@@ -1,0 +1,112 @@
+
+Using sbt Notes
+
+Think of this file as a companion to the devmachine-setup.txt
+
+1) How to build the projects that are managed by sbt?
+
+	a) change directory to the trunk directory of your enlistment (e.g., cd ~/svn/ligadata/trunk)
+	b) svn update (as needed)
+	c) start sbt with 'sbt' from console 
+	d) clean (as needed ... will clean all projects declared in the ~/svn/ligadata/trunk/build.sbt)
+	e) from sbt command line issue 'package' command (... this will build all jars and leave them in respective sub-project target)
+
+2) How to build eclipse projects from sbt?
+
+	a) from trunk directory, start sbt and issue 'eclipse' task from sbt command line.  If you prefer, I believe you can
+		also from the shell type 'sbt eclipse'... true for any of the commands you can issue from sbt command line btw.
+	b) This generates new .classpath, et al eclipse files for each sub-project identified in trunk/build.sbt
+	c) Start eclipse.  Toss out your old projects if you like (especially if they were hand crafted through the eclipse 
+		tools in the ide) and then import existing projects from the project window.  Select the 'trunk' as the parent directory
+		path in which to locate the projects.
+	d) All of the projects that are available will be presented to you with all checked for import.  Uncheck any you don't want
+		to import and click ok
+	e) Another thing about the import, your working directory for eclipse should be out of the svn tree.  When you choose import,
+		DON'T choose to copy src to the working directory.  
+
+	f) Related, but more of a comment on eclipse, it is possible to install a number of svn plugins to eclipse that will allow
+		you to check in/check out/add/remove source files from svn from within the eclipse ide.  The Subversive SVN Connector
+		and SVNKit work pretty well without a lot of fooling around.  Once installed, your projects in the Package Explorer
+		in eclipse will be annotated with the rev number and the path of where the svn repo is for each item... that is if and
+		only if you chose NOT to import your source files into the working directory where the eclipse projects are (you left
+		them in the svn enlistment tree)
+
+3) How to rebuild just one project with this setup?
+
+	a) From trunk directory start sbt and issue <subproject>/<task>.  For example to 'package' the 'Metadata' subproject, do 
+		this:
+				sbt (trunk)> Metadata/package
+
+	b) Any of the tasks defined in sbt can be used in the position of the 'package' in the above command.  To see a full list
+		of what is possible, issue the command:
+
+				sbt (trunk)> tasks
+
+		Something very similar to this will appear:
+
+				  clean            Deletes files produced by the build, such as generated sources, compiled classes, and task caches.
+				  compile          Compiles sources.
+				  console          Starts the Scala interpreter with the project classes on the classpath.
+				  consoleProject   Starts the Scala interpreter with the sbt and the build definition on the classpath and useful imports.
+				  consoleQuick     Starts the Scala interpreter with the project dependencies on the classpath.
+				  copyResources    Copies resources to the output directory.
+				  doc              Generates API documentation.
+				  package          Produces the main artifact, such as a binary jar.  This is typically an alias for the task that actually does the packaging.
+				  packageBin       Produces a main artifact, such as a binary jar.
+				  packageDoc       Produces a documentation artifact, such as a jar containing API documentation.
+				  packageSrc       Produces a source artifact, such as a jar containing sources and resources.
+				  publish          Publishes artifacts to a repository.
+				  publishLocal     Publishes artifacts to the local Ivy repository.
+				  publishM2        Publishes artifacts to the local Maven repository.
+				  run              Runs a main class, passing along arguments provided on the command line.
+				  runMain          Runs the main class selected by the first argument, passing the remaining arguments to the main method.
+				  test             Executes all tests.
+				  testOnly         Executes the tests provided as arguments or all tests if no arguments are provided.
+				  testQuick        Executes the tests that either failed before, were not run or whose transitive dependencies changed, among those provided as arguments.
+				  update           Resolves and optionally retrieves dependencies, producing a report.
+
+		If that is not enough options, try this:
+
+				sbt (trunk)> tasks -V
+
+
+4) Is it possible to find out the subprojects without cat'ing the build.sbt in the trunk directory?
+
+		sbt (trunk)> projectInfo
+
+	This will print something like this:
+
+		[info] MessageDef/*:projectInfo
+		[info] 	ModuleInfo(MessageDf,MessageDf,None,None,List(),messagedf,None,None)
+		[info] OnLEPBase/*:projectInfo
+		[info] 	ModuleInfo(OnLEPBase,OnLEPBase,None,None,List(),onlepbase,None,None)
+		[info] LoadtestRunner/*:projectInfo
+		[info] 	ModuleInfo(LoadtestRunner,LoadtestRunner,None,None,List(),loadtestrunner,None,None)
+		[info] Metadata/*:projectInfo
+		[info] 	ModuleInfo(Metadata,Metadata,None,None,List(),metadata,None,None)
+		[info] LoadtestMaster/*:projectInfo
+		[info] 	ModuleInfo(LoadtestMaster,LoadtestMaster,None,None,List(),loadtestmaster,None,None)
+		[info] PmmlCompiler/*:projectInfo
+		[info] 	ModuleInfo(PmmlCompiler,PmmlCompiler,None,None,List(),pmmlcompiler,None,None)
+		[info] MetadataBootstrap/*:projectInfo
+		[info] 	ModuleInfo(MetadataBootstrap,MetadataBootstrap,None,None,List(),metadatabootstrap,None,None)
+		[info] RichsBankPOC/*:projectInfo
+		[info] 	ModuleInfo(BankPOC,BankPOC,None,None,List(),bankpoc,None,None)
+		[info] MetadataAPI/*:projectInfo
+		[info] 	ModuleInfo(MetadataAPI,MetadataAPI,None,None,List(),metadataapi,None,None)
+		[info] LoadtestCommon/*:projectInfo
+		[info] 	ModuleInfo(LoadtestCommon,LoadtestCommon,None,None,List(),loadtestcommon,None,None)
+		[info] PmmlRuntime/*:projectInfo
+		[info] 	ModuleInfo(PmmlRuntime,PmmlRuntime,None,None,List(),pmmlruntime,None,None)
+		[info] Loadtest/*:projectInfo
+		[info] 	ModuleInfo(Loadtest,Loadtest,None,None,List(),loadtest,None,None)
+		[info] Storage/*:projectInfo
+		[info] 	ModuleInfo(Storage,Storage,None,None,List(),storage,None,None)
+		[info] trunk/*:projectInfo
+		[info] 	ModuleInfo(trunk,trunk,None,None,List(),default,None,None)
+
+	This also works producing cleaner list:
+
+		sbt (trunk)> projects 
+5) Can you add dependencies to your subproject?
+		Yes, but Joerg won't like it.

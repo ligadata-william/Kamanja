@@ -1,0 +1,60 @@
+{
+	"Concepts" :  [
+			{
+			        "NameSpace":"Ligadata",
+				"Name":"ProviderId",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"ProviderName",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Desynpuf_Id",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Clm_Id",
+				"TypeNameSpace":"System",
+				"TypeName" : "Long",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Clm_From_Dt",
+				"TypeNameSpace":"System",
+				"TypeName" : "Int",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Clm_Thru_Dt",
+				"TypeNameSpace":"System",
+				"TypeName" : "Int",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Prvdr_Num",
+				"TypeNameSpace":"System",
+				"TypeName" : "String",
+				"Version"  : 100
+			},
+			{
+				"NameSpace":"Ligadata",
+				"Name":"Segment",
+				"TypeNameSpace":"System",
+				"TypeName" : "Int",
+				"Version"  : 100
+			}
+	]
+}

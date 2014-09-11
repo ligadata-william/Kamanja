@@ -1,0 +1,97 @@
+devdb01.ligadata.com/devdb02.ligadata.com:
+10.100.0.21
+10.100.0.22
+
+echo "[datastax] 
+name = DataStax Repo for Apache Cassandra 
+baseurl = http://rpm.datastax.com/community 
+enabled = 1 
+gpgcheck = 0" > /etc/yum.repos.d/datastax.repo
+
+yum install dsc20
+chkconfig cassandra on
+
+[root@devdb02 ~]# df -hP
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/VolGroup-lv_root  493G   35G  433G   8% /
+tmpfs                          95G  228K   95G   1% /dev/shm
+/dev/sdk1                     485M   57M  404M  13% /boot
+/dev/mapper/VolGroup-lv_home  493G   21G  448G   5% /home
+/dev/sda1                     470G  177G  269G  40% /mnt/ssd1
+/dev/sdf1                     470G   35G  412G   8% /mnt/ssd2
+/dev/sdc1                     470G   35G  412G   8% /mnt/ssd3
+/dev/sdd1                     470G   35G  412G   8% /mnt/ssd4
+/dev/sdb1                     1.8T  117G  1.6T   7% /mnt/d1
+/dev/sde1                     1.8T  116G  1.6T   7% /mnt/d2
+/dev/sdg1                     1.8T  117G  1.6T   7% /mnt/d3
+/dev/sdh1                     1.8T  117G  1.6T   7% /mnt/d4
+/dev/sdi1                     1.8T  117G  1.6T   7% /mnt/d5
+/dev/sdj1                     1.8T  118G  1.6T   7% /mnt/d6
+10.100.0.21:/FTP              1.1T   13G  992G   2% /FTP
+
+mkdir /mnt/ssd1/cassandra
+mkdir /mnt/ssd2/cassandra
+mkdir /mnt/ssd3/cassandra
+mkdir /mnt/ssd4/cassandra
+
+mkdir /mnt/d1/cassandra
+mkdir /mnt/d2/cassandra
+mkdir /mnt/d3/cassandra
+mkdir /mnt/d4/cassandra
+mkdir /mnt/d5/cassandra
+mkdir /mnt/d6/cassandra
+
+
+chown cassandra /mnt/ssd1/cassandra
+chown cassandra /mnt/ssd2/cassandra
+chown cassandra /mnt/ssd3/cassandra
+chown cassandra /mnt/ssd4/cassandra
+
+chown cassandra /mnt/d1/cassandra
+chown cassandra /mnt/d2/cassandra
+chown cassandra /mnt/d3/cassandra
+chown cassandra /mnt/d4/cassandra
+chown cassandra /mnt/d5/cassandra
+chown cassandra /mnt/d6/cassandra
+
+cluster_name: 'c2'
+
+ data_file_directories:
+  - /mnt/ssd2/cassandra
+  - /mnt/ssd3/cassandra
+  - /mnt/ssd4/cassandra
+
+commitlog_directory: - /mnt/ssd1/cassandra/commitlog
+
+- seeds: "10.100.0.21"
+
+listen_address: 10.100.0.21
+
+listen_address: 10.100.0.22
+
+rpc_address: 0.0.0.0
+
+cluster_name: 'c3'
+
+concurrent_reads: 64
+concurrent_writes: 64
+
+// Large IO timeout
+read_request_timeout_in_ms: 30000
+write_request_timeout_in_ms: 30000
+
+service cassandra start
+
+root@devdb01 ~]# nodetool status
+Note: Ownership information does not include topology; for complete information, specify a keyspace
+Datacenter: datacenter1
+=======================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address      Load       Tokens  Owns   Host ID                               Rack
+UN  10.100.0.21  93.37 GB   256     52.2%  b1e7ab4b-3b80-4d6b-bdf5-1650599cf544  rack1
+UN  10.100.0.22  255.64 GB  256     47.8%  ebe0c5d7-e191-4b9c-b4ca-c18f79e22af0  rack1
+
+ERROR 17:06:29,890 Unable to initialize MemoryMeter (jamm not specified as javaagent).  This means Cassandra will be unable to measure object sizes accurately and may consequently OOM.
+  Warning: "nodetool ring" is used to output all the tokens of a node.
+  To view status related info of a node use "nodetool status" instead

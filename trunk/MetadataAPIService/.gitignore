@@ -1,0 +1,17 @@
+target/
+/.lib/
+.vagrant
+
+*~
+/.ensime
+/.ensime_lucene
+/.ensime_session
+*.log
+
+*.cache
+*.classpath
+*.project
+*.settings/
+*.scalastyle
+*.box
+*.swp

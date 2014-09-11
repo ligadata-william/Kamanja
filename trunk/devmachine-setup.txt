@@ -1,0 +1,142 @@
+# Highlevel stuff to get you a build 
+# 2014-06-02
+#
+#
+
+# Install sbt/scala (Linux)
+#
+	sudo su -
+
+	echo "[npario-el6]
+	name=nPario Distribution, Version el6
+	baseurl=ftp://nas.dc.npario.com/el6/repro
+	#gpgkey=ftp://nas.dc.npario.com/el6/repro/RPM-GPG-KEY-npario
+	gpgcheck = 0" > /etc/yum.repos.d/npario-el6.repo
+
+	# Sometimes packages are not updated - try clean the cache
+	#
+	yum cleanup metadata 
+
+	yum install scala
+	yum install sbt
+
+# Install cygwin64 
+#
+sbt will react to CTRL-c
+
+# Install Eclipse
+#
+
+# Install scala plugin 
+# Eclipse->help->Install new software : http://download.scala-ide.org/nightly-scala-ide-juno-210x
+
+# Install Jar-plug for eclipse
+# http://jar-plug.sourceforge.net/
+# Eclipse->help->Install new software : http://www.simontuffs.com/jar-plug
+
+# Install sbt (Windows)
+#
+http://www.scala-lang.org/download/
+
+
+
+# got trunk
+# you can create eclipse and sublime project files
+sbt
+> eclipse with-source=true
+> gen-sublime 
+# Start eclipse and import project
+# from trunk recursive
+
+
+# Run a project
+#
+project OnLEP
+run
+
+# Debugger (windows)
+# add environment variable and add remorte debugger
+# http://tuliodomingos.blogspot.com/2014/01/scala-remote-debugging-in-sbts-jetty.html
+#
+set SBT_OPTS=-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=4000,server=y,suspend=n
+
+# Debug from Eclipse via JUnit
+#
+Start JUnit tests
+http://scala-ide.org/docs/current-user-doc/testingframeworks/index.html#specs
+
+Both can be debugged but I am having trouble with the source code lookup:(
+
+
+# Install cassandra
+# http://cassandra.apache.org/
+
+# Windows: download msi installer
+# http://planetcassandra.org/cassandra/
+	- install cassandra (skip the ops stuff)
+	- proceed with the schema
+
+# Linux
+# http://www.datastax.com/documentation/cassandra/2.0/cassandra/install/installRHEL_t.html?
+sudo su - 
+echo "[datastax] 
+name = DataStax Repo for Apache Cassandra 
+baseurl = http://rpm.datastax.com/community 
+enabled = 1 
+gpgcheck = 0" > /etc/yum.repos.d/datastax.repo
+
+yum install dsc20
+
+chkconfig cassandra on
+
+service cassandra start
+
+# cqlsh (or equivalent on windows)
+#
+# Create some basic schema
+#
+CREATE KEYSPACE default WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+ 
+USE default;
+ 
+CREATE TABLE default
+(
+	  key blob 
+	, value blob
+	, primary key (key)
+);
+
+# Go to sbt and run test
+# and it should show success
+
+# Install Voldemort
+# http://www.project-voldemort.com/voldemort/quickstart.html
+# Get the latest https://github.com/voldemort/voldemort/archive/release-1.6.0-cutoff.zip
+# Get the release https://github.com/downloads/voldemort/voldemort/voldemort-0.96.zip
+#
+# unpack 0.96
+# copy batchfiles from the latest in bin folder
+
+# Start a single node cluster
+#
+bin\voldemort-server.bat  config\single_node_cluster
+
+
+# Install Hbase (Standalone)
+#
+sudo -v
+
+sudo rpm --import http://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/RPM-GPG-KEY-cloudera
+
+sudo wget http://archive.cloudera.com/cdh5/one-click-install/redhat/6/x86_64/cloudera-cdh-5-0.x86_64.rpm
+
+sudo yum --nogpgcheck localinstall cloudera-cdh-5-0.x86_64.rpm
+
+sudo yum install hbase hbase-master
+
+sudo service hbase-master start
+
+Notes: 
+- hbase from cdh4 was not wroking from me
+	- I uninstalled all old packages
+	- Wiped the previous hbase data in temp dir

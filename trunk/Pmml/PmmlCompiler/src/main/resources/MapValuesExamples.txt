@@ -1,0 +1,84 @@
+<DerivedField name="genderLookup" optype="categorical" dataType="string">
+<MapValues outputColumn="longForm">
+  <FieldColumnPair field="gender" column="shortForm"/>
+  <InlineTable>
+    <row><shortForm>m</shortForm><longForm>male</longForm>
+    </row>
+    <row><shortForm>f</shortForm><longForm>female</longForm>
+    </row>
+  </InlineTable>
+</MapValues>
+
+produces :
+
+val genderLookup : Map [String,String] = Map( "m" -> "male", "f" -> "female")
+
+<-- To manage missing observations, a Derived field with a MapValues underpinning
+is specified.  Only the field name and the value to substitute is presented as 
+a FieldColumnPair.  The outputColumn is marked "none" in each case.  The PmmlCompiler
+will generate an entry into the missingValueDefaults that is to contain all such 
+cases.  The Map type is Map[String,String].  It may be useful to have another table
+that has signature Map[String, Integral] or Map[String, Double] for the numeric 
+fields. -->
+
+<DerivedField name="HT_OBSERVATION" optype="categorical" dataType="string">
+  <MapValues mapMissingTo="Missing" defaultValue="Not missing" outputColumn="none">
+    <FieldColumnPair field="HT_OBSERVATION" column="none"/>
+  </MapValues>
+</DerivedField>
+
+<DerivedField name="BP_OBSERVATION" optype="categorical" dataType="string">
+  <MapValues mapMissingTo="Missing" defaultValue="Not missing" outputColumn="none">
+    <FieldColumnPair field="BP_OBSERVATION" column="none"/>
+  </MapValues>
+</DerivedField>
+
+produces:
+val missingValueDefaults : Map[String, String] = Map ( "BP_OBSERVATION" -> "none",  "HT_OBSERVATION" -> "N/A", )
+
+
+
+<DerivedField name = "foo" dataType="double" optype="continuous">
+	<MapValues outputColumn="out" dataType="integer">
+	    <FieldColumnPair field="BAND" column="band"/> 
+	    <FieldColumnPair field="STATE" column="state"/> 
+	    <InlineTable>
+		  <Extension> extender="metadata" name="file" value="<metadata-description-file-path>"/>
+		  <Extension> name="tableType" value="Vector"/>
+	      <row>
+	        <band>1</band> 
+	        <state>MN</state> 
+	        <out>10000</out> 
+	      </row>
+	      <row>
+	        <band>1</band> 
+	        <state>IL</state> 
+	        <out>12000</out> 
+	      </row>
+	      <row>
+	        <band>1</band> 
+	        <state>NY</state> 
+	        <out>20000</out> 
+	      </row>
+	      <row>
+	        <band>2</band> 
+	        <state>MN</state> 
+	        <out>20000</out> 
+	      </row>
+	      <row>
+	        <band>2</band> 
+	        <state>IL</state> 
+	        <out>23000</out> 
+	      </row>
+	      <row>
+	        <band>2</band> 
+	        <state>NY</state> 
+	        <out>30000</out> 
+	      </row>
+	    </InlineTable>
+  	</MapValues>
+</DerivedField>
+
+produces:
+
+val foo : Vector[(Integer,String,Double)] = Vector((1,"MN",12000), (1,"IL",12000), (1,"NY",20000), (2,"MN",20000), (2,"IL",23000), (2,"NY",30000))

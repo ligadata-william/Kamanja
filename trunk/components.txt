@@ -1,0 +1,17 @@
+datastax.cassandra - java PAI to Cassandra
+http://www.datastax.com/documentation/developer/java-driver/2.0/common/drivers/introduction/introArchOverview_c.html
+
+Joda - data/time library
+http://www.joda.org/joda-time/
+
+Kafka - Apache Kafka is publish-subscribe messaging rethought as a distributed commit log. 
+http://kafka.apache.org/documentation.html
+
+Postgresql - Postgres sql driver
+http://jdbc.postgresql.org/documentation/80/index.html
+
+Zookeeper
+http://zookeeper.apache.org/
+http://zookeeper.apache.org/doc/trunk/recipes.html
+
+http://www.slideshare.net/rahuldausa/introduction-to-kafka-and-zookeeper

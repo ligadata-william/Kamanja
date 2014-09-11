@@ -1,0 +1,89 @@
+System 2 Node / 3 Copies / Wow-Rack / 3 Data SSD's / 1 Commit Log SSD
+ConcitencyLevel.TWO or exceptions happen
+
+b: Bank Case
+
+---- insert
+
+run -s 0 -d "10.100.0.21" -m 1000000 --minsize 200 --maxsize 300 -w 60 10.100.0.21 10.100.0.22
+89
+
+run -s 0 -d "10.100.0.21" -m 1000000 --minsize 200 --maxsize 300 -w 120 10.100.0.21 10.100.0.22
+102k
+
+---- wrw
+
+run -s 1 -d "10.100.0.21" -m 1000000 --minsize 200 --maxsize 300 -w 60 10.100.0.21 10.100.0.22
+91k
+
+run -s 1 -d "10.100.0.21" -m 1000000 --minsize 200 --maxsize 300 -w 120 10.100.0.21 10.100.0.22
+87k
+
+
+c.	Healthcare Case
+- Gap's during execution with no cpu
+- Needed to restart nodes to trucnate table
+- Needs 10s write wait
+
+run -s 0 -d "10.100.0.21" -m 500000 --minsize 2000 --maxsize 50000 -w 60 10.100.0.21 10.100.0.22
+
+6k with 100k ops
+4k with 500k ops, some >10 sec lapses
+
+12.4% 10534 milliseconds ops: 123760 thoughput: 11748.6
+19.4% 28397 milliseconds ops: 193729 thoughput: 6822.2
+27.9% 38759 milliseconds ops: 279164 thoughput: 7202.6
+30.6% 49073 milliseconds ops: 305870 thoughput: 6233.0
+40.9% 59248 milliseconds ops: 408662 thoughput: 6897.5
+42.4% 70164 milliseconds ops: 423643 thoughput: 6037.9
+46.5% 81042 milliseconds ops: 464915 thoughput: 5736.7
+48.1% 91922 milliseconds ops: 481310 thoughput: 5236.1
+52.6% 109105 milliseconds ops: 526179 thoughput: 4822.7 
+52.6% 120920 milliseconds ops: 526248 thoughput: 4352.0 <- nothing happen for 20 sec (don't call it real time)
+61.6% 131051 milliseconds ops: 615726 thoughput: 4698.4
+64.0% 146295 milliseconds ops: 640370 thoughput: 4377.3
+72.7% 156645 milliseconds ops: 726767 thoughput: 4639.6
+75.2% 169613 milliseconds ops: 752466 thoughput: 4436.4
+78.4% 184353 milliseconds ops: 783872 thoughput: 4252.0
+80.4% 194925 milliseconds ops: 803659 thoughput: 4122.9
+81.0% 205346 milliseconds ops: 810268 thoughput: 3945.9
+89.1% 215656 milliseconds ops: 891195 thoughput: 4132.5
+92.4% 228438 milliseconds ops: 924023 thoughput: 4045.0
+97.5% 238849 milliseconds ops: 975281 thoughput: 4083.3
+
+
+run -s 0 -d "10.100.0.21" -m 100000 --minsize 2000 --maxsize 256000 -w 60 10.100.0.21 10.100.0.22
+
+0.77k
+
+12.1% 10470 milliseconds ops: 24237 thoughput: 2314.9
+24.7% 21127 milliseconds ops: 49498 thoughput: 2342.9
+28.7% 31976 milliseconds ops: 57300 thoughput: 1792.0
+32.6% 45324 milliseconds ops: 65173 thoughput: 1437.9
+32.6% 55330 milliseconds ops: 65197 thoughput: 1178.3
+33.0% 66095 milliseconds ops: 65949 thoughput: 997.8
+40.8% 76386 milliseconds ops: 81505 thoughput: 1067.0
+44.3% 93219 milliseconds ops: 88523 thoughput: 949.6
+44.3% 103223 milliseconds ops: 88591 thoughput: 858.2
+47.3% 115723 milliseconds ops: 94654 thoughput: 817.9
+55.0% 129121 milliseconds ops: 110032 thoughput: 852.2
+56.0% 139276 milliseconds ops: 111929 thoughput: 803.6
+59.1% 149655 milliseconds ops: 118284 thoughput: 790.4
+68.2% 160389 milliseconds ops: 136399 thoughput: 850.4
+71.3% 175990 milliseconds ops: 142590 thoughput: 810.2
+71.8% 188385 milliseconds ops: 143618 thoughput: 762.4
+81.4% 199297 milliseconds ops: 162710 thoughput: 816.4
+82.0% 209647 milliseconds ops: 163909 thoughput: 781.8
+86.4% 220667 milliseconds ops: 172892 thoughput: 783.5
+93.4% 230894 milliseconds ops: 186852 thoughput: 809.3
+97.2% 242944 milliseconds ops: 194361 thoughput: 800.0
+
+
+run -s 2 -d "10.100.0.21" -m 500000 --minsize 2000 --maxsize 50000 -w 60 10.100.0.21 10.100.0.22
+9k, few timeout read
+
+run -s 2 -d "10.100.0.21" -m 100000 --minsize 2000 --maxsize 256000 -w 60 10.100.0.21 10.100.0.22
+Killed one node
+
+
+run "10.100.0.21" 10.100.0.21 10.100.0.22 --confs d:\dev\ligadata\trunk\Tools\LoadtestMaster\src\main\resources\runner.json

@@ -1,0 +1,106 @@
+
+*************************************************************************
+Determining Metadata Representation and Use for the "Iterable" Functions.
+
+I need some help choosing a solution to a problem discovered while integrating function metatdata use into the pmml compiler. Please read the case and then consider a discussion of the approaches we might take.  Obviously if you have a better one, please present it.
+
+*************************************************************************
+Sample Iterable Function Example
+
+In the current version of the pmml compiler and the pmml files that we have built for asthma, cad, and contra indicative, there are a number of functions whose names start with "Container..." to indicate that these functions not only supply arguments to the function, but also supply the receiver of the function.
+
+To illustrate, consider the function "ContainerFilterAnyBetween".  A sample pmml snip use of it:
+
+		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+			<Apply function="ContainerFilterAnyBetween">
+	       		<FieldRef field="outPatientClaims"/>
+	 			<Constant>Icd9_Dgns_Cds</Constant> 
+	 			<Constant>"49300"</Constant> 
+				<Constant>"49392"</Constant> 
+				<Constant>true</Constant> 
+			</Apply>
+		</DerivedField>
+
+This function treats the first function argument (the field reference "outPatientClaims") as an object that supports the Iterable behavior.  The second argument (the term "Icd9_Dgn_Cds") is the field within the container that we wish to find if its value lies between the third and fourth values "inclusively" (known because the fifth argument is set to "true").  
+
+The compiler generates the following code snippet (without the dictionary lookup for the pmml variable value shown for simplicity):
+
+	outPatientClaims.filter((itm) => Builtins.AnyBetween(itm.Icd9_Dgns_Cds, 49300, 49392, true)
+
+The current scheme handles this by using what I refer to as a "template" associated with this Iterable function:
+
+	"%1%.filter((itm) => Builtins.AnyBetween(itm.%2%, %3%, %4%, %5%))"
+
+The positional parameters are filled with the arguments out of the pmml Apply element above.
+
+-*-
+
+As currently represented, the function metadata is not sufficient to support this kind of generation.  The functions that are representable by our current metadata don't allow us to apply the collection receiver to the iterable method (i.e., map, filter, foldleft, zip, etc.).  The function arguments following the container really are arguments on (in this case) the current item in the iteration.
+
+*************************************************************************
+SO... the issue is how do we represent this sort of function ... similar to a macro ... in the metadata?
+
+1) An additional type of metadata ("macro" or "template") is developed.  This metadata would be searched first by the pmml compiler before the standard functions are considered.  Part of the metadata maintained would be the template with the positional parameters as presented above:
+
+	"%1%.filter((itm) => Builtins.AnyBetween(itm.%2%, %3%, %4%, %5%))"
+
+The return type for such use function macro would be the same container flavor as the first positional parameter.  That is, if it's an ArrayBuffer, an ArrayBuffer is returned.  If it's a Set, a Set is returned, and so on.  The more difficult question is determining if it is an ArrayBuffer or Set of what?  
+
+The Iterable function, 'map', presents the essential case.  While the container type is the same as the input container, the 'item' type returned is normally different... the result of a projection, a calculation... anything!  
+
+To figure this out, we might to do this.  Rather than hide the name of the function that operates on the item of the container, we INSIST it is explicitly added to the Pmml specification for the function use.  For example, here is a mapping function that sums 5 fields from each container item returning it as the result:
+
+		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+			<Apply function="ContainerMap">
+	       		<FieldRef field="inPatientClaims"/>
+	       		<Apply function="Sum"/>
+		 			<Constant>Clm_Pmt_Amt</Constant> 
+		 			<Constant>Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
+					<Constant>Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
+					<Constant>Nch_Bene_Ptb_Ddctbl_Amt</Constant> 
+					<Constant>Nch_Bene_Ptb_Coinsrnc_Amt</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+or:
+
+		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+			<Apply function="ContainerMap">
+	       		<FieldRef field="inPatientClaims"/>
+	       		<Constant>Sum</Constant> 
+	 			<Constant>Clm_Pmt_Amt</Constant> 
+	 			<Constant>Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
+				<Constant>Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
+				<Constant>Nch_Bene_Ptb_Ddctbl_Amt</Constant> 
+				<Constant>Nch_Bene_Ptb_Coinsrnc_Amt</Constant> 
+			</Apply>
+		</DerivedField>
+
+The first one seems more natural, but it implies that we can detect that Clm_Pmt_Amt and the other fields are part of the inPatientClaims, which is really a sibling of the parent element, Sum.  The second one presents all of the information in the same element which is likely to be easier to manage in the compiler.
+
+One issue with both of these is that the fields are marked as "<Constant>".  I think to determine the type information, we need to know the type of all the arguments.  The coding in the following example shows one approach.  If the argument is a field, it's type should be "ident" which will cause the compiler to look it up in the metadata.  Perhaps the function name should be marked with "fIdent".  This is the key needed to search the functions instead of attributes or messages for example.  If it is a constant, the type will be whatever it is.  Note that the FieldRef elements means that the 'field' attribute value is the name of a field in either the pmml data dictionary or transformation dictionary.  To rewrite the second example, then, with a constant value thrown in...
+
+		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+			<Apply function="ContainerMap">
+	       		<FieldRef field="inPatientClaims"/>
+	       		<Constant dataType="fIdent">Sum</Constant> 
+	 			<Constant dataType="ident">Clm_Pmt_Amt</Constant> 
+	 			<Constant dataType="ident">Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
+				<Constant dataType="ident">Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
+				<Constant dataType="ident">Nch_Bene_Ptb_Ddctbl_Amt</Constant> 
+				<Constant dataType="ident">Nch_Bene_Ptb_Coinsrnc_Amt</Constant> 
+				<Constant dataType="integer">1</Constant> 
+			</Apply>
+		</DerivedField>
+
+The assumption would be that any "ident" would be fields in the FieldRef container.  The types of these would be found in the metadata in the "inPatientClaims" message metadata.  This means that if this is an interim container ... say the result of a filter of the incoming messages to the model, we need to track that this interim type is just like the incoming one (in the case of a filter) in temp metadata that is determined during the semantic analysis.  That would include knowing all of the attribute names of it (perhaps just noting that the container is "like" the original).
+
+Once the metadata for the arguments of the "Sum" function are retrieved the suitable Sum function (overloaded or template) is known for the new container's item type to be formed from the mapped results.
+
+I guess if we have this much metadata, is it really necessary to have the "template" or "macro" notion any longer.  Isn't it sufficient to use this more decorative function use case as just described instead of it? 
+
+Let's chat about this when you get a chance.
+
+
+

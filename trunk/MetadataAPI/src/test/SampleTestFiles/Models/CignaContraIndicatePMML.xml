@@ -1,0 +1,136 @@
+
+<!--
+	Medication contra indicator rule set
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Cigna Corp. 2014" description="Industry established measures to determining contra indicative drug combinations in Medication input feeds">
+		<Application name="ContraIndicator" version="02.00.01"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+
+	    <DataField name="ValidEventTypes" displayName="ValidInputTypes" optype="categorical" dataType="string">
+	      <Value value="Medication" property="valid"/>
+	    </DataField>
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+	  	<!-- Derived Fields -->
+
+		<!--
+			Obtain the Alert History for this client
+		-->
+		<DerivedField name="conflictMedCds" dataType="ConflictMedCds" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">ConflictMedCds</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!-- def AllUniqueHistoryMedicationIdentifiers(): Array[String] = {
+		    medications.map(_.MedicationIdentifier).toSet.toArray
+		  } -->
+		<DerivedField name="AllUniqueHistoryMedicationIdentifiers" dataType="any" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ToSet">
+					<Apply function="ContainerMap">
+			       		<FieldRef field="msg.medications"/>
+			 			<Constant dataType="ident">MedicationIdentifier</Constant> 
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+	
+
+		  <!-- Current event MedicationIdentifier
+		  def CurrentMedicationIdentifier(): String = {
+		    medications.last.MedicationIdentifier
+		  } -->
+		<DerivedField name="CurrentMedicationIdentifier" dataType="string" optype="categorical">
+			<Apply function="ContainerFieldLast">
+	       		<FieldRef field="msg.medications"/>
+	 			<Constant>MedicationIdentifier</Constant> 
+			</Apply>
+		</DerivedField>
+
+		   <!--Making ordered pairs between current & history of MedicationIdentifiers
+		  def MedicationIdOrderedPairs(left: String, right: Array[String]): Array[(String, String)] = {
+		    MakeOrderedPairs(left, right)
+		  } -->
+		<DerivedField name="MedicationIdOrderedPairs" dataType="any" optype="categorical">
+			<Apply function="MakeOrderedPairs">
+	       		<FieldRef field="CurrentMedicationIdentifier"/>
+	       		<FieldRef field="AllUniqueHistoryMedicationIdentifiers"/>
+			</Apply>
+		</DerivedField>
+
+		  <!--Making Strings from ordered pairs
+		  def MedicationIdPairStrings(arr: Array[(String, String)]): Array[String] = {
+		    MakeStrings(arr, ",")
+		  } -->
+		<DerivedField name="MedicationIdPairStrings" dataType="any" optype="categorical">
+			<Apply function="MakeStrings">
+	       		<FieldRef field="MedicationIdOrderedPairs"/>
+	       		<Constant dataType="string">,</Constant>
+			</Apply>
+		</DerivedField>
+
+
+  		<!-- def FindContraIndicative(arr: Array[String]): Set[String] = {
+		    Intersect(arr, conflictMedCds.toSet) // If this is complex to code in PMML, I can change conflictMedCds of type Set
+		  } -->
+		<DerivedField name="ContraIndicative" dataType="any" optype="categorical">
+			<Apply function="Intersect">
+				<FieldRef field="MedicationIdPairStrings"/>
+				<Apply function="ToSet">
+		       		<FieldRef field="conflictMedCds"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="IsContraIndicative" dataType="integer" optype="categorical">
+			<Apply function="if">
+				<Apply function="greaterThan">
+					<Apply function="ContainerLength">
+						<FieldRef field="ContraIndicative"/>
+					</Apply>
+					<Constant dataType="integer">0</Constant>    
+				</Apply>
+				<Constant dataType="integer">1</Constant> 
+				<Constant dataType="integer">0</Constant>       
+			</Apply>
+		</DerivedField>
+		
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="ContraIndicator" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="conflictMedCds" usageType="active"/>
+			<MiningField name="AllUniqueHistoryMedicationIdentifiers" usageType="active"/>
+			<MiningField name="CurrentMedicationIdentifier" usageType="active"/>
+			<MiningField name="MedicationIdOrderedPairs" usageType="active"/>
+			<MiningField name="MedicationIdPairStrings" usageType="active"/>
+
+			<MiningField name="ContraIndicative" usageType="supplementary"/>
+			<MiningField name="IsContraIndicative" usageType="predicted"/>
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0" >  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="RULE1" score="1">
+				<SimplePredicate field="IsContraIndicative" operator="equal" value="1"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

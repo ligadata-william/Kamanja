@@ -1,0 +1,42 @@
+# clean up output files
+rm -Rf ostore1/G* ostore2/G* ostore3/G*
+rm ostore1/results/*
+
+bin/registerModel `pwd`/pmml/CignaAsthmaPMML.xml `pwd`/models 1 false 102 '{clinicalinput}' '{clinicaloutput}' Cigna "InPatient,OutPatient"
+bin/registerModel `pwd`/pmml/CignaContraIndicatePMML.xml `pwd`/models 1 false 101 '{clinicalinput}' '{clinicaloutput}' Cigna Medication
+bin/registerModel `pwd`/pmml/CignaCadModel.xml `pwd`/models 1 false 101 '{clinicalinput}' '{clinicaloutput}' Cigna "HL7,InPatient,OutPatient,CarrierClaim"
+
+
+Copy OleDemo bin dir to one location, if it is /home/rich/ole/demo/bin
+	cd /home/rich/ole/demo/bin
+
+Start Ole with the following command
+	scala -J-Xmx20g OleManager
+
+Initialize Storage locations with the following command (clean those dirs if some data already exists and want to test fresh again)
+	init /home/rich/ole/demo/ostore1,/mnt/d2/ole/ostore2,/mnt/d3/ole/ostore3
+
+Load all References (dimensions) assuming we copied the data from GoogleDrive\Mira\Learning Engine\Development\TestData to /home/rich/ole/demo/inputdata
+	LoadZip dimHcpcs /home/rich/ole/demo/inputdata/HcpcsCode.gz
+	LoadZip dimDiagnosis /home/rich/ole/demo/inputdata/Icd9DiagnosisCode.gz
+	LoadZip dimProcedure /home/rich/ole/demo/inputdata/Icd9ProcedureCode.gz
+	LoadZip dimDiagnosisGroup /home/rich/ole/demo/inputdata/DiagnosisRelatedGroupCode.gz
+	LoadZip dimLineProcessIndicator /home/rich/ole/demo/inputdata/LineProcessingIndicatorTable.gz
+	LoadZip dimProviderNumber /home/rich/ole/demo/inputdata/ProviderNumberTable.gz
+	Load conflictMedicalCodes /home/rich/ole/demo/inputdata/ConflictMedicalCodes.txt
+
+Process One member for Asthma
+	Process /home/rich/ole/demo/asthma_01.txt
+
+Process One member for ContraIndicative
+	Process /home/rich/ole/demo/ContraIndicative_01.txt
+
+Process One member for Cad
+	Process /home/rich/ole/demo/cad_01.txt
+
+Results are written to the following location 
+	/home/rich/ole/demo/demodata/results/
+
+
+
+

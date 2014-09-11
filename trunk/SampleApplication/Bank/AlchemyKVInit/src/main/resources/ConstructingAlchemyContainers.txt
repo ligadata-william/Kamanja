@@ -1,0 +1,13 @@
+########################################
+# Alchemy ruleset container construction
+########################################
+
+# build CustomerPreferences map 
+java -jar /tmp/OnLEPNew/AlchemyKVInit-1.0 --kvname CustomerPreferences_100 --kvpath /tmp/OnLEPNew/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/CustomerPreferences.csv --keyfieldname ENT_ACC_NUM
+
+# build AlertHistory map
+java -jar /tmp/OnLEPNew/AlchemyKVInit-1.0 --kvname AlertHistory_100 --kvpath /tmp/OnLEPNew/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertHistory.csv --keyfieldname ENT_ACC_NUM
+
+# build AlertParameters map
+java -jar /tmp/OnLEPNew/AlchemyKVInit-1.0 --kvname AlertParameters_100 --kvpath /tmp/OnLEPNew/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertParameters.csv --keyfieldname ALERT
+

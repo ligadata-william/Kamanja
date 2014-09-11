@@ -1,0 +1,35 @@
+Pmml Identifier Name Evaluation Notes
+
+Ligadata metadata, be they types, fields, functions, containers, messages or models, by design have at least two parts to their names:
+
+	o 	Namespace name
+	o 	identifer (name)
+
+Containers and messages can have nested containers.  This means that a fully qualified name 
+of a field in a nested container could have an arbitrary number of nodes.
+
+For namespaces, only the publicly visible (outermost) container may have a namespace qualifier explicitly added to a metadata object identifier when used in the PMML specification.  Any internal names, while they may have their own namespaces (as is the case with concepts that have been independently cataloged and then used in a message), will nevertheless not have their namespaces explicitly mentioned when they appear inside a container/message as an attribute.
+
+Examples:
+
+
+
+
+
+
+
+Notes:
+
+[15:08:26] Rich Johnson: I am working on the compiler at the moment... integrating the name identifier lookup
+[15:08:35] Rich Johnson: we have compound names
+[15:09:01] Rich Johnson: we have concepts that can be independently cataloged in the metadata and then used in a container.
+[15:09:07] Rich Johnson: all have namespaces.
+[15:10:01] Rich Johnson: the question is how do we reference nested elements like this.
+[15:12:03] Rich Johnson: Furthermore, it is part of the current design to have nested containers.  In other words, a nested identifier could have arbitrary number of nodes to reference some leaf element.
+[15:13:15] Rich Johnson: I think that qualifying each such name (let's take the indepently cataloged concept participating in a nested container case) will be messy and confusing.
+[15:13:30] Rich Johnson: At the same time, the namespace idea is exactly right.
+[15:14:23] Rich Johnson: I think the issue is how do we express references to these things without the ugliness of namespace.container.namespace.subcontainer.namespace.conceptdef in the PMML
+[15:14:49] Rich Johnson: My proposal is one we have spoken of in passing
+[15:14:59] Rich Johnson: Let's use namespace search list like in the platform
+[15:16:17] Rich Johnson: For pmml specification, one must have one specified in the pmml iff there are containers, concepts, and what not not found in the "default" search list.  For the default, we can have two that are always searched : {public,system}
+[15:17:15] Rich Johnson: if edifecs wants another they specify it in a "known" array variable in the pmml

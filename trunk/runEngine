@@ -1,0 +1,16 @@
+#!/bin/bash
+# A sample script  I used to test the engine. Yet to implement fat jars and packaging the external dependencies
+
+cd $ONLEPLIBPATH
+
+export JSON_JARS=$HOME/.ivy2/cache/org.json4s/json4s-jackson_2.10/jars/json4s-jackson_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.11/jars/json4s-ast_2.11-3.2.10.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.11/jars/json4s-core_2.11-3.2.10.jar:$HOME/.ivy2/cache/org.json4s/json4s-jackson_2.11/jars/json4s-jackson_2.11-3.2.10.jar
+
+export JACKSON_JARS=$HOME/.ivy2/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2.3.1.jar:$HOME/.ivy2/cache/com.fasterxml.jackson.core/jackson-annotations/bundles/jackson-annotations-2.3.0.jar:$HOME/.ivy2/cache/com.fasterxml.jackson.core/jackson-databind/bundles/jackson-databind-2.3.1.jar:$HOME/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar:$HOME/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.1.jar:$HOME/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.3.jar:$HOME/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.5.6.jar:$HOME/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.4.1.jar
+
+export MAPDB_JARS=$HOME/.ivy2/cache/org.mapdb/mapdb/bundles/mapdb-1.0.6.jar:$HOME/.ivy2/cache/org.mapdb/mapdb/jars/mapdb-0.9.0.jar
+
+export JODA_JARS=$HOME/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar:$HOME/my_libs/joda-time-2.4.jar
+
+export olep_classpath=$ONLEPLIBPATH/log4j-1.2.17.jar:$ONLEPLIBPATH/bankpoc_2.10-1.0.jar:$ONLEPLIBPATH/msgsandcontainers_2.10-1.0.jar:$ONLEPLIBPATH/metadata_2.10-1.0.jar:$ONLEPLIBPATH/onlepbase_2.10-1.0.jar:$ONLEPLIBPATH/basetypes_2.10-0.1.0.jar:$ONLEPLIBPATH/metadataapi_2.10-1.0.jar:$ONLEPLIBPATH/storage_2.10-0.0.0.2.jar:$ONLEPLIBPATH/pmmlruntime_2.10-1.0.jar:$ONLEPLIBPATH/pmmludfs_2.10-1.0.jar:$JODA_JARS:$JSON_JARS:$MAPDB_JARS:$JACKSON_JARS
+echo $olep_classpath
+scala  -J-Xmx1024M -cp $olep_classpath $ONLEPLIBPATH/onlepmanager_2.10-1.0.jar --config $ONLEPLIBPATH/simp_samp_node1_config.cfg

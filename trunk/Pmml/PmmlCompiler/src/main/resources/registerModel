@@ -1,0 +1,148 @@
+#!/bin/bash
+
+##############################################################################################
+#
+# Generate a module from the supplied pmml source.  Compile it, jar it, and register it with
+# the Ole registration database.
+#
+##############################################################################################
+
+pmmlFilePath=$1
+modelJarTargetPath=$2
+cp="$CLASSPATH"
+scalaHome="$SCALA_HOME"
+javaHome="$JAVA_HOME"
+srcScript="/tmp/scriptSnip.scr"
+modelOutputPolicy=$3
+shouldActivate=$4
+version=$5
+inputqueues=$6
+outputqueues=$7
+customername=$8
+events=$9
+
+echo "pmmlFilePath=$pmmlFilePath"
+echo "modelJarTargetPath=$modelJarTargetPath"
+echo "cp=$cp"
+echo "scalaHome=$scalaHome"
+echo "javaHome=$javaHome"
+echo "srcScript=$srcScript"
+echo "modelOutputPolicy=$modelOutputPolicy"
+echo "shouldActivate=$shouldActivate"
+echo "version=$version"
+echo "inputqueues=$inputqueues"
+echo "outputqueues=$outputqueues"
+echo "customername=$customername"
+
+usage() {
+    echo "$0 <pmml model xml path> <model jar target path> <model output policy> <mark as active> <inputqueues> <outputqueues> <customername> <events>"
+    echo "      The model xml path locates the pmml model to be processed." 
+    echo "      The model jar target path is where the jar produced will be saved"
+    echo "      The model output policy can be any{1,2} where 1 means report everything, 2 means report state change"
+    echo "      The mark as active argument is either true or false, indicating how the online engine will treat the model once "
+    echo "          registration event is received.  A 'true' will cause the model to be scheduled for execution."
+    echo "      The version number you have specified in the pmml file. "
+    echo
+}
+
+if [ ! -f "$pmmlFilePath" ]; then
+        echo "The pmml model xml path does not refer to a valid file.  Please supply the model pmml file path."
+        usage
+        exit 1
+fi
+if [ ! -d "$modelJarTargetPath" ]; then
+        echo "model jar target path does not refer to a valid directory.  Please supply the model jar target path."
+        usage
+        exit 1
+fi
+if [ ! -d "$scalaHome" ]; then
+        echo "SCALA_HOME is not set.  Please set it to your scala installation (2.10.x or better) "
+        usage
+        exit 1
+fi
+if [ ! -d "$javaHome" ]; then
+        echo "JAVA_HOME is not set.  Please set it to your java installation (1.6.x or better) "
+        usage
+        exit 1
+fi
+if [ -z "$modelOutputPolicy" ]; then
+        echo "model output policy must be set ... "
+        usage
+        exit 1
+else 
+	if [ $modelOutputPolicy -eq 1 -o $modelOutputPolicy -eq 2 -o  $modelOutputPolicy -eq 3 ]; then
+        echo "model policy is $modelOutputPolicy"
+    else
+		echo "The output policy must be one of {1,2,3}"
+		usage
+		exit 1
+	fi
+fi
+if [ -z "$shouldActivate" ]; then
+        echo "No indication whether the model should be activated.  Specify true to activate. "
+        usage
+        exit 1
+fi
+
+if [ -z "$version" ]; then
+	echo "You should specify the version nunber for the model being registered."
+fi
+
+if [ -z "$inputqueues" ]; then
+        echo "You should specify input queues for this model."
+fi
+
+if [ -z "$outputqueues" ]; then
+        echo "You should specify output queues for this model."
+fi
+
+if [ -z "$customername" ]; then
+        echo "You should specify customer name for this model."
+fi
+
+if [ -z "$events" ]; then
+        echo "You should specify events like InPatient,OutPatient,etc separated by comma for this model."
+fi
+
+validEvent=""
+evnts=(${events//,/ })
+
+for i in "${!evnts[@]}"
+do
+	validEvent="$validEvent --validEvent ${evnts[i]}"
+done
+
+# compile and jar the model 
+echo "scala  -cp bin:$cp com.ligadata.Compiler.PmmlCompiler --pmml '$pmmlFilePath'  $validEvent --jarpath '$modelJarTargetPath' --cp '$cp' --scalaHome '$scalaHome' --javaHome '$javaHome' --scriptOut '$srcScript' --client '$customername' >/dev/null"
+
+scala  -cp bin:$cp com.ligadata.Compiler.PmmlCompiler --pmml "$pmmlFilePath"  $validEvent --jarpath "$modelJarTargetPath" --cp "$cp" --scalaHome "$scalaHome" --javaHome "$javaHome" --scriptOut "$srcScript" --client "$customername"  >/dev/null
+
+
+#########################################################
+# "$srcScript" is a file path that contains variables set to produce the necessary arguments to the psql query executed below"
+#########################################################
+# for example the following info is produced:
+# modelClassName=com.edifecs.AsthmaRisk_1020140515.pmml.AsthmaRisk_1020140515
+# modelVersion=1020140515
+# pmmlFilePath=/home/rich/ole/demo/pmml/AsthmaPMML.xml
+# pmml=`cat "/home/rich/ole/demo/pmml/AsthmaPMML.xml"`
+# jarPath=/home/rich/ole/demo/models/AsthmaRisk_1020140515.jar
+# clientName=cigna
+
+# source this script to bring these variables into scope
+echo
+#echo "This is what the source script looks like:"
+#cat "$srcScript"
+
+echo
+#echo "Source it now:"
+source "$srcScript"
+echo 
+echo
+
+echo
+psql -p 5432 -U admin -d mira -c "select Ole.RegisterModel('$modelClassName', '$version', '$pmml', '$jarPath', $modelOutputPolicy, $shouldActivate)"
+echo 
+echo
+psql -p 5432 -U admin -d mira -c "select Ole.RegisterModelToCustomer('$modelClassName', '$version', '$clientName', '2010-01-01', '2015-01-01', true, '$inputqueues', '$outputqueues');"
+

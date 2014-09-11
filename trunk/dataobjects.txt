@@ -1,0 +1,32 @@
+User Data:
+
+	Beneficiary
+
+		Carrier Claim
+			Carrier Claim Line Item
+
+		HL7
+
+		Inpatient Claim
+
+		Outpatient Claim
+
+		Prescription Drug
+
+		Medication
+
+Dimensions:
+
+	Conflict Medical Code
+	
+	Conflict Medical Code Set 
+
+	dgRelGrpCodes
+	
+	lneProcIndTable
+	
+	provNumTable
+	
+Models:
+
+	Data/Code or Both?

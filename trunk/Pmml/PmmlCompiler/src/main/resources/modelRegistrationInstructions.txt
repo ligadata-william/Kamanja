@@ -1,0 +1,52 @@
+Model Registration Steps:
+
+1) IMPORTANT: IMPORTANT: run the registerModel script from the ole directory - /mnt/ssd1/mira/ole
+cd /mnt/ssd1/mira/ole
+
+2) Verify Environment variables are set before invoking scripts:
+
+a) CLASSPATH
+export CLASSPATH=/mnt/ssd1/mira/ole/libs/joda-convert-1.6.jar:/mnt/ssd1/mira/ole/libs/joda-time-2.3.jar:/mnt/ssd1/mira/ole/libs/OleDemo.jar:/mnt/ssd1/mira/ole/libs/PmmlRuntime.jar:/mnt/ssd1/mira/ole/libs/PmmlCompiler.jar:/mnt/ssd1/mira/ole/libs/log4j-1.2.15.jar
+
+-or- 
+
+export CLASSPATH=/home/rich/ole/demo/libs/joda-convert-1.6.jar:/home/rich/ole/demo/libs/joda-time-2.3.jar:/home/rich/ole/demo/libs/OleDemo.jar:/home/rich/ole/demo/libs/PmmlRuntime.jar:/home/rich/ole/demo/libs/PmmlCompiler.jar:/home/rich/ole/demo/libs/log4j-1.2.17.jar
+
+b) JAVA_HOME
+(wowrack example)
+export JAVA_HOME=/opt/java/jdk1.6.0_37
+-or-
+export JAVA_HOME=/usr/lib/jvm/jdk1.6.0
+
+c) SCALA_HOME
+(wowrack example)
+export SCALA_HOME=/opt/scala
+-or-
+export SCALA_HOME=/home/rich/tarballs/scala/scala-2.10.3
+
+d) NOTE that the PmmlCompiler now uses log4j.  Part of the use of that is to set up a log4j.properties file with the appropriate log settings in it.
+See that the log4j.properties exists in the "models" subdirectory so that the registerModel script can find it.  If it is not there, there will be warning messages... no
+faulure however.
+
+3) For purposes of registration, absolute paths are used to record locations in the registration db.
+
+a)Register Asthma:
+
+bin/registerModel `pwd`/pmml/AsthmaPMML.xml `pwd`/models 1 false 102 '{clinicalinput}' '{clinicaloutput}' BSCa InPatient OutPatient
+
+b) Register Contra:
+
+bin/registerModel `pwd`/pmml/BSCContraIndicatePMML.xml `pwd`/models 1 false 101 '{clinicalinput}' '{clinicaloutput}' BSCa Medication
+
+
+NOTES:
+The registerModel does the following:
+
+	1)  It compiles the pmml file in the first argument creating a source program written in scala.
+	2)	The scala program is compiled
+	3)	The .class files from the compilation along with the original pmml and the generated scala are
+		put in a jar.
+	4)	The jar is left in the path specified in the second argument in the script invocations above, namely
+		the models subdirectory.
+
+4) You can copy one of the jars to your local box and unjar it with unzip or 'jar xvf <jar name>'

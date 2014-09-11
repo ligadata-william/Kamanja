@@ -1,0 +1,17 @@
+Flows/Processes
+
+- Check stats (Single Beneficiary)
+
+- Check all stats
+
+- Refresh\Update Models
+
+- Process events from Queue (Kafka)
+	- Process model for event
+
+
+
+
+
+
+	

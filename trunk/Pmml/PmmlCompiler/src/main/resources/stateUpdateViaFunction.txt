@@ -1,0 +1,165 @@
+
+
+1) manage update of state via function call as opposed to derived field assignment.
+
+
+For example,
+
+		<!--
+			Determine whether to send Emer Borrow result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendEBResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendEBResult"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="EBAlertType"/> <!-- this sets AlertType if successful which is tested next -->
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="startsWith">
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">EB</Constant>
+				</Apply>
+				<Apply function="or">
+					<Apply function="and">
+						<Apply function="equal">
+							<FieldRef field="AlertType"/>
+							<Constant>EB2</Constant>
+						</Apply>
+						<Apply function="incrementBy">
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<Constant dataType="integer">1</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="and">
+						<Apply function="equal">
+							<FieldRef field="AlertType"/>
+							<Constant>EB1</Constant>
+						</Apply>
+						<Apply function="incrementBy">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<Constant dataType="integer">1</Constant> 
+						</Apply>
+					</Apply>
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+The 'incrementBy' functions are used to update a field in a fixed field container in the example above.  In order to both update it and have the statement be just another participant in the boolean calculation as to whether field "SendEBResultDetermination" should be set, the ClientAlertsToday (an AlertHistory container) must be updated in a context that permits that.  What I have chosen to do is this:
+
+a) The incrementBy is what is known as a function macro.
+b) Function macros are like functions, in fact inherit from them metadata wise (i.e., a MacroDef isA FunctionDef)
+c) Function macros distinguish themselves from functions in that they have textual templates associated with the
+MacroDef instance.
+d) There are actually two templates associated with them:
+	- one handles fixed messages
+	- one handles the mapped messages
+e) If the function doesn't have a container to contend with in its argument list, and a macro is necessary for creating correct code for successful model execution, then only one template can be submitted if desired (it is used to set both templates)
+
+To make this concrete, let's see what the current compiler generates and why this, while somewhat complex, is not as
+complex as the alternatives:
+
+	class Derive_SendEBResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+	      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+	    override def execute(ctx : Context) : BooleanDataValue = {
+	        val SendEBResultDetermination = Udfs.And(Udfs.Equal(ctx.valueFor("SendEBResult").asInstanceOf[AnyDataValue].Value.asInstanceOf[null], true), Udfs.Equal(ctx.valueFor("EBAlertType").asInstanceOf[AnyDataValue].Value.asInstanceOf[null], true), startsWith(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB"), Udfs.Or(Udfs.And(Udfs.Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, EB2), ), Udfs.And(Udfs.Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, EB1), )), )
+	        ctx.xDict.apply("SendEBResultDetermination").Value(new BooleanDataValue(SendEBResultDetermination))
+	          new BooleanDataValue(SendEBResultDetermination)
+	    }
+	}
+
+
+As you can see if you look closely, there is a missing parameter to several of the Udfs.Equal functions nested inside as well as something missing at the end.  The first two are the 'incrementBy' function generations and the last one is the 'Put'.  Let's ignore the 'Put' for now except to say that it, like the 'incrementBy' are being handled by macro generation.
+
+Before going on to look at the macros in more detail, let's consider the alternatives.  
+
+	1. Generate a write method on every field in each structured container (or mapped container for that matter).
+	2. Generate a 'var' local variable in the execute function above for the structures to be updated and create assignment statements..
+	3. Generate a local class in the Derive_SendEBResultDetermination that has the structure to be updated supplied to it in the constructor as a 'var'
+
+My take is this (ymmv), the first would require creating update functions (generate them via the message compiler presumably) for each field.  It would be difficult to discern at messagedef creation time which of these fields would be updated.  There would be a lot of code that may not get used.  To participate in the boolean calculation of the rule above, for example, each method would need to return a boolean as to whether the update succeeded.  This is certainly a possibility for single level structures.  Should there be subcontainers, things get more complicated, but could probably be done.
+
+The second alternative is in my estimation extremely difficult.  This is in compiler terms a global optimization issue (think -O3 level optimization on the g++ compiler).  The entire predicate hierarchy would need to be transformed in a spectacular way I think to get the variables to update at the correct moment and yet still yield a correct boolean for the SendEBResultDetermination value stored for this derived field.
+
+The third approach generates an updateable context based upon field usage in the pmml model.  It is the one I am implementing.
+
+To see how this would work, it is instructive to look at the macro for 'incrementBy' and the statements that catalog them in the mdmgr:
+
+		val incrementByMacroStringFixed : String =  """
+				class %1%_%2%_incrementBy(var %1% : %1.type%, val %3% : %3.type%)
+				{
+				  	def incrementBy  : Boolean = { %1%.%2% += %3%; true }
+				} """
+		
+		val incrementByMacroStringMapped : String =  """
+				class %1%_%2%_incrementBy(var %1% : %1.type%, val %3% : %3.type%)
+				{
+				  	def incrementBy  : Boolean = { %1%(%2%) = %1%(%2%) + %3%; true }
+				} """
+		
+		MdMgr.MakeMacro(mgr
+					, MdMgr.sysNS
+					, "incrementBy"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (incrementByMacroStringFixed,incrementByMacroStringMapped))	  
+		  
+		MdMgr.MakeMacro(mgr
+					, MdMgr.sysNS
+					, "incrementBy"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "Double"))
+					, fcnMacrofeatures
+					, (incrementByMacroStringFixed,incrementByMacroStringMapped))	  
+		  
+		MdMgr.MakeMacro(mgr
+					, MdMgr.sysNS
+					, "incrementBy"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Long"), ("containerField", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (incrementByMacroStringFixed,incrementByMacroStringMapped))	  
+
+
+The templates are the two strings above that are then supplied to the MakeMacro invocations as the last argument.  Note that they return a 'Boolean' value.  What is to happen is that when the 'incrementBy' function encountered during code generation pass, the macro will be sought from the metadata based upon its function signature.  Once found, the macro will "executed" by splicing the variable and variable type values into the macro.  This snippet will be queued for insertion just before the closing brace of the derived field class.  The use of the class will be inserted in line with the rest of the boolean expression.  For example, the first incrementBy in the example pmml would fill that first empty slot in the generated code with:
+
+		new ClientAlertsToday_EB002Sent_incrementBy(ctx.xDict.apply("ClientAlertsToday").Value, 1).incrementBy
+
+
+The derived class in the above example, 'Derive_SendEBResultDetermination', would now print like this:
+
+	class Derive_SendEBResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+	      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+	    override def execute(ctx : Context) : BooleanDataValue = {
+
+
+	        val SendEBResultDetermination = Udfs.And(Udfs.Equal(ctx.valueFor("SendEBResult").asInstanceOf[AnyDataValue].Value.asInstanceOf[null], true), Udfs.Equal(ctx.valueFor("EBAlertType").asInstanceOf[AnyDataValue].Value.asInstanceOf[null], true), startsWith(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB"), Udfs.Or(Udfs.And(Udfs.Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, EB2), new ClientAlertsToday_EB002Sent_incrementBy(ctx.xDict.apply("ClientAlertsToday").Value, 1).incrementBy), Udfs.And(Udfs.Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, EB1), new ClientAlertsToday_EB001Sent_incrementBy(ctx.xDict.apply("ClientAlertsToday").Value, 1).incrementBy, 1))), <Put generation here>)
+	        ctx.xDict.apply("SendEBResultDetermination").Value(new BooleanDataValue(SendEBResultDetermination))
+	          new BooleanDataValue(SendEBResultDetermination)
+	    }
+
+		class ClientAlertsToday_EB002Sent_incrementBy(var ClientAlertsToday : AlertHistory, val value : Int)
+		{
+		  	def incrementBy  : Boolean = { ClientAlertsToday.EB002Sent += 1; true }
+		} 
+
+		class ClientAlertsToday_EB001Sent_incrementBy(var ClientAlertsToday : AlertHistory, val value : Int)
+		{
+		  	def incrementBy  : Boolean = { ClientAlertsToday.EB001Sent += 1; true }
+		} 
+	}
+
+A Caveat
+
+The function inside the generated classes above (i.e., incrementBy in the examples) MUST BE the name of the function macro.  This is checked (template is searched for "def $function").  At some point, some device should be invented such that the macro name is used (e.g., invention of a variable called "$MACRONAME" that can be used by the macro author). 
