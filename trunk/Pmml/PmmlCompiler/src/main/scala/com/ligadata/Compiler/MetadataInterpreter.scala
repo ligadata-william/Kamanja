@@ -323,7 +323,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			baseTypeTriples += Tuple3(conceptType.typeString, isContainerWithNamedFields, conceptType)
 			true
 		} else {
-			logger.trace(s"The name '$name' in field reference value is not a valid concept. ")
+			//logger.trace(s"The name '$name' in field reference value is not a valid concept. ")
 			false
 		}
 		gotOne

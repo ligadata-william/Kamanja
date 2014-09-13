@@ -61,16 +61,16 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
     /***********************************************************************/
     def initialize : AlchemyAlerts_000100 = {
 
-        ctx.SetRuleSetModel(new RuleSetModel_classification_031("AlchemyRules", "classification", "RuleSet", ""))
+        ctx.SetRuleSetModel(new RuleSetModel_classification_020("AlchemyRules", "classification", "RuleSet", ""))
         val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
         /** Initialize the RuleSetModel and SimpleRules array with new instances of respective classes */
         var simpleRuleInstances : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]()
-        ruleSetModel.AddRule(new SimpleRule_EBRule_025("EBRule", "6", 0.0, 0.0, 0.0, 0.0))
-        ruleSetModel.AddRule(new SimpleRule_NORule_026("NORule", "5", 0.0, 0.0, 0.0, 0.0))
-        ruleSetModel.AddRule(new SimpleRule_ODRule3_027("ODRule3", "4", 0.0, 0.0, 0.0, 0.0))
-        ruleSetModel.AddRule(new SimpleRule_ODRule2_028("ODRule2", "3", 0.0, 0.0, 0.0, 0.0))
-        ruleSetModel.AddRule(new SimpleRule_ODRule1_029("ODRule1", "2", 0.0, 0.0, 0.0, 0.0))
-        ruleSetModel.AddRule(new SimpleRule_LBRule_030("LBRule", "1", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_EBRule_014("EBRule", "6", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_NORule_015("NORule", "5", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_ODRule3_016("ODRule3", "4", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_ODRule2_017("ODRule2", "3", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_ODRule1_018("ODRule1", "2", 0.0, 0.0, 0.0, 0.0))
+        ruleSetModel.AddRule(new SimpleRule_LBRule_019("LBRule", "1", 0.0, 0.0, 0.0, 0.0))
         /* Update the ruleset model with the default score and rule selection methods collected for it */
         ruleSetModel.DefaultScore(new StringDataValue("0"))
         ruleSetModel.AddRuleSelectionMethod(new RuleSelectionMethod("firstHit"))
@@ -85,13 +85,12 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
 
         /* Update each ruleSetModel's mining schema dict */
         ruleSetModel.AddMiningField("AlertType", new MiningField("AlertType","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
-        ruleSetModel.AddMiningField("ClientPrefs.ACCT_SHORT_NM", new MiningField("ClientPrefs.ACCT_SHORT_NM","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
-        ruleSetModel.AddMiningField("ClientPrefs.MOBILE_NUMBER", new MiningField("ClientPrefs.MOBILE_NUMBER","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("SendResult", new MiningField("SendResult","predicted","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
-        ruleSetModel.AddMiningField("EBAlertParms.ALERT_EXPIRY_TIME", new MiningField("EBAlertParms.ALERT_EXPIRY_TIME","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("RUN_LDG_XAU", new MiningField("RUN_LDG_XAU","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("OfflineEvent", new MiningField("OfflineEvent","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
-        ruleSetModel.AddMiningField("msg.RUN_LDG_XAU", new MiningField("msg.RUN_LDG_XAU","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
-        ruleSetModel.AddMiningField("msg.ENT_DTE", new MiningField("msg.ENT_DTE","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("ACCT_SHORT_NM", new MiningField("ACCT_SHORT_NM","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("ENT_DTE", new MiningField("ENT_DTE","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("MOBILE_NUMBER", new MiningField("MOBILE_NUMBER","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
 
         /* For convenience put the mining schema map in the context as well as ruleSetModel */
         ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())
@@ -104,19 +103,27 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
 
         ctx.dDict += ("parameters" -> new DataField("parameters", "Any", dfoo2, "", "", ""))
         var dfoo3 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("SendResult" -> new DataField("SendResult", "String", dfoo3, "", "", ""))
+        ctx.dDict += ("RUN_LDG_XAU" -> new DataField("RUN_LDG_XAU", "Double", dfoo3, "", "", ""))
         var dfoo4 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("gCtx" -> new DataField("gCtx", "Any", dfoo4, "", "", ""))
+        ctx.dDict += ("SendResult" -> new DataField("SendResult", "String", dfoo4, "", "", ""))
         var dfoo5 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("msg" -> new DataField("msg", "Any", dfoo5, "", "", ""))
+        ctx.dDict += ("gCtx" -> new DataField("gCtx", "Any", dfoo5, "", "", ""))
         var dfoo6 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("OfflineEvent" -> new DataField("OfflineEvent", "String", dfoo6, "", "", ""))
+        ctx.dDict += ("msg" -> new DataField("msg", "Any", dfoo6, "", "", ""))
+        var dfoo7 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("OfflineEvent" -> new DataField("OfflineEvent", "String", dfoo7, "", "", ""))
+        var dfoo8 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("ACCT_SHORT_NM" -> new DataField("ACCT_SHORT_NM", "String", dfoo8, "", "", ""))
+        var dfoo9 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("MOBILE_NUMBER" -> new DataField("MOBILE_NUMBER", "String", dfoo9, "", "", ""))
+        var dfoo10 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("ENT_DTE" -> new DataField("ENT_DTE", "Int", dfoo10, "", "", ""))
 
         /** initialize the transformation dictionary (derived field part) */
         var xbar1 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD3Range" -> new Derive_InOD3Range("InOD3Range", "Boolean", xbar1, "null", "null", ""))
+        ctx.xDict += ("SendLBResultDetermination" -> new Derive_SendLBResultDetermination("SendLBResultDetermination", "Boolean", xbar1, "null", "null", ""))
         var xbar2 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendLBResultDetermination" -> new Derive_SendLBResultDetermination("SendLBResultDetermination", "Boolean", xbar2, "null", "null", ""))
+        ctx.xDict += ("InOD3Range" -> new Derive_InOD3Range("InOD3Range", "Boolean", xbar2, "null", "null", ""))
         var xbar3 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SendEBResultDetermination" -> new Derive_SendEBResultDetermination("SendEBResultDetermination", "Boolean", xbar3, "null", "null", ""))
         var xbar4 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
@@ -150,67 +157,69 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         var xbar18 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("ShouldOnlineNOEventBeIssued" -> new Derive_ShouldOnlineNOEventBeIssued("ShouldOnlineNOEventBeIssued", "Boolean", xbar18, "null", "null", ""))
         var xbar19 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldODOfflineEventBeIssued" -> new Derive_ShouldODOfflineEventBeIssued("ShouldODOfflineEventBeIssued", "Boolean", xbar19, "null", "null", ""))
+        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar19, "null", "null", ""))
         var xbar20 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendLBResult" -> new Derive_SendLBResult("SendLBResult", "String", xbar20, "null", "null", ""))
+        ctx.xDict += ("ShouldODOfflineEventBeIssued" -> new Derive_ShouldODOfflineEventBeIssued("ShouldODOfflineEventBeIssued", "Boolean", xbar20, "null", "null", ""))
         var xbar21 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ODOfflineEvent" -> new Derive_ODOfflineEvent("ODOfflineEvent", "Boolean", xbar21, "null", "null", ""))
+        ctx.xDict += ("SendLBResult" -> new Derive_SendLBResult("SendLBResult", "String", xbar21, "null", "null", ""))
         var xbar22 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ClientAlertsToday" -> new Derive_ClientAlertsToday("ClientAlertsToday", "Any", xbar22, "null", "null", ""))
+        ctx.xDict += ("ODOfflineEvent" -> new Derive_ODOfflineEvent("ODOfflineEvent", "Boolean", xbar22, "null", "null", ""))
         var xbar23 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AcctHasEBLimit" -> new Derive_AcctHasEBLimit("AcctHasEBLimit", "Boolean", xbar23, "null", "null", ""))
+        ctx.xDict += ("ClientAlertsToday" -> new Derive_ClientAlertsToday("ClientAlertsToday", "Any", xbar23, "null", "null", ""))
         var xbar24 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedOD2Condition" -> new Derive_DebitHasCausedOD2Condition("DebitHasCausedOD2Condition", "Boolean", xbar24, "null", "null", ""))
+        ctx.xDict += ("AcctHasEBLimit" -> new Derive_AcctHasEBLimit("AcctHasEBLimit", "Boolean", xbar24, "null", "null", ""))
         var xbar25 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD3ResultDetermination" -> new Derive_SendOD3ResultDetermination("SendOD3ResultDetermination", "Boolean", xbar25, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedOD2Condition" -> new Derive_DebitHasCausedOD2Condition("DebitHasCausedOD2Condition", "Boolean", xbar25, "null", "null", ""))
         var xbar26 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ClientPrefs" -> new Derive_ClientPrefs("ClientPrefs", "Any", xbar26, "null", "null", ""))
+        ctx.xDict += ("SendOD3ResultDetermination" -> new Derive_SendOD3ResultDetermination("SendOD3ResultDetermination", "Boolean", xbar26, "null", "null", ""))
         var xbar27 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD2Result" -> new Derive_SendOD2Result("SendOD2Result", "String", xbar27, "null", "null", ""))
+        ctx.xDict += ("ClientPrefs" -> new Derive_ClientPrefs("ClientPrefs", "Any", xbar27, "null", "null", ""))
         var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedOD1Condition" -> new Derive_DebitHasCausedOD1Condition("DebitHasCausedOD1Condition", "Boolean", xbar28, "null", "null", ""))
+        ctx.xDict += ("SendOD2Result" -> new Derive_SendOD2Result("SendOD2Result", "String", xbar28, "null", "null", ""))
         var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("NearOverdraftLimit" -> new Derive_NearOverdraftLimit("NearOverdraftLimit", "Double", xbar29, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedOD1Condition" -> new Derive_DebitHasCausedOD1Condition("DebitHasCausedOD1Condition", "Boolean", xbar29, "null", "null", ""))
         var xbar30 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldNOOfflineEventBeIssued" -> new Derive_ShouldNOOfflineEventBeIssued("ShouldNOOfflineEventBeIssued", "Boolean", xbar30, "null", "null", ""))
+        ctx.xDict += ("NearOverdraftLimit" -> new Derive_NearOverdraftLimit("NearOverdraftLimit", "Double", xbar30, "null", "null", ""))
         var xbar31 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("LBAlertParms" -> new Derive_LBAlertParms("LBAlertParms", "Any", xbar31, "null", "null", ""))
+        ctx.xDict += ("ShouldNOOfflineEventBeIssued" -> new Derive_ShouldNOOfflineEventBeIssued("ShouldNOOfflineEventBeIssued", "Boolean", xbar31, "null", "null", ""))
         var xbar32 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineLBEventBeIssued" -> new Derive_ShouldOnlineLBEventBeIssued("ShouldOnlineLBEventBeIssued", "Boolean", xbar32, "null", "null", ""))
+        ctx.xDict += ("LBAlertParms" -> new Derive_LBAlertParms("LBAlertParms", "Any", xbar32, "null", "null", ""))
         var xbar33 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedNOCondition" -> new Derive_DebitHasCausedNOCondition("DebitHasCausedNOCondition", "Boolean", xbar33, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineLBEventBeIssued" -> new Derive_ShouldOnlineLBEventBeIssued("ShouldOnlineLBEventBeIssued", "Boolean", xbar33, "null", "null", ""))
         var xbar34 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar34, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedNOCondition" -> new Derive_DebitHasCausedNOCondition("DebitHasCausedNOCondition", "Boolean", xbar34, "null", "null", ""))
         var xbar35 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar35, "null", "null", ""))
+        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar35, "null", "null", ""))
         var xbar36 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar36, "null", "null", ""))
+        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar36, "null", "null", ""))
         var xbar37 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar37, "null", "null", ""))
+        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar37, "null", "null", ""))
         var xbar38 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar38, "null", "null", ""))
+        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar38, "null", "null", ""))
         var xbar39 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar39, "null", "null", ""))
+        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar39, "null", "null", ""))
         var xbar40 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar40, "null", "null", ""))
+        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar40, "null", "null", ""))
         var xbar41 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar41, "null", "null", ""))
+        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar41, "null", "null", ""))
         var xbar42 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar42, "null", "null", ""))
+        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar42, "null", "null", ""))
         var xbar43 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar43, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar43, "null", "null", ""))
         var xbar44 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar44, "null", "null", ""))
+        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar44, "null", "null", ""))
         var xbar45 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar45, "null", "null", ""))
+        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar45, "null", "null", ""))
         var xbar46 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar46, "null", "null", ""))
+        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar46, "null", "null", ""))
         var xbar47 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar47, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar47, "null", "null", ""))
         var xbar48 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar48, "null", "null", ""))
+        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar48, "null", "null", ""))
         var xbar49 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar49, "null", "null", ""))
+        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar49, "null", "null", ""))
+        var xbar50 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar50, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -350,6 +359,18 @@ class Derive_LBAlertParms (name : String, dataType : String, validValues: ArrayB
 }
 
 
+class Derive_MaterializeOutputs (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : BooleanDataValue = {
+        val MaterializeOutputs = And(Put("RUN_LDG_XAU", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU), Put("ACCT_SHORT_NM", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].ACCT_SHORT_NM), Put("ENT_DTE", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_DTE), Put("MOBILE_NUMBER", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MOBILE_NUMBER))
+        ctx.xDict.apply("MaterializeOutputs").Value(new BooleanDataValue(MaterializeOutputs))
+          new BooleanDataValue(MaterializeOutputs)
+    }
+
+}
+
+
 class Derive_ShouldOnlineEBEventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
@@ -402,27 +423,13 @@ class Derive_EBAlertType (name : String, dataType : String, validValues: ArrayBu
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val EBAlertType = Or(And(Equal(ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MAX_EB_CNT, 7), new AlertType_value1_Put("AlertType", "EB1").Put), new AlertType_value2_Put("AlertType", "EB2").Put)
+        val EBAlertType = Or(And(Equal(ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MAX_EB_CNT, 7), Put("AlertType", "EB1")), And(NotEqual(ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MAX_EB_CNT, 7), Put("AlertType", "EB2")))
         ctx.xDict.apply("EBAlertType").Value(new BooleanDataValue(EBAlertType))
           new BooleanDataValue(EBAlertType)
     }
 
 }
 
-	class AlertType_value1_Put(var AlertType : String, val value1 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value1)
-			set 
-		}
-	} 
-	class AlertType_value2_Put(var AlertType : String, val value2 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value2)
-			set 
-		}
-	} 
 
 class Derive_SumOfAlertsSentToday (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
@@ -452,39 +459,25 @@ class Derive_ShouldEBOfflineEventBeIssued (name : String, dataType : String, val
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ShouldEBOfflineEventBeIssued = And(Equal(ctx.valueFor("EBOfflineEvent").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("SumOfAlertsSentToday").asInstanceOf[IntDataValue].Value, 0), new OfflineEvent_value3_Put("OfflineEvent", "true").Put)
+        val ShouldEBOfflineEventBeIssued = And(Equal(ctx.valueFor("EBOfflineEvent").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("SumOfAlertsSentToday").asInstanceOf[IntDataValue].Value, 0), Put("OfflineEvent", "true"))
         ctx.xDict.apply("ShouldEBOfflineEventBeIssued").Value(new BooleanDataValue(ShouldEBOfflineEventBeIssued))
           new BooleanDataValue(ShouldEBOfflineEventBeIssued)
     }
 
 }
 
-	class OfflineEvent_value3_Put(var OfflineEvent : String, val value3 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(OfflineEvent, value3)
-			set 
-		}
-	} 
 
 class Derive_NOOfflineEvent (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val NOOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("NOAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("NOAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), new OfflineEvent_value4_Put("OfflineEvent", "true").Put)
+        val NOOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("NOAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("NOAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), Put("OfflineEvent", "true"))
         ctx.xDict.apply("NOOfflineEvent").Value(new BooleanDataValue(NOOfflineEvent))
           new BooleanDataValue(NOOfflineEvent)
     }
 
 }
 
-	class OfflineEvent_value4_Put(var OfflineEvent : String, val value4 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(OfflineEvent, value4)
-			set 
-		}
-	} 
 
 class Derive_ShouldNOOfflineEventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
@@ -502,20 +495,13 @@ class Derive_ODOfflineEvent (name : String, dataType : String, validValues: Arra
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ODOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), new OfflineEvent_value5_Put("OfflineEvent", "true").Put)
+        val ODOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), Put("OfflineEvent", "true"))
         ctx.xDict.apply("ODOfflineEvent").Value(new BooleanDataValue(ODOfflineEvent))
           new BooleanDataValue(ODOfflineEvent)
     }
 
 }
 
-	class OfflineEvent_value5_Put(var OfflineEvent : String, val value5 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(OfflineEvent, value5)
-			set 
-		}
-	} 
 
 class Derive_ShouldODOfflineEventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
@@ -533,20 +519,13 @@ class Derive_LBOfflineEvent (name : String, dataType : String, validValues: Arra
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val LBOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), new OfflineEvent_value6_Put("OfflineEvent", "true").Put)
+        val LBOfflineEvent = And(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)), Put("OfflineEvent", "true"))
         ctx.xDict.apply("LBOfflineEvent").Value(new BooleanDataValue(LBOfflineEvent))
           new BooleanDataValue(LBOfflineEvent)
     }
 
 }
 
-	class OfflineEvent_value6_Put(var OfflineEvent : String, val value6 : String)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(OfflineEvent, value6)
-			set 
-		}
-	} 
 
 class Derive_ShouldLBOfflineEventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
@@ -845,200 +824,165 @@ class Derive_SendEBResultDetermination (name : String, dataType : String, validV
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendEBResultDetermination = And(Equal(ctx.valueFor("SendEBResult").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("EBAlertType").asInstanceOf[BooleanDataValue].Value, true), startsWith(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB"), Or(And(Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB2"), new ClientAlertsToday_EB002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy), And(Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB1"), new ClientAlertsToday_EB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy)), new gCtx_value9_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendEBResultDetermination = And(Equal(ctx.valueFor("SendEBResult").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("EBAlertType").asInstanceOf[BooleanDataValue].Value, true), startsWith(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB"), Or(And(Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB2"), new ClientAlertsToday_EB002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy), And(Equal(ctx.valueFor("AlertType").asInstanceOf[StringDataValue].Value, "EB1"), new ClientAlertsToday_EB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy)), new gCtx_value3_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendEBResultDetermination").Value(new BooleanDataValue(SendEBResultDetermination))
           new BooleanDataValue(SendEBResultDetermination)
     }
 
 }
 
-	class ClientAlertsToday_EB002Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value7 : Int)
+	class ClientAlertsToday_EB002Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value1 : Int)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.EB002Sent += value7; true }
+	  	def incrementBy  : Boolean = { ClientAlertsToday.EB002Sent += value1; true }
 	} 
-	class ClientAlertsToday_EB001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value8 : Int)
+	class ClientAlertsToday_EB001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value2 : Int)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.EB001Sent += value8; true }
+	  	def incrementBy  : Boolean = { ClientAlertsToday.EB001Sent += value2; true }
 	} 
-	class gCtx_value9_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value9 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
+	class gCtx_value3_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value3 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def Put  : Boolean = { gCtx.setObject(value9, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value3, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 class Derive_SendNOResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendNOResultDetermination = And(Equal(ctx.valueFor("SendNOResult").asInstanceOf[StringDataValue].Value, "NO1"), new AlertType_value10_Put("AlertType", "NO1").Put, new ClientAlertsToday_NO001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value12_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendNOResultDetermination = And(Equal(ctx.valueFor("SendNOResult").asInstanceOf[StringDataValue].Value, "NO1"), Put("AlertType", "NO1"), new ClientAlertsToday_NO001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value5_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendNOResultDetermination").Value(new BooleanDataValue(SendNOResultDetermination))
           new BooleanDataValue(SendNOResultDetermination)
     }
 
 }
 
-	class AlertType_value10_Put(var AlertType : String, val value10 : String)
+	class ClientAlertsToday_NO001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value4 : Int)
 	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value10)
-			set 
-		}
+	  	def incrementBy  : Boolean = { ClientAlertsToday.NO001Sent += value4; true }
 	} 
-	class ClientAlertsToday_NO001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value11 : Int)
+	class gCtx_value5_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value5 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.NO001Sent += value11; true }
-	} 
-	class gCtx_value12_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value12 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
-	{
-	  	def Put  : Boolean = { gCtx.setObject(value12, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value5, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 class Derive_SendOD3ResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendOD3ResultDetermination = And(Equal(ctx.valueFor("SendOD3Result").asInstanceOf[StringDataValue].Value, "OD3"), new AlertType_value13_Put("AlertType", "OD3").Put, new ClientAlertsToday_OD003Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value15_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendOD3ResultDetermination = And(Equal(ctx.valueFor("SendOD3Result").asInstanceOf[StringDataValue].Value, "OD3"), Put("AlertType", "OD3"), new ClientAlertsToday_OD003Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value7_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendOD3ResultDetermination").Value(new BooleanDataValue(SendOD3ResultDetermination))
           new BooleanDataValue(SendOD3ResultDetermination)
     }
 
 }
 
-	class AlertType_value13_Put(var AlertType : String, val value13 : String)
+	class ClientAlertsToday_OD003Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value6 : Int)
 	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value13)
-			set 
-		}
+	  	def incrementBy  : Boolean = { ClientAlertsToday.OD003Sent += value6; true }
 	} 
-	class ClientAlertsToday_OD003Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value14 : Int)
+	class gCtx_value7_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value7 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.OD003Sent += value14; true }
-	} 
-	class gCtx_value15_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value15 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
-	{
-	  	def Put  : Boolean = { gCtx.setObject(value15, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value7, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 class Derive_SendOD2ResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendOD2ResultDetermination = And(Equal(ctx.valueFor("SendOD2Result").asInstanceOf[StringDataValue].Value, "OD2"), new AlertType_value16_Put("AlertType", "OD2").Put, new ClientAlertsToday_OD002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value18_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendOD2ResultDetermination = And(Equal(ctx.valueFor("SendOD2Result").asInstanceOf[StringDataValue].Value, "OD2"), Put("AlertType", "OD2"), new ClientAlertsToday_OD002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value9_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendOD2ResultDetermination").Value(new BooleanDataValue(SendOD2ResultDetermination))
           new BooleanDataValue(SendOD2ResultDetermination)
     }
 
 }
 
-	class AlertType_value16_Put(var AlertType : String, val value16 : String)
+	class ClientAlertsToday_OD002Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value8 : Int)
 	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value16)
-			set 
-		}
+	  	def incrementBy  : Boolean = { ClientAlertsToday.OD002Sent += value8; true }
 	} 
-	class ClientAlertsToday_OD002Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value17 : Int)
+	class gCtx_value9_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value9 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.OD002Sent += value17; true }
-	} 
-	class gCtx_value18_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value18 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
-	{
-	  	def Put  : Boolean = { gCtx.setObject(value18, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value9, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 class Derive_SendOD1ResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendOD1ResultDetermination = And(Equal(ctx.valueFor("SendOD1Result").asInstanceOf[StringDataValue].Value, "OD1"), new AlertType_value19_Put("AlertType", "OD1").Put, new ClientAlertsToday_OD001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value21_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendOD1ResultDetermination = And(Equal(ctx.valueFor("SendOD1Result").asInstanceOf[StringDataValue].Value, "OD1"), Put("AlertType", "OD1"), new ClientAlertsToday_OD001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value11_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendOD1ResultDetermination").Value(new BooleanDataValue(SendOD1ResultDetermination))
           new BooleanDataValue(SendOD1ResultDetermination)
     }
 
 }
 
-	class AlertType_value19_Put(var AlertType : String, val value19 : String)
+	class ClientAlertsToday_OD001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value10 : Int)
 	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value19)
-			set 
-		}
+	  	def incrementBy  : Boolean = { ClientAlertsToday.OD001Sent += value10; true }
 	} 
-	class ClientAlertsToday_OD001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value20 : Int)
+	class gCtx_value11_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value11 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.OD001Sent += value20; true }
-	} 
-	class gCtx_value21_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value21 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
-	{
-	  	def Put  : Boolean = { gCtx.setObject(value21, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value11, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 class Derive_SendLBResultDetermination (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val SendLBResultDetermination = And(Equal(ctx.valueFor("SendLBResult").asInstanceOf[StringDataValue].Value, "LB1"), new AlertType_value22_Put("AlertType", "LB1").Put, new ClientAlertsToday_LB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value24_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put)
+        val SendLBResultDetermination = And(Equal(ctx.valueFor("SendLBResult").asInstanceOf[StringDataValue].Value, "LB1"), Put("AlertType", "LB1"), new ClientAlertsToday_LB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, new gCtx_value13_msg_ENT_ACC_NUM_Put(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "AlertHistory", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100], ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100]).Put, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("SendLBResultDetermination").Value(new BooleanDataValue(SendLBResultDetermination))
           new BooleanDataValue(SendLBResultDetermination)
     }
 
 }
 
-	class AlertType_value22_Put(var AlertType : String, val value22 : String)
+	class ClientAlertsToday_LB001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value12 : Int)
 	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(AlertType, value22)
-			set 
-		}
+	  	def incrementBy  : Boolean = { ClientAlertsToday.LB001Sent += value12; true }
 	} 
-	class ClientAlertsToday_LB001Sent_incrementBy(var ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100, val value23 : Int)
+	class gCtx_value13_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value13 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
 	{
-	  	def incrementBy  : Boolean = { ClientAlertsToday.LB001Sent += value23; true }
-	} 
-	class gCtx_value24_msg_ENT_ACC_NUM_Put(var gCtx : com.ligadata.OnLEPBase.EnvContext, val value24 : String, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val ClientAlertsToday : com.ligadata.OnLEPBankPoc.AlertHistory_100)
-	{
-	  	def Put  : Boolean = { gCtx.setObject(value24, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
+	  	def Put  : Boolean = { gCtx.setObject(value13, msg.ENT_ACC_NUM.toString, ClientAlertsToday); true }
 	} 
 
 
 /*************** SimpleRule Class Definitions ***************/
 
-class SimpleRule_EBRule_025 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_EBRule_014 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendEBResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
         if (answer == true) score else defaultScore.Value
     }
 }
-class SimpleRule_NORule_026 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_NORule_015 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendNOResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
         if (answer == true) score else defaultScore.Value
     }
 }
-class SimpleRule_ODRule3_027 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_ODRule3_016 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendOD3ResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
         if (answer == true) score else defaultScore.Value
     }
 }
-class SimpleRule_ODRule2_028 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_ODRule2_017 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendOD2ResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
         if (answer == true) score else defaultScore.Value
     }
 }
-class SimpleRule_ODRule1_029 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_ODRule1_018 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendOD1ResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
         if (answer == true) score else defaultScore.Value
     }
 }
-class SimpleRule_LBRule_030 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
+class SimpleRule_LBRule_019 (id : String, score : String, recordCount : Double, nbCorrect : Double, confidence : Double, weight : Double) 
       extends SimpleRule(id, score, recordCount, nbCorrect, confidence, weight) {
     override def execute(ctx : Context, defaultScore : StringDataValue) : String = {
         val answer : Boolean = Equal(ctx.valueFor("SendLBResultDetermination").asInstanceOf[BooleanDataValue].Value,true)
@@ -1048,7 +992,7 @@ class SimpleRule_LBRule_030 (id : String, score : String, recordCount : Double, 
 
 /*************** RuleSetModel Class Definition ***************/
 
-class RuleSetModel_classification_031 (modelName : String, functionName : String, algorithmName : String, isScorable : String) 
+class RuleSetModel_classification_020 (modelName : String, functionName : String, algorithmName : String, isScorable : String) 
       extends RuleSetModel(modelName, functionName, algorithmName, isScorable) { 
 
       override def execute(ctx : Context) {

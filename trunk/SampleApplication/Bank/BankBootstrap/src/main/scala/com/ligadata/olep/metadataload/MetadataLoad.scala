@@ -91,7 +91,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 					        , (MdMgr.sysNS, "LB_LIMIT", MdMgr.sysNS, "Double", false)
 					        , (MdMgr.sysNS, "RUN_LDG_XAU", MdMgr.sysNS, "Double", false))
 					        /** , (MdMgr.sysNS, "OUTPUT_ALERT_TYPE", MdMgr.sysNS, "Double", false)) */ 
-					        , baseTypesVer, "msgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
+					        , baseTypesVer, "bankmsgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
 
 		logger.trace("MetadataLoad...loading AlertHistory")
 		mgr.AddFixedContainer(MdMgr.sysNS
@@ -108,7 +108,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "EB002Sent", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "UTFSent", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "PTFSent", MdMgr.sysNS, "Int", false))
-						        , baseTypesVer, "msgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
+						        , baseTypesVer, "bankmsgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
 		
 		logger.trace("MetadataLoad...loading AlertParameters")
 		mgr.AddFixedContainer(MdMgr.sysNS
@@ -119,7 +119,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "ONLINE_START_TIME", MdMgr.sysNS, "Long", false)
 						        , (MdMgr.sysNS, "ONLINE_END_TIME", MdMgr.sysNS, "Long", false)
 						        , (MdMgr.sysNS, "ALERT_EXPIRY_TIME", MdMgr.sysNS, "Long", false))
-						        , baseTypesVer, "msgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
+						        , baseTypesVer, "bankmsgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
 		
 		logger.trace("MetadataLoad...loading CustomerPreferences")
 		mgr.AddFixedContainer(MdMgr.sysNS
@@ -140,7 +140,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "OD_T2_LIMIT", MdMgr.sysNS, "Double", false)
 						        , (MdMgr.sysNS, "OD_T1_LIMIT", MdMgr.sysNS, "Double", false)
 						        , (MdMgr.sysNS, "NO_FACTOR", MdMgr.sysNS, "Double", false))
-						        , baseTypesVer, "msgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
+						        , baseTypesVer, "bankmsgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
 
 		logger.trace("MetadataLoad...loading EnvContext")
 		
@@ -166,6 +166,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 
 	def InitModelDefs = {
 	  
+	  /**
 		logger.trace("MetadataLoad...loading model EmergencyBorrowAlert")
 		mgr.AddModelDef(MdMgr.sysNS
 						, "EmergencyBorrowAlert"
@@ -188,10 +189,10 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						     , ("ExpiryDate", MdMgr.sysNS, "String")
 						     , ("ExpiryTime", MdMgr.sysNS, "String")
 						     , ("MobileNumber", MdMgr.sysNS, "String"))
-						 , baseTypesVer, "onlepebmodel_2.10-1.0.jar", Array("metadata_2.10-1.0.jar", "onlepbankpocmsgscontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"))
+						 , baseTypesVer, "onlepebmodel_2.10-1.0.jar", Array("metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")) */
 
-	//com.Barclay.AlchemyAlerts_000100.pmml.AlchemyAlerts_000100
-						 
+			
+		logger.trace("MetadataLoad...loading AlchemyAlerts model")
 		mgr.AddModelDef(
 		       MdMgr.sysNS
 			, "AlchemyAlerts_000100"
@@ -243,7 +244,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 				,("SendResult", "system", "String"))
 			 , baseTypesVer
 			 , "alchemy_000100_2.10-1.0.jar"
-			 , Array("pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "onlepbankpocmsgscontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
+			 , Array("pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
 		)  
 	}
 
@@ -1124,13 +1125,13 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
 		//mgr.AddFunc("Pmml", "incrementBy", "com.ligadata.pmml.udfs.Udfs.incrementBy", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Any")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Double")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Any")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Double")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
 	}
 
 
