@@ -59,7 +59,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  		if (isIterable) selectIterableFcn else selectSimpleFcn
 		  	} else {
 		  		val nm : String = node.function
-		  		ctx.logger.error(s"Unable to find function by the name '$nm' in the metadata.")
+		  		ctx.logger.warn(s"Unable to find function by the name '$nm' in the metadata... is it a macro?")
 		  		(null,null)
 		  	}
 		  	selectedFcn = fcndef

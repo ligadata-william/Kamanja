@@ -128,7 +128,7 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
 	def openstore(typeName : String, tableName : String, dataPath : String) : DataStore = {
 		var connectinfo : PropertyMap = new PropertyMap
 		connectinfo+= ("connectiontype" -> "hashmap")
-		connectinfo+= ("path" -> s"$dataPath")
+		connectinfo+= ("path" -> s"$dataPath/kvstores")
 		connectinfo+= ("schema" -> s"$typeName")
 		connectinfo+= ("table" -> s"$tableName")
 		connectinfo+= ("inmemory" -> "false")
@@ -176,9 +176,33 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
 
  	override def setObject(containerName: String, elementkey: Any, value: BaseContainer): Unit = _lock.synchronized {
  		val container = _containers.getOrElse(containerName.toLowerCase(), null)
-		if (container != null) container(elementkey.toString.toLowerCase()) = value
+		if (container != null) {
+			val key : String = elementkey.toString.toLowerCase()
+			container(key) = value
+			//writeThru
+		}
 		// bugbug: throw exception
+		
  	}
+ 	
+ 	private def writeThru(key : String, value : String) {
+ 		object i extends IStorage{
+            var k = new com.ligadata.keyvaluestore.Key
+            var v = new com.ligadata.keyvaluestore.Value
+            for(c <- key ){
+                k += c.toByte
+            }
+            for(c <- value ){
+                v += c.toByte
+            }
+            def Key = k
+            def Value = v
+            def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+        }
+        //store.put(i) 
+ 	  
+ 	}
+ 	
 }
 
 

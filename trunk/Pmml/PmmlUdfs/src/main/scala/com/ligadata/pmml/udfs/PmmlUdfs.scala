@@ -222,6 +222,14 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4)
   }
 
+  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
+    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5)
+  }
+
+  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
+    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5 && boolexpr6)
+  }
+
   def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr || boolexpr1)
   }
@@ -232,6 +240,18 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
     (boolexpr || boolexpr1 || boolexpr2 || boolexpr3)
+  }
+
+  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean): Boolean = {
+    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4)
+  }
+
+  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
+    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5)
+  }
+
+  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
+    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5 || boolexpr6)
   }
 
   def Or(boolexprs: ArrayBuffer[Boolean]): Boolean = {

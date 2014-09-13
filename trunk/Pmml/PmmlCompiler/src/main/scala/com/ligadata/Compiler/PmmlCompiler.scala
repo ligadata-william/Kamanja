@@ -283,6 +283,19 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 		var valid : Boolean = (pmmlFilePath != null) 
 
 		if (valid) {
+		  
+			/** 
+			 *  Files, should it be desirable to load the mdmgr from files the paths will be collected from
+			 *  the following files from the command line. For now, they are not used.  See MetadataLoad.
+			 */
+			val typesPath : String = ""
+			val fcnPath : String = ""
+			val attrPath : String = ""
+			val msgCtnPath : String = ""
+			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger, typesPath, fcnPath, attrPath, msgCtnPath)
+			mdLoader.initialize
+
+		  
 			val compiler : PmmlCompiler = new PmmlCompiler(MdMgr.mdMgr, clientName, logger)
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
@@ -350,16 +363,6 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	/** the PmmlContext needs a fully operational mdmgr... create it after MetadataLoad. */
 	var ctx : PmmlContext = new PmmlContext(mgr, logger)
 
-	/** 
-	 *  Files, should it be desirable to load the mdmgr from files the paths will be collected from
-	 *  the following files from the command line. For now, they are not used.  See MetadataLoad.
-	 */
-	val typesPath : String = ""
-	val fcnPath : String = ""
-	val attrPath : String = ""
-	val msgCtnPath : String = ""
-	val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger, typesPath, fcnPath, attrPath, msgCtnPath)
-	mdLoader.initialize
 
 	/** Compile the source found in the supplied path, producing scala src in the returned srcCode string.
 	 *  FIXME: The jars required by the model is to be returned as the second object in the pair returned.

@@ -28,6 +28,12 @@
 		<DataField name="SendResult" displayName="SendResult" optype="categorical" dataType="string"/>
 		<DataField name="OfflineEvent" displayName="OfflineEvent" optype="categorical" dataType="string"/>
 
+
+		<DataField name="RUN_LDG_XAU" displayName="RUN_LDG_XAU" optype="continuous" dataType="double"/>
+		<DataField name="ACCT_SHORT_NM" displayName="ACCT_SHORT_NM" optype="categorical" dataType="string"/>
+		<DataField name="ENT_DTE" displayName="ENT_DTE" optype="continuous" dataType="integer"/>
+		<DataField name="MOBILE_NUMBER" displayName="MOBILE_NUMBER" optype="categorical" dataType="string"/>
+
 	</DataDictionary>
 
 	<TransformationDictionary>
@@ -99,6 +105,32 @@
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">AlertParameters</Constant>
 			    <Constant dataType="string">LB</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!-- 
+			Materialize these variables from their containers to derived fields to make
+			them accessible for output emission 
+		-->
+
+		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="Put">  
+					<Constant dataType="string">RUN_LDG_XAU</Constant>
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ACCT_SHORT_NM</Constant>
+					<FieldRef field="ClientPrefs.ACCT_SHORT_NM"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ENT_DTE</Constant>
+					<FieldRef field="msg.ENT_DTE"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">MOBILE_NUMBER</Constant>
+					<FieldRef field="ClientPrefs.MOBILE_NUMBER"/>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -220,13 +252,19 @@
 						<Constant>7</Constant>
 					</Apply>
 					<Apply function="Put">  <!-- Set AlertType -->
-						<FieldRef field="AlertType"/>
+						<Constant dataType="string">AlertType</Constant>
 						<Constant dataType="string">EB1</Constant> 
 					</Apply>
 				</Apply>
-				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
-					<Constant dataType="string">EB2</Constant> 
+				<Apply function="and">
+					<Apply function="notEqual">
+						<FieldRef field="ClientPrefs.MAX_EB_CNT"/>
+						<Constant>7</Constant>
+					</Apply>
+					<Apply function="Put">  <!-- Set AlertType -->
+						<Constant dataType="string">AlertType</Constant>
+						<Constant dataType="string">EB2</Constant> 
+					</Apply>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -274,7 +312,7 @@
 					<Constant dataType="integer">0</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set OfflineEvent -->
-					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">OfflineEvent</Constant>
 					<Constant dataType="string">true</Constant> 
 				</Apply>
 			</Apply>
@@ -296,7 +334,7 @@
 					</Apply>
 				</Apply>
 				<Apply function="Put">  <!-- Set OfflineEvent -->
-					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">OfflineEvent</Constant>
 					<Constant dataType="string">true</Constant> 
 				</Apply>
 			</Apply>
@@ -334,7 +372,7 @@
 					</Apply>
 				</Apply>
 				<Apply function="Put">  <!-- Set OfflineEvent -->
-					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">OfflineEvent</Constant>
 					<Constant dataType="string">true</Constant> 
 				</Apply>
 			</Apply>
@@ -372,7 +410,7 @@
 					</Apply>
 				</Apply>
 				<Apply function="Put">  <!-- Set OfflineEvent -->
-					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">OfflineEvent</Constant>
 					<Constant dataType="string">true</Constant> 
 				</Apply>
 			</Apply>
@@ -901,6 +939,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -915,7 +954,7 @@
 					<Constant dataType="string">NO1</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
+					<Constant dataType="string">AlertType</Constant>
 					<Constant dataType="string">NO1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
@@ -928,6 +967,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -942,7 +982,7 @@
 					<Constant dataType="string">OD3</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
+					<Constant dataType="string">AlertType</Constant>
 					<Constant dataType="string">OD3</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
@@ -955,6 +995,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -965,7 +1006,7 @@
 					<Constant dataType="string">OD2</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
+					<Constant dataType="string">AlertType</Constant>
 					<Constant dataType="string">OD2</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
@@ -978,6 +1019,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -988,7 +1030,7 @@
 					<Constant dataType="string">OD1</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
+					<Constant dataType="string">AlertType</Constant>
 					<Constant dataType="string">OD1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
@@ -1001,6 +1043,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -1015,7 +1058,7 @@
 					<Constant dataType="string">LB1</Constant>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
-					<FieldRef field="AlertType"/>
+					<Constant dataType="string">AlertType</Constant>
 					<Constant dataType="string">LB1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
@@ -1028,6 +1071,7 @@
 				    <FieldRef field="msg.ENT_ACC_NUM"/>
 					<FieldRef field="ClientAlertsToday"/>
 				</Apply>
+				<FieldRef field="MaterializeOutputs"/>
 			</Apply>
 		</DerivedField>
 
@@ -1039,11 +1083,10 @@
 			<MiningField name="SendResult" usageType="predicted"/>
 			<MiningField name="OfflineEvent" usageType="supplementary"/>
 			<MiningField name="AlertType" usageType="supplementary"/>
-			<MiningField name="msg.RUN_LDG_XAU" usageType="supplementary"/>
-			<MiningField name="ClientPrefs.ACCT_SHORT_NM" usageType="supplementary"/>
-			<MiningField name="msg.ENT_DTE" usageType="supplementary"/>
-			<MiningField name="EBAlertParms.ALERT_EXPIRY_TIME" usageType="supplementary"/>
-			<MiningField name="ClientPrefs.MOBILE_NUMBER" usageType="supplementary"/>
+			<MiningField name="RUN_LDG_XAU" usageType="supplementary"/>
+			<MiningField name="ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="ENT_DTE" usageType="supplementary"/>
+			<MiningField name="MOBILE_NUMBER" usageType="supplementary"/>
 
 	    </MiningSchema>
 	
