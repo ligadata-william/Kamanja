@@ -137,15 +137,15 @@ cp *gz $ONLEPLIBPATH/msgdata/
 
 # Prepare the test kvstore - CustomerPreferences map 
 echo "Prepare the test kvstore - CustomerPreferences map..."
-java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname CustomerPreferences_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/CustomerPreferences.csv --keyfieldname ENT_ACC_NUM
+java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname CustomerPreferences_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/CustomerPreferences.csv --keyfieldname ENT_ACC_NUM
 
 # Prepare the test kvstore - AlertHistory map 
 echo "Prepare the test kvstore - AlertHistory map..."
-java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertHistory_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertHistory.csv --keyfieldname ENT_ACC_NUM
+java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertHistory_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertHistory.csv --keyfieldname ENT_ACC_NUM
 
 # Prepare the test kvstore - AlertParameters map 
 echo "Prepare the test kvstore - AlertParameters map..."
-java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertParameters_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertParameters.csv --keyfieldname ALERT
+java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertParameters_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertParameters.csv --keyfieldname ALERT
 
 
 # *******************************
