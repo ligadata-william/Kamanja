@@ -51,6 +51,8 @@ lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRunt
 
 lazy val BankPOCBootstrap = project.in(file("SampleApplication/Bank/BankBootstrap")) dependsOn(Metadata, OnLEPBase)
 
+lazy val BankTestModel = project.in(file("SampleApplication/Bank/OnLEPTestModel")) dependsOn(Metadata, OnLEPBase, BankPOCMsgsAndContainers)
+
 lazy val BankPOCMsgsAndContainers = project.in(file("SampleApplication/Bank/BankMsgsAndContainers")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 
 lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRuntime, OnLEPBase)
@@ -72,4 +74,6 @@ lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(M
 lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
 lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
+
+lazy val SimpleKafkaProducer = project.in(file("SampleApplication/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 

@@ -165,12 +165,11 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 	}
 
 	def InitModelDefs = {
-	  
 	  /**
 		logger.trace("MetadataLoad...loading model EmergencyBorrowAlert")
 		mgr.AddModelDef(MdMgr.sysNS
 						, "EmergencyBorrowAlert"
-						, "com.ligadata.OnLEPEB.EmergencyBorrowAlert_100"
+						, "com.ligadata.OnLEPTestModel.EmergencyBorrowAlert_100"
 						, "RuleSet"
 						, List(("BankPocMsg", "ENT_SEG_TYP", MdMgr.sysNS, "String", false)
 						    , ("BankPocMsg", "ENT_DTE", MdMgr.sysNS, "Int", false)
@@ -189,9 +188,9 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						     , ("ExpiryDate", MdMgr.sysNS, "String")
 						     , ("ExpiryTime", MdMgr.sysNS, "String")
 						     , ("MobileNumber", MdMgr.sysNS, "String"))
-						 , baseTypesVer, "onlepebmodel_2.10-1.0.jar", Array("metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")) */
+						 , baseTypesVer, "onleptestmodel_2.10-1.0.jar", Array("metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"))  */
 
-			
+
 		logger.trace("MetadataLoad...loading AlchemyAlerts model")
 		mgr.AddModelDef(
 		       MdMgr.sysNS
