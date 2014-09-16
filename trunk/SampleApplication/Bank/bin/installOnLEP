@@ -137,7 +137,7 @@ cp *gz $ONLEPLIBPATH/msgdata/
 
 # Prepare the test kvstore - CustomerPreferences map 
 echo "Prepare the test kvstore - CustomerPreferences map..."
-<<<<<<< HEAD
+
 java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname CustomerPreferences_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/CustomerPreferences.csv --keyfieldname ENT_ACC_NUM
 
 # Prepare the test kvstore - AlertHistory map 
