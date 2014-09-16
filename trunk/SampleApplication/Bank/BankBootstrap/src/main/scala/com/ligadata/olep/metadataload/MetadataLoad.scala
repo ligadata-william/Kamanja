@@ -170,7 +170,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		logger.trace("MetadataLoad...loading model EmergencyBorrowAlert")
 		mgr.AddModelDef(MdMgr.sysNS
 						, "EmergencyBorrowAlert"
-						, "com.ligadata.OnLEPEB.EmergencyBorrowAlert_100"
+						, "com.ligadata.OnLEPTestModel.EmergencyBorrowAlert_100"
 						, "RuleSet"
 						, List(("BankPocMsg", "ENT_SEG_TYP", MdMgr.sysNS, "String", false)
 						    , ("BankPocMsg", "ENT_DTE", MdMgr.sysNS, "Int", false)
