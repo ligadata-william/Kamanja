@@ -16,6 +16,7 @@ import com.ligadata.keyvaluestore.cassandra._
 
 import com.ligadata._
 import org.apache.log4j._
+import java.util.Properties
 
 import java.io._
 import scala.io._
@@ -58,7 +59,7 @@ object TestMetadataAPI{
     functions match{
       case None => println("no functions available")
       case Some(fs) =>
-	logger.trace(MetadataAPIImpl.toJson(fs.toArray))
+	logger.trace(MetadataAPIImpl.listToJson("Functions",fs.toArray))
 	fs.foreach(f => {
 	  logger.trace("Dump the function " +  f.name)
 	  logger.trace("key => "   + f.typeString)
@@ -271,7 +272,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val msgKeys = MetadataAPIImpl.GetAllMessageKeys
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -400,7 +401,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val modKeys = MetadataAPIImpl.GetAllModelKeys
+      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -485,7 +486,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val msgKeys = MetadataAPIImpl.GetAllMessageKeys
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -689,7 +690,7 @@ object TestMetadataAPI{
   def GetAllMessagesFromStore{
     try{
       logger.setLevel(Level.TRACE);
-      val msgKeys = MetadataAPIImpl.GetAllMessageKeys
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
 	return
@@ -762,7 +763,7 @@ object TestMetadataAPI{
   def GetAllModelsFromStore{
     try{
       logger.setLevel(Level.TRACE);
-      val modKeys = MetadataAPIImpl.GetAllModelKeys
+      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
 	println("Sorry, No models are available in the Metadata")
 	return
@@ -822,7 +823,7 @@ object TestMetadataAPI{
       println("Results as json string => \n" + MetadataAPIImpl.AddContainer(contStr,"JSON"))
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Container Already in the metadata, update is not implemented yet")
+	  logger.error("Container Already in the metadata....")
       }
       case e: Exception => {
 	e.printStackTrace()
@@ -881,7 +882,7 @@ object TestMetadataAPI{
       println("Results as json string => \n" + MetadataAPIImpl.AddMessage(msgStr,"JSON"))
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Message Already in the metadata, update is not implemented yet")
+	  logger.error("Message Already in the metadata....")
       }
       case e: Exception => {
 	e.printStackTrace()
@@ -950,7 +951,7 @@ object TestMetadataAPI{
       println("Results as json string => \n" + MetadataAPIImpl.AddModel(model))
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Model Already in the metadata, update is not implemented yet")
+	  logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
 	e.printStackTrace()
@@ -994,13 +995,13 @@ object TestMetadataAPI{
       functionFilePath = functionFiles(choice-1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      MdMgr.GetMdMgr.truncate("FunctionDef")
+      //MdMgr.GetMdMgr.truncate("FunctionDef")
       val apiResult = MetadataAPIImpl.AddFunctions(functionStr,"JSON")
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Function Already in the metadata, update is not implemented yet")
+	  logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
 	e.printStackTrace()
@@ -1062,7 +1063,7 @@ object TestMetadataAPI{
       println("Result as Json String => \n" + resultData)
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Concept Already in the metadata, update is not implemented yet")
+	  logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
 	e.printStackTrace()
@@ -1075,6 +1076,114 @@ object TestMetadataAPI{
       val apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def LoadTypesFromAFile {
+    try{
+      var dirName = System.getenv("TYPE_FILES_DIR")
+      if ( dirName == null  ){
+	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+	logger.info("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+      val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if ( typeFiles.length == 0 ){
+	logger.fatal("No type files in the directory " + dirName)
+	return
+      }
+
+      var typeFilePath = ""
+      println("Pick a Type Definition file(type) from below choices")
+
+      var seq = 0
+      typeFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == typeFiles.length + 1){
+	return
+      }
+      if( choice < 1 || choice > typeFiles.length + 1 ){
+	  logger.fatal("Invalid Choice : " + choice)
+	  return
+      }
+
+      typeFilePath = typeFiles(choice-1).toString
+
+      val typeStr = Source.fromFile(typeFilePath).mkString
+      MdMgr.GetMdMgr.truncate("TypeDef")
+      val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    }catch {
+      case e: AlreadyExistsException => {
+	  logger.error("Type Already in the metadata....")
+      }
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllTypesAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
+  def DumpAllTypesByObjTypeAsJson{
+    try{
+      val typeMenu = Map( 1 ->  "ScalarTypeDef",
+			  2 ->  "ArrayTypeDef",
+			  3 ->  "ArrayBufTypeDef",
+			  4 ->  "SetTypeDef",
+			  5 ->  "TreeSetTypeDef",
+			  6 ->  "AnyTypeDef",
+			  7 ->  "SortedSetTypeDef",
+			  8 ->  "MapTypeDef",
+			  9 ->  "HashMapTypeDef",
+			  10 ->  "ListTypeDef",
+			  11 ->  "QueueTypeDef",
+			  12 ->  "TupleTypeDef")
+      var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
+      var done = false
+      while ( done == false ){
+	println("\n\nPick a Type ")
+	var seq = 0
+	typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq))})
+	seq += 1
+	println("[" + seq + "] Exit")
+	print("\nEnter your choice: ")
+	val choice:Int = readInt()
+	if( choice <= typeMenu.size ){
+	  selectedType = "com.ligadata.olep.metadata." + typeMenu(choice)
+	  done = true
+	}
+	else if( choice == typeMenu.size + 1 ){
+	  done = true
+	}
+	else{
+	  logger.error("Invalid Choice : " + choice)
+	}
+      }
+
+      val apiResult = MetadataAPIImpl.GetAllTypesByObjType("JSON",selectedType)
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => " + resultData)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1126,8 +1235,11 @@ object TestMetadataAPI{
       val loadFunctionsFromAFile = ()=> { LoadFunctionsFromAFile }
       val dumpAllConceptsAsJson = ()=> { DumpAllConceptsAsJson }
       val loadConceptsFromAFile = ()=> { LoadConceptsFromAFile }
+      val dumpAllTypesAsJson = ()=> { DumpAllTypesAsJson }
+      val dumpAllTypesByObjTypeAsJson = ()=> { DumpAllTypesByObjTypeAsJson }
+      val loadTypesFromAFile = ()=> { LoadTypesFromAFile }
 
-      val topLevelMenu1 = Array( "Add Model","Get Model","Get All Models","Remove Model","Add Message","Get Message","Get All Messages","Remove Message","Add Container","Get Container","Get All Containers","Remove Container","Dump MetaData","Load Functions From a File","Dump All Functions","Load Concepts From a File","Dump All Concepts")
+      val topLevelMenu1 = Array( "Add Model","Get Model","Get All Models","Remove Model","Add Message","Get Message","Get All Messages","Remove Message","Add Container","Get Container","Get All Containers","Remove Container","Dump MetaData","Load Functions From a File","Dump All Functions","Load Concepts From a File","Dump All Concepts","Load Types From a File","Dump All Types","Dump All Types By Object Type")
       val topLevelMenu2 = Map( 1 ->  addModel, 
 			       2 ->  getModel,
 			       3 ->  getAllModels,
@@ -1144,7 +1256,10 @@ object TestMetadataAPI{
 			       14 -> loadFunctionsFromAFile,
 			       15 -> dumpAllFunctionsAsJson,
 			       16 -> loadConceptsFromAFile,
-			       17 -> dumpAllConceptsAsJson)
+			       17 -> dumpAllConceptsAsJson,
+			       18 -> loadTypesFromAFile,
+			       19 -> dumpAllTypesAsJson,
+			       20 -> dumpAllTypesByObjTypeAsJson)
 
       var done = false
       while ( done == false ){
@@ -1165,10 +1280,8 @@ object TestMetadataAPI{
 	  logger.error("Invalid Choice : " + choice)
 	}
       }
-      MetadataAPIImpl.CloseDbStore
     }catch {
       case e: Exception => {
-	MetadataAPIImpl.CloseDbStore
 	e.printStackTrace()
       }
     }
@@ -1179,58 +1292,18 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
-      //val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
-      //mdLoader.initialize
-      //new MetadataLoad(MdMgr.GetMdMgr, null, "", "", "", "")
-      // 
-      // testDbConn
-      //MetadataAPIImpl.testDbOp
-      // testInitMdMgr
-
-      // All of MetaDataAPI functions use datastore
-      //var pMap = GetConnectionProperties
+      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+      
+      MetadataAPIImpl.readMetadataAPIConfig
       StartTest
-
-      //testAddMessage(System.getenv("HOME") + "/ligadata/trunk/MessageDef/ContainerFE.json")
-      //val msgDefFile = System.getenv("HOME") + "/ligadata/trunk/MessageDef/ContainerFE.json"
-      //val compProxy = new CompilerProxy
-      //val msgDefStr = Source.fromFile(msgDefFile).mkString
-      //val mgr = MdMgr.GetMdMgr
-      //val msg = new MessageDefImpl()
-      //val(classStr,msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr)
-
-      // AddMessage(System.getenv("HOME") + "/ligadata/trunk/MessageDef/messageTOutPatient.json")
-      // testCompileMessageDef3
-      // testDeserializeMessage(System.getenv("HOME") + "/ligadata/trunk/MessageDef/messageTOutPatient.json")
-      //testAddFunctions
-      //testGetFunctions
-      //dumpAllFunctions
-      //logger.trace(testGetAllFunctions)
-      //testCompilePmml
-      //testCompileMessageDef2
-      //testAddRemoveUpdateType
-      //testAddRemoveDeletePmml
-      //testAddTypes
-
-      //testAddConcepts
-      //testGetAllConcepts
-      //var zkClient = new ZooKeeperClient("localhost:2181")
-      //zkClient.close
-
-      //val compiler : PmmlCompiler = new PmmlCompiler(MdMgr.GetMdMgr, "MetadataAPI", logger)
-      //testAddModel(System.getenv("HOME") + "/ligadata/trunk/Pmml/Models/Banking/Alchemy.xml",compiler)
-      //testDeserializeModel(System.getenv("HOME") + "/ligadata/trunk/Pmml/Models/Banking/Alchemy.xml",compiler)
-      //testAddModel(System.getenv("HOME") + "/ligadata/trunk/Pmml/Models/Banking/DebitCardFraud.xml",compiler)
-      //testAddModel(System.getenv("HOME") + "/ligadata/trunk/Pmml/Models/Banking/EmerBorrowing.xml")
-
-      //val mgr = MetadataAPIImpl.InitMdMgr
-      // CloseDbStore Must be called for a clean exit
-      //MetadataAPIImpl.CloseDbStore
     }catch {
       case e: Exception => {
 	e.printStackTrace()
       }
+    }
+    finally{
+      // CloseDbStore Must be called for a clean exit
+      MetadataAPIImpl.CloseDbStore
     }
   }
 }
