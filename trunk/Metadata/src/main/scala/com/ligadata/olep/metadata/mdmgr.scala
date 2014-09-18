@@ -205,7 +205,6 @@ class MdMgr {
                 val existingIdx = newBaseElemsIdxs.getOrElse(fnm, -1)
                 if (existingIdx < 0) {
                   newBaseElemsIdxs(fnm) = newElems.size
-		  logger.trace("An object of class" + e.getClass.getName + " is added to immutable set")
                   newElems += e
                 } else if (newElems(existingIdx).Version < e.Version) {
                   newElems(existingIdx) = e
@@ -514,7 +513,10 @@ class MdMgr {
         case Some(fs) => {
           // val signature = key.trim.toLowerCase + "(" + args.foldLeft("")((sig, elem) => sig + "," + elem.trim.toLowerCase) + ")"
           val signature = key.trim.toLowerCase + "(" + args.map(elem => elem.trim.toLowerCase).mkString(",") + ")"
+	  //logger.trace("signature => " + signature)
+	  //logger.trace("fs => " + fs.size)
           val matches = fs.filter(f => (onlyActive == false || (onlyActive && f.IsActive)) && (signature == f.typeString))
+	  //logger.trace("matches => " + matches.toSet.size)
           if (matches.size > 0) Some(matches.toSet) else None
         }
       }
@@ -837,6 +839,7 @@ class MdMgr {
     val st = new ArrayTypeDef
     SetBaseElem(st, nameSpace, name, ver, null, depJars)
     st.elemDef = elemDef
+    st.arrayDims = numDims
     st
   }
 
@@ -1196,7 +1199,7 @@ class MdMgr {
 
     SetBaseElem(fn, nameSpace, name, ver, jarNm, dJars)
     fn.PhysicalName(physicalName)
-
+    fn.active = true
     fn
   }
 
