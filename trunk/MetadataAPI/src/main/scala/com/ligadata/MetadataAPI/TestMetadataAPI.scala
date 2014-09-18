@@ -171,15 +171,15 @@ object TestMetadataAPI{
     // Read a model
     val pmmlStr = Source.fromFile(pmmlFilePath).mkString
     val (classStr:String,model:ModelDef) = compiler.compile(pmmlStr)
-    val pmmlScalaFile = System.getenv("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
+    val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
     val (jarFile,depJars) = compiler.createJar(classStr,
-	    System.getenv("CLASSPATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
 	    pmmlScalaFile,
-	    //System.getenv("SCRIPT_PATH"),
-	    System.getenv("JAR_TARGET_DIR"),
-	    System.getenv("MANIFEST_PATH"),
-	    System.getenv("SCALA_HOME"),
-	    System.getenv("JAVA_HOME"),
+	    //MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCRIPT_PATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 	    false)
     model.jarName = jarFile
     model.ver     = 1
@@ -201,15 +201,15 @@ object TestMetadataAPI{
     // Read a model
     val pmmlStr = Source.fromFile(pmmlFilePath).mkString
     val (classStr:String,model:ModelDef) = compiler.compile(pmmlStr)
-    val pmmlScalaFile = System.getenv("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
+    val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
     val (jarFile,depJars) = compiler.createJar(classStr,
-	    System.getenv("CLASSPATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
 	    pmmlScalaFile,
-	    //System.getenv("SCRIPT_PATH"),
-	    System.getenv("JAR_TARGET_DIR"),
-	    System.getenv("MANIFEST_PATH"),
-	    System.getenv("SCALA_HOME"),
-	    System.getenv("JAVA_HOME"),
+	    //MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCRIPT_PATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 	    false)
     model.jarName = jarFile
     model.nameSpace = sysNS
@@ -246,7 +246,7 @@ object TestMetadataAPI{
       MetadataAPIImpl.OpenDbStore
 
       logger.trace("add the message...")
-      testAddMessage(System.getenv("HOME") + "/ligadata/trunk/MessageDef/messageTOutPatient.json")
+      testAddMessage(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MessageDef/messageTOutPatient.json")
       logger.trace("get the message that was added just now...")
       val results = MetadataAPIImpl.GetMessageDef("outpatientclaimtmsg","JSON","-1")
 
@@ -781,9 +781,9 @@ object TestMetadataAPI{
 
   def AddContainer{
     try{
-      var dirName = System.getenv("CONTAINER_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
 	logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -840,9 +840,9 @@ object TestMetadataAPI{
   def AddMessage{
     try{
 
-      var dirName = System.getenv("MESSAGE_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
 	logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -893,9 +893,9 @@ object TestMetadataAPI{
 
   def AddModel {
     try{
-      var dirName = System.getenv("MODEL_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
 	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
@@ -928,15 +928,15 @@ object TestMetadataAPI{
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
       val (classStr,model) = compiler.compile(pmmlStr)
-      val pmmlScalaFile = System.getenv("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
+      val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
       val (jarFile,depJars) = 
       compiler.createJar(classStr,
-			 System.getenv("CLASSPATH"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
 			 pmmlScalaFile,
-			 System.getenv("JAR_TARGET_DIR"),
-			 System.getenv("MANIFEST_PATH"),
-			 System.getenv("SCALA_HOME"),
-			 System.getenv("JAVA_HOME"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 			 false)
       model.jarName = jarFile
       if( model.ver == 0 ){
@@ -962,9 +962,9 @@ object TestMetadataAPI{
 
   def LoadFunctionsFromAFile {
     try{
-      var dirName = System.getenv("FUNCTION_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
 	logger.info("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
@@ -1024,9 +1024,9 @@ object TestMetadataAPI{
 
   def LoadConceptsFromAFile {
     try{
-      var dirName = System.getenv("CONCEPT_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
 	logger.info("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
@@ -1085,9 +1085,9 @@ object TestMetadataAPI{
 
   def LoadTypesFromAFile {
     try{
-      var dirName = System.getenv("TYPE_FILES_DIR")
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if ( dirName == null  ){
-	dirName = System.getenv("HOME") + "/ligadata/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
 	logger.info("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
