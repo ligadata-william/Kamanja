@@ -88,7 +88,7 @@ object TestMetadataAPI{
     dumpAllFunctions
   }
 
-  def testAddTypes{
+  def testAddScalarTypes{
     MetadataAPIImpl.AddTypes(SampleData.sampleTypesStr,"JSON")
   }
 
@@ -1118,7 +1118,7 @@ object TestMetadataAPI{
       typeFilePath = typeFiles(choice-1).toString
 
       val typeStr = Source.fromFile(typeFilePath).mkString
-      MdMgr.GetMdMgr.truncate("TypeDef")
+      //MdMgr.GetMdMgr.truncate("TypeDef")
       val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
@@ -1166,7 +1166,7 @@ object TestMetadataAPI{
 	var seq = 0
 	typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq))})
 	seq += 1
-	println("[" + seq + "] Exit")
+	println("[" + seq + "] Main Menu")
 	print("\nEnter your choice: ")
 	val choice:Int = readInt()
 	if( choice <= typeMenu.size ){
