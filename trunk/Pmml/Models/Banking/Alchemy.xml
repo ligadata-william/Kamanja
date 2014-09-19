@@ -65,6 +65,17 @@
 		</DerivedField>
 
 		<!--
+			Obtain this client's tier limits 
+		-->
+		<DerivedField name="ClientTierLimits" dataType="TukTier" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">TukTier</Constant>
+			    <FieldRef field="ClientPrefs.RISK_TIER_ID"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
 			EB Alert parms  
 		-->
 		<DerivedField name="EBAlertParms" dataType="AlertParameters" optype="categorical">
@@ -549,7 +560,7 @@
 			<Apply function="and">
 				<Apply function="lessThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
 				</Apply>
 				<Apply function="greaterThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
@@ -568,11 +579,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
 				</Apply>
 				<Apply function="lessThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -584,11 +595,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
 				</Apply>
 				<Apply function="lessThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -600,11 +611,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
 				</Apply>
 				<Apply function="lessThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -623,7 +634,7 @@
 				</Apply>
 				<Apply function="greaterOrEqual">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
 				</Apply>
 				<Apply function="lessThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>

@@ -129,6 +129,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "SORT_CODE", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "ENT_ACC_NUM", MdMgr.sysNS, "Long", false)
 						        , (MdMgr.sysNS, "ACCT_SHORT_NM", MdMgr.sysNS, "String", false)
+						        , (MdMgr.sysNS, "RISK_TIER_ID", MdMgr.sysNS, "String", false)
 						        , (MdMgr.sysNS, "LB_REG_FLG", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "LB_LIMIT", MdMgr.sysNS, "Double", false)
 						        , (MdMgr.sysNS, "OD_REG_FLG", MdMgr.sysNS, "Int", false)
@@ -141,6 +142,52 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "OD_T1_LIMIT", MdMgr.sysNS, "Double", false)
 						        , (MdMgr.sysNS, "NO_FACTOR", MdMgr.sysNS, "Double", false))
 						        , baseTypesVer, "bankmsgsandcontainers_2.10-1.0.jar", Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
+
+		logger.trace("MetadataLoad...loading TukTier")
+		mgr.AddFixedContainer(MdMgr.sysNS
+						    , "TukTier"
+						    , "com.ligadata.OnLEPBankPoc.TukTier_100"
+						    , List((MdMgr.sysNS, "TIERSET_ID", MdMgr.sysNS, "Long", false)
+						        , (MdMgr.sysNS, "T1_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T1_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T1_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T1_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T1_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T1_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T2_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T2_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T2_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T2_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T2_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T2_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T3_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T3_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T3_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T3_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T3_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T3_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T4_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T4_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T4_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T4_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T4_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T4_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T5_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T5_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T5_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T5_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T5_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T5_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T6_START_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T6_END_DATE", MdMgr.sysNS, "Int", false)
+						        , (MdMgr.sysNS, "T6_START_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T6_END_AMT", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T6_FEE", MdMgr.sysNS, "Double", false)
+						        , (MdMgr.sysNS, "T6_MAX_PER_PERIOD_CNT", MdMgr.sysNS, "Int", false)
+						        )
+					        , baseTypesVer
+					        , "bankmsgsandcontainers_2.10-1.0.jar"
+					        , Array("basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar"));
 
 		logger.trace("MetadataLoad...loading EnvContext")
 		
