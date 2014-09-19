@@ -220,7 +220,7 @@ object SimpleKafkaProducer {
                 val totalParts = (hashCode % (topicpartitions * topics.size)).toInt.abs
                 val topicIdx = (totalParts / topicpartitions)
                 val partIdx = (totalParts % topicpartitions)
-                val sendmsg = msg + "," + curTime.toString + "," + fltrData
+                val sendmsg = msg + "," + fltrData
                 send(producer, topics(topicIdx), sendmsg, partIdx.toString)
                 st.totalFiltered += ln.size
                 st.totalSent += sendmsg.size
