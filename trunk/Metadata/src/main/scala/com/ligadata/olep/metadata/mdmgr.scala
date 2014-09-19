@@ -334,7 +334,7 @@ class MdMgr {
    *  @return the constructed StructTypeDef
    */
 
-  private def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean)], ver: Int, jarNm: String, depJars: Array[String]): StructTypeDef = {
+  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean)], ver: Int, jarNm: String, depJars: Array[String]): StructTypeDef = {
     var sd = new StructTypeDef
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
