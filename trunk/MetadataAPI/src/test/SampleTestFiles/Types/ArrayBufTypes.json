@@ -1,0 +1,102 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferofint",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Int",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferoflong",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Long",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferofany",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Any",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferofdouble",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Double",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferofstring",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "String",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferoffloat",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Float",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+},
+{
+  "MetadataType" : "ArrayBufTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arraybufferofboolean",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Boolean",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 0
+} ]
+
+}
