@@ -1,0 +1,40 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "HashMapTypeDef",
+  "NameSpace" : "system",
+  "Name" : "hashmapofintint",
+  "TypeTypeName" : "tContainer",
+  "TypeNameSpace" : "system",
+  "TypeName" : "HashMap",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "Fixed" : false,
+  "KeyTypeNameSpace" : "system",
+  "KeyTypeName" : "Int",
+  "ValueTypeNameSpace" : "system",
+  "ValueTypeName" : "Int"
+},
+{
+  "MetadataType" : "HashMapTypeDef",
+  "NameSpace" : "system",
+  "Name" : "hashmapofintarraybufferofint",
+  "TypeTypeName" : "tContainer",
+  "TypeNameSpace" : "system",
+  "TypeName" : "HashMap",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "Fixed" : false,
+  "KeyTypeNameSpace" : "system",
+  "KeyTypeName" : "Int",
+  "ValueTypeNameSpace" : "system",
+  "ValueTypeName" : "ArrayBuffer"
+} ]
+
+}

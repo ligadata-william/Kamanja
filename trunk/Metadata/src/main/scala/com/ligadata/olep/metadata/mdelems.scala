@@ -92,7 +92,7 @@ object ObjTypeType extends Enumeration {
   type TypeType = Value
   val tAny, tScalar, tContainer, tTupleN = Value
 
-  def asString(typ: Type): String = {
+  def asString(typ: TypeType): String = {
     val str = typ.toString match {
       case "tAny" => "Any"
       case _ => typ.toString
@@ -446,7 +446,7 @@ class FunctionDef extends BaseElemDef {
     }
   }
 
-  def typeString: String = FullName + "(" + args.map(arg => arg.typeString).mkString(",") + ")"
+  def typeString: String = (FullName + "(" + args.map(arg => arg.Type.FullName).mkString(",") + ")").toLowerCase
 
   def returnTypeString: String = if (retType != null) retType.typeString else "Unit"
 }

@@ -1,0 +1,44 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "TupleTypeDef",
+  "NameSpace" : "system",
+  "Name" : "tupleofstringstring",
+  "TypeTypeName" : "tTupleN",
+  "TypeNameSpace" : "System",
+  "TypeName" : "Any",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "TupleDefinitions": [ 
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "string",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "String",
+  "PhysicalName" : "String",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.StringImpl"
+},
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "string",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "String",
+  "PhysicalName" : "String",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.StringImpl"
+} ]
+} ]
+
+}

@@ -153,15 +153,15 @@ class CompilerProxy{
     val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
     val (classStr,model) = compiler.compile(pmmlStr)
 
-    var pmmlFilePath = System.getenv("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
+    var pmmlFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
     dumpStrTextToFile(pmmlStr,pmmlFilePath)
     var(status,jarFile) = jarCode(model.name,classStr,
-	    System.getenv("CLASSPATH"),
-	    System.getenv("JAR_TARGET_DIR"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
 	    "Test Client",
 	    pmmlFilePath,
-	    System.getenv("SCALA_HOME"),
-	    System.getenv("JAVA_HOME"))
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
     model.jarName = jarFile
     model.ver     = 1
     if( model.modelType == null){
@@ -177,18 +177,18 @@ class CompilerProxy{
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
       val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr)
-      val msgDefFilePath = System.getenv("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
+      val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePath)
-      val msgDefClassFilePath = System.getenv("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
+      val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
       dumpStrTextToFile(classStr,msgDefClassFilePath)
       var(status,jarFile) = jarCode(msgDef.name,
 	    classStr,
-	    System.getenv("CLASSPATH"),
-	    System.getenv("JAR_TARGET_DIR"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
 	    "Test Client",
 	    msgDefFilePath,
-	    System.getenv("SCALA_HOME"),
-	    System.getenv("JAVA_HOME"))
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
 
       logger.trace("Status => " + status + ",Jar File => " + jarFile)
 

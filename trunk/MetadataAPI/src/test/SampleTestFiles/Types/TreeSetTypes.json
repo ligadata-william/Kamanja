@@ -1,0 +1,20 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "TreeSetTypeDef",
+  "NameSpace" : "system",
+  "Name" : "treesetofany",
+  "TypeTypeName" : "tContainer",
+  "TypeNameSpace" : "system",
+  "TypeName" : "TreeSet",
+  "PhysicalName" : null,
+  "Version" : 1,
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "Fixed" : false,
+  "KeyTypeNameSpace" : "system",
+  "KeyTypeName" : "Any"
+} ]
+
+}
