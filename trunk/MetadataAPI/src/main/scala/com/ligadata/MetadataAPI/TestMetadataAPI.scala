@@ -25,12 +25,8 @@ import com.ligadata.Compiler._
 
 object TestMetadataAPI{
 
-  val sysNS = "System"		// system name space
-
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-
-  lazy val loggerFormat = "%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"
 
   def testDbConn{
     var hostnames = "localhost"
@@ -45,104 +41,62 @@ object TestMetadataAPI{
     val session = cluster.connect(keyspace);
   }
 
-  def GetConnectionProperties: PropertyMap = {
-    val connectinfo = new PropertyMap
-    connectinfo+= ("connectiontype" -> "cassandra")
-    connectinfo+= ("hostlist" -> "localhost") 
-    connectinfo+= ("schema" -> "default")
-    connectinfo+= ("table" -> "default")
-    connectinfo
+  def AddType = {
+    var apiResult = MetadataAPIImpl.AddType(SampleData.sampleScalarTypeStr,"JSON")
+    var result = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + result._2)
+    apiResult = MetadataAPIImpl.AddType(SampleData.sampleTupleTypeStr,"JSON")
+    result = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + result._2)
   }
 
-  def dumpAllFunctions{
-    val functions = MdMgr.GetMdMgr.Functions(true,true)
-    functions match{
-      case None => println("no functions available")
-      case Some(fs) =>
-	logger.trace(MetadataAPIImpl.listToJson("Functions",fs.toArray))
-	fs.foreach(f => {
-	  logger.trace("Dump the function " +  f.name)
-	  logger.trace("key => "   + f.typeString)
-	})
-    }
+  def RemoveType = {
+    val apiResult = MetadataAPIImpl.RemoveType(MdMgr.sysNS,"my_char",100)
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
-  def testGetFunctions{
-    val functions = MdMgr.GetMdMgr.Functions(true,true)
-    functions match{
-      case None => println("no functions available")
-      case Some(fs) =>
-	val functionList = fs.toList
-	for( f <- functionList ){
-	  logger.trace("Get the function " +  f.Name)
-          var kv:KeyValuePair = new KeyValuePair
-          var funcStr = MetadataAPIImpl.GetFunctionDef(f.FullName,"JSON","-1.0")
-          logger.trace("FunctionDef => " + funcStr)
-	}
-    }
+  def UpdateType = {
+    val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
 
-  def testAddFunctions{
-    MetadataAPIImpl.AddFunctions(SampleData.sampleFunctionsText,"JSON")
-    dumpAllFunctions
+  def AddFunction = {
+    var apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
+    var result = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + result._2)
   }
 
-  def testAddScalarTypes{
-    MetadataAPIImpl.AddTypes(SampleData.sampleTypesStr,"JSON")
+  def RemoveFunction = {
+    val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min",100)
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
-  def testAddConcepts{
-    MetadataAPIImpl.AddConcepts(SampleData.sampleConceptsStr,"JSON")
-    //MetadataAPIImpl.dumpAttrbDefs
+  def UpdateFunction = {
+    val apiResult = MetadataAPIImpl.UpdateFunctions(SampleData.sampleFunctionStr,"JSON")
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
-  def testGetAllConcepts : String = {
-    MetadataAPIImpl.GetAllConcepts("JSON")
+  def AddConcept = {
+    var apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
+    var result = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + result._2)
   }
 
-  def testGetAllFunctions : String = {
-    MetadataAPIImpl.GetAllFunctionDefs("JSON")
+  def RemoveConcept = {
+    val apiResult = MetadataAPIImpl.RemoveConcept("Ligadata.ProviderId.100")
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
-  def testAddMessage(msgDefFile: String){
-    val msgStr = Source.fromFile(msgDefFile).mkString
-    new MetadataLoad(MdMgr.GetMdMgr, null, "", "", "", "")
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    logger.trace(MetadataAPIImpl.AddMessage(msgStr,"JSON"))
-  }
-
-
-  def testDeserializeMessage(msgDefFile: String){
-    val msgStr = Source.fromFile(msgDefFile).mkString
-    new MetadataLoad(MdMgr.GetMdMgr, null, "", "", "", "")
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    var compProxy = new CompilerProxy
-    compProxy.setLoggerLevel(Level.TRACE)
-    var(classStr,msgDef) = compProxy.compileMessageDef(msgStr)
-    val jsonStr = MetadataAPIImpl.toJson(msgDef)
-    logger.trace(jsonStr)
-    val newMsgDef = MetadataAPIImpl.parseMessageDef(jsonStr,"JSON")
-    logger.trace(MetadataAPIImpl.toJson(newMsgDef))
-  }
-
-  def testAddRemoveDeletePmml = {
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    logger.trace(MetadataAPIImpl.AddModel(SampleData.sampleModelInXml))
-  }
-
-  def testCompileMessageDef1 = {
-    var compProxy = new CompilerProxy
-    var(classStr,msgDef) = compProxy.compileMessageDef(SampleData.sampleMessageDef1)
-  }
-
-  def testAddRemoveUpdateType = {
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    logger.trace(MetadataAPIImpl.AddType(SampleData.sampleIntTypeStr,"JSON"))
-    logger.trace(MetadataAPIImpl.RemoveType("Int",1))
-    logger.trace(MetadataAPIImpl.AddType(SampleData.sampleIntTypeStr,"JSON"))
-    logger.trace(MetadataAPIImpl.UpdateType(SampleData.sampleUpdatedIntTypeStr,"JSON"))
-    logger.trace(MetadataAPIImpl.RemoveType("Int",1))
+  def UpdateConcept = {
+    val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON")
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
   }
 
   def fileToString(filePath: String) :String = {
@@ -165,107 +119,6 @@ object TestMetadataAPI{
     val pmmlStr =  new String(outStream.toByteArray())
     logger.trace(pmmlStr)
     pmmlStr
-  }
-
-  def testAddModel(pmmlFilePath: String,compiler: PmmlCompiler){
-    // Read a model
-    val pmmlStr = Source.fromFile(pmmlFilePath).mkString
-    val (classStr:String,model:ModelDef) = compiler.compile(pmmlStr)
-    val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
-    val (jarFile,depJars) = compiler.createJar(classStr,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
-	    pmmlScalaFile,
-	    //MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCRIPT_PATH"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-	    false)
-    model.jarName = jarFile
-    model.ver     = 1
-    if( model.modelType == null){
-      model.modelType = "RuleSet"
-    }
-
-    // Save the model
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    logger.trace(MetadataAPIImpl.AddModel(model))
-    logger.trace(MetadataAPIImpl.GetAllModelDefs("JSON"))
-    //logger.trace(MetadataAPIImpl.GetModelDef(model.name,"JSON",model.ver.toString))
-    //logger.trace(MetadataAPIImpl.RemoveModel(model.name,model.ver))
-    //logger.trace(MetadataAPIImpl.GetModelDef(model.name,"JSON",model.ver.toString))
-  }
-
-
-  def testDeserializeModel(pmmlFilePath: String,compiler: PmmlCompiler){
-    // Read a model
-    val pmmlStr = Source.fromFile(pmmlFilePath).mkString
-    val (classStr:String,model:ModelDef) = compiler.compile(pmmlStr)
-    val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
-    val (jarFile,depJars) = compiler.createJar(classStr,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
-	    pmmlScalaFile,
-	    //MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCRIPT_PATH"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-	    false)
-    model.jarName = jarFile
-    model.nameSpace = sysNS
-    model.ver     = 1
-    if( model.modelType == null){
-      model.modelType = "RuleSet"
-    }
-    // Save the model
-    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    val jsonStr = MetadataAPIImpl.toJson(model)
-    logger.trace(jsonStr)
-    val newModDef = MetadataAPIImpl.parseModelDef(jsonStr,"JSON")
-    logger.trace(MetadataAPIImpl.toJson(newModDef))
-  }
-
-  def AddMessage(msgDefFile: String){
-    try{
-      MetadataAPIImpl.OpenDbStore
-      val msgStr = Source.fromFile(msgDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      logger.trace(MetadataAPIImpl.AddMessage(msgStr,"JSON"))
-      // logger.trace("Message was added just now...")
-      MetadataAPIImpl.CloseDbStore
-    }catch {
-      case e: Exception => {
-	MetadataAPIImpl.CloseDbStore
-	e.printStackTrace()
-      }
-    }
-  }
-
-  def testCompileMessageDef3{
-    try{
-      MetadataAPIImpl.OpenDbStore
-
-      logger.trace("add the message...")
-      testAddMessage(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MessageDef/messageTOutPatient.json")
-      logger.trace("get the message that was added just now...")
-      val results = MetadataAPIImpl.GetMessageDef("outpatientclaimtmsg","JSON","-1")
-
-      logger.trace("get the messageDef string from APIResult instance")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(results)
-      logger.trace(resultData)
-      
-      logger.trace("parse the message def from we got from persistence store")
-      val msgDef = MetadataAPIImpl.parseMessageDef(resultData,"JSON")
-
-      logger.trace("add the message again")
-      logger.trace(MetadataAPIImpl.AddMessageDef(msgDef))
-      MetadataAPIImpl.CloseDbStore
-    }catch {
-      case e: Exception => {
-	MetadataAPIImpl.CloseDbStore
-	e.printStackTrace()
-      }
-    }
   }
 
   def GetMessage{
@@ -1197,7 +1050,7 @@ object TestMetadataAPI{
     mdLoader.initialize
   }
 
-  def dumpMetadata{
+  def DumpMetadata{
     MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     MdMgr.GetMdMgr.dump
     MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
@@ -1218,62 +1071,65 @@ object TestMetadataAPI{
       MetadataAPIImpl.OpenDbStore
       MetadataAPIImpl.LoadObjectsIntoCache
 
-      val objectDump = ()       => { dumpMetadata }
-      val addModel = ()         => { AddModel }
-      val getModel = ()         => { GetModelFromCache }
-      val getAllModels = ()     => { GetAllModelsFromCache }
-      val removeModel = ()      => { RemoveModel }
-      val addMessage = ()       => { AddMessage }
-      val getMessage = ()       => { GetMessageFromCache }
-      val getAllMessages = ()   => { GetAllMessagesFromCache }
-      val removeMessage = ()    => { RemoveMessage }
-      val addContainer = ()     => { AddContainer }
-      val getContainer = ()     => { GetContainerFromCache }
-      val getAllContainers = () => { GetAllContainersFromCache }
-      val removeContainer = ()  => { RemoveContainer }
-      val dumpAllFunctionsAsJson = ()=> { DumpAllFunctionsAsJson }
-      val loadFunctionsFromAFile = ()=> { LoadFunctionsFromAFile }
-      val dumpAllConceptsAsJson = ()=> { DumpAllConceptsAsJson }
-      val loadConceptsFromAFile = ()=> { LoadConceptsFromAFile }
-      val dumpAllTypesAsJson = ()=> { DumpAllTypesAsJson }
+      val dumpMetadata = ()               => { DumpMetadata }
+      val addModel = ()                   => { AddModel }
+      val getModel = ()                   => { GetModelFromCache }
+      val getAllModels = ()               => { GetAllModelsFromCache }
+      val removeModel = ()                => { RemoveModel }
+      val addMessage = ()                 => { AddMessage }
+      val getMessage = ()                 => { GetMessageFromCache }
+      val getAllMessages = ()             => { GetAllMessagesFromCache }
+      val removeMessage = ()              => { RemoveMessage }
+      val addContainer = ()               => { AddContainer }
+      val getContainer = ()               => { GetContainerFromCache }
+      val getAllContainers = ()           => { GetAllContainersFromCache }
+      val removeContainer = ()            => { RemoveContainer }
+      val addType         = ()            => { AddType }
+      val removeType      = ()            => { RemoveType }
+      val updateType         = ()         => { UpdateType }
+      val dumpAllFunctionsAsJson = ()     => { DumpAllFunctionsAsJson }
+      val loadFunctionsFromAFile = ()     => { LoadFunctionsFromAFile }
+      val dumpAllConceptsAsJson = ()      => { DumpAllConceptsAsJson }
+      val loadConceptsFromAFile = ()      => { LoadConceptsFromAFile }
+      val dumpAllTypesAsJson = ()         => { DumpAllTypesAsJson }
       val dumpAllTypesByObjTypeAsJson = ()=> { DumpAllTypesByObjTypeAsJson }
-      val loadTypesFromAFile = ()=> { LoadTypesFromAFile }
+      val loadTypesFromAFile = ()         => { LoadTypesFromAFile }
 
-      val topLevelMenu1 = Array( "Add Model","Get Model","Get All Models","Remove Model","Add Message","Get Message","Get All Messages","Remove Message","Add Container","Get Container","Get All Containers","Remove Container","Dump MetaData","Load Functions From a File","Dump All Functions","Load Concepts From a File","Dump All Concepts","Load Types From a File","Dump All Types","Dump All Types By Object Type")
-      val topLevelMenu2 = Map( 1 ->  addModel, 
-			       2 ->  getModel,
-			       3 ->  getAllModels,
-			       4 ->  removeModel,
-			       5 ->  addMessage,
-			       6 ->  getMessage,
-			       7 ->  getAllMessages,
-			       8 ->  removeMessage,
-			       9 ->  addContainer,
-			       10 -> getContainer,
-			       11 -> getAllContainers,
-			       12 -> removeContainer,
-			       13 -> objectDump,
-			       14 -> loadFunctionsFromAFile,
-			       15 -> dumpAllFunctionsAsJson,
-			       16 -> loadConceptsFromAFile,
-			       17 -> dumpAllConceptsAsJson,
-			       18 -> loadTypesFromAFile,
-			       19 -> dumpAllTypesAsJson,
-			       20 -> dumpAllTypesByObjTypeAsJson)
+      val topLevelMenu = List(("Add Model",addModel),
+			      ("Get Model",getModel),
+			      ("Get All Models",getAllModels),
+			      ("Remove Model",removeModel),
+			      ("Add Message",addMessage),
+			      ("Get Message",getMessage),
+			      ("Get All Messages",getAllMessages),
+			      ("Remove Message",removeMessage),
+			      ("Add Container",addContainer),
+			      ("Get Container",getContainer),
+			      ("Get All Containers",getAllContainers),
+			      ("Remove Container",removeContainer),
+			      ("Add Type",addType),
+			      ("Remove Type",removeType),
+			      ("Update Type",updateType),
+			      ("Load Concepts from a file",loadConceptsFromAFile),
+			      ("Load Functions from a file",loadFunctionsFromAFile),
+			      ("Load Types from a file",loadTypesFromAFile),
+			      ("Dump All Metadata Keys",dumpMetadata),
+			      ("Dump All Functions",dumpAllFunctionsAsJson),
+			      ("Dump All Concepts",dumpAllConceptsAsJson),
+			      ("Dump All Types",dumpAllTypesAsJson),
+			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson))
 
       var done = false
       while ( done == false ){
 	println("\n\nPick an API ")
-	var seq = 0
-	topLevelMenu1.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
-	seq += 1
-	println("[" + seq + "] Exit")
+	for((key,idx) <- topLevelMenu.zipWithIndex){println("[" + (idx+1) + "] " + key._1)}
+	println("[" + (topLevelMenu.size+1) + "] Exit")
 	print("\nEnter your choice: ")
 	val choice:Int = readInt()
-	if( choice <= topLevelMenu2.size ){
-	  topLevelMenu2(choice).apply
+	if( choice <= topLevelMenu.size ){
+	  topLevelMenu(choice-1)._2.apply
 	}
-	else if( choice == topLevelMenu2.size + 1 ){
+	else if( choice == topLevelMenu.size + 1 ){
 	  done = true
 	}
 	else{
