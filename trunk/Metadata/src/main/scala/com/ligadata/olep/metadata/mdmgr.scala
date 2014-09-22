@@ -2231,6 +2231,18 @@ class MdMgr {
 	    containerDefs.addBinding(container.FullName, container)
 	}
 
+
+	@throws(classOf[AlreadyExistsException])
+	@throws(classOf[NoSuchElementException])
+	def AddContainerType(containerType: ContainerTypeDef): Unit = {
+	    if (Type(containerType.FullName, -1, false) != None) {
+	      throw new AlreadyExistsException(s"Container type ${containerType.FullName} already exists.")
+	    }
+	    typeDefs.addBinding(containerType.FullName, containerType)
+	}
+
+
+
   	/**
   	 *  Construct and catalog a model definition.  The model definition represents the essential metadata regarding
   	 *  a PMML generated model, including the identifying information, the model type, and the inputs and output

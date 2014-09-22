@@ -1087,6 +1087,12 @@ object TestMetadataAPI{
       val addType         = ()            => { AddType }
       val removeType      = ()            => { RemoveType }
       val updateType         = ()         => { UpdateType }
+      val addFunction         = ()        => { AddFunction }
+      val removeFunction      = ()        => { RemoveFunction }
+      val updateFunction         = ()     => { UpdateFunction }
+      val addConcept         = ()         => { AddConcept }
+      val removeConcept      = ()         => { RemoveConcept }
+      val updateConcept         = ()      => { UpdateConcept }
       val dumpAllFunctionsAsJson = ()     => { DumpAllFunctionsAsJson }
       val loadFunctionsFromAFile = ()     => { LoadFunctionsFromAFile }
       val dumpAllConceptsAsJson = ()      => { DumpAllConceptsAsJson }
@@ -1110,6 +1116,12 @@ object TestMetadataAPI{
 			      ("Add Type",addType),
 			      ("Remove Type",removeType),
 			      ("Update Type",updateType),
+			      ("Add Function",addFunction),
+			      ("Remove Function",removeFunction),
+			      ("Update Function",updateFunction),
+			      ("Add Concept",addConcept),
+			      ("Remove Concept",removeConcept),
+			      ("Update Concept",updateConcept),
 			      ("Load Concepts from a file",loadConceptsFromAFile),
 			      ("Load Functions from a file",loadFunctionsFromAFile),
 			      ("Load Types from a file",loadTypesFromAFile),
