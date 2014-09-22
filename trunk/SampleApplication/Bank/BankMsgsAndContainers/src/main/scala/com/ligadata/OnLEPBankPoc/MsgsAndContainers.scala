@@ -65,6 +65,7 @@ class BankPocMsg_100 extends BaseMsg {
 	buffer.append(s"\tENT_AMT_TYP : Int    = ${ENT_AMT_TYP.toString}\n")
 	buffer.append(s"\tENT_AMT     : Double = ${ENT_AMT.toString}\n")
 	buffer.append(s"\tODR_LMT     : Double = ${ODR_LMT.toString}\n")
+	buffer.append(s"\tANT_LMT     : Double = ${ANT_LMT.toString}\n")
 	buffer.append(s"\tUNP_BUFF    : Double = ${UNP_BUFF.toString}\n")
 	buffer.append(s"\tEB_BUFFER   : Double = ${EB_BUFFER.toString}\n")
 	buffer.append(s"\tOD_BUFFER   : Double = ${OD_BUFFER.toString}\n")

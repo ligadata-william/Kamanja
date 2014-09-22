@@ -86,7 +86,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			/** The variable is either defined in one of the dictionaries (ddict or xdict) or is a field (or key) inside
 			 *  one of these containers  */
 			if (name != null) {
-				if (ctx.dDict.contains(name)) {
+				if (ctx.dDict.contains(name) && parentContainer == null) {
 					val fld : xDataField = ctx.dDict.apply(name)
 					val containerType : ContainerTypeDef = getContainerWithNamesType(fld.dataType)
 					if (containerType == null && names.size != 1) { /** this is not a container and therefore should be last name */
@@ -121,7 +121,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 					}
 			  
 				} else {
-					val inXDict : Boolean = ctx.xDict.contains(name) 
+					val inXDict : Boolean = (ctx.xDict.contains(name)  && parentContainer == null)
 					if (inXDict) {
 						val fld : xDerivedField = ctx.xDict.apply(name)
 						val containerType : ContainerTypeDef = getContainerWithNamesType(fld.dataType)

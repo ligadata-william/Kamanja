@@ -469,7 +469,7 @@ class PmmlContext(val mgr : MdMgr, val logger : Logger) {
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
 				  			true
 				  		}
-			  case _ => { 	logger.trace("Unecessary to register this dataType ... $dataType")
+			  case _ => { 	//logger.trace(s"Unecessary to register this dataType ... $dataType")
 				  			false
 			    		}
 			} 
@@ -730,7 +730,7 @@ class PmmlContext(val mgr : MdMgr, val logger : Logger) {
 	 *  nodes of the xDerived field.
 	 */
 	def transformTopLevelApplyNodes()  {
-	    val catTransformer : CategorizedReturnValueTransform = new CategorizedReturnValueTransform(this)
+	    val catTransformer : IfActionTransform = new IfActionTransform(this)
 		val xDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("TransformationDictionary")
 		PmmlExecNodeVisitor.Visit(xDictNode, catTransformer)
 	}

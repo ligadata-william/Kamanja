@@ -393,19 +393,22 @@ object NodePrinterHelpers {
 		
 	}
 	
-	def constantsFromTopLevelChild(node : xDerivedField) :  Option[ArrayBuffer[xConstant]]= {
+	/** 
+	 *  Answer the IfActionElements for this node if it is the top level function in the supplied derived field.
+	 */
+	def IfActionElementsFromTopLevelChild(node : xDerivedField) :  Option[ArrayBuffer[PmmlExecNode]]= {
 		val noChildren : Int = node.Children.length 
-		val Consts = if (noChildren == 1) {
+		val actionElements = if (noChildren == 1) {
 			if (node.Children.apply(0).isInstanceOf[xApply]) {
 				val applyFcn : xApply = node.Children.apply(0).asInstanceOf[xApply]			
-				val consts = applyFcn.CategorizedValues
-				if (consts.length > 0) Some(consts) else None
+				val ifActionElements = applyFcn.IfActionElements
+				if (ifActionElements.length > 0) Some(ifActionElements) else None
 			} else {
 				None
 			}
 		} else
 			None
-		Consts
+		actionElements
 	}
 
 	def applyFromTopLevelChild(node : xDerivedField) :  Option[xApply] = {
@@ -443,7 +446,7 @@ object NodePrinterHelpers {
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
 		clsBuffer.append(s"        val $fldName = ")
-		val categoricalConsts : Option[ArrayBuffer[xConstant]] = constantsFromTopLevelChild(node)
+		val ifActionElems : Option[ArrayBuffer[PmmlExecNode]] = IfActionElementsFromTopLevelChild(node)
 		val apply : Option[xApply] = applyFromTopLevelChild(node)
 		val fcnName : String = apply match {
 			case Some(apply) => {
@@ -453,26 +456,31 @@ object NodePrinterHelpers {
 			case _ => ""
 		}
  		clsBuffer.append(fcnBuffer.toString)
-  		//clsBuffer.append(s")")
 
 		var truthStr : String = ""
 		var liesStr : String = ""
-		var catConstLen = 0
-		categoricalConsts match {  /** FIXME: We only handle the if and other binary decisions with this for now... 
-									   multi values... need mapvalues support */
-			case Some(categoricalConsts) => {
-				if (categoricalConsts.length == 2)  {
-					val truth = categoricalConsts.apply(0)
-					val lies = categoricalConsts.apply(1)
-					truthStr = truth.asString
-					liesStr = lies.asString
-					catConstLen = 2
+		var ifActionElemsLen : Int = 0
+		val actionBuffer : StringBuilder = new StringBuilder
+		ifActionElems match { 
+			case Some(ifActionElems) => {
+				if (ifActionElems.length == 2)  {
+					val truthAction : PmmlExecNode = ifActionElems.apply(0)
+					val falseAction = ifActionElems.apply(1)
+					generator.generateCode1(Some(truthAction), actionBuffer, generator, CodeFragment.FUNCCALL)
+					truthStr = actionBuffer.toString
+					actionBuffer.clear
+					generator.generateCode1(Some(falseAction), actionBuffer, generator, CodeFragment.FUNCCALL)
+					liesStr = actionBuffer.toString
+					ifActionElemsLen = 2
 				}
 			}
 			case _ => None
 		}
- 		if (catConstLen == 2) {
-			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) $truthStr else $liesStr\n")
+ 		
+ 		if (ifActionElemsLen == 2) {
+ 			/** FIXME: The action statement's return value is returned for the result here. 
+ 			 *  Should the predictate's result value be returned instead? ... i.e., $ fldName above ... leave it for now.*/
+			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {

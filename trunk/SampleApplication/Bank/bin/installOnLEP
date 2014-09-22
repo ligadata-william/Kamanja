@@ -110,8 +110,8 @@ cp $srcPath/modeldbg/Alchemy_000100/target/scala-2.10/alchemy_000100_2.10-1.0.ja
 
 # sample configs
 echo "copy sample configs..."
-cp $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/*cfg $ONLEPLIBPATH
 cp $srcPath/OnLEPManager/src/main/resources/*cfg $ONLEPLIBPATH
+cp $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/*cfg $ONLEPLIBPATH
 
 # other jars 
 echo "copy other jars..."

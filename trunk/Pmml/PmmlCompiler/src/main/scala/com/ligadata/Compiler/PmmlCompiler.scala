@@ -292,11 +292,11 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val fcnPath : String = ""
 			val attrPath : String = ""
 			val msgCtnPath : String = ""
-			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger, typesPath, fcnPath, attrPath, msgCtnPath)
+			val mgr : MdMgr = MdMgr.GetMdMgr
+			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, logger, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 
-		  
-			val compiler : PmmlCompiler = new PmmlCompiler(MdMgr.mdMgr, clientName, logger)
+			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger)
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
 			val xmlSrcTxt : String  = Source.fromFile(pmmlFilePath).mkString

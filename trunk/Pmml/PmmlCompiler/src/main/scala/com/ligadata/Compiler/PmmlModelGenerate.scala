@@ -262,7 +262,7 @@ class PmmlModelGenerator(ctx : PmmlContext) {
 		
 		/** collect the udf functions from the TransactionDictinary, etc. */
 		ctx.collectUdfs()
-		/** collect the categorical constant values from the top level derived field's apply function */
+		/** transform the 'if' apply elements rewriting the child list by removing the true and false elements at the list end.  */
 		ctx.transformTopLevelApplyNodes()
 		
 		/** collect additional information needed to decorate the runtime RuleSetModel class */

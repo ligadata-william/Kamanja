@@ -460,10 +460,10 @@ class xParameterField(val name : String
 
 class xApply(val function : String, val mapMissingTo : String, val invalidValueTreatment : String = "returnInvalid") extends PmmlExecNode("Apply") {
   
-	var categorizedValues : ArrayBuffer[xConstant] = ArrayBuffer[xConstant]()
-	def CategorizedValue(idx : Int) : xConstant = categorizedValues.apply(idx)
-	def CategorizedValues : ArrayBuffer[xConstant] = categorizedValues
-	def addCategorizedValue(aConst : xConstant)  : ArrayBuffer[xConstant] = { categorizedValues += aConst }
+	var ifActionElements : ArrayBuffer[PmmlExecNode] = ArrayBuffer[PmmlExecNode]()
+	def IfActionElement(idx : Int) : PmmlExecNode = ifActionElements.apply(idx)
+	def IfActionElements : ArrayBuffer[PmmlExecNode] = ifActionElements
+	def addIfAction(anAction : PmmlExecNode)  : ArrayBuffer[PmmlExecNode] = { ifActionElements += anAction; ifActionElements }
 	
 	override def asString : String = 
 	{
