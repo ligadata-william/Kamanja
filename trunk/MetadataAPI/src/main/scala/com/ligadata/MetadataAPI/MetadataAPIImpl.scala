@@ -232,10 +232,10 @@ object MetadataAPIImpl extends MetadataAPI{
 	  MdMgr.GetMdMgr.AddTupleType(o)
 	  SaveObject(key,value,typeStore)
 	}
-	//case o:ContainerTypeDef => {
-	  //MdMgr.GetMdMgr.AddContainer(o)
-	  //SaveObject(key,value,typeStore)
-	//}
+	case o:ContainerTypeDef => {
+	  MdMgr.GetMdMgr.AddContainerType(o)
+	  SaveObject(key,value,typeStore)
+	}
 	case _ => {
 	  logger.error("SaveObject is not implemented for objects of type " + obj.getClass.getName)
 	}
