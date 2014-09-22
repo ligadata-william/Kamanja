@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.joda.time.DateTime;
 
 public class Utils 
@@ -31,7 +33,18 @@ public class Utils
 		RunProcess(command, argumentsStr);
 
 	}
-	
+
+	public static String GetCurrentWebMethodName(HttpServletRequest request)
+	{//there is no actual web method. assuming all urls are like <Servlet>?svc=<method>&..... => get the <method>
+		if (request.getParameter("svc") == null) 
+		{
+			return "";
+		} 
+		else
+		{
+			return request.getParameter("svc");
+		}
+	}
 	public static final void RunProcess(
 			String command,
 			String statupParameters)

@@ -37,6 +37,15 @@
       <!-- ls 20 -->
       <param-value>ls20.dc.npario.com:2181</param-value>
     </init-param>
+    <init-param>
+      <param-name>LogFilePath</param-name>
+      <param-value>C:\\rtdlogs\\npario.log</param-value>
+      <!--<param-value>/usr/share/tomcat6/RTDLogs/npario.log</param-value>-->
+    </init-param>
+    <init-param>
+      <param-name>LogFilePattern</param-name>
+      <param-value>'.'yyyy-MM-dd-HH'.log'</param-value>
+    </init-param>
   </servlet>
   <servlet-mapping>
     <servlet-name>MessagesService</servlet-name>
