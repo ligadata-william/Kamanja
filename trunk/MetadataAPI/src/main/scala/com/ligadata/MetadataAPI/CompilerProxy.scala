@@ -153,17 +153,20 @@ class CompilerProxy{
     val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
     val (classStr,model) = compiler.compile(pmmlStr)
 
-    var pmmlFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
-    dumpStrTextToFile(pmmlStr,pmmlFilePath)
-    var(status,jarFile) = jarCode(model.name,classStr,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-	    "Test Client",
-	    pmmlFilePath,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
+    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_DIR") + "/" + model.name + ".pmml"    
+    val (jarFile,depJars) = 
+      compiler.createJar(classStr,
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
+			 pmmlScalaFile,
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+			 false)
     model.jarName = jarFile
-    model.ver     = 1
+    if( model.ver == 0 ){
+      model.ver     = 1
+    }
     if( model.modelType == null){
       model.modelType = "RuleSet"
     }

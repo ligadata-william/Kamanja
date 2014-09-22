@@ -60,7 +60,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveType(typeName:String, version:Int): String
+  def RemoveType(typeNameSpace:String, typeName:String, version:Int): String
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -98,7 +98,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveFunction(functionName:String, version:Int): String
+  def RemoveFunction(nameSpace:String, functionName:String, version:Int): String
 
   /** Add new concepts 
    * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
