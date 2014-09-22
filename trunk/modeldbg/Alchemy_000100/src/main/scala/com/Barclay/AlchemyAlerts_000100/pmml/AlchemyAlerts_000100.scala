@@ -123,9 +123,9 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         var xbar1 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SendLBResultDetermination" -> new Derive_SendLBResultDetermination("SendLBResultDetermination", "Boolean", xbar1, "null", "null", ""))
         var xbar2 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD3Range" -> new Derive_InOD3Range("InOD3Range", "Boolean", xbar2, "null", "null", ""))
+        ctx.xDict += ("UpdateOD2AlertAction" -> new Derive_UpdateOD2AlertAction("UpdateOD2AlertAction", "Boolean", xbar2, "null", "null", ""))
         var xbar3 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("UpdateOD2AlertAction" -> new Derive_UpdateOD2AlertAction("UpdateOD2AlertAction", "Boolean", xbar3, "null", "null", ""))
+        ctx.xDict += ("InOD3Range" -> new Derive_InOD3Range("InOD3Range", "Boolean", xbar3, "null", "null", ""))
         var xbar4 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SendEBResultDetermination" -> new Derive_SendEBResultDetermination("SendEBResultDetermination", "Boolean", xbar4, "null", "null", ""))
         var xbar5 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
@@ -137,47 +137,47 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         var xbar8 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("EBAlertHistoryUpdate" -> new Derive_EBAlertHistoryUpdate("EBAlertHistoryUpdate", "Boolean", xbar8, "null", "null", ""))
         var xbar9 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineODEventBeIssued" -> new Derive_ShouldOnlineODEventBeIssued("ShouldOnlineODEventBeIssued", "Boolean", xbar9, "null", "null", ""))
+        ctx.xDict += ("SendOD3Result" -> new Derive_SendOD3Result("SendOD3Result", "String", xbar9, "null", "null", ""))
         var xbar10 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD3Result" -> new Derive_SendOD3Result("SendOD3Result", "String", xbar10, "null", "null", ""))
+        ctx.xDict += ("SendNOResultDetermination" -> new Derive_SendNOResultDetermination("SendNOResultDetermination", "Boolean", xbar10, "null", "null", ""))
         var xbar11 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendNOResultDetermination" -> new Derive_SendNOResultDetermination("SendNOResultDetermination", "Boolean", xbar11, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedOD3Condition" -> new Derive_DebitHasCausedOD3Condition("DebitHasCausedOD3Condition", "Boolean", xbar11, "null", "null", ""))
         var xbar12 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedOD3Condition" -> new Derive_DebitHasCausedOD3Condition("DebitHasCausedOD3Condition", "Boolean", xbar12, "null", "null", ""))
+        ctx.xDict += ("AlertHistoryUpdate" -> new Derive_AlertHistoryUpdate("AlertHistoryUpdate", "Boolean", xbar12, "null", "null", ""))
         var xbar13 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AlertHistoryUpdate" -> new Derive_AlertHistoryUpdate("AlertHistoryUpdate", "Boolean", xbar13, "null", "null", ""))
+        ctx.xDict += ("UpdateEBAlertAction" -> new Derive_UpdateEBAlertAction("UpdateEBAlertAction", "Boolean", xbar13, "null", "null", ""))
         var xbar14 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("UpdateEBAlertAction" -> new Derive_UpdateEBAlertAction("UpdateEBAlertAction", "Boolean", xbar14, "null", "null", ""))
+        ctx.xDict += ("ShouldEBOfflineEventBeIssued" -> new Derive_ShouldEBOfflineEventBeIssued("ShouldEBOfflineEventBeIssued", "Boolean", xbar14, "null", "null", ""))
         var xbar15 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldEBOfflineEventBeIssued" -> new Derive_ShouldEBOfflineEventBeIssued("ShouldEBOfflineEventBeIssued", "Boolean", xbar15, "null", "null", ""))
+        ctx.xDict += ("UpdateLBAlertAction" -> new Derive_UpdateLBAlertAction("UpdateLBAlertAction", "Boolean", xbar15, "null", "null", ""))
         var xbar16 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("UpdateLBAlertAction" -> new Derive_UpdateLBAlertAction("UpdateLBAlertAction", "Boolean", xbar16, "null", "null", ""))
+        ctx.xDict += ("EBAlertType" -> new Derive_EBAlertType("EBAlertType", "Boolean", xbar16, "null", "null", ""))
         var xbar17 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EBAlertType" -> new Derive_EBAlertType("EBAlertType", "Boolean", xbar17, "null", "null", ""))
+        ctx.xDict += ("ShouldLBOfflineEventBeIssued" -> new Derive_ShouldLBOfflineEventBeIssued("ShouldLBOfflineEventBeIssued", "Boolean", xbar17, "null", "null", ""))
         var xbar18 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldLBOfflineEventBeIssued" -> new Derive_ShouldLBOfflineEventBeIssued("ShouldLBOfflineEventBeIssued", "Boolean", xbar18, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedLBCondition" -> new Derive_DebitHasCausedLBCondition("DebitHasCausedLBCondition", "Boolean", xbar18, "null", "null", ""))
         var xbar19 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedLBCondition" -> new Derive_DebitHasCausedLBCondition("DebitHasCausedLBCondition", "Boolean", xbar19, "null", "null", ""))
+        ctx.xDict += ("EBAlertParms" -> new Derive_EBAlertParms("EBAlertParms", "Any", xbar19, "null", "null", ""))
         var xbar20 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EBAlertParms" -> new Derive_EBAlertParms("EBAlertParms", "Any", xbar20, "null", "null", ""))
+        ctx.xDict += ("LBOfflineEvent" -> new Derive_LBOfflineEvent("LBOfflineEvent", "Boolean", xbar20, "null", "null", ""))
         var xbar21 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("LBOfflineEvent" -> new Derive_LBOfflineEvent("LBOfflineEvent", "Boolean", xbar21, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineNOEventBeIssued" -> new Derive_ShouldOnlineNOEventBeIssued("ShouldOnlineNOEventBeIssued", "Boolean", xbar21, "null", "null", ""))
         var xbar22 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineNOEventBeIssued" -> new Derive_ShouldOnlineNOEventBeIssued("ShouldOnlineNOEventBeIssued", "Boolean", xbar22, "null", "null", ""))
+        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar22, "null", "null", ""))
         var xbar23 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar23, "null", "null", ""))
+        ctx.xDict += ("ShouldODOfflineEventBeIssued" -> new Derive_ShouldODOfflineEventBeIssued("ShouldODOfflineEventBeIssued", "Boolean", xbar23, "null", "null", ""))
         var xbar24 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldODOfflineEventBeIssued" -> new Derive_ShouldODOfflineEventBeIssued("ShouldODOfflineEventBeIssued", "Boolean", xbar24, "null", "null", ""))
+        ctx.xDict += ("SendLBResult" -> new Derive_SendLBResult("SendLBResult", "String", xbar24, "null", "null", ""))
         var xbar25 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendLBResult" -> new Derive_SendLBResult("SendLBResult", "String", xbar25, "null", "null", ""))
+        ctx.xDict += ("ODOfflineEvent" -> new Derive_ODOfflineEvent("ODOfflineEvent", "Boolean", xbar25, "null", "null", ""))
         var xbar26 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ODOfflineEvent" -> new Derive_ODOfflineEvent("ODOfflineEvent", "Boolean", xbar26, "null", "null", ""))
+        ctx.xDict += ("ClientAlertsToday" -> new Derive_ClientAlertsToday("ClientAlertsToday", "Any", xbar26, "null", "null", ""))
         var xbar27 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ClientAlertsToday" -> new Derive_ClientAlertsToday("ClientAlertsToday", "Any", xbar27, "null", "null", ""))
+        ctx.xDict += ("AcctHasEBLimit" -> new Derive_AcctHasEBLimit("AcctHasEBLimit", "Boolean", xbar27, "null", "null", ""))
         var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AcctHasEBLimit" -> new Derive_AcctHasEBLimit("AcctHasEBLimit", "Boolean", xbar28, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedOD2Condition" -> new Derive_DebitHasCausedOD2Condition("DebitHasCausedOD2Condition", "Boolean", xbar28, "null", "null", ""))
         var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedOD2Condition" -> new Derive_DebitHasCausedOD2Condition("DebitHasCausedOD2Condition", "Boolean", xbar29, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineOD3EventBeIssued" -> new Derive_ShouldOnlineOD3EventBeIssued("ShouldOnlineOD3EventBeIssued", "Boolean", xbar29, "null", "null", ""))
         var xbar30 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SendOD3ResultDetermination" -> new Derive_SendOD3ResultDetermination("SendOD3ResultDetermination", "Boolean", xbar30, "null", "null", ""))
         var xbar31 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
@@ -201,47 +201,51 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         var xbar40 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("DebitHasCausedNOCondition" -> new Derive_DebitHasCausedNOCondition("DebitHasCausedNOCondition", "Boolean", xbar40, "null", "null", ""))
         var xbar41 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar41, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineOD2EventBeIssued" -> new Derive_ShouldOnlineOD2EventBeIssued("ShouldOnlineOD2EventBeIssued", "Boolean", xbar41, "null", "null", ""))
         var xbar42 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar42, "null", "null", ""))
+        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar42, "null", "null", ""))
         var xbar43 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar43, "null", "null", ""))
+        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar43, "null", "null", ""))
         var xbar44 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("UpdateOD3AlertAction" -> new Derive_UpdateOD3AlertAction("UpdateOD3AlertAction", "Boolean", xbar44, "null", "null", ""))
+        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar44, "null", "null", ""))
         var xbar45 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar45, "null", "null", ""))
+        ctx.xDict += ("UpdateOD3AlertAction" -> new Derive_UpdateOD3AlertAction("UpdateOD3AlertAction", "Boolean", xbar45, "null", "null", ""))
         var xbar46 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EB2AlertHistoryUpdate" -> new Derive_EB2AlertHistoryUpdate("EB2AlertHistoryUpdate", "Boolean", xbar46, "null", "null", ""))
+        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar46, "null", "null", ""))
         var xbar47 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("UpdateNOAlertAction" -> new Derive_UpdateNOAlertAction("UpdateNOAlertAction", "Boolean", xbar47, "null", "null", ""))
+        ctx.xDict += ("EB2AlertHistoryUpdate" -> new Derive_EB2AlertHistoryUpdate("EB2AlertHistoryUpdate", "Boolean", xbar47, "null", "null", ""))
         var xbar48 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar48, "null", "null", ""))
+        ctx.xDict += ("UpdateNOAlertAction" -> new Derive_UpdateNOAlertAction("UpdateNOAlertAction", "Boolean", xbar48, "null", "null", ""))
         var xbar49 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar49, "null", "null", ""))
+        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar49, "null", "null", ""))
         var xbar50 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar50, "null", "null", ""))
+        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar50, "null", "null", ""))
         var xbar51 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar51, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineOD1EventBeIssued" -> new Derive_ShouldOnlineOD1EventBeIssued("ShouldOnlineOD1EventBeIssued", "Boolean", xbar51, "null", "null", ""))
         var xbar52 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar52, "null", "null", ""))
+        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar52, "null", "null", ""))
         var xbar53 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SumOfAlertsSeenToday" -> new Derive_SumOfAlertsSeenToday("SumOfAlertsSeenToday", "Int", xbar53, "null", "null", ""))
+        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar53, "null", "null", ""))
         var xbar54 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar54, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar54, "null", "null", ""))
         var xbar55 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar55, "null", "null", ""))
+        ctx.xDict += ("SumOfAlertsSeenToday" -> new Derive_SumOfAlertsSeenToday("SumOfAlertsSeenToday", "Int", xbar55, "null", "null", ""))
         var xbar56 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar56, "null", "null", ""))
+        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar56, "null", "null", ""))
         var xbar57 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EB1AlertHistoryUpdate" -> new Derive_EB1AlertHistoryUpdate("EB1AlertHistoryUpdate", "Boolean", xbar57, "null", "null", ""))
+        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar57, "null", "null", ""))
         var xbar58 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar58, "null", "null", ""))
+        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar58, "null", "null", ""))
         var xbar59 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar59, "null", "null", ""))
+        ctx.xDict += ("EB1AlertHistoryUpdate" -> new Derive_EB1AlertHistoryUpdate("EB1AlertHistoryUpdate", "Boolean", xbar59, "null", "null", ""))
         var xbar60 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar60, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar60, "null", "null", ""))
         var xbar61 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar61, "null", "null", ""))
+        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar61, "null", "null", ""))
+        var xbar62 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar62, "null", "null", ""))
+        var xbar63 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar63, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -630,7 +634,7 @@ class Derive_InNearOverdraftRange (name : String, dataType : String, validValues
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val InNearOverdraftRange = And(LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("NearOverdraftLimit").asInstanceOf[DoubleDataValue].Value), GreaterThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("NearOverdraftLimit").asInstanceOf[DoubleDataValue].Value, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
+        val InNearOverdraftRange = And(LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("NearOverdraftLimit").asInstanceOf[DoubleDataValue].Value), GreaterThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
         ctx.xDict.apply("InNearOverdraftRange").Value(new BooleanDataValue(InNearOverdraftRange))
           new BooleanDataValue(InNearOverdraftRange)
     }
@@ -679,7 +683,7 @@ class Derive_ShouldOnlineNOEventBeIssued (name : String, dataType : String, vali
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ShouldOnlineNOEventBeIssued = Not(Or(GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent), ctx.valueFor("NOAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY), GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent), 0)))
+        val ShouldOnlineNOEventBeIssued = Not(Or(GreaterThan(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent), 0), GreaterOrEqual(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY)))
         ctx.xDict.apply("ShouldOnlineNOEventBeIssued").Value(new BooleanDataValue(ShouldOnlineNOEventBeIssued))
           new BooleanDataValue(ShouldOnlineNOEventBeIssued)
     }
@@ -838,13 +842,37 @@ class Derive_ShouldODOfflineEventBeIssued (name : String, dataType : String, val
 }
 
 
-class Derive_ShouldOnlineODEventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+class Derive_ShouldOnlineOD3EventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ShouldOnlineODEventBeIssued = Not(Or(GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD003Sent), ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY), GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent), 0)))
-        ctx.xDict.apply("ShouldOnlineODEventBeIssued").Value(new BooleanDataValue(ShouldOnlineODEventBeIssued))
-          new BooleanDataValue(ShouldOnlineODEventBeIssued)
+        val ShouldOnlineOD3EventBeIssued = Not(Or(GreaterThan(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent), 0), GreaterOrEqual(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD003Sent, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY)))
+        ctx.xDict.apply("ShouldOnlineOD3EventBeIssued").Value(new BooleanDataValue(ShouldOnlineOD3EventBeIssued))
+          new BooleanDataValue(ShouldOnlineOD3EventBeIssued)
+    }
+
+}
+
+
+class Derive_ShouldOnlineOD2EventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : BooleanDataValue = {
+        val ShouldOnlineOD2EventBeIssued = Not(Or(GreaterThan(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD003Sent), 0), GreaterOrEqual(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD002Sent, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY)))
+        ctx.xDict.apply("ShouldOnlineOD2EventBeIssued").Value(new BooleanDataValue(ShouldOnlineOD2EventBeIssued))
+          new BooleanDataValue(ShouldOnlineOD2EventBeIssued)
+    }
+
+}
+
+
+class Derive_ShouldOnlineOD1EventBeIssued (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : BooleanDataValue = {
+        val ShouldOnlineOD1EventBeIssued = Not(Or(GreaterThan(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].NO001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD003Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD002Sent), 0), GreaterOrEqual(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].OD001Sent, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY)))
+        ctx.xDict.apply("ShouldOnlineOD1EventBeIssued").Value(new BooleanDataValue(ShouldOnlineOD1EventBeIssued))
+          new BooleanDataValue(ShouldOnlineOD1EventBeIssued)
     }
 
 }
@@ -854,7 +882,7 @@ class Derive_SendOD3Result (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : StringDataValue = {
-        val SendOD3Result = If(And(Equal(ctx.valueFor("InOD3Range").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("DebitHasCausedOD3Condition").asInstanceOf[BooleanDataValue].Value, true), Or(Equal(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("ShouldOnlineODEventBeIssued").asInstanceOf[BooleanDataValue].Value, true))))
+        val SendOD3Result = If(And(ctx.valueFor("InOD3Range").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("DebitHasCausedOD3Condition").asInstanceOf[BooleanDataValue].Value, Or(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("ShouldOnlineOD3EventBeIssued").asInstanceOf[BooleanDataValue].Value)))
         var result : String = if (SendOD3Result) { "OD3" } else { "NOTSET" }
         ctx.xDict.apply("SendOD3Result").Value(new StringDataValue(result))
         new StringDataValue(result)
@@ -867,7 +895,7 @@ class Derive_SendOD2Result (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : StringDataValue = {
-        val SendOD2Result = If(And(Equal(ctx.valueFor("InOD2Range").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("DebitHasCausedOD2Condition").asInstanceOf[BooleanDataValue].Value, true), Or(Equal(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("ShouldOnlineODEventBeIssued").asInstanceOf[BooleanDataValue].Value, true))))
+        val SendOD2Result = If(And(ctx.valueFor("InOD2Range").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("DebitHasCausedOD2Condition").asInstanceOf[BooleanDataValue].Value, Or(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("ShouldOnlineOD2EventBeIssued").asInstanceOf[BooleanDataValue].Value)))
         var result : String = if (SendOD2Result) { "OD2" } else { "NOTSET" }
         ctx.xDict.apply("SendOD2Result").Value(new StringDataValue(result))
         new StringDataValue(result)
@@ -880,7 +908,7 @@ class Derive_SendOD1Result (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : StringDataValue = {
-        val SendOD1Result = If(And(Equal(ctx.valueFor("InOD1Range").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("DebitHasCausedOD1Condition").asInstanceOf[BooleanDataValue].Value, true), Or(Equal(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("ShouldOnlineODEventBeIssued").asInstanceOf[BooleanDataValue].Value, true))))
+        val SendOD1Result = If(And(ctx.valueFor("InOD1Range").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("DebitHasCausedOD1Condition").asInstanceOf[BooleanDataValue].Value, Or(ctx.valueFor("ShouldODOfflineEventBeIssued").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("ShouldOnlineOD1EventBeIssued").asInstanceOf[BooleanDataValue].Value)))
         var result : String = if (SendOD1Result) { "OD1" } else { "NOTSET" }
         ctx.xDict.apply("SendOD1Result").Value(new StringDataValue(result))
         new StringDataValue(result)

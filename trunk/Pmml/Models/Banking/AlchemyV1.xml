@@ -474,7 +474,7 @@
 				<Apply function="greaterThan">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
 					<Apply function="+">
-						<FieldRef field="NearOverdraftLimit"/>
+						<FieldRef field="msg.ODR_LMT"/>
 						<FieldRef field="msg.EB_BUFFER"/>
 					</Apply>
 				</Apply>
@@ -535,29 +535,28 @@
 		</DerivedField>
 
 		<!--
-			Assess whether an online Near OD event notification is to be issued
+			Assess whether an online Over Draft 3 event notification is to be issued
 		-->
 		<DerivedField name="ShouldOnlineNOEventBeIssued" dataType="boolean" optype="categorical">
 			<Apply function="not">
 				<Apply function="or">
-					<Apply function="greaterOrEqual">
-						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
-						</Apply>
-						<FieldRef field="NOAlertParms.MAX_ALERTS_PER_DAY"/>
-					</Apply>
-					<Apply function="greaterOrEqual">
+					<Apply function="greaterThan">
 						<Apply function="+">
 							<FieldRef field="ClientAlertsToday.UTFSent"/>
 							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<FieldRef field="ClientAlertsToday.NO001Sent"/>
+						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
 					</Apply>
 				</Apply>
 			</Apply>
 		</DerivedField>
+
 
 		<!--
 			Assess whether we need to send a Near Overdraft result.
@@ -774,32 +773,80 @@
 		</DerivedField>
 
 		<!--
-			Assess whether an online Over Draft event notification is to be issued
+			Assess whether an online Over Draft 3 event notification is to be issued
 		-->
-		<DerivedField name="ShouldOnlineODEventBeIssued" dataType="boolean" optype="categorical">
+		<DerivedField name="ShouldOnlineOD3EventBeIssued" dataType="boolean" optype="categorical">
 			<Apply function="not">
 				<Apply function="or">
-					<Apply function="greaterOrEqual">
-						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD002Sent"/>
-							<FieldRef field="ClientAlertsToday.OD003Sent"/>
-						</Apply>
-						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
-					</Apply>
-					<Apply function="greaterOrEqual">
+					<Apply function="greaterThan">
 						<Apply function="+">
 							<FieldRef field="ClientAlertsToday.UTFSent"/>
 							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<FieldRef field="ClientAlertsToday.OD003Sent"/>
+						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
 					</Apply>
 				</Apply>
 			</Apply>
 		</DerivedField>
+
+		<!--
+			Assess whether an online Over Draft 3 event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineOD2EventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterThan">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD003Sent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<FieldRef field="ClientAlertsToday.OD002Sent"/>
+						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online Over Draft 3 event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineOD1EventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterThan">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD003Sent"/>
+							<FieldRef field="ClientAlertsToday.OD002Sent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<FieldRef field="ClientAlertsToday.OD001Sent"/>
+						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
 
 		<!--
 			Assess whether we need to send a Near Overdraft result.
@@ -807,23 +854,11 @@
 		<DerivedField name="SendOD3Result" dataType="string" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply function="equal">
-						<FieldRef field="InOD3Range"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
-					<Apply function="equal">
-						<FieldRef field="DebitHasCausedOD3Condition"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
+					<FieldRef field="InOD3Range"/>
+					<FieldRef field="DebitHasCausedOD3Condition"/>
 					<Apply function="or">
-						<Apply function="equal">
-							<FieldRef field="ShouldODOfflineEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
-						<Apply function="equal">
-							<FieldRef field="ShouldOnlineODEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
+						<FieldRef field="ShouldODOfflineEventBeIssued"/>
+						<FieldRef field="ShouldOnlineOD3EventBeIssued"/>
 					</Apply>
 				</Apply>
 				<Constant dataType="string">OD3</Constant> 
@@ -837,23 +872,11 @@
 		<DerivedField name="SendOD2Result" dataType="string" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply function="equal">
-						<FieldRef field="InOD2Range"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
-					<Apply function="equal">
-						<FieldRef field="DebitHasCausedOD2Condition"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
+					<FieldRef field="InOD2Range"/>
+					<FieldRef field="DebitHasCausedOD2Condition"/>
 					<Apply function="or">
-						<Apply function="equal">
-							<FieldRef field="ShouldODOfflineEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
-						<Apply function="equal">
-							<FieldRef field="ShouldOnlineODEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
+						<FieldRef field="ShouldODOfflineEventBeIssued"/>
+						<FieldRef field="ShouldOnlineOD2EventBeIssued"/>
 					</Apply>
 				</Apply>
 				<Constant dataType="string">OD2</Constant> 
@@ -867,23 +890,11 @@
 		<DerivedField name="SendOD1Result" dataType="string" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply function="equal">
-						<FieldRef field="InOD1Range"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
-					<Apply function="equal">
-						<FieldRef field="DebitHasCausedOD1Condition"/>
-						<Constant dataType="boolean">true</Constant>
-					</Apply>
+					<FieldRef field="InOD1Range"/>
+					<FieldRef field="DebitHasCausedOD1Condition"/>
 					<Apply function="or">
-						<Apply function="equal">
-							<FieldRef field="ShouldODOfflineEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
-						<Apply function="equal">
-							<FieldRef field="ShouldOnlineODEventBeIssued"/>
-							<Constant dataType="boolean">true</Constant>
-						</Apply>
+						<FieldRef field="ShouldODOfflineEventBeIssued"/>
+						<FieldRef field="ShouldOnlineOD1EventBeIssued"/>
 					</Apply>
 				</Apply>
 				<Constant dataType="string">OD1</Constant> 
