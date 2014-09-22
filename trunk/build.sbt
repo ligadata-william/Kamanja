@@ -71,7 +71,7 @@ lazy val BankPOCEnvContext = project.in(file("SampleApplication/Bank/BankEnvCont
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(MetadataAPI)
 
-lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
+// lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
 lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 

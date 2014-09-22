@@ -445,10 +445,11 @@ class FunctionDef extends BaseElemDef {
       case _ => false
     }
   }
-
-  def typeString: String = (FullName + "(" + args.map(arg => arg.Type.FullName).mkString(",") + ")").toLowerCase
+  def typeString : String = (FullName + "(" + args.map(arg => arg.Type.typeString).mkString(",") + ")").toLowerCase
+  //def tStr: String = (FullName + "(" + args.map(arg => arg.Type.FullName).mkString(",") + ")").toLowerCase
 
   def returnTypeString: String = if (retType != null) retType.typeString else "Unit"
+  //def AnotherImplementationForReturnTypeString: String = if (retType != null) retType.tStr else "Unit"
 }
 
 /** 
@@ -460,7 +461,7 @@ class FunctionDef extends BaseElemDef {
  *    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect 
  *    	and return whether the update happened as a Boolean.  This is needed so that the variable updates can be folded into 
  *      the flow of a pmml predicate interpretation.  Variable updates are currently done inside a class as a variable arg
- *      to the constructor.  These classes are added to the current derived field class before the enclosing '}' for the
+ *      to the constructor.  These classes are added just after the current derived field class' enclosing '}' for the
  *      class representing the derived field.  A global optimization of the derived field's function would be needed to 
  *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
  *      parts. 

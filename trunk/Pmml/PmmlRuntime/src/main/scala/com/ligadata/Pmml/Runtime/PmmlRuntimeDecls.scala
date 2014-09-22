@@ -259,6 +259,22 @@ object DataValue {
 			case _ : Throwable => false 
 		}
 	} 
+
+	def defaultValue(dataType : String) : DataValue = {
+		val default : DataValue = dataType match {
+		  case "string" => new StringDataValue("NotSet")
+		  case "integer" =>  new IntDataValue(0)
+		  case "long" =>  new LongDataValue(0)
+		  case "float" =>  new FloatDataValue(0) 
+		  case "double" =>  new DoubleDataValue(0) 
+		  case "date" =>  new DateDataValue(LocalDate.now()) 
+		  case "dateTime" =>  new DateTimeDataValue(DateTime.now()) 
+		  case "time" =>  new TimeDataValue(LocalTime.now()) 
+		  
+		  case _ => new AnyDataValue(List[String]())
+		}
+		default
+	}
 }
 
 class IntDataValue (var value : Int) extends DataValue("Int") {
@@ -457,7 +473,7 @@ class DataField(val name : String, val dataType : String, values : ArrayBuffer[(
 	
 	var valueHasBeenSet : Boolean = false
 	var valueRef : DataValue = null
-	def Value : DataValue = valueRef
+	def Value : DataValue = { if (valueRef == null) DataValue.defaultValue(dataType) else valueRef }
 	def Value(valu : DataValue) { 
 	  valueRef = valu 
 	  valueHasBeenSet = true
@@ -473,7 +489,7 @@ class DataField(val name : String, val dataType : String, values : ArrayBuffer[(
 class DerivedField(val name : String, val dataType : String, values : ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) {
 	var valueHasBeenSet : Boolean = false
 	var valueRef : DataValue = null
-	def Value : DataValue = valueRef
+	def Value : DataValue =  { if (valueRef == null) DataValue.defaultValue(dataType) else valueRef }
 	def Value(valu : DataValue) { 
 	  	valueRef = valu 
 	  	valueHasBeenSet = true

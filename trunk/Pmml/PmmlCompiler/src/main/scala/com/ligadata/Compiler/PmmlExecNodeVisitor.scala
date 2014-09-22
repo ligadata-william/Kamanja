@@ -89,70 +89,53 @@ class SimpleRuleCollector(ctx : PmmlContext) extends PmmlExecVisitor {
 	}
 }
 
-/** Derived fields in the transformation dictionary can have a top level function that contains categorized return
- *  values.  These are quite common with the various MapValue types.  It can also be seen with the boolean functions, 
- *  especially used with if in the examples one sees on the web examples.  Virtually any of them could be used
- *  this way, however (e.g., greaterOrEqual, etc). 
+/** Derived fields in the transformation dictionary with 'if' functions are processed here.
+ *  The if statement's true and false actions are removed from the child list for the node and placed
+ *  in the apply (if) function's that contains categorized value array.  
  *  
- *  This class strips the categorized values from the top level apply functions and adds them to its 
- *  categorizedValues array.  That is, these categorized values are removed from the Children of the apply node
- *  and moved to the array of categorized values.  This simplifies the code generation later.
- *  
- *  For now, the focus is on the boolean functions whose derived (parent) field has an optype of 'categorical'
- *  The last two xConstants are removed from the Child list of the top level apply.
+ *  These actions are rendered after the 'if' predicate is computed.  NOTE: Only the 'top' level
+ *  applies are treated this way.  If there are if's nested at lower levels in a nested set of apply elements,
+ *  they will be rendered in place.  That sort of expression is untested at this point, but we need to support it.
  */
-class CategorizedReturnValueTransform (ctx : PmmlContext) extends PmmlExecVisitor {
+
+class IfActionTransform (ctx : PmmlContext) extends PmmlExecVisitor {
   
 	override def Visit(node : PmmlExecNode) {
 		node match {
 		  case x : xDerivedField => {
-			  if (categorizedReturnValuesPresent(node)) {
-				  stripCategoryConstantsFromApplysChildren(node)
+			  if (IfActionPresent(node)) {
+				  stripIfActionsFromApplysChildren(node)
 			  }
 		  }
 		  case _ => None
 		}
 	}
 	
-	def categorizedReturnValuesPresent(node : PmmlExecNode) : Boolean = {
+	def IfActionPresent(node : PmmlExecNode) : Boolean = {
  
 		val thisIsDerivedField = if (node.isInstanceOf[xDerivedField]) true else false
-		var categoryConstCount = 0
+		var ifActionExprCnt = 0
 		if (thisIsDerivedField) {
 			val derivedFld : xDerivedField = node.asInstanceOf[xDerivedField]
 			
 			val thisDerivedFieldHasApply : Boolean = if (derivedFld.Children.length == 1 && 
 			    								derivedFld.Children.head.isInstanceOf[xApply]) 
 															{ true } else { false }
-			val isCategoricalType : Boolean = if (derivedFld.optype == "categorical" && thisDerivedFieldHasApply) true else false
-			categoryConstCount = if (isCategoricalType) {
+			ifActionExprCnt = if (thisDerivedFieldHasApply) {
 				val topLevelApply : xApply = derivedFld.Children.head.asInstanceOf[xApply]
-				val numConsts = topLevelApply.Children.filter( _.isInstanceOf[xConstant]).length
 				val childCnt : Int = topLevelApply.Children.length
 				/** 
-				 *  If the top level function is one of our udfs and could have numerous constants as arguments 
+				 *  If the top level function is one of our udfs and could have numerous arguments... 
 				 *  make sure they are preserved. 
 				 */
 				val fcn : String = topLevelApply.function
 				val (minParmsNeeded, maxParmsNeeded) : (Int,Int) = ctx.MetadataHelper.minMaxArgsForTheseFcns(fcn)
 				
-				ctx.logger.debug(s"categorizedReturnValuesPresent() - topLevelApply fcn = $fcn")
-				if (fcn == "if" && numConsts >= 2 && (childCnt - maxParmsNeeded) >= 2) { 
-					/** verify there at least the last two are constants */
+				if (fcn == "if" && (childCnt - maxParmsNeeded) >= 2) { 
 					
-					var cnt : Int = 0
-					//topLevelApply.Children.foreach((child) => {
-					//	val rep : String = child.asString
-					//	ctx.logger.debug(s"child($cnt) = $rep")
-					//	cnt += 1
-				  	//}) 
-					val lastTwo : Int = if (topLevelApply.Children.apply(childCnt - 1).isInstanceOf[xConstant] && 
-											topLevelApply.Children.apply(childCnt - 2).isInstanceOf[xConstant]) {
-						2
-					} else {
-						0
-					} 
-					lastTwo 
+					ctx.logger.debug(s"categorizedReturnValuesPresent() - topLevelApply 'if' fcn = $fcn")
+					
+					2
 				} else {
 					0
 				}
@@ -160,22 +143,23 @@ class CategorizedReturnValueTransform (ctx : PmmlContext) extends PmmlExecVisito
 				0
 			}
 		}
-		if (categoryConstCount > 0) true else false
+		if (ifActionExprCnt > 0) true else false
 	}
 	
 	/** 
-	 *  pre-condition : categorizedReturnValuesPresent(node) == true
+	 *  Strip the if action elements from the supplied 'if' apply node leaving just the predicate, reserving them 
+	 *  in the apply's IfAction array.
 	 *  
-	 *  call it without this pre-condition in mind and see what happens...
+	 *  pre-condition : IfActionPresent(node) == true
 	 */
-	def stripCategoryConstantsFromApplysChildren(node : PmmlExecNode) {
+	private def stripIfActionsFromApplysChildren(node : PmmlExecNode) : Unit = {
 		val topLevelApply : xApply = node.Children.head.asInstanceOf[xApply]
 		val n : Int = topLevelApply.Children.length - 2
 		val (children, catValues) = topLevelApply.Children.splitAt(n)
 		catValues.foreach((value) => {
-				val aXConst : xConstant = value.asInstanceOf[xConstant]
-				topLevelApply.addCategorizedValue(aXConst)
-		  	}) 
+			val aNode : PmmlExecNode = value.asInstanceOf[PmmlExecNode]
+			topLevelApply.addIfAction(aNode)
+		}) 
 		topLevelApply.replaceChildren(children)
 	}
 
