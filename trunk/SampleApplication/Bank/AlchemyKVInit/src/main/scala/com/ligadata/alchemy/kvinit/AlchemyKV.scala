@@ -43,7 +43,7 @@ container def jar, doing introspection, dynamic loading and the rest.  This is l
 another day.
 
 The kvname serves as both the name of the physical hdb to be written to disk and the 
-name of the container (e.g., CustomerPreferences_100, AlertParameters_100, AlertHistory_100).
+name of the container (e.g., CustomerPreferences_100, AlertParameters_100, AlertHistory_100, TukTier_100).
 
 It is expected that the first row of the csv file will be the column names.  One of the names
 must be specified as the key field name.  Failure to find this name causes termination and
@@ -226,6 +226,7 @@ class AlchemyKV(val kvname : String
             case "CustomerPreferences_100" =>  new CustomerPreferences_100
             case "AlertParameters_100" =>  new AlertParameters_100
             case "AlertHistory_100" => new AlertHistory_100
+            case "TukTier_100" => new TukTier_100
             case _ => {
                 logger.error(s"Container name ${'"'}$containerName${'"'} supplied in the --kvname argument is unknown... aborting...")
                 sys.exit

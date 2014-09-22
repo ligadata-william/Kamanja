@@ -148,6 +148,10 @@ java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertHistory_100 --kvpath $ON
 echo "Prepare the test kvstore - AlertParameters map..."
 java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname AlertParameters_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertParameters.csv --keyfieldname ALERT
 
+# Prepare the test kvstore - TukTier map 
+echo "Prepare the test kvstore - TukTier map..."
+java -jar $ONLEPLIBPATH/AlchemyKVInit-1.0 --kvname TukTier_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Bank/AlchemyKVInit/src/main/resources/EnvContextContainerData/TukTier.csv --keyfieldname TIERSET_ID
+
 
 # *******************************
 # All that is left is to run the OnLEPManager

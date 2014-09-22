@@ -179,6 +179,7 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
 		if (container != null) {
 			val key : String = elementkey.toString.toLowerCase()
 			container(key) = value
+			logger.info(s"Replacing container '$containerName' entry for key '$key' ... value = \n${value.toString}")
 			//writeThru
 		}
 		// bugbug: throw exception

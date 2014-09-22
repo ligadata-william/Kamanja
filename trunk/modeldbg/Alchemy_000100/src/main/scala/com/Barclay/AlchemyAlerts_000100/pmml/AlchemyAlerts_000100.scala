@@ -177,49 +177,51 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SendOD2Result" -> new Derive_SendOD2Result("SendOD2Result", "String", xbar28, "null", "null", ""))
         var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedOD1Condition" -> new Derive_DebitHasCausedOD1Condition("DebitHasCausedOD1Condition", "Boolean", xbar29, "null", "null", ""))
+        ctx.xDict += ("ClientTierLimits" -> new Derive_ClientTierLimits("ClientTierLimits", "Any", xbar29, "null", "null", ""))
         var xbar30 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("NearOverdraftLimit" -> new Derive_NearOverdraftLimit("NearOverdraftLimit", "Double", xbar30, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedOD1Condition" -> new Derive_DebitHasCausedOD1Condition("DebitHasCausedOD1Condition", "Boolean", xbar30, "null", "null", ""))
         var xbar31 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldNOOfflineEventBeIssued" -> new Derive_ShouldNOOfflineEventBeIssued("ShouldNOOfflineEventBeIssued", "Boolean", xbar31, "null", "null", ""))
+        ctx.xDict += ("NearOverdraftLimit" -> new Derive_NearOverdraftLimit("NearOverdraftLimit", "Double", xbar31, "null", "null", ""))
         var xbar32 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("LBAlertParms" -> new Derive_LBAlertParms("LBAlertParms", "Any", xbar32, "null", "null", ""))
+        ctx.xDict += ("ShouldNOOfflineEventBeIssued" -> new Derive_ShouldNOOfflineEventBeIssued("ShouldNOOfflineEventBeIssued", "Boolean", xbar32, "null", "null", ""))
         var xbar33 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineLBEventBeIssued" -> new Derive_ShouldOnlineLBEventBeIssued("ShouldOnlineLBEventBeIssued", "Boolean", xbar33, "null", "null", ""))
+        ctx.xDict += ("LBAlertParms" -> new Derive_LBAlertParms("LBAlertParms", "Any", xbar33, "null", "null", ""))
         var xbar34 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedNOCondition" -> new Derive_DebitHasCausedNOCondition("DebitHasCausedNOCondition", "Boolean", xbar34, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineLBEventBeIssued" -> new Derive_ShouldOnlineLBEventBeIssued("ShouldOnlineLBEventBeIssued", "Boolean", xbar34, "null", "null", ""))
         var xbar35 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar35, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedNOCondition" -> new Derive_DebitHasCausedNOCondition("DebitHasCausedNOCondition", "Boolean", xbar35, "null", "null", ""))
         var xbar36 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar36, "null", "null", ""))
+        ctx.xDict += ("ODAlertParms" -> new Derive_ODAlertParms("ODAlertParms", "Any", xbar36, "null", "null", ""))
         var xbar37 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar37, "null", "null", ""))
+        ctx.xDict += ("SendOD1Result" -> new Derive_SendOD1Result("SendOD1Result", "String", xbar37, "null", "null", ""))
         var xbar38 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar38, "null", "null", ""))
+        ctx.xDict += ("SendOD2ResultDetermination" -> new Derive_SendOD2ResultDetermination("SendOD2ResultDetermination", "Boolean", xbar38, "null", "null", ""))
         var xbar39 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar39, "null", "null", ""))
+        ctx.xDict += ("EBOfflineEvent" -> new Derive_EBOfflineEvent("EBOfflineEvent", "Boolean", xbar39, "null", "null", ""))
         var xbar40 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar40, "null", "null", ""))
+        ctx.xDict += ("InOD1Range" -> new Derive_InOD1Range("InOD1Range", "Boolean", xbar40, "null", "null", ""))
         var xbar41 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar41, "null", "null", ""))
+        ctx.xDict += ("AcctHasODLimit" -> new Derive_AcctHasODLimit("AcctHasODLimit", "Boolean", xbar41, "null", "null", ""))
         var xbar42 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar42, "null", "null", ""))
+        ctx.xDict += ("PreviousBalance" -> new Derive_PreviousBalance("PreviousBalance", "Double", xbar42, "null", "null", ""))
         var xbar43 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar43, "null", "null", ""))
+        ctx.xDict += ("InEmergencyBorrowRange" -> new Derive_InEmergencyBorrowRange("InEmergencyBorrowRange", "Boolean", xbar43, "null", "null", ""))
         var xbar44 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar44, "null", "null", ""))
+        ctx.xDict += ("ShouldOnlineEBEventBeIssued" -> new Derive_ShouldOnlineEBEventBeIssued("ShouldOnlineEBEventBeIssued", "Boolean", xbar44, "null", "null", ""))
         var xbar45 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar45, "null", "null", ""))
+        ctx.xDict += ("InNearOverdraftRange" -> new Derive_InNearOverdraftRange("InNearOverdraftRange", "Boolean", xbar45, "null", "null", ""))
         var xbar46 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar46, "null", "null", ""))
+        ctx.xDict += ("InOD2Range" -> new Derive_InOD2Range("InOD2Range", "Boolean", xbar46, "null", "null", ""))
         var xbar47 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar47, "null", "null", ""))
+        ctx.xDict += ("SendOD1ResultDetermination" -> new Derive_SendOD1ResultDetermination("SendOD1ResultDetermination", "Boolean", xbar47, "null", "null", ""))
         var xbar48 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar48, "null", "null", ""))
+        ctx.xDict += ("DebitHasCausedEBCondition" -> new Derive_DebitHasCausedEBCondition("DebitHasCausedEBCondition", "Boolean", xbar48, "null", "null", ""))
         var xbar49 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar49, "null", "null", ""))
+        ctx.xDict += ("SendEBResult" -> new Derive_SendEBResult("SendEBResult", "Boolean", xbar49, "null", "null", ""))
         var xbar50 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar50, "null", "null", ""))
+        ctx.xDict += ("NOAlertParms" -> new Derive_NOAlertParms("NOAlertParms", "Any", xbar50, "null", "null", ""))
+        var xbar51 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("SendNOResult" -> new Derive_SendNOResult("SendNOResult", "String", xbar51, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -306,6 +308,18 @@ class Derive_ClientPrefs (name : String, dataType : String, validValues: ArrayBu
         val ClientPrefs = Get(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "CustomerPreferences", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_ACC_NUM)
         ctx.xDict.apply("ClientPrefs").Value(new AnyDataValue(ClientPrefs))
           new AnyDataValue(ClientPrefs)
+    }
+
+}
+
+
+class Derive_ClientTierLimits (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val ClientTierLimits = Get(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "TukTier", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].RISK_TIER_ID)
+        ctx.xDict.apply("ClientTierLimits").Value(new AnyDataValue(ClientTierLimits))
+          new AnyDataValue(ClientTierLimits)
     }
 
 }
@@ -615,7 +629,7 @@ class Derive_InOD3Range (name : String, dataType : String, validValues: ArrayBuf
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val InOD3Range = And(LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T2_LIMIT), GreaterThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
+        val InOD3Range = And(LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T2_END_AMT), GreaterThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
         ctx.xDict.apply("InOD3Range").Value(new BooleanDataValue(InOD3Range))
           new BooleanDataValue(InOD3Range)
     }
@@ -627,7 +641,7 @@ class Derive_DebitHasCausedOD3Condition (name : String, dataType : String, valid
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val DebitHasCausedOD3Condition = And(GreaterOrEqual(ctx.valueFor("PreviousBalance").asInstanceOf[DoubleDataValue].Value, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T2_LIMIT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T2_LIMIT))
+        val DebitHasCausedOD3Condition = And(GreaterOrEqual(ctx.valueFor("PreviousBalance").asInstanceOf[DoubleDataValue].Value, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T2_END_AMT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T2_END_AMT))
         ctx.xDict.apply("DebitHasCausedOD3Condition").Value(new BooleanDataValue(DebitHasCausedOD3Condition))
           new BooleanDataValue(DebitHasCausedOD3Condition)
     }
@@ -639,7 +653,7 @@ class Derive_InOD2Range (name : String, dataType : String, validValues: ArrayBuf
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val InOD2Range = And(GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T2_LIMIT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T1_LIMIT))
+        val InOD2Range = And(GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T2_END_AMT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T1_END_AMT))
         ctx.xDict.apply("InOD2Range").Value(new BooleanDataValue(InOD2Range))
           new BooleanDataValue(InOD2Range)
     }
@@ -651,7 +665,7 @@ class Derive_DebitHasCausedOD2Condition (name : String, dataType : String, valid
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val DebitHasCausedOD2Condition = And(GreaterOrEqual(ctx.valueFor("PreviousBalance").asInstanceOf[DoubleDataValue].Value, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T1_LIMIT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T1_LIMIT))
+        val DebitHasCausedOD2Condition = And(GreaterOrEqual(ctx.valueFor("PreviousBalance").asInstanceOf[DoubleDataValue].Value, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T1_END_AMT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T1_END_AMT))
         ctx.xDict.apply("DebitHasCausedOD2Condition").Value(new BooleanDataValue(DebitHasCausedOD2Condition))
           new BooleanDataValue(DebitHasCausedOD2Condition)
     }
@@ -663,7 +677,7 @@ class Derive_InOD1Range (name : String, dataType : String, validValues: ArrayBuf
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val InOD1Range = And(GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)), GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].OD_T1_LIMIT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].OD_BUFFER))
+        val InOD1Range = And(GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)), GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T1_END_AMT), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].OD_BUFFER))
         ctx.xDict.apply("InOD1Range").Value(new BooleanDataValue(InOD1Range))
           new BooleanDataValue(InOD1Range)
     }
