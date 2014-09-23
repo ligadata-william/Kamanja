@@ -132,6 +132,7 @@ gzip -c transactionsAlerts.csv > transactionsAlerts.gz
 gzip -c OneCustomerTransactionsAlerts.csv > OneCustomerTransactionsAlerts.gz
 gzip -c OneCustomerTransactionsNoAlerts.csv > OneCustomerTransactionsNoAlerts.gz
 gzip -c alltransactionsDateTimeOrder.csv > alltransactionsDateTimeOrder.gz
+gzip -c OneCustomerTransactionsAlerts_OD123.csv > OneCustomerTransactionsAlerts_OD123.gz
 
 cp *gz $ONLEPLIBPATH/msgdata/
 

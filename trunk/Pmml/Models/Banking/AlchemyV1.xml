@@ -452,11 +452,14 @@
 		<DerivedField name="NearOverdraftLimit" dataType="double" optype="continuous">
 			<Apply function="-">
 				<FieldRef field="msg.ODR_LMT"/>
-				<Apply function="*">
+				<Apply function="-">
 					<FieldRef field="msg.ODR_LMT"/>
-					<Apply function="/">
-						<FieldRef field="ClientPrefs.NO_FACTOR"/>
-						<Constant dataType="double">100</Constant>
+					<Apply function="*">
+						<FieldRef field="msg.ODR_LMT"/>
+						<Apply function="/">
+							<FieldRef field="ClientPrefs.NO_FACTOR"/>
+							<Constant dataType="double">100</Constant>
+						</Apply>
 					</Apply>
 				</Apply>
 			</Apply>
