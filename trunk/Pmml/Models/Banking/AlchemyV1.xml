@@ -229,11 +229,11 @@
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
 					<Constant dataType="string">AlertType</Constant>
-					<Constant dataType="string">EB1</Constant> 
+					<Constant dataType="string">EB2</Constant> 
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
 					<Constant dataType="string">AlertType</Constant>
-					<Constant dataType="string">EB2</Constant> 
+					<Constant dataType="string">EB1</Constant> 
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -251,7 +251,7 @@
 						</Apply>
 						<FieldRef field="EBAlertParms.MAX_ALERTS_PER_DAY"/>
 					</Apply>
-					<Apply function="greaterOrEqual">
+					<Apply function="greaterThan">
 						<Apply function="+">
 							<FieldRef field="ClientAlertsToday.UTFSent"/>
 							<FieldRef field="ClientAlertsToday.PTFSent"/>
@@ -277,7 +277,7 @@
 		-->
 		<DerivedField name="InEmergencyBorrowRange" dataType="boolean" optype="categorical">
 			<Apply function="and">
-				<Apply function="greaterThan">
+				<Apply function="greaterOrEqual">
 					<FieldRef field="msg.RUN_LDG_XAU"/>
 					<Apply function="+">
 						<FieldRef field="msg.ODR_LMT"/>
@@ -433,7 +433,10 @@
 				<FieldRef field="SendEBResult"/>
 
 				<FieldRef field="UpdateEBAlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -610,7 +613,10 @@
 				</Apply>
 
 				<FieldRef field="UpdateNOAlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -935,7 +941,10 @@
 				</Apply>
 
 				<FieldRef field="UpdateOD3AlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -969,7 +978,10 @@
 				</Apply>
 
 				<FieldRef field="UpdateOD2AlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -1003,7 +1015,10 @@
 				</Apply>
 
 				<FieldRef field="UpdateOD1AlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 
@@ -1190,7 +1205,10 @@
 				</Apply>
 
 				<FieldRef field="UpdateLBAlertAction"/>
-				<Constant dataType="boolean">false</Constant>
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/> <!-- Nevertheless make sure fields are materialized -->
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
 			</Apply>
 		</DerivedField>
 

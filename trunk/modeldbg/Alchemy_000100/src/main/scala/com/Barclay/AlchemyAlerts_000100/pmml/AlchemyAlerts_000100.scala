@@ -466,7 +466,7 @@ class Derive_EBAlertType (name : String, dataType : String, validValues: ArrayBu
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val EBAlertType = If(GreaterOrEqual(ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MAX_EB_CNT, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T6_MAX_PER_PERIOD_CNT))
-        var result : Boolean = if (EBAlertType) { Put("AlertType", "EB1") } else { Put("AlertType", "EB2") }
+        var result : Boolean = if (EBAlertType) { Put("AlertType", "EB2") } else { Put("AlertType", "EB1") }
         ctx.xDict.apply("EBAlertType").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -478,7 +478,7 @@ class Derive_ShouldOnlineEBEventBeIssued (name : String, dataType : String, vali
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ShouldOnlineEBEventBeIssued = Not(Or(GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent), ctx.valueFor("EBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY), GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent), 0)))
+        val ShouldOnlineEBEventBeIssued = Not(Or(GreaterOrEqual(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB001Sent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].EB002Sent), ctx.valueFor("EBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].MAX_ALERTS_PER_DAY), GreaterThan(Plus(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].UTFSent, ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100].PTFSent), 0)))
         ctx.xDict.apply("ShouldOnlineEBEventBeIssued").Value(new BooleanDataValue(ShouldOnlineEBEventBeIssued))
           new BooleanDataValue(ShouldOnlineEBEventBeIssued)
     }
@@ -502,7 +502,7 @@ class Derive_InEmergencyBorrowRange (name : String, dataType : String, validValu
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val InEmergencyBorrowRange = And(GreaterThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ANT_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].UNP_BUFF)), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
+        val InEmergencyBorrowRange = And(GreaterOrEqual(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ANT_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].UNP_BUFF)), LessThan(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU, Plus(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ODR_LMT, ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].EB_BUFFER)))
         ctx.xDict.apply("InEmergencyBorrowRange").Value(new BooleanDataValue(InEmergencyBorrowRange))
           new BooleanDataValue(InEmergencyBorrowRange)
     }
@@ -610,7 +610,7 @@ class Derive_SendEBResultDetermination (name : String, dataType : String, validV
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendEBResultDetermination = If(ctx.valueFor("SendEBResult").asInstanceOf[BooleanDataValue].Value)
-        var result : Boolean = if (SendEBResultDetermination) { ctx.valueFor("UpdateEBAlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendEBResultDetermination) { ctx.valueFor("UpdateEBAlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendEBResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -725,7 +725,7 @@ class Derive_SendNOResultDetermination (name : String, dataType : String, validV
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendNOResultDetermination = If(Equal(ctx.valueFor("SendNOResult").asInstanceOf[StringDataValue].Value, "NO1"))
-        var result : Boolean = if (SendNOResultDetermination) { ctx.valueFor("UpdateNOAlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendNOResultDetermination) { ctx.valueFor("UpdateNOAlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendNOResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -938,7 +938,7 @@ class Derive_SendOD3ResultDetermination (name : String, dataType : String, valid
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendOD3ResultDetermination = If(Equal(ctx.valueFor("SendOD3Result").asInstanceOf[StringDataValue].Value, "OD3"))
-        var result : Boolean = if (SendOD3ResultDetermination) { ctx.valueFor("UpdateOD3AlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendOD3ResultDetermination) { ctx.valueFor("UpdateOD3AlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendOD3ResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -967,7 +967,7 @@ class Derive_SendOD2ResultDetermination (name : String, dataType : String, valid
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendOD2ResultDetermination = If(Equal(ctx.valueFor("SendOD2Result").asInstanceOf[StringDataValue].Value, "OD2"))
-        var result : Boolean = if (SendOD2ResultDetermination) { ctx.valueFor("UpdateOD2AlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendOD2ResultDetermination) { ctx.valueFor("UpdateOD2AlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendOD2ResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -996,7 +996,7 @@ class Derive_SendOD1ResultDetermination (name : String, dataType : String, valid
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendOD1ResultDetermination = If(Equal(ctx.valueFor("SendOD1Result").asInstanceOf[StringDataValue].Value, "OD1"))
-        var result : Boolean = if (SendOD1ResultDetermination) { ctx.valueFor("UpdateOD1AlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendOD1ResultDetermination) { ctx.valueFor("UpdateOD1AlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendOD1ResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -1111,7 +1111,7 @@ class Derive_SendLBResultDetermination (name : String, dataType : String, validV
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val SendLBResultDetermination = If(Equal(ctx.valueFor("SendLBResult").asInstanceOf[StringDataValue].Value, "LB1"))
-        var result : Boolean = if (SendLBResultDetermination) { ctx.valueFor("UpdateLBAlertAction").asInstanceOf[BooleanDataValue].Value } else { false }
+        var result : Boolean = if (SendLBResultDetermination) { ctx.valueFor("UpdateLBAlertAction").asInstanceOf[BooleanDataValue].Value } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, false) }
         ctx.xDict.apply("SendLBResultDetermination").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }

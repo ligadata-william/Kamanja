@@ -133,7 +133,7 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 						        , (MdMgr.sysNS, "LB_REG_FLG", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "LB_LIMIT", MdMgr.sysNS, "Double", false)
 						        , (MdMgr.sysNS, "OD_REG_FLG", MdMgr.sysNS, "Int", false)
-						        , (MdMgr.sysNS, "MAX_EB_CNT", MdMgr.sysNS, "Char", false)
+						        , (MdMgr.sysNS, "MAX_EB_CNT", MdMgr.sysNS, "Int", false)
 						        , (MdMgr.sysNS, "LAST_UPDATE_TS", MdMgr.sysNS, "String", false)
 						        , (MdMgr.sysNS, "CONT_ID", MdMgr.sysNS, "Long", false)
 						        , (MdMgr.sysNS, "MOBILE_NUMBER", MdMgr.sysNS, "String", false)
