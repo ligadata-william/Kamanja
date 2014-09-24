@@ -38,7 +38,7 @@ import org.apache.zookeeper.data.{ACL, Id, Stat}
 
 case class JsonException(message: String) extends Exception(message)
 
-case class TypeDef(MetadataType:String, NameSpace: String, Name: String, TypeTypeName:String, TypeNameSpace: String, TypeName:String, PhysicalName:String, Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions :Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]] )
+case class TypeDef(MetadataType:String, NameSpace: String, Name: String, TypeTypeName:String, TypeNameSpace: String, TypeName:String, PhysicalName:String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions :Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]] )
 case class TypeDefList(Types: List[TypeDef])
 
 case class Argument(ArgName: String, ArgTypeNameSpace:String, ArgTypeName: String)
@@ -49,13 +49,15 @@ case class FunctionList(Functions: List[Function])
 case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String)
 case class ConceptList(Concepts: List[Concept])
 
-case class Attr(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String)
-case class StructureTypeDef(Attributes: List[Attr])
-case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], StructTypeDef: StructureTypeDef)
+case class Attr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
+case class InputAttr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
+case class OutputAttr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
+
+case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
-case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, InputAttributes: List[Attr], OutputAttributes: List[Attr], DependencyJars: List[String])
+case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[InputAttr], OutputAttributes: List[OutputAttr])
 case class ModelDefinition(Model: ModelInfo)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -67,6 +69,7 @@ case class FunctionListParsingException(e: String) extends Throwable(e)
 case class FunctionParsingException(e: String) extends Throwable(e)
 case class TypeDefListParsingException(e: String) extends Throwable(e)
 case class TypeParsingException(e: String) extends Throwable(e)
+case class TypeDefProcessingException(e: String) extends Throwable(e)
 case class ConceptListParsingException(e: String) extends Throwable(e)
 case class ConceptParsingException(e: String) extends Throwable(e)
 case class MessageDefParsingException(e: String) extends Throwable(e)
@@ -190,7 +193,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
 	case o:ScalarTypeDef => {
 	  MdMgr.GetMdMgr.AddScalar(o)
-	  SaveObject(key,value,otherStore)
+	  SaveObject(key,value,typeStore)
 	}
 	case o:ArrayTypeDef => {
 	  MdMgr.GetMdMgr.AddArray(o)
@@ -358,7 +361,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("Get the object from store, key => " + KeyAsStr(k))
       store.get(k,o)
-      logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
+      //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
       o
     } catch {
       case e:Exception => {
@@ -498,22 +501,22 @@ object MetadataAPIImpl extends MetadataAPI{
 	  }
 	}
 	case _ => {
-	  throw new TypeDefListParsingException("Internal Error: Unknown Type " + typ.MetadataType)
+	  throw new TypeDefProcessingException("Internal Error: Unknown Type " + typ.MetadataType)
 	}
       }
       typeDef
     }catch {
-      case e:Exception => {
-	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	val typeName = keyValues.mkString(",")
-	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	typeDef
-      }
       case e:AlreadyExistsException => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
 	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	typeDef
+	throw new AlreadyExistsException(e.getMessage())
+      }
+      case e:Exception => {
+	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
+	val typeName = keyValues.mkString(",")
+	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	throw new TypeDefProcessingException(e.getMessage())
       }
     }
   }
@@ -535,11 +538,14 @@ object MetadataAPIImpl extends MetadataAPI{
       typeList.Types.map(typ => {
 	try{
 	  val typeDefObj:BaseTypeDef = processTypeDef(typ)
-	  if( typeDefObj != null ){
-	    typeDefList :+ typeDefObj
-	  }
+	  typeDefList :+ typeDefObj
 	}catch {
-	  case e:Exception => {
+	  case e:AlreadyExistsException => {
+	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
+	    val typeName = keyValues.mkString(",")
+	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	  }
+	  case e:TypeDefProcessingException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
 	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
@@ -607,7 +613,7 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("Parsed the json : " + contDefJson)
 
       val ContDefInst = json.extract[ContainerDefinition]
-      val attrList = ContDefInst.Container.StructTypeDef.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.TypeNameSpace,attr.TypeName,false))
+      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false))
       val contDef = MdMgr.GetMdMgr.MakeFixedContainer(ContDefInst.Container.NameSpace,
 						      ContDefInst.Container.Name,
 						      ContDefInst.Container.PhysicalName,
@@ -731,10 +737,10 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("Parsed the json : " + msgDefJson)
 
       val MsgDefInst = json.extract[MessageDefinition]
-      val attrList = MsgDefInst.Message.StructTypeDef.Attributes
+      val attrList = MsgDefInst.Message.Attributes
       var attrList1 = List[(String, String, String,String,Boolean)]()
       for (attr <- attrList) {
-	attrList1 ::= (attr.NameSpace,attr.Name, attr.TypeNameSpace,attr.TypeName,false)
+	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false)
       }
       val msgDef = MdMgr.GetMdMgr.MakeFixedMsg(MsgDefInst.Message.NameSpace,
 					       MsgDefInst.Message.Name,
@@ -774,13 +780,13 @@ object MetadataAPIImpl extends MetadataAPI{
       val inputAttrList = ModDefInst.Model.InputAttributes
       var inputAttrList1 = List[(String, String, String,String,Boolean)]()
       for (attr <- inputAttrList) {
-	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.TypeNameSpace,attr.TypeName,false)
+	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false)
       }
 
       val outputAttrList = ModDefInst.Model.OutputAttributes
       var outputAttrList1 = List[(String, String, String)]()
       for (attr <- outputAttrList) {
-	outputAttrList1 ::= (attr.Name, attr.TypeNameSpace,attr.TypeName)
+	outputAttrList1 ::= (attr.Name, attr.Type.NameSpace,attr.Type.Name)
       }
 
       val modDef = MdMgr.GetMdMgr.MakeModelDef(ModDefInst.Model.NameSpace,
@@ -850,58 +856,53 @@ object MetadataAPIImpl extends MetadataAPI{
 	pretty(render(json))
       }
       case o:MessageDef => {
-	var cTypeStr:String = "StructTypeDef"
 	// Assume o.containerType is checked for not being null
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    cTypeStr = "StructTypeDef"
-	  }
-	  case _ => {
-            throw new UnsupportedObjectException(s"toJson doesn't support the objectType of $mdObj.name  yet")
-	  }
-	}	    
-	val json = ("Message"  -> ("NameSpace" -> o.nameSpace) ~
+	val json = ("Message"  -> 
+		    ("NameSpace" -> o.nameSpace) ~
 		    ("Name"      -> o.name) ~
 		    ("FullName"  -> o.FullName) ~
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
-		    (cTypeStr -> 
-		       ("Attributes"    -> o.containerType.asInstanceOf[StructTypeDef].memberDefs.toList.map{ arg => 
-			 (("NameSpace"      -> arg.nameSpace) ~
-			  ("Name"           -> arg.name) ~
-			  ("TypeNameSpace"  -> arg.typeDef.nameSpace) ~
-			  ("TypeName"       -> arg.typeDef.name)
-			)}))
-		  )
-	pretty(render(json))
+		    ("DependencyJars" -> o.dependencyJarNames.toList))
+	var jsonStr = pretty(render(json))
+	o.containerType match{
+	  case c:StructTypeDef => {
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    var memberDefJson = listToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
+	    memberDefJson = memberDefJson + "}\n}"
+	    jsonStr += memberDefJson
+	    jsonStr
+	  }
+	  case _ => {
+            throw new UnsupportedObjectException(s"toJson doesn't support the " +
+						 "objectType of $mdObj.name  yet")
+	  }
+	}
       }
       case o:ContainerDef => {
-	var cTypeStr:String = "StructTypeDef"
-	// Assume o.containerType is checked for not being null
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    cTypeStr = "StructTypeDef"
-	  }
-	  case _ => {
-            throw new UnsupportedObjectException(s"toJson doesn't support the objectType of $mdObj.name  yet")
-	  }
-	}	    
-	val json = ("Container"  -> ("NameSpace" -> o.nameSpace) ~
+	val json = ("Container"  -> 
+		    ("NameSpace" -> o.nameSpace) ~
 		    ("Name"      -> o.name) ~
 		    ("FullName"  -> o.FullName) ~
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
-         	    ("Elements"    -> o.containerType.asInstanceOf[StructTypeDef].memberDefs.toList.map{arg =>
-		      (("NameSpace"      -> arg.nameSpace) ~
-		       ("Name"           -> arg.name) ~
-		       ("Type"           -> arg.typeDef.nameSpace.concat(".").concat(arg.typeDef.name))
-		     )})
-		  )
-	pretty(render(json))
+		    ("DependencyJars" -> o.dependencyJarNames.toList))
+	var jsonStr = pretty(render(json))
+	o.containerType match{
+	  case c:StructTypeDef => {
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    var memberDefJson = listToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
+	    memberDefJson = memberDefJson + "}\n}"
+	    jsonStr += memberDefJson
+	    jsonStr
+	  }
+	  case _ => {
+            throw new UnsupportedObjectException(s"toJson doesn't support the " +
+						 "objectType of $mdObj.name  yet")
+	  }
+	}
       }
       case o:ModelDef => {
 	val json = ( "Model" -> ("NameSpace" -> o.nameSpace) ~
@@ -910,32 +911,30 @@ object MetadataAPIImpl extends MetadataAPI{
 		    ("ModelType"  -> o.modelType) ~
 		    ("JarName" -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("InputAttributes"    -> o.inputVars.toList.map{ arg => 
-			 (("NameSpace"      -> arg.nameSpace) ~
-			  ("Name"           -> arg.name) ~
-			  ("TypeNameSpace"  -> arg.typeDef.nameSpace) ~
-			  ("TypeName"       -> arg.typeDef.name)
-			)}
-		    ) ~
-		    ("OutputAttributes"    -> o.outputVars.toList.map{ arg => 
-			 (("NameSpace"      -> arg.nameSpace) ~
-			  ("Name"           -> arg.name) ~
-			  ("TypeNameSpace"  -> arg.typeDef.nameSpace) ~
-			  ("TypeName"       -> arg.typeDef.name)
-			)}
-		    ) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList)
-		   )
+		    ("DependencyJars" -> o.dependencyJarNames.toList))
+	var jsonStr = pretty(render(json))
+	jsonStr = jsonStr.replaceAll("}","").trim
+	jsonStr = jsonStr + ",\n\"InputAttributes\": "
+	var memberDefJson = listToJson(o.inputVars)
+	jsonStr += memberDefJson
 
-	pretty(render(json))
+	jsonStr = jsonStr + ",\n\"OuputAttributes\": "
+	memberDefJson = listToJson(o.outputVars)
+	memberDefJson = memberDefJson + "}\n}"
+	jsonStr += memberDefJson
+	jsonStr
       }
+
       case o:AttributeDef => {
 	val json = (("NameSpace" -> o.name) ~
 		    ("Name" -> o.name) ~
-		    ("TypeNameSpace"  -> o.typeDef.nameSpace) ~
-		    ("TypeName"  -> o.typeDef.name) ~
-		    ("Version"  -> o.ver) )
-	pretty(render(json))
+		    ("Version" -> o.ver))
+	var jsonStr = pretty(render(json))
+	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
+	var memberDefJson = toJson(o.typeDef)
+	memberDefJson = memberDefJson + "}"
+	jsonStr += memberDefJson
+	jsonStr
       }
       case o:ScalarTypeDef => {
 	val json =  (("MetadataType" -> "ScalarTypeDef") ~
@@ -943,7 +942,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -957,7 +956,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -975,7 +974,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -993,7 +992,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1011,7 +1010,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1030,7 +1029,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1049,7 +1048,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1066,7 +1065,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1113,16 +1112,16 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
 		     ("Implementation" -> o.implementationName) )
 	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.dropRight(2) + ",\n  \"TupleDefinitions\": "
+	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = listToJson(o.tupleDefs)
-	tupleDefJson = tupleDefJson.stripSuffix(",") + "}"
+	tupleDefJson = tupleDefJson + "}"
 	jsonStr += tupleDefJson
 	jsonStr
       }
@@ -1132,7 +1131,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1146,7 +1145,7 @@ object MetadataAPIImpl extends MetadataAPI{
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
 		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.tType) ) ~
+		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
@@ -1320,12 +1319,18 @@ object MetadataAPIImpl extends MetadataAPI{
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(typeJson)
       logger.trace("Parsed the json : " + typeJson)
-      val typ = json.extract[TypeDef]
-      typeDef = processTypeDef(typ)
-      if( IsTypeAlreadyExists(typeDef) ){
-	typeDef.ver = typeDef.ver + 1
+      var typ = json.extract[TypeDef]
+      try{
+	typeDef = processTypeDef(typ)
+	AddType(typeDef)
+      }catch{
+	case e:AlreadyExistsException => {
+	  var newVer:Int = typ.Version.toInt + 1
+	  typ.Version = newVer.toString
+	  typeDef = processTypeDef(typ)
+	  AddType(typeDef)
+	}
       }
-      AddType(typeDef)
       var apiResult = new ApiResult(0,"Type was updated",typeJson)
       apiResult.toString()
     } catch {
@@ -1335,7 +1340,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       case e:AlreadyExistsException => {
-	logger.trace("Failed to add the type, json => " + typeJson  + ",Error => " + e.getMessage())
+	logger.trace("Failed to update the type, json => " + typeJson  + ",Error => " + e.getMessage())
 	var apiResult = new ApiResult(-1,"Error: " + e.getMessage(),typeJson)
 	apiResult.toString()
       }
@@ -2269,10 +2274,10 @@ object MetadataAPIImpl extends MetadataAPI{
 				      false)
       o match{
 	case None => None
-	  logger.trace("concept not in the cache => " + key)
+	  logger.trace("Type not in the cache => " + key)
 	  return false;
 	case Some(m) => 
-	  logger.trace("concept found => " + m.asInstanceOf[BaseTypeDef].FullNameWithVer)
+	  logger.trace("Type found => " + m.asInstanceOf[BaseTypeDef].FullNameWithVer)
 	  return true
       }
     }catch {
@@ -2869,6 +2874,12 @@ object MetadataAPIImpl extends MetadataAPI{
       java_home = java_home.replace("$ROOT_DIR",root_dir)
       logger.trace("JAVA_HOME => " + java_home)
 
+      var manifest_path = prop.getProperty("MANIFEST_PATH")
+      if (manifest_path == null ){
+	throw new MissingPropertyException("The property MANIFEST_PATH must be defined in the config file " + configFile)
+      }
+      manifest_path = manifest_path.replace("$GIT_ROOT",git_root)
+      logger.trace("MANIFEST_PATH => " + manifest_path)
 
       var classpath = prop.getProperty("CLASSPATH")
       if (classpath == null ){
@@ -2884,6 +2895,7 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("JAR_TARGET_DIR",jar_target_dir)
       metadataAPIConfig.setProperty("SCALA_HOME",scala_home)
       metadataAPIConfig.setProperty("JAVA_HOME",java_home)
+      metadataAPIConfig.setProperty("MANIFEST_PATH",manifest_path)
       metadataAPIConfig.setProperty("CLASSPATH",classpath)
       
     } catch { 
