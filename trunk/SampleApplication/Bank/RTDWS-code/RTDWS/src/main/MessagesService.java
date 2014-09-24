@@ -65,6 +65,16 @@ public class MessagesService extends HttpServlet {
 		return getServletConfig().getInitParameter("ZookeeperConnnectionString");
 	}
 	
+	public String getLogFilePath()
+	{
+		return getServletConfig().getInitParameter("LogFilePath");
+	}
+	
+	public String getLogFilePattern()
+	{
+		return getServletConfig().getInitParameter("LogFilePattern");
+	}
+	
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
@@ -85,9 +95,33 @@ public class MessagesService extends HttpServlet {
 		response.setHeader("Cache-Control", "no-cache");
 		response.setHeader("Pragma", "no-cache");
 		
+		Global.CONFIG_LOG_FILE_PATH = getLogFilePath();
+		Global.CONFIG_LOG_FILE_PATTERN = getLogFilePattern();
+		
 		HttpSession session = request.getSession(true);
 		
 		DateTime callTimestamp = DateTime.now();
+		
+		UserState userState = null;
+		if (session != null)
+		{
+			
+			if(session.getAttribute("npariostate") != null) 
+			{
+				userState = (UserState) session.getAttribute("npariostate");//dummy user state used for logging. no login is needed for now
+			}
+			else
+			{
+				userState = new UserState();
+				session.setAttribute("npariostate", userState);
+			}
+		}
+		
+			
+		//else 
+		//{
+			//throw new Exception("Session state can not be null");
+		//}
 		
 		synchronized(session)
 		{
@@ -168,6 +202,10 @@ public class MessagesService extends HttpServlet {
 						}
 						break;
 						
+					case "test":
+						
+						out.print("Testing.....");
+						break;
 						
 					default:
 						
@@ -213,26 +251,37 @@ public class MessagesService extends HttpServlet {
 	
 	public String startStopEngine(HttpServletRequest Httprequest, String start)
 	{
-		
+		String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();	
 		try
 		{
+			
+			Log.WriteMethodCall(methodName, "start: " + start + "", Httprequest);
+			
 			String zkConnection = getZookeeperConnnectionString();
 			
 			if(start.equals("1"))
+			{
 				MTServicesHelper.startEngine(Httprequest, zkConnection);
+			}
 			
 			else if(start.equals("0"))
+			{
 				MTServicesHelper.stopEngine(Httprequest, zkConnection);
+			}
 			
 			else
 				throw new Exception("not supported argument value start='"+start+"'");
 			
-			return(JsonHelper.wrapUpInXml("true"));
+			String result = JsonHelper.wrapUpInXml("true");
+			
+			Log.WriteMethodResult(methodName, Httprequest);
+			
+			return result;
 		}
 		catch (Exception ex)
 		{
 			ex.printStackTrace();
-			
+			Log.WriteMethodException(methodName, ex, Httprequest);
 			return(JsonHelper.wrapUpInXml("false"));
 		}
 		
@@ -241,6 +290,9 @@ public class MessagesService extends HttpServlet {
 	public String getEventsInfo(HttpServletRequest Httprequest, boolean reset, DateTime callTimestamp)
 	{
 		//Map<String, Object> result = getEventsInfoFromDB2(Httprequest, reset, callTimestamp);
+		String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();	
+		Log.WriteMethodCall(methodName, "reset: " + reset + "", Httprequest);
+		
 		String zkConnection = getZookeeperConnnectionString();
 		Map<String, Object> result = null;
 		try
@@ -250,7 +302,12 @@ public class MessagesService extends HttpServlet {
 		catch(Exception ex)
 		{
 			ex.printStackTrace();
+			
+			Log.WriteMethodException(methodName, ex, Httprequest);
+			return "";
 		}
+		
+		Log.WriteMethodResult(methodName, Httprequest);
 		
 		if(result != null)
 			return JsonHelper.SerializeList(result);

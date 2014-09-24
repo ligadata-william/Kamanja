@@ -20,7 +20,7 @@ public class MTServicesHelper
 {
 	public static void test()
 	{
-		try
+		/*try
 		{
 			String zkConnection = "192.168.200.140:2181";
 			MTServices mt = new MTServices(zkConnection);
@@ -31,26 +31,63 @@ public class MTServicesHelper
 		catch(Exception ex)
 		{
 			ex.printStackTrace();
+		}*/
+	}
+
+	public static MTServices getMtServicesInstance(HttpServletRequest request, String zkConnection)
+	{
+		UserState userState = (UserState) request.getSession().getAttribute("npariostate");
+		
+		if(userState.MTServicesObj == null)
+		{
+			System.out.println("Trying to create a new instance of MtServices with zookeeper connection: " + zkConnection);
+			
+			try
+			{
+				userState.MTServicesObj = new MTServices(zkConnection);
+				System.out.println("A new instance of MtServices was successfully created");
+			}
+			catch(Exception ex)
+			{
+				System.out.println("Failed to create a new instance of MtServices");
+				ex.printStackTrace();
+			}
 		}
+		
+		return userState.MTServicesObj;
 	}
 	
 	public static void startEngine(HttpServletRequest request, String zkConnection) throws Exception
 	{
-		MTServices mt = new MTServices(zkConnection);
-		mt.start();
+		
+		MTServices mt = getMtServicesInstance(request, zkConnection);
+		
+		if(mt != null)
+			mt.start();
 	}
 	
 	public static void stopEngine(HttpServletRequest request, String zkConnection) throws Exception
 	{
-		MTServices mt = new MTServices(zkConnection);
-		mt.stop();
+		MTServices mt = getMtServicesInstance(request, zkConnection);
+		
+		if(mt != null)
+			mt.stop();
 	}
 	
 	public static Map<String, Object> getEventsInfoFromZookeeper(HttpServletRequest request, String zkConnection, boolean reset) throws Exception
 	{
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		//return result;
+		
 		HttpSession session = request.getSession(true);
+		
+		MTServices mt = getMtServicesInstance(request, zkConnection);
+		
+		if(mt == null)
+			return result;
+		
 		EventsInfo PreviousEventsInfo = (EventsInfo)session.getAttribute("PreviousEventsInfo");
-		MTServices mt = new MTServices(zkConnection);
+		
 		
 		if(reset)
 		{
@@ -64,8 +101,6 @@ public class MTServicesHelper
 		}
 		
 		
-		
-		Map<String, Object> result = new LinkedHashMap<String, Object> ();
 		
 		ClientEventsInfo clientEventsInfo = new ClientEventsInfo();
 		List<ClientAlertInfo> alertInfoList = new LinkedList<ClientAlertInfo>();
@@ -137,17 +172,11 @@ public class MTServicesHelper
     		String[] msgsAr = messeagesStr.split(",");
     		messagesList = Arrays.asList(msgsAr);
     	}
-    	/*else
-    	{//just for testing
-    		messagesList.add("here is message 1");
-    		messagesList.add("here is message 2");
-    		messagesList.add("here is message 3");
-    	}*/
     	
 		result.put("EventsInfo", clientEventsInfo);
 		result.put("Alerts", alertInfoList);
 		result.put("MessageScrollAlerts", messagesList);
-		
+	
 		return result;
 	}
 }
