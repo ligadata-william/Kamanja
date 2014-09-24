@@ -781,7 +781,7 @@ object TestMetadataAPI{
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
       val (classStr,model) = compiler.compile(pmmlStr)
-      val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_PATH") + "/" + model.name + ".pmml"
+      val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
       val (jarFile,depJars) = 
       compiler.createJar(classStr,
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
@@ -791,6 +791,12 @@ object TestMetadataAPI{
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 			 false)
+
+      if( jarFile == "Not Set" ){
+	logger.error("Compilation of scala file has failed, Model is not added")
+	return
+      }
+
       model.jarName = jarFile
       if( model.ver == 0 ){
 	model.ver     = 1
@@ -1015,6 +1021,7 @@ object TestMetadataAPI{
       var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
       var done = false
       while ( done == false ){
+	MetadataAPIImpl.readMetadataAPIConfig
 	println("\n\nPick a Type ")
 	var seq = 0
 	typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq))})
@@ -1059,14 +1066,14 @@ object TestMetadataAPI{
   def initModCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
     logger.setLevel(Level.ERROR);
-    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
+    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, logger,"","","","")
     mdLoader.initialize
   }
 
   def StartTest{
     try{
       MdMgr.GetMdMgr.truncate
-      val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
+      val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, logger,"","","","")
       mdLoader.initialize
       MetadataAPIImpl.OpenDbStore
       MetadataAPIImpl.LoadObjectsIntoCache
@@ -1164,6 +1171,8 @@ object TestMetadataAPI{
       
       MetadataAPIImpl.readMetadataAPIConfig
       StartTest
+      //initModCompilerBootstrap
+      //val modDef = MetadataAPIImpl.parseModelDef(SampleData.SampleModelJson,"JSON")
     }catch {
       case e: Exception => {
 	e.printStackTrace()

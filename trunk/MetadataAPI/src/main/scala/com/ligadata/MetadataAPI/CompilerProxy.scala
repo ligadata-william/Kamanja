@@ -153,7 +153,7 @@ class CompilerProxy{
     val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
     val (classStr,model) = compiler.compile(pmmlStr)
 
-    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_SRC_TARGET_DIR") + "/" + model.name + ".pmml"    
+    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"    
     val (jarFile,depJars) = 
       compiler.createJar(classStr,
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
