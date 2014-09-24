@@ -1,0 +1,1072 @@
+
+<!--
+	Barclay Bank Alchemy Ruleset.  See AlchemyDailyFeePricingAlerts-DIHighLevelDesign.v1.1
+	document for textual explanation of the ruleset.  Relevant sections:
+
+		Emergency Borrowing Alert Business Logic
+		Near Overdraft Alert
+		Overdraft Tier 3 Alert
+		Overdraft Tier 2 Alert
+		Overdraft Tier 1 Alert
+		Low Balance Alerts Business Logic
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Barclay Bank (2014)" description="Rules that consider bank machine transactions used to determine whether the Alchemy overdraft alerts should be issued for Barclay Bank customers ">
+		<Application name="AlchemyAlerts1" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="BankPocMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+		<DataField name="AlertType" displayName="AlertType" optype="categorical" dataType="string"/>
+		<DataField name="SendResult" displayName="SendResult" optype="categorical" dataType="string"/>
+		<DataField name="OfflineEvent" displayName="OfflineEvent" optype="categorical" dataType="string"/>
+
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!-- ***********************
+			Derived fields 
+		 *********************** -->
+
+		<!--
+			Obtain the Alert History for this client
+		-->
+		<DerivedField name="ClientAlertsToday" dataType="AlertHistory" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">AlertHistory</Constant>
+			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtains this client's preferences
+		-->
+		<DerivedField name="ClientPrefs" dataType="CustomerPreferences" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">CustomerPreferences</Constant>
+			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			EB Alert parms  
+		-->
+		<DerivedField name="EBAlertParms" dataType="AlertParameters" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">EB</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			NO Alert parms   
+		-->
+		<DerivedField name="NOAlertParms" dataType="AlertParameters" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">NO</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			OD Alert Alert parms 
+		-->
+		<DerivedField name="ODAlertParms" dataType="AlertParameters" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">OD</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			LB Alert parms 
+		-->
+		<DerivedField name="LBAlertParms" dataType="AlertParameters" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">LB</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online EB event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineEBEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+						</Apply>
+						<FieldRef field="EBAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online Near OD event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineNOEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+						</Apply>
+						<FieldRef field="NOAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online Near OD event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineODEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD002Sent"/>
+							<FieldRef field="ClientAlertsToday.OD003Sent"/>
+						</Apply>
+						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online Near OD event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineLBEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD001Sent"/>
+							<FieldRef field="ClientAlertsToday.OD002Sent"/>
+							<FieldRef field="ClientAlertsToday.OD003Sent"/>
+							<FieldRef field="ClientAlertsToday.LB001Sent"/>
+						</Apply>
+						<FieldRef field="LBAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<!--
+			Classify the emergency borrowing severity
+		-->
+		<DerivedField name="EBAlertType" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="ClientPrefs.MAX_EB_CNT"/>
+						<Constant>7</Constant>
+					</Apply>
+					<Apply function="Put">  <!-- Set AlertType -->
+						<FieldRef field="AlertType"/>
+						<Constant dataType="string">EB1</Constant> 
+					</Apply>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">EB2</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="SumOfAlertsSentToday" dataType="integer" optype="continuous">
+			<Apply function="+">
+				<FieldRef field="ClientAlertsToday.LB001Sent"/>
+				<FieldRef field="ClientAlertsToday.OD001Sent"/>
+				<FieldRef field="ClientAlertsToday.OD002Sent"/>
+				<FieldRef field="ClientAlertsToday.OD003Sent"/>
+				<FieldRef field="ClientAlertsToday.NO001Sent"/>
+				<FieldRef field="ClientAlertsToday.EB001Sent"/>
+				<FieldRef field="ClientAlertsToday.EB002Sent"/>
+			</Apply>
+		</DerivedField>
+
+
+		<!--
+			Note if the event being considered occurred after hours
+		-->
+		<DerivedField name="EBOfflineEvent" dataType="boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="Between">
+					<Apply function="CompressedTimeHHMMSSCC2Secs">
+						<FieldRef field="msg.ENT_TME"/>
+					</Apply>
+					<FieldRef field="EBAlertParms.ONLINE_START_TIME"/>
+					<FieldRef field="EBAlertParms.ONLINE_END_TIME"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			For offline events, assess whether an offline event notification should be posted
+		-->
+		<DerivedField name="ShouldEBOfflineEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="EBOfflineEvent"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="SumOfAlertsSentToday"/>
+					<Constant dataType="integer">0</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set OfflineEvent -->
+					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Note if the event being considered occurred after hours
+		-->
+		<DerivedField name="NOOfflineEvent" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="not">
+					<Apply function="Between">
+						<Apply function="CompressedTimeHHMMSSCC2Secs">
+							<FieldRef field="msg.ENT_TME"/>
+						</Apply>
+						<FieldRef field="NOAlertParms.ONLINE_START_TIME"/>
+						<FieldRef field="NOAlertParms.ONLINE_END_TIME"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+				</Apply>
+				<Apply function="Put">  <!-- Set OfflineEvent -->
+					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			For offline events, assess whether an offline event notification should be posted
+		-->
+		<DerivedField name="ShouldNOOfflineEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="NOOfflineEvent"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="SumOfAlertsSentToday"/>
+					<Constant dataType="integer">0</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Note if the event being considered occurred after hours
+		-->
+		<DerivedField name="ODOfflineEvent" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="not">
+					<Apply function="Between">
+						<Apply function="CompressedTimeHHMMSSCC2Secs">
+							<FieldRef field="msg.ENT_TME"/>
+						</Apply>
+						<FieldRef field="ODAlertParms.ONLINE_START_TIME"/>
+						<FieldRef field="ODAlertParms.ONLINE_END_TIME"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+				</Apply>
+				<Apply function="Put">  <!-- Set OfflineEvent -->
+					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			For offline events, assess whether an offline event notification should be posted
+		-->
+		<DerivedField name="ShouldODOfflineEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="ODOfflineEvent"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="SumOfAlertsSentToday"/>
+					<Constant dataType="integer">0</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Note if the event being considered occurred after hours
+		-->
+		<DerivedField name="LBOfflineEvent" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="not">
+					<Apply function="Between">
+						<Apply function="CompressedTimeHHMMSSCC2Secs">
+							<FieldRef field="msg.ENT_TME"/>
+						</Apply>
+						<FieldRef field="LBAlertParms.ONLINE_START_TIME"/>
+						<FieldRef field="LBAlertParms.ONLINE_END_TIME"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+				</Apply>
+				<Apply function="Put">  <!-- Set OfflineEvent -->
+					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="string">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			For offline events, assess whether an offline event notification should be posted
+		-->
+		<DerivedField name="ShouldLBOfflineEventBeIssued" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="LBOfflineEvent"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="SumOfAlertsSentToday"/>
+					<Constant dataType="integer">0</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Calculate the prior balance (excl)
+		-->
+		<DerivedField name="PreviousBalance" dataType="double" optype="continuous">
+			<Apply function="-">
+				<FieldRef field="msg.RUN_LDG_XAU"/>
+				<FieldRef field="msg.ENT_AMT"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the emergency borrowing range?
+		-->
+		<DerivedField name="InEmergencyBorrowRange" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.ANT_LMT"/>
+						<FieldRef field="msg.UNP_BUFF"/>
+					</Apply>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Answer whether the debit in current message caused an emergency borrowing condition
+		-->
+		<DerivedField name="DebitHasCausedEBCondition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+
+		<!--
+			Calculate the near overdraft limit:
+
+			msg.ODR_LMT – (msg.ODR_LMT * ClientPrefs.NO_FACTOR/100)
+		-->
+		<DerivedField name="NearOverdraftLimit" dataType="double" optype="continuous">
+			<Apply function="-">
+				<FieldRef field="msg.ODR_LMT"/>
+				<Apply function="*">
+					<FieldRef field="msg.ODR_LMT"/>
+					<Apply function="/">
+						<FieldRef field="ClientPrefs.NO_FACTOR"/>
+						<Constant dataType="double">100</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the near overdraft range?
+		-->
+		<DerivedField name="InNearOverdraftRange" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="NearOverdraftLimit"/>
+				</Apply>
+				<Apply function="greaterThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="NearOverdraftLimit"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Was it the debit entry has taken the balance into the Near Overdraft tier?
+		-->
+		<DerivedField name="DebitHasCausedNOCondition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="NearOverdraftLimit"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the overdraft range?
+		-->
+		<DerivedField name="InOD3Range" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+				</Apply>
+				<Apply function="greaterThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Was it the debit entry has taken the balance into the 3rd Overdraft tier?
+		-->
+		<DerivedField name="DebitHasCausedOD3Condition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the overdraft range?
+		-->
+		<DerivedField name="InOD2Range" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T2_LIMIT"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Was it the debit entry has taken the balance into the 2nd Overdraft tier?
+		-->
+		<DerivedField name="DebitHasCausedOD2Condition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the overdraft range?
+		-->
+		<DerivedField name="InOD1Range" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+				<Apply function="greaterOrEqual">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="ClientPrefs.OD_T1_LIMIT"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.OD_BUFFER"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Was it the debit entry has taken the balance into the 1st Overdraft tier?
+		-->
+		<DerivedField name="DebitHasCausedOD1Condition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<FieldRef field="msg.OD_BUFFER"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.OD_BUFFER"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the low balance range?  
+		-->
+		<DerivedField name="InLowBalanceRange" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.LB_LIMIT"/>
+				</Apply>
+				<Apply function="greaterOrEqual">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.OD_BUFFER"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the low balance range?  
+		-->
+		<DerivedField name="DebitHasCausedLBCondition" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<FieldRef field="msg.LB_LIMIT"/>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.LB_LIMIT"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Does this client subscribe to the emergency borrowing account feature
+		-->
+		<DerivedField name="AcctHasEBLimit" dataType="boolean" optype="categorical">
+			<Apply function="lessThan">
+				<FieldRef field="msg.ANT_LMT"/>
+				<Constant dataType="double">0</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Does this client subscribe to the emergency borrowing account feature
+		-->
+		<DerivedField name="AcctHasODLimit" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<FieldRef field="msg.ODR_LMT"/>
+				<Constant dataType="double">0</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Does this client subscribe to the emergency borrowing account feature
+		-->
+		<DerivedField name="AcctHasLBLimit" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<FieldRef field="ClientPrefs.LB_LIMIT"/>
+				<Constant dataType="double">0</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether we need to send a Emer Borrow result.
+		-->
+		<DerivedField name="SendEBResult" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="AcctHasEBLimit"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="InEmergencyBorrowRange"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="DebitHasCausedEBCondition"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="or">
+					<Apply function="equal">
+						<FieldRef field="ShouldEBOfflineEventBeIssued"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="ShouldOnlineEBEventBeIssued"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+		<!--
+			Assess whether we need to send a Near Overdraft result.
+		-->
+		<DerivedField name="SendNOResult" dataType="string" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="InNearOverdraftRange"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="DebitHasCausedNOCondition"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="or">
+						<Apply function="equal">
+							<FieldRef field="ShouldNOOfflineEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+						<Apply function="equal">
+							<FieldRef field="ShouldOnlineNOEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="string">NO1</Constant> 
+				<Constant dataType="string">NOTSET</Constant>       
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether we need to send a Near Overdraft result.
+		-->
+		<DerivedField name="SendOD3Result" dataType="string" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="InOD3Range"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="DebitHasCausedOD3Condition"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="or">
+						<Apply function="equal">
+							<FieldRef field="ShouldODOfflineEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+						<Apply function="equal">
+							<FieldRef field="ShouldOnlineODEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="string">OD3</Constant> 
+				<Constant dataType="string">NOTSET</Constant>       
+			</Apply>
+		</DerivedField>
+		
+		<!--
+			Assess whether we need to send a Near Overdraft result.
+		-->
+		<DerivedField name="SendOD2Result" dataType="string" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="InOD2Range"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="DebitHasCausedOD2Condition"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="or">
+						<Apply function="equal">
+							<FieldRef field="ShouldODOfflineEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+						<Apply function="equal">
+							<FieldRef field="ShouldOnlineODEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="string">OD2</Constant> 
+				<Constant dataType="string">NOTSET</Constant>       
+			</Apply>
+		</DerivedField>
+		
+		<!--
+			Assess whether we need to send a Near Overdraft result.
+		-->
+		<DerivedField name="SendOD1Result" dataType="string" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="InOD1Range"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="DebitHasCausedOD1Condition"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="or">
+						<Apply function="equal">
+							<FieldRef field="ShouldODOfflineEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+						<Apply function="equal">
+							<FieldRef field="ShouldOnlineODEventBeIssued"/>
+							<Constant dataType="boolean">true</Constant>
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="string">OD1</Constant> 
+				<Constant dataType="string">NOTSET</Constant>       
+			</Apply>
+		</DerivedField>
+		
+		<!--
+			Assess whether we need to send a Low Balance result.
+		-->
+		<DerivedField name="SendLBResult" dataType="string" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="AcctHasLBLimit"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="InLowBalanceRange"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="DebitHasCausedLBCondition"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="ShouldLBOfflineEventBeIssued"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="ShouldOnlineLBEventBeIssued"/>
+						<Constant dataType="boolean">true</Constant>
+					</Apply>
+				</Apply>
+				<Constant dataType="string">LB1</Constant> 
+				<Constant dataType="string">NOTSET</Constant>       
+			</Apply>
+		</DerivedField>
+		
+		
+		<!--
+			Determine whether to send Emer Borrow result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendEBResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendEBResult"/>
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="EBAlertType"/> <!-- this sets AlertType if successful which is tested next -->
+					<Constant dataType="boolean">true</Constant>
+				</Apply>
+				<Apply function="startsWith">
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">EB</Constant>
+				</Apply>
+				<Apply function="or">
+					<Apply function="and">
+						<Apply function="equal">
+							<FieldRef field="AlertType"/>
+							<Constant dataType="string">EB2</Constant>
+						</Apply>
+						<Apply function="incrementBy">
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<Constant dataType="integer">1</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="and">
+						<Apply function="equal">
+							<FieldRef field="AlertType"/>
+							<Constant dataType="string">EB1</Constant>
+						</Apply>
+						<Apply function="incrementBy">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<Constant dataType="integer">1</Constant> 
+						</Apply>
+					</Apply>
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Determine whether to send Near OD result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendNOResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendNOResult"/>
+					<Constant dataType="string">NO1</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">NO1</Constant> 
+				</Apply>
+				<Apply function="incrementBy">
+					<FieldRef field="ClientAlertsToday.NO001Sent"/>
+					<Constant dataType="integer">1</Constant> 
+				</Apply>
+				<Apply function="Put">  
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Determine whether to send Overdraft result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendOD3ResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendOD3Result"/>
+					<Constant dataType="string">OD3</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">OD3</Constant> 
+				</Apply>
+				<Apply function="incrementBy">
+					<FieldRef field="ClientAlertsToday.OD003Sent"/>
+					<Constant dataType="integer">1</Constant> 
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="SendOD2ResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendOD2Result"/>
+					<Constant dataType="string">OD2</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">OD2</Constant> 
+				</Apply>
+				<Apply function="incrementBy">
+					<FieldRef field="ClientAlertsToday.OD002Sent"/>
+					<Constant dataType="integer">1</Constant> 
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="SendOD1ResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendOD1Result"/>
+					<Constant dataType="string">OD1</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">OD1</Constant> 
+				</Apply>
+				<Apply function="incrementBy">
+					<FieldRef field="ClientAlertsToday.OD001Sent"/>
+					<Constant dataType="integer">1</Constant> 
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Determine whether to send Low Bal result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendLBResultDetermination" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendLBResult"/>
+					<Constant dataType="string">LB1</Constant>
+				</Apply>
+				<Apply function="Put">  <!-- Set AlertType -->
+					<FieldRef field="AlertType"/>
+					<Constant dataType="string">LB1</Constant> 
+				</Apply>
+				<Apply function="incrementBy">
+					<FieldRef field="ClientAlertsToday.LB001Sent"/>
+					<Constant dataType="integer">1</Constant> 
+				</Apply>
+				<Apply function="Put">
+				    <FieldRef field="gCtx"/>
+				    <Constant dataType="string">AlertHistory</Constant>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="AlchemyRules" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="SendResult" usageType="predicted"/>
+			<MiningField name="OfflineEvent" usageType="supplementary"/>
+			<MiningField name="AlertType" usageType="supplementary"/>
+			<MiningField name="msg.RUN_LDG_XAU" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="msg.ENT_DTE" usageType="supplementary"/>
+			<MiningField name="EBAlertParms.ALERT_EXPIRY_TIME" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.MOBILE_NUMBER" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="EBRule" score="6">
+				<SimplePredicate field="SendEBResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="NORule" score="5">
+				<SimplePredicate field="SendNOResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="ODRule3" score="4">
+				<SimplePredicate field="SendOD3ResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="ODRule2" score="3">
+				<SimplePredicate field="SendOD2ResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="ODRule1" score="2">
+				<SimplePredicate field="SendOD1ResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="LBRule" score="1">
+				<SimplePredicate field="SendLBResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>
