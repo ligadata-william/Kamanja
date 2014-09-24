@@ -594,7 +594,7 @@ class RuleSetModel(val modelName : String
 	}
 
 	def DefaultScore(dflt : StringDataValue) { defaultScore = dflt }
-	def DefaultScore() : StringDataValue = defaultScore
+	def DefaultScore() : StringDataValue = { if (defaultScore != null) defaultScore else new StringDataValue("0") }
 	
 
 	def MiningSchemaMap() : Map[String,MiningField] = { miningSchemaMap } 
