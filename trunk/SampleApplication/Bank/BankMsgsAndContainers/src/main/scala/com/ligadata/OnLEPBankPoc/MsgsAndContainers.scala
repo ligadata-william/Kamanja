@@ -305,7 +305,7 @@ class CustomerPreferences_100 extends BaseContainer {
   var LB_REG_FLG: Int = _
   var LB_LIMIT: Double = _
   var OD_REG_FLG: Int = _
-  var MAX_EB_CNT: Char = _
+  var MAX_EB_CNT: Int = _
   var LAST_UPDATE_TS: String = _
   var CONT_ID: Long = _
   var MOBILE_NUMBER: String = _
@@ -327,7 +327,7 @@ class CustomerPreferences_100 extends BaseContainer {
 	buffer.append(s"\tLB_REG_FLG       : Int      = ${LB_REG_FLG.toString}\n")
 	buffer.append(s"\tLB_LIMIT         : Double   = ${LB_LIMIT.toString}\n")
 	buffer.append(s"\tOD_REG_FLG       : Int      = ${OD_REG_FLG.toString}\n")
-	buffer.append(s"\tMAX_EB_CNT       : Char     = ${MAX_EB_CNT.toString}\n")
+	buffer.append(s"\tMAX_EB_CNT       : Int      = ${MAX_EB_CNT.toString}\n")
 	buffer.append(s"\tLAST_UPDATE_TS   : String   = ${LAST_UPDATE_TS.toString}\n")
 	buffer.append(s"\tCONT_ID          : Long     = ${CONT_ID.toString}\n")
 	buffer.append(s"\tMOBILE_NUMBER    : String   = ${MOBILE_NUMBER.toString}\n")
@@ -377,7 +377,7 @@ class CustomerPreferences_100 extends BaseContainer {
       LB_REG_FLG = IntImpl.Input(list(idx)); idx = idx + 1
       LB_LIMIT = DoubleImpl.Input(list(idx)); idx = idx + 1
       OD_REG_FLG = IntImpl.Input(list(idx)); idx = idx + 1
-      MAX_EB_CNT = CharImpl.Input(list(idx)); idx = idx + 1
+      MAX_EB_CNT = IntImpl.Input(list(idx)); idx = idx + 1
       LAST_UPDATE_TS = StringImpl.Input(list(idx)); idx = idx + 1
       CONT_ID = LongImpl.Input(list(idx)); idx = idx + 1
       MOBILE_NUMBER = StringImpl.Input(list(idx)); idx = idx + 1

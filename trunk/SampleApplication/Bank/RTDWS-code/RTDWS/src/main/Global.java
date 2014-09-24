@@ -47,11 +47,11 @@ public class Global extends HttpServlet
 		} catch (Exception e) {}
 		
 		try {
-			CONFIG_LOG_FILE_PATH = getServletConfig().getInitParameter("LogFilePath"); 
+			//CONFIG_LOG_FILE_PATH = getServletConfig().getInitParameter("LogFilePath"); 
 		} catch (Exception e) {}
 		
 		try {
-			CONFIG_LOG_FILE_PATTERN = getServletConfig().getInitParameter("LogFilePattern"); 
+			//CONFIG_LOG_FILE_PATTERN = getServletConfig().getInitParameter("LogFilePattern"); 
 		} catch (Exception e) {}
 		
 	}
