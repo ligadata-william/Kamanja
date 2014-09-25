@@ -102,7 +102,7 @@ no kv store creation.
             	dstore.Shutdown()
             } else {
             	val dstore : DataStore = kvmaker.build     
-            	kvmaker.dump(dstore)
+            	//kvmaker.dump(dstore)
             	dstore.Shutdown()
         	}
         } else {
