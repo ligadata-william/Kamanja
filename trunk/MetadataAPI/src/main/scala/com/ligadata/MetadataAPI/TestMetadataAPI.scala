@@ -1075,7 +1075,7 @@ object TestMetadataAPI{
       MdMgr.GetMdMgr.truncate
       val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, logger,"","","","")
       mdLoader.initialize
-      MetadataAPIImpl.OpenDbStore
+      MetadataAPIImpl.OpenDbStore(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE"))
       MetadataAPIImpl.LoadObjectsIntoCache
 
       val dumpMetadata = ()               => { DumpMetadata }
