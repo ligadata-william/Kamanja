@@ -50,14 +50,12 @@ case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeNa
 case class ConceptList(Concepts: List[Concept])
 
 case class Attr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
-case class InputAttr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
-case class OutputAttr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
 
 case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
-case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[InputAttr], OutputAttributes: List[OutputAttr])
+case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -278,7 +276,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
       }
       case o:ContainerDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
+	DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
 	MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
       }
       case o:AttributeDef => {
@@ -918,7 +916,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	var memberDefJson = listToJson(o.inputVars)
 	jsonStr += memberDefJson
 
-	jsonStr = jsonStr + ",\n\"OuputAttributes\": "
+	jsonStr = jsonStr + ",\n\"OutputAttributes\": "
 	memberDefJson = listToJson(o.outputVars)
 	memberDefJson = memberDefJson + "}\n}"
 	jsonStr += memberDefJson
@@ -1187,11 +1185,29 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       var connectinfo = new PropertyMap
       connectinfo+= ("connectiontype" -> storeType)
-      connectinfo+= ("path" -> "/tmp")
-      connectinfo+= ("schema" -> storeName)
       connectinfo+= ("table" -> tableName)
-      connectinfo+= ("inmemory" -> "false")
-      connectinfo+= ("withtransaction" -> "true")
+      storeType match{
+	case "hashmap" => {
+	  connectinfo+= ("path" -> "/tmp")
+	  connectinfo+= ("schema" -> storeName)
+	  connectinfo+= ("inmemory" -> "false")
+	  connectinfo+= ("withtransaction" -> "true")
+	}
+	case "treemap" => {
+	  connectinfo+= ("path" -> "/tmp")
+	  connectinfo+= ("schema" -> storeName)
+	  connectinfo+= ("inmemory" -> "false")
+	  connectinfo+= ("withtransaction" -> "true")
+	}
+	case "cassandra" => {
+	  connectinfo+= ("hostlist" -> "localhost") 
+	  connectinfo+= ("schema" -> "metadata")
+	  connectinfo+= ("ConsistencyLevelRead" -> "ONE")
+	}
+	case _ => {
+	  throw new CreateStoreFailedException("The database type " + storeType + " is not supported yet ")
+	}
+      }
       KeyValueManager.Get(connectinfo)
     }catch{
       case e:Exception => {
@@ -1202,26 +1218,44 @@ object MetadataAPIImpl extends MetadataAPI{
   }
       
 
-  def OpenDbStore {
-    logger.info("Opening datastore")
-    modelStore     = GetDataStoreHandle("hashmap","model_store","models")
-    messageStore   = GetDataStoreHandle("hashmap","message_store","messages")
-    containerStore = GetDataStoreHandle("hashmap","container_store","containers")
-    functionStore  = GetDataStoreHandle("hashmap","function_store","functions")
-    conceptStore   = GetDataStoreHandle("hashmap","concept_store","concepts")
-    typeStore      = GetDataStoreHandle("hashmap","type_store","types")
-    otherStore     = GetDataStoreHandle("hashmap","other_store","others")
+  @throws(classOf[CreateStoreFailedException])
+  def OpenDbStore(storeType:String) {
+    try{
+      logger.info("Opening datastore")
+      modelStore     = GetDataStoreHandle(storeType,"model_store","models")
+      messageStore   = GetDataStoreHandle(storeType,"message_store","messages")
+      containerStore = GetDataStoreHandle(storeType,"container_store","containers")
+      functionStore  = GetDataStoreHandle(storeType,"function_store","functions")
+      conceptStore   = GetDataStoreHandle(storeType,"concept_store","concepts")
+      typeStore      = GetDataStoreHandle(storeType,"type_store","types")
+      otherStore     = GetDataStoreHandle(storeType,"other_store","others")
+    }catch{
+      case e:CreateStoreFailedException => {
+	e.printStackTrace()
+	throw new CreateStoreFailedException(e.getMessage())
+      }
+      case e:Exception => {
+	e.printStackTrace()
+	throw new CreateStoreFailedException(e.getMessage())
+      }
+    }
   }
 
   def CloseDbStore {
-    logger.info("Closing datastore")
-    modelStore.Shutdown()
-    messageStore.Shutdown()
-    containerStore.Shutdown()
-    functionStore.Shutdown()
-    conceptStore.Shutdown()
-    typeStore.Shutdown()
-    otherStore.Shutdown()
+    try{
+      logger.info("Closing datastore")
+      modelStore.Shutdown()
+      messageStore.Shutdown()
+      containerStore.Shutdown()
+      functionStore.Shutdown()
+      conceptStore.Shutdown()
+      typeStore.Shutdown()
+      otherStore.Shutdown()
+    }catch{
+      case e:Exception => {
+	throw e;
+      }
+    }
   }
 
   def AddType(typeText:String, format:String): String = {
@@ -2343,7 +2377,9 @@ object MetadataAPIImpl extends MetadataAPI{
 	val typeKey = KeyAsStr(key)
 	val obj = GetObject(typeKey.toLowerCase,typeStore)
 	val typ = parseType(ValueAsStr(obj.Value),"JSON")
-	SaveObject(typ)
+	if( typ != null ){
+	  SaveObject(typ)
+	}
       })
     }catch {
       case e: Exception => {
@@ -2807,7 +2843,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def testDbOp{
     try{
-      OpenDbStore
+      OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
       SaveObject("key2","value2",otherStore)
       SaveObject("key2","value2",otherStore)
       GetObject("key2",otherStore)
@@ -2844,6 +2880,12 @@ object MetadataAPIImpl extends MetadataAPI{
 	throw new MissingPropertyException("The property ROOT_DIR must be defined in the config file " + configFile)
       }
       logger.trace("ROOT_DIR => " + root_dir)
+
+      var database = prop.getProperty("DATABASE")
+      if (database == null ){
+	database = "hashmap"
+      }
+      logger.trace("database => " + database)
 
       var git_root = prop.getProperty("GIT_ROOT")
       if (git_root == null ){
@@ -2891,6 +2933,7 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("CLASSPATH => " + classpath)
 
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
+      metadataAPIConfig.setProperty("DATABASE",database)
       metadataAPIConfig.setProperty("GIT_ROOT",git_root)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR",jar_target_dir)
       metadataAPIConfig.setProperty("SCALA_HOME",scala_home)
@@ -2910,7 +2953,7 @@ object MetadataAPIImpl extends MetadataAPI{
     MdMgr.GetMdMgr.truncate
     val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
     mdLoader.initialize
-    MetadataAPIImpl.OpenDbStore
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
   }
