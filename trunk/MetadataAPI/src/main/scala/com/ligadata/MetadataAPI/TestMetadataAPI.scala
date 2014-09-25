@@ -23,6 +23,10 @@ import scala.io._
 import com.ligadata.messagedef._
 import com.ligadata.Compiler._
 
+//import com.twitter.chill.ScalaKryoInstantiator
+//import java.io.ByteArrayOutputStream
+//import com.esotericsoftware.kryo.io.{Input, Output}
+
 object TestMetadataAPI{
 
   val loggerName = this.getClass.getName
@@ -1070,6 +1074,21 @@ object TestMetadataAPI{
     mdLoader.initialize
   }
 
+  def Chill {
+    val items = List(1,2,4,6)
+    val instantiator = new ScalaKryoInstantiator
+    instantiator.setRegistrationRequired(false)
+ 
+    val kryo = instantiator.newKryo()
+    val baos = new ByteArrayOutputStream
+    val output = new Output(baos, 4096)
+    kryo.writeObject(output, items)
+ 
+    val input = new Input(baos.toByteArray)
+    val deser = kryo.readObject(input, classOf[List[Int]])
+    assert(deser.size == 4)
+  }
+
   def StartTest{
     try{
       MdMgr.GetMdMgr.truncate
@@ -1171,8 +1190,7 @@ object TestMetadataAPI{
       
       MetadataAPIImpl.readMetadataAPIConfig
       StartTest
-      //initModCompilerBootstrap
-      //val modDef = MetadataAPIImpl.parseModelDef(SampleData.SampleModelJson,"JSON")
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
