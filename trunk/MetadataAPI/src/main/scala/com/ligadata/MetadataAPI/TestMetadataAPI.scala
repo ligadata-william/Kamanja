@@ -1074,20 +1074,20 @@ object TestMetadataAPI{
     mdLoader.initialize
   }
 
-  def Chill {
-    val items = List(1,2,4,6)
-    val instantiator = new ScalaKryoInstantiator
-    instantiator.setRegistrationRequired(false)
- 
-    val kryo = instantiator.newKryo()
-    val baos = new ByteArrayOutputStream
-    val output = new Output(baos, 4096)
-    kryo.writeObject(output, items)
- 
-    val input = new Input(baos.toByteArray)
-    val deser = kryo.readObject(input, classOf[List[Int]])
-    assert(deser.size == 4)
-  }
+//  def Chill {
+//    val items = List(1,2,4,6)
+//    val instantiator = new ScalaKryoInstantiator
+//    instantiator.setRegistrationRequired(false)
+// 
+//    val kryo = instantiator.newKryo()
+//    val baos = new ByteArrayOutputStream
+//    val output = new Output(baos, 4096)
+//    kryo.writeObject(output, items)
+// 
+//    val input = new Input(baos.toByteArray)
+//    val deser = kryo.readObject(input, classOf[List[Int]])
+//    assert(deser.size == 4)
+//  }
 
   def StartTest{
     try{
