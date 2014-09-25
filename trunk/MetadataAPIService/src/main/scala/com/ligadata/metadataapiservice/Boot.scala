@@ -29,7 +29,8 @@ object Boot extends App {
     MdMgr.GetMdMgr.truncate
     val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
     mdLoader.initialize
-    MetadataAPIImpl.OpenDbStore
+    MetadataAPIImpl.readMetadataAPIConfig
+    MetadataAPIImpl.OpenDbStore(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
 
     val callbackActor = actor(new Act {
