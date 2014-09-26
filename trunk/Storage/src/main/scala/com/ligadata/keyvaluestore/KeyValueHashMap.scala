@@ -115,6 +115,7 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore
 
 	override def Shutdown() =
 	{
+		db.commit(); //persist changes into disk
 		map.close();
 	}
 

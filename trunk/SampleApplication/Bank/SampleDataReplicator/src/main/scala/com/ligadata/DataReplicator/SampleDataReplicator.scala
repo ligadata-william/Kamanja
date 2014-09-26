@@ -224,7 +224,7 @@ object SampleDataReplicator {
     val WriteStart = System.nanoTime
 
     while (generatedRows < outputrows) {
-      val cust_accs = rand.nextInt(7)
+      val cust_accs = rand.nextInt(199)
       val cust_id = accno
 
       if (generateMultipleRowsPerAcc) {

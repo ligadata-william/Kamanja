@@ -104,6 +104,7 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
 			  }
 			}
 		})
+    	logger.trace("Loaded %d objects".format(map.size))    	
   	}
 
     def buildContainer (tupleBytes : Value, container : BaseContainer)  {
@@ -113,7 +114,7 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
     	//logger.trace(tuples)
     	
     	container.populate(new DelimitedData(tuples, ","))
-    	logger.trace(s"\n$container")    	
+    	// logger.trace(s"\n$container")    	
     }
 
   	var keys : ArrayBuffer[String] = ArrayBuffer[String]()
@@ -132,7 +133,7 @@ object BankPOCEnvContext extends EnvContext with LogTrait {
 		connectinfo+= ("schema" -> s"$typeName")
 		connectinfo+= ("table" -> s"$tableName")
 		connectinfo+= ("inmemory" -> "false")
-		connectinfo+= ("withtransaction" -> "true")
+		connectinfo+= ("withtransaction" -> "false")
 	    
 	    val kvstore : DataStore = KeyValueManager.Get(connectinfo)
 	    kvstore
