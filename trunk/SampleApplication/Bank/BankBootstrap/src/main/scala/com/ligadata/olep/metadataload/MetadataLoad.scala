@@ -447,8 +447,8 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		logger.trace("MetadataLoad...loading Macro functions")
 
 		
+		/** **************************************************************************************************************/
 		
-	
 		/** catalog the CLASSUPDATE oriented macros: 
 		 
 	  		"incrementBy(Int,Int)"  
@@ -514,25 +514,8 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 					, fcnMacrofeatures
 					, (incrementByMacroStringFixed,incrementByMacroStringMapped))	  
 
+		/** **************************************************************************************************************/
 					
-		/** Macros associated with this macro template:
-		 	"Put(Any,Any,Any)"
-		 */
-		
-		val putContainerMacroStringMapped : String =   """
-	class %1%_%2%_%3%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%)
-	{
-	  	def Put  : Boolean = { %1%.getObject(%2, %3) = %3%; true }
-	} """
-		
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("container", MdMgr.sysNS, "Any"), ("key", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Any"))
-					, fcnMacrofeatures
-					, (putContainerMacroStringMapped,putContainerMacroStringMapped))	  
-		  				
-
 		val putGlobalContainerMacroStringFixed : String =  """
 	class %1%_%2%_%3%_%4%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
@@ -616,30 +599,35 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
 		  				
 
-		/** Macros associated with this macro template:
-		 	"Put(String,String)"
-		 	"Put(Int,Int)"
-		 	"Put(Long,Long)"
-		 	"Put(Double,Double)"
-		 	"Put(Boolean,Boolean)"
-		 	"Put(Any,Any)"
+		/** **************************************************************************************************************/
+
+		/** ***********************************************************************
+		 *  Catalog the ITERABLE only macros (no class generation needed for these 
+		 **************************************************************************/
+		fcnMacrofeatures.clear
+		fcnMacrofeatures += FcnMacroAttr.ITERABLE
+
+		/** 
+		 	Macros associated with the 'putVariableMacroPmmlDict' macro template:
+			 	"Put(String,String)"
+			 	"Put(String,Int)"
+			 	"Put(String,Long)"
+			 	"Put(String,Double)"
+			 	"Put(String,Boolean)"
+			 	"Put(String,Any)"
 		 	
-		 	Note: No "mapped" version of the template needed for this case.
+		 	Notes: 
+		 		1) No "mapped" version of the template needed for this case.
+		 		2) These functions can ONLY be used inside objects that have access to the model's ctx
+		 		   (e.g., inside the 'execute(ctx : Context)' function of a derived field)
 		 */
 		
-		val putVariableMacroPmmlDict : String =   """
-	class %1%_%2%_Put(var %1% : %1_type%, val %2% : %2_type%)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(%1%, %2%)
-			set 
-		}
-	} """
+		val putVariableMacroPmmlDict : String =   """Put(ctx, %1%, %2%)"""
 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "String"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "String"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
 					,-1)	  
@@ -647,43 +635,38 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "Int"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Int"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "Long"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Long"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "Double"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Double"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "Boolean"), ("value", MdMgr.sysNS, "Boolean"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Boolean"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("variable", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Any"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Any"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
-		  
-		  
-		/** catalog the ITERABLE macros */
-		fcnMacrofeatures.clear
-		fcnMacrofeatures += FcnMacroAttr.ITERABLE
 	}
 
 	/**
@@ -1156,11 +1139,6 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseContainer")), null)
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
@@ -1171,14 +1149,21 @@ class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+
+		/** These are exposed as macros */
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseContainer")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseContainer")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseContainer")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseContainer")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseContainer")), null)
 		//mgr.AddFunc("Pmml", "incrementBy", "com.ligadata.pmml.udfs.Udfs.incrementBy", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Any")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Double")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Any")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Double")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
 	}
 
 

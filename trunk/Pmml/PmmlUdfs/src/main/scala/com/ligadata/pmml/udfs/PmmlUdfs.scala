@@ -32,13 +32,10 @@ import com.ligadata.OnLEPBase._
 
 object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
-  /** Set the context so we can have standard functions update the runtime state of data fields, derived fields etc. */
-  var ctx : Context = null
-  def SetContext(actx : Context) = { ctx = actx }
+  /** runtime state write functions NOTE: macros use these functions ... the ctx is not directly
+   *  supported in the Pmml */
   
-  /** runtime state write functions */
-  
-  def Put(variableName : String, value : String) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : String) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new StringDataValue(value))
@@ -46,7 +43,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set
   }
     	
-  def Put(variableName : String, value : Int) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Int) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new IntDataValue(value))
@@ -54,7 +51,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set 
   }
 
-  def Put(variableName : String, value : Long) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Long) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new LongDataValue(value))
@@ -62,7 +59,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set 
   }
 
-  def Put(variableName : String, value : Double) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Double) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new DoubleDataValue(value))
@@ -70,7 +67,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set 
   }
 
-  def Put(variableName : String, value : Any) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Any) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new AnyDataValue(value))
@@ -78,7 +75,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set 
   }
 
-  def Put(variableName : String, value : Boolean) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Boolean) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new BooleanDataValue(value))
@@ -86,7 +83,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  set 
   }
 
-  def Put(variableName : String, value : Float) : Boolean = {
+  def Put(ctx : Context, variableName : String, value : Float) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valuePut(variableName, new FloatDataValue(value))
@@ -96,7 +93,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   /** runtime state increment function */
   
-  def incrementBy(variableName : String, value : Int) : Boolean = {
+  def incrementBy(ctx : Context, variableName : String, value : Int) : Boolean = {
 	  var set : Boolean = (ctx != null)
 	  if (set) {
 		  set = ctx.valueIncr(variableName, value)

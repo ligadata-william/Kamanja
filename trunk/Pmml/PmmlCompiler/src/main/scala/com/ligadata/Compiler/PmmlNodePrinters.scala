@@ -126,7 +126,8 @@ object NodePrinterHelpers {
 				}
 			}
 		}
-	  	fcnBuffer.toString
+		val fcnExprStr : String = fcnBuffer.toString
+	  	fcnExprStr
 	  
 	}
 	
@@ -807,8 +808,6 @@ object NodePrinterHelpers {
 		clsBuffer.append(s"class $classname($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
 		clsBuffer.append(s"   extends ModelBase {\n") 
 		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()\n")
-		clsBuffer.append(s"	   /** make the Context avaialble to std udfs to permit state updates via Put, incrementBy, et al */ \n")
-		clsBuffer.append(s"	   com.ligadata.pmml.udfs.Udfs.SetContext(ctx) \n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    override def getModelName : String = $classname.getModelName\n")
@@ -1052,8 +1051,8 @@ object NodePrinterHelpers {
         prepResultBuffer.append(s"        val predictionFld : MiningField = miningVars.filter(m => m.usageType == ${'"'}predicted${'"'}).head\n") 
 
 		prepResultBuffer.append(s"\n")                       
-		prepResultBuffer.append(s"        /** This piece prevents result generation when model doesn't score an rule... is relying on the */\n")                       
-		prepResultBuffer.append(s"        /** default score.  This will be optionally executed based upon argument from engine ultimately. */\n")                       
+		prepResultBuffer.append(s"        /** This piece prevents result generation when model doesn't score by any rule... i.e., is relying on the */\n")                       
+		prepResultBuffer.append(s"        /** the default score.  This will be optionally executed based upon argument from engine ultimately. */\n")                       
 		prepResultBuffer.append(s"        val somePrediction : DataValue = ctx.valueFor(predictionFld.name) \n")
 		prepResultBuffer.append(s"        val predictedValue : Any = somePrediction match { \n")
 		prepResultBuffer.append(s"    	  		 case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value \n")
