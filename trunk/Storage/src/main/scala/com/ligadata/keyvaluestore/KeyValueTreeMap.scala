@@ -30,7 +30,8 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 	var table = parameter.getOrElse("table", "default")
 
 	var InMemory = parameter.getOrElse("inmemory", "false")
-
+	val withTransactions = parameter.getOrElse("withtransaction", "false").toBoolean
+	
 	var db : DB = null
 
 	if(InMemory.toBoolean == true)
@@ -57,12 +58,14 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 	def add(source: IStorage) =
 	{
 		map.putIfAbsent(source.Key.toArray[Byte], source.Value.toArray[Byte])
-		db.commit() //persist changes into disk
+		if(withTransactions)
+			db.commit() //persist changes into disk
 	}
 	def put(source: IStorage) =
 	{
 		map.put(source.Key.toArray[Byte], source.Value.toArray[Byte])
-		db.commit() //persist changes into disk
+		if(withTransactions)
+			db.commit() //persist changes into disk
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =
@@ -96,7 +99,8 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 	def del(key: Key) =
 	{
 		map.remove(key.toArray[Byte])
-		db.commit(); //persist changes into disk
+		if(withTransactions)
+			db.commit(); //persist changes into disk
 	}
 
 	def del(source: IStorage) = { del(source.Key) }
@@ -115,7 +119,9 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 	def TruncateStore()
 	{
 		map.clear()
-		db.commit() //persist changes into disk
+		if(withTransactions)
+			db.commit() //persist changes into disk
+			
 		// Defrag on startup
 		db.compact()
 	}
@@ -133,7 +139,6 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 			val key = new Key
 			for(b <- buffer)
 				key+=b
-
 
 			handler(key)
 		}
