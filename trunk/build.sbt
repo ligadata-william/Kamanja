@@ -77,3 +77,4 @@ lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBo
 
 lazy val SimpleKafkaProducer = project.in(file("SampleApplication/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
+lazy val BankSampleDataReplicator = project.in(file("SampleApplication/Bank/SampleDataReplicator"))

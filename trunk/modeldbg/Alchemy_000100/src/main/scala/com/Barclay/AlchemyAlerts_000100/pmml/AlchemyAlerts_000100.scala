@@ -38,8 +38,6 @@ object AlchemyAlerts_000100 extends ModelBaseObj {
 class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg_100, val modelName:String, val modelVersion:String, val tenantId: String)
    extends ModelBase {
     val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()
-	   /** make the Context avaialble to std udfs to permit state updates via Put, incrementBy, et al */ 
-	   com.ligadata.pmml.udfs.Udfs.SetContext(ctx) 
     def GetContext : Context = { ctx }
     override def getModelName : String = AlchemyAlerts_000100.getModelName
     override def getVersion : String = AlchemyAlerts_000100.getVersion
@@ -439,7 +437,7 @@ class Derive_MaterializeOutputs (name : String, dataType : String, validValues: 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val MaterializeOutputs = And(Put("RUN_LDG_XAU", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU), Put("ACCT_SHORT_NM", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].ACCT_SHORT_NM), Put("ENT_DTE", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_DTE), Put("MOBILE_NUMBER", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MOBILE_NUMBER))
+        val MaterializeOutputs = And(Put(ctx, "RUN_LDG_XAU", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].RUN_LDG_XAU), Put(ctx, "ACCT_SHORT_NM", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].ACCT_SHORT_NM), Put(ctx, "ENT_DTE", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_DTE), Put(ctx, "MOBILE_NUMBER", ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MOBILE_NUMBER))
         ctx.xDict.apply("MaterializeOutputs").Value(new BooleanDataValue(MaterializeOutputs))
           new BooleanDataValue(MaterializeOutputs)
     }
@@ -492,7 +490,7 @@ class Derive_EBAlertType (name : String, dataType : String, validValues: ArrayBu
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val EBAlertType = If(GreaterOrEqual(ctx.valueFor("ClientPrefs").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.CustomerPreferences_100].MAX_EB_CNT, ctx.valueFor("ClientTierLimits").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.TukTier_100].T6_MAX_PER_PERIOD_CNT))
-        var result : Boolean = if (EBAlertType) { Put("AlertType", "EB2") } else { Put("AlertType", "EB1") }
+        var result : Boolean = if (EBAlertType) { Put(ctx, "AlertType", "EB2") } else { Put(ctx, "AlertType", "EB1") }
         ctx.xDict.apply("EBAlertType").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -599,7 +597,7 @@ class Derive_ShouldEBOfflineEventBeIssued (name : String, dataType : String, val
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val ShouldEBOfflineEventBeIssued = If(And(Equal(ctx.valueFor("EBOfflineEvent").asInstanceOf[BooleanDataValue].Value, true), Equal(ctx.valueFor("SumOfAlertsSeenToday").asInstanceOf[IntDataValue].Value, 0)))
-        var result : Boolean = if (ShouldEBOfflineEventBeIssued) { Put("OfflineEvent", "true") } else { false }
+        var result : Boolean = if (ShouldEBOfflineEventBeIssued) { Put(ctx, "OfflineEvent", "true") } else { false }
         ctx.xDict.apply("ShouldEBOfflineEventBeIssued").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -697,7 +695,7 @@ class Derive_ShouldNOOfflineEventBeIssued (name : String, dataType : String, val
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val ShouldNOOfflineEventBeIssued = If(And(ctx.valueFor("NOOfflineEvent").asInstanceOf[BooleanDataValue].Value, Equal(ctx.valueFor("SumOfAlertsSeenToday").asInstanceOf[IntDataValue].Value, 0)))
-        var result : Boolean = if (ShouldNOOfflineEventBeIssued) { Put("OfflineEvent", "true") } else { false }
+        var result : Boolean = if (ShouldNOOfflineEventBeIssued) { Put(ctx, "OfflineEvent", "true") } else { false }
         ctx.xDict.apply("ShouldNOOfflineEventBeIssued").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -734,7 +732,7 @@ class Derive_UpdateNOAlertAction (name : String, dataType : String, validValues:
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val UpdateNOAlertAction = And(Put("AlertType", "NO1"), new ClientAlertsToday_NO001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
+        val UpdateNOAlertAction = And(Put(ctx, "AlertType", "NO1"), new ClientAlertsToday_NO001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("UpdateNOAlertAction").Value(new BooleanDataValue(UpdateNOAlertAction))
           new BooleanDataValue(UpdateNOAlertAction)
     }
@@ -848,7 +846,7 @@ class Derive_ODOfflineEvent (name : String, dataType : String, validValues: Arra
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val ODOfflineEvent = If(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("ODAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)))
-        var result : Boolean = if (ODOfflineEvent) { Put("OfflineEvent", "true") } else { false }
+        var result : Boolean = if (ODOfflineEvent) { Put(ctx, "OfflineEvent", "true") } else { false }
         ctx.xDict.apply("ODOfflineEvent").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -947,7 +945,7 @@ class Derive_UpdateOD3AlertAction (name : String, dataType : String, validValues
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val UpdateOD3AlertAction = And(Put("AlertType", "OD3"), new ClientAlertsToday_OD003Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
+        val UpdateOD3AlertAction = And(Put(ctx, "AlertType", "OD3"), new ClientAlertsToday_OD003Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("UpdateOD3AlertAction").Value(new BooleanDataValue(UpdateOD3AlertAction))
           new BooleanDataValue(UpdateOD3AlertAction)
     }
@@ -976,7 +974,7 @@ class Derive_UpdateOD2AlertAction (name : String, dataType : String, validValues
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val UpdateOD2AlertAction = And(Put("AlertType", "OD2"), new ClientAlertsToday_OD002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
+        val UpdateOD2AlertAction = And(Put(ctx, "AlertType", "OD2"), new ClientAlertsToday_OD002Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("UpdateOD2AlertAction").Value(new BooleanDataValue(UpdateOD2AlertAction))
           new BooleanDataValue(UpdateOD2AlertAction)
     }
@@ -1005,7 +1003,7 @@ class Derive_UpdateOD1AlertAction (name : String, dataType : String, validValues
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val UpdateOD1AlertAction = And(Put("AlertType", "OD1"), new ClientAlertsToday_OD001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
+        val UpdateOD1AlertAction = And(Put(ctx, "AlertType", "OD1"), new ClientAlertsToday_OD001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("UpdateOD1AlertAction").Value(new BooleanDataValue(UpdateOD1AlertAction))
           new BooleanDataValue(UpdateOD1AlertAction)
     }
@@ -1071,7 +1069,7 @@ class Derive_LBOfflineEvent (name : String, dataType : String, validValues: Arra
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val LBOfflineEvent = If(Not(Between(CompressedTimeHHMMSSCC2Secs(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.BankPocMsg_100].ENT_TME), ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_START_TIME, ctx.valueFor("LBAlertParms").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertParameters_100].ONLINE_END_TIME, true)))
-        var result : Boolean = if (LBOfflineEvent) { Put("OfflineEvent", "true") } else { false }
+        var result : Boolean = if (LBOfflineEvent) { Put(ctx, "OfflineEvent", "true") } else { false }
         ctx.xDict.apply("LBOfflineEvent").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -1120,7 +1118,7 @@ class Derive_UpdateLBAlertAction (name : String, dataType : String, validValues:
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val UpdateLBAlertAction = And(Put("AlertType", "LB1"), new ClientAlertsToday_LB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
+        val UpdateLBAlertAction = And(Put(ctx, "AlertType", "LB1"), new ClientAlertsToday_LB001Sent_incrementBy(ctx.valueFor("ClientAlertsToday").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBankPoc.AlertHistory_100], 1).incrementBy, ctx.valueFor("AlertHistoryUpdate").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value)
         ctx.xDict.apply("UpdateLBAlertAction").Value(new BooleanDataValue(UpdateLBAlertAction))
           new BooleanDataValue(UpdateLBAlertAction)
     }

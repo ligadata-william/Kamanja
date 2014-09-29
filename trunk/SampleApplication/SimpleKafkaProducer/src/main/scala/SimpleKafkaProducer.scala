@@ -175,7 +175,6 @@ object SimpleKafkaProducer {
     } catch {
       case e: Exception =>
         e.printStackTrace
-        // producer.close
         sys.exit(1)
     }
   }
@@ -307,8 +306,8 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('sleep -> value), tail)
       case "--gz" :: value :: tail =>
         nextOption(map ++ Map('gz -> value), tail)
-      case "--topic" :: value :: tail =>
-        nextOption(map ++ Map('topic -> value), tail)
+      case "--topics" :: value :: tail =>
+        nextOption(map ++ Map('topics -> value), tail)
       case "--msg" :: value :: tail =>
         nextOption(map ++ Map('msg -> value), tail)
       case "--threads" :: value :: tail =>
@@ -317,8 +316,6 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('filter -> value), tail)
       case "--partitionkeyidxs" :: value :: tail =>
         nextOption(map ++ Map('partitionkeyidxs -> value), tail)
-      case "--ntopics" :: value :: tail =>
-        nextOption(map ++ Map('ntopics -> value), tail)
       case "--ignorelines" :: value :: tail =>
         nextOption(map ++ Map('ignorelines -> value), tail)
       case "--topicpartitions" :: value :: tail =>
@@ -327,7 +324,6 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('brokerlist -> value), tail)
       case option :: tail => {
         println("Unknown option " + option)
-        // producer.close
         sys.exit(1)
       }
     }
@@ -344,11 +340,10 @@ object SimpleKafkaProducer {
     val sFilesNames = options.getOrElse('files, null).asInstanceOf[String]
     if (sFilesNames == null) {
       println("Need input files as parameter")
-      // producer.close
       sys.exit(1)
     }
 
-    val sAllFls = sFilesNames.split(",")
+    val sAllFls = sFilesNames.replace("\"", "").trim.split(",")
     val sAllTrimFls = sAllFls.map(flnm => flnm.trim)
     val sAllValidTrimFls = sAllTrimFls.filter(flnm => flnm.size > 0)
 
@@ -358,23 +353,22 @@ object SimpleKafkaProducer {
 
     if (msg.size == 0) {
       println("Need message type")
-      // producer.close
       sys.exit(1)
     }
 
-    val basetopic = options.getOrElse('topic, "").toString.replace("\"", "").trim.toLowerCase
+    val tmptopics = options.getOrElse('topics, "").toString.replace("\"", "").trim.toLowerCase.split(",").map(t => t.trim).filter(t => t.size > 0)
 
-    if (basetopic.size == 0) {
-      println("Need queue")
-      // producer.close
+    if (tmptopics.size == 0) {
+      println("Need queue(s)")
       sys.exit(1)
     }
+
+    val topics = tmptopics.toList.sorted.toArray // Sort topics by names    
 
     val brokerlist = options.getOrElse('brokerlist, "").toString.replace("\"", "").trim.toLowerCase
 
     if (brokerlist.size == 0) {
       println("Need Brokers list (brokerlist) in the format of HOST:PORT,HOST:PORT")
-      // producer.close
       sys.exit(1)
     }
 
@@ -390,31 +384,15 @@ object SimpleKafkaProducer {
 
     if (threads <= 0) {
       println("Threads must be more than 0")
-      // producer.close
-      sys.exit(1)
-    }
-
-    val ntopics = options.getOrElse('ntopics, "0").toString.toInt
-
-    if (ntopics <= 0) {
-      println("We should have at least one topic")
-      // producer.close
       sys.exit(1)
     }
 
     val ignorelines = options.getOrElse('ignorelines, "0").toString.toInt
 
-    if (ntopics < 0) {
-      println("We should not have -ve ignorelines")
-      // producer.close
-      sys.exit(1)
-    }
-
     val topicpartitions = options.getOrElse('topicpartitions, "0").toString.replace("\"", "").toInt
 
     if (topicpartitions <= 0) {
       println("We should have +ve topicpartitions")
-      // producer.close
       sys.exit(1)
     }
 
@@ -470,16 +448,8 @@ object SimpleKafkaProducer {
           executor.execute(new Runnable() {
             val threadNo = idx
             val flNames = fls.toArray
-            val topics1: Array[String] = new Array[String](ntopics)
-
-            for (i <- 0 to ntopics - 1) {
-              topics1(i) = basetopic + "_" + (i + 1)
-            }
-
-            val topics = topics1.toList.sorted.toArray // Sort topics by names
-
-            val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props)) // Not closing this producer at this moment
             override def run() {
+              val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props))
               var tm: Long = 0
               val st: Stats = new Stats
               flNames.foreach(fl => {
@@ -490,6 +460,7 @@ object SimpleKafkaProducer {
                 }
                 println("%02d. File:%s ElapsedTime:%.02fms".format(threadNo, fl, tm / 1000000.0))
               })
+              producer.close
             }
           })
         }
@@ -505,7 +476,7 @@ object SimpleKafkaProducer {
 
     // statsPrintFn
     println("Done. ElapsedTime:%.02fms".format((System.nanoTime - s) / 1000000.0))
-    // producer.close
+    sys.exit(0)
 
   }
 }

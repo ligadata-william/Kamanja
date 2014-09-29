@@ -133,7 +133,7 @@ class AlchemyKV(val kvname : String
         connectinfo+= ("schema" -> s"$kvname")
         connectinfo+= ("table" -> s"$tablevalue")
         connectinfo+= ("inmemory" -> "false")
-        connectinfo+= ("withtransaction" -> "true")
+        connectinfo+= ("withtransaction" -> "false")
         
         val kvstore : DataStore = KeyValueManager.Get(connectinfo)
         kvstore
@@ -161,7 +161,7 @@ class AlchemyKV(val kvname : String
         
         locateKeyPos /** locate key idx */
         
-        val tx : Transaction = kvstore.beginTx()
+        // val tx : Transaction = kvstore.beginTx()
         val csvdataRecs : List[String] = csvdata.tail
         csvdataRecs.foreach(tuples => {
             /** if we can make one ... we add the data to the store. This will crash if the data is bad */
@@ -171,7 +171,7 @@ class AlchemyKV(val kvname : String
             val key : String = data(keyPos)
             SaveObject(key, tuples, kvstore)
         })
-        kvstore.endTx(tx)
+        // kvstore.endTx(tx)
 
         kvstore
     }

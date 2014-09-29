@@ -37,6 +37,30 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  		  	})	  		  
 	  		}
 	  	}
+	  	
+	  	if (macroDef == null) {
+	  		val expandingContainerFields = false
+	  		var argTypesNoExp : Array[(String,Boolean,BaseTypeDef)] = fcnSelector.collectArgKeys(expandingContainerFields)
+	  	  
+		  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
+		  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
+		  	ctx.logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
+		  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
+		  	if (macroDef == null) {
+		  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(argTypesNoExp)
+		  		breakable {
+		  		  	simpleKeysToTry.foreach( key => {
+		  		  		ctx.logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+		  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
+		  		  		if (macroDef != null) {
+		  		  			ctx.logger.trace(s"selectMacro ...found macroDef with $key")
+		  		  			break
+		  		  		}
+		  		  	})	  		  
+		  		}
+		  	}
+	  	  
+	  	}
 	  	val foundDef : String = if (macroDef != null)  "YES" else "NO!!"
 	  	ctx.logger.trace(s"selectMacro ...macroDef produced?  $foundDef")
 	  	(macroDef, argTypes)
@@ -85,18 +109,42 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	}
   	
 	/** 
-	 *  Some macros don't generate the "builds" class.  They emit some elaborate code to be inserted inline in the 
-	 *  current function's string builder buffer.  To get properly handled, only the 2nd item in the returned 
-	 *  tuple ... the one for the "does" piece ... is filled.  The "builds" item must be null to prevent 
-	 *  the enqueue of text that at minimum could hammer the formatting for the derived field's class.
+	 *  Some macros don't generate the "builds" class.  They emit some possibly elaborate code to be inserted inline in the 
+	 *  current function's string builder buffer.  NOTE: only the 2nd item in the returned tuple is filled.  This is 
+	 *  the one for the "does" piece.  The first item is only filled for those macro uses that have the FcnMacroAttr.CLASSUPDATE 
+	 *  feature.  
 	 *  
 	 *  @param macroDef a MacroDef that describes the macro to be used for this code generation.
 	 *  @param argTypes the function macro arg types and whether they are containers, (and functions too eventually).  It may be useful
 	 *  to return the actual type metadata in the second arg instead of a boolean or in addition to the boolean.
-	 *  @return a "builds/does" pair with a null first tuple value.
+	 *  @return a "builds/does" pair with a null "builds" value in tuple._1 since it is not used.
 	 */
 	def generateOnlyDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String) = {
-		(null,"")
+	  
+	  	/** either template can be used.  There is no mapped container */
+  		val templateUsed : String = macroDef.macroTemplate._1
+		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
+		val parameterValues : Array[String] = getArgValues
+
+		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues)
+		(null,functionMacroExpr)
+	}
+	
+	/**
+	 * 	Create an array of substitution values from the xApply node's children (i.e., the arguments)
+	 */
+	def getArgValues : Array[String] = {  
+		var substitutionValues : ArrayBuffer[String] = ArrayBuffer[String]()
+	  	val fcnBuffer : StringBuilder = new StringBuilder
+
+	  	node.Children.foreach(child => {
+	  		fcnBuffer.clear
+	  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+	  		val argPrint : String = fcnBuffer.toString
+	  		substitutionValues += argPrint
+  		})
+	  
+  		substitutionValues.toArray
 	}
 	
 	/** 
@@ -377,5 +425,41 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  
 		typeArgs
 	}
+
+	/** 
+	 *  Answer the "does" string for simpler macros.. those that don't generate classes.  This method generates the 
+	 *  simple function macro use.
+	 *  
+	 *  @param templateUsed one of the two templates from the function macro... 
+	 *  @param parametersUsed - these are indices into the fcnArgValues parameter (the 2nd arg) that are needed for the "does" arguments to 
+	 *  	be produced here.
+	 *  @param parameterValues - the substitution values that are avaialable for the substitution.  Note that not all of them
+	 *  	necessarily need to be used.  The parametersUsed determines which will be used in the substitution map.
+	 *  @return the generated expression based upon the supplied template and substitution values.
+	 */
+	def generateDoes(templateUsed : String, parametersUsed : Array[Int], parameterValues : Array[String]) : String = {
+		val buffer : StringBuilder = new StringBuilder
+
+		val paramCnt : Int = parametersUsed.size
+		if (parameterValues.size == 5) {  /** little debug station */
+			val stopHere = 0
+		}
+		
+  		/** construct the substitution map used to fill in copy of template */
+  		var substitutionMap : HashMap[String,String] = HashMap[String,String]()
+  		parameterValues.zipWithIndex.foreach( pair => {
+  			val argExpr : String = pair._1
+  			val argidx : Int = pair._2 + 1
+  			val argIdxName = argidx.toString 
+
+  			ctx.logger.trace(s"%$argIdxName% = $argExpr")
+  			substitutionMap += s"%$argIdxName%" -> s"$argExpr"
+  		})
+  		
+  		
+  		val subExpr : String = ctx.fcnSubstitute.makeSubstitutions(templateUsed, substitutionMap)
+		subExpr
+	}
+	
 }
 
