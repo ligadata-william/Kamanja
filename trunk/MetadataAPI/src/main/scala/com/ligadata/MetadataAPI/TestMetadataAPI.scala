@@ -23,9 +23,9 @@ import scala.io._
 import com.ligadata.messagedef._
 import com.ligadata.Compiler._
 
-//import com.twitter.chill.ScalaKryoInstantiator
-//import java.io.ByteArrayOutputStream
-//import com.esotericsoftware.kryo.io.{Input, Output}
+import com.twitter.chill.ScalaKryoInstantiator
+import java.io.ByteArrayOutputStream
+import com.esotericsoftware.kryo.io.{Input, Output}
 
 object TestMetadataAPI{
 
@@ -1074,20 +1074,57 @@ object TestMetadataAPI{
     mdLoader.initialize
   }
 
-//  def Chill {
-//    val items = List(1,2,4,6)
-//    val instantiator = new ScalaKryoInstantiator
-//    instantiator.setRegistrationRequired(false)
-// 
-//    val kryo = instantiator.newKryo()
-//    val baos = new ByteArrayOutputStream
-//    val output = new Output(baos, 4096)
-//    kryo.writeObject(output, items)
-// 
-//    val input = new Input(baos.toByteArray)
-//    val deser = kryo.readObject(input, classOf[List[Int]])
-//    assert(deser.size == 4)
-//  }
+  def TestChill[T <: BaseElemDef](obj: List[T]) {
+    val items = obj;
+
+    logger.trace("Serializing " + obj.length + " objects ")
+    val instantiator = new ScalaKryoInstantiator
+    instantiator.setRegistrationRequired(false)
+ 
+    val kryo = instantiator.newKryo()
+    val baos = new ByteArrayOutputStream
+    val output = new Output(baos, 4096)
+    kryo.writeObject(output, items)
+ 
+    val input = new Input(baos.toByteArray)
+    val deser = kryo.readObject(input, classOf[List[T]])
+
+    logger.trace("DeSerialized " + deser.length + " objects ")
+    assert(deser.length == obj.length)
+  }
+
+
+  def TestKryoSerialize{
+    MetadataAPIImpl.InitMdMgrFromBootStrap
+    val msgDefs = MdMgr.GetMdMgr.Types(true,true)
+    msgDefs match{
+      case None => {
+	logger.trace("No Messages found ")
+      }
+      case Some(ms) => {
+	val msa = ms.toArray
+	TestChill(msa.toList)
+      }
+    }
+  }
+
+  def TestKryoSerialize1{
+    MetadataAPIImpl.InitMdMgrFromBootStrap
+    val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
+    msgDefs match{
+      case None => {
+	logger.trace("No Messages found ")
+      }
+      case Some(ms) => {
+	val msa = ms.toArray
+	msa.foreach( m => {
+	  val ba = MetadataAPIImpl.SerializeObject(m)
+	  val m1 = MetadataAPIImpl.DeserializeObject(ba,new MessageDef)
+	  assert(m.asInstanceOf[MessageDef].FullNameWithVer == m1.asInstanceOf[MessageDef].FullNameWithVer)
+	})
+      }
+    }
+  }
 
   def StartTest{
     try{
@@ -1190,6 +1227,8 @@ object TestMetadataAPI{
       
       MetadataAPIImpl.readMetadataAPIConfig
       StartTest
+      //TestKryoSerialize
+      //TestKryoSerialize1
 
     }catch {
       case e: Exception => {
