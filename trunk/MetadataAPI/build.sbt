@@ -56,4 +56,9 @@ libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9"
 
 libraryDependencies += "org.apache.zookeeper" % "zookeeper" % "3.4.6"
 
+libraryDependencies ++= Seq(
+"com.twitter" %% "chill" % "0.3.6",
+"org.scalamacros" % "quasiquotes_2.10.4" % "2.0.0-M6"
+)
+
 scalacOptions += "-deprecation"
