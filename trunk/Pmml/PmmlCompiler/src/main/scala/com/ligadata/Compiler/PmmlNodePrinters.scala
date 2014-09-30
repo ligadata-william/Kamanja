@@ -10,7 +10,7 @@ import com.ligadata.olep.metadata._
 //import com.ligadata.Pmml.Runtime._
 
 
-object NodePrinterHelpers {
+object NodePrinterHelpers extends LogTrait {
 
 	/** used by data dictionary and transform dictionary */
 	def valuesHlp(vals : ArrayBuffer[(String,String)], valNm : String, pad : String) = {
@@ -58,7 +58,19 @@ object NodePrinterHelpers {
 			case _ => true
 		}
 		
-		if (isPmmlBuiltin) {	
+		/** 
+		 *  There are four cases:
+		 *  	1) "built in" function.  These are functions supported from the Pmml specification
+		 *   	2) "iterable" function.  These are functions that have a collection (some type with "Iterable" interface.
+		 *    		These functions are printed with the collection as the receiver (e.g., coll.map(mbr => ...))
+		 *      3) "simple" function.  These are Udfs that require no special printing needs
+		 *      4) "macro" function. The macros generate template specific code of two types:
+		 *      	a) "does" code is a string returned from the macro printer that will print immediately inline
+		 *       		in the current printer.
+		 *         	b) "builds" code is a string that is printed out of line just before closure of the current class.
+		 *          	See MacroSelect.scala for the details and use cases. 
+		 */
+		if (isPmmlBuiltin) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
 			simpleFcnPrint(scalaFcnName
 						, node
@@ -69,8 +81,37 @@ object NodePrinterHelpers {
 					    , fcnBuffer
 					    , null)					
 		} else {
+			var funcDef : FunctionDef = null
 			val functionSelector : FunctionSelect = new FunctionSelect(ctx, ctx.mgr, node)
-			val (funcDef, argTypes) : (FunctionDef, Array[(String,Boolean,BaseTypeDef)]) = functionSelector.selectFunction
+			val isIterable = functionSelector.isIterableFcn
+			if (isIterable) { /** iterable functions in the form coll.<fcn>(mbr => ...) */
+				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectIterableFcn 
+				val applysFcnName : String = node.function
+				val iterablePrinter : IterableFcnPrinter = new IterableFcnPrinter(applysFcnName
+																				, node
+																			    , ctx
+																			    , generator
+																			    , generate
+																			    , order
+																			    , fcnTypeInfo)
+				iterablePrinter.print(fcnBuffer)
+				funcDef = fcnTypeInfo.fcnDef
+				
+			} else {  /** simple function...*/
+				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectSimpleFcn
+				if (fcnTypeInfo != null && fcnTypeInfo.fcnDef != null) {
+					val scalaFcnName : String = node.function
+					simpleFcnPrint(scalaFcnName
+								, node
+							    , ctx
+							    , generator
+							    , generate
+							    , order
+							    , fcnBuffer
+							    , fcnTypeInfo.fcnDef)					
+					funcDef = fcnTypeInfo.fcnDef
+				}
+			}
 			if (funcDef == null) {
 				/** perhaps its a macro instead */
 				val macroSelector : MacroSelect = new MacroSelect(ctx, ctx.mgr, node, generator, functionSelector)
@@ -97,13 +138,13 @@ object NodePrinterHelpers {
 						val matchFcnBuff : StringBuilder = new StringBuilder()
 						matchFcnBuff.append("Any{")
 						fcnsThatWouldMatchWithRightTypeSig.addString(matchFcnBuff, s"${'"'},${'"'}").append(s"${'"'}}")
-						ctx.logger.error(s"Function '$fcnName' could not be located in the Metadata.")
-						ctx.logger.error(s"One or more functions named '$fcnName' is/are known, but your key is not good enough to locate one")
-						ctx.logger.error(s"Any of these keys would return a version of $fcnName:")
+						logger.error(s"Function '$fcnName' could not be located in the Metadata.")
+						logger.error(s"One or more functions named '$fcnName' is/are known, but your key is not good enough to locate one")
+						logger.error(s"Any of these keys would return a version of $fcnName:")
 						val fcnSetStr : String = matchFcnBuff.toString
-						ctx.logger.error(s"    $fcnSetStr")
+						logger.error(s"    $fcnSetStr")
 					} else {
-						ctx.logger.error(s"Function $fcnName is not known in the metadata...")
+						logger.error(s"Function $fcnName is not known in the metadata...")
 					}
 				}
 			} else {
@@ -167,7 +208,8 @@ object NodePrinterHelpers {
   		fcnBuffer.append(closingParen)
   		
   		val fcnUseRep : String = fcnBuffer.toString
-  		//ctx.logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
+  		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
+  		val wtf : Boolean = true
 	}
 
   		
@@ -500,9 +542,9 @@ object NodePrinterHelpers {
 		val clsBuffer : StringBuilder = new StringBuilder()
 		
 		if (ctx.UpdateClassQueue.size > 0) {
-			ctx.logger.error("There are items in the update class queue.. evidently they were not dumped. They are:")
+			logger.error("There are items in the update class queue.. evidently they were not dumped. They are:")
 			for ( updateClsStr <- ctx.UpdateClassQueue) {
-				ctx.logger.error(s"\n$updateClsStr")
+				logger.error(s"\n$updateClsStr")
 			}	  
 			ctx.UpdateClassQueue.clear
 		}
@@ -725,7 +767,7 @@ object NodePrinterHelpers {
 		objBuffer.append(s"    def getModelVersion: String = getVersion\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
-			ctx.logger.error("No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
+			logger.error("No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
 			ArrayBuffer[(String, Boolean, BaseTypeDef, String)]()
 		} else {
 			/** select any containers in scope that are not = gCtx and have been marked as constructor parameter (container._2._1) */
@@ -905,7 +947,7 @@ object NodePrinterHelpers {
 		val ddNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("DataDictionary") 
 		ddNode match {
 		  case Some(ddNode) => generator.generateCode1(Some(ddNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => ctx.logger.error(s"there was no data dictionary avaialble... whoops!\n")
+		  case _ => logger.error(s"there was no data dictionary avaialble... whoops!\n")
 		}
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"\n")
@@ -916,7 +958,7 @@ object NodePrinterHelpers {
 		dictBuffer.clear
 		xNode match {
 		  case Some(xNode) => generator.generateCode1(Some(xNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => ctx.logger.error(s"there was no data dictionary avaialble... whoops!")
+		  case _ => logger.error(s"there was no data dictionary avaialble... whoops!")
 		}		
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"\n")
@@ -928,7 +970,7 @@ object NodePrinterHelpers {
 		clsBuffer.append(s"        //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
 		rsmNode match {
 		  case Some(rsmNode) => generator.generateCode1(Some(rsmNode), dictBuffer, generator, CodeFragment.MININGFIELD)
-		  case _ => ctx.logger.error(s"no mining fields... whoops!\n")
+		  case _ => logger.error(s"no mining fields... whoops!\n")
 		}
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"        /** put a reference of the mining schema map in the context for convenience. */\n")
@@ -1016,7 +1058,7 @@ object NodePrinterHelpers {
  	}
 
 	/**
-  		FIXME: This function will add the "prepareResults" function to the model class being written.
+  		This function will add the "prepareResults" function to the model class being written.
   		It will take the mining variables and prepare the following objects... and array of 
   		
 			class Result(var resultType: MiningVarInfo, var result: Any) {

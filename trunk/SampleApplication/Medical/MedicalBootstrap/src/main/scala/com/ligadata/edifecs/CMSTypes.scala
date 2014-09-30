@@ -369,7 +369,7 @@ class Medication extends BaseMsg {
   }
   
   var Desynpuf_Id: String = ""; // Make sure we store only lowercase
-  var MedicationIdentofier: String = "" // Make sure we store only lowercase
+  var MedicationIdentifier: String = "" // Make sure we store only lowercase
   var MedicationDetails_Name: String = ""
   var EncounterId: Long = 0 // Same as ClaimId
   var Administration_Dosage_Quantity: Double = 0

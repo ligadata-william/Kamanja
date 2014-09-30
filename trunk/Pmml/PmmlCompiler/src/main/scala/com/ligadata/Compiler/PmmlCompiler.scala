@@ -18,8 +18,7 @@ import org.xml.sax.XMLReader
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload._
-
+import com.ligadata.edifecs._
 
 
 /** 
@@ -236,7 +235,11 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 	
 	override def main (args : Array[String]) {
 		
-		logger.debug("PmmlCompiler.main begins")
+		logger.debug("********************************")
+		logger.debug("********************************")
+		logger.debug("* PmmlCompiler.main begins")
+		logger.debug("********************************")
+		logger.debug("********************************")
 
 
 		if (args.length == 0) logger.error(usage)
@@ -293,9 +296,15 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val attrPath : String = ""
 			val msgCtnPath : String = ""
 			val mgr : MdMgr = MdMgr.GetMdMgr
-			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, logger, typesPath, fcnPath, attrPath, msgCtnPath)
-			mdLoader.initialize
-
+			
+			if (clientName.toLowerCase.startsWith("barc")) {
+				val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+				mdLoader.initialize
+			} else {
+				val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+				mdLoader.initialize
+			}
+			
 			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger)
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
@@ -361,7 +370,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	}
 
 	/** the PmmlContext needs a fully operational mdmgr... create it after MetadataLoad. */
-	var ctx : PmmlContext = new PmmlContext(mgr, logger)
+	var ctx : PmmlContext = new PmmlContext(mgr)
 
 
 	/** Compile the source found in the supplied path, producing scala src in the returned srcCode string.

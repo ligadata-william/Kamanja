@@ -161,6 +161,15 @@ object PmmlTypes {
 		}
 		fcnName
   	}
+  	
+   	def scalaNameForIterableFcnName(iterableFcnName : String) : String = {
+		val fcnName = iterableFcnName match {
+		      case "ContainerMap" => "map"
+		      case "ContainerFilter" => "filter"
+		      case _  => null
+		}
+		fcnName
+  	}
  
 }
 

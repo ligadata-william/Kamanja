@@ -45,6 +45,7 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  	val strRep : String = value.toString
 	  	dataType match {
 	  		case "string" | "date" | "time" | "dateTime" => s"${'"'}$strRep${'"'}"
+	  		case "ident"  => s"mbr.$strRep"  /** don't change 'mbr.' without adjusting IterableFcnPrinter.iterablePrint */
 	  		case _ => strRep
 	  	}
 	}
@@ -1761,9 +1762,9 @@ object PmmlExecNode {
 				val possibleContainer : String = fieldNodes.head
 				val expandCompoundFieldTypes : Boolean = true
 				/** See the types for the containers with this to educate ourselves about it */
-				val explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(possibleContainer, expandCompoundFieldTypes)
-				val fieldTypes : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(possibleContainer, ! expandCompoundFieldTypes)
-				val fieldType : String = fieldTypes(0)._1
+				val explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(field, expandCompoundFieldTypes)
+
+				/** Verify outer level container is a defined container in the pmml... */
 				val isContainerInScope : Boolean = ctx.containersInScope.filter( tup4 => {
 					possibleContainer == tup4._1 
 				}).length > 0
@@ -1778,19 +1779,14 @@ object PmmlExecNode {
 						val varRefBuffer : StringBuilder = new StringBuilder
 						val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
 						varRefBuffer.append(s"ctx.valueFor(${'"'}$possibleContainer${'"'}).asInstanceOf[$dataValueType]")
-						if (fieldNodes.size > 1) { /** add the container fields and their fields (FIXME) */
+						/** Handle arbitrarily nested fields e.g., container.sub.subsub.field */
+						if (fieldNodes.size > 1) { 
 							val containerField : String= fieldNodes(1)
 							val containerFieldType : ContainerTypeDef = container.asInstanceOf[ContainerTypeDef]
-							/** FIXME: only structured types for now... add maps, sets, arrays, et al in a bit*/
-							val memberType = containerFieldType match {
-								  case str : StructTypeDef => {
-									  val memberDefs : Array[BaseAttributeDef] = containerFieldType.asInstanceOf[StructTypeDef].memberDefs
-									  val mDef : Array[BaseAttributeDef] = memberDefs.filter( m => m.name == containerField )
-									  if (mDef.size > 0) mDef.head.typeString else "Any"
-								  }
-								  case _ => containerFieldType.typeString
-								}
-							varRefBuffer.append(s".Value.asInstanceOf[$typeStr].$containerField")
+							
+							val containerFieldRep : String = compoundFieldPrint(fieldNodes.tail, explodedFieldTypes.tail)
+
+							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]$containerFieldRep")
 						} else {
 							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]")
 						}
@@ -1826,8 +1822,39 @@ object PmmlExecNode {
 		fieldRefStr
 	}
 
-}
+	/**
+		Print the remaining field nodes in the supplied array, coercing them to their corresponding type.  The outer
+		field node (a variable in one of the pmml dictionaries) is handled by the caller.		
+						
+		@param fieldNodes an array of the names found in a container qualified field referebce (e.g., the 
+			container.sub.subsub.fld of a field reference like msg.container.sub.subsub.fld)
+		@param the type information corresponding to the fieldNodes.
+		@return a string rep for the compound field
+							
+	 */	
+						
+	def compoundFieldPrint(fieldNodes : Array[String]
+						, explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)]) : String = {
+		val varRefBuffer : StringBuilder = new StringBuilder
+		val lastNode : String = fieldNodes.last
+		fieldNodes.zip(explodedFieldTypes).foreach ( tuple => {
+			val (field, typeInfo) : (String, (String,Boolean,BaseTypeDef)) = tuple
+			val (typeStr, isContainerWFields, baseType) : (String,Boolean,BaseTypeDef) = typeInfo
+			if (field == lastNode) {
+				/** don't bother to print the type of the leaf field */
+				varRefBuffer.append(s".$field")
+			} else {
+				//varRefBuffer.append(s".$field.asInstanceOf[$typeStr]")
+				varRefBuffer.append(s".$field")
+			}
+		})
+			
+		varRefBuffer.toString
+	}
+		
 
+
+}
 
 
 

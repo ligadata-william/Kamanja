@@ -39,12 +39,21 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 	    logger.trace("MetadataLoad...loading Edifecs message and container definitions")
 	    InitFixedMsgsForEdifecs
+	    
+		logger.trace("MetadataLoad...loading Edifecs types")
+		InitTypesForEdifecs1
+
+		logger.trace("MetadataLoad...loading Beneficiary")
+	    InitFixedMsgsForEdifecs1
 		
 		logger.trace("MetadataLoad...loading Pmml types")
 		initTypesFor_com_ligadata_pmml_udfs_Udfs
 
 		logger.trace("MetadataLoad...loading Pmml udfs")
 		init_com_ligadata_pmml_udfs_Udfs
+		
+		logger.trace("MetadataLoad...loading Iterable functions")
+		InitFcns
 			
 	    logger.trace("MetadataLoad...loading function macro definitions")
 	    initMacroDefs
@@ -124,6 +133,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Line_Alowd_Chrg_Amt", MdMgr.sysNS, "Float", false)
 					        ));
 
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfCarrierClaimLineItem", MdMgr.sysNS, "CarrierClaimLineItem", 1, 1)
+
 		logger.trace("MetadataLoad...loading CarrierClaim")
 		mgr.AddFixedMsg(MdMgr.sysNS
 					    , "CarrierClaim"
@@ -150,13 +161,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Clm_Utlztn_Day_Cnt", MdMgr.sysNS, "Int", false)
 							, (MdMgr.sysNS, "Nch_Bene_Dschrg_Dt", MdMgr.sysNS, "Int", false)
 							, (MdMgr.sysNS, "Clm_Drg_Cd", MdMgr.sysNS, "Int", false)
-							, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Clm_Pass_Thru_Per_Diem_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Ip_Ddctbl_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Pta_Coinsrnc_Lblty_Am", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Icd9_Dgns_Cds:", MdMgr.sysNS, "ArrayOfString", false)
+							, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Clm_Pass_Thru_Per_Diem_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Ip_Ddctbl_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Pta_Coinsrnc_Lblty_Am", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false)
 							, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false)
 							, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false)
 					        ));
@@ -176,11 +187,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Prvdr_Num", MdMgr.sysNS, "Int", false)
 							, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false)
 							, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Double", false)
-							, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Float", false)
-							, (MdMgr.sysNS, "Icd9_Dgns_Cds:", MdMgr.sysNS, "ArrayOfString", false)
+							, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Double", false)
+							, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false)
 							, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false)
 							, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false)
 					        ));
@@ -286,20 +297,20 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Conditions", MdMgr.sysNS, "ArrayOfInt", false)
 					        ));
 
-
-		logger.trace("MetadataLoad...loading Beneficiary")
+		logger.trace("MetadataLoad...loading PrescriptionDrug")
 		mgr.AddFixedMsg(MdMgr.sysNS
-					    , "Beneficiary"
-					    , "com.ligadata.edifecs.Beneficiary"
-					    , List((MdMgr.sysNS, "beneficiaryBase", MdMgr.sysNS, "BeneficiaryBase", false)
-					        ,(MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayBufferOfInpatientClaim", false)
-					        , (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", false)
-					        , (MdMgr.sysNS, "Carrier_Claims", MdMgr.sysNS, "ArrayBufferOfCarrierClaim", false)
-					        , (MdMgr.sysNS, "Prescription_Drug_Events", MdMgr.sysNS, "ArrayBufferOfPrescriptionDrug", false)
-					        , (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayBufferOfHL7", false)
-					        , (MdMgr.sysNS, "Medications", MdMgr.sysNS, "ArrayBufferOfMedication", false)
+					    , "PrescriptionDrug"
+					    , "com.ligadata.edifecs.PrescriptionDrug"
+					    , List((MdMgr.sysNS, "Desynpuf_Id", MdMgr.sysNS, "String", false)
+					        , (MdMgr.sysNS, "Pde_Id", MdMgr.sysNS, "Long", false)
+					        , (MdMgr.sysNS, "Srvc_Dt", MdMgr.sysNS, "Int", false)
+					        , (MdMgr.sysNS, "Days_Suply_Num", MdMgr.sysNS, "Int", false)
+					        , (MdMgr.sysNS, "Ptnt_Pay_Amt", MdMgr.sysNS, "Float", false)
+					        , (MdMgr.sysNS, "Tot_Rx_Cst_Amt", MdMgr.sysNS, "Float", false)
+					        , (MdMgr.sysNS, "Qty_Dspnsd_Num", MdMgr.sysNS, "String", false)
+					        , (MdMgr.sysNS, "Prod_Srvc_Id", MdMgr.sysNS, "String", false)
 					        ));
-
+		
 		logger.trace("MetadataLoad...loading IdCodeDim")
 		mgr.AddFixedContainer(MdMgr.sysNS
 					    , "IdCodeDim"
@@ -318,6 +329,44 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Description", MdMgr.sysNS, "String", false)
 					        ));
 
+		
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfConflictMedicalCode", MdMgr.sysNS, "ConflictMedicalCode", 1, 1)
+
+		
+		logger.trace("MetadataLoad...loading EnvContext")		
+		mgr.AddFixedContainer(MdMgr.sysNS
+			    , "EnvContext"
+			    , "com.ligadata.OnLEPBase.EnvContext"
+		  		, List()) 
+		 		  		
+		logger.trace("MetadataLoad...loading BaseMsg")
+		 mgr.AddFixedContainer(MdMgr.sysNS
+							    , "BaseMsg"
+							    , "com.ligadata.OnLEPBase.BaseMsg"
+						  		, List()) 
+		  		
+		logger.trace("MetadataLoad...loading BaseContainer")
+		 mgr.AddFixedContainer(MdMgr.sysNS
+							    , "BaseContainer"
+							    , "com.ligadata.OnLEPBase.BaseContainer"
+						  		, List()) 		
+				  		
+	}
+
+	def InitFixedMsgsForEdifecs1 : Unit = {
+
+		logger.trace("MetadataLoad...loading Beneficiary")
+		mgr.AddFixedMsg(MdMgr.sysNS
+					    , "Beneficiary"
+					    , "com.ligadata.edifecs.Beneficiary"
+					    , List((MdMgr.sysNS, "beneficiaryBase", MdMgr.sysNS, "BeneficiaryBase", false)
+					        ,(MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayBufferOfInpatientClaim", false)
+					        , (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", false)
+					        , (MdMgr.sysNS, "Carrier_Claims", MdMgr.sysNS, "ArrayBufferOfCarrierClaim", false)
+					        , (MdMgr.sysNS, "Prescription_Drug_Events", MdMgr.sysNS, "ArrayBufferOfPrescriptionDrug", false)
+					        , (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayBufferOfHL7", false)
+					        , (MdMgr.sysNS, "Medications", MdMgr.sysNS, "ArrayBufferOfMedication", false)
+					        ));
 		logger.trace("MetadataLoad..IdStrDimContainer.loading hcpcsCodes")
 		mgr.AddFixedContainer(MdMgr.sysNS
 					    , "hcpcsCodes"
@@ -373,24 +422,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 					    , List((MdMgr.sysNS, "codeSet", MdMgr.sysNS, "TreeSetOfString", false)
 					        ));
 
-		logger.trace("MetadataLoad...loading EnvContext")		
-		mgr.AddFixedContainer(MdMgr.sysNS
-			    , "EnvContext"
-			    , "com.ligadata.OnLEPBase.EnvContext"
-		  		, List()) 
-		 		  		
-		logger.trace("MetadataLoad...loading BaseMsg")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "BaseMsg"
-							    , "com.ligadata.OnLEPBase.BaseMsg"
-						  		, List()) 
-		  		
-		logger.trace("MetadataLoad...loading BaseContainer")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "BaseContainer"
-							    , "com.ligadata.OnLEPBase.BaseContainer"
-						  		, List()) 		
-				  		
+
 	}
 
 
@@ -409,6 +441,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddScalar("System", "Char", tChar, "Char", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.CharImpl")
 
 		
+		mgr.AddHashMap("System", "HashMapOfAnyAny", ("System", "Any"), ("System", "Any"), 1)
+		mgr.AddMap("System", "MapOfAnyAny", ("System", "Any"), ("System", "Any"), 1)
+
+
+		
 	}
 	
 	def InitTypesForEdifecs : Unit = {
@@ -417,43 +454,83 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfCarrierClaimLineItem", MdMgr.sysNS, "CarrierClaimLineItem", 1, 1)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfInt", MdMgr.sysNS, "String", 1, 1)
 
+		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfStringInt", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Int"), 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfString", MdMgr.sysNS, "String", 1)
+	}
 
+	def InitTypesForEdifecs1 : Unit = {
+
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfMedication", MdMgr.sysNS, "Medication", 1, 1)
 
-		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfStringInt", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Int"), 1)
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfString", MdMgr.sysNS, "String", 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfMedication", MdMgr.sysNS, "Medication", 1, 1)
+
+		mgr.AddSet(MdMgr.sysNS, "SetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfMedication", MdMgr.sysNS, "Medication", 1)
+
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfMedication", MdMgr.sysNS, "Medication", 1)
+
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfMedication", MdMgr.sysNS, "Medication", 1)
+
 	}
 
 	/**
 	  
 	 
 	 */
-	def initTypesFor_com_ligadata_pmml_udfs_Udfs {
-		//mgr.AddScalar("System", "String", tString, "java.lang.String", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Int", tInt, "scala.Int", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Long", tLong, "scala.Long", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Boolean", tBoolean, "scala.Boolean", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Double", tDouble, "scala.Double", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Float", tFloat, "scala.Float", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "Any", tAny, "scala.Any", 100, null, null, "someimplementation")
-		//mgr.AddScalar("System", "EnvContext", tNone)
-		//mgr.AddScalar("System", "BaseContainer", tNone)
-		mgr.AddArray("System", "ArrayOfAny", "System", "Any", 1, 1)
+def initTypesFor_com_ligadata_pmml_udfs_Udfs {
+		//MdMgr.MakeScalar(mgr, "System", "Int", tInt)
+		//MdMgr.MakeScalar(mgr, "System", "Stack[T]", tNone)
+		//MdMgr.MakeScalar(mgr, "System", "Vector[T]", tNone)
+		//MdMgr.MakeScalar(mgr, "System", "String", tString)
+		//MdMgr.MakeScalar(mgr, "System", "Long", tLong)
+		//MdMgr.MakeScalar(mgr, "System", "Boolean", tBoolean)
+		//MdMgr.MakeScalar(mgr, "System", "Double", tDouble)
+		//MdMgr.MakeScalar(mgr, "System", "Float", tFloat)
+		//MdMgr.MakeScalar(mgr, "System", "Any", tAny)
+		//MdMgr.MakeScalar(mgr, "System", "EnvContext", tNone)
+		//MdMgr.MakeScalar(mgr, "System", "BaseContainer", tNone)
+		//MdMgr.MakeHashMap(mgr, "System", "HashMapOfKV", ("System", "K"), ("System", "V"))
+		//MdMgr.MakeMap(mgr, "System", "MapOfKV", ("System", "K"), ("System", "V"))
+		mgr.AddQueue("System", "QueueOfAny", "System", "Any", 1)
+		mgr.AddList("System", "ListOfAny", "System", "Any", 1)
+		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", 1)
+		mgr.AddTreeSet("System", "TreeSetOfAny", "System", "Any", 1)
 		mgr.AddSet("System", "SetOfAny", "System", "Any", 1)
-		mgr.AddArray("System", "ArrayOfString", "System", "String", 1, 1)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfAny", "System", "Any", 1, 1)
+		mgr.AddArray("System", "ArrayOfAny", "System", "Any", 1, 1)
+		//mgr.AddArray("System", "ArrayOfString", "System", "String", 1, 1)
 		mgr.AddTupleType("System", "TupleOfStringString", Array(("System","String"), ("System","String")), 1)
 		mgr.AddArray("System", "ArrayOfTupleOfStringString", "System", "TupleOfStringString", 1, 1)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfString", "System", "String", 1, 1)
-		mgr.AddArray("System", "ArrayOfFloat", "System", "Float", 1, 1 )
+		mgr.AddArray("System", "ArrayOfFloat", "System", "Float", 1, 1)
 		mgr.AddArray("System", "ArrayOfDouble", "System", "Double", 1, 1)
 		mgr.AddArray("System", "ArrayOfLong", "System", "Long", 1, 1)
-		mgr.AddArray("System", "ArrayOfInt", "System", "Int", 1, 1)
+		//mgr.AddArray("System", "ArrayOfInt", "System", "Int", 1, 1)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfFloat", "System", "Float", 1, 1)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfDouble", "System", "Double", 1, 1)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfLong", "System", "Long", 1, 1)
@@ -465,18 +542,29 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddList("System", "ListOfLong", "System", "Long", 1)
 		mgr.AddList("System", "ListOfInt", "System", "Int", 1)
 		mgr.AddList("System", "ListOfString", "System", "String", 1)
-		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", 1)
-		mgr.AddQueue("System", "QueueOfAny", "System", "Any", 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfAny", "System", "Any", 1, 1)
-		mgr.AddTreeSet("System", "TreeSetOfAny", "System", "Any", 1)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfBoolean", "System", "Boolean", 1, 1)
 		mgr.AddArray("System", "ArrayOfBaseContainer", "System", "BaseContainer", 1, 1)
 	}
+
+
 		
 	
 	def init_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Between", "com.ligadata.pmml.udfs.Udfs.Between", ("System", "ArrayOfAny"), List(("set", "System", "SetOfAny")), null)
 		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ArrayOfAny")), null)
+
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ArrayBufferOfAny")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "QueueOfAny")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ListOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ArrayOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ArrayBufferOfAny")), null)
+ 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "SortedSetOfAny")), null)
+ 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "TreeSetOfAny")), null)
+ 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "SetOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ListOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "QueueOfAny")), null)
+ 		//mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "StackOfAny")), null)
+		
 		mgr.AddFunc("Pmml", "MakeStrings", "com.ligadata.pmml.udfs.Udfs.MakeStrings", ("System", "ArrayOfString"), List(("arr", "System", "ArrayOfTupleOfStringString"),("separator", "System", "String")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayBufferOfString")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayOfString")), null)
@@ -698,7 +786,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Double"), List(("exprs", "System", "ArrayOfDouble")), null)
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Long"), List(("exprs", "System", "ArrayOfLong")), null)
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Int"), List(("exprs", "System", "ArrayOfInt")), null)
-		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "String"), List(("exprs", "System", "ArrayOfString")), null)
+		//mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "String"), List(("exprs", "System", "ArrayOfString")), null)
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Float"), List(("exprs", "System", "ArrayBufferOfFloat")), null)
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Double"), List(("exprs", "System", "ArrayBufferOfDouble")), null)
 		mgr.AddFunc("Pmml", "Plus", "com.ligadata.pmml.udfs.Udfs.Plus", ("System", "Long"), List(("exprs", "System", "ArrayBufferOfLong")), null)
@@ -906,6 +994,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
@@ -919,6 +1008,21 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
 		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
 		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
+
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "HashMapOfKV")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "MapOfKV")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Stack[T]")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "QueueOfAny")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Vector[T]")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ListOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "SortedSetOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "TreeSetOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "SetOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ArrayBufferOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ArrayOfAny")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "HashMapOfAnyAny")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "MapOfAnyAny")), null)
+
 	}
 
 	
@@ -926,7 +1030,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		/** 
 		    NOTE: These functions are variable in nature, more like macros than
 		    actual functions.  They actually deploy two
-		    functions: the outer container function (e.g., Map or Filter) and the inner
+		    functions (in most cases): the outer container function (e.g., Map or Filter) and the inner
 		    function that will operate on the members of the container in some way.
 		    
 		    Since we only know the outer function that will be used, only it is
@@ -961,7 +1065,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerFilter"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
-					, (MdMgr.sysNS, "ArrayOfInt")
+					, (MdMgr.sysNS, "ArrayBufferOfAny")
 					, List(("containerId", MdMgr.sysNS, "ArrayBufferOfAny"))
 					, fcnMacrofeatures)	  
 		mgr.AddFunc(MdMgr.sysNS
@@ -985,14 +1089,14 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerFilter"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
-					, (MdMgr.sysNS, "MapOfAny")
-					, List(("containerId", MdMgr.sysNS, "MapOfAny"))
+					, (MdMgr.sysNS, "MapOfAnyAny")
+					, List(("containerId", MdMgr.sysNS, "MapOfAnyAny"))
 					, fcnMacrofeatures)	  
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerFilter"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
-					, (MdMgr.sysNS, "HashMapOfAny")
-					, List(("containerId", MdMgr.sysNS, "HashMapOfAny"))
+					, (MdMgr.sysNS, "HashMapOfAnyAny")
+					, List(("containerId", MdMgr.sysNS, "HashMapOfAnyAny"))
 					, fcnMacrofeatures)	  
 
 
@@ -1006,7 +1110,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerMap"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
-					, (MdMgr.sysNS, "ArrayOfInt")
+					, (MdMgr.sysNS, "ArrayBufferOfAny")
 					, List(("containerId", MdMgr.sysNS, "ArrayBufferOfAny"))
 					, fcnMacrofeatures)	  
 		mgr.AddFunc(MdMgr.sysNS
@@ -1030,15 +1134,17 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerMap"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
-					, (MdMgr.sysNS, "MapOfAny")
-					, List(("containerId", MdMgr.sysNS, "MapOfAny"))
+					, (MdMgr.sysNS, "MapOfAnyAny")
+					, List(("containerId", MdMgr.sysNS, "MapOfAnyAny"))
 					, fcnMacrofeatures)	  
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerMap"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
-					, (MdMgr.sysNS, "HashMapOfAny")
-					, List(("containerId", MdMgr.sysNS, "HashMapOfAny"))
+					, (MdMgr.sysNS, "HashMapOfAnyAny")
+					, List(("containerId", MdMgr.sysNS, "HashMapOfAnyAny"))
 					, fcnMacrofeatures)	  
+					
+		
 	  
 	}
 	

@@ -47,7 +47,7 @@ lazy val Loadtest = project.in(file("Tools/Loadtest")) dependsOn(Storage)
 
 lazy val PmmlRuntime = project.in(file("Pmml/PmmlRuntime")) dependsOn(Metadata, OnLEPBase) 
 
-lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, OnLEPBase, BankPOCBootstrap, BankPOCMsgsAndContainers)
+lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, OnLEPBase, BankPOCBootstrap, BankPOCMsgsAndContainers, MedicalBootstrap)
 
 lazy val BankPOCBootstrap = project.in(file("SampleApplication/Bank/BankBootstrap")) dependsOn(Metadata, OnLEPBase)
 

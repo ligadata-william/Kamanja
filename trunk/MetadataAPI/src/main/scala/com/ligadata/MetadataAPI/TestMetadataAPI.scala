@@ -1057,7 +1057,7 @@ object TestMetadataAPI{
 
   def initMsgCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
-    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
+    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, "","","","")
     mdLoader.initialize
   }
 
@@ -1070,7 +1070,7 @@ object TestMetadataAPI{
   def initModCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
     logger.setLevel(Level.ERROR);
-    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, logger,"","","","")
+    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, "","","","")
     mdLoader.initialize
   }
 
@@ -1092,7 +1092,7 @@ object TestMetadataAPI{
   def StartTest{
     try{
       MdMgr.GetMdMgr.truncate
-      val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, logger,"","","","")
+      val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, "","","","")
       mdLoader.initialize
       MetadataAPIImpl.OpenDbStore(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE"))
       MetadataAPIImpl.LoadObjectsIntoCache

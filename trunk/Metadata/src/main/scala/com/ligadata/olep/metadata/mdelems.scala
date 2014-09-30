@@ -213,12 +213,6 @@ class ScalarTypeDef extends BaseTypeDef {
   var typeArg: Type = _
 }
 
-abstract class ContainerTypeDef extends BaseTypeDef {
-  def tTypeType = tContainer
-
-  def IsFixed: Boolean
-}
-
 class AnyTypeDef extends BaseTypeDef {
   def tTypeType: ObjTypeType.TypeType = ObjTypeType.tAny
   def tType = tNone
@@ -228,6 +222,27 @@ class AnyTypeDef extends BaseTypeDef {
   }
 }
 
+abstract class ContainerTypeDef extends BaseTypeDef {
+  def tTypeType = tContainer
+
+  def IsFixed: Boolean
+  /** 
+   *  Answer the element type or types that are held in the ContainerTypeDef subclass.
+   *  This is primarily used to understand the element types of collections.  An array
+   *  is returned since tuples and maps to name two have more than one element 
+   *  
+   *  While all ContainerTypeDef subclasses implement this, this is really used 
+   *  to describe only those container based upon one of the collection classes that
+   *  have element types as part of their type specification.  Specifically
+   *  the MappedMsgTypeDef and StructTypeDef both use this default behavior.  See
+   *  the respective classes for how to gain access to the field domain and fields
+   *  they possess.
+   *  
+   *  @return As a default, give a null list.  
+   */
+  def ElementTypes : Array[BaseTypeDef] = Array[BaseTypeDef]()
+}
+
 class SetTypeDef extends ContainerTypeDef {
   def tType = tSet
   var keyDef: BaseTypeDef = _
@@ -235,6 +250,9 @@ class SetTypeDef extends ContainerTypeDef {
   override def IsFixed: Boolean = false
   override def typeString: String = {
     "scala.collection.mutable.Set[" + keyDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef)
   }
 }
 
@@ -246,6 +264,9 @@ class TreeSetTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.TreeSet[" + keyDef.typeString + "]"
   }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef)
+  }
 }
 
 class SortedSetTypeDef extends ContainerTypeDef {
@@ -255,6 +276,9 @@ class SortedSetTypeDef extends ContainerTypeDef {
   override def IsFixed : Boolean = false
   override def typeString : String = {
 	 "scala.collection.mutable.SortedSet[" + keyDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef)
   }
 }
 
@@ -268,6 +292,9 @@ class MapTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.Map[" + keyDef.typeString + "," + valDef.typeString + "]"
   }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef,valDef)
+  }
 }
 
 class HashMapTypeDef extends ContainerTypeDef {
@@ -280,6 +307,9 @@ class HashMapTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.HashMap[" + keyDef.typeString + "," + valDef.typeString + "]"
   }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef,valDef)
+  }
 }
 
 class ListTypeDef extends ContainerTypeDef {
@@ -290,6 +320,9 @@ class ListTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.List[" + valDef.typeString + "]"
   }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(valDef)
+  }
 }
 
 class QueueTypeDef extends ContainerTypeDef {
@@ -298,7 +331,10 @@ class QueueTypeDef extends ContainerTypeDef {
 
   override def IsFixed: Boolean = false
   override def typeString: String = {
-    "Queue[" + valDef.typeString + "]"
+    "scala.collection.mutable.Queue[" + valDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(valDef)
   }
 }
 
@@ -310,7 +346,10 @@ class ArrayTypeDef extends ContainerTypeDef {
 
   override def IsFixed: Boolean = false
   override def typeString: String = {
-    "Array[" + elemDef.typeString + "]"
+    "scala.Array[" + elemDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(elemDef)
   }
 }
 
@@ -324,6 +363,9 @@ class ArrayBufTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.ArrayBuffer[" + elemDef.typeString + "]"
   }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(elemDef)
+  }
 }
 
 class TupleTypeDef extends ContainerTypeDef {
@@ -335,6 +377,9 @@ class TupleTypeDef extends ContainerTypeDef {
   override def IsFixed: Boolean = false
   override def typeString: String = {
     "(" + tupleDefs.map(tup => tup.typeString).mkString(",") + ")"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	tupleDefs
   }
 }
 
@@ -461,7 +506,7 @@ class FunctionDef extends BaseElemDef {
  *    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect 
  *    	and return whether the update happened as a Boolean.  This is needed so that the variable updates can be folded into 
  *      the flow of a pmml predicate interpretation.  Variable updates are currently done inside a class as a variable arg
- *      to the constructor.  These classes are added just after the current derived field class' enclosing '}' for the
+ *      to the constructor.  These classes are added to the current derived field class before the enclosing '}' for the
  *      class representing the derived field.  A global optimization of the derived field's function would be needed to 
  *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
  *      parts. 

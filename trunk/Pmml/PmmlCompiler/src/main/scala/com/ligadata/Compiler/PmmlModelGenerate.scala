@@ -2,7 +2,7 @@ package com.ligadata.Compiler
 
 import org.apache.log4j.Logger
 
-class PmmlModelGenerator(ctx : PmmlContext) {
+class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 
 	/** Dump out the print elements for the syntax trees in the after transformation... before code generation */
 	def generateDiagnostics() {
@@ -202,7 +202,7 @@ class PmmlModelGenerator(ctx : PmmlContext) {
 		for (node <- nodes) {
 			node match {
 			  	case Some(node) => generateCode(Some(node), gBuffer)
-				case _ => ctx.logger.error("One of the PMML root nodes is missing" )
+				case _ => logger.error("One of the PMML root nodes is missing" )
 			}			  
 		}
 	}
@@ -249,7 +249,7 @@ class PmmlModelGenerator(ctx : PmmlContext) {
 			  val rsmInst : xRuleSetModel = rsm.asInstanceOf[xRuleSetModel]
 			  ctx.MiningSchemaMap(rsmInst.MiningSchemaMap)
 		  }
-		  case _ => ctx.logger.error(s"there was no RuleSetModel avaialble... whoops!\n")
+		  case _ => logger.error(s"there was no RuleSetModel avaialble... whoops!\n")
 		}
 		
 		/** Register the parameters */
@@ -418,11 +418,11 @@ class PmmlModelGenerator(ctx : PmmlContext) {
 				  	}
 					case _ => {
 						val nodeName : String = node.qName
-						ctx.logger.error(s"pmml model generate ... un handled node ... name = $nodeName")
+						logger.error(s"pmml model generate ... un handled node ... name = $nodeName")
 					}
 				}
 			}
-			case _ => ctx.logger.error(s"pmml model generate ... UnknownNode ... name = $node.qName")
+			case _ => logger.error(s"pmml model generate ... UnknownNode ... name = $node.qName")
 		}
 	}
 }

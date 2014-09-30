@@ -2,7 +2,7 @@ package com.ligadata.Compiler
 
 import org.apache.log4j.Logger
 
-class PmmlXform(val ctx : PmmlContext) {
+class PmmlXform(val ctx : PmmlContext) extends LogTrait {
 
 	/** iterate the pmmlNodeQueue, decorating each tree node as appropriate (see PmmlNode) to form
 	 *  PmmlNode derivatives.
@@ -156,7 +156,7 @@ class PmmlXform(val ctx : PmmlContext) {
 					val rsNode : PmmlRuleSet = node.asInstanceOf[PmmlRuleSet]
 					ctx.dispatchPmmlToPmmlExecXform(this,node.qName, rsNode)
 			}
-			case _ => ctx.logger.warn(s"xform not handling nodes of type $clsName")
+			case _ => logger.warn(s"xform not handling nodes of type $clsName")
 		}
 	}
 

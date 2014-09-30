@@ -103,7 +103,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 										logger.trace(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
 										logger.trace("Either correct the spelling or add a type with this name to the metadata")
 									} else {
-										baseTypeTriples += Tuple3(typestring, (containerType == null), typedef)
+										baseTypeTriples += Tuple3(typestring, (containerType != null), typedef)
 									}
 								}
 							} else {

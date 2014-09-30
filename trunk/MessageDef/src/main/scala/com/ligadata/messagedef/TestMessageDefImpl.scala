@@ -21,7 +21,7 @@ object TestMessageDefImpl extends LogTrait {
   def main(args: Array[String]) {
     var msg: MessageDefImpl = new MessageDefImpl()
 
-    val mdLoader: MetadataLoad = new MetadataLoad(MdMgr.GetMdMgr, logger, "", "", "", "")
+    val mdLoader: MetadataLoad = new MetadataLoad(MdMgr.GetMdMgr, "", "", "", "")
     mdLoader.initialize
     //  val json: String = Source.fromFile("messageTOutPatient.json").getLines.mkString
    //  val json: String = Source.fromFile("ContainerFE.json").getLines.mkString

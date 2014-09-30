@@ -12,26 +12,38 @@ import com.ligadata.olep.metadata._
  * Since the Macro is so similar to the function, a FunctionSelect is supplied to service
  * key formation and relaxation.
  */
-class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,generator : PmmlModelGenerator, val fcnSelector : FunctionSelect) {
+class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,generator : PmmlModelGenerator, val fcnSelector : FunctionSelect)  extends LogTrait {
 							    
   
 	def selectMacro : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = {
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	val expandingContainerFields = true
-	  	/** the typestring, isContainer flag, and metadata element for each argument is returned */
-	  	var argTypes : Array[(String,Boolean,BaseTypeDef)] = fcnSelector.collectArgKeys(expandingContainerFields)
-	  	var simpleKey : String = fcnSelector.buildSimpleKey(argTypes.map( argPair => argPair._1))
+	  	
+	  	var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
+	  			= fcnSelector.collectArgKeys(expandingContainerFields)
+
+	  	/** Project the various argTypeExpanded pieces into their own arrays */
+	  	val argTypesExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgs.map( tuple => tuple._1)
+	  	val mbrFcnTypesExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgs.map( tuple => tuple._2)
+	  	val containerTypeDefs : Array[ContainerTypeDef] = returnedArgs.map( tuple => tuple._3)
+	  	val memberTypes : Array[Array[BaseTypeDef]] = returnedArgs.map( tuple => tuple._4)
+	  	val returnTypes : Array[String] = returnedArgs.map( tuple => tuple._5)  	
+	  	
+	  	/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
+	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
+	  	
+	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	ctx.logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
 	  	if (macroDef == null) {
-	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(argTypes)
+	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 	  		breakable {
 	  		  	simpleKeysToTry.foreach( key => {
-	  		  		ctx.logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+	  		  		logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
 	  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 	  		  		if (macroDef != null) {
-	  		  			ctx.logger.trace(s"selectMacro ...found macroDef with $key")
+	  		  			logger.trace(s"selectMacro ...found macroDef with $key")
 	  		  			break
 	  		  		}
 	  		  	})	  		  
@@ -40,14 +52,32 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	
 	  	if (macroDef == null) {
 	  		val expandingContainerFields = false
-	  		var argTypesNoExp : Array[(String,Boolean,BaseTypeDef)] = fcnSelector.collectArgKeys(expandingContainerFields)
+	  		var returnedArgsNoExp : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
+	  			= fcnSelector.collectArgKeys(expandingContainerFields)
+
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
+
+	  		val argTypesNoExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgsNoExp.map( tuple => tuple._1)
+	  		val returnTypes : Array[String] = returnedArgsNoExp.map( tuple => tuple._5)
+		  	
+	  		/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
+		  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesNoExp.flatten
 	  	  
-		  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
+		  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
+		  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, argTypesNoExp.map( argPair => argPair._1))
+		  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, returnTypes)
 		  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
 		  	ctx.logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
 		  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
 		  	if (macroDef == null) {
-		  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(argTypesNoExp)
+		  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
 		  		  		ctx.logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
@@ -62,7 +92,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	  
 	  	}
 	  	val foundDef : String = if (macroDef != null)  "YES" else "NO!!"
-	  	ctx.logger.trace(s"selectMacro ...macroDef produced?  $foundDef")
+	  	logger.trace(s"selectMacro ...macroDef produced?  $foundDef")
 	  	(macroDef, argTypes)
 	}
 	
@@ -255,7 +285,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val argIdxName = argidx.toString 
   			val argName : String = argval._1
   			val argIdxTypeName = argidx.toString + "_type"
-  			ctx.logger.trace(s"%$argIdxName% = $argName, %$argIdxTypeName% = $argtype)")
+  			logger.trace(s"%$argIdxName% = $argName, %$argIdxTypeName% = $argtype)")
   			substitutionMap += s"%$argIdxName%" -> s"$argName"
   			substitutionMap += s"%$argIdxTypeName%" -> s"$argtype"
   		})
@@ -272,8 +302,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val subExpr : String = ctx.fcnSubstitute.makeSubstitutions(mappedBuildsTemplate, substitutionMap)
    			(subExpr,buildsTemplate)
   		}
-		ctx.logger.trace("builds class to be queued:")
-		ctx.logger.trace(s"\n$substitutedClassExpr")		  
+		logger.trace("builds class to be queued:")
+		logger.trace(s"\n$substitutedClassExpr")		  
 		
 		/** 
 		 *	Create the "does" portion 
@@ -285,8 +315,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
 		val doesCmd : String = generateDoes(macroDef, argTypes, fcnArgValues, classUpdateClassName, parametersUsed)
 
-		ctx.logger.trace("'does' use of 'builds' class to be used:")
-		ctx.logger.trace(s"\n$doesCmd")		  
+		logger.trace("'does' use of 'builds' class to be used:")
+		logger.trace(s"\n$doesCmd")		  
 		
 	  
 	  	(substitutedClassExpr,doesCmd)

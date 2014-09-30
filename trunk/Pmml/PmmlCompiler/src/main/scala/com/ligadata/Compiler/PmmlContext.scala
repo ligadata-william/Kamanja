@@ -43,8 +43,7 @@ import scala.util.control.Breaks._
 
 */
 
-class PmmlContext(val mgr : MdMgr, val logger : Logger) {
-	
+class PmmlContext(val mgr : MdMgr)  extends LogTrait {	
 	/** used to generate a unique number for fcn names in same scope during scala code generation */
 	var counter : Int = 0
 	def Counter() : Int = { 

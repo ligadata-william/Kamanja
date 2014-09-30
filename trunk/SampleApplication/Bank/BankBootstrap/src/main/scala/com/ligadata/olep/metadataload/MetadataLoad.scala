@@ -20,7 +20,13 @@ import com.ligadata.OnLEPBase._
  *  
  */
 
-class MetadataLoad (val mgr : MdMgr, val logger : Logger, val typesPath : String, val fcnPath : String, val attrPath : String, msgCtnPath : String) {
+trait LogTrait {
+    val loggerName = this.getClass.getName()
+    val logger = Logger.getLogger(loggerName)
+}
+
+
+class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : String, val attrPath : String, msgCtnPath : String) extends LogTrait {
 	val baseTypesVer = 100 // Which is 00.01.00
   
 	/** construct the loader and call this to complete the cache initialization */
