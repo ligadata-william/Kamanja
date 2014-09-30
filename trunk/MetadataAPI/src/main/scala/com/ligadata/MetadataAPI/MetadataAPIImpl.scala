@@ -36,6 +36,10 @@ import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id, Stat}
 
+import com.twitter.chill.ScalaKryoInstantiator
+import java.io.ByteArrayOutputStream
+import com.esotericsoftware.kryo.io.{Input, Output}
+
 case class JsonException(message: String) extends Exception(message)
 
 case class TypeDef(MetadataType:String, NameSpace: String, Name: String, TypeTypeName:String, TypeNameSpace: String, TypeName:String, PhysicalName:String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions :Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]] )
@@ -80,6 +84,8 @@ case class CreateStoreFailedException(e: String) extends Throwable(e)
 
 case class MissingPropertyException(e: String) extends Throwable(e)
 case class InvalidPropertyException(e: String) extends Throwable(e)
+case class KryoSerializationException(e: String) extends Throwable(e)
+
 
 class KeyValuePair extends IStorage{
   var key = new com.ligadata.keyvaluestore.Key
@@ -101,6 +107,8 @@ object MetadataAPIImpl extends MetadataAPI{
   lazy val logger = Logger.getLogger(loggerName)
 
   lazy val metadataAPIConfig = new Properties()
+
+  lazy val kryoFactory = new ScalaKryoInstantiator
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
@@ -138,6 +146,25 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       for(c <- value ){
 	v += c.toByte
+      }
+      def Key = k
+      def Value = v
+      def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+    }
+    val t = store.beginTx
+    store.put(i)
+    store.commitTx(t)
+  }
+
+  def SaveSerializedObject(key: String, value: Array[Byte], store: DataStore){
+    object i extends IStorage{
+      var k = new com.ligadata.keyvaluestore.Key
+      var v = new com.ligadata.keyvaluestore.Value
+      for(c <- key ){
+	k += c.toByte
+      }
+      for(c <- value ){
+	v += c
       }
       def Key = k
       def Value = v
@@ -248,6 +275,33 @@ object MetadataAPIImpl extends MetadataAPI{
       case e:Exception => {
 	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
+    }
+  }
+
+  def SerializeObject[T <: BaseElemDef](obj : T) : Array[Byte] = {
+    try{
+      val kryo = kryoFactory.newKryo()
+      val baos = new ByteArrayOutputStream
+      val output = new Output(baos)
+      kryo.writeObject(output,obj)
+      output.close()
+      baos.toByteArray()
+    }catch{
+      case e:Exception => {
+	throw new KryoSerializationException("Failed to Serialize the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
+
+  def DeserializeObject[T <: BaseElemDef](obj: Array[Byte], cls: T) : T = {
+    try{
+      val kryo = kryoFactory.newKryo()
+      val bais = new ByteArrayInputStream(obj);
+      val inp = new Input(bais)
+      val m = kryo.readObject(inp,cls.getClass)
+      inp.close()
+      m
     }
   }
 
@@ -1736,6 +1790,26 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+
+  def AddMessageDef1(msgDef: MessageDef): String = {
+    try{
+      var key = msgDef.FullNameWithVer
+      var value = MetadataAPIImpl.SerializeObject(msgDef)
+
+      //logger.trace("key => " + key + ",value =>" + value);
+
+      SaveSerializedObject(key,value,messageStore)
+      MdMgr.GetMdMgr.AddMsg(msgDef)
+      var apiResult = new ApiResult(0,"MsgDef was Added",key)
+      apiResult.toString()
+    }catch {
+      case e:Exception =>{
+	var apiResult = new ApiResult(-1,"Failed to add the msgDef:",e.toString)
+	apiResult.toString()
+      }
+    }
+  }
+
   def AddMessage(messageText:String, format:String): String = {
     try{
       var compProxy = new CompilerProxy
@@ -1744,7 +1818,7 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  logger.trace(toJson(msg))
-	  AddMessageDef(msg)
+	  AddMessageDef1(msg)
 	}
 	case cont:ContainerDef =>{
 	  logger.trace(toJson(cont))
@@ -2441,8 +2515,11 @@ object MetadataAPIImpl extends MetadataAPI{
       msgKeys.foreach(key => { 
 	val msgKey = KeyAsStr(key)
 	val obj = GetObject(msgKey.toLowerCase,messageStore)
-	val msgDef = parseMessageDef(ValueAsStr(obj.Value),"JSON")
-	SaveObject(msgDef)
+	val ba = obj.Value.toArray[Byte]
+	val o = MetadataAPIImpl.DeserializeObject(ba,new MessageDef)
+	//val msgDef = parseMessageDef(ValueAsStr(obj.Value),"JSON")
+	MdMgr.GetMdMgr.AddMsg(o)
+	//SaveObject(msgDef)
       })
     }catch {
       case e: Exception => {
@@ -2957,5 +3034,13 @@ object MetadataAPIImpl extends MetadataAPI{
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
+  }
+
+  def InitMdMgrFromBootStrap{
+    MdMgr.GetMdMgr.truncate
+    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, logger,"","","","")
+    mdLoader.initialize
+    MetadataAPIImpl.readMetadataAPIConfig
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
   }
 }
