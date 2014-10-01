@@ -23,7 +23,9 @@ lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata)
 
 lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
 
-lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata,OnLEPBase,BankPOCBootstrap,MetadataAPI)
+//lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata,OnLEPBase,BankPOCBootstrap,MetadataAPI)
+
+lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata,OnLEPBase,BankPOCBootstrap)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
 
