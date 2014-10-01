@@ -27,10 +27,14 @@ import com.twitter.chill.ScalaKryoInstantiator
 import java.io.ByteArrayOutputStream
 import com.esotericsoftware.kryo.io.{Input, Output}
 
+import com.ligadata.Serialize._
+
 object TestMetadataAPI{
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+
+  lazy val serializer = SerializerManager.GetSerializer("kryo")
 
   def testDbConn{
     var hostnames = "localhost"
@@ -1118,8 +1122,8 @@ object TestMetadataAPI{
       case Some(ms) => {
 	val msa = ms.toArray
 	msa.foreach( m => {
-	  val ba = MetadataAPIImpl.SerializeObject(m)
-	  val m1 = MetadataAPIImpl.DeserializeObject(ba,new MessageDef)
+	  val ba = serializer.SerializeObjectToByteArray(m)
+	  val m1 = serializer.DeserializeObjectFromByteArray(ba,new MessageDef)
 	  assert(m.asInstanceOf[MessageDef].FullNameWithVer == m1.asInstanceOf[MessageDef].FullNameWithVer)
 	})
       }
