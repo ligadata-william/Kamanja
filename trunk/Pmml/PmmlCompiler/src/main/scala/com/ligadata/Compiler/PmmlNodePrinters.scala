@@ -147,25 +147,7 @@ object NodePrinterHelpers extends LogTrait {
 						logger.error(s"Function $fcnName is not known in the metadata...")
 					}
 				}
-			} else {
-				/** The function has been found ... print it as appropriate */
-				if (funcDef.features.contains(FcnMacroAttr.ITERABLE)) {
-					/** 
-					 *  Iterable functions get special treatment for print.  The first child is 
-					 *  known as the receiver and has the Iterable trait.
-					 */
-				} else {
-					val scalaFcnName : String = node.function
-					simpleFcnPrint(scalaFcnName
-								, node
-							    , ctx
-							    , generator
-							    , generate
-							    , order
-							    , fcnBuffer
-							    , funcDef)					
-				}
-			}
+			} 
 		}
 		val fcnExprStr : String = fcnBuffer.toString
 	  	fcnExprStr
