@@ -36,9 +36,7 @@ import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id, Stat}
 
-import com.twitter.chill.ScalaKryoInstantiator
-import java.io.ByteArrayOutputStream
-import com.esotericsoftware.kryo.io.{Input, Output}
+import com.ligadata.Serialize._
 
 case class JsonException(message: String) extends Exception(message)
 
@@ -106,9 +104,9 @@ object MetadataAPIImpl extends MetadataAPI{
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
-  lazy val metadataAPIConfig = new Properties()
+  lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  lazy val kryoFactory = new ScalaKryoInstantiator
+  lazy val metadataAPIConfig = new Properties()
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
@@ -178,7 +176,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def SaveObject(obj: BaseElemDef){
     try{
       val key = obj.FullNameWithVer.toLowerCase
-      val value = MetadataAPIImpl.toJson(obj)
+      val value = JsonSerializer.SerializeObjectToJson(obj)
       obj match{
 	case o:ModelDef => {
           if( IsModelAlreadyExists(o) == false ){
@@ -275,33 +273,6 @@ object MetadataAPIImpl extends MetadataAPI{
       case e:Exception => {
 	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
-    }
-  }
-
-  def SerializeObject[T <: BaseElemDef](obj : T) : Array[Byte] = {
-    try{
-      val kryo = kryoFactory.newKryo()
-      val baos = new ByteArrayOutputStream
-      val output = new Output(baos)
-      kryo.writeObject(output,obj)
-      output.close()
-      baos.toByteArray()
-    }catch{
-      case e:Exception => {
-	throw new KryoSerializationException("Failed to Serialize the object(" + obj.FullNameWithVer + "): " + e.getMessage())
-      }
-    }
-  }
-
-
-  def DeserializeObject[T <: BaseElemDef](obj: Array[Byte], cls: T) : T = {
-    try{
-      val kryo = kryoFactory.newKryo()
-      val bais = new ByteArrayInputStream(obj);
-      val inp = new Input(bais)
-      val m = kryo.readObject(inp,cls.getClass)
-      inp.close()
-      m
     }
   }
 
@@ -445,425 +416,6 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def error[T](prefix: String): Option[T] =
-			throw JsonException("Json String Syntax Error : %s ".format(prefix))
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[FunctionListParsingException])
-  def parseFunctionList(funcListJson:String,formatType:String) : Array[FunctionDef] = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(funcListJson)
-
-      logger.trace("Parsed the json : " + funcListJson)
-      val funcList = json.extract[FunctionList]
-      val funcDefList = new Array[FunctionDef](funcList.Functions.length)
-
-      funcList.Functions.map( fn => {
-	try{
-	  val argList = fn.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-	  val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace,fn.Name,fn.PhysicalName,
-					   (fn.ReturnTypeNameSpace,fn.ReturnTypeName),
-					   argList,null,
-					   fn.Version.toInt,
-					   fn.JarName,
-					   fn.DependantJars.toArray)
-	  funcDefList :+ func
-	} catch {
-	  case e:AlreadyExistsException => {
-	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
-	    val funcName = funcDef.mkString(",")
-	    logger.trace("Failed to add the func: " + funcName  + ": " + e.getMessage())
-	  }
-	}
-      })
-      funcDefList
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new FunctionListParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-  def processTypeDef(typ: TypeDef) : BaseTypeDef = {
-    var typeDef:BaseTypeDef = null
-    try{
-      typ.MetadataType match {
-	case "ScalarTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeScalar(typ.NameSpace,typ.Name,ObjType.fromString(typ.TypeName),
-				    typ.PhysicalName,typ.Version.toInt,typ.JarName,
-				    typ.DependencyJars.toArray,typ.Implementation)
-	}
-	case "ArrayTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeArray(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				   typ.TypeName,typ.NumberOfDimensions.get,
-				   typ.Version.toInt)
-	}
-	case "ArrayBufTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeArrayBuffer(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-					 typ.TypeName,typ.NumberOfDimensions.get,
-					 typ.Version.toInt)
-	}
-	case "ListTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeList(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				  typ.TypeName,typ.Version.toInt)
-	}
-	case "QueueTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeQueue(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				   typ.TypeName,typ.Version.toInt)
-	}
-	case "SetTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				 typ.TypeName,typ.Version.toInt)
-	}
-	case "TreeSetTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeTreeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				     typ.TypeName,typ.Version.toInt)
-	}
-	case "SortedSetTypeDef" => {
-	  typeDef = MdMgr.GetMdMgr.MakeSortedSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				       typ.TypeName,typ.Version.toInt)
-	}
-	case "MapTypeDef" => {
-	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
-	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
-	  typeDef = MdMgr.GetMdMgr.MakeMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
-	}
-	case "HashMapTypeDef" => {
-	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
-	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
-	  typeDef = MdMgr.GetMdMgr.MakeHashMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
-	}
-	case "TupleTypeDef" => {
-	  val tuples = typ.TupleDefinitions.get.map(arg => (arg.NameSpace,arg.Name)).toArray
-	  typeDef = MdMgr.GetMdMgr.MakeTupleType(typ.NameSpace,typ.Name,tuples,typ.Version.toInt)
-	}
-	case "ContainerTypeDef" => {
-	  if (typ.TypeName == "Struct" ){
-	    typeDef = MdMgr.GetMdMgr.MakeStructDef(typ.NameSpace,typ.Name,typ.PhysicalName,
-					 null,typ.Version.toInt,typ.JarName,
-					 typ.DependencyJars.toArray)
-	  }
-	}
-	case _ => {
-	  throw new TypeDefProcessingException("Internal Error: Unknown Type " + typ.MetadataType)
-	}
-      }
-      typeDef
-    }catch {
-      case e:AlreadyExistsException => {
-	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	val typeName = keyValues.mkString(",")
-	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	throw new AlreadyExistsException(e.getMessage())
-      }
-      case e:Exception => {
-	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	val typeName = keyValues.mkString(",")
-	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	throw new TypeDefProcessingException(e.getMessage())
-      }
-    }
-  }
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[TypeDefListParsingException])
-  def parseTypeList(typeListJson:String,formatType:String) : Array[BaseTypeDef] = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(typeListJson)
-
-      logger.trace("Parsed the json : " + typeListJson)
-      val typeList = json.extract[TypeDefList]
-
-      logger.trace("Type count  => " + typeList.Types.length)
-      val typeDefList = new Array[BaseTypeDef](typeList.Types.length)
-
-      typeList.Types.map(typ => {
-	try{
-	  val typeDefObj:BaseTypeDef = processTypeDef(typ)
-	  typeDefList :+ typeDefObj
-	}catch {
-	  case e:AlreadyExistsException => {
-	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	    val typeName = keyValues.mkString(",")
-	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	  }
-	  case e:TypeDefProcessingException => {
-	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
-	    val typeName = keyValues.mkString(",")
-	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
-	  }
-	}
-      })
-      typeDefList
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new TypeDefListParsingException(e.getMessage())
-      }
-    }
-  }
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[ConceptListParsingException])
-  def parseConceptList(conceptsStr:String,formatType:String) : Array[BaseAttributeDef] = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(conceptsStr)
-      val conceptList = json.extract[ConceptList]
-      val attrDefList = new Array[BaseAttributeDef](conceptList.Concepts.length)
-      conceptList.Concepts.map(o => {
-	try{
-	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
-						o.Name,
-						o.TypeNameSpace,
-						o.TypeName,
-						o.Version.toInt,
-						false)
-	  attrDefList :+ attr
-	} catch {
-	  case e:AlreadyExistsException => {
-	    val keyValues = List(o.NameSpace,o.Name,o.Version)
-	    val fullName  = keyValues.mkString(",")
-	    logger.trace("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
-	  }
-	}
-      })
-      attrDefList
-    }catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new ConceptListParsingException(e.getMessage())
-      }
-    }
-  }
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[ContainerDefParsingException])
-  def parseContainerDef(contDefJson:String,formatType:String) : ContainerDef = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(contDefJson)
-
-      logger.trace("Parsed the json : " + contDefJson)
-
-      val ContDefInst = json.extract[ContainerDefinition]
-      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false))
-      val contDef = MdMgr.GetMdMgr.MakeFixedContainer(ContDefInst.Container.NameSpace,
-						      ContDefInst.Container.Name,
-						      ContDefInst.Container.PhysicalName,
-						      attrList.toList,
-						      ContDefInst.Container.Version.toInt,
-						      ContDefInst.Container.JarName,
-						      ContDefInst.Container.DependencyJars.toArray)
-      contDef
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new ContainerDefParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[TypeParsingException])
-  def parseType(typeJson:String,formatType:String) : BaseTypeDef = {
-    var typeDef:BaseTypeDef = null
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(typeJson)
-      logger.trace("Parsed the json : " + typeJson)
-      val typ = json.extract[TypeDef]
-      typeDef = processTypeDef(typ)
-      typeDef
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:AlreadyExistsException => {
-	logger.trace("Failed to add the type, json => " + typeJson  + ",Error => " + e.getMessage())
-	typeDef
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new TypeParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[ConceptParsingException])
-  def parseConcept(conceptJson:String,formatType:String) : BaseAttributeDef = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(conceptJson)
-
-      logger.trace("Parsed the json : " + conceptJson)
-
-      val conceptInst = json.extract[Concept]
-      val concept = MdMgr.GetMdMgr.MakeConcept(conceptInst.NameSpace,
-					       conceptInst.Name,
-					       conceptInst.TypeNameSpace,
-					       conceptInst.TypeName,
-					       conceptInst.Version.toInt,
-					       false)
-      concept
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new ConceptParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[FunctionParsingException])
-  def parseFunction(functionJson:String,formatType:String) : FunctionDef = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(functionJson)
-
-      logger.trace("Parsed the json : " + functionJson)
-
-      val functionInst = json.extract[Function]
-      val argList = functionInst.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-      val function = MdMgr.GetMdMgr.MakeFunc(functionInst.NameSpace,
-					     functionInst.Name,
-					     functionInst.PhysicalName,
-					     (functionInst.ReturnTypeNameSpace,functionInst.ReturnTypeName),
-					     argList,
-					     null,
-					     functionInst.Version.toInt,
-					     functionInst.JarName,
-					     functionInst.DependantJars.toArray)
-      function
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new FunctionParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[MessageDefParsingException])
-  def parseMessageDef(msgDefJson:String,formatType:String) : MessageDef = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(msgDefJson)
-
-      logger.trace("Parsed the json : " + msgDefJson)
-
-      val MsgDefInst = json.extract[MessageDefinition]
-      val attrList = MsgDefInst.Message.Attributes
-      var attrList1 = List[(String, String, String,String,Boolean)]()
-      for (attr <- attrList) {
-	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false)
-      }
-      val msgDef = MdMgr.GetMdMgr.MakeFixedMsg(MsgDefInst.Message.NameSpace,
-					       MsgDefInst.Message.Name,
-					       MsgDefInst.Message.PhysicalName,
-					       attrList1.toList,
-					       MsgDefInst.Message.Version.toInt,
-					       MsgDefInst.Message.JarName,
-					       MsgDefInst.Message.DependencyJars.toArray)
-      msgDef
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new MessageDefParsingException(e.getMessage())
-      }
-    }
-  }
-
-
-
-
-
-  @throws(classOf[Json4sParsingException])
-  @throws(classOf[ModelDefParsingException])
-  def parseModelDef(modDefJson:String,formatType:String) : ModelDef = {
-    try{
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(modDefJson)
-
-      logger.trace("Parsed the json : " + modDefJson)
-
-      val ModDefInst = json.extract[ModelDefinition]
-
-      val inputAttrList = ModDefInst.Model.InputAttributes
-      var inputAttrList1 = List[(String, String, String,String,Boolean)]()
-      for (attr <- inputAttrList) {
-	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false)
-      }
-
-      val outputAttrList = ModDefInst.Model.OutputAttributes
-      var outputAttrList1 = List[(String, String, String)]()
-      for (attr <- outputAttrList) {
-	outputAttrList1 ::= (attr.Name, attr.Type.NameSpace,attr.Type.Name)
-      }
-
-      val modDef = MdMgr.GetMdMgr.MakeModelDef(ModDefInst.Model.NameSpace,
-					       ModDefInst.Model.Name,
-					       ModDefInst.Model.PhysicalName,
-					       ModDefInst.Model.ModelType,
-					       inputAttrList1,
-					       outputAttrList1,
-					       ModDefInst.Model.Version.toInt,
-					       ModDefInst.Model.JarName,
-					       ModDefInst.Model.DependencyJars.toArray)
-
-      modDef
-    } catch {
-      case e:MappingException =>{
-	e.printStackTrace()
-	throw Json4sParsingException(e.getMessage())
-      }
-      case e:Exception => {
-	e.printStackTrace()
-	throw new ModelDefParsingException(e.getMessage())
-      }
-    }
-  }
-
   @throws(classOf[Json4sParsingException])
   @throws(classOf[ApiResultParsingException])
   def getApiResult(apiResultJson: String): (Int,String) = {
@@ -884,354 +436,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	throw new ApiResultParsingException(e.getMessage())
       }
     }
-  }
-
-  @throws(classOf[UnsupportedObjectException])
-  def toJson(mdObj: BaseElemDef): String = {
-    mdObj match{
-      case o:FunctionDef => {
-	val json = (("NameSpace"  -> o.nameSpace) ~
-		    ("Name"       -> o.name) ~
-		    ("PhysicalName"       -> o.physicalName) ~
-		    ("ReturnTypeNameSpace"     -> o.retType.nameSpace) ~
-		    ("ReturnTypeName"     -> o.retType.name) ~
-		    ("Arguments"  -> o.args.toList.map{ arg => 
-				  (
-				    ("ArgName"      -> arg.name) ~
-				    ("ArgTypeNameSpace"      -> arg.Type.nameSpace) ~
-				    ("ArgTypeName"      -> arg.Type.name)
-				  )
-				  }) ~
-		    ("Version"    -> o.ver) ~
-		    ("JarName"    -> o.jarName) ~
-		    ("DependantJars" -> o.dependencyJarNames.toList))
-	pretty(render(json))
-      }
-      case o:MessageDef => {
-	// Assume o.containerType is checked for not being null
-	val json = ("Message"  -> 
-		    ("NameSpace" -> o.nameSpace) ~
-		    ("Name"      -> o.name) ~
-		    ("FullName"  -> o.FullName) ~
-		    ("Version"   -> o.ver) ~
-		    ("JarName"      -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
-	var jsonStr = pretty(render(json))
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
-	    var memberDefJson = listToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case _ => {
-            throw new UnsupportedObjectException(s"toJson doesn't support the " +
-						 "objectType of $mdObj.name  yet")
-	  }
-	}
-      }
-      case o:ContainerDef => {
-	val json = ("Container"  -> 
-		    ("NameSpace" -> o.nameSpace) ~
-		    ("Name"      -> o.name) ~
-		    ("FullName"  -> o.FullName) ~
-		    ("Version"   -> o.ver) ~
-		    ("JarName"      -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
-	var jsonStr = pretty(render(json))
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
-	    var memberDefJson = listToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case _ => {
-            throw new UnsupportedObjectException(s"toJson doesn't support the " +
-						 "objectType of $mdObj.name  yet")
-	  }
-	}
-      }
-      case o:ModelDef => {
-	val json = ( "Model" -> ("NameSpace" -> o.nameSpace) ~
-		    ("Name" -> o.name) ~
-		    ("Version" -> o.ver) ~
-		    ("ModelType"  -> o.modelType) ~
-		    ("JarName" -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
-	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim
-	jsonStr = jsonStr + ",\n\"InputAttributes\": "
-	var memberDefJson = listToJson(o.inputVars)
-	jsonStr += memberDefJson
-
-	jsonStr = jsonStr + ",\n\"OutputAttributes\": "
-	memberDefJson = listToJson(o.outputVars)
-	memberDefJson = memberDefJson + "}\n}"
-	jsonStr += memberDefJson
-	jsonStr
-      }
-
-      case o:AttributeDef => {
-	val json = (("NameSpace" -> o.name) ~
-		    ("Name" -> o.name) ~
-		    ("Version" -> o.ver))
-	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
-	var memberDefJson = toJson(o.typeDef)
-	memberDefJson = memberDefJson + "}"
-	jsonStr += memberDefJson
-	jsonStr
-      }
-      case o:ScalarTypeDef => {
-	val json =  (("MetadataType" -> "ScalarTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
-	pretty(render(json))
-      }
-      case o:SetTypeDef => {
-	val json =  (("MetadataType" -> "SetTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
-
-	pretty(render(json))
-      }
-      case o:TreeSetTypeDef => {
-	val json =  (("MetadataType" -> "TreeSetTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
-
-	pretty(render(json))
-      }
-      case o:SortedSetTypeDef => {
-	val json =  (("MetadataType" -> "SortedSetTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
-
-	pretty(render(json))
-      }
-      case o:MapTypeDef => {
-	val json =  (("MetadataType" -> "MapTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
-		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
-	pretty(render(json))
-      }
-      case o:HashMapTypeDef => {
-	val json =  (("MetadataType" -> "HashMapTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
-		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
-	pretty(render(json))
-      }
-      case o:ListTypeDef => {
-	val json =  (("MetadataType" -> "ListTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
-	pretty(render(json))
-      }
-      case o:QueueTypeDef => {
-	val json =  (("MetadataType" -> "QueueTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("Fixed" -> o.IsFixed) ~
-		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
-	pretty(render(json))
-      }
-      case o:ArrayTypeDef => {
-	val json =  (("MetadataType" -> "ArrayTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.elemDef.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.elemDef.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.elemDef.tType) ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("NumberOfDimensions" -> o.arrayDims))
-	pretty(render(json))
-      }
-      case o:ArrayBufTypeDef => {
-	val json =  (("MetadataType" -> "ArrayBufTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.elemDef.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.elemDef.nameSpace ) ~
-		     ("TypeName" -> ObjType.asString(o.elemDef.tType) ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) ~
-		     ("NumberOfDimensions" -> o.arrayDims))
-	pretty(render(json))
-      }
-      case o:TupleTypeDef => {
-	var json =  (("MetadataType" -> "TupleTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) )
-	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
-	var tupleDefJson = listToJson(o.tupleDefs)
-	tupleDefJson = tupleDefJson + "}"
-	jsonStr += tupleDefJson
-	jsonStr
-      }
-      case o:ContainerTypeDef => {
-	val json =  (("MetadataType" -> "ContainerTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
-	pretty(render(json))
-      }
-      case o:AnyTypeDef => {
-	val json =  (("MetadataType" -> "AnyTypeDef") ~
-		     ("NameSpace" -> o.nameSpace) ~
-		     ("Name" -> o.name) ~
-		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
-		     ("TypeNameSpace" -> o.nameSpace ) ~
-		     ("TypeName" -> o.name ) ~
-		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
-		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
-	pretty(render(json))
-      }
-      case _ => {
-        throw new UnsupportedObjectException(s"toJson doesn't support the objectType of $mdObj.name  yet")
-      }
-    }
-  }
-
-  def getJarList(jarArray: Array[String]): List[String] = {
-    if (jarArray != null ){
-      jarArray.toList
-    }
-    else{
-      new Array[String](0).toList
-    }
-  }
-
-
-  def listToJson[T <: BaseElemDef](objList: Array[T]) : String = {
-    var json = "[ \n" 
-    objList.toList.map(obj =>  {var objJson = toJson(obj); json += objJson; json += ",\n"})
-    json = json.stripSuffix(",\n")
-    json += " ]\n"
-    json 
-  }
-
-  def listToJson[T <: BaseElemDef](objType:String, objList: Array[T]) : String = {
-    var json = "{\n" + "\"" + objType + "\" :" + listToJson(objList) + "\n}" 
-    json 
   }
 
   @throws(classOf[CreateStoreFailedException])
@@ -1314,7 +518,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def AddType(typeText:String, format:String): String = {
     try{
-      val typ = parseType(typeText,"JSON")
+      val typ = JsonSerializer.parseType(typeText,"JSON")
       SaveObject(typ)
       var apiResult = new ApiResult(0,"Type was Added",typeText)
       apiResult.toString()
@@ -1335,10 +539,11 @@ object MetadataAPIImpl extends MetadataAPI{
     logger.trace("Implementation jar name => " + typeDef.jarName)
   }
 
+
   def AddType(typeDef: BaseTypeDef): String = {
     try{
       var key = typeDef.FullNameWithVer
-      var value = toJson(typeDef);
+      var value = JsonSerializer.SerializeObjectToJson(typeDef);
       logger.trace("key => " + key + ",value =>" + value);
       SaveObject(typeDef)
       var apiResult = new ApiResult(0,"Type was Added",value)
@@ -1358,7 +563,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	var typeList = parseTypeList(typesText,"JSON")
+	var typeList = JsonSerializer.parseTypeList(typesText,"JSON")
 	if (typeList.length  > 0) {
 	  logger.trace("Found " + typeList.length + " type objects ")
 	  typeList.foreach(typ => { 
@@ -1405,17 +610,12 @@ object MetadataAPIImpl extends MetadataAPI{
     var typeDef:BaseTypeDef = null
     try{
       implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(typeJson)
-      logger.trace("Parsed the json : " + typeJson)
-      var typ = json.extract[TypeDef]
+      typeDef = JsonSerializer.parseType(typeJson,"JSON")
       try{
-	typeDef = processTypeDef(typ)
 	AddType(typeDef)
       }catch{
 	case e:AlreadyExistsException => {
-	  var newVer:Int = typ.Version.toInt + 1
-	  typ.Version = newVer.toString
-	  typeDef = processTypeDef(typ)
+	  typeDef.ver += 1
 	  AddType(typeDef)
 	}
       }
@@ -1493,7 +693,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(cs) => 
 	  val conceptArray = cs.toArray
 	  conceptArray.foreach(concept => { DeleteObject(concept) })
-	  var apiResult = new ApiResult(0,"Successfully Removed concept",listToJson(conceptArray))
+	  var apiResult = new ApiResult(0,"Successfully Removed concept",JsonSerializer.SerializeObjectListToJson(conceptArray))
 	  apiResult.toString()
       }
     }catch {
@@ -1507,7 +707,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def AddFunction(functionDef: FunctionDef): String = {
     try{
       val key   = functionDef.FullNameWithVer
-      val value = MetadataAPIImpl.toJson(functionDef)
+      val value = JsonSerializer.SerializeObjectToJson(functionDef)
 
       logger.trace("key => " + key + ",value =>" + value);
       SaveObject(functionDef)
@@ -1556,7 +756,7 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("arg_name => " + arg.name)
       logger.trace("arg_type => " + arg.Type.tType)
     }
-    logger.trace("Json string => " + toJson(funcDef))
+    logger.trace("Json string => " + JsonSerializer.SerializeObjectToJson(funcDef))
   }
 
   def UpdateFunction(functionDef: FunctionDef): String = {
@@ -1589,7 +789,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	var funcList = parseFunctionList(functionsText,"JSON")
+	var funcList = JsonSerializer.parseFunctionList(functionsText,"JSON")
 	funcList.foreach(func => { 
 	  SaveObject(func) 
 	})
@@ -1612,7 +812,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	var func = parseFunction(functionText,"JSON")
+	var func = JsonSerializer.parseFunction(functionText,"JSON")
 	SaveObject(func) 
 	var apiResult = new ApiResult(0,"Function is Added",functionText)
 	apiResult.toString()
@@ -1643,7 +843,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	var funcList = parseFunctionList(functionsText,"JSON")
+	var funcList = JsonSerializer.parseFunctionList(functionsText,"JSON")
 	funcList.foreach(func => { 
 	  UpdateFunction(func) 
 	})
@@ -1677,7 +877,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	  var conceptList = parseConceptList(conceptsText,format)
+	  var conceptList = JsonSerializer.parseConceptList(conceptsText,format)
 	  conceptList.foreach(concept => { 
 	    SaveObject(concept) 
 	  })
@@ -1722,7 +922,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	apiResult.toString()
       }
       else{
-	var conceptList = parseConceptList(conceptsText,"JSON")
+	var conceptList = JsonSerializer.parseConceptList(conceptsText,"JSON")
 	conceptList.foreach(concept => { 
 	  UpdateConcept(concept) 
 	})
@@ -1757,7 +957,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def AddContainerDef(contDef: ContainerDef): String = {
     try{
       var key = contDef.FullNameWithVer
-      var value = MetadataAPIImpl.toJson(contDef)
+      var value = JsonSerializer.SerializeObjectToJson(contDef)
 
       logger.trace("key => " + key + ",value =>" + value);
 
@@ -1775,7 +975,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def AddMessageDef(msgDef: MessageDef): String = {
     try{
       var key = msgDef.FullNameWithVer
-      var value = MetadataAPIImpl.toJson(msgDef)
+      var value = JsonSerializer.SerializeObjectToJson(msgDef)
 
       logger.trace("key => " + key + ",value =>" + value);
 
@@ -1794,7 +994,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def AddMessageDef1(msgDef: MessageDef): String = {
     try{
       var key = msgDef.FullNameWithVer
-      var value = MetadataAPIImpl.SerializeObject(msgDef)
+      var value = serializer.SerializeObjectToByteArray(msgDef)
 
       //logger.trace("key => " + key + ",value =>" + value);
 
@@ -1817,11 +1017,11 @@ object MetadataAPIImpl extends MetadataAPI{
       val(classStr,msgDef) = compProxy.compileMessageDef(messageText)
       msgDef match{
 	case msg:MessageDef =>{
-	  logger.trace(toJson(msg))
+	  logger.trace(JsonSerializer.SerializeObjectToJson(msg))
 	  AddMessageDef1(msg)
 	}
 	case cont:ContainerDef =>{
-	  logger.trace(toJson(cont))
+	  logger.trace(JsonSerializer.SerializeObjectToJson(cont))
 	  AddContainerDef(cont)
 	}
       }
@@ -1841,11 +1041,11 @@ object MetadataAPIImpl extends MetadataAPI{
       val(classStr,msgDef) = compProxy.compileMessageDef(containerText)
       msgDef match{
 	case msg:MessageDef =>{
-	  logger.trace(toJson(msg))
+	  logger.trace(JsonSerializer.SerializeObjectToJson(msg))
 	  AddMessageDef(msg)
 	}
 	case cont:ContainerDef =>{
-	  logger.trace(toJson(cont))
+	  logger.trace(JsonSerializer.SerializeObjectToJson(cont))
 	  AddContainerDef(cont)
 	}
       }
@@ -1952,7 +1152,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def AddModel(model: ModelDef): String = {
     try{
       var key = model.FullNameWithVer
-      var value = MetadataAPIImpl.toJson(model)
+      var value = JsonSerializer.SerializeObjectToJson(model)
 
       //logger.trace("key => " + key + ",value =>" + value);
 
@@ -2014,7 +1214,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(ms) => 
 	  val msa = ms.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all models",listToJson("Models",msa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all models",JsonSerializer.SerializeObjectListToJson("Models",msa))
 	  apiResult.toString()
       }
     }catch {
@@ -2037,7 +1237,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(ms) => 
 	  val msa = ms.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all messages",listToJson("Messages",msa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all messages",JsonSerializer.SerializeObjectListToJson("Messages",msa))
 	  apiResult.toString()
       }
     }catch {
@@ -2135,7 +1335,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(ms) => 
 	  val msa = ms.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all models",listToJson("Models",msa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all models",JsonSerializer.SerializeObjectListToJson("Models",msa))
 	  apiResult.toString()
       }
     }catch {
@@ -2164,7 +1364,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(m) => 
 	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
-	  var apiResult = new ApiResult(0,"Successfully Fetched the model",toJson(m))
+	  var apiResult = new ApiResult(0,"Successfully Fetched the model",JsonSerializer.SerializeObjectToJson(m))
 	  apiResult.toString()
       }
     }catch {
@@ -2188,7 +1388,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(m) => 
 	  logger.trace("message found => " + m.asInstanceOf[MessageDef].FullNameWithVer)
-	  var apiResult = new ApiResult(0,"Successfully Fetched the message",toJson(m))
+	  var apiResult = new ApiResult(0,"Successfully Fetched the message",JsonSerializer.SerializeObjectToJson(m))
 	  apiResult.toString()
       }
     }catch {
@@ -2211,7 +1411,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(m) => 
 	  logger.trace("container found => " + m.asInstanceOf[ContainerDef].FullNameWithVer)
-	  var apiResult = new ApiResult(0,"Successfully Fetched the container",toJson(m))
+	  var apiResult = new ApiResult(0,"Successfully Fetched the container",JsonSerializer.SerializeObjectToJson(m))
 	  apiResult.toString()
       }
     }catch {
@@ -2450,7 +1650,7 @@ object MetadataAPIImpl extends MetadataAPI{
       typeKeys.foreach(key => { 
 	val typeKey = KeyAsStr(key)
 	val obj = GetObject(typeKey.toLowerCase,typeStore)
-	val typ = parseType(ValueAsStr(obj.Value),"JSON")
+	val typ = JsonSerializer.parseType(ValueAsStr(obj.Value),"JSON")
 	if( typ != null ){
 	  SaveObject(typ)
 	}
@@ -2473,7 +1673,7 @@ object MetadataAPIImpl extends MetadataAPI{
       conceptKeys.foreach(key => { 
 	val conceptKey = KeyAsStr(key)
 	val obj = GetObject(conceptKey.toLowerCase,conceptStore)
-	val concept = parseConcept(ValueAsStr(obj.Value),"JSON")
+	val concept = JsonSerializer.parseConcept(ValueAsStr(obj.Value),"JSON")
 	SaveObject(concept)
       })
     }catch {
@@ -2494,7 +1694,7 @@ object MetadataAPIImpl extends MetadataAPI{
       functionKeys.foreach(key => { 
 	val functionKey = KeyAsStr(key)
 	val obj = GetObject(functionKey.toLowerCase,functionStore)
-	val function = parseFunction(ValueAsStr(obj.Value),"JSON")
+	val function = JsonSerializer.parseFunction(ValueAsStr(obj.Value),"JSON")
 	SaveObject(function)
       })
     }catch {
@@ -2516,10 +1716,8 @@ object MetadataAPIImpl extends MetadataAPI{
 	val msgKey = KeyAsStr(key)
 	val obj = GetObject(msgKey.toLowerCase,messageStore)
 	val ba = obj.Value.toArray[Byte]
-	val o = MetadataAPIImpl.DeserializeObject(ba,new MessageDef)
-	//val msgDef = parseMessageDef(ValueAsStr(obj.Value),"JSON")
+	val o = serializer.DeserializeObjectFromByteArray(ba,new MessageDef)
 	MdMgr.GetMdMgr.AddMsg(o)
-	//SaveObject(msgDef)
       })
     }catch {
       case e: Exception => {
@@ -2539,7 +1737,7 @@ object MetadataAPIImpl extends MetadataAPI{
       contKeys.foreach(key => { 
 	val contKey = KeyAsStr(key)
 	val obj = GetObject(contKey.toLowerCase,containerStore)
-	val contDef = parseContainerDef(ValueAsStr(obj.Value),"JSON")
+	val contDef = JsonSerializer.parseContainerDef(ValueAsStr(obj.Value),"JSON")
 	SaveObject(contDef)
       })
     }catch {
@@ -2559,7 +1757,7 @@ object MetadataAPIImpl extends MetadataAPI{
       modKeys.foreach(key => { 
 	val modKey = KeyAsStr(key)
 	val obj = GetObject(modKey.toLowerCase,modelStore)
-	val modDef = parseModelDef(ValueAsStr(obj.Value),"JSON")
+	val modDef = JsonSerializer.parseModelDef(ValueAsStr(obj.Value),"JSON")
 	SaveObject(modDef)
       })
     }catch {
@@ -2626,7 +1824,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(fs) => 
 	  val fsa = fs.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all functions",listToJson("Functions",fsa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all functions",JsonSerializer.SerializeObjectListToJson("Functions",fsa))
 	  apiResult.toString()
       }
     }catch {
@@ -2648,7 +1846,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       else{
 	  val fsa = funcDefs.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all functions",listToJson("Functions",fsa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all functions",JsonSerializer.SerializeObjectListToJson("Functions",fsa))
 	  apiResult.toString()
       }
     }catch {
@@ -2677,7 +1875,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(cs) => 
 	  val csa = cs.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched all concepts",listToJson("Concepts",csa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	  apiResult.toString()
       }
     }catch {
@@ -2699,7 +1897,7 @@ object MetadataAPIImpl extends MetadataAPI{
 					"No Concepts Available")
 	  apiResult.toString()
 	case Some(cs) => 
-	  var apiResult = new ApiResult(0,"Successfully Fetched concepts",toJson(cs))
+	  var apiResult = new ApiResult(0,"Successfully Fetched concepts",JsonSerializer.SerializeObjectToJson(cs))
 	  apiResult.toString()
       }
     }catch {
@@ -2722,7 +1920,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(cs) => 
 	  val csa = cs.toArray
-	  var apiResult = new ApiResult(0,"Successfully Fetched concepts",listToJson("Concepts",csa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	  apiResult.toString()
       }
     }catch {
@@ -2745,7 +1943,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(cs) => 
 	  val csa = cs.toArray.filter(t => {t.getClass.getName == "DerivedAttributeDef"})
 	  if( csa.length > 0 ) {
-	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",listToJson("Concepts",csa))
+	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	    apiResult.toString()
 	  }
 	  else{
@@ -2773,7 +1971,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(cs) => 
 	  val csa = cs.toArray.filter(t => {t.getClass.getName == "DerivedAttributeDef"})
 	  if( csa.length > 0 ) {
-	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",listToJson("Concepts",csa))
+	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	    apiResult.toString()
 	  }
 	  else{
@@ -2799,7 +1997,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  apiResult.toString()
 	case Some(cs) => 
 	  if ( cs.isInstanceOf[DerivedAttributeDef] ){
-	    var apiResult = new ApiResult(0,"Successfully Fetched concepts",toJson(cs))
+	    var apiResult = new ApiResult(0,"Successfully Fetched concepts",JsonSerializer.SerializeObjectToJson(cs))
 	    apiResult.toString()
 	  }
 	  else{
@@ -2829,7 +2027,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(ts) => 
 	  val tsa = ts.toArray
 	  logger.trace("Found " + tsa.length + " types ")
-	  var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",listToJson("Types",tsa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",JsonSerializer.SerializeObjectListToJson("Types",tsa))
 	  apiResult.toString()
       }
     }catch {
@@ -2859,7 +2057,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	    apiResult.toString()
 	  }
 	  else{
-	    var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",listToJson("Types",tsa))
+	    var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",JsonSerializer.SerializeObjectListToJson("Types",tsa))
 	    apiResult.toString()
 	  }
       }
@@ -2883,7 +2081,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(ts) => 
 	  val tsa = ts.toArray
 	  logger.trace("Found " + tsa.length + " types ")
-	  var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",listToJson("Types",tsa))
+	  var apiResult = new ApiResult(0,"Successfully Fetched all typeDefs",JsonSerializer.SerializeObjectListToJson("Types",tsa))
 	  apiResult.toString()
       }
     }catch {
