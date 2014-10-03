@@ -463,7 +463,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  @param templateUsed one of the two templates from the function macro... 
 	 *  @param parametersUsed - these are indices into the fcnArgValues parameter (the 2nd arg) that are needed for the "does" arguments to 
 	 *  	be produced here.
-	 *  @param parameterValues - the substitution values that are avaialable for the substitution.  Note that not all of them
+	 *  @param parameterValues - the substitution values that are available for the substitution.  Note that not all of them
 	 *  	necessarily need to be used.  The parametersUsed determines which will be used in the substitution map.
 	 *  @return the generated expression based upon the supplied template and substitution values.
 	 */

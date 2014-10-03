@@ -709,13 +709,17 @@ class PmmlContext(val mgr : MdMgr)  extends LogTrait {
 				val containervalue = (containerName, containerBaseTypeDef.NameSpace, containerBaseTypeDef.typeString)
 				/** give the full container.name for the field reference */
 				val typeStr : String = fieldBaseTypeDef.typeString
-				val fldvalue = (name, fieldBaseTypeDef.NameSpace, fldType)
+				val fldTypeName : String = fieldBaseTypeDef.Name
+				val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
+				val fldvalue = (name, fldTypeNameSp, fldType)
 				//modelOutputs(containerName.toLowerCase()) = containervalue
 				modelOutputs(name.toLowerCase()) = fldvalue
 			} else {
 				val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(0)
 				val typeStr : String = fldType
-				val fldvalue = (name, fieldBaseTypeDef.NameSpace, typeStr)
+				val fldTypeName : String = fieldBaseTypeDef.Name
+				val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
+				val fldvalue = (name, fldTypeNameSp, fldTypeName)
 				modelOutputs(name.toLowerCase()) = fldvalue
 			}
 			

@@ -549,6 +549,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	coll.last
   }
 
+  def Last[T  : ClassTag](coll : ArrayBuffer[T]) : T = {
+	coll.last
+  }
+
   def Last(coll : Queue[Any]) : Any = {
 	coll.last
   }
@@ -2235,13 +2239,189 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   def ToSet[T  : ClassTag](arr: Array[T]): Set[T] = {
     if (arr == null || arr.size == 0)
-      return Array[T]().toSet
+      return Set[T]().toSet
     arr.toSet
   }
 
+  def ToSet[T  : ClassTag](arr: ArrayBuffer[T]): Set[T] = {
+    if (arr == null || arr.size == 0)
+      return Set[T]().toSet
+    arr.toSet
+  }
+
+  def ToSet(arr: ArrayBuffer[Any]): Set[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]().toSet
+    arr.toSet
+  }
+
+  def ToSet(arr: Array[Any]): Set[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]().toSet
+    arr.toSet
+  }
+
+  def ToSet(q: Queue[Any]): Set[Any] = {
+    if (q == null || q.size == 0)
+      return Queue[Any]().toSet
+    q.toSet
+  }
+
+  def ToSet(l: List[Any]): Set[Any] = {
+    if (l == null || l.size == 0)
+      return Queue[Any]().toSet
+    l.toSet
+  }
+
+  def ToArray[T : ClassTag](set: MutableSet[T]): Array[T] = {
+    if (set == null || set.size == 0)
+      return Array[T]()
+    set.toArray
+  }
+  
   def ToArray[T : ClassTag](set: Set[T]): Array[T] = {
     if (set == null || set.size == 0)
       return Array[T]()
     set.toArray
+  }
+  
+  def ToArray(set: MutableSet[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray(set: Set[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray[T : ClassTag](arr: ArrayBuffer[T]): Array[T] = {
+    if (arr == null || arr.size == 0)
+      return Array[T]()
+    arr.toArray
+  }
+  
+  def ToArray(arr: ArrayBuffer[Any]): Array[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]()
+    arr.toArray
+  }
+  
+  def ToArray[T : ClassTag](arr: Array[T]): Array[T] = {
+    if (arr == null || arr.size == 0)
+      return Array[T]()
+    arr.toArray
+  }
+  
+  def ToArray(arr: Array[Any]): Array[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]()
+    arr.toArray
+  }
+  
+  def ToArray[T : ClassTag](set: SortedSet[T]): Array[T] = {
+    if (set == null || set.size == 0)
+      return Array[T]()
+    set.toArray
+  }
+  
+  def ToArray(set: SortedSet[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray[T : ClassTag](ts: TreeSet[T]): Array[T] = {
+    if (ts == null || ts.size == 0)
+      return Array[T]()
+    ts.toArray
+  }
+  
+  def ToArray(ts: TreeSet[Any]): Array[Any] = {
+    if (ts == null || ts.size == 0)
+      return Array[Any]()
+    ts.toArray
+  }
+  
+  def ToArray[T : ClassTag](l: List[T]): Array[T] = {
+    if (l == null || l.size == 0)
+      return Array[T]()
+    l.toArray
+  }
+  
+  def ToArray(l: List[Any]): Array[Any] = {
+    if (l == null || l.size == 0)
+      return Array[Any]()
+    l.toArray
+  }
+  
+  def ToArray[T : ClassTag](q: Queue[T]): Array[T] = {
+    if (q == null || q.size == 0)
+      return Array[T]()
+    q.toArray
+  }
+  
+   def ToArray(q: Queue[Any]): Array[Any] = {
+    if (q == null || q.size == 0)
+      return Array[Any]()
+    q.toArray
+  }
+  
+ def ToArray[T : ClassTag](stack: Stack[T]): Array[T] = {
+    if (stack == null || stack.size == 0)
+      return Array[T]()
+    stack.toArray
+  }
+  
+  def ToArray(stack: Stack[Any]): Array[Any] = {
+    if (stack == null || stack.size == 0)
+      return Array[Any]()
+    stack.toArray
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Array[T]) : Int = {
+    coll.length
+  }
+  
+  def CollectionLength[T : ClassTag](coll : ArrayBuffer[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Set[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : TreeSet[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : SortedSet[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : List[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Vector[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Queue[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Stack[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : Map[K,V]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : HashMap[K,V]) : Int = {
+    coll.size
   }
 }

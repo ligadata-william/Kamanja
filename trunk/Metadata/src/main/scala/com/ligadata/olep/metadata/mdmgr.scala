@@ -270,8 +270,9 @@ class MdMgr {
     }
 
     var ad = new AttributeDef
+    val typname : String = typeName.toLowerCase()
     ad.inherited = null
-    ad.aType = GetElem(Type(typeNameNs, typeName, -1, false), s"Type $typeNameNs.$typeName does not exist")
+    ad.aType = GetElem(Type(typeNameNs, typname, -1, false), s"Type $typeNameNs.$typeName does not exist")
     if (ad.aType == null) { throw new NoSuchElementException(s"Type $typeNameNs.$typeName does not exist") }
 
     val depJarSet = scala.collection.mutable.Set[String]()

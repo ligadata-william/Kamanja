@@ -451,7 +451,6 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	def InitTypesForEdifecs : Unit = {
 
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfString", MdMgr.sysNS, "String", 1, 1)
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfCarrierClaimLineItem", MdMgr.sysNS, "CarrierClaimLineItem", 1, 1)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfInt", MdMgr.sysNS, "String", 1, 1)
 
 		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfStringInt", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Int"), 1)
