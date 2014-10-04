@@ -73,26 +73,35 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val memberTypes : Array[Array[BaseTypeDef]] = argTypesExpanded.map( tuple => tuple._4)
 	  	val returnTypes : Array[String] = argTypesExpanded.map( tuple => tuple._5)  	
 	  	
-	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.map( arg => arg.last)
+	  	logger.trace(s"selectSimpleFcn ... fcn = ${node.function}")
+	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = if (argTypesExp != null && argTypesExp.size > 0) 
+	  		{ 
+	  			argTypesExp.map( arg => if (arg != null) arg.last else (null,false,null)) 
+	  		} else {
+	  			null
+	  		}
 	  	
-	  	var simpleKey : String = buildSimpleKey(node.function, argTypes.map( argTriple => argTriple._1))
+	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
+	  	var simpleKey : String = if (hasArgs) buildSimpleKey(node.function, argTypes.map( argTriple => argTriple._1)) else s"${node.function}()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
 	  	logger.trace(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
 	  	var funcDef : FunctionDef = ctx.MetadataHelper.FunctionByTypeSig(simpleKey)
 	  	var winningKey : String = null
 	  	val typeInfo : FcnTypeInfo = if (funcDef == null) {
-	  		val simpleKeysToTry : Array[String] = relaxSimpleKey(node.function, argTypes, returnTypes)
-	  		breakable {
-	  		  	simpleKeysToTry.foreach( key => {
-	  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
-	  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
-	  		  		if (funcDef != null) {
-	  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
-	  		  			winningKey = key
-	  		  			break
-	  		  		}
-	  		  	})	  		  
+	  		if (hasArgs || (! hasArgs && returnTypes != null && returnTypes.size > 0)) {
+		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(node.function, argTypes, returnTypes)
+		  		breakable {
+		  		  	simpleKeysToTry.foreach( key => {
+		  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
+		  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
+		  		  		if (funcDef != null) {
+		  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
+		  		  			winningKey = key
+		  		  			break
+		  		  		}
+		  		  	})	  		  
+		  		}
 	  		}
 	  		if (funcDef != null) {
 	  			new FcnTypeInfo(funcDef, argTypes, argTypesExp, winningKey)
@@ -448,11 +457,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	keyBuff.append(fcnName)
 	  	keyBuff.append('(')
 	  	var cnt : Int = 0
-	  	argtypes.foreach (arg => {
-	  		keyBuff.append(arg)
-	  		cnt += 1
-	  		if (cnt < argtypes.size) keyBuff.append(',')
-	  	})
+	  	if (argtypes != null) {
+		  	argtypes.foreach (arg => {
+		  		keyBuff.append(arg)
+		  		cnt += 1
+		  		if (cnt < argtypes.size) keyBuff.append(',')
+		  	})
+	  	}
 	  	keyBuff.append(')')
 	  	val simpleKey : String = keyBuff.toString
 	  	simpleKey

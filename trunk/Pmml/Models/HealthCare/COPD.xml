@@ -1,0 +1,379 @@
+
+<!--
+AsthmaPMML.xml 
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Edifecs Corp. Copyright 2014" description="COPD Risk Assessment">
+		<Application name="COPDRiskAssessment" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="3">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
+	</DataDictionary>
+
+	<TransformationDictionary>
+	
+	  	<!-- Time now since epoch expressed in seconds -->
+		<DerivedField name="Today" dataType="long" optype="categorical">
+			<Apply function="AsSeconds">
+				<Apply function="Now"/>
+			</Apply>
+		</DerivedField>
+
+	  	<!-- Time a year ago since epoch expressed in seconds -->
+		<DerivedField name="AYearAgo" dataType="long" optype="categorical">
+			<Apply function="-">
+				<FieldRef field="Today"/>
+				<Apply function="*">
+					<Apply function="*">
+						<Constant dataType="long">60</Constant> 
+						<Constant dataType="long">60</Constant> 
+					</Apply>			
+					<Apply function="*">
+						<Constant dataType="long">24</Constant> 
+						<Constant dataType="long">365</Constant> 
+					</Apply>			
+				</Apply>			
+			</Apply>
+		</DerivedField>
+
+	  	<!-- 40 years of age or older -->
+		<DerivedField name="FortyYrsOrOlder" dataType="boolean" optype="categorical">
+			<Apply function="greaterOrEqual">
+				<Apply function="AgeCalc">
+					<FieldRef field="msg.beneficiaryBase.Bene_Birth_Dt"/>
+				</Apply>
+				<Constant dataType="integer">40</Constant> 
+			</Apply>
+		</DerivedField>
+			
+		<!-- All hl7 messages from this past year NOTE: Clm_Thru_Dt expressed
+			 as seconds since epoch for this method... if it were millisecs,
+			 things need to be adjusted -->
+		<DerivedField name="hl7InfoThisLastYear" dataType="ArrayOfHL7" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="msg.HL7Messages"/>
+		 			<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
+		 			<FieldRef field="AYearAgo"/> 
+		 			<FieldRef field="Today"/> 
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!-- Over HL7 Smoking in last year  -->
+		<DerivedField name="WithSmokingHistory" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="CollectionLength">
+					<Apply function="ContainerFilter">
+			       		<FieldRef field="hl7InfoThisLastYear"/>
+			 			<Constant dataType="fIdent">equal</Constant> 
+			 			<Constant dataType="ident">Tobacco</Constant> 
+						<Constant dataType="integer">1</Constant> 
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+
+		<!-- All inpatient records this past year  NOTE: Clm_Thru_Dt expressed
+			 as seconds since epoch for this method... if it were millisecs,
+			 things need to be adjusted -->
+		<DerivedField name="inpatientInfoThisLastYear" dataType="ArrayOfInpatientClaim" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="msg.Inpatient_Claims"/>
+		 			<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
+		 			<FieldRef field="AYearAgo"/> 
+		 			<FieldRef field="Today"/> 
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!-- All outpatient records this past year  NOTE: Clm_Thru_Dt expressed
+			 as seconds since epoch for this method... if it were millisecs,
+			 things need to be adjusted -->
+		<DerivedField name="outpatientInfoThisLastYear" dataType="ArrayOfOutpatientClaim" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="msg.Outpatient_Claims"/>
+		 			<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
+		 			<FieldRef field="AYearAgo"/> 
+		 			<FieldRef field="Today"/> 
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!-- 
+			Tally the reports of Environmental Exposure from the inpatient and
+			outpatient records over the past year and answer if that tally 
+			is greater than 0
+
+			NOTE: This derivation assumes that the codes are all in one 
+			range.  If that were not the case (e.g., multiple ranges,
+			disjoint codes, etc), this function would be rewritten..
+
+			See COPDSymptoms for how one might code a disjoint set
+			of codes.
+
+			NOTE: Imagine the range values in use here were the real range for
+			Environment exposure...
+		  -->
+		<DerivedField name="WithEnvironmentalExposures" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="+">
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="inpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">Between</Constant> 
+				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+				 			<Constant dataType="string">49300</Constant> 
+							<Constant dataType="string">49392</Constant> 
+							<Constant dataType="boolean">true</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="inpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">AnyBetween</Constant> 
+				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
+				 			<Constant dataType="string">49300</Constant> 
+							<Constant dataType="string">49392</Constant> 
+							<Constant dataType="boolean">true</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="outpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">Between</Constant> 
+				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+				 			<Constant dataType="string">49300</Constant> 
+							<Constant dataType="string">49392</Constant> 
+							<Constant dataType="boolean">true</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="outpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">AnyBetween</Constant> 
+				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
+				 			<Constant dataType="string">49300</Constant> 
+							<Constant dataType="string">49392</Constant> 
+							<Constant dataType="boolean">true</Constant> 
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+
+
+		<!-- Over HL7 AATDeficiency in last year  -->
+		<DerivedField name="AATDeficiency" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="CollectionLength">
+					<Apply function="ContainerFilter">
+			       		<FieldRef field="hl7InfoThisLastYear"/>
+			 			<Constant dataType="fIdent">equal</Constant> 
+			 			<Constant dataType="ident">AATDeficiency</Constant> 
+						<Constant dataType="integer">1</Constant> 
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+		
+		<!-- Over HL7 Dyspnoea in last year  -->
+		<DerivedField name="Dyspnoea" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="CollectionLength">
+					<Apply function="ContainerFilter">
+			       		<FieldRef field="hl7InfoThisLastYear"/>
+			 			<Constant dataType="fIdent">equal</Constant> 
+			 			<Constant dataType="ident">Shortnessofbreath</Constant> 
+						<Constant dataType="integer">1</Constant> 
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+		
+		<!-- Over HL7 ChronicCough in last year  -->
+		<DerivedField name="ChronicCough" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="CollectionLength">
+					<Apply function="ContainerFilter">
+			       		<FieldRef field="hl7InfoThisLastYear"/>
+			 			<Constant dataType="fIdent">equal</Constant> 
+			 			<Constant dataType="ident">ChronicCough</Constant> 
+						<Constant dataType="integer">1</Constant> 
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+		
+		<!-- Over HL7 ChronicSputum in last year  -->
+		<DerivedField name="ChronicSputum" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="CollectionLength">
+					<Apply function="ContainerFilter">
+			       		<FieldRef field="hl7InfoThisLastYear"/>
+			 			<Constant dataType="fIdent">equal</Constant> 
+			 			<Constant dataType="ident">ChronicSputum</Constant> 
+						<Constant dataType="integer">1</Constant> 
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="COPDSymptoms" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<FieldRef field="Dyspnoea"/>
+				<FieldRef field="ChronicCough"/>
+				<FieldRef field="ChronicSputum"/>
+			</Apply>
+		</DerivedField>
+				
+		<!-- Over HL7 ChronicSputum in last year  
+			
+			Compare this function that examines multiple characteristics of hl7
+			with one pass versus the method in the derivations above that 
+			examine one only at a time.  This requires an 'or' udf that 
+			can accept 'Int' types where '0' is false and 'non 0' is true
+		-->
+		<DerivedField name="FamilyHistory" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="equal">
+					<FieldRef field="msg.beneficiaryBase.Sp_Copd"/>
+					<Constant dataType="integer">1</Constant>
+				</Apply>
+				<Apply function="greaterThan">
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="hl7InfoThisLastYear"/>
+				 			<Constant dataType="fIdent">or</Constant> 
+				 			<Constant dataType="ident">ChronicCough</Constant> 
+				 			<Constant dataType="ident">Sp_Copd</Constant> 
+				 			<Constant dataType="ident">Shortnessofbreath</Constant> 
+				 			<Constant dataType="ident">ChronicSputum</Constant> 
+						</Apply>
+					</Apply>
+					<Constant dataType="integer">0</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<DerivedField name="CATII_Rule2" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="not">
+						<FieldRef field="FortyYrsOrOlder"/>
+					</Apply>
+					<Apply function="or">
+						<FieldRef field="COPDSymptoms"/>
+						<FieldRef field="AATDeficiency"/>
+						<FieldRef field="FamilyHistory"/>
+					</Apply>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">2</Constant> 
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">NotSet</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="CATI_Rule1b" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<FieldRef field="FortyYrsOrOlder"/>
+					<FieldRef field="WithSmokingHistory"/>
+					<FieldRef field="AATDeficiency"/>
+					<FieldRef field="WithEnvironmentalExposures"/>
+					<FieldRef field="COPDSymptoms"/>
+				</Apply>
+				<!-- Rather than use rule score, you can set variables according
+					to if's predicate above... -->
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">1b</Constant> 
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">NotSet</Constant> 
+				</Apply>
+
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="CATI_Rule1a" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<FieldRef field="FortyYrsOrOlder"/>
+					<FieldRef field="WithSmokingHistory"/>
+					<Apply function="or">
+						<FieldRef field="AATDeficiency"/>
+						<FieldRef field="WithEnvironmentalExposures"/>
+						<FieldRef field="COPDSymptoms"/>
+					</Apply>
+				</Apply>
+				<!-- Rather than use rule score, you can set variables according
+					to if's predicate above... -->
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">1b</Constant> 
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">COPDSeverity</Constant>
+					<Constant dataType="string">NotSet</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="COPDRisk" functionName="classification" algorithmName="RuleSet">
+
+	    <MiningSchema>
+			<MiningField name="COPDSeverity" usageType="predicted"/>
+			<MiningField name="WithSmokingHistory" usageType="supplementary"/>
+			<MiningField name="Dyspnoea" usageType="supplementary"/>
+			<MiningField name="ChronicCough" usageType="supplementary"/>
+			<MiningField name="ChronicSputum" usageType="supplementary"/>
+			<MiningField name="AATDeficiency" usageType="supplementary"/>
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="CATI_Rule1b" score="1b">
+				<SimplePredicate field="CATI_Rule1b" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="CATI_Rule1a" score="1a">
+				<SimplePredicate field="CATI_Rule1a" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="CATII_Rule2" score="II">
+				<SimplePredicate field="CATII_Rule2" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

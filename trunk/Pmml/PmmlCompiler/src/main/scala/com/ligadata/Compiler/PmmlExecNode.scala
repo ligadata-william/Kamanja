@@ -271,18 +271,14 @@ class xDerivedField(val name : String
 						NodePrinterHelpers.derivedFieldFcnHelper(this, ctx, generator, kind, order)
 					}
 					case CodeFragment.FUNCCALL => {
-						/** generate the code to fetch the value */ 
+						/** generate the code to fetch the value  
 						
-						/** FIXME:  HACK ALERT!!! When the field refers to "beneficiary... " we really don't want to retrieve a value 
-						 *  from the dictionaries.  Instead this field reference refers to a the extracted data found in ctx.Beneficiary... 
-						 *  With this in mind, we don't do the lookup for the value.  Instead, we simply return the beneficiary reference as a string.
-						 */
-		
 						if (name.startsWith("beneficiary")) {
 							name
 						} else {
 							s"ctx.valueFor(${'"'}$name${'"'})"			  
-						}
+						}*/
+					  ""
 					} 
 					case _ => { 
 						ctx.logger.error("DerivedField node - unsupported CodeFragment.Kind") 

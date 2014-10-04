@@ -27,6 +27,7 @@ trait LogTrait {
  */
 
 class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : String, val attrPath : String, msgCtnPath : String) extends LogTrait {
+	val baseTypesVer = 100 // Which is 00.01.00
   
 	/** construct the loader and call this to complete the cache initialization */
 	def initialize { 
@@ -54,6 +55,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		
 		logger.trace("MetadataLoad...loading Iterable functions")
 		InitFcns
+	    logger.trace("MetadataLoad...loading model definitions")
+	    InitModelDefs
 			
 	    logger.trace("MetadataLoad...loading function macro definitions")
 	    initMacroDefs
@@ -294,6 +297,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							, (MdMgr.sysNS, "Ldl", MdMgr.sysNS, "Double", false)
 							, (MdMgr.sysNS, "Triglycerides", MdMgr.sysNS, "Double", false)
 							, (MdMgr.sysNS, "Chestpain", MdMgr.sysNS, "String", false)
+
+							, (MdMgr.sysNS, "AATDeficiency", MdMgr.sysNS, "Int", false)
+							, (MdMgr.sysNS, "ChronicCough", MdMgr.sysNS, "Int", false)
+							, (MdMgr.sysNS, "ChronicSputum", MdMgr.sysNS, "Int", false)
+
 							, (MdMgr.sysNS, "Conditions", MdMgr.sysNS, "ArrayOfInt", false)
 					        ));
 
@@ -433,6 +441,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddScalar("System", "Any", tAny, "Any", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.AnyImpl")
 		mgr.AddScalar("System", "String", tString, "String", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.StringImpl")
 		mgr.AddScalar("System", "Int", tInt, "Int", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.IntImpl")
+		mgr.AddScalar("System", "Integer", tInt, "Int", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.IntImpl")
 		mgr.AddScalar("System", "Long", tLong, "Long", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.LongImpl")
 		mgr.AddScalar("System", "Boolean", tBoolean, "Boolean", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.BoolImpl")
 		mgr.AddScalar("System", "Bool", tBoolean, "Boolean", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.BoolImpl")
@@ -572,6 +581,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2Secs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2Secs", ("System", "Int"), List(("compressedTime", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "AsSeconds", "com.ligadata.pmml.udfs.Udfs.AsSeconds", ("System", "Long"), List(("milliSecs", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "Timenow", "com.ligadata.pmml.udfs.Udfs.Timenow", ("System", "Long"), List(), null)
+		mgr.AddFunc("Pmml", "Now", "com.ligadata.pmml.udfs.Udfs.Now", ("System", "Long"), List(), null)
 		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Int"), List(), null)
 		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Int"), List(), null)
 		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
@@ -970,14 +980,35 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "Float"),("setExprs", "System", "ArrayBufferOfFloat")), null)
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "Int"),("setExprs", "System", "ArrayBufferOfInt")), null)
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ArrayBufferOfString")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexprs", "System", "ArrayBufferOfBoolean")), null)
+
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
+
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int"),("boolexpr6", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int")), null)
+
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
+
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int"),("boolexpr6", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int")), null)
+
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexprs", "System", "ArrayBufferOfBoolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
@@ -1152,8 +1183,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		logger.trace("MetadataLoad...loading Macro functions")
 
 		
+		/** **************************************************************************************************************/
 		
-	
 		/** catalog the CLASSUPDATE oriented macros: 
 		 
 	  		"incrementBy(Int,Int)"  
@@ -1219,25 +1250,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (incrementByMacroStringFixed,incrementByMacroStringMapped))	  
 
+		/** **************************************************************************************************************/
 					
-		/** Macros associated with this macro template:
-		 	"Put(Any,Any,Any)"
-		 */
-		
-		val putContainerMacroStringMapped : String =   """
-	class %1%_%2%_%3%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%)
-	{
-	  	def Put  : Boolean = { %1%.getObject(%2, %3) = %3%; true }
-	} """
-		
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("container", MdMgr.sysNS, "Any"), ("key", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Any"))
-					, fcnMacrofeatures
-					, (putContainerMacroStringMapped,putContainerMacroStringMapped))	  
-		  				
-
 		val putGlobalContainerMacroStringFixed : String =  """
 	class %1%_%2%_%3%_%4%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
@@ -1321,25 +1335,30 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
 		  				
 
-		/** Macros associated with this macro template:
-		 	"Put(String,String)"
-		 	"Put(Int,Int)"
-		 	"Put(Long,Long)"
-		 	"Put(Double,Double)"
-		 	"Put(Boolean,Boolean)"
-		 	"Put(Any,Any)"
+		/** **************************************************************************************************************/
+
+		/** ***********************************************************************
+		 *  Catalog the ITERABLE only macros (no class generation needed for these 
+		 **************************************************************************/
+		fcnMacrofeatures.clear
+		fcnMacrofeatures += FcnMacroAttr.ITERABLE
+
+		/** 
+		 	Macros associated with the 'putVariableMacroPmmlDict' macro template:
+			 	"Put(String,String)"
+			 	"Put(String,Int)"
+			 	"Put(String,Long)"
+			 	"Put(String,Double)"
+			 	"Put(String,Boolean)"
+			 	"Put(String,Any)"
 		 	
-		 	Note: No "mapped" version of the template needed for this case.
+		 	Notes: 
+		 		1) No "mapped" version of the template needed for this case.
+		 		2) These functions can ONLY be used inside objects that have access to the model's ctx
+		 		   (e.g., inside the 'execute(ctx : Context)' function of a derived field)
 		 */
 		
-		val putVariableMacroPmmlDict : String =   """
-	class %1%_%2%_Put(var %1% : %1_type%, val %2% : %2_type%)
-	{
-	  	def Put  : Boolean = { 
-	  		val set : Boolean = ctx.valuePut(%1%, %2%)
-			set 
-		}
-	} """
+		val putVariableMacroPmmlDict : String =   """Put(ctx, %1%, %2%)"""
 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
@@ -1384,12 +1403,34 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
-		  
-		  
-		/** catalog the ITERABLE macros */
-		fcnMacrofeatures.clear
-		fcnMacrofeatures += FcnMacroAttr.ITERABLE
 	}
+
+	def InitModelDefs = {
+	  			
+		logger.trace("MetadataLoad...loading AlchemyAlerts model")
+		/**mgr.AddModelDef(
+		       MdMgr.sysNS
+			, "AlchemyAlerts_000100"
+			, "com.Barclay.AlchemyAlerts_000100.pmml.AlchemyAlerts_000100"
+			, "RuleSet"
+			, List(("ClientPrefs", "OD_T2_LIMIT", "system", "customerpreferences", false)
+				,("ClientPrefs", "MAX_EB_CNT", "system", "customerpreferences", false)
+			,("ODAlertParms", "ONLINE_START_TIME", "system", "alertparameters", false)
+				,("ClientAlertsToday", "EB002Sent", "system", "alerthistory", false))		
+			, List(("msg.ENT_DTE", "system", "Int")
+				,("AlertType", "system", "String")
+				,("msg.RUN_LDG_XAU", "system", "Double")
+				,("OfflineEvent", "system", "String")
+				,("ClientPrefs.ACCT_SHORT_NM", "system", "String")
+				,("ClientPrefs.MOBILE_NUMBER", "system", "String")
+				,("EBAlertParms.ALERT_EXPIRY_TIME", "system", "Long")
+				,("SendResult", "system", "String"))
+			 , baseTypesVer
+			 , "alchemy_000100_2.10-1.0.jar"
+			 , Array("pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
+		)  */
+	}
+
 
 
 }

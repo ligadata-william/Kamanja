@@ -227,6 +227,30 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5 && boolexpr6)
   }
 
+  def And(boolexpr: Int, boolexpr1: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
+  }
+
   def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr || boolexpr1)
   }
@@ -253,6 +277,30 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   def Or(boolexprs: ArrayBuffer[Boolean]): Boolean = {
     boolexprs.reduceLeft(_ || _)
+  }
+
+ def Or(boolexpr: Int, boolexpr1: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0 || boolexpr6 != 0)
   }
 
   def IsIn(fldRefExpr: String, setExprs: ArrayBuffer[String]): Boolean = {
@@ -2173,28 +2221,33 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  milliSecs / 1000
   }
 
- 
+  def Now(): Long = {
+    var now: org.joda.time.DateTime = new org.joda.time.DateTime()
+    now.getMillis()
+  }
+
 
 
   /** 
    *  Convert time formatted in integer (compressed decimal) 
    *  to seconds.
    *  
-   *  		Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND 
+   *      Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND 
    *  
    *  @param time, an Int
    *  @return time, an Int
    */
   def CompressedTimeHHMMSSCC2Secs(compressedTime : Int) : Int = {
-	val hours = (compressedTime / 1000000) % 100
-	val minutes = (compressedTime / 10000) % 100
-	val seconds = (compressedTime / 100) % 100
-	val millisecs = (compressedTime % 100) * 10
-	
-	val evtseconds = hours * 60 *  60 + minutes * 60 + seconds + (if (millisecs >= 500) 1 else 0)
-	
-	evtseconds
+    val hours = (compressedTime / 1000000) % 100
+    val minutes = (compressedTime / 10000) % 100
+    val seconds = (compressedTime / 100) % 100
+    val millisecs = (compressedTime % 100) * 10
+    
+    val evtseconds = hours * 60 *  60 + minutes * 60 + seconds + (if (millisecs >= 500) 1 else 0)
+    
+    evtseconds
   }
+
 
   /** Calculate age from yyyymmdd ISO8601 type compressed in integer */
   def AgeCalc(yyyymmdd: Int): Int = {
