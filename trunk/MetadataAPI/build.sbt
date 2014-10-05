@@ -25,7 +25,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 	case x if x endsWith "com/ligadata/olep/metadataload/MetadataLoad.class" => MergeStrategy.first
 	case x if x endsWith "org/apache/commons/beanutils/BasicDynaBean.class" => MergeStrategy.last
 	case x if x endsWith "com/esotericsoftware/minlog/Log.class" => MergeStrategy.first
-	case x if x endsWith "com/esotericsoftware/minlog/Log$Logger.class" => MergeStrategy.last
+	case x if x endsWith "com/esotericsoftware/minlog/Log$Logger.class" => MergeStrategy.first
 	case x if x contains "org/objectweb/asm/" => MergeStrategy.last
 	case x if x endsWith "ArrayStack.class" =>  MergeStrategy.last
     case "log4j.properties" => MergeStrategy.first
