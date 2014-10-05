@@ -315,8 +315,8 @@ object JsonSerializer {
 	throw Json4sParsingException(e.getMessage())
       }
       case e:AlreadyExistsException => {
-	logger.trace("Failed to add the type, json => " + typeJson  + ",Error => " + e.getMessage())
-	typeDef
+	logger.trace("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
+	throw new AlreadyExistsException(e.getMessage())
       }
       case e:Exception => {
 	e.printStackTrace()

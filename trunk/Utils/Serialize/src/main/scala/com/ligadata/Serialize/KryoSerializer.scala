@@ -24,34 +24,39 @@ class KryoSerializer extends Serializer{
     logger.setLevel(level);
   }
 
-  def SerializeObjectToByteArray[T <: BaseElemDef](obj : T) : Array[Byte] = {
+
+  def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
     try{
       val kryo = kryoFactory.newKryo()
       val baos = new ByteArrayOutputStream
       val output = new Output(baos)
-      kryo.writeObject(output,obj)
+      kryo.writeClassAndObject(output,obj)
       output.close()
-      baos.toByteArray()
+      val ba = baos.toByteArray()
+      logger.trace("Serialized data contains " + ba.length + " bytes ")
+      ba
     }catch{
       case e:Exception => {
-	throw new KryoSerializationException("Failed to Serialize the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	throw new KryoSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
   }
 
 
-  def DeserializeObjectFromByteArray[T <: BaseElemDef](obj: Array[Byte], cls: T) : T = {
+  def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
     try{
       val kryo = kryoFactory.newKryo()
-      val bais = new ByteArrayInputStream(obj);
+      val bais = new ByteArrayInputStream(ba);
       val inp = new Input(bais)
-      val m = kryo.readObject(inp,cls.getClass)
+      val m = kryo.readClassAndObject(inp)
+      logger.trace("DeSerialized object => " + m.getClass().getName())
       inp.close()
       m
     }catch{
       case e:Exception => {
-	throw new KryoSerializationException("Failed to DeSerialize the object of class(" + cls.getClass().getName() + "): " + e.getMessage())
+	throw new KryoSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }
   }
+
 }

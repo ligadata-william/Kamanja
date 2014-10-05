@@ -5,10 +5,10 @@ import com.ligadata.olep.metadata._
 
 import java.io.ByteArrayOutputStream
 
+import org.apache.log4j._
+
 trait Serializer{
-  def SerializeObjectToByteArray[T <: BaseElemDef](obj : T) : Array[Byte]
-  def DeserializeObjectFromByteArray[T <: BaseElemDef](obj: Array[Byte], cls: T) : T
-  //def SerializeObjectToJson[T <: BaseElemDef](obj : T) : String
-  //def SerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T]) : String
-  //def SerializeObjectListToJson[T <: BaseElemDef](obj : T) : String
+  def SetLoggerLevel(level: Level)
+  def SerializeObjectToByteArray(obj : Object) : Array[Byte]
+  def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object
 }
