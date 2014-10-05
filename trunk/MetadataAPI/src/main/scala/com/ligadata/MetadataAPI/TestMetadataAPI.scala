@@ -29,10 +29,16 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 
 import com.ligadata.Serialize._
 
+case class MissingArgumentException(e: String) extends Throwable(e)
+
 object TestMetadataAPI{
+
+  private type OptionMap = Map[Symbol, Any]
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+
+  var databaseOpen = false
 
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
@@ -1029,7 +1035,6 @@ object TestMetadataAPI{
       var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
       var done = false
       while ( done == false ){
-	MetadataAPIImpl.readMetadataAPIConfig
 	println("\n\nPick a Type ")
 	var seq = 0
 	typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq))})
@@ -1112,19 +1117,57 @@ object TestMetadataAPI{
     }
   }
 
-  def TestKryoSerialize1{
+//  def TestKryoSerialize1{
+//    MetadataAPIImpl.InitMdMgrFromBootStrap
+//    val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
+//    msgDefs match{
+//      case None => {
+//	logger.trace("No Messages found ")
+//      }
+//      case Some(ms) => {
+//	val msa = ms.toArray
+//	msa.foreach( m => {
+//	  val ba = serializer.SerializeObjectToByteArray(m)
+//	  val m1 = serializer.DeserializeObjectFromByteArray(ba,new MessageDef)
+//	  assert(m.asInstanceOf[MessageDef].FullNameWithVer == m1.asInstanceOf[MessageDef].FullNameWithVer)
+//	})
+//      }
+//    }
+//  }
+//
+//
+//  def TestKryoSerialize2{
+//    MetadataAPIImpl.InitMdMgrFromBootStrap
+//    val msgDefs = MdMgr.GetMdMgr.Models(true,true)
+//    msgDefs match{
+//      case None => {
+//	logger.trace("No Models found ")
+//      }
+//      case Some(ms) => {
+//	val msa = ms.toArray
+//	msa.foreach( m => {
+//	  val ba = serializer.SerializeObjectToByteArray1(m)
+//	  val m1 = serializer.DeserializeObjectFromByteArray1(ba,m)
+//	  assert(m.asInstanceOf[ModelDef].FullNameWithVer == m1.asInstanceOf[ModelDef].FullNameWithVer)
+//	})
+//      }
+//    }
+//  }
+
+  def TestKryoSerialize3{
     MetadataAPIImpl.InitMdMgrFromBootStrap
-    val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
+    val msgDefs = MdMgr.GetMdMgr.Models(true,true)
     msgDefs match{
       case None => {
-	logger.trace("No Messages found ")
+	logger.trace("No Models found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
 	msa.foreach( m => {
 	  val ba = serializer.SerializeObjectToByteArray(m)
-	  val m1 = serializer.DeserializeObjectFromByteArray(ba,new MessageDef)
-	  assert(m.asInstanceOf[MessageDef].FullNameWithVer == m1.asInstanceOf[MessageDef].FullNameWithVer)
+	  val m1 = serializer.DeserializeObjectFromByteArray(ba)
+	  logger.trace("Length of json object => " + JsonSerializer.SerializeObjectToJson(m1.asInstanceOf[ModelDef]).length)
+	  assert(JsonSerializer.SerializeObjectToJson(m) == JsonSerializer.SerializeObjectToJson(m1.asInstanceOf[ModelDef]))
 	})
       }
     }
@@ -1132,12 +1175,6 @@ object TestMetadataAPI{
 
   def StartTest{
     try{
-      MdMgr.GetMdMgr.truncate
-      val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.GetMdMgr, "","","","")
-      mdLoader.initialize
-      MetadataAPIImpl.OpenDbStore(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE"))
-      MetadataAPIImpl.LoadObjectsIntoCache
-
       val dumpMetadata = ()               => { DumpMetadata }
       val addModel = ()                   => { AddModel }
       val getModel = ()                   => { GetModelFromCache }
@@ -1222,17 +1259,54 @@ object TestMetadataAPI{
     }
   }    
 
-  def main(args: Array[String]){
+  private def PrintUsage(): Unit = {
+    logger.warn("    --config <configfilename>")
+  }
 
+  private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
+    def isSwitch(s: String) = (s(0) == '-')
+    list match {
+      case Nil => map
+      case "--config" :: value :: tail =>
+        nextOption(map ++ Map('config -> value), tail)
+      case option :: tail => {
+        logger.error("Unknown option " + option)
+        sys.exit(1)
+      }
+    }
+  }
+
+  def main(args: Array[String]){
     try{
       logger.setLevel(Level.TRACE);
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      
-      MetadataAPIImpl.readMetadataAPIConfig
+      serializer.SetLoggerLevel(Level.TRACE)
+      JsonSerializer.SetLoggerLevel(Level.TRACE)
+
+
+      if (args.length == 0) {
+	logger.warn("No Command line arguments are supplied, API Config will be loaded loaded from MetadataAPI.properties")
+	MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
+      }
+      else{
+	val options = nextOption(Map(), args.toList)
+	val cfgfile = options.getOrElse('config, null)
+	if (cfgfile == null) {
+	  logger.error("Need configuration file as parameter")
+	  throw new MissingArgumentException("configFile must be supplied")
+	}
+	MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(cfgfile.asInstanceOf[String])
+      }
+
+      MetadataAPIImpl.InitMdMgrFromBootStrap
+      databaseOpen = true
       StartTest
+      // AddType
       //TestKryoSerialize
       //TestKryoSerialize1
+      //TestKryoSerialize2
+      //TestKryoSerialize3
 
     }catch {
       case e: Exception => {
@@ -1241,7 +1315,9 @@ object TestMetadataAPI{
     }
     finally{
       // CloseDbStore Must be called for a clean exit
-      MetadataAPIImpl.CloseDbStore
+      if( databaseOpen ){
+	MetadataAPIImpl.CloseDbStore
+      }
     }
   }
 }
