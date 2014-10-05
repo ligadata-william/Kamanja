@@ -678,7 +678,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
 			logger.error(s"cmd used : $mvCmd")
 		}
-		logger.trace(s"move of jar $moduleNameJar to the target $jarTargetDir ends... rc = mvCmdRc")
+		logger.trace(s"move of jar $moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
 		
 		(0, s"$jarTargetDir/$moduleNameJar")
 	}

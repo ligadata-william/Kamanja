@@ -25,8 +25,9 @@
 
 		<!-- Obtain the conflict medical code lookup table -->
 		<DerivedField name="conflictMedCds" dataType="ArrayOfConflictMedicalCode" optype="categorical">
-			<Apply function="Get">
+			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">Dimensions</Constant>
 			    <Constant dataType="string">ConflictMedCds</Constant>
 			</Apply>
 		</DerivedField>

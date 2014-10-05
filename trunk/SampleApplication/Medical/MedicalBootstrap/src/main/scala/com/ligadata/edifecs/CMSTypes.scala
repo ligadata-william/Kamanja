@@ -266,6 +266,11 @@ class HL7 extends BaseMsg {
   var Ldl: Double = 0
   var Triglycerides: Double = 0
   var Chestpain: String = ""
+
+  var AATDeficiency: Int = 0
+  var ChronicCough: Int = 0
+  var ChronicSputum: Int = 0
+
   var Conditions: Array[Int] = null
 }
 

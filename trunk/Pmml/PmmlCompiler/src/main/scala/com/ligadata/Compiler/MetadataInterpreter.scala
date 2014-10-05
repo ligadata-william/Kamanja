@@ -52,8 +52,12 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 
 		getFieldType(names, fldRefExprStr, totalNames, null, baseTypeTriples)
 		
-		val returnArray : Array[(String,Boolean,BaseTypeDef)] = if (! expandCompoundFieldTypes) {
-			Array[(String,Boolean,BaseTypeDef)](baseTypeTriples.last)
+		val returnArray : Array[(String,Boolean,BaseTypeDef)] = if (! expandCompoundFieldTypes ) {
+			if (baseTypeTriples.size > 0) {
+				Array[(String,Boolean,BaseTypeDef)](baseTypeTriples.last)
+			} else {
+				Array[(String,Boolean,BaseTypeDef)]()
+			}
 		} else {
 			baseTypeTriples.toArray
 		}

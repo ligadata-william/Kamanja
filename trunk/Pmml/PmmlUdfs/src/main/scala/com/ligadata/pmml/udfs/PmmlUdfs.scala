@@ -227,6 +227,30 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5 && boolexpr6)
   }
 
+  def And(boolexpr: Int, boolexpr1: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0)
+  }
+
+  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
+    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
+  }
+
   def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr || boolexpr1)
   }
@@ -253,6 +277,30 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   def Or(boolexprs: ArrayBuffer[Boolean]): Boolean = {
     boolexprs.reduceLeft(_ || _)
+  }
+
+ def Or(boolexpr: Int, boolexpr1: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0)
+  }
+
+  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
+    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0 || boolexpr6 != 0)
   }
 
   def IsIn(fldRefExpr: String, setExprs: ArrayBuffer[String]): Boolean = {
@@ -546,6 +594,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   def Last(coll : ArrayBuffer[Any]) : Any = {
+	coll.last
+  }
+
+  def Last[T  : ClassTag](coll : ArrayBuffer[T]) : T = {
 	coll.last
   }
 
@@ -2169,28 +2221,33 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  milliSecs / 1000
   }
 
- 
+  def Now(): Long = {
+    var now: org.joda.time.DateTime = new org.joda.time.DateTime()
+    now.getMillis()
+  }
+
 
 
   /** 
    *  Convert time formatted in integer (compressed decimal) 
    *  to seconds.
    *  
-   *  		Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND 
+   *      Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND 
    *  
    *  @param time, an Int
    *  @return time, an Int
    */
   def CompressedTimeHHMMSSCC2Secs(compressedTime : Int) : Int = {
-	val hours = (compressedTime / 1000000) % 100
-	val minutes = (compressedTime / 10000) % 100
-	val seconds = (compressedTime / 100) % 100
-	val millisecs = (compressedTime % 100) * 10
-	
-	val evtseconds = hours * 60 *  60 + minutes * 60 + seconds + (if (millisecs >= 500) 1 else 0)
-	
-	evtseconds
+    val hours = (compressedTime / 1000000) % 100
+    val minutes = (compressedTime / 10000) % 100
+    val seconds = (compressedTime / 100) % 100
+    val millisecs = (compressedTime % 100) * 10
+    
+    val evtseconds = hours * 60 *  60 + minutes * 60 + seconds + (if (millisecs >= 500) 1 else 0)
+    
+    evtseconds
   }
+
 
   /** Calculate age from yyyymmdd ISO8601 type compressed in integer */
   def AgeCalc(yyyymmdd: Int): Int = {
@@ -2235,13 +2292,189 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   def ToSet[T  : ClassTag](arr: Array[T]): Set[T] = {
     if (arr == null || arr.size == 0)
-      return Array[T]().toSet
+      return Set[T]().toSet
     arr.toSet
   }
 
+  def ToSet[T  : ClassTag](arr: ArrayBuffer[T]): Set[T] = {
+    if (arr == null || arr.size == 0)
+      return Set[T]().toSet
+    arr.toSet
+  }
+
+  def ToSet(arr: ArrayBuffer[Any]): Set[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]().toSet
+    arr.toSet
+  }
+
+  def ToSet(arr: Array[Any]): Set[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]().toSet
+    arr.toSet
+  }
+
+  def ToSet(q: Queue[Any]): Set[Any] = {
+    if (q == null || q.size == 0)
+      return Queue[Any]().toSet
+    q.toSet
+  }
+
+  def ToSet(l: List[Any]): Set[Any] = {
+    if (l == null || l.size == 0)
+      return Queue[Any]().toSet
+    l.toSet
+  }
+
+  def ToArray[T : ClassTag](set: MutableSet[T]): Array[T] = {
+    if (set == null || set.size == 0)
+      return Array[T]()
+    set.toArray
+  }
+  
   def ToArray[T : ClassTag](set: Set[T]): Array[T] = {
     if (set == null || set.size == 0)
       return Array[T]()
     set.toArray
+  }
+  
+  def ToArray(set: MutableSet[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray(set: Set[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray[T : ClassTag](arr: ArrayBuffer[T]): Array[T] = {
+    if (arr == null || arr.size == 0)
+      return Array[T]()
+    arr.toArray
+  }
+  
+  def ToArray(arr: ArrayBuffer[Any]): Array[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]()
+    arr.toArray
+  }
+  
+  def ToArray[T : ClassTag](arr: Array[T]): Array[T] = {
+    if (arr == null || arr.size == 0)
+      return Array[T]()
+    arr.toArray
+  }
+  
+  def ToArray(arr: Array[Any]): Array[Any] = {
+    if (arr == null || arr.size == 0)
+      return Array[Any]()
+    arr.toArray
+  }
+  
+  def ToArray[T : ClassTag](set: SortedSet[T]): Array[T] = {
+    if (set == null || set.size == 0)
+      return Array[T]()
+    set.toArray
+  }
+  
+  def ToArray(set: SortedSet[Any]): Array[Any] = {
+    if (set == null || set.size == 0)
+      return Array[Any]()
+    set.toArray
+  }
+  
+  def ToArray[T : ClassTag](ts: TreeSet[T]): Array[T] = {
+    if (ts == null || ts.size == 0)
+      return Array[T]()
+    ts.toArray
+  }
+  
+  def ToArray(ts: TreeSet[Any]): Array[Any] = {
+    if (ts == null || ts.size == 0)
+      return Array[Any]()
+    ts.toArray
+  }
+  
+  def ToArray[T : ClassTag](l: List[T]): Array[T] = {
+    if (l == null || l.size == 0)
+      return Array[T]()
+    l.toArray
+  }
+  
+  def ToArray(l: List[Any]): Array[Any] = {
+    if (l == null || l.size == 0)
+      return Array[Any]()
+    l.toArray
+  }
+  
+  def ToArray[T : ClassTag](q: Queue[T]): Array[T] = {
+    if (q == null || q.size == 0)
+      return Array[T]()
+    q.toArray
+  }
+  
+   def ToArray(q: Queue[Any]): Array[Any] = {
+    if (q == null || q.size == 0)
+      return Array[Any]()
+    q.toArray
+  }
+  
+ def ToArray[T : ClassTag](stack: Stack[T]): Array[T] = {
+    if (stack == null || stack.size == 0)
+      return Array[T]()
+    stack.toArray
+  }
+  
+  def ToArray(stack: Stack[Any]): Array[Any] = {
+    if (stack == null || stack.size == 0)
+      return Array[Any]()
+    stack.toArray
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Array[T]) : Int = {
+    coll.length
+  }
+  
+  def CollectionLength[T : ClassTag](coll : ArrayBuffer[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Set[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : TreeSet[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : SortedSet[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : List[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Vector[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Queue[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : Stack[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : Map[K,V]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : HashMap[K,V]) : Int = {
+    coll.size
   }
 }

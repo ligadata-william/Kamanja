@@ -282,8 +282,8 @@ class AlchemyAlerts_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg
         val miningVars : Array[MiningField] = GetContext.GetRuleSetModel.MiningSchemaMap().values.toArray
         val predictionFld : MiningField = miningVars.filter(m => m.usageType == "predicted").head
 
-        /** This piece prevents result generation when model doesn't score an rule... is relying on the */
-        /** default score.  This will be optionally executed based upon argument from engine ultimately. */
+        /** This piece prevents result generation when model doesn't score by any rule... i.e., is relying on the */
+        /** the default score.  This will be optionally executed based upon argument from engine ultimately. */
         val somePrediction : DataValue = ctx.valueFor(predictionFld.name) 
         val predictedValue : Any = somePrediction match { 
     	  		 case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value 

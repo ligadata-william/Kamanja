@@ -61,8 +61,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	def selectSimpleFcn : FcnTypeInfo = {
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	logger.trace(s"selectSimpleFcn ... search mdmgr for ${node.function}...")
-	  	var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
-	  			= collectArgKeys()
+	  	//var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
+	  	//		= collectArgKeys()
 	  	var argTypesExpanded : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)] 
 	  			= collectArgKeys(true)
 
@@ -73,26 +73,35 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val memberTypes : Array[Array[BaseTypeDef]] = argTypesExpanded.map( tuple => tuple._4)
 	  	val returnTypes : Array[String] = argTypesExpanded.map( tuple => tuple._5)  	
 	  	
-	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.map( arg => arg.last)
+	  	logger.trace(s"selectSimpleFcn ... fcn = ${node.function}")
+	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = if (argTypesExp != null && argTypesExp.size > 0) 
+	  		{ 
+	  			argTypesExp.map( arg => if (arg != null) arg.last else (null,false,null)) 
+	  		} else {
+	  			null
+	  		}
 	  	
-	  	var simpleKey : String = buildSimpleKey(node.function, argTypes.map( argTriple => argTriple._1))
+	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
+	  	var simpleKey : String = if (hasArgs) buildSimpleKey(node.function, argTypes.map( argTriple => argTriple._1)) else s"${node.function}()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
 	  	logger.trace(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
 	  	var funcDef : FunctionDef = ctx.MetadataHelper.FunctionByTypeSig(simpleKey)
 	  	var winningKey : String = null
 	  	val typeInfo : FcnTypeInfo = if (funcDef == null) {
-	  		val simpleKeysToTry : Array[String] = relaxSimpleKey(node.function, argTypes, returnTypes)
-	  		breakable {
-	  		  	simpleKeysToTry.foreach( key => {
-	  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
-	  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
-	  		  		if (funcDef != null) {
-	  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
-	  		  			winningKey = key
-	  		  			break
-	  		  		}
-	  		  	})	  		  
+	  		if (hasArgs || (! hasArgs && returnTypes != null && returnTypes.size > 0)) {
+		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(node.function, argTypes, returnTypes)
+		  		breakable {
+		  		  	simpleKeysToTry.foreach( key => {
+		  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
+		  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
+		  		  		if (funcDef != null) {
+		  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
+		  		  			winningKey = key
+		  		  			break
+		  		  		}
+		  		  	})	  		  
+		  		}
 	  		}
 	  		if (funcDef != null) {
 	  			new FcnTypeInfo(funcDef, argTypes, argTypesExp, winningKey)
@@ -221,6 +230,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		logger.trace(s"selectIterableFcn ...searching mdmgr for iterarble fcn with a relaxed key ... $key")
 	  		  		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (iterableFcn != null) {
+	  		  			winningKey = key
 	  		  			break
 	  		  		}
 	  		  	})
@@ -447,11 +457,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	keyBuff.append(fcnName)
 	  	keyBuff.append('(')
 	  	var cnt : Int = 0
-	  	argtypes.foreach (arg => {
-	  		keyBuff.append(arg)
-	  		cnt += 1
-	  		if (cnt < argtypes.size) keyBuff.append(',')
-	  	})
+	  	if (argtypes != null) {
+		  	argtypes.foreach (arg => {
+		  		keyBuff.append(arg)
+		  		cnt += 1
+		  		if (cnt < argtypes.size) keyBuff.append(',')
+		  	})
+	  	}
 	  	keyBuff.append(')')
 	  	val simpleKey : String = keyBuff.toString
 	  	simpleKey
@@ -595,14 +607,29 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 */
 	  	val hasReturnKeys : Boolean = (returnTypes != null && returnTypes.filter(_ != null).size > 0)
 	  	if (hasReturnKeys) {
-		  	val containerArgsWithAnyMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypesToReturnType(argTypes, returnTypes)
-		  	val relaxedTypes1c : Array[String] = containerArgsWithAnyMemberTypes.map( argInfo => {
-		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
-		  		arg
-		  	})
+		  	val relaxedTypes1c : Array[String] = relaxCollectionMbrTypesToReturnType(argTypes, returnTypes)
 		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1c)
 	  	}
 	  	
+	  	/** 1.d */
+	  	/** 
+	  	 *  If the returnTypes array has a type(s) in it, directly substitute the return type in corresponding position in the argtypes.
+	  	 */
+	  	if (hasReturnKeys) {
+		  	val relaxedTypes1d : Array[String] = relaxTypesToReturnType(argTypes, returnTypes)
+		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1d)
+	  	}
+	  	
+	  	/** 1.e */
+	  	/** 
+	  	 *  If the returnTypes array has a type or types in it AND it is an iterable container with perhaps a too specific 
+	  	 *  member type(s), substitute 'Any' as the member type or types.
+	  	 */
+	  	if (hasReturnKeys) {
+		  	val relaxedTypes1e : Array[String] = relaxReturnedIterableTypeMembers(argTypes, returnTypes)
+		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1e)
+	  	}
+	  		  	
 	  	/** 2. */
 	  	/** 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract
@@ -761,11 +788,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *  	(type string, isContainerWithFields, the arg metadata)
 	 *  @param returnTypes when a 'map' function is present the current function's arguments at some position, this 
 	 *  	array will have the correct type for that argument.  Substitute it.
-	 *  @return a new set of arguments with the described transformations made
+	 *  @return a new arguments with the described transformations made
 	 */
 	
 	def relaxCollectionMbrTypesToReturnType(argTypes : Array[(String,Boolean,BaseTypeDef)], returnTypes : Array[String]) 
-	  		: Array[(String,Boolean,BaseTypeDef)] = {
+	  		: Array[String] = {
 
 	  	val buffer : StringBuilder = new StringBuilder
 	  	
@@ -773,7 +800,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	if (returnTypes.size != argTypes.size) {
 	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
 	  	}
-	  	val newArgInfo : Array[(String,Boolean,BaseTypeDef)] = argTypes.map ( argInfo => {
+	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		
 	  		val returnType = returnTypes.apply(idx)
@@ -809,11 +836,113 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
 	  		idx += 1
 	  		
-	  		(newArg, isContainer, elem)
+	  		newArg
 	  	})
 
 		newArgInfo	
 	}
+	
+	
+	/** 
+	 *  Substitute the return types collected (there is a return type for any function argument) for the 
+	 *  corresponding argument type. 
+	 *  
+	 *  @param argTypes a triple of type information that describes the arguments to the function being considered 
+	 *  	(type string, isContainerWithFields, the arg metadata)
+	 *  @param returnTypes a function is present the current function's arguments at some position, this 
+	 *  	type string will be sustituted in _._1 of the argTypes array.
+	 *  @return a new set of arguments with the described transformations made
+	 */
+	
+	def relaxTypesToReturnType(argTypes : Array[(String,Boolean,BaseTypeDef)], returnTypes : Array[String]) 
+	  		: Array[String] = {
+	  	
+	  	var idx : Int = 0
+	  	if (returnTypes.size != argTypes.size) {
+	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
+	  	}
+	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		
+	  		val returnType = returnTypes.apply(idx)
+	  		val newArg : String = if (returnType != null) returnType else arg
+	  		idx += 1
+	  		
+	  		newArg
+	  	})
+		newArgInfo	
+	}
+	
+	/** 
+	 *  Similar to function relaxTypesToReturnType, this relaxation checks if the return type is also a 
+	 *  an 'iterable' container of some sort that has member type(s) that are perhaps too specific.  Relax 
+	 *  these "too" specific types by replacing them with 'Any'.
+	 *  
+	 *  @param argTypes a triple of type information that describes the arguments to the function being considered 
+	 *  	(type string, isContainerWithFields, the arg metadata)
+	 *  @param returnTypes when a 'map' function is present the current function's arguments at some position, this 
+	 *  	array will have the correct type for that argument.  Substitute it.
+	 *  @return a new arguments with the described transformations made
+	 */
+	
+	def relaxReturnedIterableTypeMembers(argTypes : Array[(String,Boolean,BaseTypeDef)], returnTypes : Array[String]) : Array[String] = {
+
+	  	val buffer : StringBuilder = new StringBuilder
+	  	
+	  	var idx : Int = 0
+	  	if (returnTypes.size != argTypes.size) {
+	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
+	  	}
+	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		
+	  		val returnType = returnTypes.apply(idx)
+	  		val newArg : String = if (returnType != null) returnType else arg
+	  		val relaxedNewArg : String = if (newArg != arg && newArg.contains("[")) {
+	  			val collectionPart : String = newArg.split('[').head
+	  			buffer.clear
+
+	  			/** FIXME: Fix for nested collections and tuples... this currently only supports
+	  			 *  single collection with one or more member types. */
+
+	  			/** get the element type(s) in the brackets */
+	  			val mbrType : String = encloseElementArgs(returnType, '[' , ']')
+
+	  			val hasTuple : Boolean = (mbrType.contains("("))
+	  			val hasNestedColl : Boolean = (mbrType.contains("["))
+	  			if (hasTuple || hasNestedColl) {
+	  				logger.warn(s"For function ${node.function}, nested collections and/or collections with tuple members are not supported by function lookup.")
+	  				newArg
+	  			} else {	  			
+		  			if (mbrType != null && mbrType.size > 0) {	
+		  				val mbrTypes : Array[String] = mbrType.split(',')
+		  				val mbrTypeCnt : Int = mbrTypes.size
+		  				val newMbrType : String = if (mbrTypeCnt > 1) {
+		  					val newMbrTypes : Array[String] = mbrTypes.map(elmType => "Any")
+		  					newMbrTypes.addString(buffer, ",")
+		  					buffer.toString	  				  
+		  				}	else {  				  
+		  					"Any"
+		  				}
+			  			buffer.clear
+			  			buffer.append(s"$collectionPart[$newMbrType]")
+			  			buffer.toString
+		  			} else {
+		  				arg
+		  			}
+	  			}
+	  		} else {
+	  			arg
+	  		}
+	  		idx += 1
+	  		
+	  		relaxedNewArg
+	  	})
+
+		newArgInfo	
+	}
+	
+
 
 	/** 
 	 *  Extract the text between the two specified characters from the supplied string.  The characters supplied are 
