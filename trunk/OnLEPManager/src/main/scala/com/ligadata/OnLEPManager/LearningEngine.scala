@@ -77,7 +77,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           // LOG.info("Found Invalid Message:" + msgData)
         }
       } catch {
-        case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Error: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+        case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Error: " + e.getMessage /* + "\n Trace:\n" + e.printStackTrace() */ ) }
       }
     })
 

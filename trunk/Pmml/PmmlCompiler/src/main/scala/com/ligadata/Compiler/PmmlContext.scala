@@ -384,7 +384,7 @@ class PmmlContext(val mgr : MdMgr)  extends LogTrait {
 	 *  baseType namespace and name are the field's base type's namespace and name, and the boolean is an indication if this is a 
 	 *  global (was cataloged in the attrdef map explicitly). 
 	 */
-	var modelInputs : Map[String, (String, String, String, String, Boolean)] = Map[String, (String, String, String, String, Boolean)]()
+	var modelInputs : Map[String, (String, String, String, String, Boolean, String)] = Map[String, (String, String, String, String, Boolean, String)]()
 	
 	/** Model outputs are collected here for ModelDef generation. 
 	 *  The triple consists of the field name, field's type namespace, and the field type */

@@ -262,7 +262,7 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  private def MakeAttribDef(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Int, findInGlobal: Boolean): BaseAttributeDef = {
+  private def MakeAttribDef(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Int, findInGlobal: Boolean, collectionType: String): BaseAttributeDef = {
     if (findInGlobal) {
       val atr = GetElem(Attribute(nameSpace, name, -1, false), s"Attribute $nameSpace.$name does not exist")
       if (atr == null) { throw new NoSuchElementException(s"Attribute $nameSpace.$name does not exist") }
@@ -281,6 +281,19 @@ class MdMgr {
     val dJars = if (depJarSet.size > 0) depJarSet.toArray else null
 
     SetBaseElem(ad, nameSpace, name, ver, null, dJars)
+    if (collectionType == null) {
+      ad.collectionType = tNone
+    } else {
+      val ctype = collectionType.trim
+      if (ctype.isEmpty())
+        ad.collectionType = tNone
+      else if (ctype.compareToIgnoreCase("array") == 0)
+        ad.collectionType = tArray
+      else if (ctype.compareToIgnoreCase("arraybuffer") == 0)
+        ad.collectionType = tArrayBuf
+      else
+        throw new Throwable(s"Not yet handled collection Type $ctype")
+    }
     ad
   }
 
@@ -300,16 +313,16 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean)], ver: Int, jarNm: String, depJars: Array[String]): MappedMsgTypeDef = {
+  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String]): MappedMsgTypeDef = {
     val st = new MappedMsgTypeDef
     val depJarSet = scala.collection.mutable.Set[String]()
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
 
     args.foreach(elem => {
-      val (nsp, nm, typnsp, typenm, isGlobal) = elem
+      val (nsp, nm, typnsp, typenm, isGlobal, collectionType) = elem
       val nmSp = if (nsp != null) nsp else msgNm //BUGBUG:: when nsp != do we need to check for isGlobal is true?????
-      val attr = MakeAttribDef(nmSp, nm, typnsp, typenm, ver, isGlobal)
+      val attr = MakeAttribDef(nmSp, nm, typnsp, typenm, ver, isGlobal, collectionType)
       if (attr.JarName != null) depJarSet += attr.JarName
       if (attr.DependencyJarNames != null) depJarSet ++= attr.DependencyJarNames
       st.attrMap(elem._1) = attr
@@ -335,7 +348,7 @@ class MdMgr {
    *  @return the constructed StructTypeDef
    */
 
-  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean)], ver: Int, jarNm: String, depJars: Array[String]): StructTypeDef = {
+  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String]): StructTypeDef = {
     var sd = new StructTypeDef
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
@@ -343,9 +356,9 @@ class MdMgr {
     val depJarSet = scala.collection.mutable.Set[String]()
 
     sd.memberDefs = args.map(elem => {
-      val (nsp, nm, typnsp, typenm, isGlobal) = elem
+      val (nsp, nm, typnsp, typenm, isGlobal, collectionType) = elem
       val nmSp = if (nsp != null) nsp else msgNm //BUGBUG:: when nsp != do we need to check for isGlobal is true?????
-      val atr = MakeAttribDef(nmSp, nm, typnsp, typenm, ver, isGlobal)
+      val atr = MakeAttribDef(nmSp, nm, typnsp, typenm, ver, isGlobal, collectionType)
       if (atr.JarName != null) depJarSet += atr.JarName
       if (atr.DependencyJarNames != null) depJarSet ++= atr.DependencyJarNames
       atr
@@ -1331,7 +1344,7 @@ class MdMgr {
   def MakeFixedMsg(nameSpace: String
 			      , name: String
 			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean)]
+			      , args: List[(String, String, String, String, Boolean, String)]
 				  , ver: Int = 1
 				  , jarNm: String = null
 				  , depJars: Array[String] = null): MessageDef = {
@@ -1357,7 +1370,7 @@ class MdMgr {
   def MakeFixedContainer(nameSpace: String
 				      , name: String
 				      , physicalName: String
-				      , args: List[(String, String, String, String, Boolean)]
+				      , args: List[(String, String, String, String, Boolean, String)]
 					  , ver: Int = 1
 					  , jarNm: String = null
 					  , depJars: Array[String] = null): ContainerDef = {
@@ -1394,7 +1407,7 @@ class MdMgr {
   def MakeMappedMsg(nameSpace: String
 			      , name: String
 			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean)]
+			      , args: List[(String, String, String, String, Boolean, String)]
 				  , ver: Int
 				  , jarNm: String
 				  , depJars: Array[String]): MessageDef = {
@@ -1420,7 +1433,7 @@ class MdMgr {
   def MakeMappedContainer(nameSpace: String
 					      , name: String
 					      , physicalName: String
-					      , args: List[(String, String, String, String, Boolean)]
+					      , args: List[(String, String, String, String, Boolean, String)]
 						  , ver: Int
 						  , jarNm: String
 						  , depJars: Array[String]): ContainerDef = {
@@ -1465,7 +1478,7 @@ class MdMgr {
     val msgNm = MdMgr.MkFullName(nameSpace, name)
 
     val (typeNmSp, typeName) = argTypNmSpName
-    val args = argNames.map(elem => (msgNm, elem, typeNmSp, typeName, false)) //BUGBUG::Making all local Attributes
+    val args = argNames.map(elem => (msgNm, elem, typeNmSp, typeName, false, null)) //BUGBUG::Making all local Attributes and Collection Types does not handled
 
     var msg: MessageDef = new MessageDef
     msg.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars)
@@ -1501,7 +1514,7 @@ class MdMgr {
 			      , name: String
 			      , physicalName: String
 			      , modelType: String
-			      , inputVars: List[(String, String, String, String, Boolean)]
+			      , inputVars: List[(String, String, String, String, Boolean, String)]
 				  , outputVars: List[(String, String, String)]
 				  , ver: Int = 1
 				  , jarNm: String = null
@@ -1521,15 +1534,15 @@ class MdMgr {
 
     mdl.outputVars = outputVars.map(o => {
       val (nm, typnsp, typenm) = o
-      val atr = MakeAttribDef(mdlNm, nm, typnsp, typenm, ver, false)
+      val atr = MakeAttribDef(mdlNm, nm, typnsp, typenm, ver, false, null) //BUGBUG::Making all local Attributes and Collection Types does not handled
       if (atr.JarName != null) depJarSet += atr.JarName
       if (atr.DependencyJarNames != null) depJarSet ++= atr.DependencyJarNames
       atr
     }).toArray
 
     mdl.inputVars = inputVars.map(elem => {
-      val (varNameSp, varName, typeNameNs, typeName, isGlobal) = elem
-      val atr = MakeAttribDef(varNameSp, varName, typeNameNs, typeName, ver, isGlobal)
+      val (varNameSp, varName, typeNameNs, typeName, isGlobal, collectionType) = elem
+      val atr = MakeAttribDef(varNameSp, varName, typeNameNs, typeName, ver, isGlobal, collectionType)
       if (atr.JarName != null) depJarSet += atr.JarName
       if (atr.DependencyJarNames != null) depJarSet ++= atr.DependencyJarNames
       atr
@@ -1948,7 +1961,7 @@ class MdMgr {
 		   , typeName: String
 		   , ver: Int = 1
 		   , isGlobal: Boolean): BaseAttributeDef = {
-    val attr = MakeAttribDef(nameSpace, name, typeNameNs, typeName, ver, isGlobal)
+    val attr = MakeAttribDef(nameSpace, name, typeNameNs, typeName, ver, isGlobal, null) // BUGBUG:: Considering no CollectionType for Concecept
     attr
   }
 
@@ -2106,7 +2119,7 @@ class MdMgr {
   def AddFixedMsg(nameSpace: String
 			      , name: String
 			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean)]
+			      , args: List[(String, String, String, String, Boolean, String)]
 				  , ver: Int = 1
 				  , jarNm: String = null
 				  , depJars: Array[String] = Array[String]()): Unit = {
@@ -2127,7 +2140,7 @@ class MdMgr {
   def AddMappedMsg(nameSpace: String
 			      , name: String
 			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean)]
+			      , args: List[(String, String, String, String, Boolean, String)]
 				  , ver: Int = 1
 				  , jarNm: String = null
 				  , depJars: Array[String] = Array[String]()): Unit = {
@@ -2187,7 +2200,7 @@ class MdMgr {
   	def AddFixedContainer(nameSpace: String
 				  	    , name: String
 				  	    , physicalName: String
-				  	    , args: List[(String, String, String, String, Boolean)]
+				  	    , args: List[(String, String, String, String, Boolean, String)]
 					  	, ver: Int = 1
 					  	, jarNm: String = null
 					  	, depJars: Array[String] = Array[String]()): Unit = {
@@ -2208,7 +2221,7 @@ class MdMgr {
 	def AddMappedContainer(nameSpace: String
 						, name: String
 						, physicalName: String
-						, args: List[(String, String, String, String, Boolean)]
+						, args: List[(String, String, String, String, Boolean, String)]
 					  	, ver: Int = 1
 					  	, jarNm: String = null
 						, depJars: Array[String] = Array[String]()): Unit = {
@@ -2263,7 +2276,7 @@ class MdMgr {
   					, name: String
   					, physicalName: String
   					, modelType: String
-  					, inputVars: List[(String, String, String, String, Boolean)]
+  					, inputVars: List[(String, String, String, String, Boolean, String)]
 					, outputVars: List[(String, String, String)]
 					, ver: Int = 1
 					, jarNm: String = null
