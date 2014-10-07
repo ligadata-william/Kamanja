@@ -1083,6 +1083,24 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+  def AddDerivedConcept(conceptsText:String, format:String): String = {
+    try{
+      if( format != "JSON" ){
+	var apiResult = new ApiResult(0,"Not Implemented Yet","No Result")
+	apiResult.toString()
+      }
+      else{
+	  var concept = JsonSerializer.parseDerivedConcept(conceptsText,format)
+	  var apiResult = new ApiResult(0,"Concepts Are Added",conceptsText)
+	  apiResult.toString()
+      }
+    }catch {
+      case e:Exception =>{
+	var apiResult = new ApiResult(-1,"Failed to add concets: " + e.getMessage(),"FAILED")
+	apiResult.toString()
+      }
+    }
+  }
 
   def AddConcepts(conceptsText:String, format:String): String = {
     try{

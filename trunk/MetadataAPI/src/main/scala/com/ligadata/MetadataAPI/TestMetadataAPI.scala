@@ -114,6 +114,12 @@ object TestMetadataAPI{
     println("Result as Json String => \n" + resultData)
   }
 
+  def AddDerivedConcept = {
+    var apiResult = MetadataAPIImpl.AddDerivedConcept(SampleData.sampleDerivedConceptStr,"JSON")
+    var result = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + result._2)
+  }
+
   def fileToString(filePath: String) :String = {
     val file = new java.io.File(filePath)
     val inStream = new FileInputStream(file)
@@ -1285,7 +1291,6 @@ object TestMetadataAPI{
       serializer.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
 
-
       if (args.length == 0) {
 	logger.warn("No Command line arguments are supplied, API Config will be loaded loaded from MetadataAPI.properties")
 	MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
@@ -1303,6 +1308,7 @@ object TestMetadataAPI{
       MetadataAPIImpl.InitMdMgrFromBootStrap
       databaseOpen = true
       StartTest
+      // AddDerivedConcept
       // AddType
       //TestKryoSerialize
       //TestKryoSerialize1
