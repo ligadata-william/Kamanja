@@ -23,7 +23,8 @@ case class FunctionList(Functions: List[Function])
 case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String)
 case class ConceptList(Concepts: List[Concept])
 
-case class Attr(NameSpace: String,Name: String, Version: Int, Type: TypeDef)
+case class Attr(NameSpace: String,Name: String, Version: Int,CollectionType: Option[String],Type: TypeDef)
+case class DerivedConcept(FunctionDefinition: Function, Attributes: List[Attr])
 
 case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
 case class MessageDefinition(Message: MessageStruct)
@@ -267,6 +268,42 @@ object JsonSerializer {
   }
 
   @throws(classOf[Json4sParsingException])
+  @throws(classOf[ConceptListParsingException])
+  def parseDerivedConcept(conceptsStr:String,formatType:String) = {
+    try{
+      implicit val jsonFormats: Formats = DefaultFormats
+      val json = parse(conceptsStr)
+      val concept = json.extract[DerivedConcept]
+      val attrList = concept.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, attr.CollectionType.get))
+      val argList = concept.FunctionDefinition.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
+      val func = MdMgr.GetMdMgr.MakeFunc(concept.FunctionDefinition.NameSpace,
+					 concept.FunctionDefinition.Name,
+					 concept.FunctionDefinition.PhysicalName,
+					 (concept.FunctionDefinition.ReturnTypeNameSpace,
+					  concept.FunctionDefinition.ReturnTypeName),
+					 argList,
+					 null,
+					 concept.FunctionDefinition.Version.toInt,
+					 concept.FunctionDefinition.JarName,
+					 concept.FunctionDefinition.DependantJars.toArray)
+
+      //val derivedConcept = MdMgr.GetMdMgr.MakeDerivedAttr(func,attrList)
+    }catch {
+      case e:AlreadyExistsException => {
+	logger.trace("Failed to add the DerivedConcept: : " + e.getMessage())
+      }
+      case e:MappingException =>{
+	e.printStackTrace()
+	throw Json4sParsingException(e.getMessage())
+      }
+      case e:Exception => {
+	e.printStackTrace()
+	throw new ConceptListParsingException(e.getMessage())
+      }
+    }
+  }
+
+  @throws(classOf[Json4sParsingException])
   @throws(classOf[ContainerDefParsingException])
   def parseContainerDef(contDefJson:String,formatType:String) : ContainerDef = {
     try{
@@ -276,7 +313,7 @@ object JsonSerializer {
       logger.trace("Parsed the json : " + contDefJson)
 
       val ContDefInst = json.extract[ContainerDefinition]
-      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, null)) // BUGBUG:: We need to fill collectionType properly instead of null
+      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, attr.CollectionType.get))
       val contDef = MdMgr.GetMdMgr.MakeFixedContainer(ContDefInst.Container.NameSpace,
 						      ContDefInst.Container.Name,
 						      ContDefInst.Container.PhysicalName,
@@ -403,7 +440,7 @@ object JsonSerializer {
       val attrList = MsgDefInst.Message.Attributes
       var attrList1 = List[(String, String, String,String,Boolean,String)]()
       for (attr <- attrList) {
-	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, null) // BUGBUG:: We need to fill collectionType properly instead of null
+	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, attr.CollectionType.get)
       }
       val msgDef = MdMgr.GetMdMgr.MakeFixedMsg(MsgDefInst.Message.NameSpace,
 					       MsgDefInst.Message.Name,
@@ -443,7 +480,7 @@ object JsonSerializer {
       val inputAttrList = ModDefInst.Model.InputAttributes
       var inputAttrList1 = List[(String, String, String,String,Boolean,String)]()
       for (attr <- inputAttrList) {
-	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false, null) // BUGBUG:: We need to fill collectionType properly instead of null
+	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false, attr.CollectionType.get)
       }
 
       val outputAttrList = ModDefInst.Model.OutputAttributes
@@ -569,7 +606,8 @@ object JsonSerializer {
       case o:AttributeDef => {
 	val json = (("NameSpace" -> o.name) ~
 		    ("Name" -> o.name) ~
-		    ("Version" -> o.ver))
+		    ("Version" -> o.ver) ~
+		    ("CollectionType" -> ObjType.asString(o.collectionType)))
 	var jsonStr = pretty(render(json))
 	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
 	var memberDefJson = SerializeObjectToJson(o.typeDef)
