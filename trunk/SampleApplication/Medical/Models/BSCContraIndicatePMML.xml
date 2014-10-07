@@ -1,0 +1,185 @@
+
+<!--
+	Medication contra indicator rule set
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="BSCa 2014" description="Industry established measures to determining contra indicative drug combinations in Medication input feeds">
+		<Application name="ContraIndicator" version="1.0.2014.05.15"/>
+	</Header>
+
+	<DataDictionary numberOfFields="1">
+	    <DataField name="ValidEventTypes" displayName="ValidInputTypes" optype="categorical" dataType="string">
+	      <Value value="Medication" property="valid"/>
+	    </DataField>
+	</DataDictionary>
+
+	<TransformationDictionary>
+		<!-- builtins -->
+	
+		<!-- Determine the length of the supplied collection -->
+		<DefineFunction name="ContainerLength" dataType="integer" optype="continuous">
+		    <ParameterField name="collectionName" dataType="array"/>  
+	  	</DefineFunction>
+		<DefineFunction name="ToSet" dataType="Any" optype="continuous">
+		    <ParameterField name="collectionName" dataType="array"/>  
+	  	</DefineFunction>
+		<!-- Obtain a set of the projected field values from the named container collection -->
+		<DefineFunction name="ContainerFieldToSet" dataType="any" optype="categorical">
+		    <ParameterField name="containerName" dataType="array"/>  
+		    <ParameterField name="projectedField" dataType="any"/>  
+	  	</DefineFunction>
+		<!-- Obtain the specified field from the last record in the named container collection -->
+		<DefineFunction name="ContainerFieldLast" dataType="any" optype="categorical">
+		    <ParameterField name="containerName" dataType="array"/>  
+		    <ParameterField name="projectedField" dataType="any"/>  
+	  	</DefineFunction>
+	  	<!-- Match the first field with each field in the second collection returning an array of tuples -->
+		<DefineFunction name="MakeOrderedPairs" dataType="any" optype="continuous">
+		    <ParameterField name="fieldName" dataType="string"/>  
+		    <ParameterField name="containerName" dataType="array"/>  
+	  	</DefineFunction>
+	  	<!-- Map the supplied collection to a collection of strings -->
+		<DefineFunction name="MakeStrings" dataType="any" optype="continuous">
+		    <ParameterField name="collectionName" dataType="array"/>  
+		    <ParameterField name="delimiter" dataType="string"/>  
+	  	</DefineFunction>
+	  	<!-- Intersect the collection of strings -->
+		<DefineFunction name="Intersect" dataType="strings" optype="continuous">
+		    <ParameterField name="arrayOrSet" dataType="array"/>  
+		    <ParameterField name="set" dataType="set"/>  
+	  	</DefineFunction>
+
+	  	
+	  	
+		<!-- nothing to do, but DataFilter implementation is mandatory in this version -->
+		<DerivedField name="MemberFilter" dataType="integer" optype="categorical">
+			<Apply function="if">
+				<Apply function="greaterThan">
+					<Constant dataType="integer">1</Constant> 
+					<Constant dataType="integer">0</Constant> 
+				</Apply>
+				<Constant dataType="integer">1</Constant> 
+				<Constant dataType="integer">0</Constant>       
+			</Apply>
+		</DerivedField>
+			
+		<!-- nothing to do, but DataFilter implementation is mandatory in this version -->
+		<DerivedField name="DataFilter" dataType="integer" optype="categorical">
+			<Apply function="if">
+				<Apply function="greaterThan">
+					<Constant dataType="integer">1</Constant> 
+					<Constant dataType="integer">0</Constant> 
+				</Apply>
+				<Constant dataType="integer">1</Constant> 
+				<Constant dataType="integer">0</Constant>       
+			</Apply>
+		</DerivedField>
+		
+
+		 <!-- def AllUniqueHistoryMedicationIdentifiers(): Array[String] = {
+		    beneficiary.Medications.map(_.MedicationIdentofier).toSet.toArray
+		  } -->
+		<DerivedField name="AllUniqueHistoryMedicationIdentifiers" dataType="any" optype="categorical">
+			<Apply function="ContainerFieldToSet">
+	       		<FieldRef field="beneficiary.Medications"/>
+	 			<Constant>MedicationIdentofier</Constant> 
+			</Apply>
+		</DerivedField>
+	
+
+		  <!-- Current event MedicationIdentifier
+		  def CurrentMedicationIdentifier(): String = {
+		    beneficiary.Medications.last.MedicationIdentofier
+		  } -->
+		<DerivedField name="CurrentMedicationIdentifier" dataType="string" optype="categorical">
+			<Apply function="ContainerFieldLast">
+	       		<FieldRef field="beneficiary.Medications"/>
+	 			<Constant>MedicationIdentofier</Constant> 
+			</Apply>
+		</DerivedField>
+
+		   <!--Making ordered pairs between current & history of MedicationIdentofiers
+		  def MedicationIdOrderedPairs(left: String, right: Array[String]): Array[(String, String)] = {
+		    MakeOrderedPairs(left, right)
+		  } -->
+		<DerivedField name="MedicationIdOrderedPairs" dataType="any" optype="categorical">
+			<Apply function="MakeOrderedPairs">
+	       		<FieldRef field="CurrentMedicationIdentifier"/>
+	       		<FieldRef field="AllUniqueHistoryMedicationIdentifiers"/>
+			</Apply>
+		</DerivedField>
+
+		  <!--Making Strings from ordered pairs
+		  def MedicationIdPairStrings(arr: Array[(String, String)]): Array[String] = {
+		    MakeStrings(arr, ",")
+		  } -->
+		<DerivedField name="MedicationIdPairStrings" dataType="any" optype="categorical">
+			<Apply function="MakeStrings">
+	       		<FieldRef field="MedicationIdOrderedPairs"/>
+	       		<Constant>,</Constant>
+			</Apply>
+		</DerivedField>
+
+	<!-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+	 HI LEVEL RULE CALCULATION (and supplementary return variable prep) IS BELOW... 
+	 ABOVE HERE IS PRIMARILY FEATURE EXTRACTION (filtering) 
+
+	 vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv-->
+	 
+
+  		<!-- def FindContraIndicative(arr: Array[String]): Set[String] = {
+		    Intersect(arr, dims.conflictMedCds.toSet) // If this is complex to code in PMML, I can change conflictMedCds of type Set
+		  } -->
+		<DerivedField name="ContraIndicative" dataType="any" optype="categorical">
+			<Apply function="Intersect">
+				<FieldRef field="MedicationIdPairStrings"/>
+				<Apply function="ToSet">
+		       		<FieldRef field="dims.conflictMedCds"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="IsContraIndicative" dataType="integer" optype="categorical">
+			<Apply function="if">
+				<Apply function="greaterThan">
+					<Apply function="ContainerLength">
+						<FieldRef field="ContraIndicative"/>
+					</Apply>
+					<Constant dataType="integer">0</Constant>    
+				</Apply>
+				<Constant dataType="integer">1</Constant> 
+				<Constant dataType="integer">0</Constant>       
+			</Apply>
+		</DerivedField>
+		
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="ContraIndicator" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+			<MiningField name="dims.conflictMedCds" usageType="active"/>
+			<MiningField name="beneficiary.Medications" usageType="active"/>
+			<MiningField name="beneficiary.Medications.MedicationIdentofier" usageType="active"/>
+			<MiningField name="ValidEventTypes" usageType="active"/>
+			<MiningField name="MemberFilter" usageType="featureextraction"/>
+			<MiningField name="DataFilter" usageType="featureextraction"/>
+			<MiningField name="MedicationIdPairStrings" usageType="featureextraction"/>
+			<MiningField name="MedicationIdOrderedPairs" usageType="featureextraction"/>
+			<MiningField name="CurrentMedicationIdentifier" usageType="featureextraction"/>
+			<MiningField name="AllUniqueHistoryMedicationIdentifiers" usageType="featureextraction"/>
+			<MiningField name="IsValidEventType" usageType="featureextraction"/>
+
+			<MiningField name="ContraIndicative" usageType="supplementary"/>
+			<MiningField name="IsContraIndicative" usageType="predicted"/>
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0" >  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="RULE1" score="1">
+				<SimplePredicate field="IsContraIndicative" operator="equal" value="1"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

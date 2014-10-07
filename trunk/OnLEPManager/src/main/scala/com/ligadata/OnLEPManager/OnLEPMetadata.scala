@@ -2,7 +2,8 @@
 package com.ligadata.OnLEPManager
 
 import com.ligadata.olep.metadata.BaseElem
-import com.ligadata.olep.metadataload.MetadataLoad
+//import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.edifecs.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
 import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage }

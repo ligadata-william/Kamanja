@@ -297,13 +297,8 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val msgCtnPath : String = ""
 			val mgr : MdMgr = MdMgr.GetMdMgr
 			
-			if (clientName.toLowerCase.startsWith("barc")) {
-				val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
-				mdLoader.initialize
-			} else {
-				val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
-				mdLoader.initialize
-			}
+			val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+			mdLoader.initialize
 			
 			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger)
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
