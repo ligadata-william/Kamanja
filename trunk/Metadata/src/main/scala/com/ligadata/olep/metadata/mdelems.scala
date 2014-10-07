@@ -434,8 +434,22 @@ class AttributeDef extends BaseAttributeDef {
 
   var aType: BaseTypeDef = _
   var inherited: AttributeDef = _ // attributes could be inherited from others - in that case aType would be same as parent one
+  var collectionType = tNone // Fill if there is collection type for this attribute
 
-  override def typeString: String = if (parent != null) parent.typeString else aType.typeString
+  override def typeString: String = {
+    val baseTypStr = if (parent != null) parent.typeString else aType.typeString
+    if (collectionType == tNone) {
+      baseTypStr
+    } else {
+      if (collectionType == tArray) {
+        "Array[" + baseTypStr + "]"
+      } else if (collectionType == tArrayBuf) {
+        "scala.collection.mutable.ArrayBuffer[" + baseTypStr + "]"
+      } else {
+        throw new Throwable(s"Not yet handled collection Type $collectionType")
+      }
+    }
+  }
 }
 
 // attribute/concept definition

@@ -463,7 +463,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			val modelPkg = s"com.$clientName.$classname.pmml"
 			ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 			ctx.pmmlTerms("ClassName") = Some(classname)
-			ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal)
+			ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal, null) // BUGBUG:: We need to fill collectionType properly instead of null
 			val fldvalue = (name, fieldBaseTypeDef.NameSpace, fieldBaseTypeDef.typeString)
 			modelOutputs(name.toLowerCase()) = fldvalue	 
 		 */
@@ -482,11 +482,11 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val fqClassName : String = modelPkg + "." + className
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
-		val inputVars : List[(String,String,String,String,Boolean)] = ctx.modelInputs.values.toList
+		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
 		logger.trace(s"\n\ndump of the inputVars for the model metadata construction:")
 		inputVars.foreach(aVar => {
-			val (modelNmSpc, varnm, typeNmspc, typeNm, isGlobal) : (String,String,String,String,Boolean) = aVar
-			logger.trace(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal)")
+			val (modelNmSpc, varnm, typeNmspc, typeNm, isGlobal, collectionType) : (String,String,String,String,Boolean,String) = aVar
+			logger.trace(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal, $collectionType)")
 		})
 		val outputVars : List[(String,String,String)] = ctx.modelOutputs.values.toList
 		logger.trace(s"\n\ndump of the outputVars for the model metadata construction:")

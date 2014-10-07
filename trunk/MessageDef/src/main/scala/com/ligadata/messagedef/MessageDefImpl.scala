@@ -44,7 +44,7 @@ class MessageDefImpl {
     throw MessageException("%s must be specified".format(prefix))
 
   //creates the class string
-  def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean)]) = {
+  def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean,String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -163,13 +163,13 @@ class MessageDefImpl {
   }
 
   //generates the variables string and assign string
-  def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean)]) = {
+  def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
     var list = List[(String, String)]()
-    var argsList = List[(String, String, String, String, Boolean)]()
+    var argsList = List[(String, String, String, String, Boolean, String)]()
     val pad1 = "\t"
     val pad2 = "\t\t"
     val pad3 = "\t\t\t"
@@ -187,12 +187,12 @@ class MessageDefImpl {
         throw new Exception("Type %s not found in metadata for namespace %s" + f.Ttype)
 
       // if (!typ.get.physicalName.equals("String")){
-      //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
+      //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false, null) :: argsList // BUGBUG:: We need to fill collectionType properly instead of null
       //}else
       if (typ.get.physicalName.isEmpty())
         throw new Exception("Physical Name not found in metadata for namespace %s" + f.Ttype)
 
-      argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName, false) :: argsList
+      argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName, false, null) :: argsList  // BUGBUG:: We need to fill collectionType properly instead of null
 
       if (typ.get.implementationName.isEmpty())
         throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
@@ -508,14 +508,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean)]): ContainerDef = {
+  def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     
     containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray)
     containerDef
   }
 
-  def createMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean)]): MessageDef = {
+  def createMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
     msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray)
     msgDef

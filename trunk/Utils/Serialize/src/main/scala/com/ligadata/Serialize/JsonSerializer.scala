@@ -276,7 +276,7 @@ object JsonSerializer {
       logger.trace("Parsed the json : " + contDefJson)
 
       val ContDefInst = json.extract[ContainerDefinition]
-      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false))
+      val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, null)) // BUGBUG:: We need to fill collectionType properly instead of null
       val contDef = MdMgr.GetMdMgr.MakeFixedContainer(ContDefInst.Container.NameSpace,
 						      ContDefInst.Container.Name,
 						      ContDefInst.Container.PhysicalName,
@@ -401,9 +401,9 @@ object JsonSerializer {
 
       val MsgDefInst = json.extract[MessageDefinition]
       val attrList = MsgDefInst.Message.Attributes
-      var attrList1 = List[(String, String, String,String,Boolean)]()
+      var attrList1 = List[(String, String, String,String,Boolean,String)]()
       for (attr <- attrList) {
-	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false)
+	attrList1 ::= (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, null) // BUGBUG:: We need to fill collectionType properly instead of null
       }
       val msgDef = MdMgr.GetMdMgr.MakeFixedMsg(MsgDefInst.Message.NameSpace,
 					       MsgDefInst.Message.Name,
@@ -441,9 +441,9 @@ object JsonSerializer {
       val ModDefInst = json.extract[ModelDefinition]
 
       val inputAttrList = ModDefInst.Model.InputAttributes
-      var inputAttrList1 = List[(String, String, String,String,Boolean)]()
+      var inputAttrList1 = List[(String, String, String,String,Boolean,String)]()
       for (attr <- inputAttrList) {
-	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false)
+	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false, null) // BUGBUG:: We need to fill collectionType properly instead of null
       }
 
       val outputAttrList = ModDefInst.Model.OutputAttributes
