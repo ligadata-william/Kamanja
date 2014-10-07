@@ -1,5 +1,6 @@
 package com.ligadata.MetadataAPI
 
+
 import java.util.Properties
 import java.io._
 import scala.Enumeration
@@ -8,7 +9,9 @@ import scala.io._
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadata.MdMgr._
-import com.ligadata.olep.metadataload.MetadataLoad
+
+//import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.edifecs.MetadataLoad
 
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
@@ -1826,7 +1829,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val typeKeys = GetAllKeys("TypeDef")
       if( typeKeys.length == 0 ){
-	logger.trace("No types available in the Metadata")
+	logger.trace("No types available in the Database")
 	return
       }
       typeKeys.foreach(key => { 
@@ -1850,7 +1853,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val conceptKeys = GetAllKeys("Concept")
       if( conceptKeys.length == 0 ){
-	logger.trace("No concepts available in the Metadata")
+	logger.trace("No concepts available in the Database")
 	return
       }
       conceptKeys.foreach(key => { 
@@ -1872,7 +1875,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val functionKeys = GetAllKeys("FunctionDef")
       if( functionKeys.length == 0 ){
-	logger.trace("No functions available in the Metadata")
+	logger.trace("No functions available in the Database")
 	return
       }
       functionKeys.foreach(key => { 
@@ -1894,7 +1897,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val msgKeys = GetAllKeys("MessageDef")
       if( msgKeys.length == 0 ){
-	logger.trace("No messages available in the Metadata")
+	logger.trace("No messages available in the Database")
 	return
       }
       msgKeys.foreach(key => { 
@@ -1915,7 +1918,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val contKeys = GetAllKeys("ContainerDef")
       if( contKeys.length == 0 ){
-	logger.trace("No containers available in the Metadata")
+	logger.trace("No containers available in the Database")
 	return
       }
       contKeys.foreach(key => { 
@@ -1936,7 +1939,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       val modKeys = GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
-	logger.trace("No models available in the Metadata")
+	logger.trace("No models available in the Database")
 	return
       }
       modKeys.foreach(key => { 
@@ -2512,7 +2515,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def InitMdMgr {
     MdMgr.GetMdMgr.truncate
-    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr, "","","","")
+    val mdLoader = new MetadataLoad (MdMgr.mdMgr, "","","","")
     mdLoader.initialize
     MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
@@ -2522,7 +2525,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def InitMdMgrFromBootStrap{
     MdMgr.GetMdMgr.truncate
-    val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (MdMgr.mdMgr,"","","","")
+    val mdLoader = new MetadataLoad (MdMgr.mdMgr,"","","","")
     mdLoader.initialize
     MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))

@@ -1,11 +1,5 @@
 package com.ligadata.MetadataAPI
 
-import scala.Enumeration
-import scala.io.Source._
-import java.util._
-import scala.util.parsing.json.{JSONObject, JSONArray}
-import scala.collection.immutable.Map
-
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -41,6 +35,30 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   * 
+   * Example:
+   * 
+   * {{{
+   * val sampleScalarTypeStr = """
+   * {
+   * "MetadataType" : "ScalarTypeDef",
+   * "NameSpace" : "system",
+   * "Name" : "my_char",
+   * "TypeTypeName" : "tScalar",
+   * "TypeNameSpace" : "System",
+   * "TypeName" : "Char",
+   * "PhysicalName" : "Char",
+   * "Version" : 100,
+   * "JarName" : "basetypes_2.10-0.1.0.jar",
+   * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+   * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
+   * }
+   * """
+   * var apiResult = MetadataAPIImpl.AddType(sampleScalarTypeStr,"JSON")
+   * var result = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + result._2)
+   * }}}
+   * 
    */
   def AddType(typesText:String, formatType:String): String
 
