@@ -1,0 +1,763 @@
+{
+  "Message": {
+    "NameSpace": "System",
+    "Name": "HL7",
+    "Version": "00.01.00",
+    "Description": "HL7",
+    "Fixed": "true",
+    "Fields": [
+      {
+        "Name": "Desynpuf_Id",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Clm_Id",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Clm_From_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Thru_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Birth_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Death_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Sex_Ident_Cd",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Race_Cd",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Esrd_Ind",
+        "Type": "System.Char"
+      },
+      {
+        "Name": "Sp_State_Code",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_County_Cd",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Hi_Cvrage_Tot_Mons",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Smi_Cvrage_Tot_Mons",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Bene_Hmo_Cvrage_Tot_Mons",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Plan_Cvrg_Mos_Num",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Alzhdmta",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Chf",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Chrnkidn",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Cncr",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Copd",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Depressn",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Diabetes",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Ischmcht",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Osteoprs",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Ra_Oa",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Sp_Strketia",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Age",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Infectious_Parasitic_Diseases",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Neoplasms",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Endocrine_Nutritional_Metabolic_Diseases_Immunity_Disorders",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Blood_Blood_Forming_Organs",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Mental_Disorders",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Nervous_System_Sense_Organs",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Circulatory_System",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Respiratory_System",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Digestive_System",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Genitourinary_System",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Complications_Of_Pregnancy_Childbirth_The_Puerperium",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Skin_Subcutaneous_Tissue",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diseases_Musculoskeletal_System_Connective_Tissue",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Congenital_Anomalies",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Certain_Conditions_Originating_In_The_Perinatal_Period",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Symptoms_Signs_Ill_Defined_Conditions",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Injury_Poisoning",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Factors_Influencing_Health_Status_Contact_With_Health_Services",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "External_Causes_Of_Injury_Poisoning",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Hypothyroidism",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Infarction",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Alzheimer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Alzheimer_Related",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Anemia",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Asthma",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Atrial_Fibrillation",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Hyperplasia",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Cataract",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Kidney_Disease",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Pulmonary_Disease",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Depression",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Diabetes",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Glaucoma",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Heart_Failure",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Hip_Pelvic_Fracture",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Hyperlipidemia",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Hypertension",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Ischemic_Heart_Disease",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Osteoporosis",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Ra_Oa",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Stroke",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Breast_Cancer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Colorectal_Cancer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Prostate_Cancer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Lung_Cancer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Endometrial_Cancer",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Tobacco",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Height",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Weight",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Systolic",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Diastolic",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Totalcholesterol",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Ldl",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Triglycerides",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Shortnessofbreath",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Chestpain",
+        "Type": "System.String"
+      }
+    ]
+  }
+}
+
+{
+  "Message": {
+    "NameSpace": "System",
+    "Name": "InpatientClaim",
+    "Version": "00.01.00",
+    "Description": "Inpatient Claim",
+    "Fixed": "true",
+    "Fields": [
+      {
+        "Name": "Desynpuf_Id",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Clm_Id",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Segment",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_From_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Thru_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Prvdr_Num",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Pmt_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Nch_Prmry_Pyr_Clm_Pd_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "At_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Op_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Ot_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Clm_Admsn_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Admtng_Icd9_Dgns_Cd",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Clm_Pass_Thru_Per_Diem_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Nch_Bene_Ip_Ddctbl_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Nch_Bene_Pta_Coinsrnc_Lblty_Am",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Nch_Bene_Blood_Ddctbl_Lblty_Am",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Clm_Utlztn_Day_Cnt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Nch_Bene_Dschrg_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Drg_Cd",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Icd9_Dgns_Cds",
+        "Type": "System.String",
+        "CollectionType": "Array"
+      },
+      {
+        "Name": "Icd9_Prcdr_Cds",
+        "Type": "System.Int",
+        "CollectionType": "Array"
+      },
+      {
+        "Name": "Hcpcs_Cds",
+        "Type": "System.Int",
+        "CollectionType": "Array"
+      }
+    ]
+  }
+}
+
+{
+  "Message": {
+    "NameSpace": "System",
+    "Name": "OutpatientClaim",
+    "Version": "00.01.00",
+    "Description": "Outpatient Claim",
+    "Fixed": "true",
+    "Fields": [
+      {
+        "Name": "Desynpuf_Id",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Clm_Id",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Segment",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_From_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Thru_Dt",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Prvdr_Num",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "Clm_Pmt_Amt",
+        "Type": "System.Double"
+      },
+      {
+        "Name": "Nch_Prmry_Pyr_Clm_Pd_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "At_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Op_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Ot_Physn_Npi",
+        "Type": "System.Long"
+      },
+      {
+        "Name": "Nch_Bene_Blood_Ddctbl_Lblty_Am",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Icd9_Dgns_Cds",
+        "Type": "System.String",
+        "CollectionType": "Array"
+      },
+      {
+        "Name": "Icd9_Prcdr_Cds",
+        "Type": "System.Int",
+        "CollectionType": "Array"
+      },
+      {
+        "Name": "Nch_Bene_Ptb_Ddctbl_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Nch_Bene_Ptb_Coinsrnc_Amt",
+        "Type": "System.Float"
+      },
+      {
+        "Name": "Admtng_Icd9_Dgns_Cd",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Hcpcs_Cds",
+        "Type": "System.Int",
+        "CollectionType": "Array"
+      }
+    ]
+  }
+}
+
+{
+  "Message": {
+    "NameSpace": "System",
+    "Name": "Beneficiary",
+    "Version": "00.01.00",
+    "Description": "Beneficiary Data",
+    "Fixed": "true",
+    "Elements": [
+      {
+        "Field": {
+          "Name": "Desynpuf_Id",
+          "Type": "System.String"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Esrd_Ind",
+          "Type": "System.Char"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Birth_Dt",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Death_Dt",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Sex_Ident_Cd",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Race_Cd",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_State_Code",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_County_Cd",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Hi_Cvrage_Tot_Mons",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Smi_Cvrage_Tot_Mons",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Hmo_Cvrage_Tot_Mons",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Plan_Cvrg_Mos_Num",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Alzhdmta",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Chf",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Chrnkidn",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Cncr",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Copd",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Depressn",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Diabetes",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Ischmcht",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Osteoprs",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Ra_Oa",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Sp_Strketia",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Medreimb_Ip",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Benres_Ip",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Pppymt_Ip",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Medreimb_Op",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Benres_Op",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Pppymt_Op",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Medreimb_Car",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Benres_Car",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Pppymt_Car",
+          "Type": "System.Double"
+        }
+      },
+      {
+        "Message": {
+          "Name": "Inpatient_Claims",
+          "Type": "System.InpatientClaim",
+          "CollectionType": "Array"
+        }
+      },
+      {
+        "Message": {
+          "Name": "Outpatient_Claims",
+          "Type": "System.OutpatientClaim",
+          "CollectionType": "Array"
+        }
+      },
+      {
+        "Message": {
+          "Name": "HL7Messages",
+          "Type": "System.HL7",
+          "CollectionType": "Array"
+        }
+      }
+    ]
+  }
+}
+
