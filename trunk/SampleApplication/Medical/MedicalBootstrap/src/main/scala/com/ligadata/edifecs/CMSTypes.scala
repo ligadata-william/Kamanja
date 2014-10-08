@@ -21,7 +21,7 @@ class System_HL7_100 extends BaseMsg {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
@@ -330,11 +330,12 @@ class System_InpatientClaim_100 extends BaseMsg {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
   def assignCsv(list: Array[String], startIdx: Int): Int = {
+    val arrvaldelim = "~"
     var idx = startIdx
     try {
       if (list.size < 23)
@@ -380,15 +381,13 @@ class System_InpatientClaim_100 extends BaseMsg {
       idx = idx + 1
 	  Clm_Drg_Cd = IntImpl.Input(list(idx))
       idx = idx + 1
-      /** FIXME: BUGBUG: It is expected that there is a different delim inside the string that demarcates the 
-       *  strings and ints to be included in the array.  A small function that perhaps is part of the BaseTypes
-       *  is crafted for each base type to pull these array elements apart with a standard split fcn.
+      /** FIXME: BUGBUG: For now we are expecting ~ as separater between array values
        */
-	  //Icd9_Dgns_Cds: Array[String] = _  = ArrayOfStringImpl.Input(list(idx));
+      Icd9_Dgns_Cds = list(idx).split(arrvaldelim, -1).map(v => StringImpl.Input(v))
       idx = idx + 1
-	  //Icd9_Prcdr_Cds: Array[Int] = _ = ArrayOfIntImpl.Input(list(idx));
+      Icd9_Prcdr_Cds = list(idx).split(arrvaldelim, -1).map(v => IntImpl.Input(v))
       idx = idx + 1
-	  //Hcpcs_Cds: Array[Int] = _ = ArrayOfIntImpl.Input(list(idx));
+      Hcpcs_Cds = list(idx).split(arrvaldelim, -1).map(v => IntImpl.Input(v))
       idx = idx + 1
 
     } catch {
@@ -449,11 +448,12 @@ class System_OutpatientClaim_100 extends BaseMsg {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
   def assignCsv(list: Array[String], startIdx: Int): Int = {
+    val arrvaldelim = "~"
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -484,13 +484,11 @@ class System_OutpatientClaim_100 extends BaseMsg {
 	  Nch_Bene_Blood_Ddctbl_Lblty_Am = FloatImpl.Input(list(idx))
       idx = idx + 1
       
-      /** FIXME: BUGBUG: It is expected that there is a different delim inside the string that demarcates the 
-       *  strings and ints to be included in the array.  A small function that perhaps is part of the BaseTypes
-       *  is crafted for each base type to pull these array elements apart with a standard split fcn.
+      /** FIXME: BUGBUG: For now we are expecting ~ as separater between array values
        */
-	  //Icd9_Dgns_Cds: Array[String] = _ = ArrayOfStringImpl.Input(list(idx));
+      Icd9_Dgns_Cds = list(idx).split(arrvaldelim, -1).map(v => StringImpl.Input(v))
       idx = idx + 1
-	  //Icd9_Prcdr_Cds: Array[Int] = _ = ArrayOfIntImpl.Input(list(idx));
+      Icd9_Prcdr_Cds = list(idx).split(arrvaldelim, -1).map(v => IntImpl.Input(v))
       idx = idx + 1
 	  Nch_Bene_Ptb_Ddctbl_Amt = FloatImpl.Input(list(idx))
       idx = idx + 1
@@ -498,7 +496,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
       idx = idx + 1
 	  Admtng_Icd9_Dgns_Cd = StringImpl.Input(list(idx).trim)
       idx = idx + 1
-	  //Hcpcs_Cds: Array[Int] = _ = ArrayOfIntImpl.Input(list(idx));
+      Hcpcs_Cds = list(idx).split(arrvaldelim, -1).map(v => IntImpl.Input(v))
       idx = idx + 1
 
     } catch {
@@ -555,7 +553,7 @@ class System_Beneficiary_100 extends BaseMsg {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
@@ -630,36 +628,12 @@ class System_Beneficiary_100 extends BaseMsg {
       idx = idx + 1
 	  Pppymt_Car = DoubleImpl.Input(list(idx))
       idx = idx + 1
-	
-      
       /**
-       		BUG BUG FIXME: FIXME:
-       		
-        	For the arrays below, the comma delimited records for each would contain the following 
-        	tuple (more or less):
-        		
-        		1) PathName (or similar) key that can be used to locate the "open" kv store in some lookup table 
-        			available in either the mdmgr or another container supplied in a context object here.  This could
-        			even be the EnvContext object perhaps.
-        		2) Name of container in that store that has the content
-        		3) The primary key of the supplied content that can be used as key to locate the respective records
-        			for this type.  I would presume these would be compressed blob of the array of respective records
-        			that resurrects ultimately to an array or array buffer.
-        	
-        	In other words, AT LEAST FOR THE CURRENT DEADLINE, inpatient, outpatient and HL7 records are stored in a 
-        	kv store different than the top level beneficiary record and each others store. Four I/Os for the demo
-        	....
-       
+       		NOTE NOTE:: For now We are not expecting messages data in this message/container data.
        */
-      
-            
-	  //Inpatient_Claims: ArrayBuffer[com.ligadata.edifecs.System_InpatientClaim_100] = new ArrayBuffer[com.ligadata.edifecs.System_InpatientClaim_100];
-      idx = idx + 1
-	  //Outpatient_Claims: ArrayBuffer[com.ligadata.edifecs.System_OutpatientClaim_100] = new ArrayBuffer[com.ligadata.edifecs.System_OutpatientClaim_100];
-      idx = idx + 1
-	  //HL7Messages: ArrayBuffer[com.ligadata.edifecs.System_HL7_100] = new ArrayBuffer[com.ligadata.edifecs.System_HL7_100];
-      idx = idx + 1
-      
+      // Inpatient_Claims is messages ArrayBuffer, so we are not going to populate it here
+      // Outpatient_Claims is messages ArrayBuffer, so we are not going to populate it here
+      // HL7Messages is messages ArrayBuffer, so we are not going to populate it here
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -738,7 +712,7 @@ class ConflictMedicalCode extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -765,7 +739,7 @@ class IdCodeDim extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -791,7 +765,7 @@ class hcpcsCodes extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -817,7 +791,7 @@ class icd9DiagnosisCodes extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -843,7 +817,7 @@ class icd9ProcedureCodes extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -869,7 +843,7 @@ class dgRelGrpCodes extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -895,7 +869,7 @@ class lneProcIndTable extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -921,7 +895,7 @@ class provNumTable extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -946,7 +920,7 @@ class conflictMedCds extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     /** ... */
   }
 }
@@ -972,7 +946,7 @@ class SmokeCodes_100 extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
@@ -1018,7 +992,7 @@ class EnvCodes_100 extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
@@ -1064,7 +1038,7 @@ class CoughCodes_100 extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 
@@ -1110,7 +1084,7 @@ class SputumCodes_100 extends BaseContainer {
   def populateCSV(inputdata: DelimitedData) = {
     val delimiter = inputdata.dataDelim
     val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter)
+    val list = inputdata.dataInput.split(delimiter, -1)
     assignCsv(list, 0)
   }
 

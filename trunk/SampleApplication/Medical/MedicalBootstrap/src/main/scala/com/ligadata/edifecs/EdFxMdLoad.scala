@@ -214,7 +214,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Float", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Float", false, null)
 						, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false, null)
-						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, "")
+						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
 						));
 
 
@@ -237,7 +237,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 					        ));
 
 		
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfConflictMedicalCode", MdMgr.sysNS, "ConflictMedicalCode", 1, 1)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfConflictMedicalCode", MdMgr.sysNS, "ConflictMedicalCode", 1, baseTypesVer)
 
 		
 		logger.trace("MetadataLoad...loading EnvContext")		
@@ -395,8 +395,6 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 	/** Define any types that may be used in the container, message, fcn, and model metadata */
 	def InitTypeDefs = {
-	    val baseTypesVer = 100 // Which is 00.01.00
-
 		mgr.AddScalar("System", "Any", tAny, "Any", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.AnyImpl")
 		mgr.AddScalar("System", "String", tString, "String", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.StringImpl")
 		mgr.AddScalar("System", "Int", tInt, "Int", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.IntImpl")
@@ -409,8 +407,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddScalar("System", "Char", tChar, "Char", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.CharImpl")
 
 		
-		mgr.AddHashMap("System", "HashMapOfAnyAny", ("System", "Any"), ("System", "Any"), 1)
-		mgr.AddMap("System", "MapOfAnyAny", ("System", "Any"), ("System", "Any"), 1)
+		mgr.AddHashMap("System", "HashMapOfAnyAny", ("System", "Any"), ("System", "Any"), baseTypesVer)
+		mgr.AddMap("System", "MapOfAnyAny", ("System", "Any"), ("System", "Any"), baseTypesVer)
 
 
 		
@@ -418,35 +416,35 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	
 	def InitTypesForEdifecs : Unit = {
 
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfString", MdMgr.sysNS, "String", 1, 1)
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfInt", MdMgr.sysNS, "String", 1, 1)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfString", MdMgr.sysNS, "String", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfInt", MdMgr.sysNS, "Int", 1, baseTypesVer)
 
-		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfStringInt", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Int"), 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfString", MdMgr.sysNS, "String", 1)
+		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfStringInt", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Int"), baseTypesVer)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfString", MdMgr.sysNS, "String", baseTypesVer)
 	}
 
 	def InitTypesForEdifecs1 : Unit = {
 
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 1)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, baseTypesVer)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, baseTypesVer)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
 
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, 1)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, baseTypesVer)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
+		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
 
-		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
-		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddSet(MdMgr.sysNS, "SetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", baseTypesVer)
+		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
+		mgr.AddSet(MdMgr.sysNS, "SetOfHL7", MdMgr.sysNS, "HL7", baseTypesVer)
 
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", baseTypesVer)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
+		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfHL7", MdMgr.sysNS, "HL7", baseTypesVer)
 
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfHL7", MdMgr.sysNS, "HL7", 1)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", baseTypesVer)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
+		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfHL7", MdMgr.sysNS, "HL7", baseTypesVer)
 
 	}
 
@@ -468,34 +466,34 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		//MdMgr.MakeScalar(mgr, "System", "BaseContainer", tNone)
 		//MdMgr.MakeHashMap(mgr, "System", "HashMapOfKV", ("System", "K"), ("System", "V"))
 		//MdMgr.MakeMap(mgr, "System", "MapOfKV", ("System", "K"), ("System", "V"))
-		mgr.AddQueue("System", "QueueOfAny", "System", "Any", 1)
-		mgr.AddList("System", "ListOfAny", "System", "Any", 1)
-		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", 1)
-		mgr.AddTreeSet("System", "TreeSetOfAny", "System", "Any", 1)
-		mgr.AddSet("System", "SetOfAny", "System", "Any", 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfAny", "System", "Any", 1, 1)
-		mgr.AddArray("System", "ArrayOfAny", "System", "Any", 1, 1)
-		//mgr.AddArray("System", "ArrayOfString", "System", "String", 1, 1)
-		mgr.AddTupleType("System", "TupleOfStringString", Array(("System","String"), ("System","String")), 1)
-		mgr.AddArray("System", "ArrayOfTupleOfStringString", "System", "TupleOfStringString", 1, 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfString", "System", "String", 1, 1)
-		mgr.AddArray("System", "ArrayOfFloat", "System", "Float", 1, 1)
-		mgr.AddArray("System", "ArrayOfDouble", "System", "Double", 1, 1)
-		mgr.AddArray("System", "ArrayOfLong", "System", "Long", 1, 1)
-		//mgr.AddArray("System", "ArrayOfInt", "System", "Int", 1, 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfFloat", "System", "Float", 1, 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfDouble", "System", "Double", 1, 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfLong", "System", "Long", 1, 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfInt", "System", "Int", 1, 1)
-		mgr.AddHashMap("System", "HashMapOfIntInt", ("System", "Int"), ("System", "Int"), 1)
-		mgr.AddHashMap("System", "HashMapOfIntArrayBufferOfInt", ("System", "Int"), ("System", "ArrayBufferOfInt"), 1)
-		mgr.AddList("System", "ListOfFloat", "System", "Float", 1)
-		mgr.AddList("System", "ListOfDouble", "System", "Double", 1)
-		mgr.AddList("System", "ListOfLong", "System", "Long", 1)
-		mgr.AddList("System", "ListOfInt", "System", "Int", 1)
-		mgr.AddList("System", "ListOfString", "System", "String", 1)
-		mgr.AddArrayBuffer("System", "ArrayBufferOfBoolean", "System", "Boolean", 1, 1)
-		mgr.AddArray("System", "ArrayOfBaseContainer", "System", "BaseContainer", 1, 1)
+		mgr.AddQueue("System", "QueueOfAny", "System", "Any", baseTypesVer)
+		mgr.AddList("System", "ListOfAny", "System", "Any", baseTypesVer)
+		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", baseTypesVer)
+		mgr.AddTreeSet("System", "TreeSetOfAny", "System", "Any", baseTypesVer)
+		mgr.AddSet("System", "SetOfAny", "System", "Any", baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfAny", "System", "Any", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfAny", "System", "Any", 1, baseTypesVer)
+		//mgr.AddArray("System", "ArrayOfString", "System", "String", 1, baseTypesVer)
+		mgr.AddTupleType("System", "TupleOfStringString", Array(("System","String"), ("System","String")), baseTypesVer)
+		mgr.AddArray("System", "ArrayOfTupleOfStringString", "System", "TupleOfStringString", 1, baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfString", "System", "String", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfFloat", "System", "Float", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfDouble", "System", "Double", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfLong", "System", "Long", 1, baseTypesVer)
+		//mgr.AddArray("System", "ArrayOfInt", "System", "Int", 1, baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfFloat", "System", "Float", 1, baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfDouble", "System", "Double", 1, baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfLong", "System", "Long", 1, baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfInt", "System", "Int", 1, baseTypesVer)
+		mgr.AddHashMap("System", "HashMapOfIntInt", ("System", "Int"), ("System", "Int"), baseTypesVer)
+		mgr.AddHashMap("System", "HashMapOfIntArrayBufferOfInt", ("System", "Int"), ("System", "ArrayBufferOfInt"), baseTypesVer)
+		mgr.AddList("System", "ListOfFloat", "System", "Float", baseTypesVer)
+		mgr.AddList("System", "ListOfDouble", "System", "Double", baseTypesVer)
+		mgr.AddList("System", "ListOfLong", "System", "Long", baseTypesVer)
+		mgr.AddList("System", "ListOfInt", "System", "Int", baseTypesVer)
+		mgr.AddList("System", "ListOfString", "System", "String", baseTypesVer)
+		mgr.AddArrayBuffer("System", "ArrayBufferOfBoolean", "System", "Boolean", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfBaseContainer", "System", "BaseContainer", 1, baseTypesVer)
 	}
 
 
