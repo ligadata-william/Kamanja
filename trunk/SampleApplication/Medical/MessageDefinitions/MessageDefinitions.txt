@@ -337,6 +337,18 @@
       {
         "Name": "Chestpain",
         "Type": "System.String"
+      },
+      {
+        "Name": "AATDeficiency",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "ChronicCough",
+        "Type": "System.Int"
+      },
+      {
+        "Name": "ChronicSputum",
+        "Type": "System.Int"
       }
     ]
   }
@@ -432,18 +444,15 @@
       },
       {
         "Name": "Icd9_Dgns_Cds",
-        "Type": "System.String",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfString"
       },
       {
         "Name": "Icd9_Prcdr_Cds",
-        "Type": "System.Int",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfInt"
       },
       {
         "Name": "Hcpcs_Cds",
-        "Type": "System.Int",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfInt"
       }
     ]
   }
@@ -507,13 +516,11 @@
       },
       {
         "Name": "Icd9_Dgns_Cds",
-        "Type": "System.String",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfString"
       },
       {
         "Name": "Icd9_Prcdr_Cds",
-        "Type": "System.Int",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfInt"
       },
       {
         "Name": "Nch_Bene_Ptb_Ddctbl_Amt",
@@ -529,8 +536,7 @@
       },
       {
         "Name": "Hcpcs_Cds",
-        "Type": "System.Int",
-        "CollectionType": "Array"
+        "Type": "System.ArrayOfInt"
       }
     ]
   }
@@ -739,22 +745,19 @@
       {
         "Message": {
           "Name": "Inpatient_Claims",
-          "Type": "System.InpatientClaim",
-          "CollectionType": "Array"
+          "Type": "System.ArrayBufferOfInpatientClaim"
         }
       },
       {
         "Message": {
           "Name": "Outpatient_Claims",
-          "Type": "System.OutpatientClaim",
-          "CollectionType": "Array"
+          "Type": "System.ArrayBufferOfOutpatientClaim"
         }
       },
       {
         "Message": {
           "Name": "HL7Messages",
-          "Type": "System.HL7",
-          "CollectionType": "Array"
+          "Type": "System.ArrayBufferOfHL7"
         }
       }
     ]

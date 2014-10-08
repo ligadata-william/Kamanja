@@ -300,9 +300,9 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Medreimb_Car", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Benres_Car", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Pppymt_Car", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayOfInpatientClaim", false, null)
-						, (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayOfOutpatientClaim", false, null)
-						, (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayOfHL7", false, null)
+						, (MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayBufferOfInpatientClaim", false, null)
+						, (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", false, null)
+						, (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayBufferOfHL7", false, null)
 						));
 
 		logger.trace("MetadataLoad..CoughCodes")
@@ -430,9 +430,9 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
 
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, baseTypesVer)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
 
 		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
