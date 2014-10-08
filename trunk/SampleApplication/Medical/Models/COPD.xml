@@ -49,7 +49,7 @@ AsthmaPMML.xml
 		<DerivedField name="FortyYrsOrOlder" dataType="boolean" optype="categorical">
 			<Apply function="greaterOrEqual">
 				<Apply function="AgeCalc">
-					<FieldRef field="msg.beneficiaryBase.Bene_Birth_Dt"/>
+					<FieldRef field="msg.Bene_Birth_Dt"/>
 				</Apply>
 				<Constant dataType="integer">40</Constant> 
 			</Apply>
@@ -260,7 +260,7 @@ AsthmaPMML.xml
 		<DerivedField name="FamilyHistory" dataType="boolean" optype="categorical">
 			<Apply function="or">
 				<Apply function="equal">
-					<FieldRef field="msg.beneficiaryBase.Sp_Copd"/>
+					<FieldRef field="msg.Sp_Copd"/>
 					<Constant dataType="integer">1</Constant>
 				</Apply>
 				<Apply function="greaterThan">

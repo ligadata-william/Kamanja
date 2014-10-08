@@ -155,6 +155,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Triglycerides", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Shortnessofbreath", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Chestpain", MdMgr.sysNS, "String", false, null)
+						/** we leave these here even though we are rewriting these determinations in terms of icd9 codes */
+						, (MdMgr.sysNS, "AATDeficiency", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "ChronicCough", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "ChronicSputum", MdMgr.sysNS, "Int", false, null)
+						
 						));
 
 		logger.trace("MetadataLoad...loading InpatientClaim")
@@ -182,9 +187,9 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Clm_Utlztn_Day_Cnt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Dschrg_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Clm_Drg_Cd", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "String", false, "Array")
-						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "Int", false, "Array")
-						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "Int", false, "Array")
+						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false, null)
+						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
+						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
 						));
 
 		logger.trace("MetadataLoad...loading OutpatientClaim")
@@ -204,55 +209,14 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Op_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Ot_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "String", false, "Array")
-						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "Int", false, "Array")
+						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false, null)
+						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Float", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Float", false, null)
 						, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false, null)
-						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "Int", false, "Array")
+						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, "")
 						));
 
-		logger.trace("MetadataLoad...loading Beneficiary")
-		mgr.AddFixedMsg(MdMgr.sysNS
-				, "Beneficiary"
-				, "com.ligadata.edifecs.System_Beneficiary_100"
-				, List(
-						  (MdMgr.sysNS, "Desynpuf_Id", MdMgr.sysNS, "String", false, null)
-						, (MdMgr.sysNS, "Bene_Esrd_Ind", MdMgr.sysNS, "Char", false, null)
-						, (MdMgr.sysNS, "Bene_Birth_Dt", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Death_Dt", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Sex_Ident_Cd", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Race_Cd", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_State_Code", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_County_Cd", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Hi_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Smi_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Bene_Hmo_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Plan_Cvrg_Mos_Num", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Alzhdmta", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Chf", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Chrnkidn", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Cncr", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Copd", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Depressn", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Diabetes", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Ischmcht", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Osteoprs", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Ra_Oa", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Sp_Strketia", MdMgr.sysNS, "Int", false, null)
-						, (MdMgr.sysNS, "Medreimb_Ip", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Benres_Ip", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Pppymt_Ip", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Medreimb_Op", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Benres_Op", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Pppymt_Op", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Medreimb_Car", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Benres_Car", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Pppymt_Car", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "InpatientClaim", false, "Array")
-						, (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "OutpatientClaim", false, "Array")
-						, (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "HL7", false, "Array")
-						));
 
 		logger.trace("MetadataLoad...loading IdCodeDim")
 		mgr.AddFixedContainer(MdMgr.sysNS
@@ -298,18 +262,78 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 	def InitFixedMsgsForEdifecs1 : Unit = {
 
+
 		logger.trace("MetadataLoad...loading Beneficiary")
 		mgr.AddFixedMsg(MdMgr.sysNS
-					    , "Beneficiary"
-					    , "com.ligadata.edifecs.Beneficiary"
-					    , List((MdMgr.sysNS, "beneficiaryBase", MdMgr.sysNS, "BeneficiaryBase", false, null)
-					        ,(MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayBufferOfInpatientClaim", false, null)
-					        , (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", false, null)
-					        , (MdMgr.sysNS, "Carrier_Claims", MdMgr.sysNS, "ArrayBufferOfCarrierClaim", false, null)
-					        , (MdMgr.sysNS, "Prescription_Drug_Events", MdMgr.sysNS, "ArrayBufferOfPrescriptionDrug", false, null)
-					        , (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayBufferOfHL7", false, null)
-					        , (MdMgr.sysNS, "Medications", MdMgr.sysNS, "ArrayBufferOfMedication", false, null)
-					        ));
+				, "Beneficiary"
+				, "com.ligadata.edifecs.System_Beneficiary_100"
+				, List(
+						  (MdMgr.sysNS, "Desynpuf_Id", MdMgr.sysNS, "String", false, null)
+						, (MdMgr.sysNS, "Bene_Esrd_Ind", MdMgr.sysNS, "Char", false, null)
+						, (MdMgr.sysNS, "Bene_Birth_Dt", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Death_Dt", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Sex_Ident_Cd", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Race_Cd", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_State_Code", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_County_Cd", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Hi_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Smi_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Bene_Hmo_Cvrage_Tot_Mons", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Plan_Cvrg_Mos_Num", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Alzhdmta", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Chf", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Chrnkidn", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Cncr", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Copd", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Depressn", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Diabetes", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Ischmcht", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Osteoprs", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Ra_Oa", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Sp_Strketia", MdMgr.sysNS, "Int", false, null)
+						, (MdMgr.sysNS, "Medreimb_Ip", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Benres_Ip", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Pppymt_Ip", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Medreimb_Op", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Benres_Op", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Pppymt_Op", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Medreimb_Car", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Benres_Car", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Pppymt_Car", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayOfInpatientClaim", false, null)
+						, (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayOfOutpatientClaim", false, null)
+						, (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayOfHL7", false, null)
+						));
+
+		logger.trace("MetadataLoad..CoughCodes")
+		mgr.AddFixedContainer(MdMgr.sysNS
+					    , "CoughCodes"
+					    , "com.ligadata.edifecs.CoughCodes_100"
+					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
+					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
+					        ));		
+		logger.trace("MetadataLoad..EnvExposureCodes")
+		mgr.AddFixedContainer(MdMgr.sysNS
+					    , "EnvExposureCodes"
+					    , "com.ligadata.edifecs.EnvExposureCodes_100"
+					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
+					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
+					        ));		
+		logger.trace("MetadataLoad..SmokingCodes")
+		mgr.AddFixedContainer(MdMgr.sysNS
+					    , "SmokingCodes"
+					    , "com.ligadata.edifecs.SmokingCodes_100"
+					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
+					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
+					        ));		
+		logger.trace("MetadataLoad..SputumCodes")
+		mgr.AddFixedContainer(MdMgr.sysNS
+					    , "SputumCodes"
+					    , "com.ligadata.edifecs.SputumCodes_100"
+					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
+					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
+					        ));		
+
 		logger.trace("MetadataLoad..IdStrDimContainer.loading hcpcsCodes")
 		mgr.AddFixedContainer(MdMgr.sysNS
 					    , "hcpcsCodes"
@@ -404,40 +428,25 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	def InitTypesForEdifecs1 : Unit = {
 
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfMedication", MdMgr.sysNS, "Medication", 1, 1)
 
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1, 1)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfHL7", MdMgr.sysNS, "HL7", 1, 1)
-		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayOfMedication", MdMgr.sysNS, "Medication", 1, 1)
 
-		mgr.AddSet(MdMgr.sysNS, "SetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
 		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
 		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddSet(MdMgr.sysNS, "SetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
 		mgr.AddSet(MdMgr.sysNS, "SetOfHL7", MdMgr.sysNS, "HL7", 1)
-		mgr.AddSet(MdMgr.sysNS, "SetOfMedication", MdMgr.sysNS, "Medication", 1)
 
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
 		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
 		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
 		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfHL7", MdMgr.sysNS, "HL7", 1)
-		mgr.AddTreeSet(MdMgr.sysNS, "TreeSetOfMedication", MdMgr.sysNS, "Medication", 1)
 
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfCarrierClaim", MdMgr.sysNS, "CarrierClaim", 1)
 		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1)
 		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1)
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfPrescriptionDrug", MdMgr.sysNS, "PrescriptionDrug", 1)
 		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfHL7", MdMgr.sysNS, "HL7", 1)
-		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfMedication", MdMgr.sysNS, "Medication", 1)
 
 	}
 

@@ -67,3 +67,9 @@ lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBo
 
 lazy val SimpleKafkaProducer = project.in(file("SampleApplication/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
+lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (MedicalBootstrap, Storage)
+
+lazy val MedEnvContext = project.in(file("SampleApplication/Medical/MedEnvContext")) dependsOn (OnLEPBase, Storage)
+
+lazy val COPD_000100 = project.in(file("modeldbg/COPD_000100")) dependsOn (OnLEPBase, PmmlUdfs, PmmlRuntime, MedicalBootstrap)
+
