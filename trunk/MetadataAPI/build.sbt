@@ -30,6 +30,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x endsWith "com/esotericsoftware/minlog/Log$Logger.class" => MergeStrategy.first
     case x if x endsWith "com\\esotericsoftware\\minlog\\pom.properties" => MergeStrategy.first
     case x if x endsWith "com/esotericsoftware/minlog/pom.properties" => MergeStrategy.first
+    case x if x contains "com.esotericsoftware.minlog\\minlog\\pom.properties" => MergeStrategy.first
+    case x if x contains "com.esotericsoftware.minlog/minlog/pom.properties" => MergeStrategy.first
     case x if x contains "org\\objectweb\\asm\\" => MergeStrategy.last
     case x if x contains "org/objectweb/asm/" => MergeStrategy.last
     case x if x endsWith "ArrayStack.class" =>  MergeStrategy.last
