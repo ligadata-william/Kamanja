@@ -2170,8 +2170,10 @@ class MdMgr {
 			      , args: List[(String, String, String, String, Boolean, String)]
 				  , ver: Int = 1
 				  , jarNm: String = null
-				  , depJars: Array[String] = Array[String]()): Unit = {
-	  AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars))
+				  , depJars: Array[String] = Array[String]()
+				  , primaryKeys: List[(String, List[String])] = null
+				  , foreignKeys: List[(String, List[String], String, List[String])] = null): Unit = {
+	  AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys))
   }
 
   /**

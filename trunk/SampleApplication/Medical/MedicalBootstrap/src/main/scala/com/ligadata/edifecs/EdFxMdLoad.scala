@@ -159,8 +159,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "AATDeficiency", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "ChronicCough", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "ChronicSputum", MdMgr.sysNS, "Int", false, null)
-						
-						));
+						)
+						, baseTypesVer
+						, null
+						, Array[String]()
+						, null
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
 
 		logger.trace("MetadataLoad...loading InpatientClaim")
 		mgr.AddFixedMsg(MdMgr.sysNS
@@ -190,7 +194,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false, null)
 						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
 						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
-						));
+						)
+						, baseTypesVer
+						, null
+						, Array[String]()
+						, null
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
 
 		logger.trace("MetadataLoad...loading OutpatientClaim")
 		mgr.AddFixedMsg(MdMgr.sysNS
@@ -215,7 +224,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Float", false, null)
 						, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false, null)
 						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
-						));
+						)
+						, baseTypesVer
+						, null
+						, Array[String]()
+						, null
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
+
 
 
 		logger.trace("MetadataLoad...loading IdCodeDim")
@@ -303,7 +318,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Inpatient_Claims", MdMgr.sysNS, "ArrayBufferOfInpatientClaim", false, null)
 						, (MdMgr.sysNS, "Outpatient_Claims", MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", false, null)
 						, (MdMgr.sysNS, "HL7Messages", MdMgr.sysNS, "ArrayBufferOfHL7", false, null)
-						));
+						)
+						, baseTypesVer
+						, null
+						, Array[String]()
+						, List((null, List("Desynpuf_Id")))
+						, null);
+
 
 		logger.trace("MetadataLoad..CoughCodes")
 		mgr.AddFixedContainer(MdMgr.sysNS
