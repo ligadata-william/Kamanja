@@ -383,8 +383,35 @@ class TupleTypeDef extends ContainerTypeDef {
   }
 }
 
+object RelationKeyType extends Enumeration {
+  type RelationKeyType = Value
+  val tPrimary, tForeign = Value
+  def asString(typ: RelationKeyType): String = {
+    typ.toString
+  }
+}
+import RelationKeyType._
+
+abstract class RelationKeyBase {
+  var constraintName:String = _ // If we have given any name for this constraint
+  var key:Array[String] = _ // Local Primary Key / Foreign Key Field Names
+  def KeyType: RelationKeyType // Relation type could be Primary / Foreign at this moment
+}
+
+class PrimaryKey extends RelationKeyBase {
+  def KeyType: RelationKeyType = tPrimary
+}
+
+class ForeignKey extends RelationKeyBase {
+  def KeyType: RelationKeyType = tForeign
+  var forignContainerName:String = _// Container or Message Name
+  var forignKey:Array[String] = _ // Names in Foreign Container (which are primary keys there). Expecting same number of names in key & forignKey
+}
+
 trait EntityType {
+  var keys: Array[RelationKeyBase] = _ // Keys (primary & foreign keys) for this container. For now we are consider them for MAP based and STRUCT based containers.
   def NumMems
+  def Keys = keys
 }
 
 class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
