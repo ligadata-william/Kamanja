@@ -1416,30 +1416,28 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	def InitModelDefs = {
 	  			
 		logger.trace("MetadataLoad...loading AlchemyAlerts model")
-		/**mgr.AddModelDef(
+		mgr.AddModelDef(
 		       MdMgr.sysNS
-			, "AlchemyAlerts_000100"
-			, "com.Barclay.AlchemyAlerts_000100.pmml.AlchemyAlerts_000100"
+			, "COPDRiskAssessment_000100"
+			, "com.Edifecs.pmml.COPDRiskAssessment_000100"
 			, "RuleSet"
-			, List(("ClientPrefs", "OD_T2_LIMIT", "system", "customerpreferences", false)
-				,("ClientPrefs", "MAX_EB_CNT", "system", "customerpreferences", false)
-			,("ODAlertParms", "ONLINE_START_TIME", "system", "alertparameters", false)
-				,("ClientAlertsToday", "EB002Sent", "system", "alerthistory", false))		
-			, List(("msg.ENT_DTE", "system", "Int")
-				,("AlertType", "system", "String")
-				,("msg.RUN_LDG_XAU", "system", "Double")
-				,("OfflineEvent", "system", "String")
-				,("ClientPrefs.ACCT_SHORT_NM", "system", "String")
-				,("ClientPrefs.MOBILE_NUMBER", "system", "String")
-				,("EBAlertParms.ALERT_EXPIRY_TIME", "system", "Long")
-				,("SendResult", "system", "String"))
+			, List(("msg", "Inpatient_Claims", "system", "beneficiary", false, null)
+					,("msg", "HL7Messages", "system", "beneficiary", false, null)
+					,("msg", "Bene_Birth_Dt", "system", "beneficiary", false, null)
+					,("msg", "Outpatient_Claims", "system", "beneficiary", false, null)
+					,("msg", "Sp_Copd", "system", "beneficiary", false, null)
+				)		
+			, List(("Dyspnoea", "system", "boolean")
+					,("AATDeficiency", "system", "boolean")
+					,("COPDSeverity", "system", "string")
+					,("WithSmokingHistory", "system", "boolean")
+					,("ChronicCough", "system", "boolean")
+					,("ChronicSputum", "system", "boolean")
+				)
 			 , baseTypesVer
-			 , "alchemy_000100_2.10-1.0.jar"
-			 , Array("pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "bankmsgsandcontainers_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
-		)  */
+			 , "copd_000100_2.10-1.0.jar"
+			 , Array("medenvcontext_2.10-1.0.jar, pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "medicalbootstrap_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
+		)  
 	}
-
-
-
 }
 
