@@ -108,6 +108,12 @@ object TestMetadataAPI{
     println("Result as Json String => \n" + resultData)
   }
 
+  def RemoveConcepts = {
+    val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"))
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + resultData)
+  }
+
   def UpdateConcept = {
     val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON")
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
