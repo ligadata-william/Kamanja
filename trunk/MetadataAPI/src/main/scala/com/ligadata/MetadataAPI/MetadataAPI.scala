@@ -68,6 +68,30 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * 
+   * {{{
+   * val sampleScalarTypeStr = """
+   * {
+   * "MetadataType" : "ScalarTypeDef",
+   * "NameSpace" : "system",
+   * "Name" : "my_char",
+   * "TypeTypeName" : "tScalar",
+   * "TypeNameSpace" : "System",
+   * "TypeName" : "Char",
+   * "PhysicalName" : "Char",
+   * "Version" : 101,
+   * "JarName" : "basetypes_2.10-0.1.0.jar",
+   * "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+   * "Implementation" : "com.ligadata.BaseTypes.CharImpl"
+   * }
+   * """
+   * var apiResult = MetadataAPIImpl.UpdateType(sampleScalarTypeStr,"JSON")
+   * var result = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + result._2)
+   * }}}
+   * 
    */
   def UpdateType(typesText:String, formatType:String): String
 
@@ -77,6 +101,15 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * 
+   * {{{
+   * val apiResult = MetadataAPIImpl.RemoveType(MdMgr.sysNS,"my_char",100)
+   * val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + resultData)
+   * }}}
+   * 
    */
   def RemoveType(typeNameSpace:String, typeName:String, version:Int): String
 
@@ -88,6 +121,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
    */
   def UploadImplementation(implPath:String): String
 
@@ -97,6 +131,34 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * {{{
+   *   val sampleFunctionStr = """
+   *  {
+   *  "NameSpace" : "pmml",
+   *  "Name" : "my_min",
+   *  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.Min",
+   *  "ReturnTypeNameSpace" : "system",
+   *  "ReturnTypeName" : "double",
+   *  "Arguments" : [ {
+   *  "ArgName" : "expr1",
+   *  "ArgTypeNameSpace" : "system",
+   *  "ArgTypeName" : "int"
+   *  }, {
+   *  "ArgName" : "expr2",
+   *  "ArgTypeNameSpace" : "system",
+   *  "ArgTypeName" : "double"
+   *  } ],
+   *  "Version" : 1,
+   *  "JarName" : null,
+   *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
+   *  }
+   *"""
+   *    var apiResult = MetadataAPIImpl.AddFunction(sampleFunctionStr,"JSON")
+   *    var result = MetadataAPIImpl.getApiResult(apiResult)
+   *    println("Result as Json String => \n" + result._2)
+   *}}}
    */
   def AddFunctions(functionsText:String, formatType:String): String
 
@@ -106,6 +168,35 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * {{{
+   *   val sampleFunctionStr = """
+   *  {
+   *  "NameSpace" : "pmml",
+   *  "Name" : "my_min",
+   *  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.Min",
+   *  "ReturnTypeNameSpace" : "system",
+   *  "ReturnTypeName" : "double",
+   *  "Arguments" : [ {
+   *  "ArgName" : "expr1",
+   *  "ArgTypeNameSpace" : "system",
+   *  "ArgTypeName" : "int"
+   *  }, {
+   *  "ArgName" : "expr2",
+   *  "ArgTypeNameSpace" : "system",
+   *  "ArgTypeName" : "double"
+   *  } ],
+   *  "Version" : 1,
+   *  "JarName" : null,
+   *  "DependantJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ]
+   *  }
+   *"""
+   *    var apiResult = MetadataAPIImpl.UpdateFunction(sampleFunctionStr,"JSON")
+   *    var result = MetadataAPIImpl.getApiResult(apiResult)
+   *    println("Result as Json String => \n" + result._2)
+   * }}}
+   *
    */
   def UpdateFunctions(functionsText:String, formatType:String): String
 
@@ -115,6 +206,14 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * {{{
+   * val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min",100)
+   * val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + resultData)
+   *}}}
+   * 
    */
   def RemoveFunction(nameSpace:String, functionName:String, version:Int): String
 
@@ -124,6 +223,24 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   *
+   * {{{
+   *   val sampleConceptStr = """
+   *  {"Concepts" : [
+   *  "NameSpace":"Ligadata",
+   *  "Name":"ProviderId",
+   *  "TypeNameSpace":"System",
+   *  "TypeName" : "String",
+   *  "Version"  : 100 ]
+   *  }
+   *"""
+   *    var apiResult = MetadataAPIImpl.AddConcepts(sampleConceptStr,"JSON")
+   *    var result = MetadataAPIImpl.getApiResult(apiResult)
+   *    println("Result as Json String => \n" + result._2)
+   *}}}
+   * 
    */
   def AddConcepts(conceptsText:String, format:String): String // Supported format is JSON/XML
 
@@ -133,6 +250,25 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   *
+   * {{{
+   *   val sampleConceptStr = """
+   *  {"Concepts" : [
+   *  "NameSpace":"Ligadata",
+   *  "Name":"ProviderId",
+   *  "TypeNameSpace":"System",
+   *  "TypeName" : "String",
+   *  "Version"  : 101 ]
+   *  }
+   *"""
+   *    var apiResult = MetadataAPIImpl.UpdateConcepts(sampleConceptStr,"JSON")
+   *    var result = MetadataAPIImpl.getApiResult(apiResult)
+   *    println("Result as Json String => \n" + result._2)
+   * 
+   *}}}
+   * 
    */
   def UpdateConcepts(conceptsText:String, format:String): String
 
@@ -141,6 +277,14 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * {{{
+   * val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"))
+   * val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + resultData)
+   *}}}
+   * 
    */
   def RemoveConcepts(concepts:Array[String]): String
 
@@ -151,6 +295,14 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example
+   * 
+   * {{{
+   * var apiResult = MetadataAPIImpl.AddMessage(msgStr,"JSON"))
+   * var result = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + result._2)
+   * }}}
    */
   def AddMessage(messageText:String, formatType:String): String 
 
