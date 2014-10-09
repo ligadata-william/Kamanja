@@ -26,6 +26,10 @@ trait LogTrait {
 object MedEnvContext extends EnvContext with LogTrait {
 	private[this] val _lock = new Object()
 	private[this] var _containers = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, BaseContainer]]()
+	
+	/** Add this one too for caching the arrays that are returned from the loaded map's values */
+	private [this] var _filterArrays : scala.collection.mutable.Map[String, Array[BaseContainer]] = scala.collection.mutable.Map[String, Array[BaseContainer]]()
+
 	private[this] var _bInitialized: Boolean = false
     
    /** 
@@ -67,6 +71,7 @@ object MedEnvContext extends EnvContext with LogTrait {
 			
     		}
     	})
+    	
     	_bInitialized = true
     }
   
@@ -141,7 +146,28 @@ object MedEnvContext extends EnvContext with LogTrait {
 
 	override def getObjects(containerName: String, key: String): Array[BaseContainer] = _lock.synchronized {
 	    // bugbug: implement partial match
-	    Array(getObject(containerName, key))
+	    //Array(getObject(containerName, key))
+	    	    
+	    /**  
+	    	Check the "FilterArrays" map for the array with the name "key" to be returned.  If not present, 
+	    	access the _containers map with the name. Project the values of the map tuples to an array.  
+	    	Add it to the FilterArrays map and return the array as the function result.
+	    */
+	    
+	    val filterValues : Array[BaseContainer] = if (_filterArrays.contains(key)) {
+	    	_filterArrays.apply(key)
+	    } else {
+	    	val values : Array[BaseContainer] = if (_containers.contains(key)) {
+		    	val map : scala.collection.mutable.Map[String, BaseContainer] = _containers(key)
+		    	val filterVals : Array[BaseContainer] = map.values.toArray
+		    	_filterArrays(key) = filterVals /** cache it for subsequent calls */
+		    	filterVals
+	    	} else {
+	    		Array[BaseContainer]()
+	    	}
+	    	values
+	    }
+	    filterValues	    
 	}
 
  	private def makeKey(key : String) : com.ligadata.keyvaluestore.Key = {

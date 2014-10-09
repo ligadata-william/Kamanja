@@ -33,7 +33,7 @@ AsthmaPMML.xml
 		<DerivedField name="SputumCodes" dataType="ArrayOfSputumCodes" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterMaps</Constant>
+			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -44,7 +44,7 @@ AsthmaPMML.xml
 		<DerivedField name="SmokingCodes" dataType="ArrayOfSmokingCodes" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterMaps</Constant>
+			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">SmokingCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -55,7 +55,7 @@ AsthmaPMML.xml
 		<DerivedField name="EnvExposureCodes" dataType="ArrayOfEnvExposureCodes" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterMaps</Constant>
+			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">EnvExposureCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -66,7 +66,7 @@ AsthmaPMML.xml
 		<DerivedField name="CoughCodes" dataType="ArrayOfCoughCodes" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterMaps</Constant>
+			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">CoughCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -77,7 +77,7 @@ AsthmaPMML.xml
 		<DerivedField name="DyspnoeaCodes" dataType="ArrayOfDyspnoeaCodes" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterMaps</Constant>
+			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
