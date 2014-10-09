@@ -1109,6 +1109,52 @@ class SputumCodes_100 extends BaseContainer {
   }
 }
 
+class DyspnoeaCodes_100 extends BaseContainer {
+  
+  var icd9Code : String = _
+  var icd9Descr : String = _
+
+  def IsFixed: Boolean = true
+  def IsKv: Boolean = false
+  def getVersion: String = "00.01.00"
+  def get(key: String): Any = null
+  def getOrElse(key: String, default: Any): Any = null
+  def set(key: String, value: Any): Unit = {}
+  def getContainerName: String = { "DyspnoeaCodes_100" }
+  def populate(inputdata: InputData) {
+    if (inputdata.isInstanceOf[DelimitedData])
+      populateCSV(inputdata.asInstanceOf[DelimitedData])
+    else throw new Exception("Invalid input data")
+  }
+
+  def populateCSV(inputdata: DelimitedData) = {
+    val delimiter = inputdata.dataDelim
+    val dataStr = inputdata.dataInput
+    val list = inputdata.dataInput.split(delimiter, -1)
+    assignCsv(list, 0)
+  }
+
+  def assignCsv(list: Array[String], startIdx: Int): Int = {
+    var idx = startIdx
+    try {
+      if (list.size < 2)
+        throw new Exception("Incorrect input data size")
+      
+      icd9Code = StringImpl.Input(list(idx).trim)
+      idx = idx + 1
+      icd9Descr = StringImpl.Input(list(idx).trim)
+      idx = idx + 1
+
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
+    idx
+  }
+}
+
 
 
 
