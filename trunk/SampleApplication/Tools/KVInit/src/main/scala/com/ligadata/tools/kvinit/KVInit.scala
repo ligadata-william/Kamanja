@@ -30,7 +30,7 @@ object KVInit extends App with LogTrait {
     def usage : String = {
 """ 
 Usage: scala com.ligadata.alchemy.kvinit.KVInit 
-    --kvname <name of kv store> 
+    --kvname <full package qualified class name of a BaseContainer or BaseMsg derivative> 
     --kvpath <where to put kvname db> 
     --csvpath <input to load> 
     --keyfieldname  <name of one of the fields in the first line of the csvpath file>
@@ -38,16 +38,20 @@ Usage: scala com.ligadata.alchemy.kvinit.KVInit
 
 Nothing fancy here.  Mapdb kv store is created from arguments... style is hash map. Support
 for other styles of input (e.g., JSON, XML) are not supported.  
-This is currently tied to the medical project.  Clearly something can be done to generalize this 
-by loading the message or container def jar, doing introspection, dynamic loading and the rest.  
-This is left for another day.
-
-The kvname serves as both the name of the physical hdb to be written to disk and the 
-name of the container (e.g., SputumCodes_100, SmokeCodes_100, EnvCodes_100, and CoughCodes_100)
+      
+The name of the kvstore will be the classname(without it path).
 
 It is expected that the first row of the csv file will be the column names.  One of the names
 must be specified as the key field name.  Failure to find this name causes termination and
 no kv store creation.
+      
+Sample uses:
+      scala -cp <path> --kvname com.ligadata.edifecs.SputumCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/sputumCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
+      scala -cp <path> --kvname com.ligadata.edifecs.SmokeCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
+      scala -cp <path> --kvname com.ligadata.edifecs.EnvCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/envExposureCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
+      scala -cp <path> --kvname com.ligadata.edifecs.CoughCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/coughCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores      
+      scala -cp <path> --kvname com.ligadata.edifecs.DyspnoeaCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/dyspnoea.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores      
+      scala -cp <path> --kvname com.ligadata.edifecs.System_Beneficiary_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/beneficiary.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
       
 """
     }
@@ -90,10 +94,7 @@ no kv store creation.
         var valid : Boolean = (kvname != null && kvpath != null && csvpath != null && keyfieldname != null) 
 
         if (valid) {
-            val kvmaker : KVInit = new KVInit(kvname
-                                                    , kvpath
-                                                    , csvpath
-                                                    , keyfieldname )
+            val kvmaker : KVInit = new KVInit(kvname, kvpath, csvpath, keyfieldname)
 
  
             if (dump != null && dump.toLowerCase().startsWith("y")) {
@@ -121,16 +122,18 @@ class KVInit(val kvname : String
     val csvdata : List[String] = Source.fromFile(csvpath).mkString.split('\n').toList
     val header : Array[String] = csvdata.head.split(',').map(_.trim.toLowerCase)
     val isOk : Boolean = header.contains(keyfieldname.toLowerCase())
-    val container : BaseContainer = make(kvname)
+    var container : BaseContainer = _
+    var message : BaseMsg = _
     var keyPos : Int = 0
 
     def openstore : DataStore = {
       
-        val tablevalue : String = kvname.split('_').head
+    	val clsname : String = kvname.split('.').last
+        val tablevalue : String = clsname.split('_').head
         var connectinfo : PropertyMap = new PropertyMap
         connectinfo+= ("connectiontype" -> "hashmap")
         connectinfo+= ("path" -> s"$kvpath")
-        connectinfo+= ("schema" -> s"$kvname")
+        connectinfo+= ("schema" -> s"$clsname")
         connectinfo+= ("table" -> s"$tablevalue")
         connectinfo+= ("inmemory" -> "false")
         connectinfo+= ("withtransaction" -> "false")
@@ -154,14 +157,28 @@ class KVInit(val kvname : String
     }
     
     def build : DataStore = {
+      
+      val cls = Class.forName(kvname)
+      val isMsg : Boolean = (cls.isInstanceOf[BaseMsg])
+      val dStore : DataStore = if (isMsg) {
+    	  message = cls.newInstance().asInstanceOf[BaseMsg]
+    	  buildMsg
+      } else {
+    	  container = cls.newInstance().asInstanceOf[BaseContainer]
+    	  buildContainer
+      }
+      dStore
+    }
+    
+    def buildContainer : DataStore = {
         if (! isOk) return null
 
+        
         val kvstore : DataStore = openstore
         kvstore.TruncateStore
         
         locateKeyPos /** locate key idx */
         
-        // val tx : Transaction = kvstore.beginTx()
         val csvdataRecs : List[String] = csvdata.tail
         csvdataRecs.foreach(tuples => {
             /** if we can make one ... we add the data to the store. This will crash if the data is bad */
@@ -171,7 +188,27 @@ class KVInit(val kvname : String
             val key : String = data(keyPos)
             SaveObject(key, tuples, kvstore)
         })
-        // kvstore.endTx(tx)
+
+        kvstore
+    }
+    
+    def buildMsg : DataStore = {
+        if (! isOk) return null
+        
+        val kvstore : DataStore = openstore
+        kvstore.TruncateStore
+        
+        locateKeyPos /** locate key idx */
+        
+        val csvdataRecs : List[String] = csvdata.tail
+        csvdataRecs.foreach(tuples => {
+            /** if we can make one ... we add the data to the store. This will crash if the data is bad */
+            message.populate(new DelimitedData(tuples, ","))
+
+            val data : Array[String] = tuples.split(',').map(_.trim)
+            val key : String = data(keyPos)
+            SaveObject(key, tuples, kvstore)
+        })
 
         kvstore
     }
@@ -221,23 +258,6 @@ class KVInit(val kvname : String
 		v
 	}
  
-    private def make(containerName : String) : BaseContainer = {
-        val container : BaseContainer = containerName match {
-            case "SputumCodes_100" => new SputumCodes_100
-            case "SmokeCodes_100" => new SmokeCodes_100
-            case "EnvCodes_100" => new EnvCodes_100
-            case "CoughCodes_100" => new CoughCodes_100
-            case "DyspnoeaCodes_100" => new DyspnoeaCodes_100
-//            case "System_Beneficiary_100" => new System_Beneficiary_100
-            case _ => {
-                logger.error(s"Container name ${'"'}$containerName${'"'} supplied in the --kvname argument is unknown... aborting...")
-                sys.exit
-            }
-        }
-        container
-    }
-
-
     private def SaveObject(key: String, value: String, store: DataStore){
         object i extends IStorage{
             var k = new com.ligadata.keyvaluestore.Key
