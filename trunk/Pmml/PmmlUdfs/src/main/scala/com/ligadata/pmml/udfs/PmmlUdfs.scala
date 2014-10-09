@@ -21,6 +21,7 @@ import org.joda.time.field
 import org.joda.time.format
 import org.joda.time.tz
 import org.joda.time.LocalDate
+import org.joda.time.DateTime
 import org.joda.time.Years
 
 import com.ligadata.Pmml.Runtime._
@@ -351,6 +352,38 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     setExprs.filter(_ == fldRefExpr).length > 0
   }
   
+  def IsIn(fldRefExpr: String, setExprs: Set[String]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Int, setExprs: Set[Int]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Float, setExprs: Set[Float]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Double, setExprs: Set[Double]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+  
+  def IsIn(fldRefExpr: String, setExprs: MutableSet[String]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Int, setExprs: MutableSet[Int]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Float, setExprs: MutableSet[Float]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+
+  def IsIn(fldRefExpr: Double, setExprs: MutableSet[Double]): Boolean = {
+    setExprs.contains(fldRefExpr)
+  }
+  
  
   /** AnyBetween */
   def AnyBetween(arrayExpr: ArrayBuffer[String], leftMargin: String, rightMargin: String, inclusive: Boolean): Boolean = {
@@ -470,6 +503,87 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   def Contains(arrayExpr: Array[Double], key: Double): Boolean = {
     arrayExpr.contains(key)
   }
+
+  def Contains(setExpr: Set[String], key: String): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: Set[Long], key: Long): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: Set[Int], key: Int): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: Set[Float], key: Float): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: Set[Double], key: Double): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: MutableSet[String], key: String): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: MutableSet[Long], key: Long): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: MutableSet[Int], key: Int): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: MutableSet[Float], key: Float): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def Contains(setExpr: MutableSet[Double], key: Double): Boolean = {
+    setExpr.contains(key)
+  }
+
+  def ContainsAny(setExpr: Set[String], keys: Array[String]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: Set[Long], keys: Array[Long]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: Set[Int], keys: Array[Int]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: Set[Float], keys: Array[Float]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def Contains(setExpr: Set[Double], keys: Array[Double]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: MutableSet[String], keys: Array[String]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: MutableSet[Long], keys: Array[Long]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: MutableSet[Int], keys: Array[Int]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def ContainsAny(setExpr: MutableSet[Float], keys: Array[Float]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
+  def Contains(setExpr: MutableSet[Double], keys: Array[Double]): Boolean = {
+    (keys.filter( key => setExpr.contains(key)).length > 0)
+  }
+
 
   /** Intersect */
   def Intersect[T  : ClassTag](left: Array[T], right: Array[T]): Set[T] = {
@@ -2246,6 +2360,19 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     val evtseconds = hours * 60 *  60 + minutes * 60 + seconds + (if (millisecs >= 500) 1 else 0)
     
     evtseconds
+  }
+  
+  /** Convert millisecs to ISO8601 style date in integer */
+  
+  def AsCompressedDate(milliSecs : Long) : Int = {
+    val dt: LocalDate = new LocalDate(milliSecs)
+    val dtAtMidnight: DateTime = dt.toDateTimeAtStartOfDay
+    val yr : Int = dtAtMidnight.year().get()
+    val mo : Int = dtAtMidnight.monthOfYear().get()
+    val day : Int = dtAtMidnight.dayOfMonth().get()
+    val compressedDate : Int = yr * 10000 + mo * 1000 + day
+    
+    compressedDate
   }
 
 

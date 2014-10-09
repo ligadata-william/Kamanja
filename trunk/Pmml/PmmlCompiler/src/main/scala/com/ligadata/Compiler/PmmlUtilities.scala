@@ -162,6 +162,11 @@ object PmmlTypes {
 		fcnName
   	}
   	
+  	def translateBuiltinNameIfNeeded(fcnName : String) : String = {
+  		val fcnNameX : String = scalaBuiltinNameFcnSelector(fcnName)
+  		if (fcnNameX != "Unknown Operator") fcnNameX else fcnName
+  	}
+  	
    	def scalaNameForIterableFcnName(iterableFcnName : String) : String = {
 		val fcnName = iterableFcnName match {
 		      case "ContainerMap" => "map"

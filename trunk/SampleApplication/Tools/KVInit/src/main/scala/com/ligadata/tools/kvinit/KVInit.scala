@@ -227,6 +227,8 @@ class KVInit(val kvname : String
             case "SmokeCodes_100" => new SmokeCodes_100
             case "EnvCodes_100" => new EnvCodes_100
             case "CoughCodes_100" => new CoughCodes_100
+            case "DyspnoeaCodes_100" => new DyspnoeaCodes_100
+//            case "System_Beneficiary_100" => new System_Beneficiary_100
             case _ => {
                 logger.error(s"Container name ${'"'}$containerName${'"'} supplied in the --kvname argument is unknown... aborting...")
                 sys.exit

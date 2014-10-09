@@ -60,7 +60,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   
 	def selectSimpleFcn : FcnTypeInfo = {
 	  	/** create a search key from the function name and its children (the arguments). */
-	  	logger.trace(s"selectSimpleFcn ... search mdmgr for ${node.function}...")
+	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
+	  	logger.trace(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	//var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  	//		= collectArgKeys()
 	  	var argTypesExpanded : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)] 
@@ -73,7 +74,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val memberTypes : Array[Array[BaseTypeDef]] = argTypesExpanded.map( tuple => tuple._4)
 	  	val returnTypes : Array[String] = argTypesExpanded.map( tuple => tuple._5)  	
 	  	
-	  	logger.trace(s"selectSimpleFcn ... fcn = ${node.function}")
+	  	logger.trace(s"selectSimpleFcn ... fcn = $scalaFcnName")
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = if (argTypesExp != null && argTypesExp.size > 0) 
 	  		{ 
 	  			argTypesExp.map( arg => if (arg != null) arg.last else (null,false,null)) 
@@ -82,7 +83,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
 	  	
 	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
-	  	var simpleKey : String = if (hasArgs) buildSimpleKey(node.function, argTypes.map( argTriple => argTriple._1)) else s"${node.function}()"
+	  	var simpleKey : String = if (hasArgs) buildSimpleKey(scalaFcnName, argTypes.map( argTriple => argTriple._1)) else s"$scalaFcnName()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
 	  	logger.trace(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
@@ -90,7 +91,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	var winningKey : String = null
 	  	val typeInfo : FcnTypeInfo = if (funcDef == null) {
 	  		if (hasArgs || (! hasArgs && returnTypes != null && returnTypes.size > 0)) {
-		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(node.function, argTypes, returnTypes)
+		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(scalaFcnName, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
 		  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
@@ -390,7 +391,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	node.Children.foreach ( child => {
 	  		cnt += 1
 	  		if (cnt == 1) {
-	  			if (child.isInstanceOf[xFieldRef] && child.asInstanceOf[xFieldRef].field == "AllInPatientDiagnoses") {
+	  			if (child.isInstanceOf[xFieldRef] && child.asInstanceOf[xFieldRef].field == "SputumCodes") {
 	  				val wtf : String = "wtf"
 	  			}
 	  			/** get the collection type overall */
