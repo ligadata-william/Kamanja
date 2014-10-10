@@ -27,7 +27,7 @@ class System_HL7_100 extends BaseMsg {
   def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
-      if (list.size < 80)
+      if (list.size < 86)
         throw new Exception("Incorrect input data size")
 
       Desynpuf_Id = StringImpl.Input(list(idx).trim)
@@ -353,7 +353,7 @@ class System_InpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Clm_Thru_Dt = IntImpl.Input(list(idx))
       idx = idx + 1
-      Prvdr_Num = IntImpl.Input(list(idx))
+      Prvdr_Num = StringImpl.Input(list(idx))
       idx = idx + 1
       Clm_Pmt_Amt = FloatImpl.Input(list(idx));
       idx = idx + 1
@@ -409,7 +409,7 @@ class System_InpatientClaim_100 extends BaseMsg {
   var Segment: Int = _
   var Clm_From_Dt: Int = _
   var Clm_Thru_Dt: Int = _
-  var Prvdr_Num: Int = _
+  var Prvdr_Num: String = _
   var Clm_Pmt_Amt: Float = _
   var Nch_Prmry_Pyr_Clm_Pd_Amt: Float = _
   var At_Physn_Npi: Long = _
@@ -461,7 +461,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
     val arrvaldelim = "~"
     var idx = startIdx
     try {
-      if (list.size < 2)
+      if (list.size < 18)
         throw new Exception("Incorrect input data size")
 
       Desynpuf_Id = StringImpl.Input(list(idx).trim)
@@ -474,7 +474,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Clm_Thru_Dt = IntImpl.Input(list(idx))
       idx = idx + 1
-      Prvdr_Num = IntImpl.Input(list(idx))
+      Prvdr_Num = StringImpl.Input(list(idx))
       idx = idx + 1
       Clm_Pmt_Amt = DoubleImpl.Input(list(idx))
       idx = idx + 1
@@ -521,7 +521,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
   var Segment: Int = _
   var Clm_From_Dt: Int = _
   var Clm_Thru_Dt: Int = _
-  var Prvdr_Num: Int = _
+  var Prvdr_Num: String= _
   var Clm_Pmt_Amt: Double = _
   var Nch_Prmry_Pyr_Clm_Pd_Amt: Float = _
   var At_Physn_Npi: Long = _
