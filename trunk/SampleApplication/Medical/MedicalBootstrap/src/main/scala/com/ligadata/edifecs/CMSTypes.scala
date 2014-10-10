@@ -211,6 +211,8 @@ class System_HL7_100 extends BaseMsg {
     }
     idx
   }
+  
+  override def getKeyData: String = Desynpuf_Id
 
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
@@ -400,6 +402,8 @@ class System_InpatientClaim_100 extends BaseMsg {
     idx
   }
 
+  override def getKeyData: String = Desynpuf_Id
+
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
   var Segment: Int = _
@@ -510,6 +514,8 @@ class System_OutpatientClaim_100 extends BaseMsg {
     idx
   }
 
+  override def getKeyData: String = Desynpuf_Id
+
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
   var Segment: Int = _
@@ -566,8 +572,6 @@ class System_Beneficiary_100 extends BaseMsg {
 
       Desynpuf_Id = StringImpl.Input(list(idx).trim)
       idx = idx + 1
-      Bene_Esrd_Ind = CharImpl.Input(list(idx))
-      idx = idx + 1
       Bene_Birth_Dt = IntImpl.Input(list(idx))
       idx = idx + 1
       Bene_Death_Dt = IntImpl.Input(list(idx))
@@ -575,6 +579,8 @@ class System_Beneficiary_100 extends BaseMsg {
       Bene_Sex_Ident_Cd = IntImpl.Input(list(idx))
       idx = idx + 1
       Bene_Race_Cd = IntImpl.Input(list(idx))
+      idx = idx + 1
+      Bene_Esrd_Ind = CharImpl.Input(list(idx))
       idx = idx + 1
       Sp_State_Code = IntImpl.Input(list(idx))
       idx = idx + 1
@@ -661,12 +667,14 @@ class System_Beneficiary_100 extends BaseMsg {
     }
   }
 
+  override def getKeyData: String = Desynpuf_Id
+
   var Desynpuf_Id: String = _
-  var Bene_Esrd_Ind: Char = _
   var Bene_Birth_Dt: Int = _
   var Bene_Death_Dt: Int = _
   var Bene_Sex_Ident_Cd: Int = _
   var Bene_Race_Cd: Int = _
+  var Bene_Esrd_Ind: Char = _
   var Sp_State_Code: Int = _
   var Bene_County_Cd: Int = _
   var Bene_Hi_Cvrage_Tot_Mons: Int = _

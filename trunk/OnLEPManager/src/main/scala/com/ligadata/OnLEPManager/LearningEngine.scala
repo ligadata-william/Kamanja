@@ -91,12 +91,22 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
+  private def GetTopMsgName(msgName: String): String = {
+    val topMsgInfo = OnLEPMetadata.getMessgeInfo(msgName)
+    if (topMsgInfo == null || topMsgInfo.parents.size == 0) return msgName
+    topMsgInfo.parents(0)._1
+  }
+
   def execute(msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
     // LOG.info("LE => " + msgData)
     try {
       // BUGBUG:: for now handling only CSV input data.
       val msg = createMsg(msgType, msgFormat, msgData)
       if (msg != null) {
+        // Get top level Msg for the current msg
+        val topMsgType = GetTopMsgName(msgType)
+        val keyData = msg.getKeyData
+        // val topObj = envContext.getObject(topMsgType, keyData)
         // Run all models
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
         RunAllModels(msg, msgData, envContext, readTmNs, rdTmMs)
@@ -104,6 +114,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
         totalLatencyFromReadToProcess += latencyFromReadToProcess
         //BUGBUG:: Save the whole message here
+        // envContext.setObject(topMsgType, keyData, topObj)
       }
     } catch {
       case e: Exception => LOG.error("Failed to create and run message. Error:" + e.getMessage)

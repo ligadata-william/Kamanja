@@ -77,6 +77,8 @@ trait EnvContext {
   def getObject(containerName: String, key: String): BaseContainer
   def setObject(containerName: String, key: String, value: BaseContainer): Unit
   def setObject(containerName: String, elementkey: Any, value: BaseContainer): Unit
+  def getMsgObject(containerName: String, key: String): BaseMsg
+  def setMsgObject(containerName: String, key: String, value: BaseMsg): Unit
 }
 
 //val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg, val modelName:String, val modelVersion:String, val tenantId: String

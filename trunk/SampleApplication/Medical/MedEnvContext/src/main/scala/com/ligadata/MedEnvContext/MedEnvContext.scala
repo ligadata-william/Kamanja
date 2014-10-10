@@ -26,11 +26,13 @@ trait LogTrait {
 object MedEnvContext extends EnvContext with LogTrait {
 	private[this] val _lock = new Object()
 	private[this] var _containers = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, BaseContainer]]()
+	private[this] var _messages = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, BaseMsg]]()
 	
 	/** Add this one too for caching the arrays that are returned from the loaded map's values */
 	private [this] var _filterArrays : scala.collection.mutable.Map[String, Array[BaseContainer]] = scala.collection.mutable.Map[String, Array[BaseContainer]]()
 
-	private[this] var _bInitialized: Boolean = false
+	private[this] var _bInitializedContainers: Boolean = false
+	private[this] var _bInitializedMessages: Boolean = false
     
    /** 
     *  Intitialize the container cache from the mapdb items found in the supplied dataPath.  The names of the 
@@ -39,7 +41,7 @@ object MedEnvContext extends EnvContext with LogTrait {
     */
   	val buffer : StringBuilder = new StringBuilder
   	def initContainers(mgr : MdMgr, dataPath : String, containerNames: Array[String]): Unit = _lock.synchronized {
-	  	if (_bInitialized) {
+	  	if (_bInitializedContainers) {
     		throw new RuntimeException("Already Initialized")
     	}
     	containerNames.foreach(c => {
@@ -72,9 +74,30 @@ object MedEnvContext extends EnvContext with LogTrait {
     		}
     	})
     	
-    	_bInitialized = true
+    	_bInitializedContainers = true
     }
   
+    
+   /** 
+    *  Intitialize the messages cache
+    */
+  	def initMessages(mgr : MdMgr, dataPath : String, msgNames: Array[String]): Unit = _lock.synchronized {
+	  	if (_bInitializedMessages) {
+    		throw new RuntimeException("Already Initialized")
+    	}
+    	msgNames.foreach(c => {
+    		val names : Array[String] = c.split('.')
+    		val namespace : String = names.head
+    		val name : String = names.last
+			val msgType : MessageDef = mgr.ActiveMessage(namespace,name)
+    		if (msgType != null) {
+				_messages(msgType.FullName.toLowerCase) = scala.collection.mutable.Map[String, BaseMsg]()
+    		}
+    	})
+    	
+    	_bInitializedMessages = true
+    }
+
   	/**
   	 *  For the current container, load the values for each key, coercing it to the appropriate BaseContainer, and storing
   	 *  each in the supplied map.  
@@ -212,6 +235,21 @@ object MedEnvContext extends EnvContext with LogTrait {
 		// bugbug: throw exception
 		
  	}
+ 	
+  override def getMsgObject(msgName: String, key: String): BaseMsg = {
+ 		val msg = _messages.getOrElse(msgName.toLowerCase, null)
+		if (msg != null) {
+ 			val v = msg.getOrElse(key.toLowerCase(), null)
+ 			// LOG.info("Found Message:" + msgName + ". Value:" + v)
+ 			v
+ 		} else null
+  }
+  
+  override def setMsgObject(msgName: String, key: String, value: BaseMsg): Unit = {
+ 		val msg = _messages.getOrElse(msgName.toLowerCase, null)
+		if (msg != null) msg(key.toLowerCase) = value
+		// bugbug: throw exception
+  }
  	
  	private def writeThru(key : String, value : String) {
  		object i extends IStorage{

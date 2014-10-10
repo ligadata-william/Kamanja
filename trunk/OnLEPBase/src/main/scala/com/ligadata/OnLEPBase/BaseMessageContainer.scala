@@ -27,6 +27,7 @@ trait BaseMsg {
   def getMessageName: String // Message Name
   def getVersion: String // Message Version
   def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  def getKeyData: String = ""
 }
 
 trait BaseMsgObj {
