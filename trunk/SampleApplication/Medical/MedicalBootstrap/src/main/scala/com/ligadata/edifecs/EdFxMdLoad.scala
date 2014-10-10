@@ -1436,7 +1436,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 				)
 			 , baseTypesVer
 			 , "copd_000100_2.10-1.0.jar"
-			 , Array("medenvcontext_2.10-1.0.jar, pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "medicalbootstrap_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
+			 , Array("medenvcontext_2.10-1.0.jar", "pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "medicalbootstrap_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
 		)  
 	}
 }

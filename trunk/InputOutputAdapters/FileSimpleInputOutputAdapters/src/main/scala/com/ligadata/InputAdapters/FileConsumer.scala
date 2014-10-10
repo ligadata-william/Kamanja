@@ -73,6 +73,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         return
     }
 
+    val trimMsg = if (msg != null) msg.trim else null
     var len = 0
     var readlen = 0
     var totalLen: Int = 0
@@ -100,7 +101,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                 var readTmMs = System.currentTimeMillis
 
                 val ln = new String(buffer, startidx, idx - startidx)
-                val sendmsg = (if (msg != null) (msg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
+                val sendmsg = (if (trimMsg != null && trimMsg.isEmpty() == false) (trimMsg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
+                println(sendmsg)
 
                 try {
                   // Creating new string to convert from Byte Array to string
@@ -148,7 +150,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
       var readTmMs = System.currentTimeMillis
 
       val ln = new String(buffer, 0, len)
-      val sendmsg = (if (msg != null) (msg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
+      val sendmsg = (if (trimMsg != null && trimMsg.isEmpty() == false) (trimMsg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
+      println(sendmsg)
 
       try {
         // Creating new string to convert from Byte Array to string

@@ -98,10 +98,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       val msg = createMsg(msgType, msgFormat, msgData)
       if (msg != null) {
         // Run all models
+        // BUGBUG::Get Previous History (through Key) of the top level message/container 
         RunAllModels(msg, msgData, envContext, readTmNs, rdTmMs)
         var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
         if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
         totalLatencyFromReadToProcess += latencyFromReadToProcess
+        //BUGBUG:: Save the whole message here
       }
     } catch {
       case e: Exception => LOG.error("Failed to create and run message. Error:" + e.getMessage)

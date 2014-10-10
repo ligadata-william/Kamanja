@@ -26,6 +26,7 @@ trait BaseMsg {
   def populate(inputdata: InputData): Unit
   def getMessageName: String // Message Name
   def getVersion: String // Message Version
+  def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
 }
 
 trait BaseMsgObj {

@@ -1,7 +1,7 @@
 
 package com.ligadata.OnLEPManager
 
-import com.ligadata.olep.metadata.BaseElem
+import com.ligadata.olep.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef }
 //import com.ligadata.olep.metadataload.MetadataLoad
 import com.ligadata.edifecs.MetadataLoad
 import scala.collection.mutable.TreeSet
@@ -9,6 +9,7 @@ import scala.util.control.Breaks._
 import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
+import scala.collection.mutable.ArrayBuffer
 
 //import com.ligadata.MetadataAPI._
 
@@ -16,6 +17,8 @@ class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
 
 class MsgObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgobj: BaseMsgObj) {
+  var parents = new ArrayBuffer[(String, String)] // Immediate parent comes at the end, grand parent last but one, ... Messages/Containers. the format is Message/Container Type name and the variable in that.
+  var childs = new ArrayBuffer[(String, String)] // Child Messages/Containers (Name & type). We fill this when we create message and populate parent later from this
 }
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
@@ -54,6 +57,30 @@ object OnLEPMetadata {
       retVal = ManagerUtils.LoadJars(jars, loadedJars, loader)
     }
     retVal
+  }
+
+  private def GetChildsFromEntity(entity: EntityType, childs: ArrayBuffer[(String, String)]): Unit = {
+    // mgsObj.childs +=
+    if (entity.isInstanceOf[MappedMsgTypeDef]) {
+      var attrMap = entity.asInstanceOf[MappedMsgTypeDef].attrMap
+      //BUGBUG:: Checking for only one level at this moment
+      if (attrMap != null) {
+        childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef] && (a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[MappedMsgTypeDef] || a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[StructTypeDef]))).map(a => (a._2.Name, a._2.asInstanceOf[AttributeDef].aType.FullName))
+        // If the attribute is an arraybuffer (not yet handling others)
+        childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef] && a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[ArrayBufTypeDef] && (a._2.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.isInstanceOf[MappedMsgTypeDef] || a._2.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.isInstanceOf[StructTypeDef]))).map(a => (a._2.Name, a._2.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.FullName))
+      }
+    } else if (entity.isInstanceOf[StructTypeDef]) {
+      var memberDefs = entity.asInstanceOf[StructTypeDef].memberDefs
+      //BUGBUG:: Checking for only one level at this moment
+      if (memberDefs != null) {
+        childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef] && (a.asInstanceOf[AttributeDef].aType.isInstanceOf[MappedMsgTypeDef] || a.asInstanceOf[AttributeDef].aType.isInstanceOf[StructTypeDef]))).map(a => (a.Name, a.asInstanceOf[AttributeDef].aType.FullName))
+        // If the attribute is an arraybuffer (not yet handling others)
+        childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef] && a.asInstanceOf[AttributeDef].aType.isInstanceOf[ArrayBufTypeDef] && (a.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.isInstanceOf[MappedMsgTypeDef] || a.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.isInstanceOf[StructTypeDef]))).map(a => (a.Name, a.asInstanceOf[AttributeDef].aType.asInstanceOf[ArrayBufTypeDef].elemDef.FullName))
+      }
+    } else {
+      // Nothing to do at this moment
+    }
+
   }
 
   def PrepareMessages(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
@@ -118,7 +145,9 @@ object OnLEPMetadata {
               })
               tranformMsgFlds = new TransformMsgFldsMap(keyfldsIdxs, outputFldIdxs)
             }
-            messageObjects(msgName) = new MsgObjAndTransformInfo(tranformMsgFlds, messageobj)
+            val mgsObj = new MsgObjAndTransformInfo(tranformMsgFlds, messageobj)
+            GetChildsFromEntity(msg.containerType, mgsObj.childs)
+            messageObjects(msgName) = mgsObj
 
             LOG.info("Created Message:" + msgName)
           } else {
@@ -133,6 +162,34 @@ object OnLEPMetadata {
         LOG.error("Failed to instantiate message object :" + clsName)
       }
     })
+
+    // Prepare Parents for each message now
+    val childToParentMap = scala.collection.mutable.Map[String, (String, String)]() // ChildType, (ParentType, ChildAttrName) 
+
+    // 1. First prepare one level of parents
+    messageObjects.foreach(m => {
+      m._2.childs.foreach(c => {
+        childToParentMap(c._2.toLowerCase) = (m._1.toLowerCase, c._1) // BUGBUG:: Check whether we already have in childToParentMap or not before we replace. So that way we can check same child under multiple parents.
+      })
+    })
+
+    // 2. Now prepare Full Parent Hierarchy
+    messageObjects.foreach(m => {
+      var curParent = childToParentMap.getOrElse(m._1.toLowerCase, null)
+      while (curParent != null) {
+        m._2.parents += curParent
+        curParent = childToParentMap.getOrElse(curParent._1.toLowerCase, null)
+      }
+    })
+
+    // 3. Order Parent Hierarchy properly
+    messageObjects.foreach(m => {
+      m._2.parents.reverse
+    })
+
+    val vt = 0
+    
+    
   }
 
   def PrepareContainers(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
