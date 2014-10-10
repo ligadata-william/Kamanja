@@ -144,4 +144,15 @@ echo "Prepare the test kvstore - Smoking Codes map..."
 
 java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname com.ligadata.edifecs.SmokeCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code
 
+# *******************************
+# All that is left is to run the OnLEPManager
+# *******************************
+
+# no debug
+# java -jar $ONLEPLIBPATH/OnLEPManager-1.0 --config /tmp/OnLEPInstall/COPD.cfg
+
+# debug version intended for eclipse attached debugging
+# java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar $ONLEPLIBPATH/OnLEPManager-1.0 --config /tmp/OnLEPInstall/COPD.cfg
+
+
 echo "installOnLEP complete..."

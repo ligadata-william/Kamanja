@@ -2378,7 +2378,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   /** Calculate age from yyyymmdd ISO8601 type compressed in integer */
   def AgeCalc(yyyymmdd: Int): Int = {
-    val birthDate: LocalDate = new LocalDate(yyyymmdd / 10000, (yyyymmdd % 1000) / 100, yyyymmdd % 100)
+    val yyyy : Int = yyyymmdd / 10000
+    val mm : Int = (yyyymmdd % 1000) / 100
+    val day : Int = yyyymmdd % 100
+    val birthDate: LocalDate = new LocalDate(yyyy, mm, day)
     val age: Int = Years.yearsBetween(birthDate, new LocalDate).getYears
     age
   }

@@ -21,12 +21,12 @@ import scala.util.control.Breaks._
 */
 
 object COPDRiskAssessment_000100 extends ModelBaseObj {
-    def getModelName: String = "System.COPDRiskAssessment_000100"
+    def getModelName: String = "com.Edifecs.COPDRiskAssessment_000100.pmml.COPDRiskAssessment_000100"
     def getVersion: String = "000100"
     def getModelVersion: String = getVersion
-    val validMessages = Array("System.Beneficiary")
+    val validMessages = Array("com.ligadata.edifecs.System_Beneficiary_100")
     def IsValidMessage(msg: BaseMsg): Boolean = { 
-        validMessages.filter( m => m.toLowerCase == msg.getMessageName.toLowerCase).size > 0
+        validMessages.filter( m => m == msg.getClass.getName).size > 0
     }
 
     def CreateNewModel(gCtx : EnvContext, msg : BaseMsg, tenantId: String): ModelBase =
@@ -250,7 +250,7 @@ class Derive_SputumCodes (name : String, dataType : String, validValues: ArrayBu
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val SputumCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterMaps", "SputumCodes")
+        val SputumCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SputumCodes")
         ctx.xDict.apply("SputumCodes").Value(new AnyDataValue(SputumCodes))
           new AnyDataValue(SputumCodes)
     }
@@ -262,7 +262,7 @@ class Derive_SmokingCodes (name : String, dataType : String, validValues: ArrayB
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val SmokingCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterMaps", "SmokingCodes")
+        val SmokingCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SmokingCodes")
         ctx.xDict.apply("SmokingCodes").Value(new AnyDataValue(SmokingCodes))
           new AnyDataValue(SmokingCodes)
     }
@@ -274,7 +274,7 @@ class Derive_EnvExposureCodes (name : String, dataType : String, validValues: Ar
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val EnvExposureCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterMaps", "EnvExposureCodes")
+        val EnvExposureCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "EnvExposureCodes")
         ctx.xDict.apply("EnvExposureCodes").Value(new AnyDataValue(EnvExposureCodes))
           new AnyDataValue(EnvExposureCodes)
     }
@@ -286,7 +286,7 @@ class Derive_CoughCodes (name : String, dataType : String, validValues: ArrayBuf
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val CoughCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterMaps", "CoughCodes")
+        val CoughCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "CoughCodes")
         ctx.xDict.apply("CoughCodes").Value(new AnyDataValue(CoughCodes))
           new AnyDataValue(CoughCodes)
     }
@@ -298,7 +298,7 @@ class Derive_DyspnoeaCodes (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val DyspnoeaCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterMaps", "DyspnoeaCodes")
+        val DyspnoeaCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "DyspnoeaCodes")
         ctx.xDict.apply("DyspnoeaCodes").Value(new AnyDataValue(DyspnoeaCodes))
           new AnyDataValue(DyspnoeaCodes)
     }
