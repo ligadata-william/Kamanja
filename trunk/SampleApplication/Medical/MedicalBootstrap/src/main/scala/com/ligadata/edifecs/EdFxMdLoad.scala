@@ -1419,7 +1419,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddModelDef(
 		       MdMgr.sysNS
 			, "COPDRiskAssessment_000100"
-			, "com.Edifecs.pmml.COPDRiskAssessment_000100"
+			, "com.Edifecs.COPDRiskAssessment_000100.pmml.COPDRiskAssessment_000100"
 			, "RuleSet"
 			, List(("msg", "Inpatient_Claims", "system", "beneficiary", false, null)
 					,("msg", "HL7Messages", "system", "beneficiary", false, null)

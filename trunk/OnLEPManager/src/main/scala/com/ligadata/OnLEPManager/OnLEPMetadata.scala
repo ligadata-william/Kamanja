@@ -104,16 +104,23 @@ object OnLEPMetadata {
 
       var isMsg = true
 
-      // If required we need to enable this test
-      // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
+      try {
+        // If required we need to enable this test
+        // Convert class name into a class
+        var curClz = Class.forName(clsName, true, loader)
 
-      isMsg = false
+        isMsg = false
 
-      while (curClz != null && isMsg == false) {
-        isMsg = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
-        if (isMsg == false)
-          curClz = curClz.getSuperclass()
+        while (curClz != null && isMsg == false) {
+          isMsg = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
+          if (isMsg == false)
+            curClz = curClz.getSuperclass()
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to get classname :" + clsName)
+          e.printStackTrace
+        }
       }
 
       if (isMsg) {
@@ -186,10 +193,6 @@ object OnLEPMetadata {
     messageObjects.foreach(m => {
       m._2.parents.reverse
     })
-
-    val vt = 0
-    
-    
   }
 
   def PrepareContainers(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
@@ -270,16 +273,23 @@ object OnLEPMetadata {
 
       var isModel = true
 
-      // If required we need to enable this test
-      // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
+      try {
+        // If required we need to enable this test
+        // Convert class name into a class
+        var curClz = Class.forName(clsName, true, loader)
 
-      isModel = false
+        isModel = false
 
-      while (curClz != null && isModel == false) {
-        isModel = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.ModelBaseObj")
-        if (isModel == false)
-          curClz = curClz.getSuperclass()
+        while (curClz != null && isModel == false) {
+          isModel = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.ModelBaseObj")
+          if (isModel == false)
+            curClz = curClz.getSuperclass()
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to get classname :" + clsName)
+          e.printStackTrace
+        }
       }
 
       // LOG.info("Loading Model:" + mdl.FullName + ". ClassName: " + clsName + ". IsModel:" + isModel)

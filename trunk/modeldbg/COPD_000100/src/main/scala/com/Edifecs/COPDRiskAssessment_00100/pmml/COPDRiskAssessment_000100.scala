@@ -21,12 +21,12 @@ import scala.util.control.Breaks._
 */
 
 object COPDRiskAssessment_000100 extends ModelBaseObj {
-    def getModelName: String = "com.Edifecs.COPDRiskAssessment_000100.pmml.COPDRiskAssessment_000100"
+    def getModelName: String = "System.COPDRiskAssessment_000100"
     def getVersion: String = "000100"
     def getModelVersion: String = getVersion
-    val validMessages = Array("com.ligadata.edifecs.System_Beneficiary_100")
+    val validMessages = Array("System.Beneficiary")
     def IsValidMessage(msg: BaseMsg): Boolean = { 
-        validMessages.filter( m => m == msg.getClass.getName).size > 0
+        validMessages.filter( m => m.toLowerCase == msg.getMessageName.toLowerCase).size > 0
     }
 
     def CreateNewModel(gCtx : EnvContext, msg : BaseMsg, tenantId: String): ModelBase =

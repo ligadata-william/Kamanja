@@ -102,7 +102,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
                 val ln = new String(buffer, startidx, idx - startidx)
                 val sendmsg = (if (trimMsg != null && trimMsg.isEmpty() == false) (trimMsg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
-                println(sendmsg)
 
                 try {
                   // Creating new string to convert from Byte Array to string
@@ -151,7 +150,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
       val ln = new String(buffer, 0, len)
       val sendmsg = (if (trimMsg != null && trimMsg.isEmpty() == false) (trimMsg + ",") else "") + (if (AddTS2MsgFlag) (readTmMs.toString + ",") else "") + ln
-      println(sendmsg)
 
       try {
         // Creating new string to convert from Byte Array to string
