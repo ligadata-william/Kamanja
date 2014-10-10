@@ -161,7 +161,7 @@ object JsonSerializer {
 	  if (typ.TypeName == "Struct" ){
 	    typeDef = MdMgr.GetMdMgr.MakeStructDef(typ.NameSpace,typ.Name,typ.PhysicalName,
 					 null,typ.Version.toInt,typ.JarName,
-					 typ.DependencyJars.toArray, null, null) //BUGBUG:: Handle Keys here
+					 typ.DependencyJars.toArray, null, null, null) //BUGBUG:: Handle Primary Key, Foreign Keys & Partition Key here
 	  }
 	}
 	case _ => {

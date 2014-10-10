@@ -164,7 +164,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, null
 						, Array[String]()
 						, null
-						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id")))
+						, Array[String]("Desynpuf_Id"));
 
 		logger.trace("MetadataLoad...loading InpatientClaim")
 		mgr.AddFixedMsg(MdMgr.sysNS
@@ -199,7 +200,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, null
 						, Array[String]()
 						, null
-						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id")))
+						, Array[String]("Desynpuf_Id"));
 
 		logger.trace("MetadataLoad...loading OutpatientClaim")
 		mgr.AddFixedMsg(MdMgr.sysNS
@@ -229,7 +231,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, null
 						, Array[String]()
 						, null
-						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id"))));
+						, List((null, List("Desynpuf_Id"), "System.Beneficiary", List("Desynpuf_Id")))
+						, Array[String]("Desynpuf_Id"));
 
 
 
@@ -323,7 +326,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, null
 						, Array[String]()
 						, List((null, List("Desynpuf_Id")))
-						, null);
+						, null
+						, Array[String]("Desynpuf_Id"));
 
 
 		logger.trace("MetadataLoad..CoughCodes")

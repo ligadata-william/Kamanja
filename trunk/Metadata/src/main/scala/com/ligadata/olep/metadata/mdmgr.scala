@@ -346,7 +346,7 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])]): MappedMsgTypeDef = {
+  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MappedMsgTypeDef = {
     val st = new MappedMsgTypeDef
     val depJarSet = scala.collection.mutable.Set[String]()
 
@@ -367,6 +367,8 @@ class MdMgr {
     st.PhysicalName(physicalName)
 
     AddRelationKeys(st, primaryKeys, foreignKeys)
+    
+    st.partitionKey = partitionKey
 
     st
   }
@@ -384,7 +386,7 @@ class MdMgr {
    *  @return the constructed StructTypeDef
    */
 
-  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])]): StructTypeDef = {
+  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): StructTypeDef = {
     var sd = new StructTypeDef
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
@@ -408,6 +410,8 @@ class MdMgr {
 
     AddRelationKeys(sd, primaryKeys, foreignKeys)
    
+    sd.partitionKey = partitionKey
+
     sd
   }
 
@@ -1387,13 +1391,14 @@ class MdMgr {
 				  , jarNm: String = null
 				  , depJars: Array[String] = null
 				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null): MessageDef = {
+				  , foreignKeys: List[(String, List[String], String, List[String])] = null
+				  , partitionKey: Array[String] = null): MessageDef = {
 
 	if (Message(nameSpace, name, -1, false) != None) {
 	  throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
 	}
 	var msg: MessageDef = new MessageDef
-	msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys)
+	msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 	
 	var dJars: Array[String] = depJars
 	if (msg.containerType.isInstanceOf[ContainerTypeDef]) // This should match
@@ -1415,13 +1420,14 @@ class MdMgr {
 					  , jarNm: String = null
 					  , depJars: Array[String] = null
 					  , primaryKeys: List[(String, List[String])] = null
-					  , foreignKeys: List[(String, List[String], String, List[String])] = null): ContainerDef = {
+					  , foreignKeys: List[(String, List[String], String, List[String])] = null
+					  , partitionKey: Array[String] = null): ContainerDef = {
 
     if (Container(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Container $nameSpace.$name already exists.")
     }
     var container = new ContainerDef
-    container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys)
+    container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
     var dJars: Array[String] = depJars
     if (container.containerType.isInstanceOf[ContainerTypeDef]) {// This should match
@@ -1454,14 +1460,15 @@ class MdMgr {
 				  , jarNm: String
 				  , depJars: Array[String]
 				  , primaryKeys: List[(String, List[String])]
-				  , foreignKeys: List[(String, List[String], String, List[String])]): MessageDef = {
+				  , foreignKeys: List[(String, List[String], String, List[String])]
+				  , partitionKey: Array[String]): MessageDef = {
 
     if (Message(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
     }
 
     var msg: MessageDef = new MessageDef
-    msg.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys)
+    msg.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
     var dJars: Array[String] = depJars
     if (msg.containerType.isInstanceOf[ContainerTypeDef]) // This should match
@@ -1482,12 +1489,13 @@ class MdMgr {
 						  , jarNm: String
 						  , depJars: Array[String]
 						  , primaryKeys: List[(String, List[String])]
-						  , foreignKeys: List[(String, List[String], String, List[String])]): ContainerDef = {
+						  , foreignKeys: List[(String, List[String], String, List[String])]
+						  , partitionKey: Array[String]): ContainerDef = {
     if (Container(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Container$nameSpace.$name already exists.")
     }
     var container = new ContainerDef
-    container.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys)
+    container.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
     var dJars: Array[String] = depJars
     if (container.containerType.isInstanceOf[ContainerTypeDef]) // This should match
@@ -1518,7 +1526,8 @@ class MdMgr {
 				  , jarNm: String
 				  , depJars: Array[String]
 				  , primaryKeys: List[(String, List[String])]
-				  , foreignKeys: List[(String, List[String], String, List[String])]): MessageDef = {
+				  , foreignKeys: List[(String, List[String], String, List[String])]
+				  , partitionKey: Array[String]): MessageDef = {
     if (Message(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
     }
@@ -1529,7 +1538,7 @@ class MdMgr {
     val args = argNames.map(elem => (msgNm, elem, typeNmSp, typeName, false, null)) //BUGBUG::Making all local Attributes and Collection Types does not handled
 
     var msg: MessageDef = new MessageDef
-    msg.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys)
+    msg.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
     var dJars: Array[String] = depJars
     if (msg.containerType.isInstanceOf[ContainerTypeDef]) // This should match
@@ -2172,8 +2181,9 @@ class MdMgr {
 				  , jarNm: String = null
 				  , depJars: Array[String] = Array[String]()
 				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null): Unit = {
-	  AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys))
+				  , foreignKeys: List[(String, List[String], String, List[String])] = null
+				  , partitionKey: Array[String] = null): Unit = {
+	  AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
   /**
@@ -2195,8 +2205,9 @@ class MdMgr {
 				  , jarNm: String = null
 				  , depJars: Array[String] = Array[String]()
 				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null): Unit = {
-	  AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys))
+				  , foreignKeys: List[(String, List[String], String, List[String])] = null
+				  , partitionKey: Array[String] = null): Unit = {
+	  AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
   /**
@@ -2218,8 +2229,9 @@ class MdMgr {
 				 	, jarNm: String
 		  			, depJars: Array[String]
 		  			, primaryKeys: List[(String, List[String])]
-		  			, foreignKeys: List[(String, List[String], String, List[String])]): Unit = {
-	  	AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys))
+		  			, foreignKeys: List[(String, List[String], String, List[String])]
+		  			, partitionKey: Array[String]): Unit = {
+	  	AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   	}
 
   	@throws(classOf[AlreadyExistsException])
@@ -2280,8 +2292,9 @@ class MdMgr {
 					  	, jarNm: String = null
 						, depJars: Array[String] = Array[String]()
 						, primaryKeys: List[(String, List[String])] = null
-						, foreignKeys: List[(String, List[String], String, List[String])] = null): Unit = {
-	    AddContainer(MakeMappedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys))
+						, foreignKeys: List[(String, List[String], String, List[String])] = null
+						, partitionKey: Array[String] = null): Unit = {
+	    AddContainer(MakeMappedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
 	}
 
 	@throws(classOf[AlreadyExistsException])
