@@ -77,11 +77,18 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
 
         /* Update each ruleSetModel's mining schema dict */
         ruleSetModel.AddMiningField("AATDeficiency", new MiningField("AATDeficiency","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("COPDSymptoms", new MiningField("COPDSymptoms","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("COPDSeverity", new MiningField("COPDSeverity","predicted","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("ChronicSputum", new MiningField("ChronicSputum","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("AYearAgo", new MiningField("AYearAgo","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("Age", new MiningField("Age","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("Dyspnoea", new MiningField("Dyspnoea","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("WithSmokingHistory", new MiningField("WithSmokingHistory","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("Msg_Desynpuf_Id", new MiningField("Msg_Desynpuf_Id","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("FamilyHistory", new MiningField("FamilyHistory","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("ChronicCough", new MiningField("ChronicCough","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("Today", new MiningField("Today","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("WithEnvironmentalExposures", new MiningField("WithEnvironmentalExposures","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
 
         /* For convenience put the mining schema map in the context as well as ruleSetModel */
         ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())
@@ -92,11 +99,19 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
 
         ctx.dDict += ("parameters" -> new DataField("parameters", "Any", dfoo1, "", "", ""))
         var dfoo2 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("COPDSeverity" -> new DataField("COPDSeverity", "String", dfoo2, "", "", ""))
+        ctx.dDict += ("Inp_Clm_Thru_Dt" -> new DataField("Inp_Clm_Thru_Dt", "Int", dfoo2, "", "", ""))
         var dfoo3 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("gCtx" -> new DataField("gCtx", "Any", dfoo3, "", "", ""))
+        ctx.dDict += ("COPDSeverity" -> new DataField("COPDSeverity", "String", dfoo3, "", "", ""))
         var dfoo4 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.dDict += ("msg" -> new DataField("msg", "Any", dfoo4, "", "", ""))
+        ctx.dDict += ("gCtx" -> new DataField("gCtx", "Any", dfoo4, "", "", ""))
+        var dfoo5 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("msg" -> new DataField("msg", "Any", dfoo5, "", "", ""))
+        var dfoo6 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("Outp_Clm_Thru_Dt" -> new DataField("Outp_Clm_Thru_Dt", "Int", dfoo6, "", "", ""))
+        var dfoo7 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("Hl7_Clm_Thru_Dt" -> new DataField("Hl7_Clm_Thru_Dt", "Int", dfoo7, "", "", ""))
+        var dfoo8 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.dDict += ("Msg_Desynpuf_Id" -> new DataField("Msg_Desynpuf_Id", "String", dfoo8, "", "", ""))
 
         /** initialize the transformation dictionary (derived field part) */
         var xbar1 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
@@ -112,47 +127,51 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
         var xbar6 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("SputumCodes" -> new Derive_SputumCodes("SputumCodes", "Any", xbar6, "null", "null", ""))
         var xbar7 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("FortyYrsOrOlder" -> new Derive_FortyYrsOrOlder("FortyYrsOrOlder", "Boolean", xbar7, "null", "null", ""))
+        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar7, "null", "null", ""))
         var xbar8 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughCodes" -> new Derive_CoughCodes("CoughCodes", "Any", xbar8, "null", "null", ""))
+        ctx.xDict += ("FortyYrsOrOlder" -> new Derive_FortyYrsOrOlder("FortyYrsOrOlder", "Boolean", xbar8, "null", "null", ""))
         var xbar9 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ChronicSputum" -> new Derive_ChronicSputum("ChronicSputum", "Boolean", xbar9, "null", "null", ""))
+        ctx.xDict += ("CoughCodes" -> new Derive_CoughCodes("CoughCodes", "Any", xbar9, "null", "null", ""))
         var xbar10 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AYearAgo" -> new Derive_AYearAgo("AYearAgo", "Int", xbar10, "null", "null", ""))
+        ctx.xDict += ("ChronicSputum" -> new Derive_ChronicSputum("ChronicSputum", "Boolean", xbar10, "null", "null", ""))
         var xbar11 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar11, "null", "null", ""))
+        ctx.xDict += ("AYearAgo" -> new Derive_AYearAgo("AYearAgo", "Int", xbar11, "null", "null", ""))
         var xbar12 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar12, "null", "null", ""))
+        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar12, "null", "null", ""))
         var xbar13 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar13, "null", "null", ""))
+        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar13, "null", "null", ""))
         var xbar14 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar14, "null", "null", ""))
+        ctx.xDict += ("Age" -> new Derive_Age("Age", "Int", xbar14, "null", "null", ""))
         var xbar15 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar15, "null", "null", ""))
+        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar15, "null", "null", ""))
         var xbar16 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar16, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar16, "null", "null", ""))
         var xbar17 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar17, "null", "null", ""))
+        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar17, "null", "null", ""))
         var xbar18 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar18, "null", "null", ""))
+        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar18, "null", "null", ""))
         var xbar19 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar19, "null", "null", ""))
+        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar19, "null", "null", ""))
         var xbar20 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar20, "null", "null", ""))
+        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar20, "null", "null", ""))
         var xbar21 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar21, "null", "null", ""))
+        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar21, "null", "null", ""))
         var xbar22 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar22, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar22, "null", "null", ""))
         var xbar23 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar23, "null", "null", ""))
+        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar23, "null", "null", ""))
         var xbar24 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar24, "null", "null", ""))
+        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar24, "null", "null", ""))
         var xbar25 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar25, "null", "null", ""))
+        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar25, "null", "null", ""))
         var xbar26 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar26, "null", "null", ""))
+        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar26, "null", "null", ""))
         var xbar27 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar27, "null", "null", ""))
+        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar27, "null", "null", ""))
+        var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar28, "null", "null", ""))
+        var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar29, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -390,11 +409,23 @@ class Derive_AYearAgo (name : String, dataType : String, validValues: ArrayBuffe
 }
 
 
+class Derive_Age (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : IntDataValue = {
+        val Age = AgeCalc(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100].Bene_Birth_Dt)
+        ctx.xDict.apply("Age").Value(new IntDataValue(Age))
+          new IntDataValue(Age)
+    }
+
+}
+
+
 class Derive_FortyYrsOrOlder (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val FortyYrsOrOlder = GreaterOrEqual(AgeCalc(ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100].Bene_Birth_Dt), 40)
+        val FortyYrsOrOlder = GreaterOrEqual(ctx.valueFor("Age").asInstanceOf[IntDataValue].Value, 40)
         ctx.xDict.apply("FortyYrsOrOlder").Value(new BooleanDataValue(FortyYrsOrOlder))
           new BooleanDataValue(FortyYrsOrOlder)
     }
@@ -534,12 +565,24 @@ class Derive_FamilyHistory (name : String, dataType : String, validValues: Array
 }
 
 
+class Derive_MaterializeOutputs (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : BooleanDataValue = {
+        val MaterializeOutputs = Put(ctx, "Msg_Desynpuf_Id", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100].Desynpuf_Id)
+        ctx.xDict.apply("MaterializeOutputs").Value(new BooleanDataValue(MaterializeOutputs))
+          new BooleanDataValue(MaterializeOutputs)
+    }
+
+}
+
+
 class Derive_CATII_Rule2 (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val CATII_Rule2 = If(And(Not(ctx.valueFor("FortyYrsOrOlder").asInstanceOf[BooleanDataValue].Value), Or(ctx.valueFor("COPDSymptoms").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("AATDeficiency").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("FamilyHistory").asInstanceOf[BooleanDataValue].Value)))
-        var result : Boolean = if (CATII_Rule2) { Put(ctx, "COPDSeverity", "2") } else { Put(ctx, "COPDSeverity", "NotSet") }
+        var result : Boolean = if (CATII_Rule2) { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "2")) } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "NotSet"), false) }
         ctx.xDict.apply("CATII_Rule2").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -552,7 +595,7 @@ class Derive_CATI_Rule1b (name : String, dataType : String, validValues: ArrayBu
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val CATI_Rule1b = If(And(ctx.valueFor("FortyYrsOrOlder").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("WithSmokingHistory").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("AATDeficiency").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("WithEnvironmentalExposures").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("COPDSymptoms").asInstanceOf[BooleanDataValue].Value))
-        var result : Boolean = if (CATI_Rule1b) { Put(ctx, "COPDSeverity", "1b") } else { Put(ctx, "COPDSeverity", "NotSet") }
+        var result : Boolean = if (CATI_Rule1b) { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "1b")) } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "NotSet"), false) }
         ctx.xDict.apply("CATI_Rule1b").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }
@@ -565,7 +608,7 @@ class Derive_CATI_Rule1a (name : String, dataType : String, validValues: ArrayBu
 
     override def execute(ctx : Context) : BooleanDataValue = {
         val CATI_Rule1a = If(And(ctx.valueFor("FortyYrsOrOlder").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("WithSmokingHistory").asInstanceOf[BooleanDataValue].Value, Or(ctx.valueFor("AATDeficiency").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("WithEnvironmentalExposures").asInstanceOf[BooleanDataValue].Value, ctx.valueFor("COPDSymptoms").asInstanceOf[BooleanDataValue].Value)))
-        var result : Boolean = if (CATI_Rule1a) { Put(ctx, "COPDSeverity", "1b") } else { Put(ctx, "COPDSeverity", "NotSet") }
+        var result : Boolean = if (CATI_Rule1a) { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "1a")) } else { And(ctx.valueFor("MaterializeOutputs").asInstanceOf[BooleanDataValue].Value, Put(ctx, "COPDSeverity", "NotSet"), false) }
         ctx.xDict.apply("CATI_Rule1a").Value(new BooleanDataValue(result))
         new BooleanDataValue(result)
     }

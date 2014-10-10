@@ -17,6 +17,13 @@ AsthmaPMML.xml
 	       <Value value="msg" property="valid"/>
 	    </DataField>
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
+		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
+
+		<!-- Not used -->
+		<DataField name="Inp_Clm_Thru_Dt" displayName="Inp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+		<DataField name="Outp_Clm_Thru_Dt" displayName="Outp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+		<DataField name="Hl7_Clm_Thru_Dt" displayName="Hl7_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+
 	</DataDictionary>
 
 	<TransformationDictionary>
@@ -167,12 +174,18 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
+
+	  	<!-- Calculate the member's age -->
+		<DerivedField name="Age" dataType="integer" optype="continuous">
+			<Apply function="AgeCalc">
+				<FieldRef field="msg.Bene_Birth_Dt"/>
+			</Apply>
+		</DerivedField>
+			
 	  	<!-- 40 years of age or older -->
 		<DerivedField name="FortyYrsOrOlder" dataType="boolean" optype="categorical">
 			<Apply function="greaterOrEqual">
-				<Apply function="AgeCalc">
-					<FieldRef field="msg.Bene_Birth_Dt"/>
-				</Apply>
+				<FieldRef field="Age"/>
 				<Constant dataType="integer">40</Constant> 
 			</Apply>
 		</DerivedField>
@@ -495,6 +508,20 @@ AsthmaPMML.xml
 		</DerivedField>
 
 
+		<!-- 
+			Materialize these variables from their containers to derived fields to make
+			them accessible for output emission 
+		-->
+
+		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
+			<!-- <Apply function="and"> -->
+				<Apply function="Put">  
+					<Constant dataType="string">Msg_Desynpuf_Id</Constant>
+					<FieldRef field="msg.Desynpuf_Id"/>
+				</Apply>
+			<!-- </Apply> -->
+		</DerivedField>
+
 		<!--
 			**********************************************************
 			*  Principal classification logic... is the patient
@@ -515,14 +542,22 @@ AsthmaPMML.xml
 					</Apply>
 				</Apply>
 				<!-- Rather than use rule score, you can set variables according
-					to if's predicate above... -->
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">2</Constant> 
+					to if's predicate above... NOTE: Put always returns true.. so
+					we MUST take specific measure to force CATII_Rule2 value to false -->
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">2</Constant> 
+					</Apply>
 				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">NotSet</Constant> 
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">NotSet</Constant> 
+					</Apply>
+					<Constant dataType="boolean">false</Constant> <!-- force false to be returned -->
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -537,14 +572,22 @@ AsthmaPMML.xml
 					<FieldRef field="COPDSymptoms"/>
 				</Apply>
 				<!-- Rather than use rule score, you can set variables according
-					to if's predicate above... -->
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">1b</Constant> 
+					to if's predicate above... NOTE: Put always returns true.. so
+					we MUST take specific measure to force CATI_Rule1b value to false -->
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">1b</Constant> 
+					</Apply>
 				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">NotSet</Constant> 
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">NotSet</Constant> 
+					</Apply>
+					<Constant dataType="boolean">false</Constant>  <!-- force false to be returned -->
 				</Apply>
 
 			</Apply>
@@ -562,14 +605,22 @@ AsthmaPMML.xml
 					</Apply>
 				</Apply>
 				<!-- Rather than use rule score, you can set variables according
-					to if's predicate above... -->
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">1b</Constant> 
+					to if's predicate above... NOTE: Put always returns true.. so
+					we MUST take specific measure to force CATI_Rule1a value to false -->
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">1a</Constant> 
+					</Apply>
 				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">COPDSeverity</Constant>
-					<Constant dataType="string">NotSet</Constant> 
+				<Apply function="and">
+					<FieldRef field="MaterializeOutputs"/>
+					<Apply function="Put">  
+						<Constant dataType="string">COPDSeverity</Constant>
+						<Constant dataType="string">NotSet</Constant> 
+					</Apply>
+					<Constant dataType="boolean">false</Constant>  <!-- force false to be returned -->
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -579,12 +630,23 @@ AsthmaPMML.xml
 	<RuleSetModel modelName="COPDRisk" functionName="classification" algorithmName="RuleSet">
 
 	    <MiningSchema>
+	    	<MiningField name="Msg_Desynpuf_Id" usageType="supplementary"/>
+	    	<MiningField name="Age" usageType="supplementary"/>
+	    	<MiningField name="Today" usageType="supplementary"/>
+	    	<MiningField name="AYearAgo" usageType="supplementary"/>
+
 			<MiningField name="COPDSeverity" usageType="predicted"/>
+
 			<MiningField name="WithSmokingHistory" usageType="supplementary"/>
+			<MiningField name="AATDeficiency" usageType="supplementary"/>
+			<MiningField name="WithEnvironmentalExposures" usageType="supplementary"/>
+			<MiningField name="FamilyHistory" usageType="supplementary"/>		
+	    	
+	    	<MiningField name="COPDSymptoms" usageType="supplementary"/>
 			<MiningField name="Dyspnoea" usageType="supplementary"/>
 			<MiningField name="ChronicCough" usageType="supplementary"/>
 			<MiningField name="ChronicSputum" usageType="supplementary"/>
-			<MiningField name="AATDeficiency" usageType="supplementary"/>
+
 	    </MiningSchema>
 	
 		<RuleSet defaultScore="0">  

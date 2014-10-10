@@ -1433,10 +1433,17 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 				)		
 			, List(("Dyspnoea", "system", "boolean")
 					,("AATDeficiency", "system", "boolean")
+					,("COPDSymptoms", "system", "boolean")
+					,("Msg_Desynpuf_Id", "system", "string")
+					,("Today", "system", "integer")
 					,("COPDSeverity", "system", "string")
+					,("AYearAgo", "system", "integer")
+					,("WithEnvironmentalExposures", "system", "boolean")
 					,("WithSmokingHistory", "system", "boolean")
+					,("Age", "system", "integer")
 					,("ChronicCough", "system", "boolean")
 					,("ChronicSputum", "system", "boolean")
+					,("FamilyHistory", "system", "boolean")
 				)
 			 , baseTypesVer
 			 , "copd_000100_2.10-1.0.jar"

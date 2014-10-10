@@ -104,7 +104,8 @@ cp $srcPath/modeldbg/COPD_000100/target/scala-2.10/copd_000100_2.10-1.0.jar $ONL
 
 # sample configs
 #echo "copy sample configs..."
-cp $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/*cfg $ONLEPLIBPATH
+#cp $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/*cfg $ONLEPLIBPATH
+cp $srcPath/SampleApplication/Tools/KVInit/src/main/resources/*cfg $ONLEPLIBPATH
 
 # other jars 
 echo "copy other jars..."
@@ -121,6 +122,7 @@ cd $srcPath/SampleApplication/Tools/KVInit/src/main/resources
 gzip -c beneficiaries.csv > beneficiaries.gz
 gzip -c messages_new_format.csv > messages_new_format.gz
 gzip -c messages_old_format.csv > messages_old_format.gz
+gzip -c messages_new_format_all.csv > messages_new_format_all.csv.gz
 
 cp *gz $ONLEPLIBPATH/msgdata/
 
