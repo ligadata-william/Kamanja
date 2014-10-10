@@ -91,10 +91,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def GetTopMsgName(msgName: String): String = {
+  private def GetTopMsgName(msgName: String): (String, Boolean, MsgObjAndTransformInfo) = {
     val topMsgInfo = OnLEPMetadata.getMessgeInfo(msgName)
-    if (topMsgInfo == null || topMsgInfo.parents.size == 0) return msgName
-    topMsgInfo.parents(0)._1
+    if (topMsgInfo == null || topMsgInfo.parents.size == 0) return (msgName, false, null)
+    (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
   def execute(msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
@@ -103,18 +103,28 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       // BUGBUG:: for now handling only CSV input data.
       val msg = createMsg(msgType, msgFormat, msgData)
       if (msg != null) {
-        // Get top level Msg for the current msg
-        val topMsgType = GetTopMsgName(msgType)
-        val keyData = msg.getKeyData
-        // val topObj = envContext.getObject(topMsgType, keyData)
-        // Run all models
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
-        RunAllModels(msg, msgData, envContext, readTmNs, rdTmMs)
-        var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
-        if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
-        totalLatencyFromReadToProcess += latencyFromReadToProcess
-        //BUGBUG:: Save the whole message here
-        // envContext.setObject(topMsgType, keyData, topObj)
+        // Get top level Msg for the current msg
+        val topMsgTypeAndHasParent = GetTopMsgName(msgType)
+        val keyData = msg.getKeyData
+        val topObj = envContext.getMsgObject(topMsgTypeAndHasParent._1, keyData)
+        var handleMsg: Boolean = true
+        if (topMsgTypeAndHasParent._2) {
+          handleMsg = topObj != null
+        }
+        if (handleMsg) {
+          val finalTopMsg = if (topObj != null) topObj else msg
+          if (topMsgTypeAndHasParent._2)
+            finalTopMsg.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
+          // Run all models
+          RunAllModels(finalTopMsg, msgData, envContext, readTmNs, rdTmMs)
+          var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
+          if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
+          totalLatencyFromReadToProcess += latencyFromReadToProcess
+          //BUGBUG:: Save the whole message here
+          if (topMsgTypeAndHasParent._2 || (topObj == null))
+            envContext.setMsgObject(topMsgTypeAndHasParent._1, keyData, finalTopMsg)
+        }
       }
     } catch {
       case e: Exception => LOG.error("Failed to create and run message. Error:" + e.getMessage)

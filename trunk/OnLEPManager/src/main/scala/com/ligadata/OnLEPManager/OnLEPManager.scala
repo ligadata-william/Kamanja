@@ -388,7 +388,9 @@ class OnLEPManager {
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           val containerNames = OnLEPMetadata.containerObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+          val topMessageNames = OnLEPMetadata.messageObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.initContainers(OnLEPMetadata.mdMgr, OnLEPConfiguration.jarPath, containerNames)
+          envCtxt.initMessages(OnLEPMetadata.mdMgr, OnLEPConfiguration.jarPath, topMessageNames)
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {

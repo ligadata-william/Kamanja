@@ -73,6 +73,7 @@ class ModelResult(var eventDate: Long, var executedTime: String, var mdlName: St
 
 trait EnvContext {
   def initContainers(mgr : MdMgr, dataPath : String, containerNames: Array[String]): Unit
+  def initMessages(mgr: MdMgr, dataPath: String, msgNames: Array[String]): Unit
   def getObjects(containerName: String, key: String): Array[BaseContainer]
   def getObject(containerName: String, key: String): BaseContainer
   def setObject(containerName: String, key: String, value: BaseContainer): Unit
