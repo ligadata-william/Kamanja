@@ -1,0 +1,92 @@
+option java_package = "com.ligadata.Serialize";
+option java_outer_classname = "MetadataObjects";
+
+message MetadataType {
+
+  enum ProtoObjFormatType {
+       CSV = 0;
+       JSON = 1;
+       SERIALIZED = 2;
+  }
+
+  enum ProtoObjType {
+       None = 0;
+       Int  = 1;
+       Any  = 2;
+       Long = 3;
+       Float = 4;
+       Double = 5;
+       String = 6;
+       Boolean = 7;
+       Char = 8;
+       Array = 9;
+       ArrayBuffer = 10;
+       Set = 11;
+       SortedSet = 12;
+       TreeSet = 13;
+       Map = 14;
+       HashMap = 15;
+       MsgMap = 16;
+       List = 17;
+       Queue = 18;
+       Struct = 19;
+       Attr = 20;
+   }
+
+   enum ProtoObjTypeType {
+   	AnyTypeType = 1;
+	Scalar = 2;
+	Container = 3;
+	TupleN = 4;
+   }
+
+   message ProtoBaseElem {
+
+     required string NameSpace = 1;
+     required string Name = 2;
+     required int32  Ver = 3;
+     optional int64  UniqID = 4;
+     optional int64  CreationTime = 5;
+     optional int64  ModTime = 6;
+     optional string OrigDef = 7;
+     optional string Description = 8;
+     optional string Author = 9;
+     optional string JarName = 10;
+     optional string PhysicalName = 12;
+     optional bool   IsActive = 13;
+     optional bool   IsDeActive = 14;
+     optional int32  MdElemStructVer = 15;
+     repeated string DependencyJarNames = 19;
+   }
+
+   message ProtoBaseType {
+      required ProtoBaseElem pbe = 1;
+      optional string TypeType = 2;
+      optional string Type = 3;
+      optional string implementationName = 4;
+   }
+
+   message ScalarType {
+     	required ProtoBaseElem pbe = 1;
+	required ProtoBaseType pbt = 2;
+   }
+
+   message ProtoBaseTypeKey{
+     required string NameSpace = 1;
+     required string Name = 2;
+     required int32  Ver = 3;
+   }
+
+   message Attribute {
+   	required ProtoBaseElem pbe = 1;
+	required ProtoBaseTypeKey pbt = 2;
+	optional string collectionType = 3;
+   }
+
+   message Model {
+   	required ProtoBaseElem pbe = 1;
+   	required string modelType = 2 [default = "RuleSet"];
+	repeated Attribute  inputVars = 3;
+	repeated Attribute  outputVars = 4;
+   }
+}

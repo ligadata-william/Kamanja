@@ -8,6 +8,7 @@ object SerializerManager
     try{
       serializerType match {
 	case "kryo" =>  return new KryoSerializer
+	case "protobuf" =>  return new ProtoBufSerializer
 	case _ => {
 	  throw new SerializerManagerException("Unknown Serializer Type : " + serializerType)
 	}

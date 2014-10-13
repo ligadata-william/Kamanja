@@ -17,4 +17,6 @@ libraryDependencies ++= Seq(
 "org.scalamacros" % "quasiquotes_2.10.4" % "2.0.0-M6"
 )
 
+libraryDependencies += "com.google.protobuf" % "protobuf-java" % "2.6.0" 
+
 scalacOptions += "-deprecation"

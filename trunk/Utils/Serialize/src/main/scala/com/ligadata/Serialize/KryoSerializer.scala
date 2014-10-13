@@ -59,4 +59,7 @@ class KryoSerializer extends Serializer{
     }
   }
 
+  def DeserializeObjectFromByteArray(ba: Array[Byte],objectType: String) : Object = {
+    DeserializeObjectFromByteArray(ba)
+  }
 }

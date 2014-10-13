@@ -11,4 +11,5 @@ trait Serializer{
   def SetLoggerLevel(level: Level)
   def SerializeObjectToByteArray(obj : Object) : Array[Byte]
   def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object
+  def DeserializeObjectFromByteArray(ba: Array[Byte],objectType: String) : Object
 }
