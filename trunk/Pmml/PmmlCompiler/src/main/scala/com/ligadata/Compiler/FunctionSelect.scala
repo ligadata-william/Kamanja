@@ -392,7 +392,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		cnt += 1
 	  		if (cnt == 1) {
 	  			if (child.isInstanceOf[xFieldRef] && child.asInstanceOf[xFieldRef].field == "SputumCodes") {
-	  				val wtf : String = "wtf"
+	  				val huh : String = "huh" // debugging rest stop 
 	  			}
 	  			/** get the collection type overall */
 	  			val (iterArgs, mbrArgs, collType, collArgTypes, retTypStr) : 
@@ -1389,7 +1389,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		var collElemTypes : Array[BaseTypeDef] = null
 		if (isIterable) { 
 			if (fcnNode.function == "ContainerFilter") {
-				val wtf : Boolean = true
+				val huh : String = "huh" // debugging rest stop 
 			}
 			val typeInfo : FcnTypeInfo = fcnNodeSelector.selectIterableFcn 
 			if (typeInfo != null) {

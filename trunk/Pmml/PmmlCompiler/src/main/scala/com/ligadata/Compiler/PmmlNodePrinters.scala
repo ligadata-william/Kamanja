@@ -191,7 +191,7 @@ object NodePrinterHelpers extends LogTrait {
   		
   		val fcnUseRep : String = fcnBuffer.toString
   		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
-  		val wtf : Boolean = true
+  		val huh : String = "huh" // debugging rest stop 
 	}
 
   		
