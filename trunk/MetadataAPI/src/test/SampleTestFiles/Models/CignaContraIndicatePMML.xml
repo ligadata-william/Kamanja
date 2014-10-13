@@ -6,10 +6,10 @@
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
 	<Header copyright="Cigna Corp. 2014" description="Industry established measures to determining contra indicative drug combinations in Medication input feeds">
-		<Application name="ContraIndicator" version="02.00.01"/>
+		<Application name="ContraIndicator" version="00.01.00"/>
 	</Header>
 
-	<DataDictionary numberOfFields="4">
+	<DataDictionary numberOfFields="3">
 
 		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
 		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
@@ -17,34 +17,45 @@
 	       <Value value="gCtx" property="valid"/>
 	       <Value value="msg" property="valid"/>
 	    </DataField>
-
-	    <DataField name="ValidEventTypes" displayName="ValidInputTypes" optype="categorical" dataType="string">
-	      <Value value="Medication" property="valid"/>
-	    </DataField>
 	</DataDictionary>
 
 	<TransformationDictionary>
 
 	  	<!-- Derived Fields -->
 
-		<!--
-			Obtain the Alert History for this client
-		-->
-		<DerivedField name="conflictMedCds" dataType="ConflictMedCds" optype="categorical">
-			<Apply function="Get">
+		<!-- Obtain the conflict medical code lookup table -->
+		<DerivedField name="conflictMedCds" dataType="ArrayOfConflictMedicalCode" optype="categorical">
+			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">Dimensions</Constant>
 			    <Constant dataType="string">ConflictMedCds</Constant>
 			</Apply>
 		</DerivedField>
 
-		<!-- def AllUniqueHistoryMedicationIdentifiers(): Array[String] = {
-		    medications.map(_.MedicationIdentifier).toSet.toArray
-		  } -->
-		<DerivedField name="AllUniqueHistoryMedicationIdentifiers" dataType="any" optype="categorical">
+
+		<!-- Project the code pair from the conflict med codes and create an array similar to the member's
+			"MedicationIdPairStrings" for set intersection in the ContraIndicative computation -->
+
+		<DerivedField name="conflictMedCdsSet" dataType="ArrayOfString" optype="categorical">
+			<Apply function="ToSet">
+				<Apply function="MakeStrings">
+					<Apply function="ContainerMap">
+			       		<FieldRef field="conflictMedCds"/>
+			 			<Constant dataType="ident">Code1</Constant> 
+			 			<Constant dataType="ident">Code2</Constant> 
+					</Apply>
+		       		<Constant dataType="string">,</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<!-- Create a set of medication identifiers from the member's history -->
+		<DerivedField name="AllUniqueHistoryMedicationIdentifiers" dataType="ArrayOfString" optype="categorical">
 			<Apply function="ToArray">
 				<Apply function="ToSet">
 					<Apply function="ContainerMap">
-			       		<FieldRef field="msg.medications"/>
+			       		<FieldRef field="msg.Medications"/>
 			 			<Constant dataType="ident">MedicationIdentifier</Constant> 
 					</Apply>
 				</Apply>
@@ -52,33 +63,23 @@
 		</DerivedField>
 	
 
-		  <!-- Current event MedicationIdentifier
-		  def CurrentMedicationIdentifier(): String = {
-		    medications.last.MedicationIdentifier
-		  } -->
-		<DerivedField name="CurrentMedicationIdentifier" dataType="string" optype="categorical">
-			<Apply function="ContainerFieldLast">
-	       		<FieldRef field="msg.medications"/>
-	 			<Constant>MedicationIdentifier</Constant> 
+		  <!-- Current event Medication Record -->
+		<DerivedField name="CurrentMedicationRecord" dataType="Medication" optype="categorical">
+			<Apply function="Last">
+	       		<FieldRef field="msg.Medications"/>
 			</Apply>
 		</DerivedField>
 
-		   <!--Making ordered pairs between current & history of MedicationIdentifiers
-		  def MedicationIdOrderedPairs(left: String, right: Array[String]): Array[(String, String)] = {
-		    MakeOrderedPairs(left, right)
-		  } -->
-		<DerivedField name="MedicationIdOrderedPairs" dataType="any" optype="categorical">
+		   <!--Making ordered pairs between current & history of MedicationIdentifiers -->
+		<DerivedField name="MedicationIdOrderedPairs" dataType="ArrayofTupleOfStringString" optype="categorical">
 			<Apply function="MakeOrderedPairs">
-	       		<FieldRef field="CurrentMedicationIdentifier"/>
+	       		<FieldRef field="CurrentMedicationRecord.MedicationIdentifier"/>
 	       		<FieldRef field="AllUniqueHistoryMedicationIdentifiers"/>
 			</Apply>
 		</DerivedField>
 
-		  <!--Making Strings from ordered pairs
-		  def MedicationIdPairStrings(arr: Array[(String, String)]): Array[String] = {
-		    MakeStrings(arr, ",")
-		  } -->
-		<DerivedField name="MedicationIdPairStrings" dataType="any" optype="categorical">
+		  <!--Making Strings from ordered pairs -->
+		<DerivedField name="MedicationIdPairStrings" dataType="ArrayOfString" optype="categorical">
 			<Apply function="MakeStrings">
 	       		<FieldRef field="MedicationIdOrderedPairs"/>
 	       		<Constant dataType="string">,</Constant>
@@ -86,22 +87,21 @@
 		</DerivedField>
 
 
-  		<!-- def FindContraIndicative(arr: Array[String]): Set[String] = {
-		    Intersect(arr, conflictMedCds.toSet) // If this is complex to code in PMML, I can change conflictMedCds of type Set
-		  } -->
-		<DerivedField name="ContraIndicative" dataType="any" optype="categorical">
-			<Apply function="Intersect">
-				<FieldRef field="MedicationIdPairStrings"/>
-				<Apply function="ToSet">
-		       		<FieldRef field="conflictMedCds"/>
+  		<!-- collect the set of contra indicative pairs -->
+		<DerivedField name="ContraIndicative" dataType="ArrayOfString" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="Intersect">
+					<FieldRef field="MedicationIdPairStrings"/>
+					<FieldRef field="conflictMedCdsSet"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
 		
+		<!-- determine if this member is taking questionable drug combinations -->
 		<DerivedField name="IsContraIndicative" dataType="integer" optype="categorical">
 			<Apply function="if">
 				<Apply function="greaterThan">
-					<Apply function="ContainerLength">
+					<Apply function="CollectionLength">
 						<FieldRef field="ContraIndicative"/>
 					</Apply>
 					<Constant dataType="integer">0</Constant>    

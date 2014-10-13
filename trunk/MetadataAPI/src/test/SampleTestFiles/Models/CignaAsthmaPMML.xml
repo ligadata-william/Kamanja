@@ -6,7 +6,7 @@ AsthmaPMML.xml
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
 	<Header copyright="Cigna Corp. Copyright 2014" description="Industry established measures to evaluate likelihood of patient having asthma">
-		<Application name="AsthmaRisk" version="02.01.01"/>
+		<Application name="AsthmaRisk" version="00.01.00"/>
 	</Header>
 
 	<DataDictionary numberOfFields="3">
@@ -24,7 +24,7 @@ AsthmaPMML.xml
 		<DerivedField name="YoungMales" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="Between">
-					<FieldRef field="msg.Bene_Birth_Dt"/>
+					<FieldRef field="msg.beneficiaryBase.Bene_Birth_Dt"/>
 				    <Constant dataType="integer">19800101</Constant>  
 				    <Constant dataType="integer">20121231</Constant>  
 				    <Constant dataType="boolean">true</Constant>  
@@ -41,13 +41,13 @@ AsthmaPMML.xml
 		<DerivedField name="WithAsthmaCodes" dataType="boolean" optype="categorical">
 			<Apply function="or">
 				<Apply function="greaterThan">
-					<Apply function="ContainerLength">
+					<Apply function="CollectionLength">
 						<FieldRef field="inPatientClaims"/>
 					</Apply>
 					<Constant dataType="integer">0</Constant> 
 				</Apply>
 				<Apply function="greaterThan">
-					<Apply function="ContainerLength">
+					<Apply function="CollectionLength">
 						<FieldRef field="outPatientClaims"/>
 					</Apply>
 					<Constant dataType="integer">0</Constant> 
@@ -55,57 +55,57 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 		
-		<!-- InPatientClaims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
-		<DerivedField name="InClaimAdmitDgnsFilter" dataType="Array" optype="categorical">
+		<!-- Inpatient_Claims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
+		<DerivedField name="InClaimAdmitDgnsFilter" dataType="ArrayBufferOfInpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.InPatientClaims"/>
+	       		<FieldRef field="msg.Inpatient_Claims"/>
 	 			<Constant dataType="fIdent">Between</Constant> 
-	 			<Constant>Admtng_Icd9_Dgns_Cd</Constant> 
-	 			<Constant dataType="integer">49300</Constant> 
-				<Constant dataType="integer">49392</Constant> 
+	 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+	 			<Constant dataType="string">49300</Constant> 
+				<Constant dataType="string">49392</Constant> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 	
-		<!-- OutPatientClaims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
-		<DerivedField name="OutClaimAdmitDgnsFilter" dataType="Array" optype="categorical">
+		<!-- Outpatient_Claims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
+		<DerivedField name="OutClaimAdmitDgnsFilter" dataType="ArrayBufferOfOutpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.OutPatientClaims"/>
+	       		<FieldRef field="msg.Outpatient_Claims"/>
 	 			<Constant dataType="fIdent">Between</Constant> 
-	 			<Constant>Admtng_Icd9_Dgns_Cd</Constant> 
-	 			<Constant dataType="integer">49300</Constant> 
-				<Constant dataType="integer">49392</Constant> 
+	 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+	 			<Constant dataType="string">49300</Constant> 
+				<Constant dataType="string">49392</Constant> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 
-		<!-- InPatientClaims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
-		<DerivedField name="InClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+		<!-- Inpatient_Claims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
+		<DerivedField name="InClaimIcd9DgnsFilter" dataType="ArrayBufferOfInpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.InPatientClaims"/>
+	       		<FieldRef field="msg.Inpatient_Claims"/>
 	 			<Constant dataType="fIdent">AnyBetween</Constant> 
 	 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
-	 			<Constant dataType="integer">49300</Constant> 
-				<Constant dataType="integer">49392</Constant> 
+	 			<Constant dataType="string">49300</Constant> 
+				<Constant dataType="string">49392</Constant> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 	
-		<!-- OutPatientClaims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
-		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="Array" optype="categorical">
+		<!-- Outpatient_Claims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
+		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="ArrayBufferOfOutpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.OutPatientClaims"/>
+	       		<FieldRef field="msg.Outpatient_Claims"/>
 	 			<Constant dataType="fIdent">AnyBetween</Constant> 
 	 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
-	 			<Constant dataType="integer">49300</Constant> 
-				<Constant dataType="integer">49392</Constant> 
+	 			<Constant dataType="string">49300</Constant> 
+				<Constant dataType="string">49392</Constant> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 
 		<!-- union of Inpatient where either claims with Icd9_Dgns_Cds and/or 
 			Admtng_Icd9_Dgns_Cd contain asthma codes .. A Set -->
-		<DerivedField name="AllInPatientDiagnoses" dataType="Set" optype="categorical">
+		<DerivedField name="AllInPatientDiagnoses" dataType="SetOfInpatientClaim" optype="categorical">
 			<Apply function="Union">
 	       		<FieldRef field="InClaimIcd9DgnsFilter"/>
 	       		<FieldRef field="InClaimAdmitDgnsFilter"/>
@@ -114,7 +114,7 @@ AsthmaPMML.xml
 	
 		<!-- union of outpatient where either claims with Icd9_Dgns_Cds and/or 
 			Admtng_Icd9_Dgns_Cd contain asthma codes -->
-		<DerivedField name="AllOutPatientDiagnoses" dataType="Set" optype="categorical">
+		<DerivedField name="AllOutPatientDiagnoses" dataType="SetOfOutpatientClaim" optype="categorical">
 			<Apply function="Union">
 	       		<FieldRef field="OutClaimIcd9DgnsFilter"/>
 	       		<FieldRef field="OutClaimAdmitDgnsFilter"/>
@@ -123,7 +123,7 @@ AsthmaPMML.xml
 	
 		<!-- All inpatient records containing one or more asthma codes where
 			clm.Clm_Thru_Dt is between 20080101 and  20100101 inclusive -->
-		<DerivedField name="inPatientClaims" dataType="Array" optype="categorical">
+		<DerivedField name="inPatientClaims" dataType="ArrayOfInpatientClaim" optype="categorical">
 			<Apply function="ToArray">
 				<Apply function="ContainerFilter">
 		       		<FieldRef field="AllInPatientDiagnoses"/>
@@ -138,7 +138,7 @@ AsthmaPMML.xml
 	
 		<!-- All outpatient records containing one or more asthma codes where
 			clm.Clm_Thru_Dt is between 20080101 and  20100101 inclusive -->
-		<DerivedField name="outPatientClaims" dataType="Array" optype="categorical">
+		<DerivedField name="outPatientClaims" dataType="ArrayOfOutpatientClaim" optype="categorical">
 			<Apply function="ToArray">
 				<Apply function="ContainerFilter">
 		       		<FieldRef field="AllOutPatientDiagnoses"/>
@@ -156,12 +156,12 @@ AsthmaPMML.xml
 			<Apply function="Sum">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="inPatientClaims"/>
-		 			<Constant dataType="fIdent">Sum</Constant> 
+		 			<Constant dataType="fIdent">Plus</Constant> 
 		 			<Constant dataType="ident">Clm_Pmt_Amt</Constant> 
 		 			<Constant dataType="ident">Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
+					<Constant dataType="ident">Nch_Bene_Ip_Ddctbl_Amt</Constant> 
+					<Constant dataType="ident">Nch_Bene_Pta_Coinsrnc_Lblty_Am</Constant> 
 					<Constant dataType="ident">Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
-					<Constant dataType="ident">Nch_Bene_Ptb_Ddctbl_Amt</Constant> 
-					<Constant dataType="ident">Nch_Bene_Ptb_Coinsrnc_Amt</Constant> 
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -171,7 +171,7 @@ AsthmaPMML.xml
 			<Apply function="Sum">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="outPatientClaims"/>
-		 			<Constant dataType="fIdent">Sum</Constant> 
+		 			<Constant dataType="fIdent">Plus</Constant> 
 		 			<Constant dataType="ident">Clm_Pmt_Amt</Constant> 
 		 			<Constant dataType="ident">Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
 					<Constant dataType="ident">Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
