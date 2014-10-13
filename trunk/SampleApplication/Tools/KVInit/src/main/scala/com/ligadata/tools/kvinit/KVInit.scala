@@ -29,7 +29,7 @@ object KVInit extends App with LogTrait {
 
     def usage : String = {
 """ 
-Usage: scala com.ligadata.alchemy.kvinit.KVInit 
+Usage: scala com.ligadata.kvinit.KVInit 
     --kvname <full package qualified class name of a BaseContainer or BaseMsg derivative> 
     --kvpath <where to put kvname db> 
     --csvpath <input to load> 

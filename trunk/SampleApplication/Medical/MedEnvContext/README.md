@@ -11,17 +11,17 @@ It uses the MapDb to persist these containers used for managing the COPD et al m
 
 ESSENTIAL:
 
-Building the containers with mapdb and the AlchemyKV tool is essential in order to effectively use the MedPocXXX.cfg files in the resources folder.  The MedPOCEnvContext will try to load each container supplied by the OnLEPManager to it.  If there are keys found in the store, they will be loaded into respective Map[String,BaseContainer] maps.
+The MedPOCEnvContext will try to load each container supplied by the OnLEPManager to it.  If there are keys found in the store, they will be loaded into respective Map[String,BaseContainer] maps.
 
-scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ... com.ligadata.alchemy.kvinit.AlchemyKV --kvname CoughCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/coughCodes.csv  --keyfieldname icd9Code
+scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ...  --kvname CoughCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/coughCodes.csv  --keyfieldname icd9Code
 
-scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ... com.ligadata.alchemy.kvinit.AlchemyKV ---kvname EnvCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/envExposureCodes.csv  --keyfieldname icd9Code
+scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ...  ---kvname EnvCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/envExposureCodes.csv  --keyfieldname icd9Code
 
-scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ... com.ligadata.alchemy.kvinit.AlchemyKV ---kvname SmokeCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv  --keyfieldname icd9Code
+scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ...  ---kvname SmokeCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv  --keyfieldname icd9Code
 
-scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ... com.ligadata.alchemy.kvinit.AlchemyKV ---kvname SputumCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/Icd9DiagnosisCodes.csv  --keyfieldname icd9Code
+scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ...  ---kvname SputumCodeSet_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/Icd9DiagnosisCodes.csv  --keyfieldname icd9Code
 
-scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ... com.ligadata.alchemy.kvinit.AlchemyKV --kvname Icd9DiagnosisCodeMap_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/Icd9DiagnosisCodes.csv  --keyfieldname icd9Code
+scala -Dlog4j.configuration=file:/somepath/log4j.properties -cp ...  --kvname Icd9DiagnosisCodeMap_100 --kvpath /tmp/OnLEPInstall --csvpath /<yourpath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/Icd9DiagnosisCodes.csv  --keyfieldname icd9Code
 
 This EnvContext implementation is a provisional one for near term.  A productized version will be implemented that can cope with mapdb, cassandra and other things at some point in the near future.
 
