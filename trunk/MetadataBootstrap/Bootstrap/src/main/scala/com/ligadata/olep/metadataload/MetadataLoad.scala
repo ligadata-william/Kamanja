@@ -16,7 +16,6 @@ import com.ligadata.OnLEPBase._
  *  before hand in the metadata store (e.g., a type of a function arg must exist before the function can
  *  be loaded.
  *  
- *  This is for the bank.  See MetadataLoad1.scala for the medical side.
  *  
  */
 

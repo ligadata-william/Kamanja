@@ -33,7 +33,6 @@ object OnLEPMetadata {
   val modelObjects = new HashMap[String, MdlInfo]
 
   def InitMdMgr(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
-    //MetadataAPIImpl.InitMdMgr // This function can load persistent objects, But The model based on alchemy.xml failing during execution. So this is turned off right now
     new MetadataLoad(mdMgr, "", "", "", "").initialize // Test code until we get MdMgr from Ramana
 
     PrepareMessages(loadedJars, loader, mirror)

@@ -1463,7 +1463,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 
 	def InitModelDefs = {
 	  			
-		logger.trace("MetadataLoad...loading AlchemyAlerts model")
+		logger.trace("MetadataLoad...loading COPDRiskAssessment model")
 		mgr.AddModelDef(
 		       MdMgr.sysNS
 			, "COPDRiskAssessment_000100"

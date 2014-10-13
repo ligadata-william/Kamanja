@@ -82,7 +82,6 @@ trait EnvContext {
   def setMsgObject(containerName: String, key: String, value: BaseMsg): Unit
 }
 
-//val gCtx : com.ligadata.OnLEPBase.EnvContext, val msg : com.ligadata.OnLEPBankPoc.BankPocMsg, val modelName:String, val modelVersion:String, val tenantId: String
 trait ModelBase {
   val gCtx: EnvContext
   val msg: BaseMsg
