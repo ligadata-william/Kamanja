@@ -35,9 +35,9 @@ AsthmaPMML.xml
 		-->
 
 		<!--
-			Obtain the SputumCodes used to form its filter set
+			Obtain the SputumCodes BaseContainer array 
 		-->
-		<DerivedField name="SputumCodes" dataType="ArrayOfSputumCodes" optype="categorical">
+		<DerivedField name="SputumBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">FilterArrays</Constant>
@@ -46,46 +46,96 @@ AsthmaPMML.xml
 		</DerivedField>
 
 		<!--
-			Obtain the SmokingCodes used to form its filter set
+			Obtain the SputumCodes used to form its filter set
 		-->
-		<DerivedField name="SmokingCodes" dataType="ArrayOfSmokingCodes" optype="categorical">
+		<DerivedField name="SputumCodes" dataType="ArrayOfSputumCodes" optype="categorical">
+			<Apply function="DownCastArrayMembers">
+				<FieldRef field="SputumBaseContainers"/>
+			    <Constant dataType="mbrTypename">SputumCodes</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtain the SmokingCodes BaseContainer array 
+		-->
+		<DerivedField name="SmokingBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">SmokingCodes</Constant>
+			    <Constant dataType="string">SmokeCodes</Constant>
 			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtain the SmokingCodes used to form its filter set
+		-->
+		<DerivedField name="SmokingCodes" dataType="ArrayOfSmokeCodes" optype="categorical">
+			<Apply function="DownCastArrayMembers">
+				<FieldRef field="SmokingBaseContainers"/>
+			    <Constant dataType="mbrTypename">SmokingCodes</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtain the EnvExposureCodes BaseContainer array 
+		-->
+		<DerivedField name="EnvExposureBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+				<Apply function="GetArray">
+					<FieldRef field="gCtx"/>
+				    <Constant dataType="string">FilterArrays</Constant>
+				    <Constant dataType="string">EnvExposureCodes</Constant>
+				</Apply>
 		</DerivedField>
 
 		<!--
 			Obtain the EnvExposureCodes used to form its filter set
 		-->
 		<DerivedField name="EnvExposureCodes" dataType="ArrayOfEnvExposureCodes" optype="categorical">
-			<Apply function="GetArray">
-				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">EnvExposureCodes</Constant>
+			<Apply function="DownCastArrayMembers">
+				<FieldRef field="EnvExposureBaseContainers"/>
+				<Constant dataType="mbrTypename">EnvExposureCodes</Constant>
 			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtain the CoughCodes BaseContainer array 
+		-->
+		<DerivedField name="CoughBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+				<Apply function="GetArray">
+					<FieldRef field="gCtx"/>
+				    <Constant dataType="string">FilterArrays</Constant>
+				    <Constant dataType="string">CoughCodes</Constant>
+				</Apply>
 		</DerivedField>
 
 		<!--
 			Obtain the CoughCodes used to form its filter set
 		-->
 		<DerivedField name="CoughCodes" dataType="ArrayOfCoughCodes" optype="categorical">
-			<Apply function="GetArray">
-				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">CoughCodes</Constant>
+			<Apply function="DownCastArrayMembers">
+				<FieldRef field="CoughBaseContainers"/>
+				<Constant dataType="mbrTypename">CoughCodes</Constant>
 			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtain the CoughCodes BaseContainer array 
+		-->
+		<DerivedField name="DyspnoeaBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+				<Apply function="GetArray">
+					<FieldRef field="gCtx"/>
+				    <Constant dataType="string">FilterArrays</Constant>
+				    <Constant dataType="string">DyspnoeaCodes</Constant>
+				</Apply>
 		</DerivedField>
 
 		<!--
 			Obtain the CoughCodes used to form its filter set
 		-->
 		<DerivedField name="DyspnoeaCodes" dataType="ArrayOfDyspnoeaCodes" optype="categorical">
-			<Apply function="GetArray">
-				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">DyspnoeaCodes</Constant>
+			<Apply function="DownCastArrayMembers">
+				<FieldRef field="DyspnoeaBaseContainers"/>
+				<Constant dataType="mbrTypename">DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -100,7 +150,7 @@ AsthmaPMML.xml
 			and cough arrays to form respective sets for matching
 			icd9 codes found in the inpatient and outpatient histories.-->
 
-		<DerivedField name="SputumCodeSet" dataType="SetOfString" optype="categorical">
+		<DerivedField name="SputumCodeSet" dataType="ImmutableSetOfString" optype="categorical">
 			<Apply function="ToSet">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="SputumCodes"/>
@@ -109,7 +159,7 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<DerivedField name="SmokingCodeSet" dataType="SetOfString" optype="categorical">
+		<DerivedField name="SmokingCodeSet" dataType="ImmutableSetOfString" optype="categorical">
 			<Apply function="ToSet">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="SmokingCodes"/>
@@ -118,7 +168,7 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<DerivedField name="EnvExposureCodeSet" dataType="SetOfString" optype="categorical">
+		<DerivedField name="EnvExposureCodeSet" dataType="ImmutableSetOfString" optype="categorical">
 			<Apply function="ToSet">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="EnvExposureCodes"/>
@@ -127,7 +177,7 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<DerivedField name="CoughCodeSet" dataType="SetOfString" optype="categorical">
+		<DerivedField name="CoughCodeSet" dataType="ImmutableSetOfString" optype="categorical">
 			<Apply function="ToSet">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="CoughCodes"/>
@@ -136,7 +186,7 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<DerivedField name="DyspnoeaCodeSet" dataType="SetOfString" optype="categorical">
+		<DerivedField name="DyspnoeaCodeSet" dataType="ImmutableSetOfString" optype="categorical">
 			<Apply function="ToSet">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="DyspnoeaCodes"/>
@@ -155,25 +205,11 @@ AsthmaPMML.xml
 	  	<!-- Time a year ago since epoch expressed as ISO8601 date encoded integer -->
 		<DerivedField name="AYearAgo" dataType="integer" optype="categorical">
 			<Apply function="AsCompressedDate">
-				<Apply function="-">
-					<Apply function="Now"/>
-					<Apply function="*">
-						<Apply function="*">
-							<Apply function="*">
-								<Constant dataType="long">60</Constant> 
-								<Constant dataType="long">60</Constant> 
-							</Apply>			
-							<Apply function="*">
-								<Constant dataType="long">24</Constant> 
-								<Constant dataType="long">365</Constant> 
-							</Apply>
-						</Apply>
-						<Constant dataType="long">1000</Constant>
-					</Apply>			
+				<Apply function="YearsAgo">
+					<Constant dataType="integer">1</Constant>			
 				</Apply>
 			</Apply>
 		</DerivedField>
-
 
 	  	<!-- Calculate the member's age -->
 		<DerivedField name="Age" dataType="integer" optype="continuous">

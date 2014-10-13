@@ -21,11 +21,11 @@ class PmmlExecNode (val qName : String)  {
 	
 	def ElementValue : String = qName
 	
-	def asString : String = "PMML"
+	def asString(ctx : PmmlContext) : String = "PMML"
 	
 	def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order) : String = 
 	{
-		asString
+		asString(ctx)
 	}
 	
 	/** general access to PmmlExecNode trees .. our node visitor */
@@ -41,17 +41,46 @@ class PmmlExecNode (val qName : String)  {
 class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNode("Constant") {
 	def Value : DataValue = value
 	
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 	  	val strRep : String = value.toString
 	  	dataType match {
 	  		case "string" | "date" | "time" | "dateTime" => s"${'"'}$strRep${'"'}"
 	  		case "ident"  => s"mbr.$strRep"  /** don't change 'mbr.' without adjusting IterableFcnPrinter.iterablePrint */
+	  		case "typename"  => { 
+	  		  /** 
+	  		   *  The constant value is either the name of a datafield or a derived field.  Retrieve the type info for
+	  		   *  the dataType of this field and return its typeString
+	  		   */ 
+	  		  val expandCompoundFieldTypes : Boolean = false
+	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
+	  		  if (typestr != null) typestr else "Any"
+	  		}
+	  		case "mbrTypename"  => { 
+	  		  /** 
+	  		   *  The constant value is either the name of a datafield or a derived field that is either an Array
+	  		   *  or ArrayBuffer (only collection types currently supported).  Retrieve the type info for member 
+	  		   *  type of this field's Array or ArrayBuffer type and return its typeString
+	  		   */ 
+	  		  val expandCompoundFieldTypes : Boolean = false
+	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
+	  		  if (typedef != null && (typedef.isInstanceOf[ArrayTypeDef] || typedef.isInstanceOf[ArrayBufTypeDef])) {
+	  			  val typeStr : String = typedef match {
+	  			    case ar : ArrayTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
+	  			    case arb : ArrayBufTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
+	  			    case _ => "Any"
+	  			  }
+	  			  typeStr 
+	  		  } else "Any"
+	  		}
+
 	  		case _ => strRep
 	  	}
 	}
 
 	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
-		asString
+		asString(ctx)
 	}
 }
 
@@ -63,7 +92,7 @@ class xHeader(val copyright : String, val description : String) extends PmmlExec
 		applicationName = appName
 		version = ver
 	}
-	override def asString : String =  {
+	override def asString(ctx : PmmlContext) : String =  {
 			val header1 = s"/** Copyright : $copyright Application : $applicationName Version : $version\n"
 			val header2 = s"    Description : $description\n"
 			val header = s"$header1\n$header2 */"
@@ -72,7 +101,7 @@ class xHeader(val copyright : String, val description : String) extends PmmlExec
 	
 	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
 	{
-		asString
+		asString(ctx)
 	}
 
 }
@@ -107,7 +136,7 @@ class xDataField(val name : String
 		closure = closr
 	}
 
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val variable = s"var $name : $typ "
@@ -165,7 +194,7 @@ class xDataDictionary extends PmmlExecNode("DataDictionary") {
 		map += (node.name -> node)
 	}
 
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val dictBuffer : StringBuilder = new StringBuilder()
 		dictBuffer.append("dataDict : Map (\n")
@@ -250,7 +279,7 @@ class xDerivedField(val name : String
 	  name + "_Fcn"
 	}
 	
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val fcnNm = name + "_Fcn"
@@ -297,7 +326,7 @@ class xTransformationDictionary() extends PmmlExecNode("TransformationDictionary
 	def add(node : xDerivedField) {
 		map += (node.name -> node)
 	}
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val dictBuffer : StringBuilder = new StringBuilder()
 		dictBuffer.append("var xDict : Map (\n")
@@ -380,7 +409,7 @@ class xTransformationDictionary() extends PmmlExecNode("TransformationDictionary
 class xDefineFunction(val name : String
 					, val optype : String
 					, val dataType : String)  extends PmmlExecNode("DefineFunction") {	
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val applyv = s"name = $name, optype = $optype, dataType = $dataType"
 		applyv
@@ -429,7 +458,7 @@ class xParameterField(val name : String
 					, val optype : String
 					, val dataType : String)  extends PmmlExecNode("ParameterField") {	
 
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val applyv = s"name = $name, optype = $optype, dataType = $dataType"
 		applyv
@@ -462,7 +491,7 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 	def IfActionElements : ArrayBuffer[PmmlExecNode] = ifActionElements
 	def addIfAction(anAction : PmmlExecNode)  : ArrayBuffer[PmmlExecNode] = { ifActionElements += anAction; ifActionElements }
 	
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val applyv = s"function = $function"
 		applyv
@@ -483,7 +512,7 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 
 class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExecNode("FieldRef") {
   
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val fr = s"FieldRef(field = $field)"
 		fr
@@ -508,7 +537,7 @@ class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExec
 
 class xExtension(val extender : String, val name : String , val value : String ) extends PmmlExecNode("Extension") {
 
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val ext = s"Extension (extender = $extender, name = $name, value = $value)"
 		ext
@@ -627,7 +656,7 @@ class xMapValuesMap(val mapMissingTo : String
 	}
  
 	/** general diagnostic function to see what is there */
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val ext = s"xMapValuesMap(outputColumn = $outputColumn dataType = $typ"
@@ -659,7 +688,7 @@ class xMapValuesMapInline(mapMissingTo : String
 			extends xMapValuesMap( mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** general diagnostic function to see what is there */
-	override def asString : String = 
+	override def asString(ctx : PmmlContext) : String = 
 	{
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val ext = s"xMapValuesMapInline(outputColumn = $outputColumn dataType = $typ"
@@ -692,7 +721,7 @@ class xMapValuesMapExternal(mapMissingTo : String
 			extends xMapValuesMap(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
-  override def asString : String = 
+  override def asString(ctx : PmmlContext) : String = 
 	  {
 		val typ = PmmlTypes.scalaDataType(dataType)
 			val ext = s"xMapValuesMapExternal(outputColumn = $outputColumn dataType = $typ"
@@ -739,7 +768,7 @@ class xMapValuesArray(val mapMissingTo : String
 	def addExtensions ( xs : Array[xExtension]) {
 		extensions ++= xs
 	}
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val ext = s"xMapValuesArray(outputColumn = $outputColumn dataType = $typ"
 		ext
@@ -770,7 +799,7 @@ class xMapValuesArrayExternal(mapMissingTo : String
 			extends xMapValuesArray(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val ext = s"xMapValuesArrayExternal(outputColumn = $outputColumn dataType = $typ"
 		ext
@@ -801,7 +830,7 @@ class xMapValuesArrayInline(mapMissingTo : String
 			extends xMapValuesArray(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val ext = s"xMapValuesArrayInline(outputColumn = $outputColumn dataType = $typ"
 		ext
@@ -857,7 +886,7 @@ class xMapValuesArrayInline(mapMissingTo : String
 
 class xFieldColumnPair(field : String, column : String) extends PmmlExecNode("FieldColumnPair") {
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xFieldColumnPair(field = $field column = $column)"
 		ext
 	}
@@ -893,7 +922,7 @@ class xMiningField(val name : String
 	def LowValue(lval : Double) { lowValue = lval }
 	def HighValue(hval : Double) { highValue = hval }
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xMiningField(name = $name)"
 		ext
 	}
@@ -974,7 +1003,7 @@ class xRuleSetModel(val modelName : String
 	def DefaultScore : String = defaultScore
 	
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xRuleSetModel(modelName = $modelName)"
 		ext
 	}
@@ -1013,7 +1042,7 @@ class xRuleSet(val recordCount : String
 				, val defaultScore : String
 				, val defaultConfidence : String)  extends PmmlExecNode("RuleSet") {
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xRuleSet(recordCount = $recordCount, nbCorrect = $nbCorrect, defaultScore = $defaultScore, defaultConfidence = $defaultConfidence )"
 		ext
 	}
@@ -1075,7 +1104,7 @@ class xSimpleRule(val id : Option[String]
 		weight = wt
 	}
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xSimpleRule(id = $id)"
 		ext
 	}
@@ -1117,7 +1146,7 @@ class xScoreDistribution(var value : String
 	def RecordCount(rc : Double) { recordCount = rc }
 	def Confidence(conf : Double) { confidence = conf }
 	def Probability(prob : Double) { probability = prob }
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xScoreDistribution(value = $value)"
 		ext
 	}
@@ -1137,7 +1166,7 @@ class xScoreDistribution(var value : String
 
 class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("CompoundPredicate") {
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xCompoundPredicate(booleanOperator = $booleanOperator)"
 		ext
 	}
@@ -1172,7 +1201,7 @@ class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("Com
 
 class xSimplePredicate(val field : String, val operator : String, value : String) extends PmmlExecNode("SimplePredicate") {
   
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xSimplePredicate($field $operator $value)"
 		ext
 	}
@@ -1216,7 +1245,7 @@ class xSimplePredicate(val field : String, val operator : String, value : String
  */
 class xSimpleSetPredicate(val field: String, val booleanOperator: String) extends PmmlExecNode("SimpleSetPredicate") {
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xSimpleSetPredicate($field $booleanOperator {...})"
 		ext
   	}
@@ -1250,7 +1279,7 @@ class xSimpleSetPredicate(val field: String, val booleanOperator: String) extend
 
 class xArray(val n: String, val arrayType : String, val array : Array[String]) extends PmmlExecNode("Array") {
 
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val s = array.toString()
 		val ext = s"xArray({$s})"
 		ext
@@ -1289,7 +1318,7 @@ class xArray(val n: String, val arrayType : String, val array : Array[String]) e
 
 class xValue(val value : String, val property : String) extends PmmlExecNode("Value") {
 	
-	override def asString : String = {
+	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xValue(value = $value, property = $property)"
 		ext
 	}

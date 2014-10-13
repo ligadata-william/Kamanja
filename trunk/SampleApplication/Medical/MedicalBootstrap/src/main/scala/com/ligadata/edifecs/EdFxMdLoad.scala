@@ -344,9 +344,9 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
 					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
 					        ));		
-		logger.trace("MetadataLoad..SmokingCodes")
+		logger.trace("MetadataLoad..SmokeCodes")
 		mgr.AddFixedContainer(MdMgr.sysNS
-					    , "SmokingCodes"
+					    , "SmokeCodes"
 					    , "com.ligadata.edifecs.SmokeCodes_100"
 					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
 					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
@@ -423,12 +423,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfSputumCodes", MdMgr.sysNS, "SputumCodes", 1, baseTypesVer)
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfSmokingCodes", MdMgr.sysNS, "SmokingCodes", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfSmokeCodes", MdMgr.sysNS, "SmokeCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfEnvExposureCodes", MdMgr.sysNS, "EnvExposureCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfCoughCodes", MdMgr.sysNS, "CoughCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfDyspnoeaCodes", MdMgr.sysNS, "DyspnoeaCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfSputumCodes", MdMgr.sysNS, "SputumCodes", 1, baseTypesVer)
-		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfSmokingCodes", MdMgr.sysNS, "SmokingCodes", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfSmokeCodes", MdMgr.sysNS, "SmokeCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfEnvExposureCodes", MdMgr.sysNS, "EnvExposureCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfCoughCodes", MdMgr.sysNS, "CoughCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfDyspnoeaCodes", MdMgr.sysNS, "DyspnoeaCodes", 1, baseTypesVer)
@@ -452,6 +452,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddHashMap("System", "HashMapOfAnyAny", ("System", "Any"), ("System", "Any"), baseTypesVer)
 		mgr.AddMap("System", "MapOfAnyAny", ("System", "Any"), ("System", "Any"), baseTypesVer)
 
+		mgr.AddImmutableSet(MdMgr.sysNS, "ImmutableSetOfString", MdMgr.sysNS, "String", baseTypesVer)
+		mgr.AddImmutableSet(MdMgr.sysNS, "ImmutableSetOfInt", MdMgr.sysNS, "Int", baseTypesVer)
+		mgr.AddImmutableSet(MdMgr.sysNS, "ImmutableSetOfLong", MdMgr.sysNS, "Long", baseTypesVer)
+		mgr.AddImmutableSet(MdMgr.sysNS, "ImmutableSetOfFloat", MdMgr.sysNS, "Float", baseTypesVer)
+		mgr.AddImmutableSet(MdMgr.sysNS, "ImmutableSetOfDouble", MdMgr.sysNS, "Double", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfString", MdMgr.sysNS, "String", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfInt", MdMgr.sysNS, "Int", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfLong", MdMgr.sysNS, "Long", baseTypesVer)
@@ -519,6 +524,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", baseTypesVer)
 		mgr.AddTreeSet("System", "TreeSetOfAny", "System", "Any", baseTypesVer)
 		mgr.AddSet("System", "SetOfAny", "System", "Any", baseTypesVer)
+		mgr.AddImmutableSet("System", "ImmutableSetOfAny", "System", "Any", baseTypesVer)
 		mgr.AddArrayBuffer("System", "ArrayBufferOfAny", "System", "Any", 1, baseTypesVer)
 		mgr.AddArray("System", "ArrayOfAny", "System", "Any", 1, baseTypesVer)
 		//mgr.AddArray("System", "ArrayOfString", "System", "String", 1, baseTypesVer)
@@ -573,6 +579,9 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "AsSeconds", "com.ligadata.pmml.udfs.Udfs.AsSeconds", ("System", "Long"), List(("milliSecs", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "Timenow", "com.ligadata.pmml.udfs.Udfs.Timenow", ("System", "Long"), List(), null)
 		mgr.AddFunc("Pmml", "Now", "com.ligadata.pmml.udfs.Udfs.Now", ("System", "Long"), List(), null)
+		
+		mgr.AddFunc("Pmml", "YearsAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("numYrs", "System", "Int")), null)
+		
 		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Int"), List(), null)
 		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Int"), List(), null)
 		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
@@ -953,6 +962,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "SetOfFloat"),("keys", "System", "ArrayOfFloat")), null)
 		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "SetOfDouble"),("keys", "System", "ArrayOfDouble")), null)
 		
+		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "ImmutableSetOfString"),("keys", "System", "ArrayOfString")), null)
+		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "ImmutableSetOfString"),("keys", "System", "ArrayOfLong")), null)
+		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "ImmutableSetOfString"),("keys", "System", "ArrayOfInt")), null)
+		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "ImmutableSetOfString"),("keys", "System", "ArrayOfFloat")), null)
+		mgr.AddFunc("Pmml", "ContainsAny", "com.ligadata.pmml.udfs.Udfs.ContainsAny", ("System", "Boolean"), List(("setExpr", "System", "ImmutableSetOfString"),("keys", "System", "ArrayOfDouble")), null)
+		
 		mgr.AddFunc("Pmml", "NotAnyBetween", "com.ligadata.pmml.udfs.Udfs.NotAnyBetween", ("System", "Boolean"), List(("arrayExpr", "System", "ArrayOfDouble"),("leftMargin", "System", "Double"),("rightMargin", "System", "Double"),("inclusive", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "NotAnyBetween", "com.ligadata.pmml.udfs.Udfs.NotAnyBetween", ("System", "Boolean"), List(("arrayExpr", "System", "ArrayOfFloat"),("leftMargin", "System", "Float"),("rightMargin", "System", "Float"),("inclusive", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "NotAnyBetween", "com.ligadata.pmml.udfs.Udfs.NotAnyBetween", ("System", "Boolean"), List(("arrayExpr", "System", "ArrayOfInt"),("leftMargin", "System", "Int"),("rightMargin", "System", "Int"),("inclusive", "System", "Boolean")), null)
@@ -992,6 +1007,11 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "SetOfInt")), null)
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "SetOfFloat")), null)
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "SetOfDouble")), null)
+				
+		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfString")), null)
+		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfInt")), null)
+		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfFloat")), null)
+		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfDouble")), null)
 				
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
@@ -1125,6 +1145,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerFilter"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
+					, (MdMgr.sysNS, "ImmutableSetOfAny")
+					, List(("containerId", MdMgr.sysNS, "ImmutableSetOfAny"))
+					, fcnMacrofeatures)	  
+		mgr.AddFunc(MdMgr.sysNS
+					, "ContainerFilter"
+					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
 					, (MdMgr.sysNS, "TreeSetOfAny")
 					, List(("containerId", MdMgr.sysNS, "TreeSetOfAny"))
 					, fcnMacrofeatures)	  
@@ -1166,6 +1192,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
 					, (MdMgr.sysNS, "SetOfAny")
 					, List(("containerId", MdMgr.sysNS, "SetOfAny"))
+					, fcnMacrofeatures)	  
+		mgr.AddFunc(MdMgr.sysNS
+					, "ContainerMap"
+					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
+					, (MdMgr.sysNS, "ImmutableSetOfAny")
+					, List(("containerId", MdMgr.sysNS, "ImmutableSetOfAny"))
 					, fcnMacrofeatures)	  
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerMap"
@@ -1414,6 +1446,18 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Any"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
+		  
+					
+		val DowncastArrayMbrTemplate : String =   """%1%.map(itm => itm.asInstanceOf[%2%])"""
+
+					
+		mgr.AddMacro(MdMgr.sysNS
+					, "DownCastArrayMembers"
+					, (MdMgr.sysNS, "ArrayOfAny")
+					, List(("arrayExpr", MdMgr.sysNS, "ArrayOfAny"), ("mbrType", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (DowncastArrayMbrTemplate,DowncastArrayMbrTemplate))	  
+		  
 		  
 	}
 

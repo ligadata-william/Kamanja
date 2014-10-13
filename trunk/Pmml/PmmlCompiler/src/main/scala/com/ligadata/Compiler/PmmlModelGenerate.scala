@@ -15,169 +15,169 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 			val clsName : String = clsparts.last
 			clsName  match {
 				  	case "xConstant" => {
-				  			val constStr : String = node.asInstanceOf[xConstant].asString
+				  			val constStr : String = node.asInstanceOf[xConstant].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(constStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xHeader" => {
-				  			val hdStr : String = node.asInstanceOf[xHeader].asString
+				  			val hdStr : String = node.asInstanceOf[xHeader].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(hdStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xDataField" => {
-				  			val dStr : String = node.asInstanceOf[xDataField].asString
+				  			val dStr : String = node.asInstanceOf[xDataField].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(dStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xDataDictionary" => {
-				  			val dStr : String = node.asInstanceOf[xDataDictionary].asString
+				  			val dStr : String = node.asInstanceOf[xDataDictionary].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(dStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xDerivedField" => {
-				  			val dStr : String = node.asInstanceOf[xDerivedField].asString
+				  			val dStr : String = node.asInstanceOf[xDerivedField].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(dStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xTransformationDictionary" => {
-				  			val xStr : String = node.asInstanceOf[xTransformationDictionary].asString
+				  			val xStr : String = node.asInstanceOf[xTransformationDictionary].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(xStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xDefineFunction" => {
-				  			val xStr : String = node.asInstanceOf[xDefineFunction].asString
+				  			val xStr : String = node.asInstanceOf[xDefineFunction].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(xStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xParameterField" => {
-				  			val xStr : String = node.asInstanceOf[xParameterField].asString
+				  			val xStr : String = node.asInstanceOf[xParameterField].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(xStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xApply" => {
-				  			val aStr : String = node.asInstanceOf[xApply].asString
+				  			val aStr : String = node.asInstanceOf[xApply].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(aStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xFieldRef" => {
-				  			val fStr : String = node.asInstanceOf[xFieldRef].asString
+				  			val fStr : String = node.asInstanceOf[xFieldRef].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(fStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xExtension" => {
-				  			val eStr : String = node.asInstanceOf[xExtension].asString
+				  			val eStr : String = node.asInstanceOf[xExtension].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(eStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesMap" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMap].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesMap].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesMapInline" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMapInline].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesMapInline].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesMapExternal" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMapExternal].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesMapExternal].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesArray" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArray].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesArray].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesArrayExternal" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArrayExternal].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesArrayExternal].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMapValuesArrayInline" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArrayInline].asString
+				  			val mStr : String = node.asInstanceOf[xMapValuesArrayInline].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xFieldColumnPair" => {
-				  			val fStr : String = node.asInstanceOf[xFieldColumnPair].asString
+				  			val fStr : String = node.asInstanceOf[xFieldColumnPair].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(fStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xMiningField" => {
-				  			val mStr : String = node.asInstanceOf[xMiningField].asString
+				  			val mStr : String = node.asInstanceOf[xMiningField].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(mStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xRuleSelectionMethod" => {
-				  			val rStr : String = node.asInstanceOf[xRuleSelectionMethod].asString
+				  			val rStr : String = node.asInstanceOf[xRuleSelectionMethod].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(rStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xRuleSetModel" => {
-				  			val rStr : String = node.asInstanceOf[xRuleSetModel].asString
+				  			val rStr : String = node.asInstanceOf[xRuleSetModel].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(rStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xSimpleRule" => {
-				  			val rStr : String = node.asInstanceOf[xSimpleRule].asString
+				  			val rStr : String = node.asInstanceOf[xSimpleRule].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(rStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xScoreDistribution" => {
-				  			val sStr : String = node.asInstanceOf[xScoreDistribution].asString
+				  			val sStr : String = node.asInstanceOf[xScoreDistribution].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(sStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xCompoundPredicate" => {
-				  			val cStr : String = node.asInstanceOf[xCompoundPredicate].asString
+				  			val cStr : String = node.asInstanceOf[xCompoundPredicate].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(cStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xSimplePredicate" => {
-				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString
+				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(cStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xSimpleSetPredicate" => {
-				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString
+				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(cStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xArray" => {
-				  			val aStr : String = node.asInstanceOf[xArray].asString
+				  			val aStr : String = node.asInstanceOf[xArray].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(aStr)
 				  			gBuffer.append("\n")
 				  	}
 					case "xValue" => {
-				  			val vStr : String = node.asInstanceOf[xValue].asString
+				  			val vStr : String = node.asInstanceOf[xValue].asString(ctx)
 				  			gBuffer.append("\n")
 				  			gBuffer.append(vStr)
 				  			gBuffer.append("\n")
@@ -300,7 +300,7 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 				node.qName  match {
 				  	case "Constant" => { 
 				  			val aConst : xConstant = node.asInstanceOf[xConstant]	
-				  			val rep : String = aConst.asString
+				  			val rep : String = aConst.asString(ctx)
 				  			gBuffer.append(aConst.codeGenerator(ctx, this, kind, Traversal.PREORDER))
 				  	}
 					case "Header" => { 

@@ -172,25 +172,25 @@ object MedEnvContext extends EnvContext with LogTrait {
 	    //Array(getObject(containerName, key))
 	    	    
 	    /**  
-	    	Check the "FilterArrays" map for the array with the name "key" to be returned.  If not present, 
-	    	access the _containers map with the name. Project the values of the map tuples to an array.  
+	    	Check the "FilterArrays" map for the array with the name "key.toLowerCase" to be returned.  If not present, 
+	    	access the _containers map with the key. Project the keys of the map tuples to an array.  
 	    	Add it to the FilterArrays map and return the array as the function result.
 	    */
-	    
-	    val filterValues : Array[BaseContainer] = if (_filterArrays.contains(key)) {
-	    	_filterArrays.apply(key)
+	    val lKey : String = key.toLowerCase()
+	    val filterSetValues : Array[BaseContainer] = if (_filterArrays.contains(lKey)) {
+	    	_filterArrays.apply(lKey)
 	    } else {
-	    	val values : Array[BaseContainer] = if (_containers.contains(key)) {
-		    	val map : scala.collection.mutable.Map[String, BaseContainer] = _containers(key)
+	    	val setVals : Array[BaseContainer] = if (_containers.contains(lKey)) {
+		    	val map : scala.collection.mutable.Map[String, BaseContainer] = _containers(lKey)
 		    	val filterVals : Array[BaseContainer] = map.values.toArray
-		    	_filterArrays(key) = filterVals /** cache it for subsequent calls */
+		    	_filterArrays(lKey) = filterVals /** cache it for subsequent calls */
 		    	filterVals
 	    	} else {
 	    		Array[BaseContainer]()
 	    	}
-	    	values
+	    	setVals
 	    }
-	    filterValues	    
+	    filterSetValues	    
 	}
 
  	private def makeKey(key : String) : com.ligadata.keyvaluestore.Key = {

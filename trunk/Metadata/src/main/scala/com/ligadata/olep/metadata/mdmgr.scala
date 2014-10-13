@@ -1015,6 +1015,35 @@ class MdMgr {
   }
 
   /**
+   *  MakeSet catalogs an Set based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the set's type namespace
+   *  @param name - the set name.
+   *  @param tpNameSp - the namespace of the set's key element type
+   *  @param tpName - the name for the element's type
+   *  @param ver - the version info
+   *
+   */
+  // We should not have physicalName. This container type has type inside, which has PhysicalName
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def MakeImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): ImmutableSetTypeDef = {
+    if (Type(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"Set $nameSpace.$name already exists.")
+    }
+    val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The set's key type $tpNameSp.$tpName does not exist")
+    if (keyDef == null) { throw new NoSuchElementException(s"The set's key type $tpNameSp.$tpName does not exist") }
+    val depJarSet = scala.collection.mutable.Set[String]()
+    if (keyDef.JarName != null) depJarSet += keyDef.JarName
+    if (keyDef.DependencyJarNames != null) depJarSet ++= keyDef.DependencyJarNames
+    val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
+    val st = new ImmutableSetTypeDef
+    SetBaseElem(st, nameSpace, name, ver, null, depJars)
+    st.keyDef = keyDef
+    st
+  }
+
+  /**
    *  MakeTreeSet catalogs an TreeSet based type in the metadata manager's global typedefs map
    *
    *  @param nameSpace - the set's type namespace
@@ -1786,6 +1815,35 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddSet(set: SetTypeDef): Unit = {
+    if (Type(set.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Set ${set.FullName} already exists.")
+    }
+    typeDefs.addBinding(set.FullName, set)
+  }
+
+  /**
+   *  AddImmutableSet catalogs an immutable Set based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the set's type namespace
+   *  @param name - the set name.
+   *  @param tpNameSp - the namespace of the set's key element type
+   *  @param tpName - the name for the element's type
+   *  @param ver - version info
+   *
+   */
+  // We should not have physicalName. This container type has type inside, which has PhysicalName
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddImmutableSet(nameSpace: String
+		      , name: String
+		      , tpNameSp: String
+		      , tpName: String
+		      , ver: Int): Unit = {
+    AddImmutableSet(MakeImmutableSet(nameSpace, name, tpNameSp, tpName, ver))
+  }
+
+  @throws(classOf[AlreadyExistsException])
+  def AddImmutableSet(set: ImmutableSetTypeDef): Unit = {
     if (Type(set.FullName, -1, false) != None) {
       throw new AlreadyExistsException(s"Set ${set.FullName} already exists.")
     }
