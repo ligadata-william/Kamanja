@@ -25,7 +25,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String])
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String])
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String)
@@ -333,6 +333,9 @@ class MessageDefImpl {
       }
       count = count + 1
     }
+    if (message.PartitionKey != null)
+      scalaclass = scalaclass.append(partitionkeyStr(message))
+
     log.trace("final arglist " + argsList)
     if (jarset != null)
       message.jarset = jarset
@@ -369,6 +372,7 @@ import scala.util.parsing.json.JSON
 import scala.xml.XML
 import scala.xml.Elem
 import com.ligadata.OnLEPBase.{InputData, DelimitedData, JsonData, XmlData}
+import com.ligadata.BaseTypes._
 """ + imprt
 
   }
@@ -418,6 +422,12 @@ trait BaseContainer {
 	  """
   }
 
+  def partitionkeyStr(msg: Message): String = {
+
+    "\n	override def getKeyData: String = " + msg.PartitionKey(0)
+
+  }
+
   def inputData = {
     """ 
 trait InputData {
@@ -438,7 +448,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       case "System.Boolean" => "false"
       case "System.Double" => "0.0"
       case "System.Long" => "0"
-      case "System.Char" => "\'\'"
+      case "System.Char" => "\' \'"
       case "System.String" => "\"\""
       case _ => ""
     }
@@ -638,13 +648,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
-    containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray)
+    containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
     containerDef
   }
 
   def createMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
-    msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray)
+    msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
     msgDef
   }
   /*
@@ -767,7 +777,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null)
   }
 
   def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
@@ -777,6 +787,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var container: Message = null
     var pkg: String = "com.ligadata.messagedef"
     val tkey: String = "TransformData"
+    var pKey: String = ""
+    var partitionKeysList: List[String] = null
     try {
       if (message != null) {
         for (key: String <- message.keys) {
@@ -790,6 +802,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
               tdata = getTransformData(message, key)
             }
           }
+
+          if (key.equals("PartitionKey")) {
+            partitionKeysList = message.getOrElse("PartitionKey", null).asInstanceOf[List[String]]
+            for (partitionKey: String <- partitionKeysList) {
+              if (partitionKeysList.size == 1)
+                pKey = partitionKey
+            }
+          }
         }
       }
     } catch {
@@ -799,7 +819,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele.toList, tdataexists, tdata, null, pkg, null, null, null, null)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele.toList, tdataexists, tdata, null, pkg, null, null, null, null, partitionKeysList)
   }
 
   def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
