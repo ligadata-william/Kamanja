@@ -41,7 +41,7 @@ object TestMetadataAPI{
 
   var databaseOpen = false
 
-  lazy val serializer = SerializerManager.GetSerializer("kryo")
+  var serializer = SerializerManager.GetSerializer("kryo")
 
   def testDbConn{
     var hostnames = "localhost"
@@ -1130,47 +1130,13 @@ object TestMetadataAPI{
     }
   }
 
-//  def TestKryoSerialize1{
-//    MetadataAPIImpl.InitMdMgrFromBootStrap
-//    val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
-//    msgDefs match{
-//      case None => {
-//	logger.trace("No Messages found ")
-//      }
-//      case Some(ms) => {
-//	val msa = ms.toArray
-//	msa.foreach( m => {
-//	  val ba = serializer.SerializeObjectToByteArray(m)
-//	  val m1 = serializer.DeserializeObjectFromByteArray(ba,new MessageDef)
-//	  assert(m.asInstanceOf[MessageDef].FullNameWithVer == m1.asInstanceOf[MessageDef].FullNameWithVer)
-//	})
-//      }
-//    }
-//  }
-//
-//
-//  def TestKryoSerialize2{
-//    MetadataAPIImpl.InitMdMgrFromBootStrap
-//    val msgDefs = MdMgr.GetMdMgr.Models(true,true)
-//    msgDefs match{
-//      case None => {
-//	logger.trace("No Models found ")
-//      }
-//      case Some(ms) => {
-//	val msa = ms.toArray
-//	msa.foreach( m => {
-//	  val ba = serializer.SerializeObjectToByteArray1(m)
-//	  val m1 = serializer.DeserializeObjectFromByteArray1(ba,m)
-//	  assert(m.asInstanceOf[ModelDef].FullNameWithVer == m1.asInstanceOf[ModelDef].FullNameWithVer)
-//	})
-//      }
-//    }
-//  }
 
-  def TestKryoSerialize3{
-    MetadataAPIImpl.InitMdMgrFromBootStrap
-    val msgDefs = MdMgr.GetMdMgr.Models(true,true)
-    msgDefs match{
+  def TestSerialize1(serializeType:String) = {
+    //MetadataAPIImpl.InitMdMgrFromBootStrap
+    var serializer = SerializerManager.GetSerializer(serializeType)
+    serializer.SetLoggerLevel(Level.TRACE)
+    val modelDefs = MdMgr.GetMdMgr.Models(true,true)
+    modelDefs match{
       case None => {
 	logger.trace("No Models found ")
       }
@@ -1178,9 +1144,16 @@ object TestMetadataAPI{
 	val msa = ms.toArray
 	msa.foreach( m => {
 	  val ba = serializer.SerializeObjectToByteArray(m)
-	  val m1 = serializer.DeserializeObjectFromByteArray(ba)
-	  logger.trace("Length of json object => " + JsonSerializer.SerializeObjectToJson(m1.asInstanceOf[ModelDef]).length)
-	  assert(JsonSerializer.SerializeObjectToJson(m) == JsonSerializer.SerializeObjectToJson(m1.asInstanceOf[ModelDef]))
+	  MdMgr.GetMdMgr.RemoveModel(m.nameSpace,m.name,m.ver)
+	  val m1 = serializer.DeserializeObjectFromByteArray(ba,m.getClass().getName()).asInstanceOf[ModelDef]
+	  val preJson  = JsonSerializer.SerializeObjectToJson(m);
+	  val postJson = JsonSerializer.SerializeObjectToJson(m);
+	  logger.trace("Length of pre  Json string => " + preJson.length)
+	  logger.trace("Length of post Json string => " + postJson.length)
+
+	  logger.trace("Json Before Any Serialization => " + preJson)
+	  logger.trace("Json After  Serialization/DeSerialization => " + postJson)
+	  assert(preJson == postJson)
 	})
       }
     }
@@ -1317,9 +1290,8 @@ object TestMetadataAPI{
       // AddDerivedConcept
       // AddType
       //TestKryoSerialize
-      //TestKryoSerialize1
-      //TestKryoSerialize2
-      //TestKryoSerialize3
+      //TestSerialize1("kryo")
+      //TestSerialize1("protobuf")
 
     }catch {
       case e: Exception => {
