@@ -38,9 +38,9 @@ AsthmaPMML.xml
 			Obtain the SputumCodes BaseContainer array 
 		-->
 		<DerivedField name="SputumBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
-			<Apply function="GetArray">
+			<Apply function="Contains">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
+			    <Constant dataType="string">SputumCodes</Constant>
 			    <Constant dataType="string">SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -249,47 +249,6 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<!-- Over Smoking coded in icd9 codes in last year  -->
-		<DerivedField name="WithSmokingHistory" dataType="boolean" optype="categorical">
-			<Apply function="greaterThan">
-				<Apply function="+">
-					<Apply function="CollectionLength">
-						<Apply function="ContainerFilter">
-				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
-				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="SmokingCodeSet"/> 
-						</Apply>
-					</Apply>
-					<Apply function="CollectionLength">
-						<Apply function="ContainerFilter">
-				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="SmokingCodeSet"/> 
-				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
-						</Apply>
-					</Apply>
-					<Apply function="CollectionLength">
-						<Apply function="ContainerFilter">
-				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
-				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="SmokingCodeSet"/> 
-						</Apply>
-					</Apply>
-					<Apply function="CollectionLength">
-						<Apply function="ContainerFilter">
-				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="SmokingCodeSet"/> 
-				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
-						</Apply>
-					</Apply>
-				</Apply>
-				<Constant dataType="integer">0</Constant> 
-			</Apply>
-		</DerivedField>
-
 		<!-- All inpatient records this past year  NOTE: Clm_Thru_Dt expressed
 			 as ISO8601 encoded int since epoch for this method... if it were millisecs,
 			 things need to be adjusted -->
@@ -323,6 +282,55 @@ AsthmaPMML.xml
 		</DerivedField>
 
 		<!-- 
+			Tally the reports of Smoking from the inpatient and
+			outpatient records over the past year and answer if that tally 
+			is greater than 0
+		  -->
+		<DerivedField name="WithSmokingHistory" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<Apply function="+">
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="inpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SmokingCodes</Constant>
+				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="inpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">ContainsAny</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SmokingCodes</Constant>
+				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="outpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SmokingCodes</Constant>
+				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
+						</Apply>
+					</Apply>
+					<Apply function="CollectionLength">
+						<Apply function="ContainerFilter">
+				       		<FieldRef field="outpatientInfoThisLastYear"/>
+				 			<Constant dataType="fIdent">ContainsAny</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SmokingCodes</Constant>
+				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
+						</Apply>
+					</Apply>
+				</Apply>
+				<Constant dataType="integer">0</Constant> 
+			</Apply>
+		</DerivedField>
+
+		<!-- 
 			Tally the reports of Environmental Exposure from the inpatient and
 			outpatient records over the past year and answer if that tally 
 			is greater than 0
@@ -333,32 +341,36 @@ AsthmaPMML.xml
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">EnvExposures</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="EnvExposureCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="EnvExposureCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">EnvExposures</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">EnvExposures</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="EnvExposureCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="EnvExposureCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">EnvExposures</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
@@ -390,32 +402,36 @@ AsthmaPMML.xml
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">DyspnoeaCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="DyspnoeaCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="DyspnoeaCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">DyspnoeaCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">DyspnoeaCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="DyspnoeaCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="DyspnoeaCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">DyspnoeaCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
@@ -431,32 +447,36 @@ AsthmaPMML.xml
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">CoughCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="CoughCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="CoughCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">CoughCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">CoughCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="CoughCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="CoughCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">CoughCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
@@ -472,32 +492,36 @@ AsthmaPMML.xml
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SputumCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="SputumCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="inpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="SputumCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SputumCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
-				 			<Constant dataType="fIdent">IsIn</Constant> 
+				 			<Constant dataType="fIdent">Contains</Constant> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SputumCodes</Constant>
 				 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
-				 			<FieldRef field="SputumCodeSet"/> 
 						</Apply>
 					</Apply>
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="outpatientInfoThisLastYear"/>
 				 			<Constant dataType="fIdent">ContainsAny</Constant> 
-				 			<FieldRef field="SputumCodeSet"/> 
+							<FieldRef field="gCtx"/>
+			    			<Constant dataType="string">SputumCodes</Constant>
 				 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 						</Apply>
 					</Apply>

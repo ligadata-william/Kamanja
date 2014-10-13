@@ -2340,6 +2340,14 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     now.getMillis()
   }
 
+  /** 
+   *  Answer the number of millisecs numYrs ago.
+   */
+  def YearsAgo(numYrs : Int) : Long = {
+     val rightNow : org.joda.time.DateTime = new org.joda.time.DateTime()
+     val someTimeAgo = rightNow.minusYears(numYrs)
+     someTimeAgo.getMillis()
+  }
 
 
   /** 
@@ -2370,7 +2378,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     val yr : Int = dtAtMidnight.year().get()
     val mo : Int = dtAtMidnight.monthOfYear().get()
     val day : Int = dtAtMidnight.dayOfMonth().get()
-    val compressedDate : Int = yr * 10000 + mo * 1000 + day
+    val compressedDate : Int = yr * 10000 + mo * 100 + day
     
     compressedDate
   }

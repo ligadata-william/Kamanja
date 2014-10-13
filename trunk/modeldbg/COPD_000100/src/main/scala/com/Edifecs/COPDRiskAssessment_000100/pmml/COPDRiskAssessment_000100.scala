@@ -115,63 +115,73 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
 
         /** initialize the transformation dictionary (derived field part) */
         var xbar1 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CATII_Rule2" -> new Derive_CATII_Rule2("CATII_Rule2", "Boolean", xbar1, "null", "null", ""))
+        ctx.xDict += ("SputumBaseContainers" -> new Derive_SputumBaseContainers("SputumBaseContainers", "Any", xbar1, "null", "null", ""))
         var xbar2 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AATDeficiency" -> new Derive_AATDeficiency("AATDeficiency", "Boolean", xbar2, "null", "null", ""))
+        ctx.xDict += ("CATII_Rule2" -> new Derive_CATII_Rule2("CATII_Rule2", "Boolean", xbar2, "null", "null", ""))
         var xbar3 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("COPDSymptoms" -> new Derive_COPDSymptoms("COPDSymptoms", "Boolean", xbar3, "null", "null", ""))
+        ctx.xDict += ("AATDeficiency" -> new Derive_AATDeficiency("AATDeficiency", "Boolean", xbar3, "null", "null", ""))
         var xbar4 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DyspnoeaCodeSet" -> new Derive_DyspnoeaCodeSet("DyspnoeaCodeSet", "Any", xbar4, "null", "null", ""))
+        ctx.xDict += ("COPDSymptoms" -> new Derive_COPDSymptoms("COPDSymptoms", "Boolean", xbar4, "null", "null", ""))
         var xbar5 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CATI_Rule1b" -> new Derive_CATI_Rule1b("CATI_Rule1b", "Boolean", xbar5, "null", "null", ""))
+        ctx.xDict += ("DyspnoeaCodeSet" -> new Derive_DyspnoeaCodeSet("DyspnoeaCodeSet", "Any", xbar5, "null", "null", ""))
         var xbar6 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SputumCodes" -> new Derive_SputumCodes("SputumCodes", "Any", xbar6, "null", "null", ""))
+        ctx.xDict += ("CATI_Rule1b" -> new Derive_CATI_Rule1b("CATI_Rule1b", "Boolean", xbar6, "null", "null", ""))
         var xbar7 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar7, "null", "null", ""))
+        ctx.xDict += ("SputumCodes" -> new Derive_SputumCodes("SputumCodes", "Any", xbar7, "null", "null", ""))
         var xbar8 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("FortyYrsOrOlder" -> new Derive_FortyYrsOrOlder("FortyYrsOrOlder", "Boolean", xbar8, "null", "null", ""))
+        ctx.xDict += ("MaterializeOutputs" -> new Derive_MaterializeOutputs("MaterializeOutputs", "Boolean", xbar8, "null", "null", ""))
         var xbar9 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughCodes" -> new Derive_CoughCodes("CoughCodes", "Any", xbar9, "null", "null", ""))
+        ctx.xDict += ("FortyYrsOrOlder" -> new Derive_FortyYrsOrOlder("FortyYrsOrOlder", "Boolean", xbar9, "null", "null", ""))
         var xbar10 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("ChronicSputum" -> new Derive_ChronicSputum("ChronicSputum", "Boolean", xbar10, "null", "null", ""))
         var xbar11 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("AYearAgo" -> new Derive_AYearAgo("AYearAgo", "Int", xbar11, "null", "null", ""))
+        ctx.xDict += ("CoughCodes" -> new Derive_CoughCodes("CoughCodes", "Any", xbar11, "null", "null", ""))
         var xbar12 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar12, "null", "null", ""))
+        ctx.xDict += ("AYearAgo" -> new Derive_AYearAgo("AYearAgo", "Int", xbar12, "null", "null", ""))
         var xbar13 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar13, "null", "null", ""))
+        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar13, "null", "null", ""))
         var xbar14 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Age" -> new Derive_Age("Age", "Int", xbar14, "null", "null", ""))
+        ctx.xDict += ("DyspnoeaBaseContainers" -> new Derive_DyspnoeaBaseContainers("DyspnoeaBaseContainers", "Any", xbar14, "null", "null", ""))
         var xbar15 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar15, "null", "null", ""))
+        ctx.xDict += ("CoughBaseContainers" -> new Derive_CoughBaseContainers("CoughBaseContainers", "Any", xbar15, "null", "null", ""))
         var xbar16 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar16, "null", "null", ""))
+        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar16, "null", "null", ""))
         var xbar17 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar17, "null", "null", ""))
+        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar17, "null", "null", ""))
         var xbar18 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar18, "null", "null", ""))
+        ctx.xDict += ("Age" -> new Derive_Age("Age", "Int", xbar18, "null", "null", ""))
         var xbar19 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar19, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar19, "null", "null", ""))
         var xbar20 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar20, "null", "null", ""))
+        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar20, "null", "null", ""))
         var xbar21 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar21, "null", "null", ""))
+        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar21, "null", "null", ""))
         var xbar22 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar22, "null", "null", ""))
+        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar22, "null", "null", ""))
         var xbar23 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar23, "null", "null", ""))
+        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar23, "null", "null", ""))
         var xbar24 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar24, "null", "null", ""))
+        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar24, "null", "null", ""))
         var xbar25 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar25, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar25, "null", "null", ""))
         var xbar26 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar26, "null", "null", ""))
+        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar26, "null", "null", ""))
         var xbar27 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar27, "null", "null", ""))
+        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar27, "null", "null", ""))
         var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar28, "null", "null", ""))
+        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar28, "null", "null", ""))
         var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar29, "null", "null", ""))
+        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar29, "null", "null", ""))
+        var xbar30 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar30, "null", "null", ""))
+        var xbar31 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("SmokingBaseContainers" -> new Derive_SmokingBaseContainers("SmokingBaseContainers", "Any", xbar31, "null", "null", ""))
+        var xbar32 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar32, "null", "null", ""))
+        var xbar33 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("EnvExposureBaseContainers" -> new Derive_EnvExposureBaseContainers("EnvExposureBaseContainers", "Any", xbar33, "null", "null", ""))
+        var xbar34 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar34, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -265,13 +275,37 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
 
 /*************** Derived Field Class Definitions ***************/
 
+class Derive_SputumBaseContainers (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val SputumBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SputumCodes")
+        ctx.xDict.apply("SputumBaseContainers").Value(new AnyDataValue(SputumBaseContainers))
+          new AnyDataValue(SputumBaseContainers)
+    }
+
+}
+
+
 class Derive_SputumCodes (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val SputumCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SputumCodes")
+        val SputumCodes = ctx.valueFor("SputumBaseContainers").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.OnLEPBase.BaseContainer]].map(itm => itm.asInstanceOf[com.ligadata.edifecs.SputumCodes_100])
         ctx.xDict.apply("SputumCodes").Value(new AnyDataValue(SputumCodes))
           new AnyDataValue(SputumCodes)
+    }
+
+}
+
+
+class Derive_SmokingBaseContainers (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val SmokingBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SmokeCodes")
+        ctx.xDict.apply("SmokingBaseContainers").Value(new AnyDataValue(SmokingBaseContainers))
+          new AnyDataValue(SmokingBaseContainers)
     }
 
 }
@@ -281,9 +315,21 @@ class Derive_SmokingCodes (name : String, dataType : String, validValues: ArrayB
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val SmokingCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "SmokingCodes")
+        val SmokingCodes = ctx.valueFor("SmokingBaseContainers").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.OnLEPBase.BaseContainer]].map(itm => itm.asInstanceOf[com.ligadata.edifecs.SmokeCodes_100])
         ctx.xDict.apply("SmokingCodes").Value(new AnyDataValue(SmokingCodes))
           new AnyDataValue(SmokingCodes)
+    }
+
+}
+
+
+class Derive_EnvExposureBaseContainers (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val EnvExposureBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "EnvExposureCodes")
+        ctx.xDict.apply("EnvExposureBaseContainers").Value(new AnyDataValue(EnvExposureBaseContainers))
+          new AnyDataValue(EnvExposureBaseContainers)
     }
 
 }
@@ -293,9 +339,21 @@ class Derive_EnvExposureCodes (name : String, dataType : String, validValues: Ar
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val EnvExposureCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "EnvExposureCodes")
+        val EnvExposureCodes = ctx.valueFor("EnvExposureBaseContainers").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.OnLEPBase.BaseContainer]].map(itm => itm.asInstanceOf[com.ligadata.edifecs.EnvCodes_100])
         ctx.xDict.apply("EnvExposureCodes").Value(new AnyDataValue(EnvExposureCodes))
           new AnyDataValue(EnvExposureCodes)
+    }
+
+}
+
+
+class Derive_CoughBaseContainers (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val CoughBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "CoughCodes")
+        ctx.xDict.apply("CoughBaseContainers").Value(new AnyDataValue(CoughBaseContainers))
+          new AnyDataValue(CoughBaseContainers)
     }
 
 }
@@ -305,9 +363,21 @@ class Derive_CoughCodes (name : String, dataType : String, validValues: ArrayBuf
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val CoughCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "CoughCodes")
+        val CoughCodes = ctx.valueFor("CoughBaseContainers").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.OnLEPBase.BaseContainer]].map(itm => itm.asInstanceOf[com.ligadata.edifecs.CoughCodes_100])
         ctx.xDict.apply("CoughCodes").Value(new AnyDataValue(CoughCodes))
           new AnyDataValue(CoughCodes)
+    }
+
+}
+
+
+class Derive_DyspnoeaBaseContainers (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val DyspnoeaBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "DyspnoeaCodes")
+        ctx.xDict.apply("DyspnoeaBaseContainers").Value(new AnyDataValue(DyspnoeaBaseContainers))
+          new AnyDataValue(DyspnoeaBaseContainers)
     }
 
 }
@@ -317,7 +387,7 @@ class Derive_DyspnoeaCodes (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val DyspnoeaCodes = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "DyspnoeaCodes")
+        val DyspnoeaCodes = ctx.valueFor("DyspnoeaBaseContainers").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.OnLEPBase.BaseContainer]].map(itm => itm.asInstanceOf[com.ligadata.edifecs.DyspnoeaCodes_100])
         ctx.xDict.apply("DyspnoeaCodes").Value(new AnyDataValue(DyspnoeaCodes))
           new AnyDataValue(DyspnoeaCodes)
     }
@@ -401,7 +471,7 @@ class Derive_AYearAgo (name : String, dataType : String, validValues: ArrayBuffe
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : IntDataValue = {
-        val AYearAgo = AsCompressedDate(Minus(Now(), Multiply(Multiply(Multiply(60, 60), Multiply(24, 365)), 1000)))
+        val AYearAgo = AsCompressedDate(YearsAgo(1))
         ctx.xDict.apply("AYearAgo").Value(new IntDataValue(AYearAgo))
           new IntDataValue(AYearAgo)
     }
@@ -449,7 +519,7 @@ class Derive_WithSmokingHistory (name : String, dataType : String, validValues: 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val WithSmokingHistory = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
+        val WithSmokingHistory = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SmokingCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
         ctx.xDict.apply("WithSmokingHistory").Value(new BooleanDataValue(WithSmokingHistory))
           new BooleanDataValue(WithSmokingHistory)
     }
@@ -485,7 +555,7 @@ class Derive_WithEnvironmentalExposures (name : String, dataType : String, valid
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val WithEnvironmentalExposures = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
+        val WithEnvironmentalExposures = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("EnvExposureCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
         ctx.xDict.apply("WithEnvironmentalExposures").Value(new BooleanDataValue(WithEnvironmentalExposures))
           new BooleanDataValue(WithEnvironmentalExposures)
     }
@@ -509,7 +579,7 @@ class Derive_Dyspnoea (name : String, dataType : String, validValues: ArrayBuffe
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val Dyspnoea = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
+        val Dyspnoea = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("DyspnoeaCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
         ctx.xDict.apply("Dyspnoea").Value(new BooleanDataValue(Dyspnoea))
           new BooleanDataValue(Dyspnoea)
     }
@@ -521,7 +591,7 @@ class Derive_ChronicCough (name : String, dataType : String, validValues: ArrayB
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ChronicCough = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
+        val ChronicCough = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("CoughCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
         ctx.xDict.apply("ChronicCough").Value(new BooleanDataValue(ChronicCough))
           new BooleanDataValue(ChronicCough)
     }
@@ -533,7 +603,7 @@ class Derive_ChronicSputum (name : String, dataType : String, validValues: Array
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val ChronicSputum = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.mutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
+        val ChronicSputum = GreaterThan(Plus(CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("inpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.IsIn(mbr.Admtng_Icd9_Dgns_Cd, ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]]) })), CollectionLength(ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].filter( mbr => { com.ligadata.pmml.udfs.Udfs.ContainsAny(ctx.valueFor("SputumCodeSet").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Set[String]], mbr.Icd9_Dgns_Cds) }))), 0)
         ctx.xDict.apply("ChronicSputum").Value(new BooleanDataValue(ChronicSputum))
           new BooleanDataValue(ChronicSputum)
     }

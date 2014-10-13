@@ -256,6 +256,19 @@ class SetTypeDef extends ContainerTypeDef {
   }
 }
 
+class ImmutableSetTypeDef extends ContainerTypeDef {
+  def tType = tSet
+  var keyDef: BaseTypeDef = _
+
+  override def IsFixed: Boolean = false
+  override def typeString: String = {
+    "scala.collection.immutable.Set[" + keyDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef)
+  }
+}
+
 class TreeSetTypeDef extends ContainerTypeDef {
   def tType = tTreeSet
   var keyDef: BaseTypeDef = _
