@@ -220,23 +220,9 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
         val miningVars : Array[MiningField] = GetContext.GetRuleSetModel.MiningSchemaMap().values.toArray
         val predictionFld : MiningField = miningVars.filter(m => m.usageType == "predicted").head
 
-        /** This piece prevents result generation when model doesn't score by any rule... i.e., is relying on the */
-        /** the default score.  This will be optionally executed based upon argument from engine ultimately. */
-        val somePrediction : DataValue = ctx.valueFor(predictionFld.name) 
-        val predictedValue : Any = somePrediction match { 
-    	  		 case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value 
-    	  		 case f    : FloatDataValue    => somePrediction.asInstanceOf[FloatDataValue].Value 
-    	  		 case l    : LongDataValue     => somePrediction.asInstanceOf[LongDataValue].Value 
-    	  		 case i    : IntDataValue      => somePrediction.asInstanceOf[IntDataValue].Value 
-    	  		 case b    : BooleanDataValue  => somePrediction.asInstanceOf[BooleanDataValue].Value 
-    	  		 case ddv  : DateDataValue     => somePrediction.asInstanceOf[DateDataValue].Value 
-    	  		 case dtdv : DateTimeDataValue => somePrediction.asInstanceOf[DateTimeDataValue].Value 
-    	  		 case tdv  : TimeDataValue     => somePrediction.asInstanceOf[TimeDataValue].Value 
-    	  		 case s    : StringDataValue   => somePrediction.asInstanceOf[StringDataValue].Value 
+/**(All results to print)*/
 
-    	  		 case _ => somePrediction.asInstanceOf[AnyDataValue].Value 
-        } 
-        val modelProducedResult : Boolean = (predictedValue.toString != defaultScore)
+        val modelProducedResult : Boolean = true
 
         val modelResult : ModelResult = if (modelProducedResult) {
             val results : Array[Result] = GetContext.GetRuleSetModel.MiningSchemaMap().retain((k,v) => 
