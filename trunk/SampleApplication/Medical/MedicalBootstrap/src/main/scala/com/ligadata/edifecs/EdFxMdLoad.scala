@@ -337,9 +337,9 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
 					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
 					        ));		
-		logger.trace("MetadataLoad..EnvExposureCodes")
+		logger.trace("MetadataLoad..EnvCodes")
 		mgr.AddFixedContainer(MdMgr.sysNS
-					    , "EnvExposureCodes"
+					    , "EnvCodes"
 					    , "com.ligadata.edifecs.EnvCodes_100"
 					    , List((MdMgr.sysNS, "icd9Code", MdMgr.sysNS, "String", false, null)
 					    	, (MdMgr.sysNS, "icd9Descr", MdMgr.sysNS, "String", false, null)
@@ -424,12 +424,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfSputumCodes", MdMgr.sysNS, "SputumCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfSmokeCodes", MdMgr.sysNS, "SmokeCodes", 1, baseTypesVer)
-		mgr.AddArray(MdMgr.sysNS, "ArrayOfEnvExposureCodes", MdMgr.sysNS, "EnvExposureCodes", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfEnvCodes", MdMgr.sysNS, "EnvCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfCoughCodes", MdMgr.sysNS, "CoughCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfDyspnoeaCodes", MdMgr.sysNS, "DyspnoeaCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfSputumCodes", MdMgr.sysNS, "SputumCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfSmokeCodes", MdMgr.sysNS, "SmokeCodes", 1, baseTypesVer)
-		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfEnvExposureCodes", MdMgr.sysNS, "EnvExposureCodes", 1, baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfEnvCodes", MdMgr.sysNS, "EnvCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfCoughCodes", MdMgr.sysNS, "CoughCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfDyspnoeaCodes", MdMgr.sysNS, "DyspnoeaCodes", 1, baseTypesVer)
 	}

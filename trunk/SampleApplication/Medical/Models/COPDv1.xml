@@ -83,14 +83,14 @@ AsthmaPMML.xml
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
 				    <Constant dataType="string">FilterArrays</Constant>
-				    <Constant dataType="string">EnvExposureCodes</Constant>
+				    <Constant dataType="string">EnvCodes</Constant>
 				</Apply>
 		</DerivedField>
 
 		<!--
 			Obtain the EnvExposureCodes used to form its filter set
 		-->
-		<DerivedField name="EnvExposureCodes" dataType="ArrayOfEnvExposureCodes" optype="categorical">
+		<DerivedField name="EnvExposureCodes" dataType="ArrayOfEnvCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
 				<FieldRef field="EnvExposureBaseContainers"/>
 				<Constant dataType="mbrTypename">EnvExposureCodes</Constant>

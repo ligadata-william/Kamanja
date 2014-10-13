@@ -313,7 +313,7 @@ class Derive_EnvExposureBaseContainers (name : String, dataType : String, validV
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val EnvExposureBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "EnvExposureCodes")
+        val EnvExposureBaseContainers = GetArray(ctx.valueFor("gCtx").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], "FilterArrays", "EnvCodes")
         ctx.xDict.apply("EnvExposureBaseContainers").Value(new AnyDataValue(EnvExposureBaseContainers))
           new AnyDataValue(EnvExposureBaseContainers)
     }
