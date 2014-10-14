@@ -80,6 +80,10 @@ trait EnvContext {
   def setObject(containerName: String, elementkey: Any, value: BaseContainer): Unit
   def getMsgObject(containerName: String, key: String): BaseMsg
   def setMsgObject(containerName: String, key: String, value: BaseMsg): Unit
+  
+  def contains(containerName : String, key : String) : Boolean
+  def containsAny(containerName : String, keys : Array[String]) : Boolean
+  def containsAll(containerName : String, keys : Array[String]) : Boolean
 }
 
 trait ModelBase {

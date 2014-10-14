@@ -33,6 +33,21 @@ import com.ligadata.OnLEPBase._
 
 object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
+  /** Exists checking */
+  
+  def Contains(gCtx : EnvContext, containerName : String, key : String) : Boolean = {
+	  val itExists : Boolean = if (gCtx != null) gCtx.contains(containerName, key) else false
+	  itExists
+  }
+  def ContainsAny(gCtx : EnvContext, containerName : String, keys : Array[String]) : Boolean = {
+	  val itExists : Boolean = if (gCtx != null) gCtx.containsAny(containerName, keys) else false
+	  itExists
+  }
+  def ContainsAll(gCtx : EnvContext, containerName : String, keys : Array[String]) : Boolean = {
+	  val itExists : Boolean = if (gCtx != null) gCtx.containsAll(containerName, keys) else false
+	  itExists
+  }
+  
   /** runtime state write functions NOTE: macros use these functions ... the ctx is not directly
    *  supported in the Pmml */
   
