@@ -86,8 +86,6 @@ object SimpleEnvContextImpl extends EnvContext {
 
 	/**
 	 *   Does the supplied key exist in a container with the supplied name?
-	  def containsAny(containerName : String, keys : Array[String]) : Boolean
-	 * 
 	 */
   	override def contains(containerName : String, key : String) : Boolean = {
 		val container = _containers.getOrElse(containerName.toLowerCase(), null)
@@ -102,7 +100,6 @@ object SimpleEnvContextImpl extends EnvContext {
   
 	/**
 	 *   Does at least one of the supplied keys exist in a container with the supplied name?
-	 * 
 	 */
   	override def containsAny(containerName : String, keys : Array[String]) : Boolean = {
 		val container = _containers.getOrElse(containerName.toLowerCase(), null)
@@ -123,7 +120,7 @@ object SimpleEnvContextImpl extends EnvContext {
 		val container = _containers.getOrElse(containerName.toLowerCase(), null)
 		val isPresent = if (container != null) {
 			val matches : Int = keys.filter( key => container.contains(key.toLowerCase())).size
-			(matches > keys.size)
+			(matches == keys.size)
 		} else {
 			false
 		}

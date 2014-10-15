@@ -207,22 +207,38 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
     }   /** end of initialize fcn  */	
 
     /** provide access to the ruleset model's execute function */
-    def execute(outputCurrentModel:Boolean) : ModelResult = {
+    def execute(emitAllResults : Boolean) : ModelResult = {
         ctx.GetRuleSetModel.execute(ctx)
-        prepareResults
+        prepareResults(emitAllResults)
     }
 
 
     /** prepare output results scored by the rules. */
-    def prepareResults : ModelResult = {
+    def prepareResults(emitAllResults : Boolean) : ModelResult = {
 
         val defaultScore : String = GetContext.GetRuleSetModel.DefaultScore().Value
         val miningVars : Array[MiningField] = GetContext.GetRuleSetModel.MiningSchemaMap().values.toArray
         val predictionFld : MiningField = miningVars.filter(m => m.usageType == "predicted").head
 
-/**(All results to print)*/
+        /** If supplied flag is true, emit all results, else base decision on whether prediction*/
+        /** is a value other than the defaultScore.*/
+        val modelProducedResult : Boolean = if (emitAllResults) true else {
+            val somePrediction : DataValue = ctx.valueFor(predictionFld.name) 
+            val predictedValue : Any = somePrediction match { 
+    	  		     case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value 
+    	  		     case f    : FloatDataValue    => somePrediction.asInstanceOf[FloatDataValue].Value 
+    	  		     case l    : LongDataValue     => somePrediction.asInstanceOf[LongDataValue].Value 
+    	  		     case i    : IntDataValue      => somePrediction.asInstanceOf[IntDataValue].Value 
+    	  		     case b    : BooleanDataValue  => somePrediction.asInstanceOf[BooleanDataValue].Value 
+    	  		     case ddv  : DateDataValue     => somePrediction.asInstanceOf[DateDataValue].Value 
+    	  		     case dtdv : DateTimeDataValue => somePrediction.asInstanceOf[DateTimeDataValue].Value 
+    	  		     case tdv  : TimeDataValue     => somePrediction.asInstanceOf[TimeDataValue].Value 
+    	  		     case s    : StringDataValue   => somePrediction.asInstanceOf[StringDataValue].Value 
 
-        val modelProducedResult : Boolean = true
+    	  		     case _ => somePrediction.asInstanceOf[AnyDataValue].Value 
+            } 
+            (predictedValue.toString != defaultScore)
+        }
 
         val modelResult : ModelResult = if (modelProducedResult) {
             val results : Array[Result] = GetContext.GetRuleSetModel.MiningSchemaMap().retain((k,v) => 
@@ -247,7 +263,7 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
     	  		  	    new Result(mCol.name, MinVarType.StrToMinVarType(mCol.usageType), value)  
 
     	  		  	}) 
-            val millisecsSinceMidnight: Long = Builtins.dateMilliSecondsSinceMidnight().toLong 
+            val millisecsSinceMidnight: Long = dateMilliSecondsSinceMidnight().toLong 
             val now: org.joda.time.DateTime = new org.joda.time.DateTime() 
             val nowStr: String = now.toString 
             val dateMillis : Long = now.getMillis.toLong - millisecsSinceMidnight 

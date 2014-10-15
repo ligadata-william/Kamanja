@@ -33,7 +33,7 @@ import com.ligadata.OnLEPBase._
 
 object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
-  /** Exists checking */
+  /** Exists checking implemented in the EnvContext */
   
   def Contains(gCtx : EnvContext, containerName : String, key : String) : Boolean = {
 	  val itExists : Boolean = if (gCtx != null) gCtx.contains(containerName, key) else false
