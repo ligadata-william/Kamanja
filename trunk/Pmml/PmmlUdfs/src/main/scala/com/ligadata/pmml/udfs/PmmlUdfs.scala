@@ -44,8 +44,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  itExists
   }
   def ContainsAll(gCtx : EnvContext, containerName : String, keys : Array[String]) : Boolean = {
-	  val itExists : Boolean = if (gCtx != null) gCtx.containsAll(containerName, keys) else false
-	  itExists
+	  val allExist : Boolean = if (gCtx != null) gCtx.containsAll(containerName, keys) else false
+	  allExist
   }
   
   /** runtime state write functions NOTE: macros use these functions ... the ctx is not directly

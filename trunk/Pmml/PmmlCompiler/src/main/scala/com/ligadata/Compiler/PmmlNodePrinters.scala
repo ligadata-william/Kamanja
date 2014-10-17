@@ -414,7 +414,7 @@ object NodePrinterHelpers extends LogTrait {
 		val derivedDataTypeNm = PmmlTypes.scalaDerivedDataType(scalaDataType)
 	
 		clsBuffer.append(s"class $classname (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) \n")
-		clsBuffer.append(s"      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { \n\n")
+		clsBuffer.append(s"      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { \n\n")
 		
 	}
 	
@@ -470,6 +470,10 @@ object NodePrinterHelpers extends LogTrait {
 		val fldName : String = fldNameFixer.replaceAllIn(fldNameVal,"_")
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
+		
+		if (ctx.injectLogging) {
+			clsBuffer.append(s"        logger.info(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
+		}
 		clsBuffer.append(s"        val $fldName = ")
 		val ifActionElems : Option[ArrayBuffer[PmmlExecNode]] = IfActionElementsFromTopLevelChild(node)
 		val apply : Option[xApply] = applyFromTopLevelChild(node)
@@ -506,11 +510,17 @@ object NodePrinterHelpers extends LogTrait {
  			/** FIXME: The action statement's return value is returned for the result here. 
  			 *  Should the predictate's result value be returned instead? ... i.e., $ fldName above ... leave it for now.*/
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
+			if (ctx.injectLogging) {
+				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
+			}
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {
+			if (ctx.injectLogging) {
+				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
+			}
 			clsBuffer.append(s"\n        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType($fldName))\n")
-			clsBuffer.append(s"          new $returnDataValueType($fldName)\n")
+			clsBuffer.append(s"        new $returnDataValueType($fldName)\n")
 		}
  		
  		clsBuffer.append(s"    }\n")
@@ -729,7 +739,11 @@ object NodePrinterHelpers extends LogTrait {
 				generateClassName(ctx)
 			}
 			
-		objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
+		if (ctx.injectLogging) {
+			objBuffer.append(s"object $classname extends ModelBaseObj with LogTrait {\n") 
+		} else {
+			objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
+		}
 		
 		/** generate static variables */
 		val somePkg : Option[String] = ctx.pmmlTerms.apply("ModelPackageName")
@@ -828,9 +842,13 @@ object NodePrinterHelpers extends LogTrait {
 			}
 		})
 		val ctorGtxAndMessagesStr : String = ctorMsgsBuffer.toString
-		
+
 		clsBuffer.append(s"class $classname($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
-		clsBuffer.append(s"   extends ModelBase {\n") 
+		if (ctx.injectLogging) {
+			clsBuffer.append(s"   extends ModelBase with LogTrait {\n") 
+		} else {
+			clsBuffer.append(s"   extends ModelBase {\n") 
+		}
 		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		

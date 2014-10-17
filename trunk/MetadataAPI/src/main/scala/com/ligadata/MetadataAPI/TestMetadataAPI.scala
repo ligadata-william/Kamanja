@@ -805,8 +805,11 @@ object TestMetadataAPI{
 
       pmmlFilePath = pmmlFiles(choice-1).toString
 
+	  /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
+	  val injectLoggingStmts : Boolean = false 
+	  
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
-      val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger)
+      val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts)
       val (classStr,model) = compiler.compile(pmmlStr)
       val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
       val (jarFile,depJars) = 
