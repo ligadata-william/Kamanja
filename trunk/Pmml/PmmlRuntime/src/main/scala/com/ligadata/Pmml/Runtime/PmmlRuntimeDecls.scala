@@ -5,9 +5,15 @@ import scala.language.implicitConversions
 import org.joda.time._
 import com.ligadata.olep.metadata._
 import com.ligadata.OnLEPBase._
+import org.apache.log4j.Logger
+
+trait LogTrait {
+    val loggerName = this.getClass.getName()
+    val logger = Logger.getLogger(loggerName)
+}
 
 /** class Context(mgr : MdMgr) { <== we may want 'mgr' this at runtime ...*/
-class Context {
+class Context extends LogTrait {
 	
 	override def equals(another : Any) : Boolean = {
 		(this == another)

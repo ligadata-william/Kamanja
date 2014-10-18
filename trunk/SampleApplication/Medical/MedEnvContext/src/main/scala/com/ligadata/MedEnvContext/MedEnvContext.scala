@@ -269,6 +269,48 @@ object MedEnvContext extends EnvContext with LogTrait {
  	  
  	}
  	
+	/**
+	 *   Does the supplied key exist in a container with the supplied name?
+	 */
+  	override def contains(containerName : String, key : String) : Boolean = {
+		val container = _containers.getOrElse(containerName.toLowerCase(), null)
+		val isPresent = if (container != null) {
+			val lkey : String = key.toString.toLowerCase()
+			container.contains(lkey)
+		} else {
+			false
+		}
+		isPresent
+  	}
+  
+	/**
+	 *   Does at least one of the supplied keys exist in a container with the supplied name?
+	 */
+  	override def containsAny(containerName : String, keys : Array[String]) : Boolean = {
+		val container = _containers.getOrElse(containerName.toLowerCase(), null)
+		val isPresent = if (container != null) {
+			val matches : Int = keys.filter( key => container.contains(key.toLowerCase())).size
+			(matches > 0)
+		} else {
+			false
+		}
+		isPresent
+  	}
+  
+	/**
+	 *   Do all of the supplied keys exist in a container with the supplied name?
+	 */
+  	override def containsAll(containerName : String, keys : Array[String]) : Boolean = {
+		val container = _containers.getOrElse(containerName.toLowerCase(), null)
+		val isPresent = if (container != null) {
+			val matches : Int = keys.filter( key => container.contains(key.toLowerCase())).size
+			(matches == keys.size)
+		} else {
+			false
+		}
+		isPresent
+  	}
+  
 }
 
 

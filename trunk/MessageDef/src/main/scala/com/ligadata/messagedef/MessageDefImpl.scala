@@ -254,7 +254,9 @@ class MessageDefImpl {
           assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
 
         }
-
+        count = count + 1
+        
+        
       } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
         if (typ.get.tType.toString().equals("tArrayBuf")) {
 
@@ -331,7 +333,7 @@ class MessageDefImpl {
         }
 
       }
-      count = count + 1
+
     }
     if (message.PartitionKey != null)
       scalaclass = scalaclass.append(partitionkeyStr(message))

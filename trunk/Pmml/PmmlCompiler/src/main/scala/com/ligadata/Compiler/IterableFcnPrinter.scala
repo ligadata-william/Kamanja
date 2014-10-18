@@ -74,7 +74,7 @@ class IterableFcnPrinter(val fcnName : String
 		
 		val fcnUse : String = fcnBuffer.toString
 		logger.trace(s"IterableFcnPrint... fcn use : $fcnUse")
-		val wtf : Boolean = true
+		val huh : String = "huh" // debugging rest stop 
 	}
 
 	/**

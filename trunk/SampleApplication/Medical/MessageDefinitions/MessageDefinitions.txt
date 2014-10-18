@@ -8,11 +8,7 @@
     "Fields": [
       {
         "Name": "Desynpuf_Id",
-        "Type": "System.String",
-        "Key": {
-          "Type": "Foreign",
-          "Message": "System.Beneficiary"
-        }
+        "Type": "System.String"
       },
       {
         "Name": "Clm_Id",
@@ -371,11 +367,7 @@
     "Fields": [
       {
         "Name": "Desynpuf_Id",
-        "Type": "System.String",
-        "Key": {
-          "Type": "Foreign",
-          "Message": "System.Beneficiary"
-        }
+        "Type": "System.String"
       },
       {
         "Name": "Clm_Id",
@@ -482,11 +474,7 @@
     "Fields": [
       {
         "Name": "Desynpuf_Id",
-        "Type": "System.String",
-        "Key": {
-          "Type": "Foreign",
-          "Message": "System.Beneficiary"
-        }
+        "Type": "System.String"
       },
       {
         "Name": "Clm_Id",
@@ -574,10 +562,7 @@
       {
         "Field": {
           "Name": "Desynpuf_Id",
-          "Type": "System.String",
-          "Key": {
-            "Type": "Primary"
-          }
+          "Type": "System.String"
         }
       },
       {

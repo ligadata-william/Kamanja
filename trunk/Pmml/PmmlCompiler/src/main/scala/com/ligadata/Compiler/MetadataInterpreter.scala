@@ -184,7 +184,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 								val conceptCollected : Boolean = collectConceptType(name, baseTypeTriples)
 								if (! conceptCollected) {
 									/** consider that this may be a simple type ... one last search in active types */
-									val wtf : Boolean = true
+									val huh : String = "huh" // debugging rest stop 
 								}
 							} else {
 								val parentsName : String = if (parentContainer != null) parentContainer.Name else "(no parent name avaialable)"

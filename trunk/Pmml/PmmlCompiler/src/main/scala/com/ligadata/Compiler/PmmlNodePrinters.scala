@@ -191,7 +191,7 @@ object NodePrinterHelpers extends LogTrait {
   		
   		val fcnUseRep : String = fcnBuffer.toString
   		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
-  		val wtf : Boolean = true
+  		val huh : String = "huh" // debugging rest stop 
 	}
 
   		
@@ -414,7 +414,7 @@ object NodePrinterHelpers extends LogTrait {
 		val derivedDataTypeNm = PmmlTypes.scalaDerivedDataType(scalaDataType)
 	
 		clsBuffer.append(s"class $classname (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) \n")
-		clsBuffer.append(s"      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) { \n\n")
+		clsBuffer.append(s"      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { \n\n")
 		
 	}
 	
@@ -470,6 +470,10 @@ object NodePrinterHelpers extends LogTrait {
 		val fldName : String = fldNameFixer.replaceAllIn(fldNameVal,"_")
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
+		
+		if (ctx.injectLogging) {
+			clsBuffer.append(s"        logger.info(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
+		}
 		clsBuffer.append(s"        val $fldName = ")
 		val ifActionElems : Option[ArrayBuffer[PmmlExecNode]] = IfActionElementsFromTopLevelChild(node)
 		val apply : Option[xApply] = applyFromTopLevelChild(node)
@@ -506,11 +510,17 @@ object NodePrinterHelpers extends LogTrait {
  			/** FIXME: The action statement's return value is returned for the result here. 
  			 *  Should the predictate's result value be returned instead? ... i.e., $ fldName above ... leave it for now.*/
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
+			if (ctx.injectLogging) {
+				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
+			}
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {
+			if (ctx.injectLogging) {
+				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
+			}
 			clsBuffer.append(s"\n        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType($fldName))\n")
-			clsBuffer.append(s"          new $returnDataValueType($fldName)\n")
+			clsBuffer.append(s"        new $returnDataValueType($fldName)\n")
 		}
  		
  		clsBuffer.append(s"    }\n")
@@ -729,7 +739,11 @@ object NodePrinterHelpers extends LogTrait {
 				generateClassName(ctx)
 			}
 			
-		objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
+		if (ctx.injectLogging) {
+			objBuffer.append(s"object $classname extends ModelBaseObj with LogTrait {\n") 
+		} else {
+			objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
+		}
 		
 		/** generate static variables */
 		val somePkg : Option[String] = ctx.pmmlTerms.apply("ModelPackageName")
@@ -828,9 +842,13 @@ object NodePrinterHelpers extends LogTrait {
 			}
 		})
 		val ctorGtxAndMessagesStr : String = ctorMsgsBuffer.toString
-		
+
 		clsBuffer.append(s"class $classname($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
-		clsBuffer.append(s"   extends ModelBase {\n") 
+		if (ctx.injectLogging) {
+			clsBuffer.append(s"   extends ModelBase with LogTrait {\n") 
+		} else {
+			clsBuffer.append(s"   extends ModelBase {\n") 
+		}
 		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
@@ -1029,9 +1047,9 @@ object NodePrinterHelpers extends LogTrait {
 		 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
 		 */
 		clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
-		clsBuffer.append(s"    def execute(outputCurrentModel:Boolean) : ModelResult = {\n")
+		clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResult = {\n")
 		clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
-		clsBuffer.append(s"        prepareResults\n")
+		clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 		clsBuffer.append(s"    }\n")
 		clsBuffer.append(s"\n")
 		
@@ -1065,7 +1083,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		prepResultBuffer.append(s"\n")
 		prepResultBuffer.append(s"    /** prepare output results scored by the rules. */\n")
-		prepResultBuffer.append(s"    def prepareResults : ModelResult = {\n")
+		prepResultBuffer.append(s"    def prepareResults(emitAllResults : Boolean) : ModelResult = {\n")
 		prepResultBuffer.append(s"\n")
 		
 		/** NOTE: The mining field values need to be duplicated here so as to not foul the "retain" in the next step... this mining map is a variable
@@ -1075,23 +1093,25 @@ object NodePrinterHelpers extends LogTrait {
         prepResultBuffer.append(s"        val predictionFld : MiningField = miningVars.filter(m => m.usageType == ${'"'}predicted${'"'}).head\n") 
 
 		prepResultBuffer.append(s"\n")                       
-		prepResultBuffer.append(s"        /** This piece prevents result generation when model doesn't score by any rule... i.e., is relying on the */\n")                       
-		prepResultBuffer.append(s"        /** the default score.  This will be optionally executed based upon argument from engine ultimately. */\n")                       
-		prepResultBuffer.append(s"        val somePrediction : DataValue = ctx.valueFor(predictionFld.name) \n")
-		prepResultBuffer.append(s"        val predictedValue : Any = somePrediction match { \n")
-		prepResultBuffer.append(s"    	  		 case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case f    : FloatDataValue    => somePrediction.asInstanceOf[FloatDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case l    : LongDataValue     => somePrediction.asInstanceOf[LongDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case i    : IntDataValue      => somePrediction.asInstanceOf[IntDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case b    : BooleanDataValue  => somePrediction.asInstanceOf[BooleanDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case ddv  : DateDataValue     => somePrediction.asInstanceOf[DateDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case dtdv : DateTimeDataValue => somePrediction.asInstanceOf[DateTimeDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case tdv  : TimeDataValue     => somePrediction.asInstanceOf[TimeDataValue].Value \n")
-		prepResultBuffer.append(s"    	  		 case s    : StringDataValue   => somePrediction.asInstanceOf[StringDataValue].Value \n")
+		prepResultBuffer.append(s"        /** If supplied flag is true, emit all results, else base decision on whether prediction*/\n")                       
+		prepResultBuffer.append(s"        /** is a value other than the defaultScore.*/\n")                       
+		prepResultBuffer.append(s"        val modelProducedResult : Boolean = if (emitAllResults) true else {\n")
+		prepResultBuffer.append(s"            val somePrediction : DataValue = ctx.valueFor(predictionFld.name) \n")
+		prepResultBuffer.append(s"            val predictedValue : Any = somePrediction match { \n")
+		prepResultBuffer.append(s"    	  		     case d    : DoubleDataValue   => somePrediction.asInstanceOf[DoubleDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case f    : FloatDataValue    => somePrediction.asInstanceOf[FloatDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case l    : LongDataValue     => somePrediction.asInstanceOf[LongDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case i    : IntDataValue      => somePrediction.asInstanceOf[IntDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case b    : BooleanDataValue  => somePrediction.asInstanceOf[BooleanDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case ddv  : DateDataValue     => somePrediction.asInstanceOf[DateDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case dtdv : DateTimeDataValue => somePrediction.asInstanceOf[DateTimeDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case tdv  : TimeDataValue     => somePrediction.asInstanceOf[TimeDataValue].Value \n")
+		prepResultBuffer.append(s"    	  		     case s    : StringDataValue   => somePrediction.asInstanceOf[StringDataValue].Value \n")
 		prepResultBuffer.append(s"\n")                       
-		prepResultBuffer.append(s"    	  		 case _ => somePrediction.asInstanceOf[AnyDataValue].Value \n")
-		prepResultBuffer.append(s"        } \n")
-		prepResultBuffer.append(s"        val modelProducedResult : Boolean = (predictedValue.toString != defaultScore)\n")
+		prepResultBuffer.append(s"    	  		     case _ => somePrediction.asInstanceOf[AnyDataValue].Value \n")
+		prepResultBuffer.append(s"            } \n")
+		prepResultBuffer.append(s"            (predictedValue.toString != defaultScore)\n")
+		prepResultBuffer.append(s"        }\n")                       
 		
 		prepResultBuffer.append(s"\n")                       
 		
@@ -1119,7 +1139,7 @@ object NodePrinterHelpers extends LogTrait {
 		prepResultBuffer.append(s"    	  		  	    new Result(mCol.name, MinVarType.StrToMinVarType(mCol.usageType), value)  \n")
 		prepResultBuffer.append(s"\n")                       
 		prepResultBuffer.append(s"    	  		  	}) \n")
-		prepResultBuffer.append(s"            val millisecsSinceMidnight: Long = Builtins.dateMilliSecondsSinceMidnight().toLong \n")
+		prepResultBuffer.append(s"            val millisecsSinceMidnight: Long = dateMilliSecondsSinceMidnight().toLong \n")
 		prepResultBuffer.append(s"            val now: org.joda.time.DateTime = new org.joda.time.DateTime() \n")
 		prepResultBuffer.append(s"            val nowStr: String = now.toString \n")
 		prepResultBuffer.append(s"            val dateMillis : Long = now.getMillis.toLong - millisecsSinceMidnight \n")

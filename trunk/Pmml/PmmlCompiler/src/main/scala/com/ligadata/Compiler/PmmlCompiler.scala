@@ -263,6 +263,8 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 		                           nextOption(map ++ Map('classpath -> value), tail)
 		    case "--srcOut" :: value :: tail =>
 		                           nextOption(map ++ Map('scala -> value), tail)
+		    case "--instrumentWithLogInfo" :: value :: tail =>
+		                           nextOption(map ++ Map('instrumentWithLogInfo -> value), tail)
 		    case "--client" :: value :: tail =>
 		                           nextOption(map ++ Map('client -> value), tail)
 		    case "--skipjar" :: tail =>
@@ -278,6 +280,8 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 		val scalahome = if (options.contains('scalahome)) options.apply('scalahome) else null 
 		val javahome = if (options.contains('javahome)) options.apply('javahome) else null 
 		val scalaSrcTargetPath = if (options.contains('scala)) options.apply('scala) else null 
+		val instrumentWithLogInfo = if (options.contains('instrumentWithLogInfo)) 
+										options.apply('instrumentWithLogInfo) else null
 		val jarTargetDir = if (options.contains('jarpath)) options.apply('jarpath) else null 
 		val manifestpath = if (options.contains('manifestpath)) options.apply('manifestpath) else null 
 		val clientName = if (options.contains('client)) options.apply('client) else null
@@ -287,6 +291,10 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 
 		if (valid) {
 		  
+			val injectLogging : Boolean = if (instrumentWithLogInfo != null) {
+				val instruLogInfo : String = instrumentWithLogInfo.toLowerCase()
+				(instruLogInfo.startsWith("1") || instruLogInfo.startsWith("y") || instruLogInfo.startsWith("t")) 
+			} else false
 			/** 
 			 *  Files, should it be desirable to load the mdmgr from files the paths will be collected from
 			 *  the following files from the command line. For now, they are not used.  See MetadataLoad.
@@ -300,7 +308,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 			
-			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger)
+			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging)
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
 			val xmlSrcTxt : String  = Source.fromFile(pmmlFilePath).mkString
@@ -347,7 +355,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 }
 
 
-class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger) {
+class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger, val injectLogging : Boolean) {
 	
 	logger.trace("PmmlCompiler ctor ... begins")
 
@@ -365,7 +373,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	}
 
 	/** the PmmlContext needs a fully operational mdmgr... create it after MetadataLoad. */
-	var ctx : PmmlContext = new PmmlContext(mgr)
+	var ctx : PmmlContext = new PmmlContext(mgr, injectLogging)
 
 
 	/** Compile the source found in the supplied path, producing scala src in the returned srcCode string.
