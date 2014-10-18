@@ -34,10 +34,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent, ZooKeeper}
-import org.apache.zookeeper.CreateMode._
-import org.apache.zookeeper.KeeperException.NoNodeException
-import org.apache.zookeeper.data.{ACL, Id, Stat}
+import com.ligadata.ZooKeeper._
+import org.apache.curator.framework.CuratorFramework
+import org.apache.zookeeper.CreateMode
 
 import com.ligadata.Serialize._
 
@@ -63,7 +62,7 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String)
+case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZooKeeperConnectString: String)
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -108,13 +107,35 @@ class KeyValuePair extends IStorage{
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI{
     
-  val sysNS = "System"		// system name space
-  val loggerName = this.getClass.getName
+  lazy val sysNS = "System"		// system name space
+  lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  
   lazy val serializer = SerializerManager.GetSerializer("kryo")
-  
   lazy val metadataAPIConfig = new Properties()
+  var zkc:CuratorFramework = null
+
+  def InitZooKeeper: Unit = {
+    if( zkc != null ){
+      // Zookeeper is already connected
+      return
+    }
+    val zkcConnectString = GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
+    try{
+      zkc = CreateClient.createSimple(zkcConnectString)
+      zkc.start()
+      if(zkc.checkExists().forPath("/ligadata") == null ){
+	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata",null)
+      }
+      if(zkc.checkExists().forPath("/ligadata/metadata") == null ){
+	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata/metadata",null);
+      }
+    }catch{
+	case e:Exception => {
+	  throw new InternalErrorException("Failed to start a zookeeper session with(" +  zkcConnectString + "): " + e.getMessage())
+	}
+    }
+  }
+    
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
@@ -182,6 +203,49 @@ object MetadataAPIImpl extends MetadataAPI{
     store.commitTx(t)
   }
 
+  def ZooKeeperMessage(obj: BaseElemDef,operation:String) : Array[Byte] = {
+    try{
+      obj match{
+	case o:ModelDef => {
+	  val notification = "ModelDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  notification.getBytes
+	}
+	case o:MessageDef => {
+	  val notification = "MessageDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  notification.getBytes
+	}
+	case o:ContainerDef => {
+	  val notification = "ContainerDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  notification.getBytes
+	}
+	case _ => {
+	  throw new InternalErrorException("Internal Error: ZooKeeperMessage is not implemented for objects of type " + obj.getClass.getName)
+	}
+      }
+    }catch{
+	case e:Exception => {
+	  throw new InternalErrorException("Failed to generate a zookeeper message from the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	}
+    }
+  }
+	  
+  def NotifyEngine(obj: BaseElemDef,operation:String){
+    try{
+      val notifyEngine = GetMetadataAPIConfig.getProperty("NOTIFY_ENGINE")
+      if( notifyEngine != "YES"){
+	logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
+	return
+      }
+      val data = ZooKeeperMessage(obj,operation)
+      InitZooKeeper
+      zkc.setData().forPath("/ligadata/metadata",data)
+    }catch{
+      case e:Exception => {
+	  throw new InternalErrorException("Failed to notify a zookeeper message from the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
   def SaveObject(obj: BaseElemDef){
     try{
       val key = obj.FullNameWithVer.toLowerCase
@@ -193,16 +257,19 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.trace("Adding the model to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,modelStore)
 	  MdMgr.GetMdMgr.AddModelDef(o)
+	  NotifyEngine(o,"Add")
 	}
 	case o:MessageDef => {
 	  logger.trace("Adding the message to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,messageStore)
 	  MdMgr.GetMdMgr.AddMsg(o)
+	  NotifyEngine(o,"Add")
 	}
 	case o:ContainerDef => {
 	  logger.trace("Adding the container to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,containerStore)
 	  MdMgr.GetMdMgr.AddContainer(o)
+	  NotifyEngine(o,"Add")
 	}
 	case o:FunctionDef => {
           val funcKey = o.typeString.toLowerCase
@@ -2420,6 +2487,23 @@ object MetadataAPIImpl extends MetadataAPI{
       classpath = classpath.replace("$SCALA_HOME",scala_home)
       logger.trace("CLASSPATH => " + classpath)
 
+      var notifyEngine = prop.getProperty("NOTIFY_ENGINE")
+      if (notifyEngine == null ){
+	logger.warn("The property NOTIFY_ENGINE is not defined in the config file " + configFile + ". It is set to \"NO\"");
+	notifyEngine = "NO"
+      }
+      
+      var zkConnString = "localhost:2181"
+      if( notifyEngine == "YES"){
+	val zkStr = prop.getProperty("ZOOKEEPER_CONNECT_STRING")
+	if (zkStr != null ){
+	  zkConnString = zkStr
+	}
+	else{
+	  logger.warn("The property ZOOKEEPER_CONNECT_STRING must be defined in the config file " + configFile + ". It is set to \"localhost:2181\"")
+	}
+      }
+
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
       metadataAPIConfig.setProperty("DATABASE",database)
       metadataAPIConfig.setProperty("DATABASE_HOST",database_host)
@@ -2429,6 +2513,8 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("JAVA_HOME",java_home)
       metadataAPIConfig.setProperty("MANIFEST_PATH",manifest_path)
       metadataAPIConfig.setProperty("CLASSPATH",classpath)
+      metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
+      metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zkConnString)
       
     } catch { 
       case e: Exception => 
@@ -2510,6 +2596,18 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("ClassPath => " + classPath)
 
+      var notifyEngine = configMap.APIConfigParameters.NotifyEngine
+      if (notifyEngine == null ){
+	throw new MissingPropertyException("The property NotifyEngine must be defined in the config file " + configFile)
+      }
+      logger.trace("NotifyEngine => " + notifyEngine)
+
+      var zooKeeperConnectString = configMap.APIConfigParameters.ZooKeeperConnectString
+      if (zooKeeperConnectString == null ){
+	throw new MissingPropertyException("The property NotifyEngine must be defined in the config file " + configFile)
+      }
+      logger.trace("NotifyEngine => " + zooKeeperConnectString)
+
 
       metadataAPIConfig.setProperty("ROOT_DIR",rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT",gitRootDir)
@@ -2520,6 +2618,8 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("JAVA_HOME",javaHome)
       metadataAPIConfig.setProperty("MANIFEST_PATH",manifestPath)
       metadataAPIConfig.setProperty("CLASSPATH",classPath)
+      metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
+      metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zooKeeperConnectString)
       
     } catch { 
       case e:MappingException =>{

@@ -29,6 +29,9 @@ import java.io.ByteArrayOutputStream
 import com.esotericsoftware.kryo.io.{Input, Output}
 
 import com.ligadata.Serialize._
+import com.ligadata.ZooKeeper._
+import org.apache.curator.framework.CuratorFramework
+import org.apache.zookeeper.CreateMode
 
 case class MissingArgumentException(e: String) extends Throwable(e)
 
@@ -1159,6 +1162,28 @@ object TestMetadataAPI{
     }
   }
 
+  def TestNotifyZooKeeper{
+    val zkc = CreateClient.createSimple("localhost:2181")
+    try{
+      zkc.start()
+      if(zkc.checkExists().forPath("/ligadata") == null ){
+	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata",null)
+      }
+      if(zkc.checkExists().forPath("/ligadata/models") == null ){
+	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata/models",null);
+      }
+      //zkc.inTransaction().setData().forPath("/ligadata/models","Activate ModelDef-2".getBytes);
+      zkc.setData().forPath("/ligadata/models","Activate ModelDef-2".getBytes);
+    }catch{
+      case e:Exception => {
+	e.printStackTrace()
+      }
+    }finally{
+      //Closeables.closeQuietly(zkc);
+      zkc.close();
+    }
+  }
+
   def StartTest{
     try{
       val dumpMetadata = ()               => { DumpMetadata }
@@ -1292,6 +1317,7 @@ object TestMetadataAPI{
       //TestKryoSerialize
       //TestSerialize1("kryo")
       //TestSerialize1("protobuf")
+      //TestNotifyZooKeeper
 
     }catch {
       case e: Exception => {
