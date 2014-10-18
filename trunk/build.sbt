@@ -17,6 +17,8 @@ resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + 
 
 val Organization = "com.ligadata"
 
+lazy val ZooKeeperCurator = project.in(file("Utils/ZooKeeper/curator"))
+
 lazy val BaseTypes = project.in(file("BaseTypes")) dependsOn(Metadata)
 
 lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata)
@@ -57,7 +59,7 @@ lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(Pm
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperCurator)
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(MetadataAPI)
 
