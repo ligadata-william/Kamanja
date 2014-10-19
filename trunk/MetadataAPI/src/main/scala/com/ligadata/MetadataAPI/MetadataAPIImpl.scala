@@ -114,6 +114,14 @@ object MetadataAPIImpl extends MetadataAPI{
   lazy val metadataAPIConfig = new Properties()
   var zkc:CuratorFramework = null
 
+
+  def CloseZKSession: Unit = {
+    if( zkc != null ){
+      zkc.close()
+      zkc = null
+    }
+  }
+
   def InitZooKeeper: Unit = {
     if( zkc != null ){
       // Zookeeper is already connected
@@ -207,7 +215,8 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       obj match{
 	case o:ModelDef => {
-	  val notification = "ModelDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
+	  //val notification = "ModelDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
 	  notification.getBytes
 	}
 	case o:MessageDef => {
@@ -566,14 +575,17 @@ object MetadataAPIImpl extends MetadataAPI{
       case o:ModelDef => {
 	DeleteObject(o.FullNameWithVer.toLowerCase,modelStore)
 	MdMgr.GetMdMgr.RemoveModel(o.nameSpace,o.name,o.ver)
+	NotifyEngine(o,"Remove")
       }
       case o:MessageDef => {
 	DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
 	MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
+	NotifyEngine(o,"Remove")
       }
       case o:ContainerDef => {
 	DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
 	MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
+	NotifyEngine(o,"Remove")
       }
       case o:AttributeDef => {
 	DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
@@ -1398,13 +1410,21 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   // Remove model with Model Name and Version Number
-  def RemoveModel(nameSpace:String, modelName:String, version:Int): String = {
+  def RemoveModel(nameSpace:String, name:String, version:Int): String = {
     try{
-      var key = nameSpace + "." + modelName + "." + version
-      DeleteObject(key.toLowerCase,modelStore)
-      MdMgr.GetMdMgr.RemoveModel(nameSpace,modelName,version)
-      var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
-      apiResult.toString()
+      var key = nameSpace + "." + name + "." + version
+      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase,name.toLowerCase,version.toInt,true)
+      o match{
+	case None => None
+	  logger.trace("model not found => " + key)
+	  var apiResult = new ApiResult(-1,"Failed to Fetch the model",key)
+	  apiResult.toString()
+	case Some(m) => 
+	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
+	  DeleteObject(m.asInstanceOf[ModelDef])
+	  var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
+	  apiResult.toString()
+      }
     }catch {
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to delete the ModelDef:",e.toString)

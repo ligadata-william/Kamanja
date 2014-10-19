@@ -1187,6 +1187,22 @@ object TestMetadataAPI{
     }
   }
 
+
+  def NotifyZooKeeperAddModelEvent{
+    val modelDefs = MdMgr.GetMdMgr.Models(true,true)
+    modelDefs match{
+      case None => {
+	logger.trace("No Models found ")
+      }
+      case Some(ms) => {
+	val msa = ms.toArray
+	msa.foreach( m => {
+	  MetadataAPIImpl.NotifyEngine(m,"Add")
+	})
+      }
+    }
+  }
+
   def StartTest{
     try{
       val dumpMetadata = ()               => { DumpMetadata }
@@ -1321,6 +1337,7 @@ object TestMetadataAPI{
       //TestSerialize1("kryo")
       //TestSerialize1("protobuf")
       //TestNotifyZooKeeper
+      //NotifyZooKeeperAddModelEvent
 
     }catch {
       case e: Exception => {
@@ -1332,6 +1349,7 @@ object TestMetadataAPI{
       if( databaseOpen ){
 	MetadataAPIImpl.CloseDbStore
       }
+      MetadataAPIImpl.CloseZKSession
     }
   }
 }
