@@ -1,5 +1,6 @@
 package com.ligadata.ZooKeeper
 
+import com.ligadata.Serialize._
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
 import org.apache.curator.framework.recipes.cache._
@@ -17,6 +18,7 @@ object TestListener {
   lazy val logger = Logger.getLogger(loggerName)
   val contentLock = new ReentrantLock(true);
   val contentAvailable = contentLock.newCondition();
+  val znodePath = "/ligadata/metadata"
 
   var content:Object = null
 
@@ -47,7 +49,11 @@ object TestListener {
     while(true){
       content = null
       val newData = getContent().asInstanceOf[ChildData]
-      logger.debug("New data received => " + new String(newData.getData()))
+      val receivedJsonStr = new String(newData.getData())
+      logger.debug("New data received => " + receivedJsonStr)
+      val zkMessage = JsonSerializer.parseZkNotification(receivedJsonStr,"JSON")
+      val jsonStr = JsonSerializer.SerializeObjectToJson(zkMessage)
+      assert(receivedJsonStr == jsonStr)
     }
   }
 
@@ -56,7 +62,6 @@ object TestListener {
     val curatorZookeeperClient = CuratorFrameworkFactory.newClient("localhost:2181", retryPolicy)
     curatorZookeeperClient.start
     curatorZookeeperClient.getZookeeperClient.blockUntilConnectedOrTimedOut
-    val znodePath = "/ligadata/models"
     val originalData = new String(curatorZookeeperClient.getData.forPath(znodePath)) // This should be "Some data"
     logger.trace("original data => " + originalData)
     /* Zookeeper NodeCache service to get properties from ZNode */
@@ -67,8 +72,6 @@ object TestListener {
 	try {
 	  val dataFromZNode = nodeCache.getCurrentData
 	  setContent(dataFromZNode)
-	  // This should be some new data after it is changed in the Zookeeper ensemble
-	  //val newData = new String(currentData.getData) 
 	} catch {
 	  case ex: Exception => {
 	    logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause)
