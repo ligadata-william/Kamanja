@@ -17,15 +17,15 @@ resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + 
 
 val Organization = "com.ligadata"
 
-lazy val ZooKeeperCurator = project.in(file("Utils/ZooKeeper/curator"))
-
 lazy val BaseTypes = project.in(file("BaseTypes")) dependsOn(Metadata)
 
 lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata)
 
-lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
-
 lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata)
+
+lazy val ZooKeeperCurator = project.in(file("Utils/ZooKeeper/curator")) dependsOn(Serialize)
+
+lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
 
 lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata,OnLEPBase,MedicalBootstrap,MetadataAPI)
 
