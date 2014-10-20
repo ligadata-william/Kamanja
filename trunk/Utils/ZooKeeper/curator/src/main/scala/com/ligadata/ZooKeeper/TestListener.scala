@@ -46,14 +46,21 @@ object TestListener {
   }
 
   def LoopForever = {
+    var firstTime = true
     while(true){
       content = null
       val newData = getContent().asInstanceOf[ChildData]
-      val receivedJsonStr = new String(newData.getData())
-      logger.debug("New data received => " + receivedJsonStr)
-      val zkMessage = JsonSerializer.parseZkNotification(receivedJsonStr,"JSON")
-      val jsonStr = JsonSerializer.SerializeObjectToJson(zkMessage)
-      assert(receivedJsonStr == jsonStr)
+      // ignore existing message, if any, first time
+      if( firstTime == true ){
+	firstTime = false
+      }
+      else{
+	val receivedJsonStr = new String(newData.getData())
+	logger.debug("New data received => " + receivedJsonStr)
+	val zkMessage = JsonSerializer.parseZkNotification(receivedJsonStr,"JSON")
+	val jsonStr = JsonSerializer.SerializeObjectToJson(zkMessage)
+	assert(receivedJsonStr == jsonStr)
+      }
     }
   }
 
