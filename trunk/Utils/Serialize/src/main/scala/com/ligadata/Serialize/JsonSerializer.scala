@@ -567,7 +567,8 @@ object JsonSerializer {
 
   def SerializeObjectToJson(mdObj:BaseElemDef, operation:String) : String = {
     try{
-      mdObj match{
+      mdObj match{ 
+	// Assuming that message will be different based on type of object, for now it is almost identical
 	case o:ModelDef => {
 	  val json = (("ObjectType"      -> "ModelDef") ~
 		      ("Operation"       -> operation) ~
@@ -581,6 +582,17 @@ object JsonSerializer {
 	}
 	case o:MessageDef => {
 	  val json = (("ObjectType"      -> "MessageDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
+	case o:ContainerDef => {
+	  val json = (("ObjectType"      -> "ContainerDef") ~
 		      ("Operation"       -> operation) ~
 		      ("NameSpace"       -> o.nameSpace) ~
 		      ("Name"            -> o.name) ~
