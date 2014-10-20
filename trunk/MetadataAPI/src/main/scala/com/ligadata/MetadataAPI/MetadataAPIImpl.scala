@@ -220,11 +220,13 @@ object MetadataAPIImpl extends MetadataAPI{
 	  notification.getBytes
 	}
 	case o:MessageDef => {
-	  val notification = "MessageDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
+	  //val notification = "MessageDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
 	  notification.getBytes
 	}
 	case o:ContainerDef => {
-	  val notification = "ContainerDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
+	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
+	  //val notification = "ContainerDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
 	  notification.getBytes
 	}
 	case _ => {
@@ -567,80 +569,89 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def DeleteObject(obj: BaseElemDef){
-    obj match{
-      case o:FunctionDef => {
-	DeleteObject(o.typeString.toLowerCase,functionStore)
-	MdMgr.GetMdMgr.RemoveFunction(o.nameSpace,o.name,o.ver)
+    try{
+      obj match{
+	case o:FunctionDef => {
+	  DeleteObject(o.typeString.toLowerCase,functionStore)
+	  MdMgr.GetMdMgr.RemoveFunction(o.nameSpace,o.name,o.ver)
+	}
+	case o:ModelDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,modelStore)
+	  MdMgr.GetMdMgr.RemoveModel(o.nameSpace,o.name,o.ver)
+	  NotifyEngine(o,"Remove")
+	}
+	case o:MessageDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
+	  MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
+	  NotifyEngine(o,"Remove")
+	}
+	case o:ContainerDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
+	  MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
+	  NotifyEngine(o,"Remove")
+	}
+	case o:AttributeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
+	  MdMgr.GetMdMgr.RemoveAttribute(o.nameSpace,o.name,o.ver)
+	}
+	case o:ScalarTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:ArrayTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:ArrayBufTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:ListTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:QueueTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:SetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:TreeSetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:SortedSetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:MapTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:HashMapTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:TupleTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case o:ContainerTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
+	}
+	case _ => {
+	  logger.error("DeleteObject is not implemented for objects of type " + obj.getClass.getName)
+	}
       }
-      case o:ModelDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,modelStore)
-	MdMgr.GetMdMgr.RemoveModel(o.nameSpace,o.name,o.ver)
-	NotifyEngine(o,"Remove")
+    }catch{
+      case e:ObjectNolongerExistsException => {
+	logger.error("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
       }
-      case o:MessageDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
-	MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
-	NotifyEngine(o,"Remove")
-      }
-      case o:ContainerDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
-	MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
-	NotifyEngine(o,"Remove")
-      }
-      case o:AttributeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
-	MdMgr.GetMdMgr.RemoveAttribute(o.nameSpace,o.name,o.ver)
-      }
-      case o:ScalarTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:ArrayTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:ArrayBufTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:ListTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:QueueTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:SetTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:TreeSetTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:SortedSetTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:MapTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:HashMapTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:TupleTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case o:ContainerTypeDef => {
-	DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-      }
-      case _ => {
-	logger.error("DeleteObject is not implemented for objects of type " + obj.getClass.getName)
+      case e:Exception => {
+	throw new Exception("Unexpected error in DecodeToMetadataType: " + e.getMessage())
       }
     }
   }
@@ -1294,6 +1305,28 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+
+  def AddMessageTypes(msgDef:MessageDef){
+    try{
+      // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
+      // along with the messageDef.
+      val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
+					       msgDef.name,1,msgDef.ver)
+      SaveObject(arrayType)
+      val arrayBufType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arraybufferof"+msgDef.name,
+						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
+      SaveObject(arrayBufType)
+      val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
+							   msgDef.nameSpace,msgDef.name,msgDef.ver)
+      SaveObject(sortedSetType)
+    }
+    catch {
+      case e:Exception =>{
+	throw new Exception(e.getMessage())
+      }
+    }
+  }
+
   def AddMessage(messageText:String, format:String): String = {
     try{
       var compProxy = new CompilerProxy
@@ -1302,7 +1335,9 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("Message Compiler returned an object of type " + msgDef.getClass().getName())
       msgDef match{
 	case msg:MessageDef =>{
-	  AddMessageDef(msg)
+	  val result = AddMessageDef(msg)
+	  AddMessageTypes(msg)
+	  result
 	}
 	case cont:ContainerDef =>{
 	  AddContainerDef(cont)
@@ -1388,13 +1423,28 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   // Remove message with Message Name and Version Number
-  def RemoveMessage(nameSpace:String,messageName:String, version:Int): String = {
+  def RemoveMessage(nameSpace:String,name:String, version:Int): String = {
     try{
-      var key = nameSpace + "." + messageName + "." + version
-      DeleteObject(key.toLowerCase,messageStore)
-      MdMgr.GetMdMgr.RemoveMessage(nameSpace,messageName,version)
-      var apiResult = new ApiResult(0,"Message Definition was Deleted",key)
-      apiResult.toString()
+      var key = nameSpace + "." + name + "." + version
+      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase,name.toLowerCase,version,true)
+      o match{
+	case None => None
+	  logger.trace("Message not found => " + key)
+	  var apiResult = new ApiResult(-1,"Failed to Fetch the message",key)
+	  apiResult.toString()
+	case Some(m) => 
+	  val msgDef = m.asInstanceOf[MessageDef]
+	  logger.trace("message found => " + msgDef.FullNameWithVer)
+	  var typeName = "arrayof" + name 
+	  RemoveType(nameSpace,typeName,version)
+	  typeName = "sortedsetof" + name 
+	  RemoveType(nameSpace,typeName,version)
+	  typeName = "arraybufferof" + name 
+	  RemoveType(nameSpace,typeName,version)
+	  DeleteObject(msgDef)
+	  var apiResult = new ApiResult(0,"Message Definition was Deleted",key)
+	  apiResult.toString()
+      }
     }catch {
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to delete the MessageDef:",e.toString)
@@ -1413,7 +1463,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def RemoveModel(nameSpace:String, name:String, version:Int): String = {
     try{
       var key = nameSpace + "." + name + "." + version
-      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase,name.toLowerCase,version.toInt,true)
+      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase,name.toLowerCase,version,true)
       o match{
 	case None => None
 	  logger.trace("model not found => " + key)

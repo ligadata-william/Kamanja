@@ -181,7 +181,9 @@ class CompilerProxy{
     try{
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
+      logger.trace("Call Message Compiler ....")
       val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr)
+      logger.trace("Message Compilation done ....")
       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePath)
       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
