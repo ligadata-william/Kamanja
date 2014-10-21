@@ -310,7 +310,6 @@ class MessageDefImpl {
                 jarset = jarset + msgDef.JarName
 
               argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-
               /*
          * Messages in Message is not handled at this moment
        
