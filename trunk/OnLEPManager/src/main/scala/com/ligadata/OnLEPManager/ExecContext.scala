@@ -1,7 +1,7 @@
 
 package com.ligadata.OnLEPManager
 
-import com.ligadata.OnLEPBase.{ EnvContext, ExecContext, InputAdapter, OutputAdapter, MakeExecContext }
+import com.ligadata.OnLEPBase.{ EnvContext, ExecContext, InputAdapter, OutputAdapter, MakeExecContext, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 
 import org.apache.log4j.Logger
 
@@ -11,7 +11,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(data: String, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
+  def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
     try {
       val xformed = xform.execute(data)
       engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs)

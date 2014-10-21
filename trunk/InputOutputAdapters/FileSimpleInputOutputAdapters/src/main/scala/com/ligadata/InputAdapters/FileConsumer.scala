@@ -7,7 +7,7 @@ import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
 import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter }
-import com.ligadata.AdaptersConfiguration.FileAdapterConfiguration
+import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 
 object FileConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -65,13 +65,19 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
       if (isGz)
         is = new GZIPInputStream(new FileInputStream(sFileName))
       else
-        is = new GZIPInputStream(new FileInputStream(sFileName))
+        is = new FileInputStream(sFileName)
     } catch {
       case e: Exception =>
         LOG.error("Failed to open FileConsumer for %s. Message:%s".format(sFileName, e.getMessage))
         throw e
         return
     }
+
+    val uniqueKey = new FilePartitionUniqueRecordKey
+    val uniqueVal = new FilePartitionUniqueRecordValue
+
+    uniqueKey.Name = "File"
+    uniqueVal.FileFullPath = sFileName
 
     val trimMsg = if (msg != null) msg.trim else null
     var len = 0
@@ -105,7 +111,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
                 try {
                   // Creating new string to convert from Byte Array to string
-                  execThread.execute(sendmsg, readTmNs, readTmMs)
+                  uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
+                  execThread.execute(sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
                 } catch {
                   case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                 }
@@ -153,7 +160,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
       try {
         // Creating new string to convert from Byte Array to string
-        execThread.execute(sendmsg, readTmNs, readTmMs)
+        uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
+        execThread.execute(sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
       } catch {
         case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
       }
@@ -197,7 +205,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         }
         LOG.info("File:%s ElapsedTime:%.02fms".format(fl, tm / 1000000.0))
       })
-/*
+      /*
       if (st.totalLines > 0) {
         val rem = (st.totalLines - (st.totalLines / 100) * 100)
         if (rem > 0) {

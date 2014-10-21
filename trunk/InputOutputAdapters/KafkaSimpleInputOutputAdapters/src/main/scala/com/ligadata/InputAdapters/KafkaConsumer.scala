@@ -6,8 +6,8 @@ import java.util.Properties
 import kafka.consumer.{ ConsumerConfig, Consumer, ConsumerConnector }
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter }
-import com.ligadata.AdaptersConfiguration.KafkaQueueAdapterConfiguration
+import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey }
+import com.ligadata.AdaptersConfiguration.{ KafkaQueueAdapterConfiguration, KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue }
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -83,6 +83,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         var execThread: ExecContext = null
         var cntr: Long = 0
         var currentOffset: Long = -1
+        val uniqueKey = new KafkaPartitionUniqueRecordKey
+        val uniqueVal = new KafkaPartitionUniqueRecordValue
+
+        uniqueKey.TopicName = qc.Name
+
         for (message <- stream) {
           if (message.offset > currentOffset) {
             currentOffset = message.offset
@@ -101,12 +106,14 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
               if (isValid == false)
                 return ;
               checkForPartition = false
+              uniqueKey.PartitionId = curPartitionId
               execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
             }
             try {
               // Creating new string to convert from Byte Array to string
               val msg = new String(message.message)
-              execThread.execute(msg, readTmNs, readTmMs)
+              uniqueVal.Offset = currentOffset
+              execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
               cntr += 1
               val key = Category + "/" + qc.Name + "/evtCnt"
               cntrAdapter.addCntr(key, 1) // for now adding each row

@@ -54,10 +54,22 @@ trait ExecContext {
   val output: Array[OutputAdapter]
   val envCtxt: EnvContext
 
-  def execute(data: String, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
+  def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
 }
 
 trait MakeExecContext {
   def CreateExecContext(input: InputAdapter, curPartitionId: Int, output: Array[OutputAdapter], envCtxt: EnvContext): ExecContext
 }
+
+trait PartitionUniqueRecordKey {
+  val Type: String // Type of the Key -- For now putting File/Kafka like that. This is mostly for readable purpose (for which adapter etc)
+  def Serialize: String // Making String from key
+  def Deserialize(key: String): Unit // Making Key from Serialized String
+}
+
+trait PartitionUniqueRecordValue {
+  def Serialize: String // Making String from Value
+  def Deserialize(key: String): Unit // Making Value from Serialized String
+}
+
 
