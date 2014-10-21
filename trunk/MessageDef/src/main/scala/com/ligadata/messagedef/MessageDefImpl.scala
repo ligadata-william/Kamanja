@@ -231,7 +231,6 @@ class MessageDefImpl {
 
             // if (!typ.get.physicalName.equals("String")){
             //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
-
             if (typ.get.typeString.isEmpty())
               throw new Exception("Type not found in metadata for namespace %s" + f.Ttype)
 
