@@ -201,8 +201,7 @@ class MessageDefImpl {
         // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
         //val attr = MdMgr.GetMdMgr.Attribute(message.NameSpace, message.Name)
         //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
-        //     //  else
-
+       
         if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
           val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
 
