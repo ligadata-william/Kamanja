@@ -336,7 +336,6 @@ class MessageDefImpl {
 
             }
           }
-
         } else if (f.ElemType.equals("Concepts")) {
 
           var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).asInstanceOf[BaseAttributeDef]
