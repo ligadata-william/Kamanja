@@ -335,6 +335,7 @@ class MessageDefImpl {
           var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).asInstanceOf[BaseAttributeDef]
           scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
           assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
+         
           if ((attribute.dependencyJarNames != null) && (attribute.jarName != null)) {
             jarset = jarset + attribute.JarName ++ attribute.dependencyJarNames
           } else if ((attribute.jarName != null))
