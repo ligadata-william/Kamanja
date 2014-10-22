@@ -15,6 +15,7 @@ import org.apache.log4j.Logger
 import com.ligadata.olep.metadata.MdMgr
 import com.ligadata.olep.metadata.EntityType
 import com.ligadata.olep.metadata.MessageDef
+import com.ligadata.olep.metadata.BaseAttributeDef
 import com.ligadata.olep.metadata.ContainerDef
 import com.ligadata.olep.metadata.ArrayTypeDef
 import com.ligadata.olep.metadata.ArrayBufTypeDef
@@ -189,125 +190,122 @@ class MessageDefImpl {
     var arrayBufType: ArrayBufTypeDef = null
     var fname: String = ""
     var count: Int = 0
+    var concepts: String = "concepts"
 
     scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getVersion(message) + newline)
     // for (e <- message.Elements) {
-
     //  var fields = e.Fields
-    for (f <- message.Elements) {
-      // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
-      //val attr = MdMgr.GetMdMgr.Attribute(message.NameSpace, message.Name)
-      //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
+    if (message.Elements != null)
+      for (f <- message.Elements) {
+        // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
+        //val attr = MdMgr.GetMdMgr.Attribute(message.NameSpace, message.Name)
+        //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
 
-      val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
+        if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+          val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
 
-      if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+          if (typ.get.tType.toString().equals("tArray")) {
+            arrayType = typ.get.asInstanceOf[ArrayTypeDef]
 
-        if (typ.get.tType.toString().equals("tArray")) {
-          arrayType = typ.get.asInstanceOf[ArrayTypeDef]
+            if (arrayType.elemDef.implementationName.isEmpty())
+              throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
 
-          if (arrayType.elemDef.implementationName.isEmpty())
-            throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
+            else fname = arrayType.elemDef.implementationName + ".Input"
 
-          else fname = arrayType.elemDef.implementationName + ".Input"
+            argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+            scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
-          argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-          scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
+            assignCsvdata.append("%s%s = list(idx).split(arrvaldelim, -1).map(v => %s(v));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
 
-          assignCsvdata.append("%s%s = list(idx).split(arrvaldelim, -1).map(v => %s(v));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
+            if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
+              jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
+            else if (arrayType.JarName != null)
+              jarset = jarset + arrayType.JarName
 
-          if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
-            jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
-          else if (arrayType.JarName != null)
-            jarset = jarset + arrayType.JarName
+          } else {
+            if (typ.get.implementationName.isEmpty())
+              throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
 
-        } else {
-          if (typ.get.implementationName.isEmpty())
-            throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
-
-          if (typ.isEmpty)
-            throw new Exception("Type %s not found in metadata for namespace %s" + f.Ttype)
-
-          // if (!typ.get.physicalName.equals("String")){
-          //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
-          //}else
-
-          if (typ.get.typeString.isEmpty())
-            throw new Exception("Type not found in metadata for namespace %s" + f.Ttype)
-
-          argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-
-          fname = typ.get.implementationName + ".Input"
-
-          if ((typ.get.dependencyJarNames != null) && (typ.get.JarName != null))
-            jarset = jarset + typ.get.JarName ++ typ.get.dependencyJarNames
-          else if (typ.get.JarName != null)
-            jarset = jarset + typ.get.JarName
-
-          val dval: String = getDefVal(f.Ttype)
-          list = (f.Name, f.Ttype) :: list
-
-          scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
-
-          assignCsvdata.append("%s%s = %s(list(idx));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
-          assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad1, f.Name, fname, f.Name, dval, newline))
-          assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
-
-        }
-        count = count + 1
-        
-        
-      } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
-        if (typ.get.tType.toString().equals("tArrayBuf")) {
-
-          arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
-
-          argsList = (message.NameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
-          scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-          assignCsvdata.append("%s//%s Implementation of messages is not handled at this time".format(pad2, f.Name))
-
-          if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
-            jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
-          else if (arrayBufType.JarName != null)
-            jarset = jarset + arrayBufType.JarName
-
-        } else {
-
-          if (f.ElemType.equals("Container")) {
-
-            var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
-
-            scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
-            assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
-            assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
-            assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
-
-            if ((ctrDef.dependencyJarNames != null) && (ctrDef.jarName != null)) {
-              jarset = jarset + ctrDef.JarName ++ ctrDef.dependencyJarNames
-            } else if ((ctrDef.jarName != null))
-              jarset = jarset + ctrDef.JarName
-            val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true)
+            if (typ.isEmpty)
+              throw new Exception("Type %s not found in metadata for namespace %s" + f.Ttype)
+            // if (!typ.get.physicalName.equals("String")){
+            //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
+            if (typ.get.typeString.isEmpty())
+              throw new Exception("Type not found in metadata for namespace %s" + f.Ttype)
 
             argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
-          } else if (f.ElemType.equals("Message")) {
+            fname = typ.get.implementationName + ".Input"
 
-            var msgDef: MessageDef = mdMgr.Message(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
+            if ((typ.get.dependencyJarNames != null) && (typ.get.JarName != null))
+              jarset = jarset + typ.get.JarName ++ typ.get.dependencyJarNames
+            else if (typ.get.JarName != null)
+              jarset = jarset + typ.get.JarName
 
-            scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
-            assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
-            //  assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
-            //  assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
+            val dval: String = getDefVal(f.Ttype)
+            list = (f.Name, f.Ttype) :: list
 
-            if ((msgDef.dependencyJarNames != null) && (msgDef.jarName != null)) {
-              jarset = jarset + msgDef.JarName ++ msgDef.dependencyJarNames
-            } else if ((msgDef.jarName != null))
-              jarset = jarset + msgDef.JarName
+            scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
 
-            argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+            assignCsvdata.append("%s%s = %s(list(idx));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
+            assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad1, f.Name, fname, f.Name, dval, newline))
+            assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
+
           }
+          count = count + 1
 
-          /*
+        } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
+
+          val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
+
+          if (typ.get.tType.toString().equals("tArrayBuf")) {
+
+            arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
+
+            argsList = (message.NameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
+            scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
+            assignCsvdata.append("%s//%s Implementation of messages is not handled at this time".format(pad2, f.Name))
+
+            if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
+              jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
+            else if (arrayBufType.JarName != null)
+              jarset = jarset + arrayBufType.JarName
+
+          } else {
+
+            if (f.ElemType.equals("Container")) {
+
+              var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
+
+              scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
+              assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
+              assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
+              assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
+
+              if ((ctrDef.dependencyJarNames != null) && (ctrDef.jarName != null)) {
+                jarset = jarset + ctrDef.JarName ++ ctrDef.dependencyJarNames
+              } else if ((ctrDef.jarName != null))
+                jarset = jarset + ctrDef.JarName
+              val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true)
+
+              argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+
+            } else if (f.ElemType.equals("Message")) {
+
+              var msgDef: MessageDef = mdMgr.Message(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
+
+              scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
+              assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
+              //  assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
+              //  assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
+
+              if ((msgDef.dependencyJarNames != null) && (msgDef.jarName != null)) {
+                jarset = jarset + msgDef.JarName ++ msgDef.dependencyJarNames
+              } else if ((msgDef.jarName != null))
+                jarset = jarset + msgDef.JarName
+
+              argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+              /*
          * Messages in Message is not handled at this moment
        
         if (typ.get.tType.toString().equals("tArrayBuf")) {
@@ -330,9 +328,25 @@ class MessageDefImpl {
 
         } else {  */
 
+            }
+          }
+        } else if (f.ElemType.equals("Concepts")) {
+
+          var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).asInstanceOf[BaseAttributeDef]
+          scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
+          assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
+         
+          if ((attribute.dependencyJarNames != null) && (attribute.jarName != null)) {
+            jarset = jarset + attribute.JarName ++ attribute.dependencyJarNames
+          } else if ((attribute.jarName != null))
+            jarset = jarset + attribute.JarName
+
+          argsList = (attribute.NameSpace, attribute.Name, attribute.typeDef.NameSpace, attribute.typeDef.Name, false, null) :: argsList
+
         }
 
       }
+    if (message.concepts != null) {
 
     }
     if (message.PartitionKey != null)
@@ -623,6 +637,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       if (msgDfType.equals("JSON")) {
         var message: Message = null
         message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
+
         if (message.Fixed.equals("true")) {
 
           val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr)
@@ -708,6 +723,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       jtype = geJsonType(map)
       message = processJsonMap(jtype, map).asInstanceOf[Message]
+
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -724,6 +740,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
         jtype = "Message"
       else if (map.contains("Container"))
         jtype = "Container"
+      else if (map.contains("Concepts"))
+        jtype = "Concepts"
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -745,6 +763,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
           } else if (message.get("Fixed").get.equals("false")) {
             msg1 = geKVMsgorCntrObj(message, key).asInstanceOf[Message]
           } else throw new Exception("Message in json is not Map")
+
         }
       } else throw new Exception("Incorrect json")
     } catch {
@@ -791,6 +810,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val tkey: String = "TransformData"
     var pKey: String = ""
     var partitionKeysList: List[String] = null
+    var conceptsList: List[String] = null
     try {
       if (message != null) {
         for (key: String <- message.keys) {
@@ -812,6 +832,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
                 pKey = partitionKey
             }
           }
+
+          if (key.equals("Concepts")) {
+            conceptsList = getConcepts(message, key)
+          }
         }
       }
     } catch {
@@ -821,7 +845,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele.toList, tdataexists, tdata, null, pkg, null, null, null, null, partitionKeysList)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList)
   }
 
   def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
@@ -857,6 +881,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var elist: List[Element] = null
     var containerList: List[String] = null
     var container: Message = null
+    var lbuffer = new ListBuffer[Element]
+    var conceptStr: String = "Concepts"
 
     try {
       if (key.equals("Elements") || key.equals("Fields")) {
@@ -864,7 +890,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
         elist = getElements(message, key).asInstanceOf[List[Element]]
         // container = getElements(message, key)._2.asInstanceOf[Message]
       } else if (key.equals("Concepts")) {
-        elist = getConcepts(message, key)
+        elist = getConceptData(message.get(conceptStr).get.asInstanceOf[List[String]], conceptStr)
+
       }
     } catch {
       case e: Exception => {
@@ -875,19 +902,41 @@ class XmlData(var dataInput: String) extends InputData(){ }
     elist
   }
 
-  def getConcepts(message: Map[String, Any], key: String): List[Element] = {
-    var list: List[Element] = Nil
-    type messageList = List[Map[String, Any]]
-    if (message.get(key).get.isInstanceOf[messageList]) {
-      val eList = message.get(key).get.asInstanceOf[List[Map[String, Any]]]
-      for (l <- eList) {
-        if (l.isInstanceOf[Map[String, Any]]) {
-          val eMap: Map[String, Any] = l.asInstanceOf[Map[String, Any]]
-          //lbuffer += getElement(eMap)
-        }
+  def getConceptData(ccpts: List[String], key: String): List[Element] = {
+    var element: Element = null
+    var lbuffer = new ListBuffer[Element]
+    type string = String;
+    if (ccpts == null) throw new Exception("Concepts List is null")
+    try {
+      for (l <- ccpts)
+        lbuffer += new Element(null, l.toString(), null, null, key)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
       }
     }
-    list
+    lbuffer.toList
+  }
+
+  def getConcepts(message: Map[String, Any], key: String): List[String] = {
+    var list: List[Element] = Nil
+    var lbuffer = new ListBuffer[Element]
+    type ccptList = List[String]
+    var conceptList: ccptList = null
+    try {
+      if (message.get(key).get.isInstanceOf[ccptList]) {
+        //val eList = message.get(key).get.asInstanceOf[List[String]]
+        conceptList = message.getOrElse("Concepts", null).asInstanceOf[ccptList]
+
+      } else throw new Exception("Elements list do not exist in json")
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
+    conceptList
   }
 
   def getElements(message: Map[String, Any], key: String): List[Element] = {
@@ -918,6 +967,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
               val msgMap: Map[String, Any] = eMap.get("Message").get.asInstanceOf[Map[String, Any]]
               // container = getContainerObj(containerMap)
               lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Message")
+
+            } else if (eMap.contains("Concepts")) {
+              val msgMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
+              // container = getContainerObj(containerMap)
+              lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Concepts")
 
             }
           }
