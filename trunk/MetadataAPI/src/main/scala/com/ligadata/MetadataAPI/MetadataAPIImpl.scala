@@ -2106,8 +2106,8 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def UpdateMdMgr(zkMessage: ZooKeeperNotification) = {
+    val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
     try{
-      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
       zkMessage.ObjectType match {
 	case "ModelDef" => {
 	  zkMessage.Operation match{
@@ -2115,7 +2115,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      LoadModelIntoCache(key)
 	    }
 	    case "Remove" => {
-	      val result = RemoveModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+	      MdMgr.GetMdMgr.RemoveModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
 	    }
 	    case _ => {
 	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
@@ -2128,7 +2128,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      LoadMessageIntoCache(key)
 	    }
 	    case "Remove" => {
-	      val result = RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+	      MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
 	    }
 	    case _ => {
 	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
@@ -2141,7 +2141,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      LoadContainerIntoCache(key)
 	    }
 	    case "Remove" => {
-	      val result = RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+	      MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
 	    }
 	    case _ => {
 	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
@@ -2153,6 +2153,9 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
       }
     }catch {
+      case e:ObjectNolongerExistsException => {
+	logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+      }
       case e: Exception => {
 	e.printStackTrace()
       }
@@ -2170,7 +2173,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	val contKey = KeyAsStr(key)
 	val obj = GetObject(contKey.toLowerCase,containerStore)
 	val contDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	//val contDef = JsonSerializer.parseContainerDef(ValueAsStr(obj.Value),"JSON")
 	AddObjectToCache(contDef.asInstanceOf[ContainerDef])
       })
     }catch {
