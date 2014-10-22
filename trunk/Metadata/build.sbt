@@ -19,3 +19,7 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11-RC1" % "test"
 scalacOptions += "-deprecation"
 
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v")
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+
+
