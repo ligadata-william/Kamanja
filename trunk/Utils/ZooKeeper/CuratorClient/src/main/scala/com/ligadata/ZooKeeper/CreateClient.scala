@@ -15,7 +15,10 @@ object CreateClient
 
         // The simplest way to get a CuratorFramework instance. This will use default values.
         // The only required arguments are the connection string and the retry policy
-        CuratorFrameworkFactory.newClient(connectionString, retryPolicy);
+        val curatorZookeeperClient = CuratorFrameworkFactory.newClient(connectionString, retryPolicy);
+	curatorZookeeperClient.start
+	curatorZookeeperClient.getZookeeperClient.blockUntilConnectedOrTimedOut
+	curatorZookeeperClient
     }
 
     def  createWithOptions(connectionString:String, 
