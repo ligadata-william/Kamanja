@@ -11,6 +11,7 @@
 		 "ManifestPath"	: "/home/vmandava/git_hub/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf",
 		 "ClassPath"  	: ".:/home/vmandava/libs/metadata_2.10-1.0.jar:/home/vmandava/libs/basefunctions_2.10-0.1.0.jar:/home/vmandava/libs/messagedef_2.10-1.0.jar:/home/vmandava/libs/methodextractor_2.10-1.0.jar:/home/vmandava/libs/pmmlcompiler_2.10-1.0.jar:/home/vmandava/libs/bankenvcontext_2.10-1.0.jar:/home/vmandava/libs/onlepbase_2.10-1.0.jar:/home/vmandava/libs/bankbootstrap_2.10-1.0.jar:/home/vmandava/libs/bankmsgsandcontainers_2.10-1.0.jar:/home/vmandava/libs/medicalbootstrap_2.10-1.0.jar:/home/vmandava/libs/joda-time-2.4.jar:/home/vmandava/libs/joda-convert-1.6.jar:/home/vmandava/libs/basetypes_2.10-0.1.0.jar:/home/vmandava/libs/pmmludfs_2.10-1.0.jar:/home/vmandava/libs/pmmlruntime_2.10-1.0.jar",
 		 "NotifyEngine" : "YES",
+		 "ZnodePath" : "/ligadata/metadata"
 		 "ZooKeeperConnectString" : "localhost:2181"
 	}
 }

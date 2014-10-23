@@ -9,7 +9,7 @@ AsthmaPMML.xml
 		<Application name="COPDRiskAssessment" version="00.01.00"/>
 	</Header>
 
-	<DataDictionary numberOfFields="3">
+	<DataDictionary numberOfFields="8">
 		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
 		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
 	    <DataField name="parameters" displayName="parameters" dataType="container">

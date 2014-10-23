@@ -707,7 +707,7 @@ object JsonSerializer {
       }
 
       case o:AttributeDef => {
-	val json = (("NameSpace" -> o.name) ~
+	val json = (("NameSpace" -> o.nameSpace) ~
 		    ("Name" -> o.name) ~
 		    ("Version" -> o.ver) ~
 		    ("CollectionType" -> ObjType.asString(o.collectionType)))
