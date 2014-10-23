@@ -446,7 +446,6 @@ trait BaseContainer {
 
   }
 
-  
   def inputData = {
     """ 
 trait InputData {
