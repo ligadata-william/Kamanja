@@ -384,7 +384,9 @@ class MessageDefImpl {
     """
 package com.ligadata.messagedef
     
-import scala.util.parsing.json.JSON
+import org.json4s.jackson.JsonMethods._
+import org.json4s.DefaultFormats
+import org.json4s.Formats
 import scala.xml.XML
 import scala.xml.Elem
 import com.ligadata.OnLEPBase.{InputData, DelimitedData, JsonData, XmlData}
@@ -515,7 +517,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   //populateCSV fucntion in meg class
   def populatecsv = {
     """
-  def populateCSV(inputdata:DelimitedData): Unit = { 
+  private def populateCSV(inputdata:DelimitedData): Unit = { 
 	val delimiter = inputdata.dataDelim
 	val dataStr = inputdata.dataInput
 	val list = inputdata.dataInput.split(delimiter)
@@ -527,7 +529,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   ////csvAssign fucntion in meg class
   def csvAssign(assignCsvdata: String, count: Int): String = {
     """
-  def assignCsv(list:Array[String], startIdx:Int) : Int = {
+  private def assignCsv(list:Array[String], startIdx:Int) : Int = {
 	var idx = startIdx
     val arrvaldelim = "~"
 	try{
@@ -547,10 +549,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def populateJson = {
     """
-  def populateJson(json:JsonData) : Unit = {
+  private def populateJson(json:JsonData) : Unit = {
 	try{
     	if(json == null) throw new Exception("Invalid json data")
-     	val parsed:Option[Any] = JSON.parseFull(json.dataInput) 
+     	val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
      	assignJsonData(parsed.get.asInstanceOf[Map[String, Any]])
 	}catch{
 	  case e:Exception =>{
@@ -564,7 +566,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def assignJsonData(assignJsonData: String) = {
     """
-  def assignJsonData(map:Map[String,Any]) : Unit =  {
+  private def assignJsonData(map:Map[String,Any]) : Unit =  {
     try{
 	  if(map == null)  throw new Exception("Invalid json data")
 """ + assignJsonData +
@@ -581,7 +583,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def populateXml = {
     """
-  def populateXml(xmlData:XmlData) : Unit = {	  
+  private def populateXml(xmlData:XmlData) : Unit = {	  
 	try{
     	val xml = XML.loadString(xmlData.dataInput)
     	assignXml(xml)
