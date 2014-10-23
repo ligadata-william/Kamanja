@@ -8,6 +8,9 @@ import scala.util.Random
 import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseMsg, InputAdapter, OutputAdapter }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
+import scala.xml.XML
+import scala.xml.Elem
+import scala.util.parsing.json.JSON
 
 class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
@@ -22,11 +25,38 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     if (msgInfo != null) {
       val msg: BaseMsg = msgInfo.msgobj.CreateNewMessage
       if (msgFormat.equalsIgnoreCase("csv")) {
-        msg.populate(new DelimitedData(msgData, ","))
+        try {
+          val inputData = new DelimitedData(msgData, ",")
+          inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
+          inputData.curPos = 0
+          msg.populate(inputData)
+        } catch {
+          case e: Exception => {
+            LOG.error("Failed to populate CSV data for messageType:" + msgType)
+          }
+        }
       } else if (msgFormat.equalsIgnoreCase("json")) {
-        msg.populate(new JsonData(msgData))
+        try {
+          val inputData = new JsonData(msgData)
+          inputData.root_json = JSON.parseFull(inputData.dataInput)
+          inputData.cur_json = inputData.root_json
+          msg.populate(inputData)
+        } catch {
+          case e: Exception => {
+            LOG.error("Failed to populate JSON data for messageType:" + msgType)
+          }
+        }
       } else if (msgFormat.equalsIgnoreCase("xml")) {
-        msg.populate(new XmlData(msgData))
+        try {
+          val inputData = new XmlData(msgData)
+          inputData.root_xml = XML.loadString(inputData.dataInput)
+          inputData.cur_xml = inputData.root_xml
+          msg.populate(inputData)
+        } catch {
+          case e: Exception => {
+            LOG.error("Failed to populate XML data for messageType:" + msgType)
+          }
+        }
       } else {
         throw new Exception("Invalid input data type:" + msgFormat)
         return null
@@ -106,7 +136,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
         // Get top level Msg for the current msg
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
-        val keyData = msg.getKeyData
+        val keyData = msg.PartitionKeyData
         val topObj = envContext.getMsgObject(topMsgTypeAndHasParent._1, keyData)
         var handleMsg: Boolean = true
         if (topMsgTypeAndHasParent._2) {

@@ -7,24 +7,23 @@ import com.ligadata.olep.metadata._
 import com.ligadata.BaseTypes._
 
 class System_HL7_100 extends BaseMsg {
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getMessageName: String = "System.HL7"
-  def getVersion: String = "00.01.00"
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "HL7"
+  override def Version: String = "00.01.00"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 86)
@@ -212,8 +211,13 @@ class System_HL7_100 extends BaseMsg {
     idx
   }
   
-  override def getKeyData: String = Desynpuf_Id
+  override def PartitionKeyData: String = Desynpuf_Id
 
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
   var Clm_From_Dt: Int = _
@@ -309,34 +313,35 @@ class System_HL7_100 extends BaseMsg {
 }
 
 object System_HL7_100 extends BaseMsgObj {
-  def TransformDataAttributes: TransformMessage = null
-  def NeedToTransformData: Boolean = false
-  def getMessageName: String = "System.HL7"
-  def getVersion: String = "00.01.00"
-  def CreateNewMessage: BaseMsg = new System_HL7_100()
-  def IsFixed: Boolean = true;
-  def IsKv: Boolean = false;
+  override def TransformDataAttributes: TransformMessage = null
+  override def NeedToTransformData: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "HL7"
+  override def Version: String = "00.01.00"
+  override def CreateNewMessage: BaseMsg = new System_HL7_100()
+  override def IsFixed: Boolean = true;
+  override def IsKv: Boolean = false;
 }
 
 class System_InpatientClaim_100 extends BaseMsg {
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getMessageName: String = "System.InpatientClaim"
-  def getVersion: String = "00.01.00"
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "InpatientClaim"
+  override def Version: String = "00.01.00"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     val arrvaldelim = "~"
     var idx = startIdx
     try {
@@ -402,8 +407,13 @@ class System_InpatientClaim_100 extends BaseMsg {
     idx
   }
 
-  override def getKeyData: String = Desynpuf_Id
+  override def PartitionKeyData: String = Desynpuf_Id
 
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
   var Segment: Int = _
@@ -430,34 +440,35 @@ class System_InpatientClaim_100 extends BaseMsg {
 }
 
 object System_InpatientClaim_100 extends BaseMsgObj {
-  def TransformDataAttributes: TransformMessage = null
-  def NeedToTransformData: Boolean = false
-  def getMessageName: String = "System.InpatientClaim"
-  def getVersion: String = "00.01.00"
-  def CreateNewMessage: BaseMsg = new System_InpatientClaim_100()
-  def IsFixed: Boolean = true;
-  def IsKv: Boolean = false;
+  override def TransformDataAttributes: TransformMessage = null
+  override def NeedToTransformData: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "InpatientClaim"
+  override def Version: String = "00.01.00"
+  override def CreateNewMessage: BaseMsg = new System_InpatientClaim_100()
+  override def IsFixed: Boolean = true;
+  override def IsKv: Boolean = false;
 }
 
 class System_OutpatientClaim_100 extends BaseMsg {
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getMessageName: String = "System.OutpatientClaim"
-  def getVersion: String = "00.01.00"
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "OutpatientClaim"
+  override def Version: String = "00.01.00"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     val arrvaldelim = "~"
     var idx = startIdx
     try {
@@ -514,8 +525,13 @@ class System_OutpatientClaim_100 extends BaseMsg {
     idx
   }
 
-  override def getKeyData: String = Desynpuf_Id
+  override def PartitionKeyData: String = Desynpuf_Id
 
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  
   var Desynpuf_Id: String = _
   var Clm_Id: Long = _
   var Segment: Int = _
@@ -537,34 +553,35 @@ class System_OutpatientClaim_100 extends BaseMsg {
 }
 
 object System_OutpatientClaim_100 extends BaseMsgObj {
-  def TransformDataAttributes: TransformMessage = null
-  def NeedToTransformData: Boolean = false
-  def getMessageName: String = "System.OutpatientClaim"
-  def getVersion: String = "00.01.00"
-  def CreateNewMessage: BaseMsg = new System_OutpatientClaim_100()
-  def IsFixed: Boolean = true;
-  def IsKv: Boolean = false;
+  override def TransformDataAttributes: TransformMessage = null
+  override def NeedToTransformData: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "OutpatientClaim"
+  override def Version: String = "00.01.00"
+  override def CreateNewMessage: BaseMsg = new System_OutpatientClaim_100()
+  override def IsFixed: Boolean = true;
+  override def IsKv: Boolean = false;
 }
 
 class System_Beneficiary_100 extends BaseMsg {
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getMessageName: String = "System.Beneficiary"
-  def getVersion: String = "00.01.00"
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "Beneficiary"
+  override def Version: String = "00.01.00"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -667,7 +684,11 @@ class System_Beneficiary_100 extends BaseMsg {
     }
   }
 
-  override def getKeyData: String = Desynpuf_Id
+  override def PartitionKeyData: String = Desynpuf_Id
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
 
   var Desynpuf_Id: String = _
   var Bene_Birth_Dt: Int = _
@@ -708,13 +729,15 @@ class System_Beneficiary_100 extends BaseMsg {
 }
 
 object System_Beneficiary_100 extends BaseMsgObj {
-  def TransformDataAttributes: TransformMessage = null
-  def NeedToTransformData: Boolean = false
-  def getMessageName: String = "System.Beneficiary"
-  def getVersion: String = "00.01.00"
-  def CreateNewMessage: BaseMsg = new System_Beneficiary_100()
-  def IsFixed: Boolean = true;
-  def IsKv: Boolean = false;
+  override def TransformDataAttributes: TransformMessage = null
+  override def NeedToTransformData: Boolean = false
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "Beneficiary"
+  override def Version: String = "00.01.00"
+  override def CreateNewMessage: BaseMsg = new System_Beneficiary_100()
+  override def IsFixed: Boolean = true;
+  override def IsKv: Boolean = false;
 }
 
 class ConflictMedicalCode extends BaseContainer {
@@ -722,25 +745,27 @@ class ConflictMedicalCode extends BaseContainer {
   var Code2: String = ""; // Make sure we store only lowercase
   var Description: String = "";
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "ConflictMedicalCode" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "ConflictMedicalCode"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class IdCodeDim extends BaseContainer {
@@ -749,25 +774,27 @@ class IdCodeDim extends BaseContainer {
   var Code: String = "";
   var Description: String = "";
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "IdCodeDim" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "IdCodeDim"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class hcpcsCodes extends BaseContainer {
@@ -775,25 +802,27 @@ class hcpcsCodes extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "hcpcsCodes" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "hcpcsCodes"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class icd9DiagnosisCodes extends BaseContainer {
@@ -801,25 +830,27 @@ class icd9DiagnosisCodes extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "icd9DiagnosisCodes" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "icd9DiagnosisCodes" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class icd9ProcedureCodes extends BaseContainer {
@@ -827,25 +858,27 @@ class icd9ProcedureCodes extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "icd9ProcedureCodes" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "icd9ProcedureCodes" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class dgRelGrpCodes extends BaseContainer {
@@ -853,25 +886,27 @@ class dgRelGrpCodes extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "dgRelGrpCodes" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "dgRelGrpCodes" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class lneProcIndTable extends BaseContainer {
@@ -879,25 +914,27 @@ class lneProcIndTable extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "lneProcIndTable" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "lneProcIndTable"
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class provNumTable extends BaseContainer {
@@ -905,50 +942,54 @@ class provNumTable extends BaseContainer {
   var idCodeArr: Array[IdCodeDim] = null
   var str2IdMap: HashMap[String, Int] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "provNumTable" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "provNumTable" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class conflictMedCds extends BaseContainer {
 
   var codeSet: TreeSet[String] = null
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "conflictMedCds" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "conflictMedCds" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
+  private def populateCSV(inputdata: DelimitedData) = {
     /** ... */
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class SmokeCodes_100 extends BaseContainer {
@@ -956,27 +997,23 @@ class SmokeCodes_100 extends BaseContainer {
   var icd9Code: String = _
   var icd9Descr: String = _
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "SmokeCodes_100" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "SmokeCodes_100" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -995,6 +1032,12 @@ class SmokeCodes_100 extends BaseContainer {
     }
     idx
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class EnvCodes_100 extends BaseContainer {
@@ -1002,27 +1045,23 @@ class EnvCodes_100 extends BaseContainer {
   var icd9Code: String = _
   var icd9Descr: String = _
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "EnvCodes_100" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "EnvCodes_100" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -1041,6 +1080,12 @@ class EnvCodes_100 extends BaseContainer {
     }
     idx
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class CoughCodes_100 extends BaseContainer {
@@ -1048,27 +1093,23 @@ class CoughCodes_100 extends BaseContainer {
   var icd9Code: String = _
   var icd9Descr: String = _
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "CoughCodes_100" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "CoughCodes_100" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -1087,6 +1128,12 @@ class CoughCodes_100 extends BaseContainer {
     }
     idx
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class SputumCodes_100 extends BaseContainer {
@@ -1094,27 +1141,23 @@ class SputumCodes_100 extends BaseContainer {
   var icd9Code: String = _
   var icd9Descr: String = _
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "SputumCodes_100" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "SputumCodes_100" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -1133,6 +1176,12 @@ class SputumCodes_100 extends BaseContainer {
     }
     idx
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 class DyspnoeaCodes_100 extends BaseContainer {
@@ -1140,27 +1189,23 @@ class DyspnoeaCodes_100 extends BaseContainer {
   var icd9Code: String = _
   var icd9Descr: String = _
 
-  def IsFixed: Boolean = true
-  def IsKv: Boolean = false
-  def getVersion: String = "00.01.00"
-  def get(key: String): Any = null
-  def getOrElse(key: String, default: Any): Any = null
-  def set(key: String, value: Any): Unit = {}
-  def getContainerName: String = { "DyspnoeaCodes_100" }
-  def populate(inputdata: InputData) {
+  override def IsFixed: Boolean = true
+  override def IsKv: Boolean = false
+  override def Version: String = "00.01.00"
+  override def FullName: String = NameSpace + "." + Name
+  override def NameSpace: String = "System"
+  override def Name: String = "DyspnoeaCodes_100" 
+  override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
     else throw new Exception("Invalid input data")
   }
 
-  def populateCSV(inputdata: DelimitedData) = {
-    val delimiter = inputdata.dataDelim
-    val dataStr = inputdata.dataInput
-    val list = inputdata.dataInput.split(delimiter, -1)
-    assignCsv(list, 0)
+  private def populateCSV(inputdata: DelimitedData) = {
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
   }
 
-  def assignCsv(list: Array[String], startIdx: Int): Int = {
+  private def assignCsv(list: Array[String], startIdx: Int): Int = {
     var idx = startIdx
     try {
       if (list.size < 2)
@@ -1179,6 +1224,12 @@ class DyspnoeaCodes_100 extends BaseContainer {
     }
     idx
   }
+
+  override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+  override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+  override def PartitionKeyData: String = ""
 }
 
 
