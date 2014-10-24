@@ -1,7 +1,9 @@
 
 package com.ligadata.OnLEPManager
 
-import com.ligadata.olep.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef }
+import com.ligadata.olep.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
+import com.ligadata.olep.metadata.MdMgr._
+
 //import com.ligadata.olep.metadataload.MetadataLoad
 import com.ligadata.edifecs.MetadataLoad
 import scala.collection.mutable.TreeSet
@@ -22,29 +24,27 @@ class MsgObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgob
 }
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
-object OnLEPMetadata {
+class OnLEPMetadata {
   val LOG = Logger.getLogger(getClass);
 
   // Metadata manager
-  val mdMgr = com.ligadata.olep.metadata.MdMgr.GetMdMgr
-
   val messageObjects = new HashMap[String, MsgObjAndTransformInfo]
   val containerObjects = new HashMap[String, BaseContainer]
   val modelObjects = new HashMap[String, MdlInfo]
 
-  def InitMdMgr(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
-    new MetadataLoad(mdMgr, "", "", "", "").initialize // Test code until we get MdMgr from Ramana
-
-    PrepareMessages(loadedJars, loader, mirror)
-    PrepareContainers(loadedJars, loader, mirror)
-    PrepareModels(loadedJars, loader, mirror)
+  def InitMdMgr(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror,
+    tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
+    tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
+    PrepareMessages(loadedJars, loader, mirror, tmpMsgDefs)
+    PrepareContainers(loadedJars, loader, mirror, tmpContainerDefs)
+    PrepareModels(loadedJars, loader, mirror, tmpModelDefs)
 
     LOG.info("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
     LOG.info("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
     LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
-  def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
     var retVal: Boolean = true
     if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
       retVal = ManagerUtils.LoadJars(elem.DependencyJarNames.map(j => OnLEPConfiguration.jarPath + "/" + j), loadedJars, loader)
@@ -82,9 +82,7 @@ object OnLEPMetadata {
 
   }
 
-  def PrepareMessages(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
-    val tmpMsgDefs = mdMgr.Messages(true, true)
-
+  private def PrepareMessages(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]]): Unit = {
     if (tmpMsgDefs == None) // Not found any messages
       return
 
@@ -175,7 +173,13 @@ object OnLEPMetadata {
     // 1. First prepare one level of parents
     messageObjects.foreach(m => {
       m._2.childs.foreach(c => {
-        childToParentMap(c._2.toLowerCase) = (m._1.toLowerCase, c._1) // BUGBUG:: Check whether we already have in childToParentMap or not before we replace. So that way we can check same child under multiple parents.
+        val childMsgNm = c._2.toLowerCase
+        val fnd = childToParentMap.getOrElse(childMsgNm, null)
+        if (fnd != null) {
+
+        } else {
+          childToParentMap(childMsgNm) = (m._1.toLowerCase, c._1) // BUGBUG:: Check whether we already have in childToParentMap or not before we replace. So that way we can check same child under multiple parents.
+        }
       })
     })
 
@@ -194,10 +198,7 @@ object OnLEPMetadata {
     })
   }
 
-  def PrepareContainers(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
-
-    val tmpContainerDefs = mdMgr.Containers(true, true)
-
+  private def PrepareContainers(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]]): Unit = {
     if (tmpContainerDefs == None) // Not found any containers
       return
 
@@ -250,9 +251,7 @@ object OnLEPMetadata {
 
   }
 
-  def PrepareModels(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
-    val tmpModelDefs = mdMgr.Models(true, true)
-
+  private def PrepareModels(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
     if (tmpModelDefs == None) // Not found any models
       return
 
@@ -317,17 +316,53 @@ object OnLEPMetadata {
       }
     })
   }
+}
+
+object OnLEPMetadata {
+  val LOG = Logger.getLogger(getClass);
+  val mdMgr = GetMdMgr
+
+  var messageObjects: HashMap[String, MsgObjAndTransformInfo] = _
+  var containerObjects: HashMap[String, BaseContainer] = _
+  var modelObjects: HashMap[String, MdlInfo] = _
 
   def getMessgeInfo(msgType: String): MsgObjAndTransformInfo = {
+    if (messageObjects == null) return null
     messageObjects.getOrElse(msgType.toLowerCase, null)
   }
 
   def getModel(mdlName: String): MdlInfo = {
+    if (modelObjects == null) return null
     modelObjects.getOrElse(mdlName.toLowerCase, null)
   }
 
   def getContainer(containerName: String): BaseContainer = {
+    if (containerObjects == null) return null
     containerObjects.getOrElse(containerName.toLowerCase, null)
   }
+
+  def InitMdMgr(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror): Unit = {
+    new MetadataLoad(mdMgr, "", "", "", "").initialize
+
+    val tmpMsgDefs = mdMgr.Messages(true, true)
+    val tmpContainerDefs = mdMgr.Containers(true, true)
+    val tmpModelDefs = mdMgr.Models(true, true)
+
+    val obj = new OnLEPMetadata
+
+    try {
+      obj.InitMdMgr(loadedJars, loader, mirror, tmpMsgDefs, tmpContainerDefs, tmpModelDefs)
+      messageObjects = obj.messageObjects
+      containerObjects = obj.containerObjects
+      modelObjects = obj.modelObjects
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to load messages, containers & models from metadata manager. Message:" + e.getMessage)
+      }
+    }
+
+  }
 }
+
+
 

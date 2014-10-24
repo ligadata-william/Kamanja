@@ -1,42 +1,55 @@
 
 package com.ligadata.OnLEPBase
 
-trait BaseContainer {
+trait MessageContainerBase {
+  def isMessage: Boolean
+  def isContainer: Boolean 
   def IsFixed: Boolean
   def IsKv: Boolean
   def populate(inputdata: InputData): Unit
+  def set(key: String, value: Any): Unit
   def get(key: String): Any
   def getOrElse(key: String, default: Any): Any
-  def set(key: String, value: Any): Unit
-  def getContainerName: String // Container Name
-  def getVersion: String // Container Version
+  def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit
+  def Version: String // Message or Container Version
+  def PartitionKeyData: String // Partition key data
+  def FullName: String // Message or Container Full Name
+  def NameSpace: String // Message or Container NameSpace
+  def Name: String // Message or Container Name
 }
 
-trait BaseContainerObj {
+trait MessageContainerObjBase {
+  def isMessage: Boolean
+  def isContainer: Boolean 
   def IsFixed: Boolean
   def IsKv: Boolean
-  def getContainerName: String // Container Name
-  def getVersion: String // Container Version
+  def FullName: String // Message or Container FullName
+  def NameSpace: String // Message or Container NameSpace
+  def Name: String // Message or Container Name
+  def Version: String // Message or Container Version
+}
+
+trait BaseContainer extends MessageContainerBase {
+  override def isMessage: Boolean = false
+  override def isContainer: Boolean = true
+}
+
+trait BaseContainerObj extends MessageContainerObjBase {
+  override def isMessage: Boolean = false
+  override def isContainer: Boolean = true
   def CreateNewContainer: BaseContainer 
 }
 
-trait BaseMsg {
-  def IsFixed: Boolean
-  def IsKv: Boolean
-  def populate(inputdata: InputData): Unit
-  def getMessageName: String // Message Name
-  def getVersion: String // Message Version
-  def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
-  def getKeyData: String = ""
+trait BaseMsg extends MessageContainerBase {
+  override def isMessage: Boolean = true
+  override def isContainer: Boolean = false
 }
 
-trait BaseMsgObj {
-  def IsFixed: Boolean
-  def IsKv: Boolean
+trait BaseMsgObj extends MessageContainerObjBase {
+  override def isMessage: Boolean = true
+  override def isContainer: Boolean = false
   def NeedToTransformData: Boolean // Filter & Rearrange input attributes if needed
   def TransformDataAttributes: TransformMessage // Filter & Rearrange input columns if needed
-  def getMessageName: String // Message Name
-  def getVersion: String // Message Version
   def CreateNewMessage: BaseMsg 
 }
 
