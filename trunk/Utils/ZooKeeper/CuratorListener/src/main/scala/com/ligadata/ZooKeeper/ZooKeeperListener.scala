@@ -2,6 +2,7 @@ package com.ligadata.ZooKeeper
 
 import com.ligadata.Serialize._
 import com.ligadata.MetadataAPI._
+import com.ligadata.olep.metadata._
 
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
@@ -12,6 +13,8 @@ import org.apache.curator.utils._
 import java.util.concurrent.locks._
 import org.apache.log4j._
 import org.apache.zookeeper.CreateMode
+
+import scala.util.control.Breaks._
 
 object ZooKeeperListener {
 
@@ -24,7 +27,7 @@ object ZooKeeperListener {
       if( newData.getData() != null ){
 	val receivedJsonStr = new String(newData.getData())
 	logger.debug("New data received => " + receivedJsonStr)
-	val zkMessage = JsonSerializer.parseZkNotification(receivedJsonStr, "JSON")
+	val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
 	MetadataAPIImpl.UpdateMdMgr(zkMessage)
       }
     } catch {
@@ -52,42 +55,75 @@ object ZooKeeperListener {
   }
 
   def CreateListener(zkcConnectString:String,znodePath: String) = {
-    zkc = CreateClient.createSimple(zkcConnectString)
-    val nodeCache = new NodeCache(zkc, znodePath)
-    nodeCache.getListenable.addListener(new NodeCacheListener {
-      @Override
-      def nodeChanged = {
-        try {
-          val dataFromZNode = nodeCache.getCurrentData
-          ProcessData(dataFromZNode)
-        } catch {
-          case ex: Exception => {
-            logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
+   try{
+      zkc = CreateClient.createSimple(zkcConnectString)
+      val nodeCache = new NodeCache(zkc, znodePath)
+      nodeCache.getListenable.addListener(new NodeCacheListener {
+	@Override
+	def nodeChanged = {
+          try {
+            val dataFromZNode = nodeCache.getCurrentData
+            ProcessData(dataFromZNode)
+          }catch {
+            case ex: Exception => {
+              logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
+            }
           }
-        }
+	}
+      })
+      nodeCache.start
+      logger.setLevel(Level.TRACE);
+    }catch {
+      case e: Exception => {
+        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
-    })
-    nodeCache.start
-    logger.setLevel(Level.TRACE);
+    }
   }
 
   def StartLocalListener = {
-    val znodePath = "/ligadata/metadata"
-    val zkcConnectString = "localhost:2181"
+    try{
+      val znodePath = "/ligadata/metadata"
+      val zkcConnectString = "localhost:2181"
+      JsonSerializer.SetLoggerLevel(Level.TRACE)
+      CreateNodeIfNotExists(zkcConnectString,znodePath)
+      CreateListener(zkcConnectString,znodePath)
 
-    CreateNodeIfNotExists(zkcConnectString,znodePath)
-    CreateListener(zkcConnectString,znodePath)
-
-    for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
-      if (zkc != null)
-        zkc.close
-      zkc = null
-      println("Exiting")
-      System.exit(0)
+      breakable{
+	for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
+	  if (zkc != null)
+            zkc.close
+	  zkc = null
+	  println("Exiting")
+	  break
+	}
+      }
+    }catch {
+      case e: Exception => {
+        throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
+      }
+    } finally {
+      if (zkc != null) {
+        zkc.close()
+      }
     }
   }
 
   def main(args: Array[String]) = {
-    StartLocalListener
+    try{
+      MetadataAPIImpl.InitMdMgrFromBootStrap
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+      JsonSerializer.SetLoggerLevel(Level.TRACE)
+      StartLocalListener
+    }catch {
+      case e: Exception => {
+        throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
+      }
+    } finally {
+      MetadataAPIImpl.CloseDbStore
+      if (zkc != null) {
+        zkc.close()
+      }
+    }
   }
 }
