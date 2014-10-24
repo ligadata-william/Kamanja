@@ -1165,24 +1165,28 @@ object TestMetadataAPI{
     }
   }
 
+  def TestGenericProtobufSerializer = {
+    val serializer = new ProtoBufSerializer
+    serializer.SetLoggerLevel(Level.TRACE)
+    val a = MdMgr.GetMdMgr.MakeConcept("System","concept1","System","Int",1,false)
+    //val ba = serializer.SerializeObjectToByteArray1(a)
+    //val o = serializer.DeserializeObjectFromByteArray1(ba)
+    //assert(JsonSerializer.SerializeObjectToJson(a) == JsonSerializer.SerializeObjectToJson(o.asInstanceOf[AttributeDef]))
+  }
+
   def TestNotifyZooKeeper{
     val zkc = CreateClient.createSimple("localhost:2181")
     try{
       zkc.start()
-      if(zkc.checkExists().forPath("/ligadata") == null ){
-	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata",null)
-      }
       if(zkc.checkExists().forPath("/ligadata/models") == null ){
 	zkc.create().withMode(CreateMode.PERSISTENT).forPath("/ligadata/models",null);
       }
-      //zkc.inTransaction().setData().forPath("/ligadata/models","Activate ModelDef-2".getBytes);
       zkc.setData().forPath("/ligadata/models","Activate ModelDef-2".getBytes);
     }catch{
       case e:Exception => {
 	e.printStackTrace()
       }
     }finally{
-      //Closeables.closeQuietly(zkc);
       zkc.close();
     }
   }
@@ -1196,9 +1200,27 @@ object TestMetadataAPI{
       }
       case Some(ms) => {
 	val msa = ms.toArray
-	msa.foreach( m => {
-	  MetadataAPIImpl.NotifyEngine(m,"Add")
-	})
+	val objList = new Array[BaseElemDef](msa.length)
+	var i = 0
+	msa.foreach( m => {objList(i) = m; i = i + 1})
+	MetadataAPIImpl.NotifyEngine(objList,"Add")
+      }
+    }
+  }
+
+
+  def NotifyZooKeeperAddMessageEvent{
+    val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
+    msgDefs match{
+      case None => {
+	logger.trace("No Msgs found ")
+      }
+      case Some(ms) => {
+	val msa = ms.toArray
+	val objList = new Array[BaseElemDef](msa.length)
+	var i = 0
+	msa.foreach( m => {objList(i) = m; i = i + 1})
+	MetadataAPIImpl.NotifyEngine(objList,"Add")
       }
     }
   }
@@ -1336,6 +1358,7 @@ object TestMetadataAPI{
       //TestKryoSerialize
       //TestSerialize1("kryo")
       //TestSerialize1("protobuf")
+      //TestGenericProtobufSerializer
       //TestNotifyZooKeeper
       //NotifyZooKeeperAddModelEvent
 

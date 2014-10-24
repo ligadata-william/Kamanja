@@ -208,49 +208,31 @@ object MetadataAPIImpl extends MetadataAPI{
     store.commitTx(t)
   }
 
-  def ZooKeeperMessage(obj: BaseElemDef,operation:String) : Array[Byte] = {
+  def ZooKeeperMessage(objList: Array[BaseElemDef],operation:String) : Array[Byte] = {
     try{
-      obj match{
-	case o:ModelDef => {
-	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
-	  //val notification = "ModelDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
-	  notification.getBytes
-	}
-	case o:MessageDef => {
-	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
-	  //val notification = "MessageDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
-	  notification.getBytes
-	}
-	case o:ContainerDef => {
-	  val notification = JsonSerializer.SerializeObjectToJson(o,operation)
-	  //val notification = "ContainerDef," + operation + "," + obj.FullNameWithVer + "," + obj.PhysicalName
-	  notification.getBytes
-	}
-	case _ => {
-	  throw new InternalErrorException("Internal Error: ZooKeeperMessage is not implemented for objects of type " + obj.getClass.getName)
-	}
-      }
+      val notification = JsonSerializer.zkSerializeObjectListToJson("Notifications",objList,operation)
+      notification.getBytes
     }catch{
 	case e:Exception => {
-	  throw new InternalErrorException("Failed to generate a zookeeper message from the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	  throw new InternalErrorException("Failed to generate a zookeeper message from the objList " + e.getMessage())
 	}
     }
   }
 	  
-  def NotifyEngine(obj: BaseElemDef,operation:String){
+  def NotifyEngine(objList: Array[BaseElemDef],operation:String){
     try{
       val notifyEngine = GetMetadataAPIConfig.getProperty("NOTIFY_ENGINE")
       if( notifyEngine != "YES"){
 	logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
 	return
       }
-      val data = ZooKeeperMessage(obj,operation)
+      val data = ZooKeeperMessage(objList,operation)
       InitZooKeeper
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
       zkc.setData().forPath(znodePath,data)
     }catch{
       case e:Exception => {
-	  throw new InternalErrorException("Failed to notify a zookeeper message from the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	  throw new InternalErrorException("Failed to notify a zookeeper message from the objectList " + e.getMessage())
       }
     }
   }
@@ -266,19 +248,16 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.trace("Adding the model to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,modelStore)
 	  MdMgr.GetMdMgr.AddModelDef(o)
-	  NotifyEngine(o,"Add")
 	}
 	case o:MessageDef => {
 	  logger.trace("Adding the message to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,messageStore)
 	  MdMgr.GetMdMgr.AddMsg(o)
-	  NotifyEngine(o,"Add")
 	}
 	case o:ContainerDef => {
 	  logger.trace("Adding the container to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,containerStore)
 	  MdMgr.GetMdMgr.AddContainer(o)
-	  NotifyEngine(o,"Add")
 	}
 	case o:FunctionDef => {
           val funcKey = o.typeString.toLowerCase
@@ -357,7 +336,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }catch{
       case e:AlreadyExistsException => {
-	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): It already exists")
+	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
       case e:Exception => {
 	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
@@ -445,7 +424,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }catch{
       case e:AlreadyExistsException => {
-	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): It already exists")
+	logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
       case e:Exception => {
 	logger.error("Failed to Cache the object(" + obj.FullNameWithVer + "): " + e.getMessage())
@@ -576,17 +555,14 @@ object MetadataAPIImpl extends MetadataAPI{
 	case o:ModelDef => {
 	  DeleteObject(o.FullNameWithVer.toLowerCase,modelStore)
 	  MdMgr.GetMdMgr.RemoveModel(o.nameSpace,o.name,o.ver)
-	  NotifyEngine(o,"Remove")
 	}
 	case o:MessageDef => {
 	  DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
 	  MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
-	  NotifyEngine(o,"Remove")
 	}
 	case o:ContainerDef => {
 	  DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
 	  MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
-	  NotifyEngine(o,"Remove")
 	}
 	case o:AttributeDef => {
 	  DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
@@ -1304,19 +1280,24 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def AddMessageTypes(msgDef:MessageDef){
+  def AddMessageTypes(msgDef:MessageDef): Array[BaseElemDef] = {
+    val objectsAdded = new Array[BaseElemDef](3)
     try{
       // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
       // along with the messageDef.
       val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
 					       msgDef.name,1,msgDef.ver)
       SaveObject(arrayType)
-      val arrayBufType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arraybufferof"+msgDef.name,
+      objectsAdded(0) = arrayType
+      val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
 						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
       SaveObject(arrayBufType)
+      objectsAdded(1) = arrayBufType
       val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
 							   msgDef.nameSpace,msgDef.name,msgDef.ver)
       SaveObject(sortedSetType)
+      objectsAdded(2) = sortedSetType
+      objectsAdded
     }
     catch {
       case e:Exception =>{
@@ -1334,7 +1315,9 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  val result = AddMessageDef(msg)
-	  AddMessageTypes(msg)
+	  var objectsAdded = AddMessageTypes(msg)
+	  objectsAdded = objectsAdded :+ msg
+	  NotifyEngine(objectsAdded,"Add")
 	  result
 	}
 	case cont:ContainerDef =>{
@@ -1433,13 +1416,50 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(m) => 
 	  val msgDef = m.asInstanceOf[MessageDef]
 	  logger.trace("message found => " + msgDef.FullNameWithVer)
-	  var typeName = "arrayof" + name 
+
+	  // remove a type with same name as messageDef
+	  var typeName = name 
+	  var removedObjects = new Array[BaseElemDef](5)
+	  var typeDef = MdMgr.GetMdMgr.Type(nameSpace,typeName,version,true)
+	  var i = 0
+	  if( typeDef != None ){
+	    removedObjects(i) = typeDef.get
+	    i = i+1
+	  }
 	  RemoveType(nameSpace,typeName,version)
+
+	  // arrayof messageDef
+	  typeName = "arrayof" + name 
+	  typeDef = MdMgr.GetMdMgr.Type(nameSpace,typeName,version,true)
+	  if( typeDef != None ){
+	    removedObjects(i) = typeDef.get
+	    i = i+1
+	  }
+	  RemoveType(nameSpace,typeName,version)
+
+	  // sortedset of MessgeDef
 	  typeName = "sortedsetof" + name 
+	  typeDef = MdMgr.GetMdMgr.Type(nameSpace,typeName,version,true)
+	  if( typeDef != None ){
+	    removedObjects(i) = typeDef.get
+	    i = i+1
+	  }
 	  RemoveType(nameSpace,typeName,version)
+
+	  // arraybuffer of MessageDef
 	  typeName = "arraybufferof" + name 
+	  typeDef = MdMgr.GetMdMgr.Type(nameSpace,typeName,version,true)
+	  if( typeDef != None ){
+	    removedObjects(i) = typeDef.get
+	    i = i+1
+	  }
 	  RemoveType(nameSpace,typeName,version)
+
+	  // MessageDef itself
 	  DeleteObject(msgDef)
+	  removedObjects(i) = msgDef
+
+	  NotifyEngine(removedObjects,"Remove")
 	  var apiResult = new ApiResult(0,"Message Definition was Deleted",key)
 	  apiResult.toString()
       }
@@ -1447,6 +1467,62 @@ object MetadataAPIImpl extends MetadataAPI{
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to delete the MessageDef:",e.toString)
 	apiResult.toString()
+      }
+    }
+  }
+
+
+  // Remove message with Message Name and Version Number
+  def RemoveMessageFromCache(zkMessage: ZooKeeperNotification) = {
+    try{
+      var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      val o = MdMgr.GetMdMgr.Message(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt,true)
+      o match{
+	case None => None
+	  logger.trace("Message not found, Already Removed? => " + key)
+	case Some(m) => 
+	  val msgDef = m.asInstanceOf[MessageDef]
+	  logger.trace("message found => " + msgDef.FullNameWithVer)
+	  var typeName = zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "arrayof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "sortedsetof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "arraybufferof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+      }
+    }catch {
+      case e:Exception =>{
+	logger.error("Failed to delete the Message from cache:" + e.toString)
+      }
+    }
+  }
+
+  def RemoveContainerFromCache(zkMessage: ZooKeeperNotification) = {
+    try{
+      var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      val o = MdMgr.GetMdMgr.Container(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt,true)
+      o match{
+	case None => None
+	  logger.trace("Message not found, Already Removed? => " + key)
+	case Some(m) => 
+	  val msgDef = m.asInstanceOf[MessageDef]
+	  logger.trace("message found => " + msgDef.FullNameWithVer)
+	  var typeName = zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "arrayof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "sortedsetof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  typeName = "arraybufferof" + zkMessage.Name 
+	  MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace,typeName,zkMessage.Version.toInt)
+	  MdMgr.GetMdMgr.RemoveContainer(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+      }
+    }catch {
+      case e:Exception =>{
+	logger.error("Failed to delete the Message from cache:" + e.toString)
       }
     }
   }
@@ -1470,6 +1546,9 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(m) => 
 	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
 	  DeleteObject(m.asInstanceOf[ModelDef])
+	  val objectsRemoved = new Array[BaseElemDef](1)
+	  objectsRemoved(0) = m.asInstanceOf[ModelDef]
+	  NotifyEngine(objectsRemoved,"Remove")
 	  var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
 	  apiResult.toString()
       }
@@ -1513,7 +1592,11 @@ object MetadataAPIImpl extends MetadataAPI{
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
       var(classStr,modDef) = compProxy.compilePmml(pmmlText)
-      AddModel(modDef)
+      val apiResult = AddModel(modDef)
+      val objectsAdded = new Array[BaseElemDef](1)
+      objectsAdded(0) = modDef
+      NotifyEngine(objectsAdded,"Add")
+      apiResult
     }
     catch {
       case e:Exception =>{
@@ -2069,9 +2152,30 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def LoadMessageIntoCache(key: String){
     try{
+        logger.trace("Fetch the object " + key + " from database ")
 	val obj = GetObject(key.toLowerCase,messageStore)
+        logger.trace("Deserialize the object " + key)
 	val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        logger.trace("Add the object " + key + " to the cache ")
 	AddObjectToCache(msg.asInstanceOf[MessageDef])
+    }catch {
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
+  def LoadTypeIntoCache(key: String){
+    try{
+        logger.trace("Fetch the object " + key + " from database ")
+	val obj = GetObject(key.toLowerCase,typeStore)
+        logger.trace("Deserialize the object " + key)
+	val typ = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+	if( typ != null ){
+          logger.trace("Add the object " + key + " to the cache ")
+	  DecodeObjectToMetadataType(typ)
+	}
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -2082,8 +2186,11 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def LoadModelIntoCache(key: String){
     try{
+        logger.trace("Fetch the object " + key + " from database ")
 	val obj = GetObject(key.toLowerCase,modelStore)
+        logger.trace("Deserialize the object " + key)
 	val model = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        logger.trace("Add the object " + key + " to the cache ")
 	AddObjectToCache(model.asInstanceOf[ModelDef])
     }catch {
       case e: Exception => {
@@ -2105,56 +2212,97 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def UpdateMdMgr(zkMessage: ZooKeeperNotification) = {
-    val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+  def UpdateMdMgr(zkTransaction: ZooKeeperTransaction) = {
+    var key:String = null
     try{
-      zkMessage.ObjectType match {
-	case "ModelDef" => {
-	  zkMessage.Operation match{
-	    case "Add" => {
-	      LoadModelIntoCache(key)
-	    }
-	    case "Remove" => {
-	      MdMgr.GetMdMgr.RemoveModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
-	    }
-	    case _ => {
-	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-	    }
-	  }
-	}
-	case "MessageDef" => {
-	  zkMessage.Operation match{
-	    case "Add" => {
-	      LoadMessageIntoCache(key)
-	    }
-	    case "Remove" => {
-	      MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
-	    }
-	    case _ => {
-	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+      zkTransaction.Notifications.foreach( zkMessage => {
+	key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+	zkMessage.ObjectType match {
+	  case "ModelDef" => {
+	    zkMessage.Operation match{
+	      case "Add" => {
+		LoadModelIntoCache(key)
+	      }
+	      case "Remove" => {
+		try{
+		  MdMgr.GetMdMgr.RemoveModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+		}catch {
+		  case e:ObjectNolongerExistsException => {
+		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+		  }
+		}
+	      }
+	      case _ => {
+		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	      }
 	    }
 	  }
-	}
-	case "ContainerDef" => {
-	  zkMessage.Operation match{
-	    case "Add" => {
-	      LoadContainerIntoCache(key)
-	    }
-	    case "Remove" => {
-	      MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
-	    }
-	    case _ => {
-	      logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	  case "MessageDef" => {
+	    zkMessage.Operation match{
+	      case "Add" => {
+		LoadMessageIntoCache(key)
+	      }
+	      case "Remove" => {
+		try{
+		  RemoveMessageFromCache(zkMessage)
+		}catch {
+		  case e:ObjectNolongerExistsException => {
+		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+		  }
+		}
+	      }
+	      case _ => {
+		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	      }
 	    }
 	  }
+	  case "ContainerDef" => {
+	    zkMessage.Operation match{
+	      case "Add" => {
+		LoadContainerIntoCache(key)
+	      }
+	      case "Remove" => {
+		try{
+		  RemoveContainerFromCache(zkMessage)
+		}catch {
+		  case e:ObjectNolongerExistsException => {
+		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+		  }
+		}
+	      }
+	      case _ => {
+		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	      }
+	    }
+	  }
+	  case "ArrayTypeDef" | "ArrayBufTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
+	    zkMessage.Operation match{
+	      case "Add" => {
+		LoadTypeIntoCache(key)
+	      }
+	      case "Remove" => {
+		try{
+		  logger.trace("Remove the type " + key + " from cache ")
+		  //RemoveTypeFromCache(zkMessage)
+		}catch {
+		  case e:ObjectNolongerExistsException => {
+		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+		  }
+		}
+	      }
+	      case _ => {
+		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	      }
+	    }
+	  }
+	  case _ => {
+	    logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
+	  }
 	}
-	case _ => {
-	      logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
-	}
-      }
+      })
     }catch {
-      case e:ObjectNolongerExistsException => {
-	logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+      case e:AlreadyExistsException => {
+	logger.error("Failed to load the object(" + key + ") into cache: " + e.getMessage())
       }
       case e: Exception => {
 	e.printStackTrace()
