@@ -211,5 +211,4 @@ class ProtoBufSerializer extends Serializer{
   def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
     throw new ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType")
   }
-
 }

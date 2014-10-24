@@ -37,6 +37,7 @@ case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,Dat
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
+case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
 
 case class UnsupportedObjectException(e: String) extends Throwable(e)
 case class Json4sSerializationException(e: String) extends Throwable(e)
@@ -55,7 +56,7 @@ case class ApiResultParsingException(e: String) extends Throwable(e)
 case class UnexpectedMetadataAPIException(e: String) extends Throwable(e)
 case class ObjectNotFoundException(e: String) extends Throwable(e)
 case class CreateStoreFailedException(e: String) extends Throwable(e)
-case class ZkNotificationParsingException(e: String) extends Throwable(e)
+case class ZkTransactionParsingException(e: String) extends Throwable(e)
 
 // The implementation class
 object JsonSerializer {
@@ -276,16 +277,19 @@ object JsonSerializer {
 
 
   @throws(classOf[Json4sParsingException])
-  @throws(classOf[ZkNotificationParsingException])
-  def parseZkNotification(zkNotificationJson:String,formatType:String) : ZooKeeperNotification = {
+  @throws(classOf[ZkTransactionParsingException])
+  def parseZkTransaction(zkTransactionJson:String,formatType:String) : ZooKeeperTransaction = {
     try{
       implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(zkNotificationJson)
+      val json = parse(zkTransactionJson)
 
-      logger.trace("Parsed the json : " + zkNotificationJson)
+      logger.trace("Parsed the json : " + zkTransactionJson)
 
-      val zkNotificationInst = json.extract[ZooKeeperNotification]
-      zkNotificationInst
+      val zkTransaction = json.extract[ZooKeeperTransaction]
+
+      logger.trace("Serialized ZKTransaction => " + zkSerializeObjectToJson(zkTransaction))
+
+      zkTransaction
     } catch {
       case e:MappingException =>{
 	e.printStackTrace()
@@ -293,7 +297,7 @@ object JsonSerializer {
       }
       case e:Exception => {
 	e.printStackTrace()
-	throw new ZkNotificationParsingException(e.getMessage())
+	throw new ZkTransactionParsingException(e.getMessage())
       }
     }
   }
@@ -545,16 +549,21 @@ object JsonSerializer {
   }
 
 
-  def SerializeObjectToJson(o: ZooKeeperNotification): String = {
+  def zkSerializeObjectToJson(o: ZooKeeperTransaction): String = {
     try{
-      val json = (("ObjectType"    -> o.ObjectType) ~
-		("Operation"       -> o.Operation) ~
-		("NameSpace"       -> o.NameSpace) ~
-		("Name"            -> o.Name) ~
-		("Version"         -> o.Version.toInt) ~
-		("PhysicalName"    -> o.PhysicalName) ~
-		("JarName"         -> o.JarName) ~
-		("DependantJars"   -> o.DependantJars.toList))
+      val json = ("Notifications" ->  o.Notifications.toList.map{ n => 
+		    (
+		      ("ObjectType"    -> n.ObjectType) ~
+		      ("Operation"       -> n.Operation) ~
+		      ("NameSpace"       -> n.NameSpace) ~
+		      ("Name"            -> n.Name) ~
+		      ("Version"         -> n.Version.toInt) ~
+		      ("PhysicalName"    -> n.PhysicalName) ~
+		      ("JarName"         -> n.JarName) ~
+		      ("DependantJars"   -> n.DependantJars.toList)
+		    )
+		  }
+		)
       pretty(render(json))
     } catch {
       case e:Exception =>{
@@ -565,12 +574,12 @@ object JsonSerializer {
   }
 
 
-  def SerializeObjectToJson(mdObj:BaseElemDef, operation:String) : String = {
+  def zkSerializeObjectToJson(mdObj: BaseElemDef, operation:String) : String = {
     try{
       mdObj match{ 
-	// Assuming that message will be different based on type of object, for now it is almost identical
+	// Assuming that zookeeper transaction will be different based on type of object
 	case o:ModelDef => {
-	  val json = (("ObjectType"      -> "ModelDef") ~
+	  val json =  (("ObjectType"      -> "ModelDef") ~
 		      ("Operation"       -> operation) ~
 		      ("NameSpace"       -> o.nameSpace) ~
 		      ("Name"            -> o.name) ~
@@ -602,8 +611,52 @@ object JsonSerializer {
 		      ("DependantJars"   -> o.dependencyJarNames.toList))
 	  pretty(render(json))
 	}
+	case o:StructTypeDef => {
+	  val json = (("ObjectType"      -> "StructTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
+	case o:ArrayTypeDef => {
+	  val json = (("ObjectType"      -> "ArrayTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
+	case o:ArrayBufTypeDef => {
+	  val json = (("ObjectType"      -> "ArrayBufTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
+	case o:SortedSetTypeDef => {
+	  val json = (("ObjectType"      -> "SortedSetTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
 	case _ => {
-            throw new UnsupportedObjectException("SerializeObjectToJson doesn't support the  objects of type objectType of " + mdObj.getClass().getName() + " yet.")
+            throw new UnsupportedObjectException("zkSerializeObjectToJson doesn't support the  objects of type objectType of " + mdObj.getClass().getName() + " yet.")
 	}
       }
     } catch {
@@ -961,6 +1014,19 @@ object JsonSerializer {
 
   def SerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T]) : String = {
     var json = "{\n" + "\"" + objType + "\" :" + SerializeObjectListToJson(objList) + "\n}" 
+    json 
+  }
+
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objList: Array[T],operation: String) : String = {
+    var json = "[ \n" 
+    objList.toList.map(obj =>  {var objJson = zkSerializeObjectToJson(obj,operation); json += objJson; json += ",\n"})
+    json = json.stripSuffix(",\n")
+    json += " ]\n"
+    json 
+  }
+
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operation: String) : String = {
+    var json = "{\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operation) + "\n}" 
     json 
   }
 
