@@ -316,9 +316,9 @@ object OnLEPMetadata {
   private[this] var loader: OnLEPClassLoader = _
   private[this] var mirror: reflect.runtime.universe.Mirror = _
 
-  private[this] var messageObjects: HashMap[String, MsgObjAndTransformInfo] = _
-  private[this] var containerObjects: HashMap[String, BaseContainer] = _
-  private[this] var modelObjects: HashMap[String, MdlInfo] = _
+  private[this] var messageObjects = new HashMap[String, MsgObjAndTransformInfo]
+  private[this] var containerObjects = new HashMap[String, BaseContainer] 
+  private[this] var modelObjects = new HashMap[String, MdlInfo]
 
   private[this] val lock = new Object()
 
