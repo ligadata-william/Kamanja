@@ -600,6 +600,6 @@ object OnLEPMetadata {
     containerObjects.toMap
   }
 
-  def GetMdMgr: MdMgr = mdMgr
+  def getMdMgr: MdMgr = mdMgr
 }
 
