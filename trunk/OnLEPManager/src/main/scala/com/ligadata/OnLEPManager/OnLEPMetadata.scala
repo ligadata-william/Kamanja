@@ -317,7 +317,7 @@ object OnLEPMetadata {
   private[this] var mirror: reflect.runtime.universe.Mirror = _
 
   private[this] var messageObjects = new HashMap[String, MsgObjAndTransformInfo]
-  private[this] var containerObjects = new HashMap[String, BaseContainer] 
+  private[this] var containerObjects = new HashMap[String, BaseContainer]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
 
   private[this] val lock = new Object()
@@ -432,6 +432,7 @@ object OnLEPMetadata {
     } catch {
       case e: Exception => {
         LOG.error("Failed to load messages, containers & models from metadata manager. Message:" + e.getMessage)
+        throw e
       }
     }
 
@@ -442,6 +443,7 @@ object OnLEPMetadata {
       } catch {
         case e: Exception => {
           LOG.error("Failed to initialize ZooKeeper Connection." + e.getMessage)
+          throw e
         }
       }
     }
