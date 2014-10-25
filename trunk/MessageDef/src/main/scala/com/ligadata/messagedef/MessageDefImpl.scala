@@ -59,14 +59,16 @@ class MessageDefImpl {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
-    val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList) = classStr(message, mdMgr)
+    var addMsgStr: String = ""
+    val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
     try {
+      addMsgStr = addMessage(addMsg)
       val (btrait, striat, csetters) = getBaseTrait(message)
       val cobj = createObj(message)
       val isFixed = getIsFixed(message)
       val (clsstr, objstr) = classname(message)
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + populate + populatecsv.toString + csvAssign(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + populateXml + assignXmlData(xmlStr) + " \n}")
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + populate + populatecsv.toString + csvAssign(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + populateXml + assignXmlData(xmlStr) + " \n}")
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -95,18 +97,18 @@ class MessageDefImpl {
       cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
-      cobj.append(getMessageName(msg)  + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
+      cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
     }
     cobj
   }
-  
+
   def getName(msg: Message) = {
-     "\toverride def FullName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\"" + "\n" +
-     "\toverride def NameSpace: String = " + "\"" + msg.NameSpace + "\"" + "\n" +
-     "\toverride def Name: String = " + "\"" + msg.Name + "\""
+    "\toverride def FullName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\"" + "\n" +
+      "\toverride def NameSpace: String = " + "\"" + msg.NameSpace + "\"" + "\n" +
+      "\toverride def Name: String = " + "\"" + msg.Name + "\""
   }
-  
+
   def getMessageName(msg: Message) = {
     if (msg.msgtype.equals("Message"))
       "\toverride def getMessageName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\""
@@ -180,17 +182,47 @@ class MessageDefImpl {
     (btrait, strait, csetters)
   }
 
+  private def addMessage(addMsg: String): String = {
+    var addMessageFunc: String = ""
+    try {
+      if ((addMsg != null) && (addMsg.trim() != "")) {
+
+        addMessageFunc = """
+    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
+       if (childPath == null || childPath.size == 0) { // Invalid case
+    	  return
+       }
+       val curVal = childPath(0)
+       if (childPath.size == 1) { // If this is last level
+     """ + addMsg + """
+      	} else { // Yet to handle it. Make sure we add the message to one of the value given
+      		throw new Exception("Not yet handled messages more than one level")
+     	}
+     }
+     
+     """
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
+    addMessageFunc
+  }
   //generates the variables string and assign string
-  def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
     var assignXmldata = new StringBuilder(8 * 1024)
+    var addMsg = new StringBuilder(8 * 1024)
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
     val pad1 = "\t"
     val pad2 = "\t\t"
     val pad3 = "\t\t\t"
+    val pad4 = "\t\t\t\t"
     val newline = "\n"
     var jarset: Set[String] = Set();
     var arrayType: ArrayTypeDef = null
@@ -199,7 +231,7 @@ class MessageDefImpl {
     var count: Int = 0
     var concepts: String = "concepts"
 
-    scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message)  + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     // for (e <- message.Elements) {
     //  var fields = e.Fields
     if (message.Elements != null)
@@ -273,6 +305,11 @@ class MessageDefImpl {
               argsList = (message.NameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
               scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
               assignCsvdata.append("%s//%s Implementation of messages is not handled at this time".format(pad2, f.Name))
+
+              if (typ.get.typeString.toString().split("\\[").size == 2) {
+                addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
+                addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
+              }
 
               if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
                 jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
@@ -358,12 +395,14 @@ class MessageDefImpl {
 
     }
     if (message.PartitionKey != null)
-      scalaclass = scalaclass.append(partitionkeyStr(message)+newline+getsetMethods) 
-
+      scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
+    var addMessage: String = ""
+    if (addMsg.size > 5)
+      addMessage = addMsg.toString.substring(0, addMsg.length - 5)
     log.trace("final arglist " + argsList)
     if (jarset != null)
       message.jarset = jarset
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage)
 
   }
 
@@ -467,14 +506,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   def getsetMethods = {
-    
+
     """
     override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
     override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
     override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
     """
   }
-  
+
   //input function conversion
   def getDefVal(valType: String): String = {
     valType match {
