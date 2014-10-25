@@ -72,6 +72,8 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
 object OnLEPConfiguration {
   var jarPath: String = _
   var nodeId: Int = _
+  var zkConnectString: String = _
+  var znodePath: String = _
 }
 
 class OnLEPClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
@@ -106,8 +108,8 @@ class OnLEPManager {
   private var serviceObj: OnLEPServer = null
 
   private val inputAdapters = new ArrayBuffer[InputAdapter]
-  private var outputAdapters = new ArrayBuffer[OutputAdapter]
-  private var statusAdapters = new ArrayBuffer[OutputAdapter]
+  private val outputAdapters = new ArrayBuffer[OutputAdapter]
+  private val statusAdapters = new ArrayBuffer[OutputAdapter]
 
   private type OptionMap = Map[Symbol, Any]
 
@@ -387,10 +389,10 @@ class OnLEPManager {
         val objinst = obj.instance
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
-          val containerNames = OnLEPMetadata.containerObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          val topMessageNames = OnLEPMetadata.messageObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.initContainers(OnLEPMetadata.mdMgr, OnLEPConfiguration.jarPath, containerNames)
-          envCtxt.initMessages(OnLEPMetadata.mdMgr, OnLEPConfiguration.jarPath, topMessageNames)
+          val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+          val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+          envCtxt.initContainers(OnLEPMetadata.GetMdMgr, OnLEPConfiguration.jarPath, containerNames)
+          envCtxt.initMessages(OnLEPMetadata.GetMdMgr, OnLEPConfiguration.jarPath, topMessageNames)
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -480,13 +482,16 @@ class OnLEPManager {
         return false
       }
 
+      OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("zkConnectString".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.znodePath = loadConfigs.getProperty("znodePath".toLowerCase, "").replace("\"", "").trim
+
       val nodePort: Int = loadConfigs.getProperty("nodePort".toLowerCase, "0").replace("\"", "").trim.toInt
       if (nodePort <= 0) {
         LOG.error("Not found valid nodePort. It should be greater than 0")
         return false
       }
 
-      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror)
+      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.znodePath)
 
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)

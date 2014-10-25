@@ -1,4 +1,4 @@
-name := "ZooKeeper"
+name := "ZooKeeperListener"
 
 version := "1.0"
 

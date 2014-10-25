@@ -72,7 +72,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     if (msg == null)
       return
 
-    val models: Array[MdlInfo] = OnLEPMetadata.modelObjects.map(mdl => mdl._2).toArray
+    val models: Array[MdlInfo] = OnLEPMetadata.getAllModels.map(mdl => mdl._2).toArray
     var result: StringBuilder = new StringBuilder(8 * 1024)
 
     result ++= "{\"ModelsResult\" : ["

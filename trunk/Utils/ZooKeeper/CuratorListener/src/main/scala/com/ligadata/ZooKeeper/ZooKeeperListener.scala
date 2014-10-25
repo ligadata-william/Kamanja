@@ -22,13 +22,15 @@ object ZooKeeperListener {
   lazy val logger = Logger.getLogger(loggerName)
   var zkc: CuratorFramework = null
 
-  def ProcessData(newData: ChildData) = {
+  private def ProcessData(newData: ChildData, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
     try{
       if( newData.getData() != null ){
 	val receivedJsonStr = new String(newData.getData())
 	logger.debug("New data received => " + receivedJsonStr)
 	val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
 	MetadataAPIImpl.UpdateMdMgr(zkMessage)
+	if (UpdOnLepMetadataCallback != null)
+	  UpdOnLepMetadataCallback(zkMessage, com.ligadata.olep.metadata.MdMgr.GetMdMgr)
       }
     } catch {
       case e: Exception => {
@@ -54,7 +56,7 @@ object ZooKeeperListener {
     }
   }
 
-  def CreateListener(zkcConnectString:String,znodePath: String) = {
+  def CreateListener(zkcConnectString:String,znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
    try{
       zkc = CreateClient.createSimple(zkcConnectString)
       val nodeCache = new NodeCache(zkc, znodePath)
@@ -63,7 +65,7 @@ object ZooKeeperListener {
 	def nodeChanged = {
           try {
             val dataFromZNode = nodeCache.getCurrentData
-            ProcessData(dataFromZNode)
+            ProcessData(dataFromZNode, UpdOnLepMetadataCallback)
           }catch {
             case ex: Exception => {
               logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
@@ -86,7 +88,7 @@ object ZooKeeperListener {
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
       CreateNodeIfNotExists(zkcConnectString,znodePath)
-      CreateListener(zkcConnectString,znodePath)
+      CreateListener(zkcConnectString,znodePath, null)
 
       breakable{
 	for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console

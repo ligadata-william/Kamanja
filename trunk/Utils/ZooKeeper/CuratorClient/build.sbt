@@ -1,4 +1,4 @@
-name := "ZooKeeper"
+name := "ZooKeeperClient"
 
 version := "1.0"
 
