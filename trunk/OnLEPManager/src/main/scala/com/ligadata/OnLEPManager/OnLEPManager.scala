@@ -482,8 +482,8 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("zkConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.znodePath = loadConfigs.getProperty("znodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.znodePath = loadConfigs.getProperty("ZnodePath".toLowerCase, "").replace("\"", "").trim
 
       val nodePort: Int = loadConfigs.getProperty("nodePort".toLowerCase, "0").replace("\"", "").trim.toInt
       if (nodePort <= 0) {

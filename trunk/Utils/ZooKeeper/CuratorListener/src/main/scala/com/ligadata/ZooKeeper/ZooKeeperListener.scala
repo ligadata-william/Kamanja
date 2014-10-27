@@ -23,23 +23,24 @@ object ZooKeeperListener {
   var zkc: CuratorFramework = null
 
   private def ProcessData(newData: ChildData, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
-    try{
-      if( newData.getData() != null ){
-	val receivedJsonStr = new String(newData.getData())
-	logger.debug("New data received => " + receivedJsonStr)
-	val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-	MetadataAPIImpl.UpdateMdMgr(zkMessage)
-	if (UpdOnLepMetadataCallback != null)
-	  UpdOnLepMetadataCallback(zkMessage, com.ligadata.olep.metadata.MdMgr.GetMdMgr)
+    try {
+      val data = newData.getData()
+      if (data != null) {
+        val receivedJsonStr = new String(data)
+        logger.debug("New data received => " + receivedJsonStr)
+        val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
+        MetadataAPIImpl.UpdateMdMgr(zkMessage)
+        if (UpdOnLepMetadataCallback != null)
+          UpdOnLepMetadataCallback(zkMessage, com.ligadata.olep.metadata.MdMgr.GetMdMgr)
       }
     } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def CreateNodeIfNotExists(zkcConnectString:String,znodePath: String) = {
+  def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString)
       if (zkc.checkExists().forPath(znodePath) == null) {
@@ -56,26 +57,26 @@ object ZooKeeperListener {
     }
   }
 
-  def CreateListener(zkcConnectString:String,znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
-   try{
+  def CreateListener(zkcConnectString: String, znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
+    try {
       zkc = CreateClient.createSimple(zkcConnectString)
       val nodeCache = new NodeCache(zkc, znodePath)
       nodeCache.getListenable.addListener(new NodeCacheListener {
-	@Override
-	def nodeChanged = {
+        @Override
+        def nodeChanged = {
           try {
             val dataFromZNode = nodeCache.getCurrentData
             ProcessData(dataFromZNode, UpdOnLepMetadataCallback)
-          }catch {
+          } catch {
             case ex: Exception => {
               logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
             }
           }
-	}
+        }
       })
       nodeCache.start
       logger.setLevel(Level.TRACE);
-    }catch {
+    } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
@@ -83,23 +84,23 @@ object ZooKeeperListener {
   }
 
   def StartLocalListener = {
-    try{
+    try {
       val znodePath = "/ligadata/metadata"
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
-      CreateNodeIfNotExists(zkcConnectString,znodePath)
-      CreateListener(zkcConnectString,znodePath, null)
+      CreateNodeIfNotExists(zkcConnectString, znodePath)
+      CreateListener(zkcConnectString, znodePath, null)
 
-      breakable{
-	for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
-	  if (zkc != null)
+      breakable {
+        for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
+          if (zkc != null)
             zkc.close
-	  zkc = null
-	  println("Exiting")
-	  break
-	}
+          zkc = null
+          println("Exiting")
+          break
+        }
       }
-    }catch {
+    } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }
@@ -111,13 +112,13 @@ object ZooKeeperListener {
   }
 
   def main(args: Array[String]) = {
-    try{
+    try {
       MetadataAPIImpl.InitMdMgrFromBootStrap
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
       StartLocalListener
-    }catch {
+    } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }

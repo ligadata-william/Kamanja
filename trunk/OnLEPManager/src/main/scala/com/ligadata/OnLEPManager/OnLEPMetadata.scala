@@ -329,7 +329,7 @@ object OnLEPMetadata {
 
     // First removing the objects
     // Removing Models
-    if (removedModels != null) {
+    if (removedModels != null && removedModels.size > 0) {
       removedModels.foreach(mdl => {
         val elemName = (mdl._1.trim + "." + mdl._2.trim).toLowerCase
         modelObjects -= elemName
@@ -337,32 +337,32 @@ object OnLEPMetadata {
     }
 
     // Removing Messages
-    if (removedMessages != null) {
-      removedMessages.foreach(mdl => {
-        val elemName = (mdl._1.trim + "." + mdl._2.trim).toLowerCase
+    if (removedMessages != null && removedMessages.size > 0) {
+      removedMessages.foreach(msg => {
+        val elemName = (msg._1.trim + "." + msg._2.trim).toLowerCase
         messageObjects -= elemName
       })
     }
 
     // Removing Containers
-    if (removedContainers != null) {
-      removedContainers.foreach(mdl => {
-        val elemName = (mdl._1.trim + "." + mdl._2.trim).toLowerCase
+    if (removedContainers != null && removedContainers.size > 0) {
+      removedContainers.foreach(cnt => {
+        val elemName = (cnt._1.trim + "." + cnt._2.trim).toLowerCase
         containerObjects -= elemName
       })
     }
 
     // Adding new objects now
     // Adding container
-    if (contObjects != null)
+    if (contObjects != null && contObjects.size > 0)
       containerObjects ++= contObjects
 
     // Adding Messages
-    if (msgObjects != null)
+    if (msgObjects != null && msgObjects.size > 0)
       messageObjects ++= msgObjects
 
     // Adding Models
-    if (mdlObjects != null)
+    if (mdlObjects != null && mdlObjects.size > 0)
       modelObjects ++= mdlObjects
 
     // If messages/Containers removed or added, jsut change the parents chain
