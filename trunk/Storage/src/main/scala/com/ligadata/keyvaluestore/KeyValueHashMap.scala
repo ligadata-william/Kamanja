@@ -70,12 +70,9 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
       val buffer = map.get(key.toArray[Byte])
 
       // Construct the output value
-      // BUGBUG-jh-20140703: There should be a more concise way to get the data
-      //
       val value = new Value
       if (buffer != null) {
-        for (b <- buffer)
-          value += b
+        value ++= buffer
       } else {
         throw new Exception("Key Not found")
       }
@@ -88,12 +85,9 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
       val buffer = map.get(key.toArray[Byte])
 
       // Construct the output value
-      // BUGBUG-jh-20140703: There should be a more concise way to get the data
-      //
       val value = new Value
       if (buffer != null) {
-        for (b <- buffer)
-          value += b
+        value ++= buffer
       } else {
         throw new Exception("Key Not found")
       }
