@@ -94,8 +94,10 @@ class MessageDefImpl {
         tdataexists = gettdataexists + msg.TDataExists.toString
         tattribs = notdataattribs
       }
-      cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
+     // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
+      
     } else if (msg.msgtype.equals("Container")) {
       cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
@@ -118,7 +120,7 @@ class MessageDefImpl {
   }
 
   def getVersion(msg: Message) = {
-    "\toverride def getVersion: String = " + "\"" + msg.Version + "\""
+    "\toverride def Version: String = " + "\"" + msg.Version + "\""
 
   }
   def createNewMessage(msg: Message) = {
@@ -200,7 +202,14 @@ class MessageDefImpl {
      }
      
      """
+      }else{
+        
+        addMessageFunc = """
+    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+     
+     """
       }
+        
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -230,7 +239,9 @@ class MessageDefImpl {
     var count: Int = 0
     var concepts: String = "concepts"
 
-    scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+  //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    
     // for (e <- message.Elements) {
     //  var fields = e.Fields
     if (message.Elements != null)
@@ -608,7 +619,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	try{
     	if(json == null) throw new Exception("Invalid json data")
      	val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
-     	assignJsonData(parsed.get.asInstanceOf[Map[String, Any]])
+     	assignJsonData(parsed.asInstanceOf[Map[String, Any]])
 	}catch{
 	  case e:Exception =>{
    	    e.printStackTrace()
