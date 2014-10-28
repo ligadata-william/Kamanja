@@ -78,16 +78,18 @@ class CompilerProxy{
     if (scalaCompileRc != 0) {
       logger.error(s"Compile for $scalaSrcFileName has failed...rc = $scalaCompileRc")
       logger.error(s"Command used: $scalacCmd")
+      scalaCompileRc
     }
-		
-    /** The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir*/
-    val mvCmd : String = s"mv com /tmp/$moduleName/"
-    val mvCmdRc : Int = Process(mvCmd).!
-    if (mvCmdRc != 0) {
-      logger.error(s"unable to classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-      logger.error(s"cmd used : $mvCmd")
-    }		
-    (scalaCompileRc | mvCmdRc)
+    else{
+      //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir
+      val mvCmd : String = s"mv com /tmp/$moduleName/"
+      val mvCmdRc : Int = Process(mvCmd).!
+      if (mvCmdRc != 0) {
+	logger.error(s"unable to classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+	logger.error(s"cmd used : $mvCmd")
+      }		
+      mvCmdRc
+    }
   }
 
   def jarCode ( moduleName: String
@@ -197,7 +199,15 @@ class CompilerProxy{
 	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
 	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
 
-      logger.trace("Status => " + status + ",Jar File => " + jarFile)
+
+      logger.trace("Status => " + status)
+
+      if( status != 0 ){
+	logger.error("Compilation of MessgeDef scala file has failed, Message is not added")
+	throw new MsgCompilationFailedException(msgDefStr)
+      }
+
+      logger.trace("Jar File => " + jarFile)
 
       if ( msgDef.nameSpace == null ){
 	msgDef.nameSpace = MetadataAPIImpl.sysNS
