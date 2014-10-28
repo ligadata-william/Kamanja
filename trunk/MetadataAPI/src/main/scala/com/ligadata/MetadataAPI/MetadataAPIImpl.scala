@@ -1326,6 +1326,10 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
 	apiResult.toString()
@@ -1349,6 +1353,10 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to compile the containerDef:",e.toString)
 	apiResult.toString()
@@ -1380,6 +1388,10 @@ object MetadataAPIImpl extends MetadataAPI{
       apiResult.toString()
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to update the msgDef:",e.toString)
 	apiResult.toString()
