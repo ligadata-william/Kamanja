@@ -35,13 +35,13 @@ AsthmaPMML.xml
 		-->
 
 		<!--
-			Obtain the SputumCodes BaseContainer array 
+			Obtain the SputumCodes MessageContainerBase array 
 		-->
-		<DerivedField name="SputumBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+		<DerivedField name="SputumMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">SputumCodes</Constant>
+			    <Constant dataType="string">system.SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -50,19 +50,19 @@ AsthmaPMML.xml
 		-->
 		<DerivedField name="SputumCodes" dataType="ArrayOfSputumCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
-				<FieldRef field="SputumBaseContainers"/>
+				<FieldRef field="SputumMessageContainerBases"/>
 			    <Constant dataType="mbrTypename">SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
 
 		<!--
-			Obtain the SmokingCodes BaseContainer array 
+			Obtain the SmokingCodes MessageContainerBase array 
 		-->
-		<DerivedField name="SmokingBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">FilterArrays</Constant>
-			    <Constant dataType="string">SmokeCodes</Constant>
+			    <Constant dataType="string">system.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -71,19 +71,19 @@ AsthmaPMML.xml
 		-->
 		<DerivedField name="SmokingCodes" dataType="ArrayOfSmokeCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
-				<FieldRef field="SmokingBaseContainers"/>
+				<FieldRef field="SmokingMessageContainerBases"/>
 			    <Constant dataType="mbrTypename">SmokingCodes</Constant>
 			</Apply>
 		</DerivedField>
 
 		<!--
-			Obtain the EnvExposureCodes BaseContainer array 
+			Obtain the EnvExposureCodes MessageContainerBase array 
 		-->
-		<DerivedField name="EnvExposureBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
 				    <Constant dataType="string">FilterArrays</Constant>
-				    <Constant dataType="string">EnvCodes</Constant>
+				    <Constant dataType="string">system.EnvCodes</Constant>
 				</Apply>
 		</DerivedField>
 
@@ -92,19 +92,19 @@ AsthmaPMML.xml
 		-->
 		<DerivedField name="EnvExposureCodes" dataType="ArrayOfEnvCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
-				<FieldRef field="EnvExposureBaseContainers"/>
+				<FieldRef field="EnvExposureMessageContainerBases"/>
 				<Constant dataType="mbrTypename">EnvExposureCodes</Constant>
 			</Apply>
 		</DerivedField>
 
 		<!--
-			Obtain the CoughCodes BaseContainer array 
+			Obtain the CoughCodes MessageContainerBase array 
 		-->
-		<DerivedField name="CoughBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
 				    <Constant dataType="string">FilterArrays</Constant>
-				    <Constant dataType="string">CoughCodes</Constant>
+				    <Constant dataType="string">system.CoughCodes</Constant>
 				</Apply>
 		</DerivedField>
 
@@ -113,19 +113,19 @@ AsthmaPMML.xml
 		-->
 		<DerivedField name="CoughCodes" dataType="ArrayOfCoughCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
-				<FieldRef field="CoughBaseContainers"/>
+				<FieldRef field="CoughMessageContainerBases"/>
 				<Constant dataType="mbrTypename">CoughCodes</Constant>
 			</Apply>
 		</DerivedField>
 
 		<!--
-			Obtain the CoughCodes BaseContainer array 
+			Obtain the CoughCodes MessageContainerBase array 
 		-->
-		<DerivedField name="DyspnoeaBaseContainers" dataType="ArrayOfBaseContainer" optype="categorical">
+		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
 				    <Constant dataType="string">FilterArrays</Constant>
-				    <Constant dataType="string">DyspnoeaCodes</Constant>
+				    <Constant dataType="string">system.DyspnoeaCodes</Constant>
 				</Apply>
 		</DerivedField>
 
@@ -134,7 +134,7 @@ AsthmaPMML.xml
 		-->
 		<DerivedField name="DyspnoeaCodes" dataType="ArrayOfDyspnoeaCodes" optype="categorical">
 			<Apply function="DownCastArrayMembers">
-				<FieldRef field="DyspnoeaBaseContainers"/>
+				<FieldRef field="DyspnoeaMessageContainerBases"/>
 				<Constant dataType="mbrTypename">DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
