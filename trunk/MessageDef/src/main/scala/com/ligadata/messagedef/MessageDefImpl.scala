@@ -202,7 +202,14 @@ class MessageDefImpl {
      }
      
      """
+      }else{
+        
+        addMessageFunc = """
+    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+     
+     """
       }
+        
     } catch {
       case e: Exception => {
         e.printStackTrace()
