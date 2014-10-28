@@ -76,6 +76,8 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
       if (buffer != null) {
         for (b <- buffer)
           value += b
+      } else {
+        throw new Exception("Key Not found")
       }
 
       handler(value)
@@ -92,6 +94,8 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
       if (buffer != null) {
         for (b <- buffer)
           value += b
+      } else {
+        throw new Exception("Key Not found")
       }
 
       target.Construct(key, value)
