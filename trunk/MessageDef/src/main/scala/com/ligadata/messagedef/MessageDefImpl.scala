@@ -619,7 +619,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	try{
     	if(json == null) throw new Exception("Invalid json data")
      	val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
-     	assignJsonData(parsed.get.asInstanceOf[Map[String, Any]])
+     	assignJsonData(parsed.asInstanceOf[Map[String, Any]])
 	}catch{
 	  case e:Exception =>{
    	    e.printStackTrace()
