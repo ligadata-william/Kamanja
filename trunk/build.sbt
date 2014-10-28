@@ -35,7 +35,7 @@ lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/K
 
 lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/FileSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
 
-lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(OnLEPBase, Serialize)
+lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(OnLEPBase, Storage, Serialize)
 
 lazy val Storage = project.in(file("Storage"))
 

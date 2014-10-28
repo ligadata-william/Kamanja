@@ -122,23 +122,23 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  FIXME:  Perhaps we should support the various flavor of keys?
    */
     
-  def Get(gCtx : EnvContext, containerId : String, key : String) : BaseContainer = {
+  def Get(gCtx : EnvContext, containerId : String, key : String) : MessageContainerBase = {
 	  gCtx.getObject(containerId, key.toString) 
   }
   
-  def Get(gCtx : EnvContext, containerId : String, key : Int) : BaseContainer = {
+  def Get(gCtx : EnvContext, containerId : String, key : Int) : MessageContainerBase = {
 	  gCtx.getObject(containerId, key.toString) 
   }
   
-  def Get(gCtx : EnvContext, containerId : String, key : Long) : BaseContainer = {
+  def Get(gCtx : EnvContext, containerId : String, key : Long) : MessageContainerBase = {
 	  gCtx.getObject(containerId, key.toString) 
   }
   
-  def Get(gCtx : EnvContext, containerId : String, key : Double) : BaseContainer = {
+  def Get(gCtx : EnvContext, containerId : String, key : Double) : MessageContainerBase = {
 	  gCtx.getObject(containerId, key.toString) 
   }
   
-  def Get(gCtx : EnvContext, containerId : String, key : Float) : BaseContainer = {
+  def Get(gCtx : EnvContext, containerId : String, key : Float) : MessageContainerBase = {
 	  gCtx.getObject(containerId, key.toString) 
   }
   
@@ -147,23 +147,23 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  FIXME:  Perhaps we should support the various flavor of keys?
    */
     
-  def GetArray(gCtx : EnvContext, containerId : String, key : String) : Array[BaseContainer] = {
+  def GetArray(gCtx : EnvContext, containerId : String, key : String) : Array[MessageContainerBase] = {
 	  gCtx.getObjects(containerId, key.toString) 
   }
   
-  def GetArray(gCtx : EnvContext, containerId : String, key : Int) : Array[BaseContainer] = {
+  def GetArray(gCtx : EnvContext, containerId : String, key : Int) : Array[MessageContainerBase] = {
 	  gCtx.getObjects(containerId, key.toString) 
   }
   
-  def GetArray(gCtx : EnvContext, containerId : String, key : Long) : Array[BaseContainer] = {
+  def GetArray(gCtx : EnvContext, containerId : String, key : Long) : Array[MessageContainerBase] = {
 	  gCtx.getObjects(containerId, key.toString) 
   }
   
-  def GetArray(gCtx : EnvContext, containerId : String, key : Double) : Array[BaseContainer] = {
+  def GetArray(gCtx : EnvContext, containerId : String, key : Double) : Array[MessageContainerBase] = {
 	  gCtx.getObjects(containerId, key.toString) 
   }
    
-  def GetArray(gCtx : EnvContext, containerId : String, key : Float) : Array[BaseContainer] = {
+  def GetArray(gCtx : EnvContext, containerId : String, key : Float) : Array[MessageContainerBase] = {
 	  gCtx.getObjects(containerId, key.toString) 
   }
  
@@ -172,27 +172,27 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 	  FIXME:  Perhaps we should support the various flavor of keys?
    */
     
-  def Put(gCtx : EnvContext, containerId : String, key : String, value : BaseContainer) : Boolean = {
+  def Put(gCtx : EnvContext, containerId : String, key : String, value : MessageContainerBase) : Boolean = {
 	  gCtx.setObject(containerId, key.toString, value) 
 	  true
   }
   
-  def Put(gCtx : EnvContext, containerId : String, key : Int, value : BaseContainer) : Boolean = {
+  def Put(gCtx : EnvContext, containerId : String, key : Int, value : MessageContainerBase) : Boolean = {
 	  gCtx.setObject(containerId, key.toString, value) 
 	  true
   }
   
-  def Put(gCtx : EnvContext, containerId : String, key : Long, value : BaseContainer) : Boolean = {
+  def Put(gCtx : EnvContext, containerId : String, key : Long, value : MessageContainerBase) : Boolean = {
 	  gCtx.setObject(containerId, key.toString, value) 
  	  true
  }
   
-  def Put(gCtx : EnvContext, containerId : String, key : Double, value : BaseContainer) : Boolean = {
+  def Put(gCtx : EnvContext, containerId : String, key : Double, value : MessageContainerBase) : Boolean = {
 	  gCtx.setObject(containerId, key.toString, value) 
  	  true
  }
   
-  def Put(gCtx : EnvContext, containerId : String, key : Float, value : BaseContainer) : Boolean = {
+  def Put(gCtx : EnvContext, containerId : String, key : Float, value : MessageContainerBase) : Boolean = {
 	  gCtx.setObject(containerId, key.toString, value) 
 	  true
   }
