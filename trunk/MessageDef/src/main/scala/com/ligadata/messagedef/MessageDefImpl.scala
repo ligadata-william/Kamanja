@@ -94,10 +94,9 @@ class MessageDefImpl {
         tdataexists = gettdataexists + msg.TDataExists.toString
         tattribs = notdataattribs
       }
-     // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
+      // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
       cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
-      
     } else if (msg.msgtype.equals("Container")) {
       cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
@@ -202,14 +201,14 @@ class MessageDefImpl {
      }
      
      """
-      }else{
-        
+      } else {
+
         addMessageFunc = """
     override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
      
      """
       }
-        
+
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -239,9 +238,9 @@ class MessageDefImpl {
     var count: Int = 0
     var concepts: String = "concepts"
 
-  //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
-    
+
     // for (e <- message.Elements) {
     //  var fields = e.Fields
     if (message.Elements != null)
@@ -733,7 +732,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
-    containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+    if (msg.PartitionKey != null)
+      containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+    else
+      containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
     containerDef
   }
 
