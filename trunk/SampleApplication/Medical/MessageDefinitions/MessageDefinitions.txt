@@ -776,3 +776,27 @@
   }
 }
 
+{
+  "Container": {
+    "NameSpace": "System",
+    "Name": "ConflictMedicalCode",
+    "Version": "00.01.00",
+    "Description": "Conflict Medical Codes",
+    "Fixed": "true",
+    "Fields": [
+      {
+        "Name": "Code1",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Code2",
+        "Type": "System.String"
+      },
+      {
+        "Name": "Description",
+        "Type": "System.String"
+      }
+    ]
+  }
+}
+
