@@ -732,16 +732,33 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
-    if (msg.PartitionKey != null)
-      containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
-    else
-      containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+    try {
+      if (msg.PartitionKey != null)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+      else
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
     containerDef
   }
 
   def createMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
-    msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+    try {
+      if (msg.PartitionKey != null)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+      else
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
     msgDef
   }
   /*
