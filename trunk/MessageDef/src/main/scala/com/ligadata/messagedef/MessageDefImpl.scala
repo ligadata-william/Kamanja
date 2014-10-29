@@ -62,7 +62,7 @@ class MessageDefImpl {
     var addMsgStr: String = ""
     val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
     try {
-      addMsgStr = addMessage(addMsg)
+      addMsgStr = addMessage(addMsg, message)
       val (btrait, striat, csetters) = getBaseTrait(message)
       val cobj = createObj(message)
       val isFixed = getIsFixed(message)
@@ -98,7 +98,8 @@ class MessageDefImpl {
       cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
-      cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
+      // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
     }
     cobj
@@ -183,13 +184,16 @@ class MessageDefImpl {
     (btrait, strait, csetters)
   }
 
-  private def addMessage(addMsg: String): String = {
+  private def addMessage(addMsg: String, msg: Message): String = {
     var addMessageFunc: String = ""
+    var msgType: String = ""
+
     try {
+
       if ((addMsg != null) && (addMsg.trim() != "")) {
         addMessageFunc = """
-    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
-       if (childPath == null || childPath.size == 0) { // Invalid case
+          override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg)): Unit = {
+          if (childPath == null || childPath.size == 0) { // Invalid case
     	  return
        }
        val curVal = childPath(0)
@@ -433,9 +437,9 @@ class MessageDefImpl {
   def importStmts(msgtype: String): String = {
     var imprt: String = ""
     if (msgtype.equals("Message"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage}"
+      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer}"
     else if (msgtype.equals("Container"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseContainer, BaseContainerObj}"
+      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj}"
 
     """
 package com.ligadata.messagedef
