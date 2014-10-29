@@ -1336,9 +1336,12 @@ object TestMetadataAPI{
       serializer.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
 
+      val jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
       if (args.length == 0) {
-	logger.warn("No Command line arguments are supplied, API Config will be loaded loaded from MetadataAPI.properties")
-	MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
+	logger.error("Config File defaults to " + jsonConfigFile)
+	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
+	logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+	MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(jsonConfigFile)
       }
       else{
 	val options = nextOption(Map(), args.toList)
@@ -1349,10 +1352,10 @@ object TestMetadataAPI{
 	}
 	MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(cfgfile.asInstanceOf[String])
       }
-
       MetadataAPIImpl.InitMdMgrFromBootStrap
       databaseOpen = true
       StartTest
+
       // AddDerivedConcept
       // AddType
       //TestKryoSerialize
