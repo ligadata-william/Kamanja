@@ -407,7 +407,7 @@ class MessageDefImpl {
     if (message.concepts != null) {
 
     }
-    if (message.PartitionKey != null)
+   // if (message.PartitionKey != null)
       scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
     var addMessage: String = ""
     if (addMsg.size > 5)
@@ -502,8 +502,10 @@ trait BaseContainer {
 
   def partitionkeyStr(msg: Message): String = {
 
-    "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
-
+    if(msg.PartitionKey != null)
+    	"\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
+    else 
+    	"\n	override def PartitionKeyData: String = \"\""
   }
 
   def inputData = {
@@ -554,7 +556,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def cSetter() = {
+  def cSetter() = "" 
+  /*{
     """
     def get(key: String): Any ={
 		null
@@ -566,7 +569,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	    null
 	}
     """
-  }
+  }*/
   //populate method in msg-TransactionMsg class
   def populate = {
     """
