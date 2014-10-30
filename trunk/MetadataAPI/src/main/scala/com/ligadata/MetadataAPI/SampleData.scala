@@ -79,11 +79,11 @@ object SampleData {
 
   val sampleConceptStr = """
   {"Concepts" : [
-  "NameSpace":"Ligadata",
+  {"NameSpace":"Ligadata",
   "Name":"ProviderId",
   "TypeNameSpace":"System",
   "TypeName" : "String",
-  "Version"  : 100 ]
+  "Version"  : "100"} ]
   }
 """
 

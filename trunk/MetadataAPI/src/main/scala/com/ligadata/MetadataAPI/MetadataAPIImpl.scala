@@ -1175,7 +1175,8 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       else{
 	  var conceptList = JsonSerializer.parseConceptList(conceptsText,format)
-	  conceptList.foreach(concept => { 
+	  conceptList.foreach(concept => {
+	    //logger.trace("Save concept object " + JsonSerializer.SerializeObjectToJson(concept))
 	    SaveObject(concept) 
 	  })
 	  var apiResult = new ApiResult(0,"Concepts Are Added",conceptsText)
@@ -1183,7 +1184,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }catch {
       case e:Exception =>{
-	var apiResult = new ApiResult(-1,"Failed to add concets: " + e.getMessage(),"FAILED")
+	var apiResult = new ApiResult(-1,"Failed to add concepts",e.getMessage())
 	apiResult.toString()
       }
     }
