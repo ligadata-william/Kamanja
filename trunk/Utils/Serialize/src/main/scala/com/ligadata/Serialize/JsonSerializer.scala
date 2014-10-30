@@ -244,16 +244,22 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(conceptsStr)
       val conceptList = json.extract[ConceptList]
+
+      //logger.trace("Parsed the json str " + conceptsStr)
       val attrDefList = new Array[BaseAttributeDef](conceptList.Concepts.length)
+      var i = 0;
       conceptList.Concepts.map(o => {
 	try{
+	  //logger.trace("Create Concept for " + o.NameSpace + "." + o.Name)
 	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
 						o.Name,
 						o.TypeNameSpace,
 						o.TypeName,
 						o.Version.toInt,
 						false)
-	  attrDefList :+ attr
+	  logger.trace("Created AttributeDef for " + o.NameSpace + "." + o.Name)
+	  attrDefList(i) =  attr
+	  i = i + 1
 	} catch {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(o.NameSpace,o.Name,o.Version)
@@ -262,6 +268,7 @@ object JsonSerializer {
 	  }
 	}
       })
+      //logger.trace("Found " + attrDefList.length + " concepts ")
       attrDefList
     }catch {
       case e:MappingException =>{
