@@ -59,21 +59,159 @@ object TestMetadataAPI{
     val session = cluster.connect(keyspace);
   }
 
-  def AddType = {
-    var apiResult = MetadataAPIImpl.AddType(SampleData.sampleScalarTypeStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
-    apiResult = MetadataAPIImpl.AddType(SampleData.sampleTupleTypeStr,"JSON")
-    result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+  
+  // Types
+  
+  def AddType {
+    try {
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
+      if (dirName == null) {
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        logger.info("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
+      }
+      
+      if (!IsValidDir(dirName)) {
+        logger.fatal("Invalid Directory " + dirName)
+        return
+      }
+      val typFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (typFiles.length == 0) {
+        logger.fatal("No json type files exist in the directory " + dirName)
+        return
+      }
+      
+      println("\nSelect a Type Definition file:\n")
+      
+      var seq = 0
+      typFiles.foreach(key => { seq += 1; println("[" + seq + "]" + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+      
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+      
+      if (choice == typFiles.length +1) {
+        return
+      }
+      
+      if (choice < 1 || choice > typFiles.length + 1) {
+        logger.fatal("Invalid Choice: " + choice)
+        return
+      }
+      
+      val typDefFile = typFiles(choice - 1).toString
+      
+      logger.setLevel(Level.TRACE);
+      val typStr = Source.fromFile(typDefFile).mkString
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
+    }
+    catch {
+      case e: AlreadyExistsException => {
+        logger.error("Container already exists in metadata...")
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
   }
 
-  def RemoveType = {
-    val apiResult = MetadataAPIImpl.RemoveType(MdMgr.sysNS,"my_char",100)
+  def GetType {
+    try{
+      logger.setLevel(Level.TRACE);
+
+      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
+      if( typKeys.length == 0 ){
+	      println("Sorry, No types available in the Metadata")
+	      return
+      }
+
+      println("\nPick the type to be presented from the following list: ")
+      var seq = 0
+      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if ( choice < 1 || choice > typKeys.length ){
+        println("Invalid choice " + choice + ",start with main menu...")
+	      return
+      }
+
+      val typKey = MetadataAPIImpl.KeyAsStr(typKeys(choice-1))
+
+      val typKeyTokens = typKey.split("\\.")
+      val typNameSpace = typKeyTokens(0)
+      val typName = typKeyTokens(1)
+      val typVersion = typKeyTokens(2)
+      val typOpt = MetadataAPIImpl.GetType(typNameSpace,typName,typVersion,"JSON")
+      
+      typOpt match {
+        case None => None
+        case Some(ts) => 
+          val apiResult = new ApiResult(0,"Successfully fetched typeDef",JsonSerializer.SerializeObjectToJson(ts)).toString()
+          val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+          println("Result as Json String => \n" + resultData)
+      }
+    }catch {
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+  
+  def GetAllTypes{
+    val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + resultData)
+    
   }
 
+  def RemoveType {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+    
+    try {
+      logger.setLevel(Level.TRACE);
+
+      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
+      if( typKeys.length == 0 ){
+        println("Sorry, there are no types available in the Metadata")
+	      return
+      }
+
+      println("\nPick the Type to be deleted from the following list: ")
+      var seq = 0
+      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if ( choice < 1 || choice > typKeys.length ){
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
+      }
+
+      val typKey = MetadataAPIImpl.KeyAsStr(typKeys(choice-1))
+      val typKeyTokens = typKey.split("\\.")
+      val typNameSpace = typKeyTokens(0)
+      val typName = typKeyTokens(1)
+      val typVersion = typKeyTokens(2)
+      val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toInt)
+
+      val (statusCode1,resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
+      
+    }
+    catch {
+      case e: Exception => {
+	    e.printStackTrace()
+      }
+    }
+  }
+  
+  // End Types
+  
   def UpdateType = {
     val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
@@ -192,7 +330,6 @@ object TestMetadataAPI{
     }
   }
 
-
   def GetMessageFromCache{
     try{
       logger.setLevel(Level.TRACE);
@@ -233,7 +370,6 @@ object TestMetadataAPI{
       }
     }
   }
-
 
   def GetContainerFromCache{
     try{
@@ -363,7 +499,6 @@ object TestMetadataAPI{
       }
     }
   }
-
 
   def RemoveMessageFromStore{
     try{
@@ -569,7 +704,6 @@ object TestMetadataAPI{
     }
   }
 
-
   def GetAllMessagesFromStore{
     try{
       logger.setLevel(Level.TRACE);
@@ -586,7 +720,6 @@ object TestMetadataAPI{
       }
     }
   }
-
 
 
   def GetAllModelsFromCache{
@@ -660,7 +793,6 @@ object TestMetadataAPI{
       }
     }
   }
-
 
   def AddContainer{
     try{
@@ -1024,18 +1156,6 @@ object TestMetadataAPI{
     }
   }
 
-  def DumpAllTypesAsJson{
-    try{
-      val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
-    } catch{
-      case e: Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
-
 
   def DumpAllTypesByObjTypeAsJson{
     try{
@@ -1241,8 +1361,9 @@ object TestMetadataAPI{
       val getAllContainers = ()           => { GetAllContainersFromCache }
       val removeContainer = ()            => { RemoveContainer }
       val addType         = ()            => { AddType }
+      val getType         = ()            => { GetType }
+      val getAllTypes     = ()            => { GetAllTypes }
       val removeType      = ()            => { RemoveType }
-      val updateType         = ()         => { UpdateType }
       val addFunction         = ()        => { AddFunction }
       val removeFunction      = ()        => { RemoveFunction }
       val updateFunction         = ()     => { UpdateFunction }
@@ -1253,7 +1374,6 @@ object TestMetadataAPI{
       val loadFunctionsFromAFile = ()     => { LoadFunctionsFromAFile }
       val dumpAllConceptsAsJson = ()      => { DumpAllConceptsAsJson }
       val loadConceptsFromAFile = ()      => { LoadConceptsFromAFile }
-      val dumpAllTypesAsJson = ()         => { DumpAllTypesAsJson }
       val dumpAllTypesByObjTypeAsJson = ()=> { DumpAllTypesByObjTypeAsJson }
       val loadTypesFromAFile = ()         => { LoadTypesFromAFile }
 
@@ -1270,8 +1390,9 @@ object TestMetadataAPI{
 			      ("Get All Containers",getAllContainers),
 			      ("Remove Container",removeContainer),
 			      ("Add Type",addType),
+			      ("Get Type",getType),
+			      ("Get All Types",getAllTypes),
 			      ("Remove Type",removeType),
-			      ("Update Type",updateType),
 			      ("Add Function",addFunction),
 			      ("Remove Function",removeFunction),
 			      ("Update Function",updateFunction),
@@ -1284,7 +1405,6 @@ object TestMetadataAPI{
 			      ("Dump All Metadata Keys",dumpMetadata),
 			      ("Dump All Functions",dumpAllFunctionsAsJson),
 			      ("Dump All Concepts",dumpAllConceptsAsJson),
-			      ("Dump All Types",dumpAllTypesAsJson),
 			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson))
 
       var done = false
