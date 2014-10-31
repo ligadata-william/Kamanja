@@ -42,6 +42,12 @@ cp $HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $
 cp $HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar $HOME/OnLEP/
 cp $HOME/github/RTD/trunk/SampleApplication/Medical/MedEnvContext/target/scala-2.10/medenvcontext_2.10-1.0.jar $HOME/OnLEP
 
+** I have decided to use the json file as the config file for MetadataAPI. (ignore the MetadataAPI.properties from now)
+** I have  hard-coded the default config file as $HOME/MetadataAPIConfig.json where $HOME is your home directory.
+
+** I plan to change the default file path if and when we can settle on deployment tree for all the components.
+** One Can optionally supply a config file as a command line argument as described below
+
 ** copy "RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json" to your home directory(must)
 
 ** Update the config file "$HOME/MetadataAPIConfig.json"
