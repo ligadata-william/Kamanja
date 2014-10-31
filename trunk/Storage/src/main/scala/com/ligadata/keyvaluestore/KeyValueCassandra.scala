@@ -80,7 +80,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	{
 		var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
 		var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
-		session.execute(insertStmt.bind(key, value).setConsistencyLevel(consistencylevelWrite))
+		session.execute(updateStmt.bind(key, value).setConsistencyLevel(consistencylevelWrite))
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =

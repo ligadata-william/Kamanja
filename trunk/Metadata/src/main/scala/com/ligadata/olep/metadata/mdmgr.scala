@@ -654,164 +654,262 @@ class MdMgr {
   def Model(key: String, ver: Int, onlyActive: Boolean): Option[ModelDef] = GetReqValue(Models(key, onlyActive, false), ver)
 
   @throws(classOf[ObjectNolongerExistsException])
-  def RemoveModel(nameSpace: String, name: String, ver: Int){
+  def ModifyModel(nameSpace: String, name: String, ver: Int, operation: String): ModelDef = {
       val key = MdMgr.MkFullName(nameSpace, name)
       val model = modelDefs.getOrElse(key,null)
       if(model == null ){
-	 logger.trace("The model " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
+	logger.trace("The model " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
       }
       else{
-	  // Removing the model irrespective of version. Need to be fixed
-	  modelDefs(key).foreach(m =>
+	var versionMatch: ModelDef = null
+	modelDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The model " + key + " is removed ")
-	      modelDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The model " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The model " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The model " + key + " is deactivated ")
+		}
+	      }
 	    })
-
+	versionMatch
       }
   }
 
-
   @throws(classOf[ObjectNolongerExistsException])
-  def DeactivateModel(nameSpace: String, name: String, ver: Int){
+  def ModifyMessage(nameSpace: String, name: String, ver: Int, operation: String): MessageDef = {
       val key = MdMgr.MkFullName(nameSpace, name)
-      val model = modelDefs.getOrElse(key,null)
-      if(model == null ){
-	 logger.trace("The model " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
-      }
-      else{
-	  modelDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      m.Deactive
-	    })
-      }
-  }
-
-
-  @throws(classOf[ObjectNolongerExistsException])
-  def RemoveMessage(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
       val message = msgDefs.getOrElse(key,null)
       if(message == null ){
-	 logger.trace("The message " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
+	logger.trace("The message " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
       }
       else{
-	  // Removing the message irrespective of version. Need to be fixed
-	  msgDefs(key).foreach(m =>
+	var versionMatch: MessageDef = null
+	msgDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The message " + key + " is removed ")
-	      msgDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The message " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The message " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The message " + key + " is deactivated ")
+		}
+	      }
 	    })
-      }
-  }
-
-
-  @throws(classOf[ObjectNolongerExistsException])
-  def DeactivateMessage(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
-      val message = msgDefs.getOrElse(key,null)
-      if(message == null ){
-	 logger.trace("The message " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
-      }
-      else{
-	  msgDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      m.Deactive
-	    })
+	versionMatch
       }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def RemoveContainer(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
-      val container = containerDefs.getOrElse(key,null)
+  def ModifyContainer(nameSpace: String, name: String, ver: Int, operation: String): ContainerDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
+      val container = msgDefs.getOrElse(key,null)
       if(container == null ){
-	 logger.trace("The container " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
+	logger.trace("The container " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
       }
       else{
-	  // Removing the container irrespective of version. Need to be fixed
-	  containerDefs(key).foreach(m =>
+	var versionMatch: ContainerDef = null
+	msgDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The container " + key + " is removed ")
-	      containerDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The container " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The container " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The container " + key + " is deactivated ")
+		}
+	      }
 	    })
-      }
-  }
-
-
-  @throws(classOf[ObjectNolongerExistsException])
-  def DeactivateContainer(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
-      val container = containerDefs.getOrElse(key,null)
-      if(container == null ){
-	 logger.trace("The container " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
-      }
-      else{
-	  containerDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      m.Deactive
-	    })
+	versionMatch
       }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def RemoveFunction(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
+  def ModifyFunction(nameSpace: String, name: String, ver: Int, operation: String): FunctionDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
       val function = funcDefs.getOrElse(key,null)
       if(function == null ){
-	 logger.trace("The function " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
+	logger.trace("The function " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
       }
       else{
-	  // Removing the function irrespective of version. Need to be fixed
-	  funcDefs(key).foreach(m =>
+	var versionMatch: FunctionDef = null
+	funcDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The function " + key + " is removed ")
-	      funcDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The function " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The function " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The function " + key + " is deactivated ")
+		}
+	      }
 	    })
+	versionMatch
       }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def RemoveAttribute(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
-      val concept = attrbDefs.getOrElse(key,null)
-      if(concept == null ){
-	 logger.trace("The concept " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The concept $key may have been removed already")
+  def ModifyAttribute(nameSpace: String, name: String, ver: Int, operation: String): BaseAttributeDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
+      val attribute = attrbDefs.getOrElse(key,null)
+      if(attribute == null ){
+	logger.trace("The attribute " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The attribute $key may have been removed already")
       }
       else{
-	  // Removing the concept irrespective of version. Need to be fixed
-	  attrbDefs(key).foreach(m =>
+	var versionMatch: BaseAttributeDef = null
+	attrbDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The concept " + key + " is removed ")
-	      attrbDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The attribute " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The attribute " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The attribute " + key + " is deactivated ")
+		}
+	      }
 	    })
+	versionMatch
       }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def RemoveType(nameSpace: String, name: String, ver: Int){
-      val key = MdMgr.MkFullName(nameSpace, name).toLowerCase
+  def ModifyType(nameSpace: String, name: String, ver: Int, operation: String): BaseTypeDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
       val typ = typeDefs.getOrElse(key,null)
       if(typ == null ){
-	 logger.trace("The type " + key + " already removed ")
-	 throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
+	logger.trace("The type " + key + " doesn't exist ")
+	throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
       }
       else{
-	  // Removing the type irrespective of version. Need to be fixed
-	  typeDefs(key).foreach(m =>
+	var versionMatch: BaseTypeDef = null
+	typeDefs(key).foreach(m =>
 	    if(m.ver == ver ){
-	      logger.info("The type " + key + " is removed ")
-	      typeDefs.remove(key)
+	      versionMatch = m
+	      operation match{
+		case "Remove" => {
+		  m.Deleted
+		  m.Deactive
+		  logger.info("The type " + key + " is removed ")
+		}
+		case "Activate" => {
+		  m.Active
+		  logger.info("The type " + key + " is activated ")
+		}
+		case "Deactivate" => {
+		  m.Deactive
+		  logger.info("The type " + key + " is deactivated ")
+		}
+	      }
 	    })
+	versionMatch
       }
+  }
+
+
+  def RemoveMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyMessage(nameSpace,name,ver,"Remove")
+  }
+
+  def DeactivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyMessage(nameSpace,name,ver,"Deactivate")
+  }
+
+  def ActivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyMessage(nameSpace,name,ver,"Activate")
+  }
+
+  def RemoveContainer(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Remove")
+  }
+
+  def DeactivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Deactivate")
+  }
+
+  def ActivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Activate")
+  }
+
+  def RemoveFunction(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
+      ModifyFunction(nameSpace,name,ver,"Remove")
+  }
+
+  def DeactivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyFunction(nameSpace,name,ver,"Deactivate")
+  }
+
+  def ActivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Activate")
+  }
+
+  def RemoveAttribute(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
+      ModifyAttribute(nameSpace,name,ver,"Remove")
+  }
+
+  def DeactivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyAttribute(nameSpace,name,ver,"Deactivate")
+  }
+
+  def ActivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Activate")
+  }
+
+  def RemoveType(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
+      ModifyType(nameSpace,name,ver,"Remove")
+  }
+
+  def DeactivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyType(nameSpace,name,ver,"Deactivate")
+  }
+
+  def ActivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+      ModifyContainer(nameSpace,name,ver,"Activate")
   }
 
   // Make Functions. These will just make and send back the object

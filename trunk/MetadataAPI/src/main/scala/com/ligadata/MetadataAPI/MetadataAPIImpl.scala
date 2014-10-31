@@ -171,7 +171,7 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def SaveObject(key: String, value: String, store: DataStore){
+  def SaveObject(key: String, value: Array[Byte], store: DataStore){
     object i extends IStorage{
       var k = new com.ligadata.keyvaluestore.Key
       var v = new com.ligadata.keyvaluestore.Value
@@ -179,18 +179,23 @@ object MetadataAPIImpl extends MetadataAPI{
 	k += c.toByte
       }
       for(c <- value ){
-	v += c.toByte
+	v += c
       }
       def Key = k
       def Value = v
       def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
     }
     val t = store.beginTx
-    store.put(i)
+    store.add(i)
     store.commitTx(t)
   }
 
-  def SaveObject(key: String, value: Array[Byte], store: DataStore){
+  def SaveObject(key: String, value: String, store: DataStore){
+    var ba = serializer.SerializeObjectToByteArray(value)
+    SaveObject(key,ba,store)
+  }
+
+  def UpdateObject(key: String, value: Array[Byte], store: DataStore){
     object i extends IStorage{
       var k = new com.ligadata.keyvaluestore.Key
       var v = new com.ligadata.keyvaluestore.Value
@@ -345,6 +350,182 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+  def UpdateObjectInDB(obj: BaseElemDef){
+    try{
+      val key = obj.FullNameWithVer.toLowerCase
+      logger.trace("Serialize the object: name of the object => " + obj.FullNameWithVer)
+      var value = serializer.SerializeObjectToByteArray(obj)
+      obj match{
+	case o:ModelDef => {
+	  logger.trace("Updating the model in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,modelStore)
+	}
+	case o:MessageDef => {
+	  logger.trace("Updating the message in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,messageStore)
+	}
+	case o:ContainerDef => {
+	  logger.trace("Updating the container in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,containerStore)
+	}
+	case o:FunctionDef => {
+          val funcKey = o.typeString.toLowerCase
+	  logger.trace("Updating the function in the DB: name of the object =>  " + funcKey)
+	  UpdateObject(funcKey,value,functionStore)
+	}
+	case o:AttributeDef => {
+	  logger.trace("Updating the attribute in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,conceptStore)
+	}
+	case o:ScalarTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:ArrayTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:ArrayBufTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:ListTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:QueueTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:SetTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	  MdMgr.GetMdMgr.AddSet(o)
+	}
+	case o:TreeSetTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:SortedSetTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:MapTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:HashMapTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:TupleTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case o:ContainerTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
+	case _ => {
+	  logger.error("UpdateObject is not implemented for objects of type " + obj.getClass.getName)
+	}
+      }
+    }catch{
+      case e:AlreadyExistsException => {
+	logger.error("Failed to Update the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+      case e:Exception => {
+	logger.error("Failed to Update the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
+  def UpdateObjectInCache(obj: BaseElemDef,operation:String): BaseElemDef = {
+    var updatedObject:BaseElemDef = null
+    try{
+      obj match{
+	case o:FunctionDef => {
+	  updatedObject = MdMgr.GetMdMgr.ModifyFunction(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ModelDef => {
+	  updatedObject = MdMgr.GetMdMgr.ModifyModel(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:MessageDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyMessage(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ContainerDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyContainer(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:AttributeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyAttribute(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ScalarTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ArrayTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ArrayBufTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ListTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:QueueTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:SetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:TreeSetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:SortedSetTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:MapTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:HashMapTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:TupleTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ContainerTypeDef => {
+	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case _ => {
+	  throw new InternalErrorException("UpdateObjectInCache is not implemented for objects of type " + obj.getClass.getName)
+	}
+      }
+      updatedObject
+    }catch{
+      case e:ObjectNolongerExistsException => {
+	throw new ObjectNolongerExistsException("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
+      }
+      case e:Exception => {
+	throw new Exception("Unexpected error in UpdateObjectInCache: " + e.getMessage())
+      }
+    }
+  }
+
+
 
   def AddObjectToCache(obj: BaseElemDef){
     try{
@@ -432,7 +613,6 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
   }
-
 
   def DecodeObjectToMetadataType(obj: Object): BaseElemDef = {
     try{
@@ -536,6 +716,20 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+  def ModifyObject(obj: BaseElemDef, operation: String){
+    try{
+      val o1 = UpdateObjectInCache(obj,operation)
+      UpdateObjectInDB(o1)
+    }catch{
+      case e:ObjectNolongerExistsException => {
+	logger.error("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
+      }
+      case e:Exception => {
+	throw new Exception("Unexpected error in ModifyObject: " + e.getMessage())
+      }
+    }
+  }
+
   def DeleteObject(key: String,store: DataStore){
     var k = new com.ligadata.keyvaluestore.Key
     for(c <- key ){
@@ -546,87 +740,45 @@ object MetadataAPIImpl extends MetadataAPI{
     store.commitTx(t)
   }
 
+
+
   def DeleteObject(obj: BaseElemDef){
     try{
-      obj match{
-	case o:FunctionDef => {
-	  DeleteObject(o.typeString.toLowerCase,functionStore)
-	  MdMgr.GetMdMgr.RemoveFunction(o.nameSpace,o.name,o.ver)
-	}
-	case o:ModelDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,modelStore)
-	  MdMgr.GetMdMgr.RemoveModel(o.nameSpace,o.name,o.ver)
-	}
-	case o:MessageDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
-	  MdMgr.GetMdMgr.RemoveMessage(o.nameSpace,o.name,o.ver)
-	}
-	case o:ContainerDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
-	  MdMgr.GetMdMgr.RemoveContainer(o.nameSpace,o.name,o.ver)
-	}
-	case o:AttributeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
-	  MdMgr.GetMdMgr.RemoveAttribute(o.nameSpace,o.name,o.ver)
-	}
-	case o:ScalarTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:ArrayTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:ArrayBufTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:ListTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:QueueTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:SetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:TreeSetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:SortedSetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:MapTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:HashMapTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:TupleTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case o:ContainerTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
-	  MdMgr.GetMdMgr.RemoveType(o.nameSpace,o.name,o.ver)
-	}
-	case _ => {
-	  logger.error("DeleteObject is not implemented for objects of type " + obj.getClass.getName)
-	}
-      }
+      ModifyObject(obj,"Remove")
     }catch{
       case e:ObjectNolongerExistsException => {
 	logger.error("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
       }
       case e:Exception => {
-	throw new Exception("Unexpected error in DecodeToMetadataType: " + e.getMessage())
+	throw new Exception("Unexpected error in DeleteObject: " + e.getMessage())
+      }
+    }
+  }
+
+
+  def ActivateObject(obj: BaseElemDef){
+    try{
+      ModifyObject(obj,"Activate")
+    }catch{
+      case e:ObjectNolongerExistsException => {
+	logger.error("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
+      }
+      case e:Exception => {
+	throw new Exception("Unexpected error in DeleteObject: " + e.getMessage())
+      }
+    }
+  }
+
+
+  def DeactivateObject(obj: BaseElemDef){
+    try{
+      ModifyObject(obj,"Deactivate")
+    }catch{
+      case e:ObjectNolongerExistsException => {
+	logger.error("The object " + obj.FullNameWithVer + " nolonger exists in metadata : It may have been removed already")
+      }
+      case e:Exception => {
+	throw new Exception("Unexpected error in DeleteObject: " + e.getMessage())
       }
     }
   }
@@ -1548,6 +1700,59 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   // Remove model with Model Name and Version Number
+  def DeactivateModel(nameSpace:String, name:String, version:Int): String = {
+    try{
+      var key = nameSpace + "." + name + "." + version
+      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase,name.toLowerCase,version,true)
+      o match{
+	case None => None
+	  logger.trace("No active model found => " + key)
+	  var apiResult = new ApiResult(-1,"Failed to Fetch the model",key)
+	  apiResult.toString()
+	case Some(m) => 
+	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
+	  DeactivateObject(m.asInstanceOf[ModelDef])
+	  val objectsUpdated = new Array[BaseElemDef](1)
+	  objectsUpdated(0) = m.asInstanceOf[ModelDef]
+	  NotifyEngine(objectsUpdated,"Deactivate")
+	  var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
+	  apiResult.toString()
+      }
+    }catch {
+      case e:Exception =>{
+	var apiResult = new ApiResult(-1,"Failed to delete the ModelDef:",e.toString)
+	apiResult.toString()
+      }
+    }
+  }
+
+  def ActivateModel(nameSpace:String, name:String, version:Int): String = {
+    try{
+      var key = nameSpace + "." + name + "." + version
+      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase,name.toLowerCase,version,false)
+      o match{
+	case None => None
+	  logger.trace("No active model found => " + key)
+	  var apiResult = new ApiResult(-1,"Failed to Fetch the model",key)
+	  apiResult.toString()
+	case Some(m) => 
+	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
+	  ActivateObject(m.asInstanceOf[ModelDef])
+	  val objectsUpdated = new Array[BaseElemDef](1)
+	  objectsUpdated(0) = m.asInstanceOf[ModelDef]
+	  NotifyEngine(objectsUpdated,"Activate")
+	  var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
+	  apiResult.toString()
+      }
+    }catch {
+      case e:Exception =>{
+	var apiResult = new ApiResult(-1,"Failed to delete the ModelDef:",e.toString)
+	apiResult.toString()
+      }
+    }
+  }
+
+  // Remove model with Model Name and Version Number
   def RemoveModel(nameSpace:String, name:String, version:Int): String = {
     try{
       var key = nameSpace + "." + name + "." + version
@@ -1560,9 +1765,9 @@ object MetadataAPIImpl extends MetadataAPI{
 	case Some(m) => 
 	  logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
 	  DeleteObject(m.asInstanceOf[ModelDef])
-	  val objectsRemoved = new Array[BaseElemDef](1)
-	  objectsRemoved(0) = m.asInstanceOf[ModelDef]
-	  NotifyEngine(objectsRemoved,"Remove")
+	  val objectsUpdated = new Array[BaseElemDef](1)
+	  objectsUpdated(0) = m.asInstanceOf[ModelDef]
+	  NotifyEngine(objectsUpdated,"Remove")
 	  var apiResult = new ApiResult(0,"Model Definition was Deleted",key)
 	  apiResult.toString()
       }
@@ -2239,7 +2444,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      }
 	      case "Remove" => {
 		try{
-		  MdMgr.GetMdMgr.RemoveModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt)
+		  MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version.toInt,"Remove")
 		}catch {
 		  case e:ObjectNolongerExistsException => {
 		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
