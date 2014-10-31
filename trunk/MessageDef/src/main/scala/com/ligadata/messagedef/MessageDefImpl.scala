@@ -448,7 +448,7 @@ class MessageDefImpl {
       imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj}"
 
     """
-package com.ligadata.messagedef
+package com.ligadata.edifecs
     
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
