@@ -3,7 +3,6 @@ package com.ligadata.ZooKeeper
 import com.ligadata.Serialize._
 import com.ligadata.MetadataAPI._
 import com.ligadata.olep.metadata._
-
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
 import org.apache.curator.framework.recipes.cache._
@@ -13,8 +12,8 @@ import org.apache.curator.utils._
 import java.util.concurrent.locks._
 import org.apache.log4j._
 import org.apache.zookeeper.CreateMode
-
 import scala.util.control.Breaks._
+import scala.collection.mutable.ArrayBuffer
 
 object ZooKeeperListener {
 
@@ -43,9 +42,25 @@ object ZooKeeperListener {
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString)
-      if (zkc.checkExists().forPath(znodePath) == null) {
-        zkc.create().withMode(CreateMode.PERSISTENT).forPath(znodePath, null);
+
+      // Get all paths
+      val allZNodePaths = new ArrayBuffer[String]
+      var nFromPos = 0
+
+      while (nFromPos != -1) {
+        nFromPos = znodePath.indexOf('/', nFromPos + 1)
+        if (nFromPos == -1) {
+          allZNodePaths += znodePath
+        } else {
+          allZNodePaths += znodePath.substring(0, nFromPos)
+        }
       }
+
+      allZNodePaths.foreach(path => {
+        if (zkc.checkExists().forPath(path) == null) {
+          zkc.create().withMode(CreateMode.PERSISTENT).forPath(path, null);
+        }
+      })
     } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())

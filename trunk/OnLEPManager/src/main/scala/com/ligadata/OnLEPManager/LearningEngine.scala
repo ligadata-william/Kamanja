@@ -137,7 +137,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // Get top level Msg for the current msg
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
         val keyData = msg.PartitionKeyData
-        val topObj = envContext.getMsgObject(topMsgTypeAndHasParent._1, keyData)
+        val topObj = envContext.getObject(topMsgTypeAndHasParent._1, keyData)
         var handleMsg: Boolean = true
         if (topMsgTypeAndHasParent._2) {
           handleMsg = topObj != null
@@ -147,13 +147,13 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (topMsgTypeAndHasParent._2)
             finalTopMsg.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           // Run all models
-          RunAllModels(finalTopMsg, msgData, envContext, readTmNs, rdTmMs)
+          RunAllModels(finalTopMsg.asInstanceOf[BaseMsg], msgData, envContext, readTmNs, rdTmMs) //BUGBUG:: Simply casting to BaseMsg
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
           if (topMsgTypeAndHasParent._2 || (topObj == null))
-            envContext.setMsgObject(topMsgTypeAndHasParent._1, keyData, finalTopMsg)
+            envContext.setObject(topMsgTypeAndHasParent._1, keyData, finalTopMsg)
         }
       }
     } catch {

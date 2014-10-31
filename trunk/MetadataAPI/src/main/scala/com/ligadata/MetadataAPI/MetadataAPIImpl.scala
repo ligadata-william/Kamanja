@@ -113,7 +113,8 @@ object MetadataAPIImpl extends MetadataAPI{
   lazy val serializer = SerializerManager.GetSerializer("kryo")
   lazy val metadataAPIConfig = new Properties()
   var zkc:CuratorFramework = null
-
+  val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+  var propertiesAlreadyLoaded = false
 
   def CloseZKSession: Unit = {
     if( zkc != null ){
@@ -1174,7 +1175,8 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       else{
 	  var conceptList = JsonSerializer.parseConceptList(conceptsText,format)
-	  conceptList.foreach(concept => { 
+	  conceptList.foreach(concept => {
+	    //logger.trace("Save concept object " + JsonSerializer.SerializeObjectToJson(concept))
 	    SaveObject(concept) 
 	  })
 	  var apiResult = new ApiResult(0,"Concepts Are Added",conceptsText)
@@ -1182,7 +1184,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }catch {
       case e:Exception =>{
-	var apiResult = new ApiResult(-1,"Failed to add concets: " + e.getMessage(),"FAILED")
+	var apiResult = new ApiResult(-1,"Failed to add concepts",e.getMessage())
 	apiResult.toString()
       }
     }
@@ -1326,6 +1328,10 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
 	apiResult.toString()
@@ -1349,6 +1355,10 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to compile the containerDef:",e.toString)
 	apiResult.toString()
@@ -1380,6 +1390,10 @@ object MetadataAPIImpl extends MetadataAPI{
       apiResult.toString()
     }
     catch {
+      case e:MsgCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to compile the msgDef:",e.toString)
+	apiResult.toString()
+      }
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to update the msgDef:",e.toString)
 	apiResult.toString()
@@ -2728,10 +2742,13 @@ object MetadataAPIImpl extends MetadataAPI{
   
   @throws(classOf[MissingPropertyException])
   @throws(classOf[InvalidPropertyException])
-  def readMetadataAPIConfigFromPropertiesFile {
+  def readMetadataAPIConfigFromPropertiesFile(configFile: String): Unit = {
     try{
-      val configFile = "MetadataAPI.properties"
-      val input = MetadataAPIImpl.getClass.getClassLoader().getResourceAsStream(configFile)
+      if( propertiesAlreadyLoaded ){
+	return;
+      }
+      //val input = MetadataAPIImpl.getClass.getClassLoader().getResourceAsStream(configFile)
+      val input = new FileInputStream(configFile)
       val prop = new Properties()
       prop.load(input)
       val root_dir = prop.getProperty("ROOT_DIR")
@@ -2802,6 +2819,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	logger.warn("The property NOTIFY_ENGINE is not defined in the config file " + configFile + ". It is set to \"NO\"");
 	notifyEngine = "NO"
       }
+      logger.trace("NOTIFY_ENGINE => " + notifyEngine)
 
       var znodePath = "/ligadata/metadata"
       var znodePathProp = prop.getProperty("ZNODE_PATH")
@@ -2811,6 +2829,7 @@ object MetadataAPIImpl extends MetadataAPI{
       else{
 	znodePath = znodePathProp
       }
+      logger.trace("ZNODE_PATH => " + znodePath)
       
       var zkConnString = "localhost:2181"
       if( notifyEngine == "YES"){
@@ -2822,6 +2841,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.warn("The property ZOOKEEPER_CONNECT_STRING must be defined in the config file " + configFile + ". It is set to " + zkConnString)
 	}
       }
+      logger.trace("ZOOKEEPER_CONNECT_STRING => " + zkConnString)
 
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
       metadataAPIConfig.setProperty("DATABASE",database)
@@ -2835,6 +2855,8 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
       metadataAPIConfig.setProperty("ZNODE_PATH",znodePath)
       metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zkConnString)
+
+      propertiesAlreadyLoaded = true;
       
     } catch { 
       case e: Exception => 
@@ -2847,8 +2869,11 @@ object MetadataAPIImpl extends MetadataAPI{
 
   @throws(classOf[MissingPropertyException])
   @throws(classOf[LoadAPIConfigException])
-  def readMetadataAPIConfigFromJsonFile(cfgFile: String) = {
+  def readMetadataAPIConfigFromJsonFile(cfgFile: String): Unit = {
     try{
+      if( propertiesAlreadyLoaded ){
+	return;
+      }
       var configFile = "MetadataAPIConfig.json"
       if( cfgFile != null ){
 	configFile = cfgFile
@@ -2947,7 +2972,9 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
       metadataAPIConfig.setProperty("ZNODE_PATH",znodePath)
       metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zooKeeperConnectString)
-      
+
+      propertiesAlreadyLoaded = true;
+
     } catch { 
       case e:MappingException =>{
 	throw Json4sParsingException(e.getMessage())
@@ -2962,7 +2989,8 @@ object MetadataAPIImpl extends MetadataAPI{
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr, "","","","")
     mdLoader.initialize
-    MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
+    MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
@@ -2972,7 +3000,8 @@ object MetadataAPIImpl extends MetadataAPI{
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr,"","","","")
     mdLoader.initialize
-    MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile
+    MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
   }

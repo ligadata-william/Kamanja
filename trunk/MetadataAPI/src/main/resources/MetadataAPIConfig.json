@@ -3,15 +3,15 @@
 	{ 
 		 "RootDir"      : "/home/vmandava",
 		 "GitRootDir"   : "/home/vmandava/github",
-		 "Database"     : "cassandra",
+		 "Database"     : "treemap",
 		 "DatabaseHost" : "localhost",
-		 "JarTargetDir"	: "/home/vmandava/libs",
+		 "JarTargetDir"	: "/tmp/OnLEPInstall",
 		 "ScalaHome"  	: "/home/vmandava/scala-2.10.4",
 		 "JavaHome"  	: "/home/vmandava/jdk1.8.0_05",
 		 "ManifestPath"	: "/home/vmandava/git_hub/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf",
-		 "ClassPath"  	: ".:/home/vmandava/libs/metadata_2.10-1.0.jar:/home/vmandava/libs/basefunctions_2.10-0.1.0.jar:/home/vmandava/libs/messagedef_2.10-1.0.jar:/home/vmandava/libs/methodextractor_2.10-1.0.jar:/home/vmandava/libs/pmmlcompiler_2.10-1.0.jar:/home/vmandava/libs/bankenvcontext_2.10-1.0.jar:/home/vmandava/libs/onlepbase_2.10-1.0.jar:/home/vmandava/libs/bankbootstrap_2.10-1.0.jar:/home/vmandava/libs/bankmsgsandcontainers_2.10-1.0.jar:/home/vmandava/libs/medicalbootstrap_2.10-1.0.jar:/home/vmandava/libs/joda-time-2.4.jar:/home/vmandava/libs/joda-convert-1.6.jar:/home/vmandava/libs/basetypes_2.10-0.1.0.jar:/home/vmandava/libs/pmmludfs_2.10-1.0.jar:/home/vmandava/libs/pmmlruntime_2.10-1.0.jar",
-		 "NotifyEngine" : "YES",
-		 "ZnodePath" : "/ligadata/metadata"
+		 "ClassPath"  	: ".:/tmp/OnLEPInstall/metadata_2.10-1.0.jar:/tmp/OnLEPInstall/basefunctions_2.10-0.1.0.jar:/tmp/OnLEPInstall/messagedef_2.10-1.0.jar:/tmp/OnLEPInstall/methodextractor_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlcompiler_2.10-1.0.jar:/tmp/OnLEPInstall/bankenvcontext_2.10-1.0.jar:/tmp/OnLEPInstall/onlepbase_2.10-1.0.jar:/tmp/OnLEPInstall/bankbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/OnLEPInstall/medicalbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/joda-time-2.3.jar:/tmp/OnLEPInstall/joda-convert-1.6.jar:/tmp/OnLEPInstall/basetypes_2.10-0.1.0.jar:/tmp/OnLEPInstall/pmmludfs_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlruntime_2.10-1.0.jar:/tmp/OnLEPInstall/json4s-native_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-core_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-ast_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-databind-2.3.1.jar:/tmp/OnLEPInstall/jackson-annotations-2.3.0.jar:/tmp/OnLEPInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-core-2.3.1.jar:/tmp/OnLEPInstall/log4j-1.2.17.jar",
+		 "NotifyEngine" : "NO",
+		 "ZnodePath" : "/ligadata/metadata",
 		 "ZooKeeperConnectString" : "localhost:2181"
 	}
 }

@@ -277,6 +277,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 							    , "com.ligadata.OnLEPBase.BaseContainer"
 						  		, List()) 		
 				  		
+		logger.trace("MetadataLoad...loading MessageContainerBase")
+		 mgr.AddFixedContainer(MdMgr.sysNS
+							    , "MessageContainerBase"
+							    , "com.ligadata.OnLEPBase.MessageContainerBase"
+						  		, List()) 		
 	}
 
 	def InitFixedMsgsForEdifecs1 : Unit = {
@@ -695,6 +700,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		//MdMgr.MakeScalar(mgr, "System", "Any", tAny)
 		//MdMgr.MakeScalar(mgr, "System", "EnvContext", tNone)
 		//MdMgr.MakeScalar(mgr, "System", "BaseContainer", tNone)
+		//MdMgr.MakeScalar(mgr, "System", "MessageContainerBase", tNone)
 		//MdMgr.MakeHashMap(mgr, "System", "HashMapOfKV", ("System", "K"), ("System", "V"))
 		//MdMgr.MakeMap(mgr, "System", "MapOfKV", ("System", "K"), ("System", "V"))
 
@@ -888,6 +894,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddArrayBuffer("System", "ArrayBufferOfTupleOfAny2", "System", "TupleOfAny2", 1, baseTypesVer)
 
 		mgr.AddArray("System", "ArrayOfBaseContainer", "System", "BaseContainer", 1, baseTypesVer)
+		mgr.AddArray("System", "ArrayOfMessageContainerBase", "System", "MessageContainerBase", 1, baseTypesVer)
 	}
 
 
@@ -1417,22 +1424,22 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseContainer")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfBaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "BaseContainer"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "MessageContainerBase")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "MessageContainerBase")), null)
+		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
 		//mgr.AddFunc("Pmml", "incrementBy", "com.ligadata.pmml.udfs.Udfs.incrementBy", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
 		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
 		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
@@ -1899,6 +1906,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+		  				
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
@@ -1907,6 +1921,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+		  				
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
 		  				
@@ -1927,6 +1948,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+		  				
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
@@ -1941,6 +1969,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+		  				
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
@@ -1949,6 +1984,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+		  				
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
 		  				

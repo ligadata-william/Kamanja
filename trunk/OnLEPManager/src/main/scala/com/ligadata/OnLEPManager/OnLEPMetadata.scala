@@ -8,7 +8,7 @@ import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.edifecs.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage }
+import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
@@ -310,6 +310,7 @@ class OnLEPMetadata {
 }
 
 object OnLEPMetadata {
+  var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
   private[this] var loadedJars: TreeSet[String] = _
@@ -354,12 +355,22 @@ object OnLEPMetadata {
 
     // Adding new objects now
     // Adding container
-    if (contObjects != null && contObjects.size > 0)
+    if (contObjects != null && contObjects.size > 0) {
       containerObjects ++= contObjects
+      if (envCtxt != null) {
+        val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, containerNames, true) // Containers
+      }
+    }
 
     // Adding Messages
-    if (msgObjects != null && msgObjects.size > 0)
+    if (msgObjects != null && msgObjects.size > 0) {
       messageObjects ++= msgObjects
+      if (envCtxt != null) {
+        val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, topMessageNames, false) // Messages
+      }
+    }
 
     // Adding Models
     if (mdlObjects != null && mdlObjects.size > 0)

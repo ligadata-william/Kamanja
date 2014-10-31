@@ -1002,7 +1002,7 @@ class SmokeCodes_100 extends BaseContainer {
   override def Version: String = "00.01.00"
   override def FullName: String = NameSpace + "." + Name
   override def NameSpace: String = "System"
-  override def Name: String = "SmokeCodes_100" 
+  override def Name: String = "SmokeCodes" 
   override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
@@ -1050,7 +1050,7 @@ class EnvCodes_100 extends BaseContainer {
   override def Version: String = "00.01.00"
   override def FullName: String = NameSpace + "." + Name
   override def NameSpace: String = "System"
-  override def Name: String = "EnvCodes_100" 
+  override def Name: String = "EnvCodes" 
   override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
@@ -1098,7 +1098,7 @@ class CoughCodes_100 extends BaseContainer {
   override def Version: String = "00.01.00"
   override def FullName: String = NameSpace + "." + Name
   override def NameSpace: String = "System"
-  override def Name: String = "CoughCodes_100" 
+  override def Name: String = "CoughCodes" 
   override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
@@ -1146,7 +1146,7 @@ class SputumCodes_100 extends BaseContainer {
   override def Version: String = "00.01.00"
   override def FullName: String = NameSpace + "." + Name
   override def NameSpace: String = "System"
-  override def Name: String = "SputumCodes_100" 
+  override def Name: String = "SputumCodes" 
   override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
@@ -1194,7 +1194,7 @@ class DyspnoeaCodes_100 extends BaseContainer {
   override def Version: String = "00.01.00"
   override def FullName: String = NameSpace + "." + Name
   override def NameSpace: String = "System"
-  override def Name: String = "DyspnoeaCodes_100" 
+  override def Name: String = "DyspnoeaCodes" 
   override def populate(inputdata: InputData) {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])

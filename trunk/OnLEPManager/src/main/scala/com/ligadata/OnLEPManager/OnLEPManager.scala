@@ -391,8 +391,8 @@ class OnLEPManager {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.initContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, containerNames)
-          envCtxt.initMessages(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, topMessageNames)
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, containerNames, true) // Containers
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, topMessageNames, false) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -496,6 +496,8 @@ class OnLEPManager {
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)
         return false
+
+      OnLEPMetadata.envCtxt = envCtxt
 
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
       retval = LoadAdapters(loadConfigs, envCtxt)

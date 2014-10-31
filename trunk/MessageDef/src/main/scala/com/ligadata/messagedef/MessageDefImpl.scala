@@ -62,7 +62,7 @@ class MessageDefImpl {
     var addMsgStr: String = ""
     val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
     try {
-      addMsgStr = addMessage(addMsg)
+      addMsgStr = addMessage(addMsg, message)
       val (btrait, striat, csetters) = getBaseTrait(message)
       val cobj = createObj(message)
       val isFixed = getIsFixed(message)
@@ -94,10 +94,12 @@ class MessageDefImpl {
         tdataexists = gettdataexists + msg.TDataExists.toString
         tattribs = notdataattribs
       }
-      cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
+      // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
-      cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
+      // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
     }
     cobj
@@ -118,7 +120,7 @@ class MessageDefImpl {
   }
 
   def getVersion(msg: Message) = {
-    "\toverride def getVersion: String = " + "\"" + msg.Version + "\""
+    "\toverride def Version: String = " + "\"" + msg.Version + "\""
 
   }
   def createNewMessage(msg: Message) = {
@@ -182,13 +184,16 @@ class MessageDefImpl {
     (btrait, strait, csetters)
   }
 
-  private def addMessage(addMsg: String): String = {
+  private def addMessage(addMsg: String, msg: Message): String = {
     var addMessageFunc: String = ""
+    var msgType: String = ""
+
     try {
+
       if ((addMsg != null) && (addMsg.trim() != "")) {
         addMessageFunc = """
-    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
-       if (childPath == null || childPath.size == 0) { // Invalid case
+          override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg)): Unit = {
+          if (childPath == null || childPath.size == 0) { // Invalid case
     	  return
        }
        val curVal = childPath(0)
@@ -200,7 +205,14 @@ class MessageDefImpl {
      }
      
      """
+      } else {
+
+        addMessageFunc = """
+    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+     
+     """
       }
+
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -230,7 +242,9 @@ class MessageDefImpl {
     var count: Int = 0
     var concepts: String = "concepts"
 
-    scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+    scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+
     // for (e <- message.Elements) {
     //  var fields = e.Fields
     if (message.Elements != null)
@@ -393,7 +407,7 @@ class MessageDefImpl {
     if (message.concepts != null) {
 
     }
-    if (message.PartitionKey != null)
+   // if (message.PartitionKey != null)
       scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
     var addMessage: String = ""
     if (addMsg.size > 5)
@@ -423,9 +437,9 @@ class MessageDefImpl {
   def importStmts(msgtype: String): String = {
     var imprt: String = ""
     if (msgtype.equals("Message"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage}"
+      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer}"
     else if (msgtype.equals("Container"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseContainer, BaseContainerObj}"
+      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj}"
 
     """
 package com.ligadata.messagedef
@@ -488,8 +502,10 @@ trait BaseContainer {
 
   def partitionkeyStr(msg: Message): String = {
 
-    "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
-
+    if(msg.PartitionKey != null)
+    	"\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
+    else 
+    	"\n	override def PartitionKeyData: String = \"\""
   }
 
   def inputData = {
@@ -540,7 +556,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def cSetter() = {
+  def cSetter() = "" 
+  /*{
     """
     def get(key: String): Any ={
 		null
@@ -552,7 +569,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	    null
 	}
     """
-  }
+  }*/
   //populate method in msg-TransactionMsg class
   def populate = {
     """
@@ -608,7 +625,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	try{
     	if(json == null) throw new Exception("Invalid json data")
      	val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
-     	assignJsonData(parsed.get.asInstanceOf[Map[String, Any]])
+     	assignJsonData(parsed.asInstanceOf[Map[String, Any]])
 	}catch{
 	  case e:Exception =>{
    	    e.printStackTrace()
@@ -722,13 +739,33 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
-    containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+    try {
+      if (msg.PartitionKey != null)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+      else
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
     containerDef
   }
 
   def createMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
-    msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+    try {
+      if (msg.PartitionKey != null)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+      else
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
     msgDef
   }
   /*
