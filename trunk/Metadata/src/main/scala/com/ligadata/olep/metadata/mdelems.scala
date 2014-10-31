@@ -131,6 +131,7 @@ trait BaseElem {
   def IsDeactive: Boolean // Return true if the Element is de-active, otherwise false
   def Active: Unit // Make the element as Active
   def Deactive: Unit // Make the element as de-active
+  def Deleted: Unit // Mark the element as deleted
 }
 
 class BaseElemDef extends BaseElem {
@@ -152,8 +153,10 @@ class BaseElemDef extends BaseElem {
   def PhysicalName(phyNm: String): Unit = physicalName = phyNm // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code). Most of the elements will have Phsical name corresponds to Logical name like Types like System.Int maps to scala.Int as physical name.
   def IsActive: Boolean = active // Return true if the Element is active, otherwise false
   def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
+  def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
   def Active: Unit = active = true // Make the element as Active
   def Deactive: Unit = active = false // Make the element as de-active
+  def Deleted: Unit = deleted = true // Mark the element as deleted
 
   // Override in other places if required
   override def equals(that: Any) = {
@@ -178,6 +181,7 @@ class BaseElemDef extends BaseElem {
   var mdElemStructVer: Int = DefaultMdElemStructVer.Version // Metadata Element Structure version. By default whole metadata will have same number
   var physicalName: String = _ // Mapping from Logical name to Physical Name when we generate code. This is Case sensitive.
   var active: Boolean = true // Represent whether element is active or deactive. By default it is active.
+  var deleted: Boolean = false // Represent whether element is deleted. By default it is false.
 }
 
 // All these metadata elements should have specialized serialization and deserialization 

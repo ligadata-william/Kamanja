@@ -1270,7 +1270,7 @@ object TestMetadataAPI{
 	val msa = ms.toArray
 	msa.foreach( m => {
 	  val ba = serializer.SerializeObjectToByteArray(m)
-	  MdMgr.GetMdMgr.RemoveModel(m.nameSpace,m.name,m.ver)
+	  MdMgr.GetMdMgr.ModifyModel(m.nameSpace,m.name,m.ver,"Remove")
 	  val m1 = serializer.DeserializeObjectFromByteArray(ba,m.getClass().getName()).asInstanceOf[ModelDef]
 	  val preJson  = JsonSerializer.SerializeObjectToJson(m);
 	  val postJson = JsonSerializer.SerializeObjectToJson(m1);

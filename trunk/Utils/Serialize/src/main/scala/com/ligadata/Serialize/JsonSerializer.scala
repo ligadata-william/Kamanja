@@ -752,7 +752,9 @@ object JsonSerializer {
 		    ("ModelType"  -> o.modelType) ~
 		    ("JarName" -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
+		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
+		    ("Deleted"         -> o.deleted) ~
+		    ("Active"          -> o.active))
 	var jsonStr = pretty(render(json))
 	jsonStr = jsonStr.replaceAll("}","").trim
 	jsonStr = jsonStr + ",\n\"InputAttributes\": "
