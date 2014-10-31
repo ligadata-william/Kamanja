@@ -1994,11 +1994,11 @@ class MdMgr {
 		      , key: (String, String)
 		      , value: (String, String)
 		      , ver: Int): Unit = {
-    AddImmutableMap(MakeMap(nameSpace, name, key, value, ver))
+    AddImmutableMap(MakeImmutableMap(nameSpace, name, key, value, ver))
   }
 
   @throws(classOf[AlreadyExistsException])
-  def AddImmutableMap(map: MapTypeDef): Unit = {
+  def AddImmutableMap(map: ImmutableMapTypeDef): Unit = {
     if (Type(map.FullName, -1, false) != None) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }

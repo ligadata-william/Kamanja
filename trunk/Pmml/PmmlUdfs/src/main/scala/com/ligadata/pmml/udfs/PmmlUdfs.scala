@@ -1889,6 +1889,18 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     exprs.reduceLeft(_ + _)
   }
 
+  /** FIXME: do more of these with other tuples and other scalars once vetted */
+  def SumToFloat(tuples: Tuple5[Any,Any,Any,Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    //exprs.reduceLeft(_ + _)
+    exprs
+  }
+  
   def Sum(tuples: Tuple6[Float,Float,Float,Float,Float,Float]): Float = {
     val exprs : Array[Float] = ToArray(tuples)
     exprs.reduceLeft(_ + _)
@@ -2741,6 +2753,12 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
   
+  def ToArrayOfFloat(tuple : Tuple5[Any,Any,Any,Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
   def ToArray(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Any] = {
     tuple.productIterator.toArray
   }
@@ -3428,6 +3446,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     coll.size
   }
   
+  def CollectionLength[T : ClassTag](coll : MutableSet[T]) : Int = {
+    coll.size
+  }
+  
   def CollectionLength[T : ClassTag](coll : Set[T]) : Int = {
     coll.size
   }
@@ -3453,6 +3475,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
   
   def CollectionLength[T : ClassTag](coll : Stack[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : MutableMap[K,V]) : Int = {
     coll.size
   }
   

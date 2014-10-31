@@ -669,6 +669,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddMap("System", "MapOfStringArrayOfHL7", ("System", "String"), ("System", "ArrayOfHL7"), baseTypesVer)
 		mgr.AddMap("System", "MapOfIntArrayOfHL7", ("System", "Int"), ("System", "ArrayOfHL7"), baseTypesVer)
 
+		mgr.AddImmutableMap("System", "ImmutableMapOfStringArrayOfInpatientClaim", ("System", "String"), ("System", "ArrayOfInpatientClaim"), baseTypesVer)
+		mgr.AddImmutableMap("System", "ImmutableMapOfIntArrayOfInpatientClaim", ("System", "Int"), ("System", "ArrayOfInpatientClaim"), baseTypesVer)
+		mgr.AddImmutableMap("System", "ImmutableMapOfStringArrayOfOutpatientClaim", ("System", "String"), ("System", "ArrayOfOutpatientClaim"), baseTypesVer)
+		mgr.AddImmutableMap("System", "ImmutableMapOfIntArrayOfOutpatientClaim", ("System", "Int"), ("System", "ArrayOfOutpatientClaim"), baseTypesVer)
+		mgr.AddImmutableMap("System", "ImmutableMapOfStringArrayOfHL7", ("System", "String"), ("System", "ArrayOfHL7"), baseTypesVer)
+		mgr.AddImmutableMap("System", "ImmutableMapOfIntArrayOfHL7", ("System", "Int"), ("System", "ArrayOfHL7"), baseTypesVer)
+
 		mgr.AddSet(MdMgr.sysNS, "SetOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
 		mgr.AddSet(MdMgr.sysNS, "SetOfHL7", MdMgr.sysNS, "HL7", baseTypesVer)
@@ -689,20 +696,6 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	 
 	 */
 def initTypesFor_com_ligadata_pmml_udfs_Udfs {
-		//MdMgr.MakeScalar(mgr, "System", "Int", tInt)
-		//MdMgr.MakeScalar(mgr, "System", "Stack[T]", tNone)
-		//MdMgr.MakeScalar(mgr, "System", "Vector[T]", tNone)
-		//MdMgr.MakeScalar(mgr, "System", "String", tString)
-		//MdMgr.MakeScalar(mgr, "System", "Long", tLong)
-		//MdMgr.MakeScalar(mgr, "System", "Boolean", tBoolean)
-		//MdMgr.MakeScalar(mgr, "System", "Double", tDouble)
-		//MdMgr.MakeScalar(mgr, "System", "Float", tFloat)
-		//MdMgr.MakeScalar(mgr, "System", "Any", tAny)
-		//MdMgr.MakeScalar(mgr, "System", "EnvContext", tNone)
-		//MdMgr.MakeScalar(mgr, "System", "BaseContainer", tNone)
-		//MdMgr.MakeScalar(mgr, "System", "MessageContainerBase", tNone)
-		//MdMgr.MakeHashMap(mgr, "System", "HashMapOfKV", ("System", "K"), ("System", "V"))
-		//MdMgr.MakeMap(mgr, "System", "MapOfKV", ("System", "K"), ("System", "V"))
 
 		mgr.AddTupleType("System", "TupleOfAny1", Array(("System","Any")), baseTypesVer)
 		mgr.AddTupleType("System", "TupleOfAny2", Array(("System","Any"), ("System","Any")), baseTypesVer)
@@ -1440,28 +1433,20 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
-		//mgr.AddFunc("Pmml", "incrementBy", "com.ligadata.pmml.udfs.Udfs.incrementBy", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Float")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Boolean")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Any")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Double")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Long")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("variableName", "System", "String"),("value", "System", "String")), null)
 
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "HashMapOfKV")), null)
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "MapOfKV")), null)
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Stack[T]")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "QueueOfAny")), null)
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Vector[T]")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ListOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "SortedSetOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "TreeSetOfAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ImmutableSetOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "SetOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ArrayBufferOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ArrayOfAny")), null)
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "HashMapOfAnyAny")), null)
-		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "MapOfAnyAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "HashMapOfAnyAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "MapOfAnyAny")), null)
+		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ImmutableMapOfAnyAny")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Stack[T]")), null)
+		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Vector[T]")), null)
 
 	}
 
@@ -1483,6 +1468,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "QueueOfAny")), null)
  		//mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "StackOfAny")), null)
 		
+		/** FIXME:  Add other array conversions for other scalars and tuple combinations */
+ 		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
+ 	
+ 		//SumToArrayOfFloat(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Float
   		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("tup", "System", "TupleOfAny1")), null)
  		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("tup", "System", "TupleOfAny2")), null)
  		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("tup", "System", "TupleOfAny3")), null)

@@ -550,7 +550,7 @@ AsthmaPMML.xml
 			**********************************************************
 		-->
 		<!-- derive Map of Clm_Thru_Dt (an Int) -> Array[InpatientClaim] -->
-		<DerivedField name="inPatientClaimsByDate" dataType="MapOfIntArrayOfInpatientClaim" optype="categorical">
+		<DerivedField name="inPatientClaimsByDate" dataType="ImmutableMapOfIntArrayOfInpatientClaim" optype="categorical">
 			<Apply function="GroupBy">
 	       		<FieldRef field="inpatientInfoThisLastYear"/>
 	 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
@@ -576,7 +576,7 @@ AsthmaPMML.xml
 		</DerivedField>
 
 		<!-- project the cost fields from each item of each grouped inpatient claims to array of array of tuples -->
-		<DerivedField name="inPatientClaimCostTuples" dataType="ArrayOfArrayOfTupleOfFloat5" optype="categorical">
+		<DerivedField name="inPatientClaimCostTuples" dataType="ArrayOfArrayOfTupleOfAny5" optype="categorical">
 			<Apply function="ContainerMap">
 	       		<FieldRef field="inPatientClaimsByDateValues"/>
 	 			<Constant dataType="fIdent">ContainerMap</Constant> 
@@ -594,7 +594,7 @@ AsthmaPMML.xml
 			<Apply function="ToArray">
 				<Apply function="ContainerMap">
 		       		<FieldRef field="inPatientClaimCostTuples"/>
-		 			<Constant dataType="fIdent">Sum</Constant> 
+		 			<Constant dataType="fIdent">SumToArrayOfFloat</Constant> 
 		 			<Constant dataType="ident">_each</Constant> 
 				</Apply>
 			</Apply>
@@ -611,7 +611,7 @@ AsthmaPMML.xml
 			</Apply>
 		</DerivedField>
 
-		<DerivedField name="inPatientClaimCostsByDate" dataType="MapOfIntFloat" optype="categorical">
+		<DerivedField name="inPatientClaimCostsByDate" dataType="ImmutableMapOfIntFloat" optype="categorical">
 			<Apply function="ToMap">
 				<Apply function="Zip">
 					<FieldRef field="inPatientClaimsByDateKeys"/>
@@ -627,12 +627,18 @@ AsthmaPMML.xml
 		-->
 
 		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
-			<!-- <Apply function="and"> -->
+			<Apply function="and">
 				<Apply function="Put">  
 					<Constant dataType="string">Msg_Desynpuf_Id</Constant>
 					<FieldRef field="msg.Desynpuf_Id"/>
 				</Apply>
-			<!-- </Apply> -->
+				<Apply function="greaterThan">
+					<Apply function="CollectionLength">
+						<FieldRef field="inPatientClaimCostsByDate"/>
+					</Apply>
+					<Constant dataType="integer">0</Constant> 
+				</Apply>
+			</Apply> 
 		</DerivedField>
 
 		<!--
