@@ -168,9 +168,10 @@ object PmmlTypes {
   	}
   	
    	def scalaNameForIterableFcnName(iterableFcnName : String) : String = {
-		val fcnName = iterableFcnName match {
-		      case "ContainerMap" => "map"
-		      case "ContainerFilter" => "filter"
+		val fcnName = iterableFcnName.toLowerCase() match {
+		      case "containermap" => "map"
+		      case "containerfilter" => "filter"
+		      case "groupby" => "groupBy"
 		      case _  => null
 		}
 		fcnName

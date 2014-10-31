@@ -50,8 +50,12 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	/** Assess whether function has the ITERABLE feature.  The rule here is that if any function with this
 	 *  name has the ITERABLE feature, they ALL MUST HAVE it.   */
 	def isIterableFcn : Boolean = {
+	  	isIterableFcn(node.function)
+	}
+  
+	def isIterableFcn(fcnName : String) : Boolean = {
 	  	var isIterable = false
-	  	val (firstFcn,onlyOne) : (FunctionDef,Boolean) = representativeFcn(node.function)
+	  	val (firstFcn,onlyOne) : (FunctionDef,Boolean) = representativeFcn(fcnName)
 	  	if (firstFcn != null) {
 	  		isIterable = firstFcn.features.contains(FcnMacroAttr.ITERABLE)
 	  	}
@@ -171,6 +175,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   			null
   		}
 	  	
+  		if (elemFcnName == "Sum") {
+  			val stop : Int = 0
+  		}
+	  		
 	  	val leafElemArgs : Array[(String,Boolean,BaseTypeDef)] = elemFcnArgs.map(fullArgs => {if (fullArgs != null) fullArgs.last else null})
 	  	var elemFKey : String  = if (elemFcnName != null) buildIterableKey(true, elemFcnName, leafElemArgs, collectionType, collectionsElementTypes) else null
 	  	var iterableFKey : String  = buildIterableKey(false, node.function, iterableFcnArgs, collectionType, collectionsElementTypes)
@@ -206,6 +214,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		logger.trace("selectIterableFcn ...there were no keys to search for mbr function... must be fIdent-less mbr to be mapped/tupled")
 	  		  	}
 	  		}
+	  		val foundMbrDef : String = if (winningMbrKey != null)  "YES" else "NO!!"
+	  		logger.trace(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  	}
 	  	
 	  	/** Perform the iterable function lookup in any event.  It is currently acceptable
@@ -228,7 +238,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   																	, returnTypes)
  		  	breakable {
 	  		  	addlIterableKeys.foreach(key => {
-	  		  		logger.trace(s"selectIterableFcn ...searching mdmgr for iterarble fcn with a relaxed key ... $key")
+	  		  		logger.trace(s"selectIterableFcn ...searching mdmgr for iterable fcn with a relaxed key ... $key")
 	  		  		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (iterableFcn != null) {
 	  		  			winningKey = key
@@ -236,7 +246,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		}
 	  		  	})
 	  		}
-  			
+  			val foundIterableFcnDef : String = if (winningKey != null)  "YES" else "NO!!"
+	  		logger.trace(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+
   			/** 
   			 *  Record information that will be used by the printer to print the right phrase for the function invocation
   			 */
@@ -391,7 +403,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	node.Children.foreach ( child => {
 	  		cnt += 1
 	  		if (cnt == 1) {
-	  			if (child.isInstanceOf[xFieldRef] && child.asInstanceOf[xFieldRef].field == "SputumCodes") {
+	  			if (child.isInstanceOf[xFieldRef] && child.asInstanceOf[xFieldRef].field == "inPatientClaimCostsEachDate") {
 	  				val huh : String = "huh" // debugging rest stop 
 	  			}
 	  			/** get the collection type overall */
@@ -477,24 +489,37 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *  keys for both the element function and the Iterable function that uses
 	 *  it.  Supply the correct boolean value to choose which should be built. 
 	 *  
-	 *  When building element function key, there can be two cases.  If there is no
-	 *  fIdent then the remaining arguments are assumed to be either constants or 
-	 *  field identifiers for the Iterable collection item (first arg).  This is 
-	 *  appropriate only for the 'map' function.  If more than one element a tuple 
-	 *  will be formed for the elements in the generated code.
+	 *  When building element function key, there are these cases:
 	 *  
-	 *  When fIdent is present, the remaining arguments are considered to be arguments for
-	 *  this function.  If the function 'fIdent'ified was 'Between' it might look like
-	 *  this:
+	 *  <ul>
+	 *  <li>If there is no fIdent then the remaining arguments are any of these:
+	 *  <ul>
+	 *  <li>standard constants</li>
+	 *  <li>field refs</li>
+	 *  <li>field identifiers ('ident' constants) for the Iterable collection item (first arg of the apply)</li>
+	 *  </ul>
+	 *  <li>With an fIdent present, then the remaining arguments are interpreted this way:</li>
+	 *  <ul>
+	 *  <li>if the fIdent is a simple function all arguments are used to build the key</li>
+	 *  <li>if the fIdent is an 'Iterable', then only the first argument of the arg keys is used </li>
+	 *  </ul>
+	 *  </ul>
 	 *  
-	 *  	Between(Int,Int,Int,true)
+	 *  When there is an element function that is 'Iterable', recognize the elements of the parent
+	 *  container of the outer 'Iterable' function are some kind of collection (or should be). The
+	 *  Iterable collection for the member function is specified with the mapping variable, namely
+	 *  "_each".  Currently only field ('ident') projections from the member array, constants, and  
+	 *  fieldrefs are supported for the subsequent argument.  
+	 *  
+	 *  FIXME: No 'fIdent' support at this point for 'Iterable' mbr functions (i.e., Iterable mbr
+	 *  function that would have its own mbr function)
 	 *   
-	 *  The types for the idents and/or constants (from their baseType) are used to fill
-	 *  the list.  The idents will be a field reference in the Iterable found in arg 1. 
+	 *  When building the 'Iterable' function key, only the collection in arg 1 is used for the
+	 *  function signature.  The remaining arguments either refer to a member function and args
+	 *  or simply a list of args (typically a 'map' operation) that is used to build a tuple 
+	 *  from the collection struct names ('ident' constants), field refs or other standard constant values.
 	 *  
-	 *  When the element function key is not being formed, the Iterable collection key 
-	 *  is being formed.  For example, a ContainerFilter function search key whose 
-	 *  first argument (the Iterable) is an Array, would have a key like this:
+	 *  Iterable function keys look like this:
 	 *  
 	 *  	ContainerFilter(scala.collection.mutable.Array[Any]
 	 *  
@@ -511,18 +536,33 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 						, collectionsElementTypes : Array[BaseTypeDef]) : String = {
 		val keyBuff : StringBuilder = new StringBuilder()
 	  	if (buildElementFcnKey) {
-	  		if (fcnName != null) {  /** could be a simple projection with map ... i.e., no fcn */
-		  		val args : Array[(String,Boolean,BaseTypeDef)] = argTypes.tail
-			  	keyBuff.append(fcnName)
-				keyBuff.append('(')
-			  	var cnt : Int = 0
-			  	argTypes.foreach (arg => {
-			  		val (typeStr, isContainer, baseType) : (String,Boolean,BaseTypeDef) = arg
-			  		keyBuff.append(typeStr)
-			  		cnt += 1
-			  		if (cnt < argTypes.size) keyBuff.append(',')
-			  	})
-			  	keyBuff.append(')')  
+	  		if (fcnName != null) { 
+	  			val isIterableMbrFcn : Boolean = isIterableFcn(fcnName)
+	  			if (isIterableMbrFcn) {
+			  		val iterableFcnArgElemType : String = argTypes.head._1 // i.e., _each 's type (always 'Any')... check it 
+			  		val iterableCollBaseType : BaseTypeDef = collectionsElementTypes.last /** FIXME: supporting single member collections only ... need to support maps here */
+			  		val iterableContainerType : ContainerTypeDef = if (iterableCollBaseType.isInstanceOf[ContainerTypeDef]) iterableCollBaseType.asInstanceOf[ContainerTypeDef] else null
+			  		if (iterableContainerType == null) {
+			  			logger.error("buildIterableKey .. The supplied mbr type for is not a container... this will minimally produce a compile error")
+			  		} 
+			  		keyBuff.append(s"$fcnName(")
+			  		val collectionNameOnly : String = iterableContainerType.typeString.split('[').head
+			  		keyBuff.append(s"$collectionNameOnly[$iterableFcnArgElemType])")	  
+			  		
+			  		/** NOTE: No nested mbr function support (i.e., for Iterable mbr functions) yet */
+	  			} else {
+			  		val args : Array[(String,Boolean,BaseTypeDef)] = argTypes.tail
+				  	keyBuff.append(fcnName)
+					keyBuff.append('(')
+				  	var cnt : Int = 0
+				  	argTypes.foreach (arg => {
+				  		val (typeStr, isContainer, baseType) : (String,Boolean,BaseTypeDef) = arg
+				  		keyBuff.append(typeStr)
+				  		cnt += 1
+				  		if (cnt < argTypes.size) keyBuff.append(',')
+				  	})
+				  	keyBuff.append(')')  
+	  			}
 		  	}
 	  	} else { /** do outer function ... only the function name and its collection in first pos */
 	  		val nestLevel : Int = argTypes.size
@@ -530,9 +570,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		keyBuff.append(s"$fcnNm(")
 	  		keyBuff.append(s"${containerType.typeString})")	  		
 	  	}
-	  	val simpleKey : String = keyBuff.toString
+	  	val iterableKey : String = keyBuff.toString
 	  
-	  	simpleKey
+	  	iterableKey
 	}
 	
 	/** 
@@ -577,6 +617,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  member type(s) is not changed. Non container arguments are left unchanged. In certain cases, it is possible
 	  	 *  to have no candidates returned... hence the guard.
 	  	 */
+	  	if (fcnName == "MapValues") {
+	  		val debug : Boolean = true
+	  	}
 	  	val containerArgsWithPromotedMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypesToFirstTraitOrAbstractClass(argTypes)
 	  	if (containerArgsWithPromotedMemberTypes != null && containerArgsWithPromotedMemberTypes.size > 0) {
 		  	val relaxedTypes1a : Array[String] = containerArgsWithPromotedMemberTypes.map( argInfo => {
@@ -689,7 +732,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 */
 	def relaxCollectionMbrTypesToFirstTraitOrAbstractClass(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Array[(String,Boolean,BaseTypeDef)] = { 
 	  	 
-	  	val collectionMbrTypes : Map[String, Array[List[(String, ClassSymbol, Type)]]] = collectCollectionElementSuperClasses(argTypes)  
+	  	val collectionMbrTypes : Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] = collectCollectionElementSuperClasses(argTypes)  
 	  	val modifiedArgTypes : Array[(String,Boolean,BaseTypeDef)] = if (collectionMbrTypes != null && collectionMbrTypes.size > 0) {
 		  	val buffer : StringBuilder = new StringBuilder
 		  	val newArgTypes : Array[(String,Boolean,BaseTypeDef)] = argTypes.map( argType => {
@@ -699,15 +742,18 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 					var newTypes : ArrayBuffer[String] = new ArrayBuffer[String]()
 			  		breakable {
 			  			argTypeInfo.foreach( mbrArgTypeInfos => {
-			  				val superClsTypes : List[(String, ClassSymbol, Type)] = mbrArgTypeInfos
-			  				superClsTypes.foreach( mbrSupTypeCandidate => {
-			  					val (clssym, symbol, typ) : (String, ClassSymbol, Type) = mbrSupTypeCandidate
-				  				
-				  				if (symbol != null && (symbol.isAbstractClass || symbol.isTrait)) {
-				  					newTypes += symbol.fullName
-				  					break
-				  				}	  				  		  				  
-			  				})
+			  				val superClsTypes : Array[List[(String, ClassSymbol, Type)]] = mbrArgTypeInfos
+			  				val notNestedCollection : Boolean = (superClsTypes.size == 1)
+			  				if (notNestedCollection) {
+			  					superClsTypes.foreach( mbrSupTypeCandidate => {
+				  					val (clssym, symbol, typ) : (String, ClassSymbol, Type) = mbrSupTypeCandidate.apply(0)
+					  				
+					  				if (symbol != null && (symbol.isAbstractClass || symbol.isTrait)) {
+					  					newTypes += symbol.fullName
+					  					break
+					  				}	  				  		  				  
+				  				})
+			  				}
 			  			})
 			  			break
 			  		}
@@ -987,26 +1033,17 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	/** 
 	 *  For ContainerTypeDefs that have an element or elements, determine which of them have container members.
 	 *  Make an array of their superclasses similar to collectContainerSuperClasses.  Since there can be more
-	 *  than one element type used to specify a collection, answer a map with an array of array triples as value - one
-	 *  array for each collection element type.
+	 *  than one element type used to specify a collection, and furthermore each element could itself be a 
+	 *  collection with member types, ad finitum, answer a map with an array of array of a list oftriples as value - 
+	 *  one array of array for each collection element type.
 	 *  
-  	 *	Iterate over the container arguments.  If the container has ElementTypes, collect them.  For containers without
-  	 *  element types, produce an empty array of empty array.  For each ContainerTypeDef that is an element of the 
-  	 *  containers in 'collFullPkgNames' create the list of superclasses for each one, with (null,null,null) for those
-  	 *  elements in the container elements that are not containers.
-  	 *  
-  	 *  FIXME: This is a recursive issue.  Conceivably, each of the elements could in turn be containers with element types of their
-  	 *  own to an arbitrary depth.  For the current use cases, this is array of array of array... issue is not present.
-  	 *  We will detect the nesting here and issue a warning message.  If models are presented with these sorts of types, the
-  	 *  compile will fail. 
-	 *
 	 *  @param argTypes (the type (class) name for the container, if it is a container, the metadata for this type)
-	 *  @return a map keyed by the arg typestring with value an array of a List of superclass info (type, class symbol, type symbol)  
+	 *  @return a Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] where the key is the typename, 
 	 *  	for each element container type.  If the element is not a container or there are no containers in the args supplied,
 	 *   	answer nulls as needed
 	 */
 	
-	def collectCollectionElementSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[List[(String, ClassSymbol, Type)]]] = {
+	def collectCollectionElementSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] = {
 	
 	  	/** First get the arguments that are potentially collections with ElementTypes */
 		val mirror = runtimeMirror(this.getClass.getClassLoader)
@@ -1014,62 +1051,64 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val collFullPkgNames : Array[(String,String,ContainerTypeDef)] = 
 	  	  		argTypes.filter(arg => { arg._3.isInstanceOf[ContainerTypeDef] && 
 	  	  								 arg._3.asInstanceOf[ContainerTypeDef].ElementTypes.size > 0} ).map( argInfo => {
-	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
-	  		(arg, elem.typeString, elem.asInstanceOf[ContainerTypeDef])
-	  	})
+			  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+			  		(arg, elem.typeString, elem.asInstanceOf[ContainerTypeDef])
+				})
 
-		val collElementsWithSuperClasses : Array[(String,Array[List[(String, ClassSymbol, Type)]])] = collFullPkgNames.map( triple => {
+		val collElementsWithSuperClasses : Array[(String, Array[Array[List[(String, ClassSymbol, Type)]]])] = collFullPkgNames.map( triple => {
 	  		val (nm, fqClassname, containerElem) : (String, String, ContainerTypeDef) = triple
 	  
 	  		val containerElements : Array[BaseTypeDef] = containerElem.ElementTypes
 	  		
-	  		val elementTypeInfo : (String, Array[List[(String, ClassSymbol, Type)]]) = if (containerElements.size > 0) {
-	  			var elementTypesDecorated : ArrayBuffer[List[(String, ClassSymbol, Type)]] = ArrayBuffer[List[(String, ClassSymbol, Type)]]()
+	  		val elementTypeInfo : (String, Array[Array[List[(String, ClassSymbol, Type)]]]) = if (containerElements.size > 0) {
+	  			var elementTypesDecorated : ArrayBuffer[Array[List[(String, ClassSymbol, Type)]]] = ArrayBuffer[Array[List[(String, ClassSymbol, Type)]]]()
 	  			containerElements.foreach( mbrType => {
 	  				val isMbrTypeAContainer : Boolean = mbrType.isInstanceOf[ContainerTypeDef]
+	  				var memberElementBreakdown : ArrayBuffer[List[(String, ClassSymbol, Type)]] = ArrayBuffer[List[(String, ClassSymbol, Type)]]()
 	  				if (isMbrTypeAContainer) {
 	  					/** Check for recursion ... we are not supporting mbr types who themselves have member types YET */
 	  					val mbrContainer : ContainerTypeDef = mbrType.asInstanceOf[ContainerTypeDef]
 	  					if (mbrContainer.ElementTypes.size > 0) {
-	  						logger.warn("Collections of collections are not directly supported.  You must unwrap these nested collections by using Pmml variables.")
-	  						logger.warn("Alternatively, use a container outside of the model to store your complex structures.. via the global context.")
+	  					  
+	  						val stop : Boolean = true
+	  						
+	  					} else {	  					  
+		  					val useThisName = mbrContainer.typeString
+					  		val clz = Class.forName(useThisName)
+							// Convert class into class symbol
+							val clsSymbol = mirror.classSymbol(clz)
+							// Info about the class
+							val isTrait = clsSymbol.isTrait			 
+							val isAbstractClass = clsSymbol.isAbstractClass
+							val isModule = clsSymbol.isModule
+							val subclasses : Set[reflect.runtime.universe.Symbol] = clsSymbol.knownDirectSubclasses 
+							// Convert the class symbol into a Type
+							val clsType = clsSymbol.toType
+					  		val superclasses = clsType.baseClasses
+					  		
+					  		/** create the list of superclasses for this container member's type */
+							val containerElementTypeSuperClasses : List[(String, ClassSymbol, Type)] = superclasses.map( mbr => {
+								val clssym = mbr.fullName
+								if (clssym == "scala.Any") {
+									(clssym, null, null)
+								} else {
+									val cls = Class.forName(clssym)
+									val symbol = mirror.classSymbol(cls)
+									val typ = symbol.toType
+									(clssym, symbol, typ)
+								}
+							})
+							
+							memberElementBreakdown += containerElementTypeSuperClasses 					  
 	  					}
-	  					val useThisName = mbrContainer.typeString
-				  		val clz = Class.forName(useThisName)
-						// Convert class into class symbol
-						val clsSymbol = mirror.classSymbol(clz)
-						// Info about the class
-						val isTrait = clsSymbol.isTrait			 
-						val isAbstractClass = clsSymbol.isAbstractClass
-						val isModule = clsSymbol.isModule
-						val subclasses : Set[reflect.runtime.universe.Symbol] = clsSymbol.knownDirectSubclasses 
-						// Convert the class symbol into a Type
-						val clsType = clsSymbol.toType
-				  		val superclasses = clsType.baseClasses
-				  		
-				  		/** create the list of superclasses for this container member's type */
-						val containerElementTypeSuperClasses : List[(String, ClassSymbol, Type)] = superclasses.map( mbr => {
-							val clssym = mbr.fullName
-							if (clssym == "scala.Any") {
-								(clssym, null, null)
-							} else {
-								val cls = Class.forName(clssym)
-								val symbol = mirror.classSymbol(cls)
-								val typ = symbol.toType
-								(clssym, symbol, typ)
-							}
-						})
-
-						elementTypesDecorated += containerElementTypeSuperClasses
 	  					
 	  				} else {
 	  					/** when not a container return a null for the non container mbr type  */
-	  					elementTypesDecorated += List[(String,ClassSymbol,Type)]((mbrType.typeString, null, null)) 
+	  					memberElementBreakdown += List((mbrType.typeString, null, null))
 	  				}
 	  			  
-	  			  
+	  				elementTypesDecorated += memberElementBreakdown.toArray
 	  			})
-	  			
 	  			(nm, elementTypesDecorated.toArray)
 	  			
 	  		} else {
@@ -1079,10 +1118,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		elementTypeInfo
 	  	})
 
-		val map : Map[String, Array[List[(String, ClassSymbol, Type)]]] = Map[String, Array[List[(String, ClassSymbol, Type)]]]()
+	  	/** 
+	  	 *  Construct a map from the type information collected
+	  	 *  val collElementsWithSuperClasses : Array[(String, Array[Array[List[(String, ClassSymbol, Type)]]])] 
+	  	 */
+		val map : Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] = Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]]()
 	  	collElementsWithSuperClasses.foreach( pair => {
 	  		val arg : String = pair._1
-	  		val containerMbrTypeSuperClasses : Array[List[(String, ClassSymbol, Type)]] = pair._2
+	  		val containerMbrTypeSuperClasses : Array[Array[List[(String, ClassSymbol, Type)]]] = pair._2
 	  		map += (arg -> containerMbrTypeSuperClasses)
 	  	})
 	  	
@@ -1135,7 +1178,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	def collectContainerSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[(String, ClassSymbol, Type)]] = {
 
 		val mirror = runtimeMirror(this.getClass.getClassLoader)
-	  	val containerNamefullPkgNames : Array[(String,String)] = argTypes.filter(arg => arg._3.isInstanceOf[ContainerTypeDef]).map( argInfo => {
+	  	val containerNamefullPkgNames : Array[(String,String)] = argTypes.filter(arg => arg._3.isInstanceOf[ContainerTypeDef] && ! arg._3.isInstanceOf[TupleTypeDef]).map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		(arg, elem.typeString)
 	  	})
@@ -1230,6 +1273,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	    	(typdefs, null, null, null, null)
 	    }
 	    case f : xFieldRef => {
+	    	val fldRef : xFieldRef = node.asInstanceOf[xFieldRef]
+	    	if (fldRef.field == "inPatientClaimCostsEachDate") {
+	    		val stop : Int = 0
+	    	}
 	    	val typedefs : Array[(String,Boolean,BaseTypeDef)] = fldRefArgKey(node.asInstanceOf[xFieldRef], expandCompoundFieldTypes)
 	    	(typedefs, null, null, null, null)
 	    }
@@ -1262,9 +1309,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				ctx.getFieldType(constNode.Value.toString, expandCompoundFieldTypes)
 			}
 			case "fident" => {
-				logger.error("During function match... usage of 'fIdent' type arguments in simple functions are not currently supported. ")
-				logger.error("Their use is for the 'iterable' class functions.")
-				Array[(String,Boolean,BaseTypeDef)](("Any",false,null))
+				//logger.error("During function match... usage of 'fIdent' type arguments in simple functions are not currently supported. ")
+				//logger.error("Their use is for the 'iterable' class functions.")
+				//Array[(String,Boolean,BaseTypeDef)](("Any",false,null))
+				val fcnName : String = constNode.Value.toString
+				logger.trace(s"constantKeyForSimpleNode - fIdent value : $fcnName ... fident usage for simple fcn case must be the mbr fcn of an iterable function")
+				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
+
 			}
 			case _ => { /** ordinary constant.. use its dataType to build information */
 				val scalaType : String = PmmlTypes.scalaDataType(constNode.dataType)
@@ -1401,41 +1452,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				collElemTypes = typeInfo.collectionElementTypes
 			}
 						
-			/** 
-			 	FIXME: 
-			 	FIXME: 
-			 	FIXME: 
-			 	FIXME: 
-			 	FIXME: Reread the comment above.  Simply returning the Iterables type is likely wrong for many 
-			 	collection operations.  A separate class should be implemented dedicated to generating the right
-			 	type information for both the collection and its member types.  There are nuances for all of the
-			 	different container types and the operations that can be performed on them.
-			 	FIXME: 
-			 	FIXME: 
-			 	FIXME: 
-			 	FIXME: This may need to be partially implemented to satisfy pmml like this:
-			 	
-					<Apply function="Sum">
-						<Apply function="ContainerMap">
-				       		<FieldRef field="outPatientClaims"/>
-				 			<Constant dataType="fIdent">Sum</Constant> 
-				 			<Constant dataType="ident">Clm_Pmt_Amt</Constant> 
-				 			<Constant dataType="ident">Nch_Prmry_Pyr_Clm_Pd_Amt</Constant> 
-							<Constant dataType="ident">Nch_Bene_Blood_Ddctbl_Lblty_Am</Constant> 
-							<Constant dataType="ident">Nch_Bene_Ptb_Ddctbl_Amt</Constant> 
-							<Constant dataType="ident">Nch_Bene_Ptb_Coinsrnc_Amt</Constant> 
-						</Apply>
-					</Apply>
-			 	
-			 	This processes an Array[OutpatientClaim] instances. The result of the ContainerMap 
-			 	function should be Array[Double] assuming outPatientClaims is an Array.  In other words
-			 	the matching Sum's return type should be used for the member type of the result array.
-			 	
-			 	In this example, to choose the correct OUTER Sum function, we need to know the return type
-			 	of the ContainerMap.  We MAY be able to make this work by using the "sum" builtin 
-			 	function instead of "Sum" the function that actually implements it.  This would let the
-			 	scala compiler figure it out when compiling generated source... assuming there is an 
-			 	implementation of Sum(Array[Double]) which there is.
+			/**
+			 *  We are supporting, map, filter, and group by at moment for the iterable functions
+			 *  FIXME: On the next addition, this code and the "determine.." fcns used are moved out
+			 *  to MetadataInterpreter or its own file/class. 
 			 */
 			val scalaFcnName : String = PmmlTypes.scalaNameForIterableFcnName(fcnNode.function)
 			val isMapFcn : Boolean = (scalaFcnName == "map")
@@ -1445,11 +1465,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 					/** 
 					 *  
 					 *  FIXME: This is clearly inadequate... groupBy et al need to be handled 
-					 *  ... not handling those without a member function either 
-					 *  
 					 */
 					val nominalCollectionName = ObjType.asString(collectionType.tType)
-					val returnElementTypes : String = determineReturnElementTypes(mbrFuncDef, mbrsArgTypes)
+					val returnElementTypes : String = determineMapReturnElementTypes(mbrFuncDef, mbrsArgTypes)
 					val returnType : String = s"$nominalCollectionName[$returnElementTypes]"
 					returnType
 				} else {
@@ -1504,7 +1522,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *  	arguments (or the args to be used in a projection of a structure or mapped base container)
 	 *  @return memberType string to be used as part of the return type for some iterable collection being iterated.
 	 */
-	def determineReturnElementTypes(mbrFuncDef : FunctionDef, mbrsArgTypes : Array[(String,Boolean,BaseTypeDef)] ) : String = {
+	def determineMapReturnElementTypes(mbrFuncDef : FunctionDef, mbrsArgTypes : Array[(String,Boolean,BaseTypeDef)] ) : String = {
 	  	
   		val returnElementTypes  = if (mbrFuncDef != null) {
   			mbrFuncDef.returnTypeString
@@ -1613,7 +1631,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
 	/** 
 	 *  Discover the typestring for the supplied constant that is an argument for 
-	 *  a simple function (i.e., not Iterable).  
+	 *  a function (i.e., ordinarily not Iterable).  HOWEVER, the member function, should it exist,
+	 *  may be an iterable function itself (e.g., typical situation interpreting groupBy map's values).
+	 *  
+	 *  When this is the case, the containerType is a collection that has an element type that is a collection.
+	 *  This possibility is considered before "field not found" error is issued.  
 	 */
 	def constantArgForIterableFcn(constNode : xConstant
 								, expandCompoundFieldTypes : Boolean
@@ -1643,7 +1665,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			   *  the tuple.  Perhaps we search for it.  At the moment, we won't support tuple dereferencing...
 			   *  
 			   */
-			  val leafElementType : BaseTypeDef = if (collectionsElementTypes.size > 0) collectionsElementTypes.last else null
+			  val leafElementType : BaseTypeDef = if (collectionsElementTypes != null && collectionsElementTypes.size > 0) collectionsElementTypes.last else null
 			  if (leafElementType != null){
 				  /** search the function's iterable container for this (attr) name */
 				  val attrContainer  : ContainerTypeDef = if (ctx.MetadataHelper.isContainerWithFieldOrKeyNames(leafElementType)) {
@@ -1672,8 +1694,63 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			    	  }
 			    	  Array[(String,Boolean,BaseTypeDef)]((attrStr,isContainerWithFields,attrType))
 			      } else {
-			    	  logger.warn(s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
-			    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
+			    	  /** 
+			    	   *  Before issuing error message consider if this container has a container as one of its elements ...
+			    	   *  An Assert here would verify that the member function that is evidently present in the arg list of this 
+			    	   *  xApply is an Iterable function as well.  This is currently the only case acceptable.  
+			    	   */
+			          
+			          val collCollType : BaseTypeDef = if (containerType.ElementTypes.size > 0) containerType.ElementTypes.last else null
+			          val collCollContainer : ContainerTypeDef  = if (collCollType.isInstanceOf[ContainerTypeDef]) collCollType.asInstanceOf[ContainerTypeDef] else null
+			          val collCollElemType : BaseTypeDef = if (collCollContainer.ElementTypes.size > 0) collCollContainer.ElementTypes.last else null
+					  val collAttrContainer  : ContainerTypeDef = if (collCollElemType != null && ctx.MetadataHelper.isContainerWithFieldOrKeyNames(collCollElemType)) {
+						  collCollElemType match {
+						    case s : StructTypeDef => collCollElemType.asInstanceOf[StructTypeDef]
+						    case s : MappedMsgTypeDef => collCollElemType.asInstanceOf[MappedMsgTypeDef]
+						    case _ => null
+						  }
+					  } else {
+						  null
+					  }
+				      if (collAttrContainer != null) {
+				    	  /** see if the "ident" value is one of the fields in the fields of the container */
+				    	  val attr : BaseAttributeDef = if (collAttrContainer.isInstanceOf[StructTypeDef]) {
+				    		  collAttrContainer.asInstanceOf[StructTypeDef].attributeFor(constNode.Value.toString)
+				    	  } else {
+				    		  collAttrContainer.asInstanceOf[MappedMsgTypeDef].attributeFor(constNode.Value.toString)
+				    	  }
+				    	  val (attrType, attrStr, isContainerWithFields) : (BaseTypeDef, String, Boolean) = if (attr != null) {
+					    	  val attrType : BaseTypeDef = attr.typeDef
+					    	  val attrStr = attrType.typeString
+					    	  val isContainerWithFields = ctx.MetadataHelper.isContainerWithFieldOrKeyNames(attrType)
+					    	  (attrType, attrStr, isContainerWithFields)
+				    	  } else {
+				    		  (null,"Any",false)
+				    	  }
+				    	  Array[(String,Boolean,BaseTypeDef)]((attrStr,isContainerWithFields,attrType))
+				      } else {	
+				        
+				    	  /** 
+				    	   *  The assumption HAD been that 'ident' arguments to the Iterable function referred to field names of a
+				    	   *  structure or mapped message container.  NOW there is an exception.  It is also possible to refer to the entire
+				    	   *  element of the Iterable with the '_each' member variable used in the applied function on the member of the Iterable.
+				    	   *  
+				    	   *  Check that here and if it is '_each' (current value of ctx.applyElementName) let it pass, filling out the triple of course.
+				    	   */
+				    	  val collTypeInfo : Array[(String,Boolean,BaseTypeDef)] = if (constNode.Value.toString == ctx.applyElementName) {
+				    		  val isContainerWithFields = false
+				    		  val collCollElemTypeStr : String = collCollElemType.typeString
+				    		  val collCollContainerTypeStr : String = collCollContainer.typeString
+				    		  Array[(String,Boolean,BaseTypeDef)]((collCollContainerTypeStr,isContainerWithFields,collCollContainer))
+				    		  //Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollElemType))
+				    	  } else {
+					    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
+					    	  logger.error(s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
+					    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
+				    	  }
+				        
+				      	  collTypeInfo
+				      }
 			      }
 			  } else {
 				  /** 
@@ -1688,6 +1765,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				 *  value for this constant as the function name.  Return the name in the position of the typestring 
 				 */
 				val fcnName : String = constNode.Value.toString
+				if (fcnName == "Sum") {
+					val stophere : Int = 0
+				}
 				logger.trace(s"constantArgForIterableFcn - fIdent value : $fcnName")
 				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
 			}

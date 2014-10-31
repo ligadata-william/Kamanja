@@ -1101,7 +1101,7 @@ class MdMgr {
     }
 
   /**
-   *  MakeMap catalogs a Map based type in the metadata manager's global typedefs map
+   *  MakeMap catalogs a scala.collection.mutable.Map based type in the metadata manager's global typedefs map
    *
    *  @param nameSpace - the map type's namespace
    *  @param name - the map name.
@@ -1132,6 +1132,44 @@ class MdMgr {
     val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
 
     val st = new MapTypeDef
+    SetBaseElem(st, nameSpace, name, ver, null, depJars)
+    st.keyDef = keyDef
+    st.valDef = valDef
+    st
+  }
+
+  /**
+   *  MakeImmutableMap catalogs an scala.collection.immutable.Map based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the map type's namespace
+   *  @param name - the map name.
+   *  @param key - the namespace and name for the map's key
+   *  @param value - the namespace and name for the map's value
+   *  @param ver - the version info
+   *
+   */
+  // We should not have physicalName. This container type has type inside, which has PhysicalName
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def MakeImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): ImmutableMapTypeDef = {
+    if (Type(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"Map $nameSpace.$name already exists.")
+    }
+
+    val (keyNmSp, keyTypeNm) = key
+    val (valNmSp, valTypeNm) = value
+    val keyDef = GetElem(Type(keyNmSp, keyTypeNm, -1, false), s"Key type $keyNmSp.$keyTypeNm does not exist")
+    val valDef = GetElem(Type(valNmSp, valTypeNm, -1, false), s"Value type $valNmSp.$valTypeNm does not exist")
+    if (keyDef == null || valDef == null) { throw new NoSuchElementException(s"Either key type ($keyNmSp.$keyTypeNm) and/or value type ($valNmSp.$valTypeNm) does not exist") }
+
+    val depJarSet = scala.collection.mutable.Set[String]()
+    if (keyDef.JarName != null) depJarSet += keyDef.JarName
+    if (keyDef.DependencyJarNames != null) depJarSet ++= keyDef.DependencyJarNames
+    if (valDef.JarName != null) depJarSet += valDef.JarName
+    if (valDef.DependencyJarNames != null) depJarSet ++= valDef.DependencyJarNames
+    val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
+
+    val st = new ImmutableMapTypeDef
     SetBaseElem(st, nameSpace, name, ver, null, depJars)
     st.keyDef = keyDef
     st.valDef = valDef
@@ -1910,7 +1948,7 @@ class MdMgr {
 
 
   /**
-   *  MakeMap catalogs a Map based type in the metadata manager's global typedefs map
+   *  AddMap catalogs a scala.collection.mutable.Map based type in the metadata manager's global typedefs map
    *
    *  @param nameSpace - the map type's namespace
    *  @param name - the map name.
@@ -1932,6 +1970,35 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddMap(map: MapTypeDef): Unit = {
+    if (Type(map.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
+    }
+    typeDefs.addBinding(map.FullName, map)
+  }
+
+  /**
+   *  AddImmutableMap catalogs a scala.collection.immutable.Map based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the map type's namespace
+   *  @param name - the map name.
+   *  @param key - the namespace and name for the map's key
+   *  @param value - the namespace and name for the map's value
+   *  @param ver - version info
+   *
+   */
+  // We should not have physicalName. This container type has type inside, which has PhysicalName
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddImmutableMap(nameSpace: String
+		      , name: String
+		      , key: (String, String)
+		      , value: (String, String)
+		      , ver: Int): Unit = {
+    AddImmutableMap(MakeMap(nameSpace, name, key, value, ver))
+  }
+
+  @throws(classOf[AlreadyExistsException])
+  def AddImmutableMap(map: MapTypeDef): Unit = {
     if (Type(map.FullName, -1, false) != None) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }

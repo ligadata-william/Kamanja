@@ -215,6 +215,7 @@ object PmmlCompiler extends App with LogTrait {
 """	
 Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --javaHome <jhome> 
 	  --scriptOut <scriptfile> --cp <classpath> --jarpath <jar path> --manifestpath <manifest path> 
+	  [--instrumentWithLogInfo {true|false}]
 	  [--client <clientname>] [--srcOut <output path>] [--skipjar {true|false}]
          where 	<pmml path> (required) is the file path of the pmml model		
                 <classpath> (required) is the classpath containing the runtime needs of the pmml models including 
@@ -226,6 +227,8 @@ Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --java
                 <clientname> (required) is the name of the customer whose pmml models are being compiledMetadataBootstrap/BankPOC
                  <output path> (optional) is an output file path where a copy of the generated source will be left
                 skipjar (optional) is a flag that when used suppresses the compilation/jar step.. often used with the --srcOut option
+				instrumentWithLogInfo (optional) if true model derived field classes are instrumented with enter and result 
+					logging	messages.  By default, no logging instrumentation
 
 Note that the sources will be included in the jar produced.  The optional scala source described by <output path> is for immediate
 inspection in addition to the jar version.  Note that the clientName value supplied is used for scala package name generation, et al.

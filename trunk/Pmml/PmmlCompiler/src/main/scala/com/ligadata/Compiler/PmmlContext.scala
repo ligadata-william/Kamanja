@@ -94,6 +94,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	val mdHelper : MetadataInterpreter = new MetadataInterpreter(this)
 	def MetadataHelper : MetadataInterpreter = mdHelper
 	
+	/** This value used in all map/filter/groupBy apply functions as the element reference */
+	val applyElementName : String = "_each"
+	
 	/** FIXME: This needs to be pulled from either the metadata manager or possibly specified
 	 *  in some way in the PMML model itself.  At the moment this is hard coded to get something
 	 *  working. 
