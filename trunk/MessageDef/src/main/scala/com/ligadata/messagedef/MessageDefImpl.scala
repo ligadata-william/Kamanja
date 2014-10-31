@@ -277,6 +277,7 @@ class MessageDefImpl {
               jarset = jarset + arrayType.JarName
 
           } else if (typ.get.tType.toString().equals("tHashMap")) {
+            
             assignCsvdata.append(newline + "//HashMap not handled at this momemt" + newline)
           } else {
 
