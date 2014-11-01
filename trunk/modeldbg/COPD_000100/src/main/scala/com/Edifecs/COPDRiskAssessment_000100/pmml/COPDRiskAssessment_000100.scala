@@ -86,6 +86,7 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
         ruleSetModel.AddMiningField("Age", new MiningField("Age","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("Dyspnoea", new MiningField("Dyspnoea","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("WithSmokingHistory", new MiningField("WithSmokingHistory","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
+        ruleSetModel.AddMiningField("outPatientClaimCostsByDate", new MiningField("outPatientClaimCostsByDate","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("Msg_Desynpuf_Id", new MiningField("Msg_Desynpuf_Id","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("FamilyHistory", new MiningField("FamilyHistory","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
         ruleSetModel.AddMiningField("ChronicCough", new MiningField("ChronicCough","supplementary","",0.0,"",0.0,0.0,new StringDataValue(""),"",""))
@@ -145,59 +146,73 @@ class COPDRiskAssessment_000100(val gCtx : com.ligadata.OnLEPBase.EnvContext, va
         var xbar14 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
         ctx.xDict += ("AYearAgo" -> new Derive_AYearAgo("AYearAgo", "Int", xbar14, "null", "null", ""))
         var xbar15 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inPatientClaimCostsByDate" -> new Derive_inPatientClaimCostsByDate("inPatientClaimCostsByDate", "Any", xbar15, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimCostsEachDate" -> new Derive_outPatientClaimCostsEachDate("outPatientClaimCostsEachDate", "Any", xbar15, "null", "null", ""))
         var xbar16 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar16, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimTotalCostEachDate" -> new Derive_outPatientClaimTotalCostEachDate("outPatientClaimTotalCostEachDate", "Any", xbar16, "null", "null", ""))
         var xbar17 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar17, "null", "null", ""))
+        ctx.xDict += ("inPatientClaimCostsByDate" -> new Derive_inPatientClaimCostsByDate("inPatientClaimCostsByDate", "Any", xbar17, "null", "null", ""))
         var xbar18 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar18, "null", "null", ""))
+        ctx.xDict += ("SmokingCodeSet" -> new Derive_SmokingCodeSet("SmokingCodeSet", "Any", xbar18, "null", "null", ""))
         var xbar19 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Age" -> new Derive_Age("Age", "Int", xbar19, "null", "null", ""))
+        ctx.xDict += ("hl7InfoThisLastYear" -> new Derive_hl7InfoThisLastYear("hl7InfoThisLastYear", "Any", xbar19, "null", "null", ""))
         var xbar20 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar20, "null", "null", ""))
+        ctx.xDict += ("CoughCodeSet" -> new Derive_CoughCodeSet("CoughCodeSet", "Any", xbar20, "null", "null", ""))
         var xbar21 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureMessageContainerBases" -> new Derive_EnvExposureMessageContainerBases("EnvExposureMessageContainerBases", "Any", xbar21, "null", "null", ""))
+        ctx.xDict += ("Age" -> new Derive_Age("Age", "Int", xbar21, "null", "null", ""))
         var xbar22 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inPatientClaimCostsEachDate" -> new Derive_inPatientClaimCostsEachDate("inPatientClaimCostsEachDate", "Any", xbar22, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodes" -> new Derive_EnvExposureCodes("EnvExposureCodes", "Any", xbar22, "null", "null", ""))
         var xbar23 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar23, "null", "null", ""))
+        ctx.xDict += ("EnvExposureMessageContainerBases" -> new Derive_EnvExposureMessageContainerBases("EnvExposureMessageContainerBases", "Any", xbar23, "null", "null", ""))
         var xbar24 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar24, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimCostTuples" -> new Derive_outPatientClaimCostTuples("outPatientClaimCostTuples", "Any", xbar24, "null", "null", ""))
         var xbar25 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar25, "null", "null", ""))
+        ctx.xDict += ("inPatientClaimCostsEachDate" -> new Derive_inPatientClaimCostsEachDate("inPatientClaimCostsEachDate", "Any", xbar25, "null", "null", ""))
         var xbar26 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar26, "null", "null", ""))
+        ctx.xDict += ("CATI_Rule1a" -> new Derive_CATI_Rule1a("CATI_Rule1a", "Boolean", xbar26, "null", "null", ""))
         var xbar27 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inPatientClaimCostTuples" -> new Derive_inPatientClaimCostTuples("inPatientClaimCostTuples", "Any", xbar27, "null", "null", ""))
+        ctx.xDict += ("outpatientInfoThisLastYear" -> new Derive_outpatientInfoThisLastYear("outpatientInfoThisLastYear", "Any", xbar27, "null", "null", ""))
         var xbar28 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar28, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimsByDateKeys" -> new Derive_outPatientClaimsByDateKeys("outPatientClaimsByDateKeys", "Any", xbar28, "null", "null", ""))
         var xbar29 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar29, "null", "null", ""))
+        ctx.xDict += ("Dyspnoea" -> new Derive_Dyspnoea("Dyspnoea", "Boolean", xbar29, "null", "null", ""))
         var xbar30 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar30, "null", "null", ""))
+        ctx.xDict += ("DyspnoeaCodes" -> new Derive_DyspnoeaCodes("DyspnoeaCodes", "Any", xbar30, "null", "null", ""))
         var xbar31 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inPatientClaimsByDateValues" -> new Derive_inPatientClaimsByDateValues("inPatientClaimsByDateValues", "Any", xbar31, "null", "null", ""))
+        ctx.xDict += ("inPatientClaimCostTuples" -> new Derive_inPatientClaimCostTuples("inPatientClaimCostTuples", "Any", xbar31, "null", "null", ""))
         var xbar32 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inPatientClaimsByDate" -> new Derive_inPatientClaimsByDate("inPatientClaimsByDate", "Any", xbar32, "null", "null", ""))
+        ctx.xDict += ("SmokingCodes" -> new Derive_SmokingCodes("SmokingCodes", "Any", xbar32, "null", "null", ""))
         var xbar33 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar33, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimsByDateValues" -> new Derive_outPatientClaimsByDateValues("outPatientClaimsByDateValues", "Any", xbar33, "null", "null", ""))
         var xbar34 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar34, "null", "null", ""))
+        ctx.xDict += ("EnvExposureCodeSet" -> new Derive_EnvExposureCodeSet("EnvExposureCodeSet", "Any", xbar34, "null", "null", ""))
         var xbar35 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar35, "null", "null", ""))
+        ctx.xDict += ("WithSmokingHistory" -> new Derive_WithSmokingHistory("WithSmokingHistory", "Boolean", xbar35, "null", "null", ""))
         var xbar36 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar36, "null", "null", ""))
+        ctx.xDict += ("inPatientClaimsByDateValues" -> new Derive_inPatientClaimsByDateValues("inPatientClaimsByDateValues", "Any", xbar36, "null", "null", ""))
         var xbar37 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("DyspnoeaMessageContainerBases" -> new Derive_DyspnoeaMessageContainerBases("DyspnoeaMessageContainerBases", "Any", xbar37, "null", "null", ""))
+        ctx.xDict += ("outPatientClaimCostsByDate" -> new Derive_outPatientClaimCostsByDate("outPatientClaimCostsByDate", "Any", xbar37, "null", "null", ""))
         var xbar38 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("SputumMessageContainerBases" -> new Derive_SputumMessageContainerBases("SputumMessageContainerBases", "Any", xbar38, "null", "null", ""))
+        ctx.xDict += ("inPatientClaimsByDate" -> new Derive_inPatientClaimsByDate("inPatientClaimsByDate", "Any", xbar38, "null", "null", ""))
         var xbar39 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("CoughMessageContainerBases" -> new Derive_CoughMessageContainerBases("CoughMessageContainerBases", "Any", xbar39, "null", "null", ""))
+        ctx.xDict += ("FamilyHistory" -> new Derive_FamilyHistory("FamilyHistory", "Boolean", xbar39, "null", "null", ""))
         var xbar40 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar40, "null", "null", ""))
+        ctx.xDict += ("SputumCodeSet" -> new Derive_SputumCodeSet("SputumCodeSet", "Any", xbar40, "null", "null", ""))
         var xbar41 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
-        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar41, "null", "null", ""))
+        ctx.xDict += ("ChronicCough" -> new Derive_ChronicCough("ChronicCough", "Boolean", xbar41, "null", "null", ""))
+        var xbar42 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("outPatientClaimsByDate" -> new Derive_outPatientClaimsByDate("outPatientClaimsByDate", "Any", xbar42, "null", "null", ""))
+        var xbar43 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("Today" -> new Derive_Today("Today", "Int", xbar43, "null", "null", ""))
+        var xbar44 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("DyspnoeaMessageContainerBases" -> new Derive_DyspnoeaMessageContainerBases("DyspnoeaMessageContainerBases", "Any", xbar44, "null", "null", ""))
+        var xbar45 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("SputumMessageContainerBases" -> new Derive_SputumMessageContainerBases("SputumMessageContainerBases", "Any", xbar45, "null", "null", ""))
+        var xbar46 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("CoughMessageContainerBases" -> new Derive_CoughMessageContainerBases("CoughMessageContainerBases", "Any", xbar46, "null", "null", ""))
+        var xbar47 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("WithEnvironmentalExposures" -> new Derive_WithEnvironmentalExposures("WithEnvironmentalExposures", "Boolean", xbar47, "null", "null", ""))
+        var xbar48 : ArrayBuffer[(String,String)] =  new ArrayBuffer[(String,String)]()
+        ctx.xDict += ("inpatientInfoThisLastYear" -> new Derive_inpatientInfoThisLastYear("inpatientInfoThisLastYear", "Any", xbar48, "null", "null", ""))
 
         /** fill the Context's mining field dictionary ...*/
         //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel
@@ -693,7 +708,7 @@ class Derive_inPatientClaimCostTuples (name : String, dataType : String, validVa
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val inPatientClaimCostTuples = ctx.valueFor("inPatientClaimsByDateValues").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]]].map( _each => { _each.map( _each => { (_each.Clm_Pmt_Amt, _each.Nch_Prmry_Pyr_Clm_Pd_Amt, _each.Nch_Bene_Ip_Ddctbl_Amt, _each.Nch_Bene_Pta_Coinsrnc_Lblty_Am, _each.Nch_Bene_Blood_Ddctbl_Lblty_Am)}) })
+        val inPatientClaimCostTuples = ctx.valueFor("inPatientClaimsByDateValues").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[com.ligadata.edifecs.System_InpatientClaim_100]]].map( _each => { _each.map( _each => { (_each.Clm_Pmt_Amt, _each.Nch_Prmry_Pyr_Clm_Pd_Amt, _each.Clm_Pass_Thru_Per_Diem_Amt, _each.Nch_Bene_Ip_Ddctbl_Amt, _each.Nch_Bene_Pta_Coinsrnc_Lblty_Am, _each.Nch_Bene_Blood_Ddctbl_Lblty_Am)}) })
         ctx.xDict.apply("inPatientClaimCostTuples").Value(new AnyDataValue(inPatientClaimCostTuples))
         new AnyDataValue(inPatientClaimCostTuples)
     }
@@ -705,7 +720,7 @@ class Derive_inPatientClaimCostsEachDate (name : String, dataType : String, vali
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val inPatientClaimCostsEachDate = ToArray(ctx.valueFor("inPatientClaimCostTuples").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[scala.Tuple5[Any,Any,Any,Any,Any]]]].map( _each => { com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat(_each) }))
+        val inPatientClaimCostsEachDate = ToArray(ctx.valueFor("inPatientClaimCostTuples").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[scala.Tuple6[Any,Any,Any,Any,Any,Any]]]].map( _each => { com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble(_each) }))
         ctx.xDict.apply("inPatientClaimCostsEachDate").Value(new AnyDataValue(inPatientClaimCostsEachDate))
         new AnyDataValue(inPatientClaimCostsEachDate)
     }
@@ -717,7 +732,7 @@ class Derive_inPatientClaimTotalCostEachDate (name : String, dataType : String, 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val inPatientClaimTotalCostEachDate = ToArray(ctx.valueFor("inPatientClaimCostsEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[Float]]].map( _each => { com.ligadata.pmml.udfs.Udfs.Sum(_each) }))
+        val inPatientClaimTotalCostEachDate = ToArray(ctx.valueFor("inPatientClaimCostsEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[Double]]].map( _each => { com.ligadata.pmml.udfs.Udfs.Sum(_each) }))
         ctx.xDict.apply("inPatientClaimTotalCostEachDate").Value(new AnyDataValue(inPatientClaimTotalCostEachDate))
         new AnyDataValue(inPatientClaimTotalCostEachDate)
     }
@@ -729,9 +744,93 @@ class Derive_inPatientClaimCostsByDate (name : String, dataType : String, validV
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
 
     override def execute(ctx : Context) : AnyDataValue = {
-        val inPatientClaimCostsByDate = ToMap(Zip(ctx.valueFor("inPatientClaimsByDateKeys").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Int]], ctx.valueFor("inPatientClaimTotalCostEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Float]]))
+        val inPatientClaimCostsByDate = ToMap(Zip(ctx.valueFor("inPatientClaimsByDateKeys").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Int]], ctx.valueFor("inPatientClaimTotalCostEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Double]]))
         ctx.xDict.apply("inPatientClaimCostsByDate").Value(new AnyDataValue(inPatientClaimCostsByDate))
         new AnyDataValue(inPatientClaimCostsByDate)
+    }
+
+}
+
+
+class Derive_outPatientClaimsByDate (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimsByDate = ctx.valueFor("outpatientInfoThisLastYear").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]].groupBy( _each => { _each.Clm_Thru_Dt })
+        ctx.xDict.apply("outPatientClaimsByDate").Value(new AnyDataValue(outPatientClaimsByDate))
+        new AnyDataValue(outPatientClaimsByDate)
+    }
+
+}
+
+
+class Derive_outPatientClaimsByDateValues (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimsByDateValues = ToArray(MapValues(ctx.valueFor("outPatientClaimsByDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Map[Int,scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]]]))
+        ctx.xDict.apply("outPatientClaimsByDateValues").Value(new AnyDataValue(outPatientClaimsByDateValues))
+        new AnyDataValue(outPatientClaimsByDateValues)
+    }
+
+}
+
+
+class Derive_outPatientClaimsByDateKeys (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimsByDateKeys = ToArray(MapKeys(ctx.valueFor("outPatientClaimsByDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Map[Int,scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]]]))
+        ctx.xDict.apply("outPatientClaimsByDateKeys").Value(new AnyDataValue(outPatientClaimsByDateKeys))
+        new AnyDataValue(outPatientClaimsByDateKeys)
+    }
+
+}
+
+
+class Derive_outPatientClaimCostTuples (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimCostTuples = ctx.valueFor("outPatientClaimsByDateValues").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[com.ligadata.edifecs.System_OutpatientClaim_100]]].map( _each => { _each.map( _each => { (_each.Clm_Pmt_Amt, _each.Nch_Prmry_Pyr_Clm_Pd_Amt, _each.Nch_Bene_Blood_Ddctbl_Lblty_Am, _each.Nch_Bene_Ptb_Ddctbl_Amt, _each.Nch_Bene_Ptb_Coinsrnc_Amt)}) })
+        ctx.xDict.apply("outPatientClaimCostTuples").Value(new AnyDataValue(outPatientClaimCostTuples))
+        new AnyDataValue(outPatientClaimCostTuples)
+    }
+
+}
+
+
+class Derive_outPatientClaimCostsEachDate (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimCostsEachDate = ToArray(ctx.valueFor("outPatientClaimCostTuples").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[scala.Tuple5[Any,Any,Any,Any,Any]]]].map( _each => { com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble(_each) }))
+        ctx.xDict.apply("outPatientClaimCostsEachDate").Value(new AnyDataValue(outPatientClaimCostsEachDate))
+        new AnyDataValue(outPatientClaimCostsEachDate)
+    }
+
+}
+
+
+class Derive_outPatientClaimTotalCostEachDate (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimTotalCostEachDate = ToArray(ctx.valueFor("outPatientClaimCostsEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[scala.Array[Double]]].map( _each => { com.ligadata.pmml.udfs.Udfs.Sum(_each) }))
+        ctx.xDict.apply("outPatientClaimTotalCostEachDate").Value(new AnyDataValue(outPatientClaimTotalCostEachDate))
+        new AnyDataValue(outPatientClaimTotalCostEachDate)
+    }
+
+}
+
+
+class Derive_outPatientClaimCostsByDate (name : String, dataType : String, validValues: ArrayBuffer[(String,String)], leftMargin : String, rightMargin : String, closure : String) 
+      extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
+
+    override def execute(ctx : Context) : AnyDataValue = {
+        val outPatientClaimCostsByDate = ToMap(Zip(ctx.valueFor("outPatientClaimsByDateKeys").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Int]], ctx.valueFor("outPatientClaimTotalCostEachDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.Array[Double]]))
+        ctx.xDict.apply("outPatientClaimCostsByDate").Value(new AnyDataValue(outPatientClaimCostsByDate))
+        new AnyDataValue(outPatientClaimCostsByDate)
     }
 
 }
@@ -741,7 +840,7 @@ class Derive_MaterializeOutputs (name : String, dataType : String, validValues: 
       extends DerivedField(name, dataType, validValues, leftMargin, rightMargin, closure) with LogTrait { 
 
     override def execute(ctx : Context) : BooleanDataValue = {
-        val MaterializeOutputs = And(Put(ctx, "Msg_Desynpuf_Id", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100].Desynpuf_Id), GreaterThan(CollectionLength(ctx.valueFor("inPatientClaimCostsByDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Map[Int,Float]]), 0))
+        val MaterializeOutputs = And(Put(ctx, "Msg_Desynpuf_Id", ctx.valueFor("msg").asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100].Desynpuf_Id), GreaterThan(CollectionLength(ctx.valueFor("inPatientClaimCostsByDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Map[Int,Double]]), 0), GreaterThan(CollectionLength(ctx.valueFor("outPatientClaimCostsByDate").asInstanceOf[AnyDataValue].Value.asInstanceOf[scala.collection.immutable.Map[Int,Double]]), 0))
         ctx.xDict.apply("MaterializeOutputs").Value(new BooleanDataValue(MaterializeOutputs))
         new BooleanDataValue(MaterializeOutputs)
     }

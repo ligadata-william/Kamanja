@@ -179,17 +179,17 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Clm_From_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Clm_Thru_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Prvdr_Num", MdMgr.sysNS, "String", false, null)
-						, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Float", false, null)
+						, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "At_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Op_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Ot_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Clm_Admsn_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false, null)
-						, (MdMgr.sysNS, "Clm_Pass_Thru_Per_Diem_Amt", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Ip_Ddctbl_Amt", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Pta_Coinsrnc_Lblty_Am", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Float", false, null)
+						, (MdMgr.sysNS, "Clm_Pass_Thru_Per_Diem_Amt", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Ip_Ddctbl_Amt", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Pta_Coinsrnc_Lblty_Am", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Clm_Utlztn_Day_Cnt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Nch_Bene_Dschrg_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Clm_Drg_Cd", MdMgr.sysNS, "Int", false, null)
@@ -216,15 +216,15 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 						, (MdMgr.sysNS, "Clm_Thru_Dt", MdMgr.sysNS, "Int", false, null)
 						, (MdMgr.sysNS, "Prvdr_Num", MdMgr.sysNS, "String", false, null)
 						, (MdMgr.sysNS, "Clm_Pmt_Amt", MdMgr.sysNS, "Double", false, null)
-						, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Float", false, null)
+						, (MdMgr.sysNS, "Nch_Prmry_Pyr_Clm_Pd_Amt", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "At_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Op_Physn_Npi", MdMgr.sysNS, "Long", false, null)
 						, (MdMgr.sysNS, "Ot_Physn_Npi", MdMgr.sysNS, "Long", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Float", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Blood_Ddctbl_Lblty_Am", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Icd9_Dgns_Cds", MdMgr.sysNS, "ArrayOfString", false, null)
 						, (MdMgr.sysNS, "Icd9_Prcdr_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Float", false, null)
-						, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Float", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Ptb_Ddctbl_Amt", MdMgr.sysNS, "Double", false, null)
+						, (MdMgr.sysNS, "Nch_Bene_Ptb_Coinsrnc_Amt", MdMgr.sysNS, "Double", false, null)
 						, (MdMgr.sysNS, "Admtng_Icd9_Dgns_Cd", MdMgr.sysNS, "String", false, null)
 						, (MdMgr.sysNS, "Hcpcs_Cds", MdMgr.sysNS, "ArrayOfInt", false, null)
 						)
@@ -1468,10 +1468,73 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "QueueOfAny")), null)
  		//mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "StackOfAny")), null)
 		
+		/** ToArray and Sum methods for Tuple<N> */
 		/** FIXME:  Add other array conversions for other scalars and tuple combinations */
+ 		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny2")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.ToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToDouble", "com.ligadata.pmml.udfs.Udfs.SumToDouble", ("System", "Double"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny2")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny2")), null)
+
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny3")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.ToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToDouble", "com.ligadata.pmml.udfs.Udfs.SumToDouble", ("System", "Double"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny3")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny3")), null)
+
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny4")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.ToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToDouble", "com.ligadata.pmml.udfs.Udfs.SumToDouble", ("System", "Double"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny4")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny4")), null)
+
+
  		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny5")), null)
  		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny5")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.ToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToDouble", "com.ligadata.pmml.udfs.Udfs.SumToDouble", ("System", "Double"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
+
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.ToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToFloat", "com.ligadata.pmml.udfs.Udfs.SumToFloat", ("System", "Float"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfFloat", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfFloat", ("System", "ArrayOfFloat"), List(("tup", "System", "ArrayOfTupleOfAny6")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.ToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToDouble", "com.ligadata.pmml.udfs.Udfs.SumToDouble", ("System", "Double"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny6")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny6")), null)
+
+
  	
  		//SumToArrayOfFloat(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Float
   		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("tup", "System", "TupleOfAny1")), null)
