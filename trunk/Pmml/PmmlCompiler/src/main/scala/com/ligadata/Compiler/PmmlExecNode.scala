@@ -45,7 +45,13 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  	val strRep : String = value.toString
 	  	dataType match {
 	  		case "string" | "date" | "time" | "dateTime" => s"${'"'}$strRep${'"'}"
-	  		case "ident"  => s"mbr.$strRep"  /** don't change 'mbr.' without adjusting IterableFcnPrinter.iterablePrint */
+	  		case "ident"  => {
+	  			if (strRep == ctx.applyElementName) {
+	  			   s"${ctx.applyElementName}"  /** When the value is _each, the item is being passed as a whole ... common with collection args ... */
+	  			} else {
+	  			   s"${ctx.applyElementName}.$strRep"  /** don't change '_each.' without adjusting IterableFcnPrinter.iterablePrint */
+	  			}
+	  		}
 	  		case "typename"  => { 
 	  		  /** 
 	  		   *  The constant value is either the name of a datafield or a derived field.  Retrieve the type info for

@@ -259,22 +259,28 @@ class MessageDefImpl {
           if (typ.get.tType.toString().equals("tArray")) {
             arrayType = typ.get.asInstanceOf[ArrayTypeDef]
 
-            if (arrayType.elemDef.implementationName.isEmpty())
-              throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
-
-            else fname = arrayType.elemDef.implementationName + ".Input"
+            if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char"))) {
+              if (arrayType.elemDef.implementationName.isEmpty())
+                throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
+              else
+                fname = arrayType.elemDef.implementationName + ".Input"
+              assignCsvdata.append("%s%s = list(idx).split(arrvaldelim, -1).map(v => %s(v));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
+            } else
+              assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
             argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
-
-            assignCsvdata.append("%s%s = list(idx).split(arrvaldelim, -1).map(v => %s(v));\n%sidx = idx+1\n".format(pad2, f.Name, fname, pad2))
 
             if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
               jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
             else if (arrayType.JarName != null)
               jarset = jarset + arrayType.JarName
 
+          } else if (typ.get.tType.toString().equals("tHashMap")) {
+            
+            assignCsvdata.append(newline + "//HashMap not handled at this momemt" + newline)
           } else {
+
             if (typ.get.implementationName.isEmpty())
               throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
 
@@ -407,8 +413,8 @@ class MessageDefImpl {
     if (message.concepts != null) {
 
     }
-   // if (message.PartitionKey != null)
-      scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
+    // if (message.PartitionKey != null)
+    scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
     var addMessage: String = ""
     if (addMsg.size > 5)
       addMessage = addMsg.toString.substring(0, addMsg.length - 5)
@@ -442,7 +448,7 @@ class MessageDefImpl {
       imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj}"
 
     """
-package com.ligadata.messagedef
+package com.ligadata.edifecs
     
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
@@ -502,10 +508,10 @@ trait BaseContainer {
 
   def partitionkeyStr(msg: Message): String = {
 
-    if(msg.PartitionKey != null)
-    	"\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
-    else 
-    	"\n	override def PartitionKeyData: String = \"\""
+    if (msg.PartitionKey != null)
+      "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
+    else
+      "\n	override def PartitionKeyData: String = \"\""
   }
 
   def inputData = {
@@ -556,7 +562,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def cSetter() = "" 
+  def cSetter() = ""
   /*{
     """
     def get(key: String): Any ={

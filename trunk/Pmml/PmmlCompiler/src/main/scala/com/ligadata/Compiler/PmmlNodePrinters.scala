@@ -643,6 +643,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
+		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
 		commentBuffer.append(s"import scala.math._\n")
 		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")

@@ -314,6 +314,21 @@ class MapTypeDef extends ContainerTypeDef {
   }
 }
 
+class ImmutableMapTypeDef extends ContainerTypeDef {
+  def tType = tMap
+
+  var keyDef: BaseTypeDef = _
+  var valDef: BaseTypeDef = _
+
+  override def IsFixed: Boolean = false
+  override def typeString: String = {
+    "scala.collection.immutable.Map[" + keyDef.typeString + "," + valDef.typeString + "]"
+  }
+  override def ElementTypes : Array[BaseTypeDef] = {
+	Array(keyDef,valDef)
+  }
+}
+
 class HashMapTypeDef extends ContainerTypeDef {
   def tType = tHashMap
 
@@ -393,7 +408,8 @@ class TupleTypeDef extends ContainerTypeDef {
 
   override def IsFixed: Boolean = false
   override def typeString: String = {
-    "(" + tupleDefs.map(tup => tup.typeString).mkString(",") + ")"
+    val sz : Int = tupleDefs.size
+    s"scala.Tuple$sz[" + tupleDefs.map(tup => tup.typeString).mkString(",") + "]"
   }
   override def ElementTypes : Array[BaseTypeDef] = {
 	tupleDefs
@@ -555,6 +571,8 @@ class FunctionDef extends BaseElemDef {
 
   def returnTypeString: String = if (retType != null) retType.typeString else "Unit"
   //def AnotherImplementationForReturnTypeString: String = if (retType != null) retType.tStr else "Unit"
+    
+  def isIterableFcn : Boolean = { features.contains(FcnMacroAttr.ITERABLE) }
 }
 
 /** 
