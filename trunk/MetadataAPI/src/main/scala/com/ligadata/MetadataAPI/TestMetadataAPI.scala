@@ -1323,7 +1323,8 @@ object TestMetadataAPI{
 	val objList = new Array[BaseElemDef](msa.length)
 	var i = 0
 	msa.foreach( m => {objList(i) = m; i = i + 1})
-	MetadataAPIImpl.NotifyEngine(objList,"Add")
+	val operations = for (op <- objList) yield "Add"
+	MetadataAPIImpl.NotifyEngine(objList,operations)
       }
     }
   }
@@ -1340,7 +1341,8 @@ object TestMetadataAPI{
 	val objList = new Array[BaseElemDef](msa.length)
 	var i = 0
 	msa.foreach( m => {objList(i) = m; i = i + 1})
-	MetadataAPIImpl.NotifyEngine(objList,"Add")
+	val operations = for (op <- objList) yield "Add"
+	MetadataAPIImpl.NotifyEngine(objList,operations)
       }
     }
   }
