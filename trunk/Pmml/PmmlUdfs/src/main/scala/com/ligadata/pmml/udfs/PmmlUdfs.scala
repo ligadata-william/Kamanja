@@ -8,7 +8,10 @@ import scala.collection.immutable.StringLike
 import scala.collection.immutable.List
 import scala.collection.immutable.Map
 import scala.collection.immutable.Set
+import scala.collection.immutable.Iterable
+import scala.collection.mutable.{Map => MutableMap}
 import scala.collection.mutable.{Set => MutableSet}
+import scala.collection.mutable.{Iterable => MutableIterable}
 import scala.collection.mutable.ArraySeq
 import scala.collection.mutable.TreeSet
 import scala.collection.GenSeq
@@ -1785,6 +1788,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   /** sum */
 
+  //def Sum[A](exprs: ArrayBuffer[A]): A = {
+  //  exprs.reduceLeft(_ + _)
+  //}
+
   def Sum(exprs: ArrayBuffer[Int]): Int = {
     exprs.reduceLeft(_ + _)
   }
@@ -1814,6 +1821,303 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   def Sum(exprs: Array[Float]): Float = {
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple2[Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple3[Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple4[Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple5[Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple6[Int,Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple7[Int,Int,Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple8[Int,Int,Int,Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple9[Int,Int,Int,Int,Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple10[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]): Int = {
+    val exprs : Array[Int] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  /** Sum functions for Tuple2 */
+  def Sum(tuples: Tuple2[Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def SumToFloat(tuples: Tuple2[Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple2[Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    //exprs.reduceLeft(_ + _)
+    exprs
+  }
+  
+  def SumToDouble(tuples: Tuple2[Any,Any]): Double = {
+    val exprs : Array[Double] = ToArrayOfDouble(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfDouble(tuples: Array[Tuple2[Any,Any]]): Array[Double] = {
+    val exprs : Array[Double] = tuples.map( tuple => SumToDouble(tuple))
+    exprs
+  }
+  
+  def SumToInt(tuples: Tuple2[Any,Any]): Int = {
+    val exprs : Array[Int] = ToArrayOfInt(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfInt(tuples: Array[Tuple2[Any,Any]]): Array[Int] = {
+    val exprs : Array[Int] = tuples.map( tuple => SumToInt(tuple))
+    exprs
+  }
+  
+  /** Sum functions for Tuple3 */
+  def Sum(tuples: Tuple3[Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def SumToFloat(tuples: Tuple3[Any,Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple3[Any,Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    //exprs.reduceLeft(_ + _)
+    exprs
+  }
+  
+  def SumToDouble(tuples: Tuple3[Any,Any,Any]): Double = {
+    val exprs : Array[Double] = ToArrayOfDouble(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfDouble(tuples: Array[Tuple3[Any,Any,Any]]): Array[Double] = {
+    val exprs : Array[Double] = tuples.map( tuple => SumToDouble(tuple))
+    exprs
+  }
+  
+  def SumToInt(tuples: Tuple3[Any,Any,Any]): Int = {
+    val exprs : Array[Int] = ToArrayOfInt(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfInt(tuples: Array[Tuple3[Any,Any,Any]]): Array[Int] = {
+    val exprs : Array[Int] = tuples.map( tuple => SumToInt(tuple))
+    exprs
+  }
+  
+  /** Sum functions for Tuple4 */
+  def Sum(tuples: Tuple4[Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def SumToFloat(tuples: Tuple4[Any,Any,Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple4[Any,Any,Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    //exprs.reduceLeft(_ + _)
+    exprs
+  }
+  
+  def SumToDouble(tuples: Tuple4[Any,Any,Any,Any]): Double = {
+    val exprs : Array[Double] = ToArrayOfDouble(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfDouble(tuples: Array[Tuple4[Any,Any,Any,Any]]): Array[Double] = {
+    val exprs : Array[Double] = tuples.map( tuple => SumToDouble(tuple))
+    exprs
+  }
+  
+  def SumToInt(tuples: Tuple4[Any,Any,Any,Any]): Int = {
+    val exprs : Array[Int] = ToArrayOfInt(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfInt(tuples: Array[Tuple4[Any,Any,Any,Any]]): Array[Int] = {
+    val exprs : Array[Int] = tuples.map( tuple => SumToInt(tuple))
+    exprs
+  }
+  
+  /** Sum functions for Tuple5 */
+  def Sum(tuples: Tuple5[Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+   def SumToFloat(tuples: Tuple5[Any,Any,Any,Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    exprs
+  }
+  
+  def SumToDouble(tuples: Tuple5[Any,Any,Any,Any,Any]): Double = {
+    val exprs : Array[Double] = ToArrayOfDouble(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfDouble(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Array[Double] = {
+    val exprs : Array[Double] = tuples.map( tuple => SumToDouble(tuple))
+    exprs
+  }
+  
+  def SumToInt(tuples: Tuple5[Any,Any,Any,Any,Any]): Int = {
+    val exprs : Array[Int] = ToArrayOfInt(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfInt(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Array[Int] = {
+    val exprs : Array[Int] = tuples.map( tuple => SumToInt(tuple))
+    exprs
+  }
+  
+
+  /** Sum functions for Tuple6 */
+  def Sum(tuples: Tuple6[Float,Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+   def SumToFloat(tuples: Tuple6[Any,Any,Any,Any,Any,Any]): Float = {
+    val exprs : Array[Float] = ToArrayOfFloat(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfFloat(tuples: Array[Tuple6[Any,Any,Any,Any,Any,Any]]): Array[Float] = {
+    val exprs : Array[Float] = tuples.map( tuple => SumToFloat(tuple))
+    exprs
+  }
+  
+  def SumToDouble(tuples: Tuple6[Any,Any,Any,Any,Any,Any]): Double = {
+    val exprs : Array[Double] = ToArrayOfDouble(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfDouble(tuples: Array[Tuple6[Any,Any,Any,Any,Any,Any]]): Array[Double] = {
+    val exprs : Array[Double] = tuples.map( tuple => SumToDouble(tuple))
+    exprs
+  }
+  
+  def SumToInt(tuples: Tuple6[Any,Any,Any,Any,Any,Any]): Int = {
+    val exprs : Array[Int] = ToArrayOfInt(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+  
+  def SumToArrayOfInt(tuples: Array[Tuple6[Any,Any,Any,Any,Any,Any]]): Array[Int] = {
+    val exprs : Array[Int] = tuples.map( tuple => SumToInt(tuple))
+    exprs
+  }
+  
+
+  
+  /** FIXME: Do SumTo<Scalar> and SumToArrayOf<Scalar> for the remaining Tuple<N> */
+  def Sum(tuples: Tuple7[Float,Float,Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple8[Float,Float,Float,Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple9[Float,Float,Float,Float,Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple10[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]): Float = {
+    val exprs : Array[Float] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple2[Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple3[Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple4[Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple5[Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple6[Double,Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple7[Double,Double,Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple8[Double,Double,Double,Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple9[Double,Double,Double,Double,Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
+    exprs.reduceLeft(_ + _)
+  }
+
+  def Sum(tuples: Tuple10[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]): Double = {
+    val exprs : Array[Double] = ToArray(tuples)
     exprs.reduceLeft(_ + _)
   }
 
@@ -1885,92 +2189,54 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   /** Count (count)*/
 
-  def Count(exprs: ArrayBuffer[Int]): Int = {
+  def Count[A](exprs: ArrayBuffer[A]): Int = {
     exprs.length
   }
 
-  def Count(exprs: ArrayBuffer[Long]): Long = {
+  def Count[A](exprs: Array[A]): Int = {
     exprs.length
   }
 
-  def Count(exprs: ArrayBuffer[Double]): Double = {
+  def Count[A](exprs: List[A]): Int = {
     exprs.length
   }
 
-  def Count(exprs: ArrayBuffer[Float]): Float = {
-    exprs.length
+  def Count[A](exprs: Set[A]): Int = {
+    exprs.size
   }
 
-  def Count(exprs: Array[Int]): Int = {
-    exprs.length
+  def Count[A](exprs: Queue[A]): Int = {
+    exprs.size
   }
 
-  def Count(exprs: Array[Long]): Long = {
-    exprs.length
+  def Count[A,B](exprs: Map[A,B]): Int = {
+    exprs.size
   }
 
-  def Count(exprs: Array[Double]): Double = {
-    exprs.length
-  }
-
-  def Count(exprs: Array[Float]): Float = {
-    exprs.length
-  }
-
-  def Count(exprs: List[Int]): Int = {
-    exprs.length
-  }
-
-  def Count(exprs: List[Long]): Long = {
-    exprs.length
-  }
-
-  def Count(exprs: List[Double]): Double = {
-    exprs.length
-  }
-
-  def Count(exprs: List[Float]): Float = {
-    exprs.length
+  def Count[A,B](exprs: HashMap[A,B]): Int = {
+    exprs.size
   }
 
   /**
 		Aggregation functions supported by Pmml
-		FIXME: This needs to be made into template 
+  */
 
-	 	The implementation below has one error.  An Ordering is needed that can compare 
-	 	
-		
-		An Ordering[T] is implemented by specifying compare(a:T, b:T), which decides how to order two instances a and b. Instances of Ordering[T] can be used by things like scala.util.Sorting to sort collections like Array[T].
-		
-		For example:
-		
-		import scala.util.Sorting
-		
-		case class Person(name:String, age:Int)
-		val people = Array(Person("bob", 30), Person("ann", 32), Person("carl", 19))
-		
-		// sort by age
-		object AgeOrdering extends Ordering[Person] {
-		  def compare(a:Person, b:Person) = a.age compare b.age
-		}
-		Sorting.quickSort(people)(AgeOrdering)
-   */
-
-	/** "Multiset" builds sets of item values for each group by key
-	    def MultiSet[A : ClassTag,B : ClassTag](exprs : ArrayBuffer[A] , groupByKey : ArrayBuffer[B] ) : HashMap[B,ArrayBuffer[A]] = {
-		    var map = HashMap[B, ArrayBuffer[A]]()
-		    var grpleft : List[A] = exprs.toList
-		    val distinct = groupByKey.toSet.toArray.sorted
-		    distinct.foreach((key : Int) => {
-		    val grp : Map [Boolean, List[A]] = grpleft.groupBy(_ == key)
-		    val setItems : List[A] = grp(true)
-		    map(key) = new ArrayBuffer(setItems.toArray:_*)
-		    grpleft = grp(false)
-		    })
-		    map
-	    }
-   */
-
+  /** "Multiset" builds sets of item values for each group by key */
+  def MultiSet[A : ClassTag,B : ClassTag](exprs : ArrayBuffer[A] , groupByKey : ArrayBuffer[B] )(implicit cmp: Ordering[B]) : HashMap[B,ArrayBuffer[A]] = {
+    var map = HashMap[B, ArrayBuffer[A]]()
+    var grpleft : List[A] = exprs.toList
+    val distinct : Array[B] = groupByKey.toSet.toArray.sorted
+    distinct.foreach((key : B) => {
+    	val grp : Map [Boolean, List[A]] = grpleft.groupBy(_ == key)
+    	val setItems : List[A] = grp(true)
+    	val values : ArrayBuffer[A] = new ArrayBuffer[A]
+    	values ++ setItems
+    	map(key) = values
+    	grpleft = grp(false)
+    })
+    map
+  }
+ 
   /** "multiset" (similar to Ligadata 'each') */
   def MultiSet(exprs: ArrayBuffer[Int], groupByKey: ArrayBuffer[Int]): HashMap[Int, ArrayBuffer[Int]] = {
     var map = HashMap[Int, ArrayBuffer[Int]]()
@@ -1987,13 +2253,26 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     map
   }
 
-  def Sum(exprs: ArrayBuffer[Int], groupByKey: ArrayBuffer[Int]): HashMap[Int, Int] = {
-    var map = HashMap[Int, Int]()
+  def Sum[B : ClassTag](exprs: ArrayBuffer[Int], groupByKey: ArrayBuffer[B])(implicit cmp: Ordering[B]): HashMap[B, Int] = {
+    var map = HashMap[B, Int]()
     var grpleft: List[Int] = exprs.toList
     val distinct = groupByKey.toSet.toArray.sorted
-    distinct.foreach((key: Int) => {
+    distinct.foreach((key: B) => {
       val grp: Map[Boolean, List[Int]] = grpleft.groupBy(_ == key)
       val setItems: List[Int] = grp(true)
+      map(key) = Sum(setItems)
+      grpleft = grp(false)
+    })
+    map
+  }
+
+  def Sum[A : ClassTag,B : ClassTag](exprs: ArrayBuffer[Double], groupByKey: ArrayBuffer[B])(implicit cmp: Ordering[B]): HashMap[B, Double] = {
+    var map = HashMap[B, Double]()
+    var grpleft: List[Double] = exprs.toList
+    val distinct = groupByKey.toSet.toArray.sorted
+    distinct.foreach((key: B) => {
+      val grp: Map[Boolean, List[Double]] = grpleft.groupBy(_ == key)
+      val setItems: List[Double] = grp(true)
       map(key) = Sum(setItems)
       grpleft = grp(false)
     })
@@ -2397,7 +2676,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     
     compressedDate
   }
+  
+  /** Extract the Month from the IS08601 compressed date */
+  def MonthFromISO8601Int(dt : Int) : Int = {
+    val mm : Int = (dt % 1000) / 100
+    mm
+  }
 
+  /** Extract the Year from the IS08601 compressed date */
+  def YearFromISO8601Int(dt : Int) : Int = {
+    val yyyy : Int = dt / 10000
+    yyyy
+  }
+
+  /** Extract the Day of the Month from the IS08601 compressed date */
+  def DayOfMonthFromISO8601Int(dt : Int) : Int = {
+    val day : Int = dt % 100
+    day
+  }
 
   /** Calculate age from yyyymmdd ISO8601 type compressed in integer */
   def AgeCalc(yyyymmdd: Int): Int = {
@@ -2587,11 +2883,818 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     stack.toArray
   }
   
+  
+  /** ToArrayOf<Scalar> for Tuple1 */
+  def ToArray(tuple : Tuple1[Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  
+  /** ToArrayOf<Scalar> for Tuple2 */
+  def ToArray(tuple : Tuple2[Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArrayOfFloat(tuple : Tuple2[Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
+  def ToArrayOfDouble(tuple : Tuple2[Any,Any]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+   
+  def ToArrayOfInt(tuple : Tuple2[Any,Any]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+   
+  
+  /** ToArrayOf<Scalar> for Tuple3 */
+  def ToArray(tuple : Tuple3[Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArrayOfFloat(tuple : Tuple3[Any,Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
+  def ToArrayOfDouble(tuple : Tuple3[Any,Any,Any]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+   
+  def ToArrayOfInt(tuple : Tuple3[Any,Any,Any]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+   
+  
+  /** ToArrayOf<Scalar> for Tuple4 */
+  def ToArray(tuple : Tuple4[Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArrayOfFloat(tuple : Tuple4[Any,Any,Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
+  def ToArrayOfDouble(tuple : Tuple4[Any,Any,Any,Any]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+   
+  def ToArrayOfInt(tuple : Tuple4[Any,Any,Any,Any]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+
+  
+  /** ToArrayOf<Scalar> for Tuple5 */
+  def ToArray(tuple : Tuple5[Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+ 
+  def ToArrayOfFloat(tuple : Tuple5[Any,Any,Any,Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
+  def ToArrayOfDouble(tuple : Tuple5[Any,Any,Any,Any,Any]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+   
+  def ToArrayOfInt(tuple : Tuple5[Any,Any,Any,Any,Any]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+   
+
+  /** ToArrayOf<Scalar> for Tuple6 */
+  def ToArray(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArrayOfFloat(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+   
+  def ToArrayOfDouble(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+   
+  def ToArrayOfInt(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+   
+
+  /** FIXME: Do ToArrayOf<Scalar> for the remaining tuples */
+  def ToArray(tuple : Tuple7[Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple8[Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple9[Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple10[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple11[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple12[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple13[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple14[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple15[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple16[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple17[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple18[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple19[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple20[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple21[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  def ToArray(tuple : Tuple22[Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any,Any]) : Array[Any] = {
+    tuple.productIterator.toArray
+  }
+  
+  
+  def ToArray(tuple : Tuple1[Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple2[Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple3[Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple4[Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple5[Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple6[Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple7[Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+ }
+  
+  def ToArray(tuple : Tuple8[Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple9[Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple10[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple11[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple12[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple13[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple14[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple15[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple16[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple17[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple18[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple19[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple20[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple21[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+  def ToArray(tuple : Tuple22[Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int,Int]) : Array[Int] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val iArray : Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    iArray
+  }
+  
+
+  
+  def ToArray(tuple : Tuple1[Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple2[Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple3[Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple4[Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple5[Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple6[Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple7[Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+ }
+  
+  def ToArray(tuple : Tuple8[Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple9[Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple10[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple11[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple12[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple13[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple14[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple15[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple16[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple17[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple18[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple19[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple20[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple21[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  def ToArray(tuple : Tuple22[Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float,Float]) : Array[Float] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val fArray : Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    fArray
+  }
+  
+  
+  def ToArray(tuple : Tuple1[Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple2[Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple3[Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple4[Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple5[Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple6[Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple7[Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+ }
+  
+  def ToArray(tuple : Tuple8[Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple9[Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple10[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple11[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple12[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple13[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple14[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple15[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple16[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple17[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple18[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple19[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple20[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple21[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+  def ToArray(tuple : Tuple22[Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double,Double]) : Array[Double] = {
+    val arr : Array[Any] = tuple.productIterator.toArray
+    val dArray : Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    dArray
+  }
+  
+
+  
+  def ToMap[T : ClassTag, U : ClassTag](set: MutableSet[(T,U)]): Map[T,U] = {
+    if (set == null || set.size == 0)
+      return Map[T,U]()
+    set.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](set: Set[(T,U)]): Map[T,U] = {
+    if (set == null || set.size == 0)
+      return Map[T,U]()
+    set.toMap
+  }
+  
+  def ToMap(set: MutableSet[(Any,Any)]): Map[Any,Any] = {
+    if (set == null || set.size == 0)
+      return Map[Any,Any]()
+    set.toMap
+  }
+  
+  def ToMap(set: Set[(Any,Any)]): Map[Any,Any] = {
+    if (set == null || set.size == 0)
+      return Map[Any,Any]()
+    set.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](arr: ArrayBuffer[(T,U)]): Map[T,U] = {
+    if (arr == null || arr.size == 0)
+      return Map[T,U]()
+    arr.toMap
+  }
+  
+  def ToMap(arr: ArrayBuffer[(Any,Any)]): Map[Any,Any] = {
+    if (arr == null || arr.size == 0)
+      return Map[Any,Any]()
+    arr.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](arr: Array[(T,U)]): Map[T,U] = {
+    if (arr == null || arr.size == 0)
+      return Map[T,U]()
+    arr.toMap
+  }
+  
+  def ToMap(arr: Array[(Any,Any)]): Map[Any,Any] = {
+    if (arr == null || arr.size == 0)
+      return Map[Any,Any]()
+    arr.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](set: SortedSet[(T,U)]): Map[T,U] = {
+    if (set == null || set.size == 0)
+      return Map[T,U]()
+    set.toMap
+  }
+  
+  def ToMap(set: SortedSet[(Any,Any)]): Map[Any,Any] = {
+    if (set == null || set.size == 0)
+      return Map[Any,Any]()
+    set.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](ts: TreeSet[(T,U)]): Map[T,U] = {
+    if (ts == null || ts.size == 0)
+      return Map[T,U]()
+    ts.toMap
+  }
+  
+  def ToMap(ts: TreeSet[(Any,Any)]): Map[Any,Any] = {
+    if (ts == null || ts.size == 0)
+      return Map[Any,Any]()
+    ts.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](l: List[(T,U)]) : Map[T,U] = {
+    if (l == null || l.size == 0)
+      return Map[T,U]()
+    l.toMap
+  }
+  
+  def ToMap(l: List[(Any,Any)]): Map[Any,Any] = {
+    if (l == null || l.size == 0)
+      return Map[Any,Any]()
+    l.toMap
+  }
+  
+  def ToMap[T : ClassTag, U : ClassTag](q: Queue[(T,U)]): Map[T,U] = {
+    if (q == null || q.size == 0)
+      return Map[T,U]()
+    q.toMap
+  }
+  
+   def ToMap(q: Queue[(Any,Any)]): Map[Any,Any] = {
+    if (q == null || q.size == 0)
+      return Map[Any,Any]()
+    q.toMap
+  }
+  
+ def ToMap[T : ClassTag, U : ClassTag](stack: Stack[(T,U)]): Map[T,U] = {
+    if (stack == null || stack.size == 0)
+      return Map[T,U]()
+    stack.toMap
+  }
+  
+  def ToMap(stack: Stack[(Any,Any)]): Map[Any,Any] = {
+    if (stack == null || stack.size == 0)
+      return Map[Any,Any]()
+    stack.toMap
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : Array[T], other : Array[U]) :  Array[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return Array[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : ArrayBuffer[T], other : ArrayBuffer[U]) :  ArrayBuffer[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return ArrayBuffer[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : List[T], other : List[U]) :  List[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return List[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : Queue[T], other : Queue[U]) :  Queue[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return Queue[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  /**
+   * 	NOTE: Zipping mutable.Set and immutable.Set is typically not a good idea unless the pairing
+   *  	done absolutely does not matter.  Use SortedSet or TreeSet for predictable pairings.
+   */
+  def Zip[T : ClassTag, U : ClassTag](receiver : Set[T], other : Set[U]) :  Set[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return Set[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : MutableSet[T], other : MutableSet[U]) :  MutableSet[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return MutableSet[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : SortedSet[T], other : SortedSet[U])(implicit cmp: Ordering[(T,U)]) :  SortedSet[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return SortedSet[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+  def Zip[T : ClassTag, U : ClassTag](receiver : TreeSet[T], other : TreeSet[U])(implicit cmp: Ordering[(T,U)]) :  TreeSet[(T,U)] = {
+	if (receiver == null || receiver.size == 0) {
+		return TreeSet[(T,U)]()
+	}
+	receiver.zip(other)
+  }
+  
+
+  /** MapKeys = collect.keys */
+  
+  def MapKeys[T : ClassTag, U : ClassTag](receiver : MutableMap[T,U]) :  Array[T] = {
+	receiver.keys.toArray
+  }
+  
+  def MapKeys(receiver : MutableMap[Any,Any]) :  Array[Any] = {
+	receiver.keys.toArray
+  }
+  
+  def MapKeys[T : ClassTag, U : ClassTag](receiver : Map[T,U]) :  Array[T] = {
+	receiver.keys.toArray
+  }
+  
+  def MapKeys(receiver : Map[Any,Any]) :  Array[Any] = {
+	receiver.keys.toArray
+  }
+  
+  
+   /** MapValues = collect.values */
+  
+  def MapValues[T : ClassTag, U : ClassTag](receiver : MutableMap[T,U]) :  Array[U] = {
+	receiver.values.toArray
+  }
+  
+  def MapValues(receiver : MutableMap[Any,Any]) :  Array[Any] = {
+	receiver.values.toArray
+  }
+  
+  def MapValues[T : ClassTag, U : ClassTag](receiver : Map[T,U]) :  Array[U] = {
+	receiver.values.toArray
+  }
+  
+  def MapValues(receiver : Map[Any,Any]) :  Array[Any] = {
+	receiver.values.toArray
+  }
+  
+  
+  /** CollectionLength */
+  
   def CollectionLength[T : ClassTag](coll : Array[T]) : Int = {
     coll.length
   }
   
   def CollectionLength[T : ClassTag](coll : ArrayBuffer[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[T : ClassTag](coll : MutableSet[T]) : Int = {
     coll.size
   }
   
@@ -2620,6 +3723,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
   
   def CollectionLength[T : ClassTag](coll : Stack[T]) : Int = {
+    coll.size
+  }
+  
+  def CollectionLength[K : ClassTag, V : ClassTag](coll : MutableMap[K,V]) : Int = {
     coll.size
   }
   

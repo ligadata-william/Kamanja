@@ -80,7 +80,7 @@ class IterableFcnPrinter(val fcnName : String
 	/**
 	 * 	Print the iterable argument (the receiver) and its function with the mbr variable expression 
 	 *  
-	 *  e.g., "coll.map(itm =>"
+	 *  e.g., "coll.map(_itm =>"
 	 */
 	private def iterablePrint : String = {
 		var scalaFcnName : String = PmmlTypes.scalaNameForIterableFcnName(fcnName)
@@ -90,7 +90,7 @@ class IterableFcnPrinter(val fcnName : String
 		val iterArgBuffer : StringBuilder = new StringBuilder
 		val iterChild : PmmlExecNode = node.Children.head
 		generator.generateCode1(Some(iterChild), iterArgBuffer, generator, CodeFragment.FUNCCALL)
-		iterArgBuffer.append(s".$scalaFcnName( mbr => ")
+		iterArgBuffer.append(s".$scalaFcnName( ${ctx.applyElementName} => ")
 		
 		iterArgBuffer.toString
 	}
@@ -111,10 +111,18 @@ class IterableFcnPrinter(val fcnName : String
 		val mbrFcnBuffer : StringBuilder = new StringBuilder
 		val (firstElemArgIdx, lastElemArgIdx) : (Int,Int) = fcnTypeInfo.elemFcnArgRange
 		val hasMbrFcn : Boolean = (fcnTypeInfo.mbrFcn != null)
+		val isIterableFcn : Boolean = if (hasMbrFcn) fcnTypeInfo.mbrFcn.isIterableFcn else false
 		if (hasMbrFcn) {
-			mbrFcnBuffer.append(s"${fcnTypeInfo.mbrFcn.physicalName}(")
-			if ((lastElemArgIdx - firstElemArgIdx) >= 0) { 
-				for (i <- firstElemArgIdx to lastElemArgIdx) {
+			if (isIterableFcn) {
+				val iterableName : String = fcnTypeInfo.mbrFcn.name
+				val scalaName : String = PmmlTypes.scalaNameForIterableFcnName(iterableName)
+				mbrFcnBuffer.append(s"${ctx.applyElementName}.$scalaName( ${ctx.applyElementName} => { (")
+			} else {
+				mbrFcnBuffer.append(s"${fcnTypeInfo.mbrFcn.physicalName}(")
+			}
+			val firstElemArgIdxActually : Int = if (isIterableFcn) (firstElemArgIdx + 1) else firstElemArgIdx
+			if ((lastElemArgIdx - firstElemArgIdxActually) >= 0) { 
+				for (i <- firstElemArgIdxActually to lastElemArgIdx) {
 					val child : PmmlExecNode = node.Children.apply(i)
 					generator.generateCode1(Some(child), mbrFcnBuffer, generator, CodeFragment.FUNCCALL)
 					if (i < lastElemArgIdx) {
@@ -124,7 +132,12 @@ class IterableFcnPrinter(val fcnName : String
 			} else {
 				logger.warn(s"There are no arguments for this function ... ${fcnTypeInfo.mbrFcn.Name}")
 			}
-			mbrFcnBuffer.append(")")
+			/** Enclosing tuple on an iterable... should iterable mbrfcns have their own mbr fcns, this will need to change */
+			if (isIterableFcn) {
+				mbrFcnBuffer.append(")})") 
+			} else {
+				mbrFcnBuffer.append(")")
+			}
 		} else {
 			val mbrFcnNm : String = if (fcnTypeInfo.mbrFcn != null) fcnTypeInfo.mbrFcn.Name else ""
 			if ((lastElemArgIdx - firstElemArgIdx) >= 0) {

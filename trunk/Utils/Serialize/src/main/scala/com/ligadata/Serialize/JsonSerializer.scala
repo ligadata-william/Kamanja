@@ -1026,16 +1026,17 @@ object JsonSerializer {
     json 
   }
 
-  def zkSerializeObjectListToJson[T <: BaseElemDef](objList: Array[T],operation: String) : String = {
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objList: Array[T],operations: Array[String]) : String = {
     var json = "[ \n" 
-    objList.toList.map(obj =>  {var objJson = zkSerializeObjectToJson(obj,operation); json += objJson; json += ",\n"})
+    var i = 0
+    objList.toList.map(obj =>  {var objJson = zkSerializeObjectToJson(obj,operations(i)); i = i + 1; json += objJson; json += ",\n"})
     json = json.stripSuffix(",\n")
     json += " ]\n"
     json 
   }
 
-  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operation: String) : String = {
-    var json = "{\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operation) + "\n}" 
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {
+    var json = "{\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
     json 
   }
 

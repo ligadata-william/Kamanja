@@ -465,7 +465,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -628,7 +628,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -665,11 +665,92 @@ object TestMetadataAPI{
   }
 
 
+  def DeactivateModel{
+    try{
+      logger.setLevel(Level.TRACE);
+
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+
+      if( modKeys.length == 0 ){
+	println("Sorry, No models available in the Metadata")
+	return
+      }
+
+      println("\nPick the model to be deleted from the following list: ")
+      var seq = 0
+      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if ( choice < 1 || choice > modKeys.length ){
+	println("Invalid choice " + choice + ",start with main menu...")
+	return
+      }
+
+      val modKey = modKeys(choice-1)
+      val modKeyTokens = modKey.split("\\.")
+      val modNameSpace = modKeyTokens(0)
+      val modName = modKeyTokens(1)
+      val modVersion = modKeyTokens(2)
+      val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toInt)
+
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
+      
+    }catch {
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
+  def ActivateModel{
+    try{
+      logger.setLevel(Level.TRACE);
+
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(false)
+
+      if( modKeys.length == 0 ){
+	println("Sorry, No models available in the Metadata")
+	return
+      }
+
+      println("\nPick the model to be deleted from the following list: ")
+      var seq = 0
+      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if ( choice < 1 || choice > modKeys.length ){
+	println("Invalid choice " + choice + ",start with main menu...")
+	return
+      }
+
+      val modKey = modKeys(choice-1)
+      val modKeyTokens = modKey.split("\\.")
+      val modNameSpace = modKeyTokens(0)
+      val modName = modKeyTokens(1)
+      val modVersion = modKeyTokens(2)
+      val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toInt)
+
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
+      
+    }catch {
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
   def RemoveModelFromCache{
     try{
       logger.setLevel(Level.TRACE);
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -726,7 +807,7 @@ object TestMetadataAPI{
   def GetAllModelsFromCache{
     try{
       logger.setLevel(Level.TRACE);
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -940,40 +1021,10 @@ object TestMetadataAPI{
       }
 
       pmmlFilePath = pmmlFiles(choice-1).toString
-
-	  /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
-	  val injectLoggingStmts : Boolean = false 
-	  
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
-      val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts)
-      val (classStr,model) = compiler.compile(pmmlStr)
-      val pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"
-      val (jarFile,depJars) = 
-      compiler.createJar(classStr,
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
-			 pmmlScalaFile,
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-			 false)
-
-      if( jarFile == "Not Set" ){
-	logger.error("Compilation of scala file has failed, Model is not added")
-	return
-      }
-
-      model.jarName = jarFile
-      if( model.ver == 0 ){
-	model.ver     = 1
-      }
-      if( model.modelType == null){
-	model.modelType = "RuleSet"
-      }
-
       // Save the model
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddModel(model))
+      println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
@@ -1324,7 +1375,8 @@ object TestMetadataAPI{
 	val objList = new Array[BaseElemDef](msa.length)
 	var i = 0
 	msa.foreach( m => {objList(i) = m; i = i + 1})
-	MetadataAPIImpl.NotifyEngine(objList,"Add")
+	val operations = for (op <- objList) yield "Add"
+	MetadataAPIImpl.NotifyEngine(objList,operations)
       }
     }
   }
@@ -1341,7 +1393,8 @@ object TestMetadataAPI{
 	val objList = new Array[BaseElemDef](msa.length)
 	var i = 0
 	msa.foreach( m => {objList(i) = m; i = i + 1})
-	MetadataAPIImpl.NotifyEngine(objList,"Add")
+	val operations = for (op <- objList) yield "Add"
+	MetadataAPIImpl.NotifyEngine(objList,operations)
       }
     }
   }
@@ -1353,6 +1406,8 @@ object TestMetadataAPI{
       val getModel = ()                   => { GetModelFromCache }
       val getAllModels = ()               => { GetAllModelsFromCache }
       val removeModel = ()                => { RemoveModel }
+      val deactivateModel = ()            => { DeactivateModel }
+      val activateModel = ()              => { ActivateModel }
       val addMessage = ()                 => { AddMessage }
       val getMessage = ()                 => { GetMessageFromCache }
       val getAllMessages = ()             => { GetAllMessagesFromCache }
@@ -1382,6 +1437,8 @@ object TestMetadataAPI{
 			      ("Get Model",getModel),
 			      ("Get All Models",getAllModels),
 			      ("Remove Model",removeModel),
+			      ("Deactivate Model",deactivateModel),
+			      ("Activate Model",activateModel),
 			      ("Add Message",addMessage),
 			      ("Get Message",getMessage),
 			      ("Get All Messages",getAllMessages),

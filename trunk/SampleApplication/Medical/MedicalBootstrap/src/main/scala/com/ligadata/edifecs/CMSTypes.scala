@@ -360,9 +360,9 @@ class System_InpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Prvdr_Num = StringImpl.Input(list(idx))
       idx = idx + 1
-      Clm_Pmt_Amt = FloatImpl.Input(list(idx));
+      Clm_Pmt_Amt = DoubleImpl.Input(list(idx));
       idx = idx + 1
-      Nch_Prmry_Pyr_Clm_Pd_Amt = FloatImpl.Input(list(idx));
+      Nch_Prmry_Pyr_Clm_Pd_Amt = DoubleImpl.Input(list(idx));
       idx = idx + 1
       At_Physn_Npi = LongImpl.Input(list(idx));
       idx = idx + 1
@@ -374,13 +374,13 @@ class System_InpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Admtng_Icd9_Dgns_Cd = StringImpl.Input(list(idx).trim)
       idx = idx + 1
-      Clm_Pass_Thru_Per_Diem_Amt = FloatImpl.Input(list(idx));
+      Clm_Pass_Thru_Per_Diem_Amt = DoubleImpl.Input(list(idx));
       idx = idx + 1
-      Nch_Bene_Ip_Ddctbl_Amt = FloatImpl.Input(list(idx));
+      Nch_Bene_Ip_Ddctbl_Amt = DoubleImpl.Input(list(idx));
       idx = idx + 1
-      Nch_Bene_Pta_Coinsrnc_Lblty_Am = FloatImpl.Input(list(idx));
+      Nch_Bene_Pta_Coinsrnc_Lblty_Am = DoubleImpl.Input(list(idx));
       idx = idx + 1
-      Nch_Bene_Blood_Ddctbl_Lblty_Am = FloatImpl.Input(list(idx));
+      Nch_Bene_Blood_Ddctbl_Lblty_Am = DoubleImpl.Input(list(idx));
       idx = idx + 1
       Clm_Utlztn_Day_Cnt = IntImpl.Input(list(idx))
       idx = idx + 1
@@ -420,17 +420,17 @@ class System_InpatientClaim_100 extends BaseMsg {
   var Clm_From_Dt: Int = _
   var Clm_Thru_Dt: Int = _
   var Prvdr_Num: String = _
-  var Clm_Pmt_Amt: Float = _
-  var Nch_Prmry_Pyr_Clm_Pd_Amt: Float = _
+  var Clm_Pmt_Amt: Double = _
+  var Nch_Prmry_Pyr_Clm_Pd_Amt: Double = _
   var At_Physn_Npi: Long = _
   var Op_Physn_Npi: Long = _
   var Ot_Physn_Npi: Long = _
   var Clm_Admsn_Dt: Int = _
   var Admtng_Icd9_Dgns_Cd: String = _
-  var Clm_Pass_Thru_Per_Diem_Amt: Float = _
-  var Nch_Bene_Ip_Ddctbl_Amt: Float = _
-  var Nch_Bene_Pta_Coinsrnc_Lblty_Am: Float = _
-  var Nch_Bene_Blood_Ddctbl_Lblty_Am: Float = _
+  var Clm_Pass_Thru_Per_Diem_Amt: Double = _
+  var Nch_Bene_Ip_Ddctbl_Amt: Double = _
+  var Nch_Bene_Pta_Coinsrnc_Lblty_Am: Double = _
+  var Nch_Bene_Blood_Ddctbl_Lblty_Am: Double = _
   var Clm_Utlztn_Day_Cnt: Int = _
   var Nch_Bene_Dschrg_Dt: Int = _
   var Clm_Drg_Cd: Int = _
@@ -489,7 +489,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Clm_Pmt_Amt = DoubleImpl.Input(list(idx))
       idx = idx + 1
-      Nch_Prmry_Pyr_Clm_Pd_Amt = FloatImpl.Input(list(idx))
+      Nch_Prmry_Pyr_Clm_Pd_Amt = DoubleImpl.Input(list(idx))
       idx = idx + 1
       At_Physn_Npi = LongImpl.Input(list(idx));
       idx = idx + 1
@@ -497,7 +497,7 @@ class System_OutpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Ot_Physn_Npi = LongImpl.Input(list(idx));
       idx = idx + 1
-      Nch_Bene_Blood_Ddctbl_Lblty_Am = FloatImpl.Input(list(idx))
+      Nch_Bene_Blood_Ddctbl_Lblty_Am = DoubleImpl.Input(list(idx))
       idx = idx + 1
 
       /**
@@ -507,9 +507,9 @@ class System_OutpatientClaim_100 extends BaseMsg {
       idx = idx + 1
       Icd9_Prcdr_Cds = list(idx).split(arrvaldelim, -1).map(v => IntImpl.Input(v))
       idx = idx + 1
-      Nch_Bene_Ptb_Ddctbl_Amt = FloatImpl.Input(list(idx))
+      Nch_Bene_Ptb_Ddctbl_Amt = DoubleImpl.Input(list(idx))
       idx = idx + 1
-      Nch_Bene_Ptb_Coinsrnc_Amt = FloatImpl.Input(list(idx))
+      Nch_Bene_Ptb_Coinsrnc_Amt = DoubleImpl.Input(list(idx))
       idx = idx + 1
       Admtng_Icd9_Dgns_Cd = StringImpl.Input(list(idx).trim)
       idx = idx + 1
@@ -539,15 +539,15 @@ class System_OutpatientClaim_100 extends BaseMsg {
   var Clm_Thru_Dt: Int = _
   var Prvdr_Num: String= _
   var Clm_Pmt_Amt: Double = _
-  var Nch_Prmry_Pyr_Clm_Pd_Amt: Float = _
+  var Nch_Prmry_Pyr_Clm_Pd_Amt: Double = _
   var At_Physn_Npi: Long = _
   var Op_Physn_Npi: Long = _
   var Ot_Physn_Npi: Long = _
-  var Nch_Bene_Blood_Ddctbl_Lblty_Am: Float = _
+  var Nch_Bene_Blood_Ddctbl_Lblty_Am: Double = _
   var Icd9_Dgns_Cds: Array[String] = _
   var Icd9_Prcdr_Cds: Array[Int] = _
-  var Nch_Bene_Ptb_Ddctbl_Amt: Float = _
-  var Nch_Bene_Ptb_Coinsrnc_Amt: Float = _
+  var Nch_Bene_Ptb_Ddctbl_Amt: Double = _
+  var Nch_Bene_Ptb_Coinsrnc_Amt: Double = _
   var Admtng_Icd9_Dgns_Cd: String = _
   var Hcpcs_Cds: Array[Int] = _
 }
