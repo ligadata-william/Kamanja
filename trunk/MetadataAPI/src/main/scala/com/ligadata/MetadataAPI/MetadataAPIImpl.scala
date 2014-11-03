@@ -124,12 +124,15 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def InitZooKeeper: Unit = {
+    logger.trace("Connect to zookeeper..")
     if( zkc != null ){
       // Zookeeper is already connected
       return
     }
+
     val zkcConnectString = GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
     val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
+    logger.trace("Connect To ZooKeeper using " + zkcConnectString)
     try{
       zkc = CreateClient.createSimple(zkcConnectString)
       if(zkc.checkExists().forPath(znodePath) == null ){
@@ -235,6 +238,7 @@ object MetadataAPIImpl extends MetadataAPI{
       val data = ZooKeeperMessage(objList,operations)
       InitZooKeeper
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
+      logger.trace("Set the data on the zookeeper node " + znodePath)
       zkc.setData().forPath(znodePath,data)
     }catch{
       case e:Exception => {
@@ -1854,9 +1858,11 @@ object MetadataAPIImpl extends MetadataAPI{
       compProxy.setLoggerLevel(Level.TRACE)
       var(classStr,modDef) = compProxy.compilePmml(pmmlText)
       val apiResult = AddModel(modDef)
+      logger.trace("Model is added..")
       val objectsAdded = new Array[BaseElemDef](1)
       objectsAdded(0) = modDef
       val operations = for (op <- objectsAdded) yield "Add"
+      logger.trace("Notify engine via zookeeper")
       NotifyEngine(objectsAdded,operations)
       apiResult
     }
@@ -1951,10 +1957,10 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def GetAllModelsFromCache : Array[String] = {
+  def GetAllModelsFromCache(active: Boolean) : Array[String] = {
     var modelList: Array[String] = new Array[String](0)
     try{
-      val modDefs = MdMgr.GetMdMgr.Models(true,true)
+      val modDefs = MdMgr.GetMdMgr.Models(active,true)
       modDefs match{
 	case None => None
 	  logger.trace("No Models found ")
