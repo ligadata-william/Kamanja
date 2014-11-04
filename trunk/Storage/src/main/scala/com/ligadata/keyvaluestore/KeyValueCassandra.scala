@@ -80,7 +80,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	{
 		var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
 		var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
-		session.execute(updateStmt.bind(key, value).setConsistencyLevel(consistencylevelWrite))
+		session.execute(updateStmt.bind(value,key).setConsistencyLevel(consistencylevelWrite))
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =
@@ -93,9 +93,12 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		//
 		val value = new Value
 		val buffer : ByteBuffer = rs.one().getBytes(0)
-		while(buffer.hasRemaining())
-			value+= buffer.get()
-
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		    value+= buffer.get()
+		} else {
+		  throw new Exception("Key Not found")
+		}
 		handler(value)
 	}
 	
@@ -108,10 +111,15 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
-		val buffer : ByteBuffer = rs.one().getBytes(0)
-		while(buffer.hasRemaining())
-			value+= buffer.get()
 
+
+		val buffer : ByteBuffer = rs.one().getBytes(0)
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		      value+= buffer.get()
+		} else {
+		  throw new Exception("Key Not found")
+		}
 		target.Construct(key, value)
 	}
 

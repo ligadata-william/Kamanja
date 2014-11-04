@@ -90,8 +90,11 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
-		for(b <- buffer)
-			value+=b
+		if (buffer != null) {
+		   value ++= buffer
+		} else {
+		  throw new Exception("Key Not found")
+		}
 
 		target.Construct(key, value)
 	}
