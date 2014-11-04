@@ -1,0 +1,29 @@
+{
+   	"Container": { 
+   		"NameSpace":"system",
+   		"Name":"idcodedim",
+   		"Version":"00",
+   		"Description":"Id Code Dim",
+   		"Fixed":"true",
+   		"Elements" : [
+   		   {
+   		   "Field" : {
+                "Name":"Id",
+                "Type":"System.Int"
+   		     }
+   		   },
+   		   {
+   		   "Field" : {
+                "Name":"Code",
+                "Type":"System.String"
+   		     }
+   		   },
+   		   {
+   		   "Field" : {
+                "Name":"Description",
+                "Type":"System.String"
+   		     }
+   		   }
+   		]
+   	}
+}
