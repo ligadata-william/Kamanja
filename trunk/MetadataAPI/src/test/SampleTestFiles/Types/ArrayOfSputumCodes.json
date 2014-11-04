@@ -1,0 +1,14 @@
+{
+	"MetadataType":"ArrayTypeDef",
+  	"NameSpace":"system",
+  	"Name":"ArrayOfSputumCodes",
+	"TypeTypeName":"tContainer",
+	"TypeNameSpace":"system",
+	"TypeName":"SputumCodes",
+	"PhysicalName":null,
+	"Version":1,
+	"JarName":null,
+	"DependencyJars":[ ],
+	"Implementation":null,
+	"NumberOfDimensions":1
+}

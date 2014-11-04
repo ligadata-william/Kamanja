@@ -1,0 +1,14 @@
+{
+	"MetadataType":"ArrayTypeDef",
+  	"NameSpace":"system",
+  	"Name":"ArrayOfSmokeCodes",
+	"TypeTypeName":"tContainer",
+	"TypeNameSpace":"system",
+	"TypeName":"SmokeCodes",
+	"PhysicalName":null,
+	"Version":1,
+	"JarName":null,
+	"DependencyJars":[ ],
+	"Implementation":null,
+	"NumberOfDimensions":1
+}
