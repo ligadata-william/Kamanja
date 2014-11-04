@@ -2523,10 +2523,10 @@ class MdMgr {
 	@throws(classOf[AlreadyExistsException])
 	@throws(classOf[NoSuchElementException])
 	def AddContainer(container: ContainerDef): Unit = {
-	    if (Type(container.FullName, -1, true) != None) {
+	    if (Type(container.FullName, -1, false) != None) {
 	      throw new AlreadyExistsException(s"Container type ${container.FullName} already exists.")
 	    }
-	    if (Container(container.FullName, -1, true) != None) {
+	    if (Container(container.FullName, -1, false) != None) {
 	      throw new AlreadyExistsException(s"Container ${container.FullName} already exists.")
 	    }
 	    if( container.containerType == null ){
