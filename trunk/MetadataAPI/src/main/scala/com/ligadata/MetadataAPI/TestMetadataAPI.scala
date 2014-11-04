@@ -919,7 +919,7 @@ object TestMetadataAPI{
       println("Results as json string => \n" + MetadataAPIImpl.AddContainer(contStr,"JSON"))
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Container Already in the metadata....")
+	  logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
 	e.printStackTrace()
