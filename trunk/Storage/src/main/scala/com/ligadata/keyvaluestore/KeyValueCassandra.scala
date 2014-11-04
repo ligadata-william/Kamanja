@@ -24,6 +24,7 @@ import java.nio.ByteBuffer
 	CREATE TABLE default (key blob, value blob, primary key(key) );
  */
 
+
 class KeyValueCassandraTx(owner : DataStore) extends Transaction
 {
 	var parent :DataStore = owner
@@ -92,13 +93,18 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
-		val buffer : ByteBuffer = rs.one().getBytes(0)
-		if (buffer != null) {
-		  while(buffer.hasRemaining())
-		    value+= buffer.get()
-		} else {
-		  throw new Exception("Key Not found")
+	        if( rs.one() != null ){
+		  val buffer : ByteBuffer = rs.one().getBytes(0)
+		  if (buffer != null) {
+		    while(buffer.hasRemaining())
+		      value+= buffer.get()
+		  } else {
+		    throw new KeyNotFoundException("Key Not found")
+		  }
 		}
+		else{
+		    throw new KeyNotFoundException("Key Not found")
+		}		  
 		handler(value)
 	}
 	
@@ -112,13 +118,17 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		//
 		val value = new Value
 
-
-		val buffer : ByteBuffer = rs.one().getBytes(0)
-		if (buffer != null) {
-		  while(buffer.hasRemaining())
-		      value+= buffer.get()
-		} else {
-		  throw new Exception("Key Not found")
+	        if( rs.one() != null ){
+		  val buffer : ByteBuffer = rs.one().getBytes(0)
+		  if (buffer != null) {
+		    while(buffer.hasRemaining())
+		    value+= buffer.get()
+		  } else {
+		    throw new KeyNotFoundException("Key Not found")
+		  }
+		}
+	        else{
+		  throw new KeyNotFoundException("Key Not found")
 		}
 		target.Construct(key, value)
 	}

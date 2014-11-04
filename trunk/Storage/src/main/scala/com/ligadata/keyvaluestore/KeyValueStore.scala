@@ -9,6 +9,8 @@ import scala.collection.mutable.HashMap
 import com.ligadata.keyvaluestore.cassandra.KeyValueCassandra
 import java.lang.Comparable
 
+case class KeyNotFoundException(e: String) extends Throwable(e)
+
 class ByteArray extends ArrayBuffer[Byte]
 
 class Key extends ByteArray

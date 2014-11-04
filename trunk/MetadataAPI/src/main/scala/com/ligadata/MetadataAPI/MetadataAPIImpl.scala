@@ -103,7 +103,6 @@ class KeyValuePair extends IStorage{
   }
 }    
 
-
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI{
     
@@ -198,8 +197,10 @@ object MetadataAPIImpl extends MetadataAPI{
       //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
       o
     } catch {
+      case e:KeyNotFoundException => {
+	throw new ObjectNotFoundException(e.getMessage())
+      }    
       case e:Exception => {
-	e.printStackTrace()
 	throw new ObjectNotFoundException(e.getMessage())
       }
     }
@@ -1467,24 +1468,32 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def AddMessageTypes(msgDef:MessageDef): Array[BaseElemDef] = {
+  def AddMessageTypes(msgDef:BaseElemDef): Array[BaseElemDef] = {
     val objectsAdded = new Array[BaseElemDef](3)
+    logger.trace("The class name => " + msgDef.getClass().getName())
     try{
-      // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
-      // along with the messageDef.
-      val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
+      msgDef.getClass().getName() match{
+	case "com.ligadata.olep.metadata.MessageDef" | "com.ligadata.olep.metadata.ContainerDef" => {
+	  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
+	  // along with the messageDef.
+	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
 					       msgDef.name,1,msgDef.ver)
-      SaveObject(arrayType)
-      objectsAdded(0) = arrayType
-      val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
+	  SaveObject(arrayType)
+	  objectsAdded(0) = arrayType
+	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
 						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
-      SaveObject(arrayBufType)
-      objectsAdded(1) = arrayBufType
-      val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
+	  SaveObject(arrayBufType)
+	  objectsAdded(1) = arrayBufType
+	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
 							   msgDef.nameSpace,msgDef.name,msgDef.ver)
-      SaveObject(sortedSetType)
-      objectsAdded(2) = sortedSetType
-      objectsAdded
+	  SaveObject(sortedSetType)
+	  objectsAdded(2) = sortedSetType
+	  objectsAdded
+	}
+	case _ => {
+	  throw new InternalErrorException("Unknown class in AddMessageTypes")
+	}
+      }
     }
     catch {
       case e:Exception =>{
@@ -1509,7 +1518,12 @@ object MetadataAPIImpl extends MetadataAPI{
 	  result
 	}
 	case cont:ContainerDef =>{
-	  AddContainerDef(cont)
+	  val result = AddContainerDef(cont)
+	  var objectsAdded = AddMessageTypes(cont)
+	  objectsAdded = objectsAdded :+ cont
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
       }
     }
@@ -1533,10 +1547,20 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("Message Compiler returned an object of type " + msgDef.getClass().getName())
       msgDef match{
 	case msg:MessageDef =>{
-	  AddMessageDef(msg)
+	  val result = AddMessageDef(msg)
+	  var objectsAdded = AddMessageTypes(msg)
+	  objectsAdded = objectsAdded :+ msg
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
 	case cont:ContainerDef =>{
-	  AddContainerDef(cont)
+	  val result = AddContainerDef(cont)
+	  var objectsAdded = AddMessageTypes(cont)
+	  objectsAdded = objectsAdded :+ cont
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
       }
     }
