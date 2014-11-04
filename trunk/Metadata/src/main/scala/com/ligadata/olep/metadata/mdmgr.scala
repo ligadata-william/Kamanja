@@ -722,14 +722,14 @@ class MdMgr {
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyContainer(nameSpace: String, name: String, ver: Int, operation: String): ContainerDef = {
       val key = MdMgr.MkFullName(nameSpace, name)
-      val container = msgDefs.getOrElse(key,null)
+      val container = containerDefs.getOrElse(key,null)
       if(container == null ){
 	logger.trace("The container " + key + " doesn't exist ")
 	throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
       }
       else{
 	var versionMatch: ContainerDef = null
-	msgDefs(key).foreach(m =>
+	containerDefs(key).foreach(m =>
 	    if(m.ver == ver ){
 	      versionMatch = m
 	      operation match{
@@ -2523,10 +2523,10 @@ class MdMgr {
 	@throws(classOf[AlreadyExistsException])
 	@throws(classOf[NoSuchElementException])
 	def AddContainer(container: ContainerDef): Unit = {
-	    if (Type(container.FullName, -1, false) != None) {
+	    if (Type(container.FullName, -1, true) != None) {
 	      throw new AlreadyExistsException(s"Container type ${container.FullName} already exists.")
 	    }
-	    if (Container(container.FullName, -1, false) != None) {
+	    if (Container(container.FullName, -1, true) != None) {
 	      throw new AlreadyExistsException(s"Container ${container.FullName} already exists.")
 	    }
 	    if( container.containerType == null ){
