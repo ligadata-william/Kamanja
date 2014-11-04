@@ -254,11 +254,11 @@ class MessageDefImpl {
         //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
 
         if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
-          println("message.Version " + message.Version.replaceAll("[.]", "").toInt)
+          log.trace("message.Version " + message.Version.replaceAll("[.]", "").toInt)
 
           val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
           if (typ.getOrElse("None").equals("None"))
-            throw new Exception("Type not found in metadata for Name: " +  f.Name+ " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : "+f.Ttype)
+            throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
           if (typ.get.tType.toString().equals("tArray")) {
             arrayType = typ.get.asInstanceOf[ArrayTypeDef]
@@ -273,7 +273,7 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
             argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-            println("typ.get.typeString " + typ.get.typeString)
+            log.trace("typ.get.typeString " + typ.get.typeString)
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
             if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
