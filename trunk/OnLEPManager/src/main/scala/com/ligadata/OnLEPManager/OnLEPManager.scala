@@ -70,10 +70,23 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
 }
 
 object OnLEPConfiguration {
-  var jarPath: String = _
+  var storeType: String = _
+  var dataLocation: String = _
+  var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
   var znodePath: String = _
+
+  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
 }
 
 class OnLEPClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
@@ -154,16 +167,18 @@ class OnLEPManager {
 
   private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): InputAdapter = {
     if (statusAdapterCfg == null) return null
+    var allJars: collection.immutable.Set[String] = null
+
     if (statusAdapterCfg.dependencyJars != null && statusAdapterCfg.jarName != null) {
-      if (ManagerUtils.LoadJars(statusAdapterCfg.dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + statusAdapterCfg.jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = statusAdapterCfg.dependencyJars + statusAdapterCfg.jarName
     } else if (statusAdapterCfg.dependencyJars != null) {
-      if (ManagerUtils.LoadJars(statusAdapterCfg.dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = statusAdapterCfg.dependencyJars
     } else if (statusAdapterCfg.jarName != null) {
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + statusAdapterCfg.jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
+      allJars = collection.immutable.Set(statusAdapterCfg.jarName)
+    }
+
+    if (allJars != null) {
+      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -204,16 +219,17 @@ class OnLEPManager {
 
   private def CreateOutputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, loaderInfo: OnLEPLoaderInfo): OutputAdapter = {
     if (statusAdapterCfg == null) return null
+    var allJars: collection.immutable.Set[String] = null
     if (statusAdapterCfg.dependencyJars != null && statusAdapterCfg.jarName != null) {
-      if (ManagerUtils.LoadJars(statusAdapterCfg.dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + statusAdapterCfg.jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = statusAdapterCfg.dependencyJars + statusAdapterCfg.jarName
     } else if (statusAdapterCfg.dependencyJars != null) {
-      if (ManagerUtils.LoadJars(statusAdapterCfg.dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = statusAdapterCfg.dependencyJars
     } else if (statusAdapterCfg.jarName != null) {
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + statusAdapterCfg.jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
+      allJars = collection.immutable.Set(statusAdapterCfg.jarName)
+    }
+
+    if (allJars != null) {
+      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -355,17 +371,18 @@ class OnLEPManager {
     val className = envCxtConfig(0)
     val jarName = envCxtConfig(1)
     val dependencyJars = if (envCxtConfig(2).size > 0) envCxtConfig(2).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
+    var allJars: collection.immutable.Set[String] = null
 
     if (dependencyJars != null && jarName != null) {
-      if (ManagerUtils.LoadJars(dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = dependencyJars + jarName
     } else if (dependencyJars != null) {
-      if (ManagerUtils.LoadJars(dependencyJars.map(j => OnLEPConfiguration.jarPath + "/" + j).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
+      allJars = dependencyJars
     } else if (jarName != null) {
-      if (ManagerUtils.LoadJars(Array(OnLEPConfiguration.jarPath + "/" + jarName), loaderInfo.loadedJars, loaderInfo.loader) == false)
+      allJars = collection.immutable.Set(jarName)
+    }
+
+    if (allJars != null) {
+      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -391,8 +408,8 @@ class OnLEPManager {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, containerNames, true) // Containers
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, topMessageNames, false) // Messages
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -470,9 +487,24 @@ class OnLEPManager {
     var retval: Boolean = true
 
     try {
-      OnLEPConfiguration.jarPath = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.jarPath.size == 0) {
-        LOG.error("Not found valid JarPath.")
+      OnLEPConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+      if (OnLEPConfiguration.jarPaths.size == 0) {
+        OnLEPConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+        if (OnLEPConfiguration.jarPaths.size == 0) {
+          LOG.error("Not found valid JarPaths.")
+          return false
+        }
+      }
+
+      OnLEPConfiguration.storeType = loadConfigs.getProperty("StoreType".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.storeType.size == 0) {
+        LOG.error("Not found valid StoreType.")
+        return false
+      }
+
+      OnLEPConfiguration.dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.dataLocation.size == 0) {
+        LOG.error("Not found valid DataLocation.")
         return false
       }
 

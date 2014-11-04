@@ -45,7 +45,7 @@ object MedEnvContext extends EnvContext with LogTrait {
   private[this] var _kryoSer: Serializer = null
 
   // Adding new messages or Containers
-  override def AddNewMessageOrContainers(mgr: MdMgr, dataPath: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
+  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
       val names: Array[String] = c.split('.')
@@ -62,7 +62,7 @@ object MedEnvContext extends EnvContext with LogTrait {
           // We already have this
         } else {
           val newMsgOrContainer = new MsgContainerInfo
-          newMsgOrContainer.dataStore = GetDataStoreHandle("hashmap", tableName, tableName, dataPath)
+          newMsgOrContainer.dataStore = GetDataStoreHandle(storeType, tableName, tableName, dataLocation)
           newMsgOrContainer.containerType = containerType
 
           newMsgOrContainer.tableName = tableName
@@ -174,23 +174,28 @@ object MedEnvContext extends EnvContext with LogTrait {
     keys += containerKey
   }
 
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataPath: String): DataStore = {
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
       storeType match {
         case "hashmap" => {
-          connectinfo += ("path" -> s"$dataPath/kvstores")
+          connectinfo += ("path" -> dataLocation)
           connectinfo += ("schema" -> storeName)
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
         }
         case "treemap" => {
-          connectinfo += ("path" -> s"$dataPath/kvstores")
+          connectinfo += ("path" -> dataLocation)
           connectinfo += ("schema" -> storeName)
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
+        }
+        case "cassandra" => {
+          connectinfo += ("hostlist" -> dataLocation)
+          connectinfo += ("schema" -> storeName)
+          connectinfo += ("ConsistencyLevelRead" -> "ONE")
         }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
