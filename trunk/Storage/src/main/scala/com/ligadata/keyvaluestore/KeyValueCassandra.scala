@@ -89,22 +89,21 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		val key1 = ByteBuffer.wrap(key.toArray[Byte]);
 		val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
+	        if( rs.getAvailableWithoutFetching() == 0 ){
+		  throw new KeyNotFoundException("Key Not found")
+		}
+
 		// Construct the output value
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
-	        if( rs.one() != null ){
-		  val buffer : ByteBuffer = rs.one().getBytes(0)
-		  if (buffer != null) {
-		    while(buffer.hasRemaining())
-		      value+= buffer.get()
-		  } else {
-		    throw new KeyNotFoundException("Key Not found")
-		  }
+		val buffer : ByteBuffer = rs.one().getBytes(0)
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		  value+= buffer.get()
+		} else {
+		  throw new KeyNotFoundException("Key Not found")
 		}
-		else{
-		    throw new KeyNotFoundException("Key Not found")
-		}		  
 		handler(value)
 	}
 	
@@ -113,21 +112,19 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		val key1 = ByteBuffer.wrap(key.toArray[Byte]);
 		val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
+	        if( rs.getAvailableWithoutFetching() == 0 ){
+		  throw new KeyNotFoundException("Key Not found")
+		}
 		// Construct the output value
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
 
-	        if( rs.one() != null ){
-		  val buffer : ByteBuffer = rs.one().getBytes(0)
-		  if (buffer != null) {
-		    while(buffer.hasRemaining())
-		    value+= buffer.get()
-		  } else {
-		    throw new KeyNotFoundException("Key Not found")
-		  }
-		}
-	        else{
+		val buffer : ByteBuffer = rs.one().getBytes(0)
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		  value+= buffer.get()
+		} else {
 		  throw new KeyNotFoundException("Key Not found")
 		}
 		target.Construct(key, value)
