@@ -254,7 +254,11 @@ class MessageDefImpl {
         //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
 
         if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+          log.trace("message.Version " + message.Version.replaceAll("[.]", "").toInt)
+
           val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
+          if (typ.getOrElse("None").equals("None"))
+            throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
           if (typ.get.tType.toString().equals("tArray")) {
             arrayType = typ.get.asInstanceOf[ArrayTypeDef]
@@ -269,6 +273,7 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
             argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+            log.trace("typ.get.typeString " + typ.get.typeString)
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
             if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
@@ -277,7 +282,7 @@ class MessageDefImpl {
               jarset = jarset + arrayType.JarName
 
           } else if (typ.get.tType.toString().equals("tHashMap")) {
-            
+
             assignCsvdata.append(newline + "//HashMap not handled at this momemt" + newline)
           } else {
 
@@ -310,6 +315,7 @@ class MessageDefImpl {
             assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
 
           }
+
           count = count + 1
 
         } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
@@ -877,7 +883,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
-    var pkg: String = "com.ligadata.messagedef"
+    var pkg: String = "com.ligadata.edifecs"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -906,7 +912,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var tdata: TransformData = null
     var tdataexists: Boolean = false
     var container: Message = null
-    var pkg: String = "com.ligadata.messagedef"
+    var pkg: String = "com.ligadata.edifecs"
     val tkey: String = "TransformData"
     var pKey: String = ""
     var partitionKeysList: List[String] = null

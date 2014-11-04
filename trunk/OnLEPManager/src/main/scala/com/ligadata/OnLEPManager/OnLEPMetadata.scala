@@ -223,16 +223,22 @@ class OnLEPMetadata {
 
   private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
     var retVal: Boolean = true
-    if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
-      retVal = ManagerUtils.LoadJars(elem.DependencyJarNames.map(j => OnLEPConfiguration.jarPath + "/" + j), loadedJars, loader)
-    }
-    if (retVal == false) return retVal
+    var allJars: Array[String] = null
+
     val jarname = if (elem.JarName == null) "" else elem.JarName.trim
-    if (jarname.size > 0) {
-      val jars = Array(OnLEPConfiguration.jarPath + "/" + jarname)
-      retVal = ManagerUtils.LoadJars(jars, loadedJars, loader)
+
+    if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0 && jarname.size > 0) {
+      allJars = elem.DependencyJarNames :+ jarname
+    } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
+      allJars = elem.DependencyJarNames
     }
-    retVal
+    if (jarname.size > 0) {
+      allJars = Array(jarname)
+    } else {
+      return retVal
+    }
+
+    return ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)), loadedJars, loader)
   }
 
   private def GetChildsFromEntity(entity: EntityType, childs: ArrayBuffer[(String, String)]): Unit = {
@@ -359,7 +365,7 @@ object OnLEPMetadata {
       containerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, containerNames, true) // Containers
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
       }
     }
 
@@ -368,7 +374,7 @@ object OnLEPMetadata {
       messageObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.jarPath, topMessageNames, false) // Messages
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
       }
     }
 
