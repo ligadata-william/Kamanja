@@ -255,7 +255,8 @@ class MessageDefImpl {
 
         if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
           val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
-
+         
+         
           if (typ.get.tType.toString().equals("tArray")) {
             arrayType = typ.get.asInstanceOf[ArrayTypeDef]
 
@@ -269,6 +270,7 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
             argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+            println("typ.get.typeString " +typ.get.typeString)
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
             if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
@@ -877,7 +879,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
-    var pkg: String = "com.ligadata.messagedef"
+    var pkg: String = "com.ligadata.edifecs"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -906,7 +908,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var tdata: TransformData = null
     var tdataexists: Boolean = false
     var container: Message = null
-    var pkg: String = "com.ligadata.messagedef"
+    var pkg: String = "com.ligadata.edifecs"
     val tkey: String = "TransformData"
     var pKey: String = ""
     var partitionKeysList: List[String] = null
