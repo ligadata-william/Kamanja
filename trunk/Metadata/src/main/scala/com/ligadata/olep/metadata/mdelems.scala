@@ -129,34 +129,35 @@ trait BaseElem {
   def PhysicalName(phyNm: String): Unit // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
   def IsActive: Boolean // Return true if the Element is active, otherwise false
   def IsDeactive: Boolean // Return true if the Element is de-active, otherwise false
+  def IsDeleted: Boolean // Return true if the Element is deleted, otherwise false
   def Active: Unit // Make the element as Active
   def Deactive: Unit // Make the element as de-active
   def Deleted: Unit // Mark the element as deleted
 }
 
 class BaseElemDef extends BaseElem {
-  def UniqID: Long = uniqueId
-  def FullName: String = nameSpace + "." + name // Logical Name
-  def FullNameWithVer: String = nameSpace + "." + name + "." + ver
-  def CreationTime: Long = creationTime // Time in milliseconds from 1970-01-01T00:00:00
-  def ModTime: Long = modTime // Time in milliseconds from 1970-01-01T00:00:00
-  def OrigDef: String = origDef
-  def Description: String = description
-  def Author: String = author
-  def NameSpace: String = nameSpace // Part of Logical Name
-  def Name: String = name // Part of Logical Name
-  def Version: Int = ver
-  def JarName: String = jarName
-  def DependencyJarNames: Array[String] = dependencyJarNames
-  def MdElemStructVer: Int = mdElemStructVer // Metadata Element version. By default whole metadata will have same number
-  def PhysicalName: String = physicalName // Getting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
-  def PhysicalName(phyNm: String): Unit = physicalName = phyNm // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code). Most of the elements will have Phsical name corresponds to Logical name like Types like System.Int maps to scala.Int as physical name.
-  def IsActive: Boolean = active // Return true if the Element is active, otherwise false
-  def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
-  def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
-  def Active: Unit = active = true // Make the element as Active
-  def Deactive: Unit = active = false // Make the element as de-active
-  def Deleted: Unit = deleted = true // Mark the element as deleted
+  override def UniqID: Long = uniqueId
+  override def FullName: String = nameSpace + "." + name // Logical Name
+  override def FullNameWithVer: String = nameSpace + "." + name + "." + ver
+  override def CreationTime: Long = creationTime // Time in milliseconds from 1970-01-01T00:00:00
+  override def ModTime: Long = modTime // Time in milliseconds from 1970-01-01T00:00:00
+  override def OrigDef: String = origDef
+  override def Description: String = description
+  override def Author: String = author
+  override def NameSpace: String = nameSpace // Part of Logical Name
+  override def Name: String = name // Part of Logical Name
+  override def Version: Int = ver
+  override def JarName: String = jarName
+  override def DependencyJarNames: Array[String] = dependencyJarNames
+  override def MdElemStructVer: Int = mdElemStructVer // Metadata Element version. By default whole metadata will have same number
+  override def PhysicalName: String = physicalName // Getting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
+  override def PhysicalName(phyNm: String): Unit = physicalName = phyNm // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code). Most of the elements will have Phsical name corresponds to Logical name like Types like System.Int maps to scala.Int as physical name.
+  override def IsActive: Boolean = active // Return true if the Element is active, otherwise false
+  override def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
+  override def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
+  override def Active: Unit = active = true // Make the element as Active
+  override def Deactive: Unit = active = false // Make the element as de-active
+  override def Deleted: Unit = deleted = true // Mark the element as deleted
 
   // Override in other places if required
   override def equals(that: Any) = {
