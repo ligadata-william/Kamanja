@@ -24,6 +24,7 @@ import java.nio.ByteBuffer
 	CREATE TABLE default (key blob, value blob, primary key(key) );
  */
 
+
 class KeyValueCassandraTx(owner : DataStore) extends Transaction
 {
 	var parent :DataStore = owner
@@ -80,7 +81,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	{
 		var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
 		var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
-		session.execute(updateStmt.bind(key, value).setConsistencyLevel(consistencylevelWrite))
+		session.execute(updateStmt.bind(value,key).setConsistencyLevel(consistencylevelWrite))
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =
@@ -88,14 +89,21 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		val key1 = ByteBuffer.wrap(key.toArray[Byte]);
 		val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
+	        if( rs.getAvailableWithoutFetching() == 0 ){
+		  throw new KeyNotFoundException("Key Not found")
+		}
+
 		// Construct the output value
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
 		val buffer : ByteBuffer = rs.one().getBytes(0)
-		while(buffer.hasRemaining())
-			value+= buffer.get()
-
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		  value+= buffer.get()
+		} else {
+		  throw new KeyNotFoundException("Key Not found")
+		}
 		handler(value)
 	}
 	
@@ -104,14 +112,21 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		val key1 = ByteBuffer.wrap(key.toArray[Byte]);
 		val rs = session.execute(selectStmt.bind(key1).setConsistencyLevel(consistencylevelRead))
 
+	        if( rs.getAvailableWithoutFetching() == 0 ){
+		  throw new KeyNotFoundException("Key Not found")
+		}
 		// Construct the output value
 		// BUGBUG-jh-20140703: There should be a more concise way to get the data
 		//
 		val value = new Value
-		val buffer : ByteBuffer = rs.one().getBytes(0)
-		while(buffer.hasRemaining())
-			value+= buffer.get()
 
+		val buffer : ByteBuffer = rs.one().getBytes(0)
+		if (buffer != null) {
+		  while(buffer.hasRemaining())
+		  value+= buffer.get()
+		} else {
+		  throw new KeyNotFoundException("Key Not found")
+		}
 		target.Construct(key, value)
 	}
 

@@ -1,0 +1,14 @@
+{
+	"MetadataType":"ArrayTypeDef",
+  	"NameSpace":"system",
+  	"Name":"ArrayOfDyspnoeaCodes",
+	"TypeTypeName":"tContainer",
+	"TypeNameSpace":"system",
+	"TypeName":"DyspnoeaCodes",
+	"PhysicalName":null,
+	"Version":1,
+	"JarName":null,
+	"DependencyJars":[ ],
+	"Implementation":null,
+	"NumberOfDimensions":1
+}

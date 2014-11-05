@@ -103,7 +103,6 @@ class KeyValuePair extends IStorage{
   }
 }    
 
-
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI{
     
@@ -173,6 +172,40 @@ object MetadataAPIImpl extends MetadataAPI{
     new String(v1)
   }
 
+  def GetObject(key: String,store: DataStore) : IStorage = {
+    try{
+      object o extends IStorage
+      {
+	var key = new com.ligadata.keyvaluestore.Key;
+	var value = new com.ligadata.keyvaluestore.Value
+	
+	def Key = key
+	def Value = value
+	def Construct(k: com.ligadata.keyvaluestore.Key, v: com.ligadata.keyvaluestore.Value) = 
+	{ 
+	  key = k; 
+	  value = v; 
+	}
+      } 
+      
+      var k = new com.ligadata.keyvaluestore.Key
+      for(c <- key ){
+	k += c.toByte
+      }
+      logger.trace("Get the object from store, key => " + KeyAsStr(k))
+      store.get(k,o)
+      //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
+      o
+    } catch {
+      case e:KeyNotFoundException => {
+	throw new ObjectNotFoundException(e.getMessage())
+      }    
+      case e:Exception => {
+	throw new ObjectNotFoundException(e.getMessage())
+      }
+    }
+
+  }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore){
     object i extends IStorage{
@@ -188,14 +221,33 @@ object MetadataAPIImpl extends MetadataAPI{
       def Value = v
       def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
     }
-    val t = store.beginTx
-    store.add(i)
-    store.commitTx(t)
+    try{
+      var obj = GetObject(key.toLowerCase,store)
+      logger.trace("Found an existing deleted object for : " + key)
+      UpdateObject(key,value,store)
+    }
+    catch{
+      case e:ObjectNotFoundException => {
+	logger.trace("Insert new object for : " + key)
+	val t = store.beginTx
+	store.add(i)
+	store.commitTx(t)
+      }
+    }
   }
 
   def SaveObject(key: String, value: String, store: DataStore){
     var ba = serializer.SerializeObjectToByteArray(value)
-    SaveObject(key,ba,store)
+    try{
+      var obj = GetObject(key.toLowerCase,store)
+      logger.trace("Found an existing deleted object for : " + key)
+      UpdateObject(key,ba,store)
+    }
+    catch{
+      case e:ObjectNotFoundException => {
+	SaveObject(key,ba,store)
+      }
+    }
   }
 
   def UpdateObject(key: String, value: Array[Byte], store: DataStore){
@@ -357,7 +409,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def UpdateObjectInDB(obj: BaseElemDef){
     try{
       val key = obj.FullNameWithVer.toLowerCase
-      logger.trace("Serialize the object: name of the object => " + obj.FullNameWithVer)
+      logger.trace("Serialize the object: name of the object => " + key)
       var value = serializer.SerializeObjectToByteArray(obj)
       obj match{
 	case o:ModelDef => {
@@ -455,63 +507,48 @@ object MetadataAPIImpl extends MetadataAPI{
 	  updatedObject = MdMgr.GetMdMgr.ModifyModel(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:MessageDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,messageStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyMessage(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ContainerDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,containerStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyContainer(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:AttributeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,conceptStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyAttribute(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ScalarTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ArrayTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ArrayBufTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ListTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:QueueTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:SetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:TreeSetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:SortedSetTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:MapTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:HashMapTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:TupleTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:ContainerTypeDef => {
-	  DeleteObject(o.FullNameWithVer.toLowerCase,typeStore)
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case _ => {
@@ -532,6 +569,9 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   def AddObjectToCache(obj: BaseElemDef){
+    // If the object's Delete flag is set, this is a noop.
+    if (obj.IsDeleted )
+      return
     try{
       val key = obj.FullNameWithVer.toLowerCase
       obj match{
@@ -785,39 +825,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	throw new Exception("Unexpected error in DeactivateObject: " + e.getMessage())
       }
     }
-  }
-
-  def GetObject(key: String,store: DataStore) : IStorage = {
-    try{
-      object o extends IStorage
-      {
-	var key = new com.ligadata.keyvaluestore.Key;
-	var value = new com.ligadata.keyvaluestore.Value
-	
-	def Key = key
-	def Value = value
-	def Construct(k: com.ligadata.keyvaluestore.Key, v: com.ligadata.keyvaluestore.Value) = 
-	{ 
-	  key = k; 
-	  value = v; 
-	}
-      } 
-      
-      var k = new com.ligadata.keyvaluestore.Key
-      for(c <- key ){
-	k += c.toByte
-      }
-      logger.trace("Get the object from store, key => " + KeyAsStr(k))
-      store.get(k,o)
-      //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
-      o
-    } catch {
-      case e:Exception => {
-	e.printStackTrace()
-	throw new ObjectNotFoundException(e.getMessage())
-      }
-    }
-
   }
 
   def GetCassandraConnectionProperties: PropertyMap = {
@@ -1435,11 +1442,11 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       var key = contDef.FullNameWithVer
       SaveObject(contDef)
-      var apiResult = new ApiResult(0,"ContDef was Added",key)
+      var apiResult = new ApiResult(0,"Container was Added",key)
       apiResult.toString()
     }catch {
       case e:Exception =>{
-	var apiResult = new ApiResult(-1,"Failed to add the contDef:",e.toString)
+	var apiResult = new ApiResult(-1,"Failed to add the Container:",e.toString)
 	apiResult.toString()
       }
     }
@@ -1461,24 +1468,32 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def AddMessageTypes(msgDef:MessageDef): Array[BaseElemDef] = {
+  def AddMessageTypes(msgDef:BaseElemDef): Array[BaseElemDef] = {
     val objectsAdded = new Array[BaseElemDef](3)
+    logger.trace("The class name => " + msgDef.getClass().getName())
     try{
-      // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
-      // along with the messageDef.
-      val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
+      msgDef.getClass().getName() match{
+	case "com.ligadata.olep.metadata.MessageDef" | "com.ligadata.olep.metadata.ContainerDef" => {
+	  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
+	  // along with the messageDef.
+	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
 					       msgDef.name,1,msgDef.ver)
-      SaveObject(arrayType)
-      objectsAdded(0) = arrayType
-      val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
+	  SaveObject(arrayType)
+	  objectsAdded(0) = arrayType
+	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
 						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
-      SaveObject(arrayBufType)
-      objectsAdded(1) = arrayBufType
-      val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
+	  SaveObject(arrayBufType)
+	  objectsAdded(1) = arrayBufType
+	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
 							   msgDef.nameSpace,msgDef.name,msgDef.ver)
-      SaveObject(sortedSetType)
-      objectsAdded(2) = sortedSetType
-      objectsAdded
+	  SaveObject(sortedSetType)
+	  objectsAdded(2) = sortedSetType
+	  objectsAdded
+	}
+	case _ => {
+	  throw new InternalErrorException("Unknown class in AddMessageTypes")
+	}
+      }
     }
     catch {
       case e:Exception =>{
@@ -1503,7 +1518,12 @@ object MetadataAPIImpl extends MetadataAPI{
 	  result
 	}
 	case cont:ContainerDef =>{
-	  AddContainerDef(cont)
+	  val result = AddContainerDef(cont)
+	  var objectsAdded = AddMessageTypes(cont)
+	  objectsAdded = objectsAdded :+ cont
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
       }
     }
@@ -1527,10 +1547,20 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("Message Compiler returned an object of type " + msgDef.getClass().getName())
       msgDef match{
 	case msg:MessageDef =>{
-	  AddMessageDef(msg)
+	  val result = AddMessageDef(msg)
+	  var objectsAdded = AddMessageTypes(msg)
+	  objectsAdded = objectsAdded :+ msg
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
 	case cont:ContainerDef =>{
-	  AddContainerDef(cont)
+	  val result = AddContainerDef(cont)
+	  var objectsAdded = AddMessageTypes(cont)
+	  objectsAdded = objectsAdded :+ cont
+	  val operations = for (op <- objectsAdded) yield "Add"
+	  NotifyEngine(objectsAdded,operations)
+	  result
 	}
       }
     }
@@ -1596,13 +1626,25 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   // Remove container with Container Name and Version Number
-  def RemoveContainer(nameSpace:String,containerName:String, version:Int): String = {
+  def RemoveContainer(nameSpace:String,name:String, version:Int): String = {
     try{
-      var key = nameSpace + "." + containerName + "." + version
-      DeleteObject(key.toLowerCase,containerStore)
-      MdMgr.GetMdMgr.RemoveContainer(nameSpace,containerName,version)
-      var apiResult = new ApiResult(0,"Container Definition was Deleted",key)
-      apiResult.toString()
+      var key = nameSpace + "." + name + "." + version
+      val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase,name.toLowerCase,version,true)
+      o match{
+	case None => None
+	  logger.trace("container not found => " + key)
+	  var apiResult = new ApiResult(-1,"Failed to Fetch the container",key)
+	  apiResult.toString()
+	case Some(m) => 
+	  logger.trace("container found => " + m.asInstanceOf[ContainerDef].FullNameWithVer)
+	  DeleteObject(m.asInstanceOf[ContainerDef])
+	  val objectsUpdated = new Array[BaseElemDef](1)
+	  objectsUpdated(0) = m.asInstanceOf[ContainerDef]
+	  val operations = for (op <- objectsUpdated) yield "Remove"
+	  NotifyEngine(objectsUpdated,operations)
+	  var apiResult = new ApiResult(0,"Container Definition was Deleted",key)
+	  apiResult.toString()
+      }
     }catch {
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to delete the ContainerDef:",e.toString)
@@ -2442,7 +2484,6 @@ object MetadataAPIImpl extends MetadataAPI{
       typeKeys.foreach(key => { 
 	val typeKey = KeyAsStr(key)
 	val obj = GetObject(typeKey.toLowerCase,typeStore)
-	//val typ = JsonSerializer.parseType(ValueAsStr(obj.Value),"JSON")
 	val typ =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	if( typ != null ){
 	  DecodeObjectToMetadataType(typ)
@@ -2467,7 +2508,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	val conceptKey = KeyAsStr(key)
 	val obj = GetObject(conceptKey.toLowerCase,conceptStore)
 	val concept =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	//val concept = JsonSerializer.parseConcept(ValueAsStr(obj.Value),"JSON")
 	AddObjectToCache(concept.asInstanceOf[AttributeDef])
       })
     }catch {
@@ -2489,7 +2529,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	val functionKey = KeyAsStr(key)
 	val obj = GetObject(functionKey.toLowerCase,functionStore)
 	val function =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	//val function = JsonSerializer.parseFunction(ValueAsStr(obj.Value),"JSON")
 	AddObjectToCache(function.asInstanceOf[FunctionDef])
       })
     }catch {
@@ -2776,7 +2815,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	val modKey = KeyAsStr(key)
 	val obj = GetObject(modKey.toLowerCase,modelStore)
 	val modDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	//val modDef = JsonSerializer.parseModelDef(ValueAsStr(obj.Value),"JSON")
 	AddObjectToCache(modDef.asInstanceOf[ModelDef])
       })
     }catch {

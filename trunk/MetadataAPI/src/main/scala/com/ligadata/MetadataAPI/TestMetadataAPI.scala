@@ -60,7 +60,7 @@ object TestMetadataAPI{
   }
 
   
-  // Types
+  // Type defs
   
   def AddType {
     try {
@@ -210,8 +210,9 @@ object TestMetadataAPI{
     }
   }
   
-  // End Types
+  // End Type defs
   
+  // TODO: Rewrite Update Type to allow a user to pick the file they wish to update a type from.
   def UpdateType = {
     val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
@@ -919,7 +920,7 @@ object TestMetadataAPI{
       println("Results as json string => \n" + MetadataAPIImpl.AddContainer(contStr,"JSON"))
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Container Already in the metadata....")
+	  logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
 	e.printStackTrace()
