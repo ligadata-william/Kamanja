@@ -8,7 +8,7 @@ import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.edifecs.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
+import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
@@ -18,7 +18,8 @@ import com.ligadata.ZooKeeper._
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
 
-class MsgObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgobj: BaseMsgObj) {
+// msgobj is null for Containers
+class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgobj: BaseMsgObj) {
   var parents = new ArrayBuffer[(String, String)] // Immediate parent comes at the end, grand parent last but one, ... Messages/Containers. the format is Message/Container Type name and the variable in that.
   var childs = new ArrayBuffer[(String, String)] // Child Messages/Containers (Name & type). We fill this when we create message and populate parent later from this
 }
@@ -28,8 +29,8 @@ class OnLEPMetadata {
   val LOG = Logger.getLogger(getClass);
 
   // Metadata manager
-  val messageObjects = new HashMap[String, MsgObjAndTransformInfo]
-  val containerObjects = new HashMap[String, BaseContainer]
+  val messageObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
+  val containerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   val modelObjects = new HashMap[String, MdlInfo]
 
   def LoadMdMgrElems(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror,
@@ -103,7 +104,7 @@ class OnLEPMetadata {
             })
             tranformMsgFlds = new TransformMsgFldsMap(keyfldsIdxs, outputFldIdxs)
           }
-          val mgsObj = new MsgObjAndTransformInfo(tranformMsgFlds, messageobj)
+          val mgsObj = new MsgContainerObjAndTransformInfo(tranformMsgFlds, messageobj)
           GetChildsFromEntity(msg.containerType, mgsObj.childs)
           messageObjects(msgName) = mgsObj
 
@@ -127,6 +128,7 @@ class OnLEPMetadata {
     // else Assuming we are already loaded all the required jars
 
     val clsName = container.PhysicalName
+    val containerName = container.FullName.toLowerCase
 
     var isContainer = true
 
@@ -161,8 +163,9 @@ class OnLEPMetadata {
         }
       }
 */
-    val containerName = (container.NameSpace.trim + "." + container.Name.trim).toLowerCase
-    containerObjects(containerName) = null
+    val containerObj = new MsgContainerObjAndTransformInfo(null, null)
+    GetChildsFromEntity(container.containerType, containerObj.childs)
+    containerObjects(containerName) = containerObj
   }
 
   def PrepareModel(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
@@ -323,13 +326,12 @@ object OnLEPMetadata {
   private[this] var loader: OnLEPClassLoader = _
   private[this] var mirror: reflect.runtime.universe.Mirror = _
 
-  private[this] var messageObjects = new HashMap[String, MsgObjAndTransformInfo]
-  private[this] var containerObjects = new HashMap[String, BaseContainer]
+  private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
 
   private[this] val lock = new Object()
 
-  private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgObjAndTransformInfo], contObjects: HashMap[String, BaseContainer],
+  private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
     removedContainers: ArrayBuffer[(String, String, Int)]): Unit = lock.synchronized {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
@@ -347,7 +349,7 @@ object OnLEPMetadata {
     if (removedMessages != null && removedMessages.size > 0) {
       removedMessages.foreach(msg => {
         val elemName = (msg._1.trim + "." + msg._2.trim).toLowerCase
-        messageObjects -= elemName
+        messageContainerObjects -= elemName //BUGBUG:: It has both Messages & Containers. Are we sure it only removes Messages here?
       })
     }
 
@@ -355,14 +357,14 @@ object OnLEPMetadata {
     if (removedContainers != null && removedContainers.size > 0) {
       removedContainers.foreach(cnt => {
         val elemName = (cnt._1.trim + "." + cnt._2.trim).toLowerCase
-        containerObjects -= elemName
+        messageContainerObjects -= elemName //BUGBUG:: It has both Messages & Containers. Are we sure it only removes Containers here?
       })
     }
 
     // Adding new objects now
     // Adding container
     if (contObjects != null && contObjects.size > 0) {
-      containerObjects ++= contObjects
+      messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
         envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
@@ -371,7 +373,7 @@ object OnLEPMetadata {
 
     // Adding Messages
     if (msgObjects != null && msgObjects.size > 0) {
-      messageObjects ++= msgObjects
+      messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
         envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
@@ -392,29 +394,26 @@ object OnLEPMetadata {
       val childToParentMap = scala.collection.mutable.Map[String, (String, String)]() // ChildType, (ParentType, ChildAttrName) 
 
       // Clear previous parents
-      messageObjects.foreach(m => {
-        m._2.parents.clear
-      })
-
-      containerObjects.foreach(c => {
-        // c._2.parents.clear
+      messageContainerObjects.foreach(c => {
+        c._2.parents.clear
       })
 
       // 1. First prepare one level of parents
-      messageObjects.foreach(m => {
+      messageContainerObjects.foreach(m => {
         m._2.childs.foreach(c => {
+          // Checking whether we already have in childToParentMap or not before we replace. So that way we can check same child under multiple parents.
           val childMsgNm = c._2.toLowerCase
           val fnd = childToParentMap.getOrElse(childMsgNm, null)
           if (fnd != null) {
-
+            LOG.error(s"$childMsgNm is used as child under $c and $fnd._1. First detected $fnd._1, so using as child of $fnd._1 as it is.")
           } else {
-            childToParentMap(childMsgNm) = (m._1.toLowerCase, c._1) // BUGBUG:: Check whether we already have in childToParentMap or not before we replace. So that way we can check same child under multiple parents.
+            childToParentMap(childMsgNm) = (m._1.toLowerCase, c._1)
           }
         })
       })
 
       // 2. Now prepare Full Parent Hierarchy
-      messageObjects.foreach(m => {
+      messageContainerObjects.foreach(m => {
         var curParent = childToParentMap.getOrElse(m._1.toLowerCase, null)
         while (curParent != null) {
           m._2.parents += curParent
@@ -423,7 +422,7 @@ object OnLEPMetadata {
       })
 
       // 3. Order Parent Hierarchy properly
-      messageObjects.foreach(m => {
+      messageContainerObjects.foreach(m => {
         m._2.parents.reverse
       })
     }
@@ -589,9 +588,11 @@ object OnLEPMetadata {
     UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
   }
 
-  def getMessgeInfo(msgType: String): MsgObjAndTransformInfo = lock.synchronized {
-    if (messageObjects == null) return null
-    messageObjects.getOrElse(msgType.toLowerCase, null)
+  def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = lock.synchronized {
+    if (messageContainerObjects == null) return null
+    val v = messageContainerObjects.getOrElse(msgType.toLowerCase, null)
+    if (v == null || v.msgobj == null) return null
+    v
   }
 
   def getModel(mdlName: String): MdlInfo = lock.synchronized {
@@ -599,14 +600,16 @@ object OnLEPMetadata {
     modelObjects.getOrElse(mdlName.toLowerCase, null)
   }
 
-  def getContainer(containerName: String): BaseContainer = lock.synchronized {
-    if (containerObjects == null) return null
-    containerObjects.getOrElse(containerName.toLowerCase, null)
+  def getContainer(containerName: String): MsgContainerObjAndTransformInfo = lock.synchronized {
+    if (messageContainerObjects == null) return null
+    val v = messageContainerObjects.getOrElse(containerName.toLowerCase, null)
+    if (v == null || v.msgobj != null) return null
+    v
   }
 
-  def getAllMessges: Map[String, MsgObjAndTransformInfo] = lock.synchronized {
-    if (messageObjects == null) return null
-    messageObjects.toMap
+  def getAllMessges: Map[String, MsgContainerObjAndTransformInfo] = lock.synchronized {
+    if (messageContainerObjects == null) return null
+    messageContainerObjects.filter(o => o._2.msgobj != null).toMap
   }
 
   def getAllModels: Map[String, MdlInfo] = lock.synchronized {
@@ -614,9 +617,9 @@ object OnLEPMetadata {
     modelObjects.toMap
   }
 
-  def getAllContainers: Map[String, BaseContainer] = lock.synchronized {
-    if (containerObjects == null) return null
-    containerObjects.toMap
+  def getAllContainers: Map[String, MsgContainerObjAndTransformInfo] = lock.synchronized {
+    if (messageContainerObjects == null) return null
+    messageContainerObjects.filter(o => o._2.msgobj == null).toMap
   }
 
   def getMdMgr: MdMgr = mdMgr

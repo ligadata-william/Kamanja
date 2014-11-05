@@ -5,7 +5,7 @@ import com.ligadata.OnLEPBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvCo
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
-import com.ligadata.OnLEPBase.{ MdlInfo, BaseMsgObj, BaseMsg, InputAdapter, OutputAdapter }
+import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, InputAdapter, OutputAdapter }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -23,7 +23,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
   private def createMsg(msgType: String, msgFormat: String, msgData: String): BaseMsg = {
     val msgInfo = OnLEPMetadata.getMessgeInfo(msgType)
     if (msgInfo != null) {
-      val msg: BaseMsg = msgInfo.msgobj.CreateNewMessage
+      val msg: BaseMsg = msgInfo.msgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
       if (msgFormat.equalsIgnoreCase("csv")) {
         try {
           val inputData = new DelimitedData(msgData, ",")
@@ -68,8 +68,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def RunAllModels(msg: BaseMsg, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
-    if (msg == null)
+  private def RunAllModels(finalTopMsgOrContainer: MessageContainerBase, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
+    if (finalTopMsgOrContainer == null)
       return
 
     val models: Array[MdlInfo] = OnLEPMetadata.getAllModels.map(mdl => mdl._2).toArray
@@ -86,10 +86,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     models.foreach(md => {
       try {
 
-        if (md.mdl.IsValidMessage(msg)) { // Checking whether this message has any fields/concepts to execute in this model
+        if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
           // LOG.info("Found Valid Message:" + msgData)
           // executedMdls += 1
-          val curMd = md.mdl.CreateNewModel(envContext, msg, md.tenantId)
+          val curMd = md.mdl.CreateNewModel(envContext, finalTopMsgOrContainer, md.tenantId)
           if (curMd != null) {
             val res = curMd.execute(outputAlways)
             if (res != null) {
@@ -121,7 +121,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def GetTopMsgName(msgName: String): (String, Boolean, MsgObjAndTransformInfo) = {
+  private def GetTopMsgName(msgName: String): (String, Boolean, MsgContainerObjAndTransformInfo) = {
     val topMsgInfo = OnLEPMetadata.getMessgeInfo(msgName)
     if (topMsgInfo == null || topMsgInfo.parents.size == 0) return (msgName, false, null)
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
@@ -143,17 +143,17 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           handleMsg = topObj != null
         }
         if (handleMsg) {
-          val finalTopMsg = if (topObj != null) topObj else msg
+          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null) topObj else msg
           if (topMsgTypeAndHasParent._2)
-            finalTopMsg.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
+            finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           // Run all models
-          RunAllModels(finalTopMsg.asInstanceOf[BaseMsg], msgData, envContext, readTmNs, rdTmMs) //BUGBUG:: Simply casting to BaseMsg
+          RunAllModels(finalTopMsgOrContainer, msgData, envContext, readTmNs, rdTmMs) //BUGBUG:: Simply casting to BaseMsg
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
           if (topMsgTypeAndHasParent._2 || (topObj == null))
-            envContext.setObject(topMsgTypeAndHasParent._1, keyData, finalTopMsg)
+            envContext.setObject(topMsgTypeAndHasParent._1, keyData, finalTopMsgOrContainer)
         }
       }
     } catch {

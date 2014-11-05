@@ -26,11 +26,11 @@ object COPDRiskAssessment_000100 extends ModelBaseObj {
     def getVersion: String = "000100"
     def getModelVersion: String = getVersion
     val validMessages = Array("com.ligadata.edifecs.System_Beneficiary_100")
-    def IsValidMessage(msg: BaseMsg): Boolean = { 
+    def IsValidMessage(msg: MessageContainerBase): Boolean = { 
         validMessages.filter( m => m == msg.getClass.getName).size > 0
     }
 
-    def CreateNewModel(gCtx : EnvContext, msg : BaseMsg, tenantId: String): ModelBase =
+    def CreateNewModel(gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =
     {
            new COPDRiskAssessment_000100(gCtx, msg.asInstanceOf[com.ligadata.edifecs.System_Beneficiary_100], getModelName, getVersion, tenantId)
     }

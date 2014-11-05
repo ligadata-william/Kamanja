@@ -2492,8 +2492,11 @@ class MdMgr {
 				  	    , args: List[(String, String, String, String, Boolean, String)]
 					  	, ver: Int = 1
 					  	, jarNm: String = null
-					  	, depJars: Array[String] = Array[String]()): Unit = {
-	  	AddContainer(MakeFixedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars))
+					  	, depJars: Array[String] = Array[String]()
+					  	, primaryKeys: List[(String, List[String])] = null
+					  	, foreignKeys: List[(String, List[String], String, List[String])] = null
+					  	, partitionKey: Array[String] = null): Unit = {
+	  	AddContainer(MakeFixedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   	}
 
   /**
