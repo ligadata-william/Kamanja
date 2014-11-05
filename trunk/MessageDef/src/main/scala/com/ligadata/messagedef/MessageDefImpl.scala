@@ -28,8 +28,8 @@ trait Attrib {
 
 class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String])
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
-class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String)
-class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String)
+class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
+class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
 case class MessageException(message: String) extends Exception(message)
 
 case class Concept(var NameSpace: Option[String], var Name: Option[String], var Type: Option[String])
@@ -241,6 +241,7 @@ class MessageDefImpl {
     var fname: String = ""
     var count: Int = 0
     var concepts: String = "concepts"
+    var ftypeVersion: Int = -1
 
     //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
@@ -253,10 +254,13 @@ class MessageDefImpl {
         //val attr = MdMgr.GetMdMgr.Attribute(message.NameSpace, message.Name)
         //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
 
+        if (f.FieldtypeVer != null)
+          ftypeVersion = message.Version.replaceAll("[.]", "").toInt
+
         if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
           log.trace("message.Version " + message.Version.replaceAll("[.]", "").toInt)
 
-          val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
+          val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
           if (typ.getOrElse("None").equals("None"))
             throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
@@ -924,6 +928,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
             ele = getElementsObj(message, key).asInstanceOf[List[Element]]
             // container = getElementsObj(message, key)._2.asInstanceOf[Message]
           }
+
           if (mtype.equals("Message") && message.contains(tkey)) {
             if (key.equals(tkey)) {
               tdataexists = true
@@ -943,6 +948,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
             conceptsList = getConcepts(message, key)
           }
         }
+        if (ele == null)
+          throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
       }
     } catch {
       case e: Exception => {
@@ -998,7 +1005,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       } else if (key.equals("Concepts")) {
         elist = getConceptData(message.get(conceptStr).get.asInstanceOf[List[String]], conceptStr)
 
-      }
+      } else throw new Exception("Either Fields or Elements or Concepts  do not exist in " + key + " json")
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1015,7 +1022,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     if (ccpts == null) throw new Exception("Concepts List is null")
     try {
       for (l <- ccpts)
-        lbuffer += new Element(null, l.toString(), null, null, key)
+        lbuffer += new Element(null, l.toString(), null, null, key, null)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1079,10 +1086,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
               // container = getContainerObj(containerMap)
               lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Concepts")
 
-            }
+            } else throw new Exception("Either Fields or Container or Message or Concepts  do not exist in " + key + " json")
           }
         }
-      } else throw new Exception("Elements list do not exist in json")
+      } else throw new Exception("Elements not list do not exist in json")
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1156,7 +1163,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   def getcElement(concept: Concept, eType: String): Field = {
-    new Field(concept.NameSpace.getOrElse(null), concept.Name.getOrElse(null), concept.Type.getOrElse(null), null, eType)
+    new Field(concept.NameSpace.getOrElse(null), concept.Name.getOrElse(null), concept.Type.getOrElse(null), null, eType, null)
   }
 
   def getElement(eMap: Map[String, Any]): Element = {
@@ -1182,6 +1189,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def getElementData(field: Map[String, String], key: String): Element = {
     var fld: Element = null
     var name: String = ""
+    var fldTypeVer: String = null
 
     var namespace: String = ""
     var ttype: String = ""
@@ -1194,6 +1202,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
       if (field.contains("Name") && (field.get("Name").get.isInstanceOf[String]))
         name = field.get("Name").get.asInstanceOf[String]
+      else throw new Exception("Field Name do not exist in " + key)
 
       if (field.contains("Type") && (field.get("Type").get.isInstanceOf[string])) {
         val fieldstr = field.get("Type").get.toString.split("\\.")
@@ -1205,8 +1214,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
         if (field.contains("CollectionType") && (field.get("CollectionType").get.isInstanceOf[string])) {
           collectionType = field.get("CollectionType").get.asInstanceOf[String]
         }
-      }
-      fld = new Element(namespace, name, ttype, collectionType, key)
+        if (field.contains("Version") && (field.get("Version").get.isInstanceOf[string])) {
+          fldTypeVer = field.get("Version").get.asInstanceOf[String]
+        }
+
+      } else throw new Exception("Field Type do not exist in " + key)
+      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
     } catch {
       case e: Exception => {
         e.printStackTrace()
