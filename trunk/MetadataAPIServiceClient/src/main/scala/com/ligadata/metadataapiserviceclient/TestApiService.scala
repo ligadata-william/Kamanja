@@ -14,7 +14,7 @@ case class APIResultJsonProxy(APIResults: APIResultInfo)
 case class ApiResultParsingException(e: String) extends Throwable(e)
 case class Json4sParsingException(e: String) extends Throwable(e)
 
-object GetType {
+object GetModel {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
@@ -25,7 +25,7 @@ object GetType {
     try{
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(apiResultJson)
-      //logger.trace("Parsed the json : " + apiResultJson)
+      logger.trace("Parsed the json : " + apiResultJson)
       val apiResultInfo = json.extract[APIResultJsonProxy]
       (apiResultInfo.APIResults.statusCode,apiResultInfo.APIResults.resultData)
     } catch {
@@ -40,13 +40,22 @@ object GetType {
     }
   }
 
+  def GetResponse(url:String): String = {
+    val httpClient = new HttpClient
+    val response: Response = httpClient.get(new URL(url))
+    logger.trace("response.status => " + response.status)
+    logger.trace("response.body   => " + response.body.asString)
+    val(statusCode,resultData) = getApiResult(response.body.asString)
+    logger.trace(resultData)
+    resultData
+  }
 
   def main(args: Array[String]) {
     logger.setLevel(Level.TRACE);
     val httpClient = new HttpClient
-    val response: Response = httpClient.get(new URL("http://127.0.0.1:8080/api/GetModel/arrayoflong/Long"))
-    logger.trace("response.status => " + response.status)
-    val (statusCode,resultData) = getApiResult(response.body.asString)
-    logger.trace(resultData)
+    // GetModel
+    logger.trace(GetResponse("http://127.0.0.1:8080/api/GetModel/system/copdriskassessment_000100/100"))
+    // GetType
+    logger.trace(GetResponse("http://127.0.0.1:8080/api/GetType/arrayoflong"))
   }
 }
