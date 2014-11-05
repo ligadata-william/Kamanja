@@ -85,7 +85,7 @@ trait EnvContext {
 
 trait ModelBase {
   val gCtx: EnvContext
-  val msg: BaseMsg
+  val msg: MessageContainerBase
   val modelName: String
   val modelVersion: String
   val tenantId: String
@@ -98,8 +98,8 @@ trait ModelBase {
 }
 
 trait ModelBaseObj {
-  def IsValidMessage(msg: BaseMsg): Boolean // Check to fire the model
-  def CreateNewModel(gCtx: EnvContext, msg: BaseMsg, tenantId: String): ModelBase // Creating same type of object with given values 
+  def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
+  def CreateNewModel(gCtx: EnvContext, msg: MessageContainerBase, tenantId: String): ModelBase // Creating same type of object with given values 
 
   def getModelName: String // Model Name
   def getVersion: String // Model Version

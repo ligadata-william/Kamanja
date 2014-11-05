@@ -788,7 +788,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		/** Add the IsValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
-		objBuffer.append(s"    def IsValidMessage(msg: BaseMsg): Boolean = { \n")
+		objBuffer.append(s"    def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
@@ -799,7 +799,7 @@ object NodePrinterHelpers extends LogTrait {
 		val msgTypeStr : String = msgTypedef.typeString
 		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 		
-		objBuffer.append(s"    def CreateNewModel(gCtx : EnvContext, msg : BaseMsg, tenantId: String): ModelBase =\n")
+		objBuffer.append(s"    def CreateNewModel(gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
 		objBuffer.append(s"    {\n") 
 		objBuffer.append(s"           new $classname(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId)\n")
 		objBuffer.append(s"    }\n") 	
