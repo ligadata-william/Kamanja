@@ -248,6 +248,7 @@ class MessageDefImpl {
 
     // for (e <- message.Elements) {
     //  var fields = e.Fields
+    
     if (message.Elements != null)
       for (f <- message.Elements) {
         // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
