@@ -192,7 +192,7 @@ class MessageDefImpl {
 
       if ((addMsg != null) && (addMsg.trim() != "")) {
         addMessageFunc = """
-          override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg)): Unit = {
+          override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
           if (childPath == null || childPath.size == 0) { // Invalid case
     	  return
        }
