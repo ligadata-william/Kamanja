@@ -367,7 +367,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, containerNames, true) // Containers
       }
     }
 
@@ -376,7 +376,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, topMessageNames, false) // Messages
       }
     }
 

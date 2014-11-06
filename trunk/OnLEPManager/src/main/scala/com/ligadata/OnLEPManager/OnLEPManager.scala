@@ -72,6 +72,7 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
 object OnLEPConfiguration {
   var storeType: String = _
   var dataLocation: String = _
+  var schemaName: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
@@ -408,8 +409,8 @@ class OnLEPManager {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, containerNames, true) // Containers
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, topMessageNames, false) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -505,6 +506,12 @@ class OnLEPManager {
       OnLEPConfiguration.dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
       if (OnLEPConfiguration.dataLocation.size == 0) {
         LOG.error("Not found valid DataLocation.")
+        return false
+      }
+
+      OnLEPConfiguration.schemaName = loadConfigs.getProperty("SchemaName".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.schemaName.size == 0) {
+        LOG.error("Not found valid SchemaName.")
         return false
       }
 

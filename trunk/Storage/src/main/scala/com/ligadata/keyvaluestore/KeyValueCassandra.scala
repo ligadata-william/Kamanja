@@ -58,9 +58,10 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	val consistencylevelDelete = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelDelete", "ANY"))
 
 	// Check if table exists or create if needed
-	// This is just for convenience until the process is defined
-	//
+	val createTblStmt = "CREATE TABLE IF NOT EXISTS " + table + " (key blob, value blob, primary key(key) );"
+	session.execute(createTblStmt);
 
+	//
 	var insertStmt = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?);")
 	var insertStmt1 = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?) IF NOT EXISTS;")
 	var selectStmt = session.prepare("SELECT value FROM " + table  + " WHERE key = ?;")
