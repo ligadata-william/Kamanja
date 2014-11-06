@@ -13,7 +13,7 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
 object GetTypeService {
-	case class Process(objectName:String, formatType:String)
+	case class Process(objectName:String)
 }
 
 class GetTypeService(requestContext: RequestContext) extends Actor {
@@ -25,16 +25,16 @@ class GetTypeService(requestContext: RequestContext) extends Actor {
 	val log = Logging(system, getClass)
 	
 	def receive = {
-		case Process(objectName,formatType) =>
-			process(objectName,formatType)
+		case Process(objectName) =>
+			process(objectName)
 			context.stop(self)
 	}
 	
-	def process(objectName:String, formatType:String) = {
+	def process(objectName:String) = {
 	
-		log.info("Requesting GetType {},{}",objectName,formatType)
+		log.info("Requesting GetType {}",objectName)
 		
-		val apiResult = MetadataAPIImpl.GetType(objectName,formatType)
+		val apiResult = MetadataAPIImpl.GetType(objectName,"JSON")
 		
 		requestContext.complete(apiResult)
 	}

@@ -25,11 +25,11 @@ trait MetadataAPIService extends HttpService {
         requestContext =>
           val getMessageService = actorRefFactory.actorOf(Props(new GetMessageService(requestContext)))
           getMessageService ! GetMessageService.Process(nameSpace,name,version)
+      } ~
+      path("GetType" / Segment ) { (objectName) =>
+        requestContext =>
+          val getTypeService = actorRefFactory.actorOf(Props(new GetTypeService(requestContext)))
+          getTypeService ! GetTypeService.Process(objectName)
       }
-	  path("GetType" / Segment / Segment) { (objectName, formatType) =>
-		requestContext =>
-			val getTypeService = actorRefFactory.actorOf(Props(new GetTypeService(requestContext)))
-			getTypeService ! GetTypeService.Process(objectName, formatType)
-	  }
     }
 }
