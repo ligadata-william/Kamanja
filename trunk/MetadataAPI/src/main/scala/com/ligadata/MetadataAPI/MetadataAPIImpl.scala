@@ -62,7 +62,7 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath:String, ZooKeeperConnectString: String)
+case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath:String, ZooKeeperConnectString: String)
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -194,17 +194,18 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("Get the object from store, key => " + KeyAsStr(k))
       store.get(k,o)
-      //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
       o
     } catch {
       case e:KeyNotFoundException => {
+	logger.trace("KeyNotFound Exception: Error => " + e.getMessage())
 	throw new ObjectNotFoundException(e.getMessage())
       }    
       case e:Exception => {
+	e.printStackTrace()
+	logger.trace("General Exception: Error => " + e.getMessage())
 	throw new ObjectNotFoundException(e.getMessage())
       }
     }
-
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore){
@@ -878,24 +879,27 @@ object MetadataAPIImpl extends MetadataAPI{
       connectinfo+= ("table" -> tableName)
       storeType match{
 	case "hashmap" => {
-	  connectinfo+= ("path" -> "/tmp")
+	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
 	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "treemap" => {
-	  connectinfo+= ("path" -> "/tmp")
+	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
 	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "cassandra" => {
 	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+	  var databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
 	  if( databaseHost == null ){
 	    databaseHost = "localhost"
 	  }
 	  connectinfo+= ("hostlist" -> databaseHost) 
-	  connectinfo+= ("schema" -> "metadata")
+	  connectinfo+= ("schema" -> databaseSchema)
 	  connectinfo+= ("ConsistencyLevelRead" -> "ONE")
 	}
 	case _ => {
@@ -3370,6 +3374,21 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("DatabaseHost => " + databaseHost)
 
 
+      var databaseSchema = "metadata"
+      val databaseSchemaOpt = configMap.APIConfigParameters.DatabaseSchema
+      if (databaseSchemaOpt != None ){
+	databaseSchema = databaseSchemaOpt.get
+      }
+      logger.trace("DatabaseSchema(applicable to cassandra only) => " + databaseSchema)
+
+      var databaseLocation = "/tmp"
+      val databaseLocationOpt = configMap.APIConfigParameters.DatabaseLocation
+      if (databaseLocationOpt != None ){
+	databaseLocation = databaseLocationOpt.get
+      }
+      logger.trace("DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
+
+
       var jarTargetDir = configMap.APIConfigParameters.JarTargetDir
       if (jarTargetDir == null ){
 	throw new MissingPropertyException("The property JarTargetDir must be defined in the config file " + configFile)
@@ -3423,6 +3442,8 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("GIT_ROOT",gitRootDir)
       metadataAPIConfig.setProperty("DATABASE",database)
       metadataAPIConfig.setProperty("DATABASE_HOST",databaseHost)
+      metadataAPIConfig.setProperty("DATABASE_SCHEMA",databaseSchema)
+      metadataAPIConfig.setProperty("DATABASE_LOCATION",databaseLocation)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR",jarTargetDir)
       metadataAPIConfig.setProperty("SCALA_HOME",scalaHome)
       metadataAPIConfig.setProperty("JAVA_HOME",javaHome)
