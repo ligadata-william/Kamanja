@@ -1890,6 +1890,10 @@ object MetadataAPIImpl extends MetadataAPI{
       apiResult
     }
     catch {
+      case e:AlreadyExistsException =>{
+	var apiResult = new ApiResult(-1,"Failed to add the model:",e.getMessage())
+	apiResult.toString()
+      } 
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to add the model:",e.toString)
 	apiResult.toString()
