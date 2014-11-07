@@ -84,6 +84,7 @@ case class ApiResultParsingException(e: String) extends Throwable(e)
 case class UnexpectedMetadataAPIException(e: String) extends Throwable(e)
 case class ObjectNotFoundException(e: String) extends Throwable(e)
 case class CreateStoreFailedException(e: String) extends Throwable(e)
+case class UpdateStoreFailedException(e: String) extends Throwable(e)
 
 case class LoadAPIConfigException(e: String) extends Throwable(e)
 case class MissingPropertyException(e: String) extends Throwable(e)
@@ -161,6 +162,8 @@ object MetadataAPIImpl extends MetadataAPI{
   private var conceptStore:    DataStore = _
   private var typeStore:       DataStore = _
   private var otherStore:      DataStore = _
+
+  def oStore = otherStore
   
   def KeyAsStr(k: com.ligadata.keyvaluestore.Key): String = {
     val k1 = k.toArray[Byte]
@@ -223,51 +226,25 @@ object MetadataAPIImpl extends MetadataAPI{
       def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
     }
     try{
-      var obj = GetObject(key.toLowerCase,store)
-      logger.trace("Found an existing deleted object for : " + key)
-      UpdateObject(key,value,store)
+      val t = store.beginTx
+      store.put(i)
+      store.commitTx(t)
     }
     catch{
-      case e:ObjectNotFoundException => {
-	logger.trace("Insert new object for : " + key)
-	val t = store.beginTx
-	store.add(i)
-	store.commitTx(t)
+      case e:Exception => {
+	logger.trace("Failed to insert/update object for : " + key)
+	throw new UpdateStoreFailedException("Failed to insert/update object for : " + key)
       }
     }
   }
 
   def SaveObject(key: String, value: String, store: DataStore){
     var ba = serializer.SerializeObjectToByteArray(value)
-    try{
-      var obj = GetObject(key.toLowerCase,store)
-      logger.trace("Found an existing deleted object for : " + key)
-      UpdateObject(key,ba,store)
-    }
-    catch{
-      case e:ObjectNotFoundException => {
-	SaveObject(key,ba,store)
-      }
-    }
+    SaveObject(key,ba,store)
   }
 
   def UpdateObject(key: String, value: Array[Byte], store: DataStore){
-    object i extends IStorage{
-      var k = new com.ligadata.keyvaluestore.Key
-      var v = new com.ligadata.keyvaluestore.Value
-      for(c <- key ){
-	k += c.toByte
-      }
-      for(c <- value ){
-	v += c
-      }
-      def Key = k
-      def Value = v
-      def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
-    }
-    val t = store.beginTx
-    store.put(i)
-    store.commitTx(t)
+    SaveObject(key,value,store)
   }
 
   def ZooKeeperMessage(objList: Array[BaseElemDef],operations:Array[String]) : Array[Byte] = {
@@ -3177,20 +3154,6 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def testDbOp{
-    try{
-      OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
-      SaveObject("key2","value2",otherStore)
-      SaveObject("key2","value2",otherStore)
-      GetObject("key2",otherStore)
-      CloseDbStore
-    }catch{
-      case e:Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
-
   def dumpMetadataAPIConfig{
 
     //metadataAPIConfig.list(System.out)
@@ -3429,13 +3392,13 @@ object MetadataAPIImpl extends MetadataAPI{
       if (znodePath == null ){
 	throw new MissingPropertyException("The property ZnodePath must be defined in the config file " + configFile)
       }
-      logger.trace("NotifyEngine => " + znodePath)
+      logger.trace("ZNodePath => " + znodePath)
 
       var zooKeeperConnectString = configMap.APIConfigParameters.ZooKeeperConnectString
       if (zooKeeperConnectString == null ){
 	throw new MissingPropertyException("The property NotifyEngine must be defined in the config file " + configFile)
       }
-      logger.trace("NotifyEngine => " + zooKeeperConnectString)
+      logger.trace("ZooKeeperConnectString => " + zooKeeperConnectString)
 
 
       metadataAPIConfig.setProperty("ROOT_DIR",rootDir)
