@@ -69,7 +69,7 @@ lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(M
 
 lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 
-lazy val SimpleKafkaProducer = project.in(file("SampleApplication/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
+lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
 lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (MedicalBootstrap, Storage)
 
