@@ -3452,4 +3452,17 @@ object MetadataAPIImpl extends MetadataAPI{
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
   }
+
+  def InitMdMgr(mgr:MdMgr, database:String, databaseHost:String, databaseSchema:String, databaseLocation:String){
+    val mdLoader = new MetadataLoad (mgr,"","","","")
+    mdLoader.initialize
+
+    metadataAPIConfig.setProperty("DATABASE",database)
+    metadataAPIConfig.setProperty("DATABASE_HOST",databaseHost)
+    metadataAPIConfig.setProperty("DATABASE_SCHEMA",databaseSchema)
+    metadataAPIConfig.setProperty("DATABASE_LOCATION",databaseLocation)
+
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
+    MetadataAPIImpl.LoadObjectsIntoCache
+  }
 }
