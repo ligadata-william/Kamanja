@@ -36,12 +36,16 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 
 	if(InMemory.toBoolean == true)
 	{
-		db = DBMaker.newMemoryDB()
-					.make()
+	  db = DBMaker.newMemoryDB().make()
 	}
 	else
 	{
-		db = DBMaker.newFileDB(new File(path + "/" + keyspace + ".db"))
+	  val dir = new File(path);
+	  if (!dir.exists()){
+	    // attempt to create the directory here
+	    dir.mkdir();
+	  }
+	  db = DBMaker.newFileDB(new File(path + "/" + keyspace + ".db"))
 					.closeOnJvmShutdown()
 					.asyncWriteEnable()
 					.asyncWriteFlushDelay(100)
