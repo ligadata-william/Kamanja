@@ -37,6 +37,11 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
     db = DBMaker.newMemoryDB()
       .make()
   } else {
+    val dir = new File(path);
+    if (!dir.exists()){
+      // attempt to create the directory here
+      dir.mkdir();
+    }
     db = DBMaker.newFileDB(new File(path + "/" + keyspace + ".hdb"))
       .closeOnJvmShutdown()
       .asyncWriteEnable()

@@ -62,7 +62,7 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath:String, ZooKeeperConnectString: String)
+case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath:String, ZooKeeperConnectString: String)
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -84,6 +84,7 @@ case class ApiResultParsingException(e: String) extends Throwable(e)
 case class UnexpectedMetadataAPIException(e: String) extends Throwable(e)
 case class ObjectNotFoundException(e: String) extends Throwable(e)
 case class CreateStoreFailedException(e: String) extends Throwable(e)
+case class UpdateStoreFailedException(e: String) extends Throwable(e)
 
 case class LoadAPIConfigException(e: String) extends Throwable(e)
 case class MissingPropertyException(e: String) extends Throwable(e)
@@ -161,6 +162,8 @@ object MetadataAPIImpl extends MetadataAPI{
   private var conceptStore:    DataStore = _
   private var typeStore:       DataStore = _
   private var otherStore:      DataStore = _
+
+  def oStore = otherStore
   
   def KeyAsStr(k: com.ligadata.keyvaluestore.Key): String = {
     val k1 = k.toArray[Byte]
@@ -194,17 +197,18 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("Get the object from store, key => " + KeyAsStr(k))
       store.get(k,o)
-      //logger.trace("key => " + KeyAsStr(o.key) + ",value => " + ValueAsStr(o.value))
       o
     } catch {
       case e:KeyNotFoundException => {
+	logger.trace("KeyNotFound Exception: Error => " + e.getMessage())
 	throw new ObjectNotFoundException(e.getMessage())
       }    
       case e:Exception => {
+	e.printStackTrace()
+	logger.trace("General Exception: Error => " + e.getMessage())
 	throw new ObjectNotFoundException(e.getMessage())
       }
     }
-
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore){
@@ -222,51 +226,25 @@ object MetadataAPIImpl extends MetadataAPI{
       def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
     }
     try{
-      var obj = GetObject(key.toLowerCase,store)
-      logger.trace("Found an existing deleted object for : " + key)
-      UpdateObject(key,value,store)
+      val t = store.beginTx
+      store.put(i)
+      store.commitTx(t)
     }
     catch{
-      case e:ObjectNotFoundException => {
-	logger.trace("Insert new object for : " + key)
-	val t = store.beginTx
-	store.add(i)
-	store.commitTx(t)
+      case e:Exception => {
+	logger.trace("Failed to insert/update object for : " + key)
+	throw new UpdateStoreFailedException("Failed to insert/update object for : " + key)
       }
     }
   }
 
   def SaveObject(key: String, value: String, store: DataStore){
     var ba = serializer.SerializeObjectToByteArray(value)
-    try{
-      var obj = GetObject(key.toLowerCase,store)
-      logger.trace("Found an existing deleted object for : " + key)
-      UpdateObject(key,ba,store)
-    }
-    catch{
-      case e:ObjectNotFoundException => {
-	SaveObject(key,ba,store)
-      }
-    }
+    SaveObject(key,ba,store)
   }
 
   def UpdateObject(key: String, value: Array[Byte], store: DataStore){
-    object i extends IStorage{
-      var k = new com.ligadata.keyvaluestore.Key
-      var v = new com.ligadata.keyvaluestore.Value
-      for(c <- key ){
-	k += c.toByte
-      }
-      for(c <- value ){
-	v += c
-      }
-      def Key = k
-      def Value = v
-      def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
-    }
-    val t = store.beginTx
-    store.put(i)
-    store.commitTx(t)
+    SaveObject(key,value,store)
   }
 
   def ZooKeeperMessage(objList: Array[BaseElemDef],operations:Array[String]) : Array[Byte] = {
@@ -878,24 +856,27 @@ object MetadataAPIImpl extends MetadataAPI{
       connectinfo+= ("table" -> tableName)
       storeType match{
 	case "hashmap" => {
-	  connectinfo+= ("path" -> "/tmp")
+	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
 	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "treemap" => {
-	  connectinfo+= ("path" -> "/tmp")
+	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
 	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "cassandra" => {
 	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+	  var databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
 	  if( databaseHost == null ){
 	    databaseHost = "localhost"
 	  }
 	  connectinfo+= ("hostlist" -> databaseHost) 
-	  connectinfo+= ("schema" -> "metadata")
+	  connectinfo+= ("schema" -> databaseSchema)
 	  connectinfo+= ("ConsistencyLevelRead" -> "ONE")
 	}
 	case _ => {
@@ -1476,16 +1457,21 @@ object MetadataAPIImpl extends MetadataAPI{
 	case "com.ligadata.olep.metadata.MessageDef" | "com.ligadata.olep.metadata.ContainerDef" => {
 	  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
 	  // along with the messageDef.
+	  val depJars = if (msgDef.DependencyJarNames != null) 
+			   (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName) 
 	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
 					       msgDef.name,1,msgDef.ver)
+	  arrayType.dependencyJarNames = depJars 
 	  SaveObject(arrayType)
 	  objectsAdded(0) = arrayType
 	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
 						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
+	  arrayBufType.dependencyJarNames = depJars 
 	  SaveObject(arrayBufType)
 	  objectsAdded(1) = arrayBufType
 	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
 							   msgDef.nameSpace,msgDef.name,msgDef.ver)
+	  sortedSetType.dependencyJarNames = depJars 
 	  SaveObject(sortedSetType)
 	  objectsAdded(2) = sortedSetType
 	  objectsAdded
@@ -1909,6 +1895,10 @@ object MetadataAPIImpl extends MetadataAPI{
       apiResult
     }
     catch {
+      case e:AlreadyExistsException =>{
+	var apiResult = new ApiResult(-1,"Failed to add the model:",e.getMessage())
+	apiResult.toString()
+      } 
       case e:Exception =>{
 	var apiResult = new ApiResult(-1,"Failed to add the model:",e.toString)
 	apiResult.toString()
@@ -3173,20 +3163,6 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def testDbOp{
-    try{
-      OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
-      SaveObject("key2","value2",otherStore)
-      SaveObject("key2","value2",otherStore)
-      GetObject("key2",otherStore)
-      CloseDbStore
-    }catch{
-      case e:Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
-
   def dumpMetadataAPIConfig{
 
     //metadataAPIConfig.list(System.out)
@@ -3370,6 +3346,21 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("DatabaseHost => " + databaseHost)
 
 
+      var databaseSchema = "metadata"
+      val databaseSchemaOpt = configMap.APIConfigParameters.DatabaseSchema
+      if (databaseSchemaOpt != None ){
+	databaseSchema = databaseSchemaOpt.get
+      }
+      logger.trace("DatabaseSchema(applicable to cassandra only) => " + databaseSchema)
+
+      var databaseLocation = "/tmp"
+      val databaseLocationOpt = configMap.APIConfigParameters.DatabaseLocation
+      if (databaseLocationOpt != None ){
+	databaseLocation = databaseLocationOpt.get
+      }
+      logger.trace("DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
+
+
       var jarTargetDir = configMap.APIConfigParameters.JarTargetDir
       if (jarTargetDir == null ){
 	throw new MissingPropertyException("The property JarTargetDir must be defined in the config file " + configFile)
@@ -3410,19 +3401,21 @@ object MetadataAPIImpl extends MetadataAPI{
       if (znodePath == null ){
 	throw new MissingPropertyException("The property ZnodePath must be defined in the config file " + configFile)
       }
-      logger.trace("NotifyEngine => " + znodePath)
+      logger.trace("ZNodePath => " + znodePath)
 
       var zooKeeperConnectString = configMap.APIConfigParameters.ZooKeeperConnectString
       if (zooKeeperConnectString == null ){
 	throw new MissingPropertyException("The property NotifyEngine must be defined in the config file " + configFile)
       }
-      logger.trace("NotifyEngine => " + zooKeeperConnectString)
+      logger.trace("ZooKeeperConnectString => " + zooKeeperConnectString)
 
 
       metadataAPIConfig.setProperty("ROOT_DIR",rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT",gitRootDir)
       metadataAPIConfig.setProperty("DATABASE",database)
       metadataAPIConfig.setProperty("DATABASE_HOST",databaseHost)
+      metadataAPIConfig.setProperty("DATABASE_SCHEMA",databaseSchema)
+      metadataAPIConfig.setProperty("DATABASE_LOCATION",databaseLocation)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR",jarTargetDir)
       metadataAPIConfig.setProperty("SCALA_HOME",scalaHome)
       metadataAPIConfig.setProperty("JAVA_HOME",javaHome)
@@ -3461,6 +3454,19 @@ object MetadataAPIImpl extends MetadataAPI{
     mdLoader.initialize
     MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
     //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
+    MetadataAPIImpl.LoadObjectsIntoCache
+  }
+
+  def InitMdMgr(mgr:MdMgr, database:String, databaseHost:String, databaseSchema:String, databaseLocation:String){
+    val mdLoader = new MetadataLoad (mgr,"","","","")
+    mdLoader.initialize
+
+    metadataAPIConfig.setProperty("DATABASE",database)
+    metadataAPIConfig.setProperty("DATABASE_HOST",databaseHost)
+    metadataAPIConfig.setProperty("DATABASE_SCHEMA",databaseSchema)
+    metadataAPIConfig.setProperty("DATABASE_LOCATION",databaseLocation)
+
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadObjectsIntoCache
   }

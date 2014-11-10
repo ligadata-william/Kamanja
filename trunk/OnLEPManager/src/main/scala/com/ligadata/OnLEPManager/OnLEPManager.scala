@@ -70,7 +70,12 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
 }
 
 object OnLEPConfiguration {
-  var storeType: String = _
+  var allConfigs: Properties = _
+  var metadataStoreType: String = _
+  var metadataSchemaName: String = _
+  var metadataLocation: String = _
+  var dataStoreType: String = _
+  var dataSchemaName: String = _
   var dataLocation: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
@@ -408,8 +413,8 @@ class OnLEPManager {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, containerNames, true) // Containers
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, topMessageNames, false) // Messages
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -483,8 +488,10 @@ class OnLEPManager {
     true
   }
 
-  private def initialize(loadConfigs: Properties): Boolean = {
+  private def initialize: Boolean = {
     var retval: Boolean = true
+
+    val loadConfigs = OnLEPConfiguration.allConfigs
 
     try {
       OnLEPConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
@@ -496,9 +503,33 @@ class OnLEPManager {
         }
       }
 
-      OnLEPConfiguration.storeType = loadConfigs.getProperty("StoreType".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.storeType.size == 0) {
-        LOG.error("Not found valid StoreType.")
+      OnLEPConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.metadataStoreType.size == 0) {
+        LOG.error("Not found valid MetadataStoreType.")
+        return false
+      }
+
+      OnLEPConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.metadataSchemaName.size == 0) {
+        LOG.error("Not found valid MetadataSchemaName.")
+        return false
+      }
+
+      OnLEPConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.metadataLocation.size == 0) {
+        LOG.error("Not found valid MetadataLocation.")
+        return false
+      }
+
+      OnLEPConfiguration.dataStoreType = loadConfigs.getProperty("DataStoreType".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.dataStoreType.size == 0) {
+        LOG.error("Not found valid DataStoreType.")
+        return false
+      }
+
+      OnLEPConfiguration.dataSchemaName = loadConfigs.getProperty("DataSchemaName".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.dataSchemaName.size == 0) {
+        LOG.error("Not found valid DataSchemaName.")
         return false
       }
 
@@ -596,6 +627,8 @@ class OnLEPManager {
       return
     }
 
+    OnLEPConfiguration.allConfigs = loadConfigs
+
     {
       // Printing all configuration
       LOG.info("Configurations:")
@@ -613,7 +646,7 @@ class OnLEPManager {
       return
     }
 
-    if (initialize(loadConfigs) == false) {
+    if (initialize == false) {
       Shutdown
       return
     }

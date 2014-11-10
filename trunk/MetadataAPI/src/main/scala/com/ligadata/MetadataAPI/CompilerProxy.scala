@@ -18,6 +18,8 @@ import com.ligadata._
 import com.ligadata.messagedef._
 import com.ligadata.Compiler._
 
+import com.ligadata.Serialize._
+
 case class MsgCompilationFailedException(e: String) extends Throwable(e)
 case class ModelCompilationFailedException(e: String) extends Throwable(e)
 
@@ -155,26 +157,50 @@ class CompilerProxy{
     /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
     val injectLoggingStmts : Boolean = false 
     val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts)
-    val (classStr,model) = compiler.compile(pmmlStr)
+    val (classStr,modDef) = compiler.compile(pmmlStr)
 
-    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + model.name + ".pmml"    
+    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
+
+    var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+
+    if (modDef.DependencyJarNames != null) {
+      val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
+      val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
+      if (classPath != null && classPath.size > 0) {
+        classPath = classPath + ":" + depJars 
+      } else {
+        classPath = depJars 
+      }
+    }
+
     val (jarFile,depJars) = 
       compiler.createJar(classStr,
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
+			 classPath,
 			 pmmlScalaFile,
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 			 false)
-    model.jarName = jarFile
-    if( model.ver == 0 ){
-      model.ver     = 1
+    modDef.jarName = jarFile
+    if( modDef.ver == 0 ){
+      modDef.ver     = 1
     }
-    if( model.modelType == null){
-      model.modelType = "RuleSet"
+    if( modDef.modelType == null){
+      modDef.modelType = "RuleSet"
     }
-    (classStr,model)
+    (classStr,modDef)
+  }
+
+  private def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
   }
 
 
@@ -185,14 +211,29 @@ class CompilerProxy{
       val msg = new MessageDefImpl()
       logger.trace("Call Message Compiler ....")
       val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr)
-      logger.trace("Message Compilation done ....")
+      logger.trace("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
+
+      
       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePath)
       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
       dumpStrTextToFile(classStr,msgDefClassFilePath)
+
+     var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+
+      if (msgDef.DependencyJarNames != null) {
+        val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
+        val depJars = msgDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
+        if (classPath != null && classPath.size > 0) {
+          classPath = classPath + ":" + depJars 
+        } else {
+          classPath = depJars 
+        }
+      }
+
       var(status,jarFile) = jarCode(msgDef.name,
 	    classStr,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH"),
+	    classPath,
 	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
 	    "Test Client",
 	    msgDefFilePath,

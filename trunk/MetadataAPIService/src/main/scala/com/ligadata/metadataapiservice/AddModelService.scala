@@ -12,29 +12,29 @@ import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
 
-object GetTypeService {
+object AddModelService {
 	case class Process(objectName:String)
 }
 
-class GetTypeService(requestContext: RequestContext) extends Actor {
+class AddModelService(requestContext: RequestContext) extends Actor {
 
-	import GetTypeService._
+	import AddModelService._
 	
 	implicit val system = context.system
 	import system.dispatcher
 	val log = Logging(system, getClass)
 	
 	def receive = {
-		case Process(objectName) =>
-			process(objectName)
+		case Process(pmmlStr) =>
+			process(pmmlStr)
 			context.stop(self)
 	}
 	
-	def process(objectName:String) = {
-	
-		log.info("Requesting GetType {}",objectName)
+	def process(pmmlStr:String) = {
+	  
+		log.info("Requesting AddModel {}",pmmlStr)
 		
-		val apiResult = MetadataAPIImpl.GetType(objectName,"JSON")
+		val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
 		
 		requestContext.complete(apiResult)
 	}

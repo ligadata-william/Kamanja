@@ -1399,6 +1399,41 @@ object TestMetadataAPI{
     }
   }
 
+  def testSaveObject(key: String, value: String, store: DataStore){
+    val serializer = SerializerManager.GetSerializer("kryo")
+    var ba = serializer.SerializeObjectToByteArray(value)
+    try{
+      MetadataAPIImpl.UpdateObject(key,ba,store)
+    }
+    catch{
+      case e:Exception => {
+	logger.trace("Failed to save the object : " + e.getMessage())
+      }
+    }
+  }
+
+  def testDbOp{
+    try{
+      val serializer = SerializerManager.GetSerializer("kryo")
+      testSaveObject("key1","value1",MetadataAPIImpl.oStore)
+      var obj = MetadataAPIImpl.GetObject("key1",MetadataAPIImpl.oStore)
+      var v = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      assert(v == "value1")
+      testSaveObject("key1","value2",MetadataAPIImpl.oStore)
+      obj = MetadataAPIImpl.GetObject("key1",MetadataAPIImpl.oStore)
+      v = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      assert(v == "value2")
+      testSaveObject("key1","value3",MetadataAPIImpl.oStore)
+      obj = MetadataAPIImpl.GetObject("key1",MetadataAPIImpl.oStore)
+      v = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      assert(v == "value3")
+    }catch{
+      case e:Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
   def StartTest{
     try{
       val dumpMetadata = ()               => { DumpMetadata }
@@ -1533,15 +1568,8 @@ object TestMetadataAPI{
       MetadataAPIImpl.InitMdMgrFromBootStrap
       databaseOpen = true
       StartTest
+      //testDbOp
 
-      // AddDerivedConcept
-      // AddType
-      //TestKryoSerialize
-      //TestSerialize1("kryo")
-      //TestSerialize1("protobuf")
-      //TestGenericProtobufSerializer
-      //TestNotifyZooKeeper
-      //NotifyZooKeeperAddModelEvent
 
     }catch {
       case e: Exception => {

@@ -45,7 +45,7 @@ object MedEnvContext extends EnvContext with LogTrait {
   private[this] var _kryoSer: Serializer = null
 
   // Adding new messages or Containers
-  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
+  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
       val names: Array[String] = c.split('.')

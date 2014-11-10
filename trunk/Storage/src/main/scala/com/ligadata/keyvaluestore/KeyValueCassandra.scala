@@ -41,26 +41,39 @@ class KeyValueCassandraTx(owner : DataStore) extends Transaction
 
 class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 {
+        // Read all cassandra parameters
 	var hostnames = parameter.getOrElse("hostlist", "localhost") ;
 	var keyspace = parameter.getOrElse("schema", "default") ;
 	var table = parameter.getOrElse("table", "default") ;
-	var clusterBuilder = Cluster.builder()
-
-	clusterBuilder.addContactPoints(hostnames)
-
-	if(parameter.contains("user"))
-		clusterBuilder.withCredentials(parameter("user") ,  parameter.getOrElse("password", ""))
-
-	val cluster = clusterBuilder.build()
-	val session = cluster.connect(keyspace);
+	var replication_class = parameter.getOrElse("replication_class","SimpleStrategy")
+	var replication_factor = parameter.getOrElse("replication_factor","1")
 	val consistencylevelRead = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelRead", "ONE"))
 	val consistencylevelWrite = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelWrite", "ANY"))
 	val consistencylevelDelete = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelDelete", "ANY"))
 
-	// Check if table exists or create if needed
-	// This is just for convenience until the process is defined
-	//
 
+	var clusterBuilder = Cluster.builder()
+	clusterBuilder.addContactPoints(hostnames)
+	if(parameter.contains("user"))
+		clusterBuilder.withCredentials(parameter("user") ,  parameter.getOrElse("password", ""))
+	val cluster = clusterBuilder.build()
+
+	// create a session that is not associated with a key space yet so we can create one if needed
+	var session = cluster.connect();
+
+	// Check keyspace if not exists
+	val createKeySpaceStmt = "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " with replication = {'class':'" + replication_class + "', 'replication_factor':" + replication_factor + "};"
+	session.execute(createKeySpaceStmt);
+
+        // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
+	session.close()
+	session = cluster.connect(keyspace)
+
+	// Check if table exists or create if needed
+	val createTblStmt = "CREATE TABLE IF NOT EXISTS " + table + " (key blob, value blob, primary key(key) );"
+	session.execute(createTblStmt);
+
+	//
 	var insertStmt = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?);")
 	var insertStmt1 = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?) IF NOT EXISTS;")
 	var selectStmt = session.prepare("SELECT value FROM " + table  + " WHERE key = ?;")
