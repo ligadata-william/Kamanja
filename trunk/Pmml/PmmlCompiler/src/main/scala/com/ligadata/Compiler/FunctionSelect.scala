@@ -9,6 +9,42 @@ import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
 import com.ligadata.edifecs._
+import java.net.URL
+import java.net.URLClassLoader
+import scala.reflect.runtime.{ universe => ru }
+//import java.nio.file.{ Paths, Files }
+import java.io.{ File }
+
+class PMMLClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  override def addURL(url: URL) {
+    super.addURL(url)
+  }
+}
+
+class PMMLLoaderInfo {
+  // class loader
+  val loader: PMMLClassLoader = new PMMLClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+
+  // Loaded jars
+  val loadedJars: TreeSet[String] = new TreeSet[String];
+
+  // Get a mirror for reflection
+  val mirror: reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+}
+
+object PMMLConfiguration {
+  var jarPaths: collection.immutable.Set[String] = _
+  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
+}
 
 /** 
  *  1) Build a function typestring from the apply node and its children (function arguments) to locate the appropriate
@@ -1030,6 +1066,54 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		
 	}
 	
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: PMMLClassLoader): Boolean = {
+    if (PMMLConfiguration.jarPaths == null) return false
+    
+    var retVal: Boolean = true
+    var allJars: Array[String] = null
+
+    val jarname = if (elem.JarName == null) "" else elem.JarName.trim
+
+    if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0 && jarname.size > 0) {
+      allJars = elem.DependencyJarNames :+ jarname
+    } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
+      allJars = elem.DependencyJarNames
+    } else if (jarname.size > 0) {
+      allJars = Array(jarname)
+    } else {
+      return retVal
+    }
+
+    val jars = allJars.map(j => PMMLConfiguration.GetValidJarFile(PMMLConfiguration.jarPaths, j))
+
+    // Loading all jars
+    for (j <- jars) {
+      logger.info("Processing Jar " + j.trim)
+      val fl = new File(j.trim)
+      if (fl.exists) {
+        try {
+          if (loadedJars(fl.getPath())) {
+            logger.info("Jar " + j.trim + " already loaded to class path.")
+          } else {
+            loader.addURL(fl.toURI().toURL())
+            logger.info("Jar " + j.trim + " added to class path.")
+            loadedJars += fl.getPath()
+          }
+        } catch {
+          case e: Exception => {
+            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+            return false
+          }
+        }
+      } else {
+        logger.error("Jar " + j.trim + " not found")
+        return false
+      }
+    }
+
+    true
+  }
+	
 	/** 
 	 *  For ContainerTypeDefs that have an element or elements, determine which of them have container members.
 	 *  Make an array of their superclasses similar to collectContainerSuperClasses.  Since there can be more
@@ -1044,9 +1128,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 */
 	
 	def collectCollectionElementSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] = {
-	
+		val pmmlLoader = new PMMLLoaderInfo
+	  
 	  	/** First get the arguments that are potentially collections with ElementTypes */
-		val mirror = runtimeMirror(this.getClass.getClassLoader)
 		/** only container types that have element types */
 	  	val collFullPkgNames : Array[(String,String,ContainerTypeDef)] = 
 	  	  		argTypes.filter(arg => { arg._3.isInstanceOf[ContainerTypeDef] && 
@@ -1059,6 +1143,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		val (nm, fqClassname, containerElem) : (String, String, ContainerTypeDef) = triple
 	  
 	  		val containerElements : Array[BaseTypeDef] = containerElem.ElementTypes
+	  		LoadJarIfNeeded(containerElem, pmmlLoader.loadedJars, pmmlLoader.loader)
 	  		
 	  		val elementTypeInfo : (String, Array[Array[List[(String, ClassSymbol, Type)]]]) = if (containerElements.size > 0) {
 	  			var elementTypesDecorated : ArrayBuffer[Array[List[(String, ClassSymbol, Type)]]] = ArrayBuffer[Array[List[(String, ClassSymbol, Type)]]]()
@@ -1073,10 +1158,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  						val stop : Boolean = true
 	  						
 	  					} else {	  					  
+		  					LoadJarIfNeeded(mbrContainer, pmmlLoader.loadedJars, pmmlLoader.loader)
 		  					val useThisName = mbrContainer.typeString
-					  		val clz = Class.forName(useThisName)
+					  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 							// Convert class into class symbol
-							val clsSymbol = mirror.classSymbol(clz)
+							val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
 							// Info about the class
 							val isTrait = clsSymbol.isTrait			 
 							val isAbstractClass = clsSymbol.isAbstractClass
@@ -1092,8 +1178,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 								if (clssym == "scala.Any") {
 									(clssym, null, null)
 								} else {
-									val cls = Class.forName(clssym)
-									val symbol = mirror.classSymbol(cls)
+									val cls = Class.forName(clssym, true, pmmlLoader.loader)
+									val symbol = pmmlLoader.mirror.classSymbol(cls)
 									val typ = symbol.toType
 									(clssym, symbol, typ)
 								}

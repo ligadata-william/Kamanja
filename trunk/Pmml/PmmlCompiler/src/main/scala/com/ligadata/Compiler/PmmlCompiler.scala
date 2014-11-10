@@ -311,7 +311,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 			
-			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging)
+			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging, Array("."))
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
 			val xmlSrcTxt : String  = Source.fromFile(pmmlFilePath).mkString
@@ -358,8 +358,13 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 }
 
 
-class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger, val injectLogging : Boolean) {
+class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger, val injectLogging : Boolean, val jaPaths : Array[String]) {
 	
+	if (jaPaths == null || jaPaths.size == 0)
+		PMMLConfiguration.jarPaths = Array(".").toSet
+	else
+		PMMLConfiguration.jarPaths = jaPaths.toSet
+  
 	logger.trace("PmmlCompiler ctor ... begins")
 
 	var pmmlFilePath : String = "NOTSET"
