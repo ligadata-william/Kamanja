@@ -1457,16 +1457,21 @@ object MetadataAPIImpl extends MetadataAPI{
 	case "com.ligadata.olep.metadata.MessageDef" | "com.ligadata.olep.metadata.ContainerDef" => {
 	  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
 	  // along with the messageDef.
+	  val depJars = if (msgDef.DependencyJarNames != null) 
+			   (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName) 
 	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
 					       msgDef.name,1,msgDef.ver)
+	  arrayType.dependencyJarNames = depJars 
 	  SaveObject(arrayType)
 	  objectsAdded(0) = arrayType
 	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
 						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
+	  arrayBufType.dependencyJarNames = depJars 
 	  SaveObject(arrayBufType)
 	  objectsAdded(1) = arrayBufType
 	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
 							   msgDef.nameSpace,msgDef.name,msgDef.ver)
+	  sortedSetType.dependencyJarNames = depJars 
 	  SaveObject(sortedSetType)
 	  objectsAdded(2) = sortedSetType
 	  objectsAdded
