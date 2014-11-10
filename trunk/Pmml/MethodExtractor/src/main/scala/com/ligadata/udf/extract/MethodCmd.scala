@@ -60,21 +60,39 @@ import com.ligadata.olep.metadata._
  	
  */
 
-class MethodCmd(val logger : Logger
-			    , val namespace : String
-			    , var typeMap : Map[String, String]
-			    , var typeArray : ArrayBuffer[String]
+
+/** 
+ *	Collect the basic elements if a FunctionDef with an instance of this:
+ */
+class FuncDefArgs (val namespace : String
+				, val fcnName : String
+				, val physicalName : String
+				, val returnNmSpc : String
+				, val returnTypeName : String
+				, val argTriples : Array[(String,String,String)] 
+				, val versionNo : Int)
+{}
+
+class MethodCmd(  val mgr : MdMgr
+				, val initialVersion : Int
+				, val namespace : String
+			    , var typeMap : Map[String, BaseElemDef]
+			    , var typeArray : ArrayBuffer[BaseElemDef]
 			    , val name : String
 			    , val fullName : String
 			    , val returnType : String
-			    , val typeSig : String) {
-  
-	//logger.trace(s"namespace=$namespace, name=$name, returnType=$returnType, typeSig=$typeSig")
-	override def toString : String = {
+			    , val typeSig : String) extends LogTrait {  
+
+	/** 
+	 *  Answer a FuncDefArgs instance and a string representation of the MakeFunc command that would catalog
+	 *  the function described by the constructor arguments.  The FuncDefArgs has all the information needed
+	 *  to build a FunctionDef except for function's jar and the jars that its jar depends
+	 */
+	def makeFuncDef : (FuncDefArgs,String) = {
 
 	  	val buffer : StringBuilder = new StringBuilder()
-	  	val returnTypeVal : String = ReturnType
-	  	val argNm_NmSpc_TypNm : Array[String] = TypeSig
+	  	val (returnTypeVal, baseElem) : (String, BaseElemDef) = ReturnType
+	  	val (argNm_NmSpc_TypNm, argTriples) : (Array[String], Array[(String,String,String)]) = TypeSig
 
 	  	buffer.append(s"MdMgr.MakeFunc(mgr, ${'"'}$namespace${'"'}, ")
 	  	val rStr = returnTypeVal.toString
@@ -96,13 +114,17 @@ class MethodCmd(val logger : Logger
 	  	buffer.append(s"$argsStr")
 	  	
 	  	buffer.append(s"), null)\n")
-	  	buffer.toString
+	  	
+	  	val funcDefArgs = new FuncDefArgs(namespace, name, fullName, baseElem.NameSpace, baseElem.Name, argTriples, initialVersion)
+	  	
+	  	
+	  	(funcDefArgs, buffer.toString)
 	} 
 	
 	/** 
 	 *  Answer the return type string with a namespace injected as necessary.
 	 */
-	def ReturnType : String = {
+	private def ReturnType : (String, BaseElemDef) = {
 		collectType(returnType.split('.'), returnType)
 	}
 
@@ -119,8 +141,10 @@ class MethodCmd(val logger : Logger
 	 *  
 	 *  @return a type string for each argument.
 	 */
-	def TypeSig : Array[String] = {
+	private def TypeSig : (Array[String], Array[(String,String,String)]) = {
 	  
+		var typeArgTriples : ArrayBuffer[(String,String,String)] = ArrayBuffer[(String,String,String)]()
+		
 		val typeSigArgs : String = encloseElementArgs(typeSig, '(', ')')
 		val nm_nmspc_typnm : Array[String] = if (typeSigArgs == "") {
 			Array[String]()
@@ -142,32 +166,41 @@ class MethodCmd(val logger : Logger
 			} else {
 				/** a few transformations... */
 				
-	
+				val hasQName : Boolean = (argNames.filter(_ == "q").size > 0)
+				if (hasQName) {
+					val stop : Int = 0
+				}
+				
 				/** Collect the types of each argument */
-				val argsWithNmSpcFixed : Array[String] = argTypes.map( argtype => {
+				val argsWithNmSpcFixed : Array[(String,BaseElemDef)] = argTypes.map( argtype => {
 					val argNodes : Array[String] = argtype.split('.')
+					if (argtype.contains("scala.Double, scala.Double, scala.Double")) {
+						val stop : Int = 0
+					}
 					collectType(argNodes, argtype)
 				})
 				
 				/** transform the names and the argtype namespace and typename to a triple */
 				val nameAndTypePair = argNames.zip(argsWithNmSpcFixed)
 				val nameNmSpcTypNameTriples : Array[(String,String,String)] = nameAndTypePair.map( pair => {
-				  val (name, typepair) = pair
-				  val typePairSplit = typepair.split('.')
-				  val quotedTypePair  = typePairSplit.map(itm => s"${'"'}$itm${'"'}")
-				  val quotedName = s"${'"'}$name${'"'}"
-				  (quotedName,quotedTypePair(0),quotedTypePair(1))
+				  val (name, typeNSNmTypePair) = pair
+				  val (typeNSNm, _) : (String, BaseElemDef) = typeNSNmTypePair
+				  val typePairSplit = typeNSNm.split('.')
+				  val typePair  = typePairSplit.map(_.trim)  
+				  
+				  (name.trim,typePair(0),typePair(1))
 				})
 				/** transform the triple into a single string */
 				val nmnmspctyptrip : Array[String] =  nameNmSpcTypNameTriples.map ( tup => {
 					val (nm,nmspc,typnm) = tup
+					typeArgTriples += tup /** ... and remember the triple too */
 					s"($nm, $nmspc, $typnm)"
 				})
 				
 				nmnmspctyptrip
 			}
 		}
-		nm_nmspc_typnm
+		(nm_nmspc_typnm, typeArgTriples.toArray)
 	}
 
 	/** 
@@ -177,12 +210,12 @@ class MethodCmd(val logger : Logger
 	 *  the appropriate Make<Type> string for it ... any {MakeArray, MakeArrayBuffer, MakeSet, MakeMap, MakeList}
 	 *  
 	 *  @param typeParts the nodes of the type string split on the dots
-	 *  @return type string for this type fully qualified with '.' as delimiter
+	 *  @return type string for this type fully qualified with '.' as delimiter and the BaseElemDef for it
 	 */
-	def collectType(typeParts : Array[String], typeString : String) : String = {
-	  	val typeCollected = if (typeParts.size == 0) "" else {
+	private def collectType(typeParts : Array[String], typeString : String) : (String, BaseElemDef) = {
+	  	val (typeCollected,typeInstance) : (String, BaseElemDef) = if (typeParts.size == 0) ("", null) else {
 			val unQualifiedTypeName = typePartsLast(typeParts, typeString) 
-			val typeName : String = unQualifiedTypeName match {
+			val (typeName, typInst) : (String, BaseElemDef) = unQualifiedTypeName match {
 				case "List" => ListType(unQualifiedTypeName, typeParts)
 				case "Array" => ArrayType(unQualifiedTypeName, typeParts)
 				case "Array[T]" => ArrayType(unQualifiedTypeName, typeParts)
@@ -222,7 +255,11 @@ class MethodCmd(val logger : Logger
 													if (unQualifiedTypeName.startsWith("HashMap")) {
 														HashMapType(unQualifiedTypeName,typeParts)
 													} else {
-														SimpleType(unQualifiedTypeName, typeParts)
+														if (unQualifiedTypeName.startsWith("Tuple")) {
+															TupleType(unQualifiedTypeName,typeParts)
+														} else {
+															SimpleType(unQualifiedTypeName, typeParts)
+														}
 													}
 												}
 											}
@@ -234,269 +271,555 @@ class MethodCmd(val logger : Logger
 					}
 				}
 			}
-			typeName
+			(typeName, typInst)
 	  	}
-	  	typeCollected
+	  	(typeCollected,typeInstance)
 	}
 	
 	/** 
 	 *  A List type with the item qualifier in brackets is presented. 
 	 *  e.g., scala.collection.mutable.List[Float] => System.ListOfFloat
 	 */
-	def ListType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def ListType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
   		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.ListOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeList(mgr, $nmspc, $nm, $itmnmspc, $itmnm)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)
+			val listElem : ListTypeDef = if (isImmutable) { 
+				logger.error("Immutable Lists are not currently supported")
+				//mgr.AddImmutableList(nmspc, nm, itmnmspc, itmnm, initialVersion)
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddList(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ListTypeDef]				
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddList(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ListTypeDef]				
+			}
+			typeMap(key) = listElem
+			typeArray += listElem			
+			listElem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A Queue type with the item qualifier in brackets is presented. 
 	 *  e.g., scala.collection.mutable.Queue[Float] => System.QueueOfFloat
 	 */
-	def QueueType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def QueueType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
   		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.QueueOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeQueue(mgr, $nmspc, $nm, $itmnmspc, $itmnm)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val queueElem : QueueTypeDef = if (isImmutable) { 
+				logger.error("Immutable Queues are not currently supported")
+				//mgr.AddImmutableQueue(nmspc, nm, itmnmspc, itmnm, initialVersion)
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddQueue(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[QueueTypeDef]
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddQueue(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[QueueTypeDef]
+			}
+			typeMap(key) = queueElem
+			typeArray += queueElem			
+			queueElem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  An Array type with the element qualifier in brackets is presented. 
 	 *  e.g., scala.collection.mutable.Array[Float] => System.ArrayOfFloat
 	 */
-	def ArrayType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def ArrayType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.ArrayOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeArray(mgr, $nmspc, $nm, $itmnmspc, $itmnm, 1)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+			val elem : BaseTypeDef = if (alreadyCataloged) {
+				mgr.ActiveType(nmspc, nm) 
+			} else {
+				mgr.AddArray(nmspc, nm, itmnmspc, itmnm, 1, initialVersion)
+				mgr.ActiveType(nmspc, nm) 
+			}
+			typeMap(key) = elem
+			typeArray += elem			
+			elem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  An ArrayBuffer type with the element qualifier in brackets is presented. 
 	 *  e.g., scala.collection.mutable.ArrayBuffer[Float] => System.ArrayBufferOfFloat
 	 */
-	def ArrayBufferType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def ArrayBufferType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.ArrayBufferOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeArrayBuffer(mgr, $nmspc, $nm, $itmnmspc, $itmnm, 1)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+			val elem : BaseTypeDef = if (alreadyCataloged) {
+				mgr.ActiveType(nmspc, nm) 
+			} else {
+				mgr.AddArrayBuffer(nmspc, nm, itmnmspc, itmnm, 1, initialVersion)
+				mgr.ActiveType(nmspc, nm) 
+			}
+			typeMap(key) = elem
+			typeArray += elem			
+			elem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A Map type with the key/value in brackets is presented. 
 	 *  e.g., scala.collection.mutable.Map[String, Float] => System.MapOfStringFloat
 	 */
-	def MapType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def MapType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.MapOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (keynmspc,keynm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val (valnmspc,valnm) : (String, String) = itmNmSpcdAndQuoted(1)	
-			val cmd : String = s"MdMgr.MakeMap(mgr, $nmspc, $nm, ($keynmspc, $keynm), ($valnmspc, $valnm))"
-			typeMap(key) = cmd
-			typeArray += cmd
-	   	}
-	  	key
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (keynmspc,keynm) : (String, String) = itmNmSpc(0)	
+			val (valnmspc,valnm) : (String, String) = itmNmSpc(1)	
+			val mapElem : ContainerTypeDef = if (isImmutable) { 
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddImmutableMap(nmspc, nm, (keynmspc,keynm), (valnmspc,valnm), initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ContainerTypeDef]	
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddMap(nmspc, nm, (keynmspc,keynm), (valnmspc,valnm), initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ContainerTypeDef]	
+			}
+			typeMap(key) = mapElem
+			typeArray += mapElem			
+			mapElem
+	  	} else {
+	  		typeMap(key)
+	  	}
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A HashMapType type with the key/value in brackets is presented. 
 	 *  e.g., scala.collection.mutable.Map[String, Float] => System.MapOfStringFloat
 	 */
-	def HashMapType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def HashMapType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.HashMapOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (keynmspc,keynm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val (valnmspc,valnm) : (String, String) = itmNmSpcdAndQuoted(1)	
-			val cmd : String = s"MdMgr.MakeHashMap(mgr, $nmspc, $nm, ($keynmspc, $keynm), ($valnmspc, $valnm))"
-			typeMap(key) = cmd
-			typeArray += cmd
-	   	}
-	  	key
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (keynmspc,keynm) : (String, String) = itmNmSpc(0)	
+			val (valnmspc,valnm) : (String, String) = itmNmSpc(1)	
+			val mapElem : HashMapTypeDef = if (isImmutable) { 
+				logger.error("Immutable HashMaps are not currently supported")
+				//mgr.AddImmutableHashMap(nmspc, nm, (keynmspc,keynm), (valnmspc,valnm), initialVersion)
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddHashMap(nmspc, nm, (keynmspc,keynm), (valnmspc,valnm), initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[HashMapTypeDef]
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddHashMap(nmspc, nm, (keynmspc,keynm), (valnmspc,valnm), initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[HashMapTypeDef]
+			}
+			typeMap(key) = mapElem
+			typeArray += mapElem			
+			mapElem
+	  	} else {
+	  		typeMap(key)
+	  	}
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A Set type with the key in brackets is presented. 
 	 *  e.g., scala.collection.mutable.Set[String]
 	 */
-	def SetType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def SetType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.SetOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeSet(mgr, $nmspc, $nm, $itmnmspc, $itmnm)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val setElem : ContainerTypeDef = if (isImmutable) { 
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddImmutableSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ContainerTypeDef]
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[ContainerTypeDef]
+			}
+			typeMap(key) = setElem
+			typeArray += setElem			
+			setElem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A TreeSet type with the key in brackets is presented. 
 	 *  e.g., scala.collection.mutable.TreeSet[String]
 	 */
-	def TreeSetType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def TreeSetType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.TreeSetOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeTreeSet(mgr, $nmspc, $nm, $itmnmspc, $itmnm)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val setElem : TreeSetTypeDef = if (isImmutable) { 
+				logger.error("Immutable TreeSets are not currently supported")
+				//mgr.AddImmutableTreeSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+				  mgr.ActiveType(nmspc, nm) 
+				} else {
+				  mgr.AddTreeSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+				  mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[TreeSetTypeDef]
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddTreeSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[TreeSetTypeDef]
+			}
+			typeMap(key) = setElem
+			typeArray += setElem			
+			setElem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A SortedSet type with the key in brackets is presented. 
 	 *  e.g., scala.collection.mutable.SortedSet[String]
 	 */
-	def SortedSetType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
+	private def SortedSetType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
   		val isImmutable : Boolean = (typeParts.filter(part => part == "immutable").size > 0)
 
  		val itemKey = formKeyFromElementSpecifiers(unQualifiedTypeName)
 		val key = s"System.SortedSetOf$itemKey"
-		if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
+		val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
 			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val itmNmSpcdAndQuoted : Array[(String,String)] = formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
-			val (itmnmspc,itmnm) : (String, String) = itmNmSpcdAndQuoted(0)	
-			val cmd : String = s"MdMgr.MakeSortedSet(mgr, $nmspc, $nm, $itmnmspc, $itmnm)"
-			typeMap(key) = cmd
-			typeArray += cmd
+			val itmNmSpc : Array[(String,String)] = formNmSpcQualifedElementSpecifiers(unQualifiedTypeName)
+			val (itmnmspc,itmnm) : (String, String) = itmNmSpc(0)	
+			val setElem : SortedSetTypeDef = if (isImmutable) { 
+				logger.error("Immutable SortedSets are not currently supported")
+				//mgr.AddImmutableSortedSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddSortedSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[SortedSetTypeDef]
+			} else {
+				val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, nm) != null)
+				val elem : BaseTypeDef = if (alreadyCataloged) {
+					mgr.ActiveType(nmspc, nm) 
+				} else {
+					mgr.AddSortedSet(nmspc, nm, itmnmspc, itmnm, initialVersion)
+					mgr.ActiveType(nmspc, nm) 
+				}
+				elem.asInstanceOf[SortedSetTypeDef]
+			}
+			typeMap(key) = setElem
+			typeArray += setElem			
+			setElem
+	  	} else {
+	  		typeMap(key)
 	  	}
-	  	key
+	  	(key, elem)
 	}
 	
 	/** 
 	 *  A scalar or other simple type 
 	 */
-	def SimpleType(unQualifiedTypeName : String, typeParts : Array[String]) : String = {
-	  	val key : String = s"System.$unQualifiedTypeName"
-	  	if (! typeMap.contains(key)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(key)
-			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val typ : ObjType.Type = ObjType.fromString(key.split('.').last)
-			val cmd : String = s"MdMgr.MakeScalar(mgr, $nmspc, $nm, $typ)"
-			typeMap(key) = cmd
-			typeArray += cmd
-	  	}
-	  	key
-	}
-	
-	/** 		
-		MdMgr.MakeTupleType(for argKey = TupleOfStringString...tbd)
- 		def MakeTupleType(mgr : MdMgr, nameSpace: String, name:String, tuples : Array[(String,String)])
-	 */
-	
-	def TupleType(tupleTypeStr : String) : String = {
-		val buffer : StringBuilder = new StringBuilder()
-		buffer.append("System.TupleOf")
-		val args : String = encloseElementArgs(tupleTypeStr, '(', ')')  
-	  	val types : Array[String] = args.split(',')
-	  	if (args == "T") {
-	  		buffer.append("Any")
-	  	} else {
-	  		val typesWithoutDots : Array[String] = types.map( typ => typ.split('.').last.trim)
-	  		typesWithoutDots.addString(buffer, "")
-	  	}		
-	  	val argKey : String = buffer.toString
-		if (! typeMap.contains(argKey)) {
-			val nmspcAndNm : Array[String] = splitAndQuote(argKey)
-			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
-			val typesWithoutDots : Array[String] = types.map( typ => typ.split('.').last.trim)
-			val nmspcAndNmsSansDots : Array[(String,String)] = typesWithoutDots.map( typ => (s"${'"'}System${'"'}", s"${'"'}$typ${'"'}") )
-			val tupBuf : StringBuilder = new StringBuilder()
-			tupBuf.append(s"Array(")
-			nmspcAndNmsSansDots.addString(tupBuf, ", ")
-			tupBuf.append(s")")
-			val tuples : String = tupBuf.toString
-			val cmd : String = s"MdMgr.MakeTupleType(mgr, $nmspc, $nm, $tuples)"
-			typeMap(argKey) = cmd
-			typeArray += cmd
+	private def SimpleType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
+	  	var key : String = s"System.$unQualifiedTypeName"
+	  	//logger.trace(s"SimpleType(unQualifiedTypeName = $unQualifiedTypeName)")
+
+	  	if (unQualifiedTypeName.contains("Double")) {
+	  		val stop : Int = 0
 	  	}
 	  	
-	  	argKey
+	  	val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
+			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
+			
+			if (nm == "T") {
+				val stop : Int = 0
+			}
+			val coercedNm : String = if (nm.size == 1 && AlphaCaps.contains(nm)) {
+	  			"Any"
+	  		} else {
+	  			nm
+	  		}
+			
+			val typ : ObjType.Type = ObjType.fromString(coercedNm)
+			val alreadyCataloged : Boolean = (mgr.ActiveType(nmspc, coercedNm) != null)
+			val scalarElem : BaseTypeDef = if (alreadyCataloged) {
+				mgr.ActiveType(nmspc, coercedNm) 
+			} else {
+				mgr.AddScalar(nmspc, coercedNm, typ, ObjType.asString(typ), initialVersion)
+				mgr.ActiveType(nmspc, coercedNm) 
+			}
+			/** redo the key as it may have been coerced to "Any" */
+			key = s"System.$coercedNm"
+			typeMap(key) = scalarElem
+			typeArray += scalarElem			
+			scalarElem
+	  	} else {
+	  		typeMap(key)
+	  	}
+	  	(key, elem)
+	}
+	
+	/**
+	 * Handle the explicit Tuple<N>[type,type,....,typeN] types.  For example,
+	 * 
+	 * 	def ToArrayOfInt(tuple : Tuple6[Any,Any,Any,Any,Any,Any]) : Array[Int]  => arg type name is TupleOfAny6
+	 * 	def SumSomeScalars(tuple : Tuple4[Float,Double,Int,Long]) : Double => arg type name is TupleOfFloatDoubleIntLong
+	 *  
+	 *  FIXME: This code will not support member types that also have member types (e.g., Tuple2[scala.Array[String],Map[String,scala.Array[String,Map[String,scala.Array[String]]]]])
+	 *  Recursion needs to be introduced here by asking the formKeyFromElementSpecifiers method for the type string.
+	 */
+	private def TupleType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
+		val (key,tups) : (String,Array[(String,String)]) = if (unQualifiedTypeName.contains("[")) {
+			val buffer : StringBuilder = new StringBuilder()
+			val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')  
+		  	val types : Array[String] = args.split(',')
+		  	
+		  	/** Map template symbols to Any before generation */
+		  	val typesX : Array[String] = types.map(typ => {
+		  		if (typ.size == 1 && AlphaCaps.contains(typ)) "Any" else typ
+		  	})
+		  		
+		  	/** Generate the type name */
+		  	val allSameElemTypes : Boolean = (typesX.toSet.size == 1)
+		  	val typeName : String = if (allSameElemTypes) {
+		  		val size = typesX.size
+		  		val elemType = typesX(0)
+		  		s"Tupleof$elemType$size"
+		  	} else {
+		  		typesX.addString(buffer, "").toString
+			}
+		  	buffer.clear
+		  	val tuples : Array[(String,String)] = typesX.map( typ => ("System", typ.split('.').last.trim))
+		  	(s"System.$typeName",tuples)
+		} else {
+			(s"System.$unQualifiedTypeName", Array[(String,String)]())
+		}
+		
+	  	val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
+			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
+			/** Generate the tuples array ... NOTE:  The types from metadata can be prefixed with pkg qualifiers... eliminate the prefix portion */
+			mgr.AddTupleType(nmspc, nm, tups, initialVersion)
+			val tupElem : BaseTypeDef = mgr.ActiveType(nmspc,nm)
+			typeMap(key) = tupElem
+			typeArray += tupElem			
+			tupElem
+	  	} else {
+	  		typeMap(key)
+	  	}
+	  
+	  	(key, elem)
+	}
+	
+	
+	/**
+	 *    This version of TupleType handles the "(type,type,...,typeN)" form.
+	 *    
+	 *  FIXME: This code will not support member types that also have member types (e.g., Tuple2[scala.Array[String],Map[String,scala.Array[String,Map[String,scala.Array[String]]]]])
+	 *  Recursion needs to be introduced here by asking the formKeyFromElementSpecifiers method for the type string.
+	 */
+	
+	private def TupleType(tupleTypeStr : String) : (String, BaseElemDef) = {
+		val buffer : StringBuilder = new StringBuilder()
+		val args : String = encloseElementArgs(tupleTypeStr, '(', ')')  
+	  	val types : Array[String] = args.split(',')
+	  	
+		if (tupleTypeStr == "(T, U)") {
+			val stop : Int = 0
+		}
+				
+	  	/** Map template symbols to Any before generation */
+	  	val typesX : Array[String] = types.map(typ => {
+	  		val trimmedTyp : String = typ.trim
+			val argNodes : Array[String] = trimmedTyp.split('.')
+			val (typeStr, elemDef) : (String, BaseElemDef) = collectType(argNodes, trimmedTyp)
+			val typeStrSansNmSpc : String = typeStr.split('.').last
+	  		if (typeStrSansNmSpc.size == 1 && AlphaCaps.contains(typeStrSansNmSpc)) "Any" else typeStrSansNmSpc
+	  	})
+	  		
+	  	/** Generate the type name */
+	  	val allSameElemTypes : Boolean = (typesX.toSet.size == 1)
+	  	val typeName : String = if (allSameElemTypes) {
+	  		val size = typesX.size
+	  		val elemType = typesX(0)
+	  		s"TupleOf$elemType$size"
+	  	} else {
+	  		buffer.append("TupleOf")
+	  		typesX.addString(buffer, "").toString
+		}
+	  	buffer.clear
+
+	  	val key : String = s"System.$typeName"
+	  	val elem : BaseElemDef = if (! typeMap.contains(key)) {
+			val nmspcAndNm : Array[String] = key.split('.')
+			val (nmspc,nm) : (String, String) = (nmspcAndNm(0), nmspcAndNm(1))
+			/** Generate the tuples array ... NOTE:  The types from metadata can be prefixed with pkg qualifiers... eliminate the prefix portion */
+			val tuples : Array[(String,String)] = typesX.map( typ => ("System", typ.split('.').last.trim))
+			
+			mgr.AddTupleType(nmspc, nm, tuples, initialVersion)
+			val tupElem : BaseTypeDef = mgr.ActiveType(nmspc,nm)
+			typeMap(key) = tupElem
+			typeArray += tupElem			
+			tupElem
+	  	} else {
+	  		typeMap(key)
+	  	}
+		
+	  	(key, elem)
 	}
 
+	private val AlphaCaps : String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	def formKeyFromElementSpecifiers(unQualifiedTypeName : String) : String = {
+	private def formKeyFromElementSpecifiers(unQualifiedTypeName : String) : String = {
 		val buffer : StringBuilder = new StringBuilder()
 		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
 	  	val types : Array[String] = args.split(',')
-	  	val typesRecursed : Array[String] = types.map( typ => {
+	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
 	  		if (typ.contains("[")) {
 	  			collectType(typ.split('.'), typ)
 	  		} else {
-	  			typ
+	  			val key : String = if (typ.size == 1 && AlphaCaps.contains(typ)) {
+	  				"Any"
+	  			} else {
+	  				typ
+	  			}
+	  			val elem : BaseElemDef = mgr.ActiveType("System", key) 
+	  			(key, elem)
 	  		}
 	  	})
-	  	if (args == "T") {
+	  	if (args.size == 1 && AlphaCaps.contains(args)) {
 	  		buffer.append("Any")
 	  	} else {
-	  		val typesWithoutDots : Array[String] = typesRecursed.map( typ => typ.split('.').last)
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
+	  			val (typStr, typedef) : (String, BaseElemDef) = typPair
+	  			typStr.split('.').last 
+	  		})
 	  		typesWithoutDots.addString(buffer, "")
 	  	}		
 	  	val argKey : String = buffer.toString
@@ -504,20 +827,53 @@ class MethodCmd(val logger : Logger
 	}
 	
 	/** Each argument type of the element arguments, pair with the System namespace and quote them each */
-	def formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName : String) : Array[(String,String)] = {
+	private def formNmSpcQualifedElementSpecifiers(unQualifiedTypeName : String) : Array[(String,String)] = {
 		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
 	  	val types : Array[String] = args.split(',')
-	  	val typesRecursed : Array[String] = types.map( typ => {
+	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
 	  		if (typ.contains("[")) {
 	  			collectType(typ.split('.'), typ)
 	  		} else {
-	  			typ
+	  			val key : String = if (typ.size == 1 && AlphaCaps.contains(typ)) {
+	  				"Any"
+	  			} else {
+	  				typ
+	  			}
+	  			val elem : BaseElemDef = mgr.ActiveType("System", key) 
+	  			(key, elem)
 	  		}
 	  	})
-	  	val nmspcdAndQuoted = if (args == "T") {
+	  	val nmspcdAndQuoted = if (args.size == 1 && AlphaCaps.contains(args)) {
+	  		Array(("System","Any"))
+	  	} else {
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
+	  			val (typStr, typedef) : (String, BaseElemDef) = typPair   		  
+	  			typStr.split('.').last 		
+	  		})
+	  		typesWithoutDots.map( typ => ("System", typ))
+	  	}		
+	  	nmspcdAndQuoted
+	}
+	
+	/** Each argument type of the element arguments, pair with the System namespace and quote them each */
+	private def formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName : String) : Array[(String,String)] = {
+		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
+	  	val types : Array[String] = args.split(',')
+	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
+	  		if (typ.contains("[")) {
+	  			collectType(typ.split('.'), typ)
+	  		} else {
+	  			val elem : BaseElemDef = mgr.ActiveType("System", typ) 
+	  			(typ, elem)
+	  		}
+	  	})
+	  	val nmspcdAndQuoted = if (args.size == 1 && AlphaCaps.contains(args)) {
 	  		Array((s"${'"'}System${'"'}",s"${'"'}Any${'"'}"))
 	  	} else {
-	  		val typesWithoutDots : Array[String] = typesRecursed.map( typ => typ.split('.').last)
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
+	  			val (typStr, typedef) : (String, BaseElemDef) = typPair   		  
+	  			typStr.split('.').last 		
+	  		})
 	  		typesWithoutDots.map( typ => (s"${'"'}System${'"'}", s"${'"'}$typ${'"'}"))
 	  	}		
 	  	nmspcdAndQuoted
@@ -527,7 +883,7 @@ class MethodCmd(val logger : Logger
 	 * Used by the various type makers above, split the qualified name into a namespace
 	 * and name, returning the values as quoted strings.
 	 */
-	def splitAndQuote(qualifiedTypeName : String) : Array[String] = {
+	private def splitAndQuote(qualifiedTypeName : String) : Array[String] = {
 		val splitAndQuoted : Array[String] = qualifiedTypeName.split('.').map( itm => {
 			s"${'"'}$itm${'"'}"
 		})
@@ -535,7 +891,7 @@ class MethodCmd(val logger : Logger
 		splitAndQuoted
 	}
 	
-	def encloseElementArgs(typeString : String, openBracketOrParen : Char, closeBracketOrParen : Char) : String = {
+	private def encloseElementArgs(typeString : String, openBracketOrParen : Char, closeBracketOrParen : Char) : String = {
 		var begoffset : Int = 0
 		var offset : Int = 0
 		var bracketOrParenCnt : Int = 0
@@ -569,7 +925,7 @@ class MethodCmd(val logger : Logger
 	}
 	
 	/** 
-	 *  get the last portion of the name, including any item notation 
+	 *  get the last portion of the name, including any member notation 
 	 *  
 	 *  Handle things like this:
 	 *  	scala.collection.mutable.HashMap[scala.Int,scala.Int]
@@ -577,10 +933,10 @@ class MethodCmd(val logger : Logger
 	 *  	Int, scala.Int, etc
 	 *  
 	 */
-	def typePartsLast(typeParts : Array[String], typeString : String) : String = {
+	private def typePartsLast(typeParts : Array[String], typeString : String) : String = {
 	  
 		/** for the ordinary case, the . split done by the caller is adequate.  For a case where dots
-		 *  appear in the collection element spec, the dots break badly.  Therefore we look relook 
+		 *  appear in the collection element spec, the dots break badly.  Therefore we look re-look 
 		 *  at the originating string passed as the 2nd arg to determine the appropriate last type part. */
 		var idx : Int = 0
 		breakable {
@@ -592,10 +948,13 @@ class MethodCmd(val logger : Logger
 		}
 		val lastPart : String = if (idx < typeParts.size) {
 			val elementArgPart : String = encloseElementArgs(typeString, '[', ']')
-			val elementArgPartsChecked : String = if (elementArgPart(0) == '(') /** check for tuple ... when true transform type TupleOf<whatever is in the ()> */
-				TupleType(elementArgPart)
-			else
+			/** check for tuple ... when true transform type TupleOf<whatever is in the ()> */
+			val elementArgPartsChecked : String = if (elementArgPart(0) == '(') {
+				val (nmSpcQualifiedTupTypeString, _) : (String, BaseElemDef) = TupleType(elementArgPart)
+				nmSpcQualifiedTupTypeString
+			} else {
 				elementArgPart
+			}
 			val collectionTypeWithOpenBracket : String = typeParts(idx)
 			/** scrape off the bracket and any part of the element type that may be after it */
 			val collectionType : String = collectionTypeWithOpenBracket.split('[').head
@@ -607,7 +966,13 @@ class MethodCmd(val logger : Logger
 			buf.append("]")
 			buf.toString
 		} else {
-			typeParts.last
+			/** it is still possibly a tuple type expression of form '(type,type,...,type)' */
+			if (typeString(0) == '(') {
+				val (nmSpcQualifiedTupTypeString, elemDef) : (String, BaseElemDef) = TupleType(typeString)
+				nmSpcQualifiedTupTypeString.split('.').last
+			} else {
+				typeParts.last
+			}
 		}
 		lastPart
 	}
