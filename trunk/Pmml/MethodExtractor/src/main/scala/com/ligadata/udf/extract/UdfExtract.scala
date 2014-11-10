@@ -12,6 +12,12 @@ import java.net.URL
 import java.net.URLClassLoader
 import org.apache.log4j.Logger
 import com.ligadata.pmml.udfs._
+import com.ligadata.olep.metadata._
+import scala.util.parsing.json.JSON
+import scala.util.parsing.json.{JSONObject, JSONArray}
+import org.json4s._
+import org.json4s.JsonDSL._
+import com.ligadata.Serialize._
 
 
 /**
@@ -61,8 +67,9 @@ object MethodExtract extends App with LogTrait{
 
 	override def main (args : Array[String]) {
  	  
-		var typeMap : Map[String,String] = Map[String,String]()
-		var typeArray : ArrayBuffer[String] = ArrayBuffer[String]()
+		var typeMap : Map[String,BaseElemDef] = Map[String,BaseElemDef]()
+		var typeArray : ArrayBuffer[BaseElemDef] = ArrayBuffer[BaseElemDef]()
+		var funcDefArgs : ArrayBuffer[FuncDefArgs] = ArrayBuffer[FuncDefArgs]()
 		
 		val arglist = args.toList
 		type OptionMap = scala.collection.mutable.Map[Symbol, String]
@@ -75,6 +82,10 @@ object MethodExtract extends App with LogTrait{
 		    						nextOption(map ++ Map('namespace -> value), tail)
 		    	case "--exclude" :: value :: tail =>
 		    						nextOption(map ++ Map('excludeList -> value), tail)
+		    	case "--versionNumber" :: value :: tail =>
+		    						nextOption(map ++ Map('versionNumber -> value), tail)
+		    	case "--deps" :: value :: tail =>
+		    						nextOption(map ++ Map('deps -> value), tail)
 		    	case option :: tail => {
 		    		logger.error("Unknown option " + option)
 					val usageMsg : String = usage
@@ -90,18 +101,36 @@ object MethodExtract extends App with LogTrait{
 		val namespace = if (options.contains('namespace)) options.apply('namespace) else null
 		val excludeListStr = if (options.contains('excludeList)) options.apply('excludeList) else null
 		var excludeList : Array[String] = null
-		
-		if (clsName == null || namespace == null) {
+		val versionNumberStr = if (options.contains('versionNumber)) options.apply('versionNumber) else null
+		var versionNumber : Int = 1
+		try {
+			if (versionNumberStr != null) versionNumberStr.toInt
+		} catch {
+		  case _:Throwable => versionNumber = 1
+		}
+		val depsIn = if (options.contains('deps)) options.apply('deps) else null
+		if (clsName == null || namespace == null || depsIn == null) {
 			val usageStr = usage
 			logger.error("There must be a fully qualified class name supplied as an argument.")
 			logger.error(usageStr)
 			sys.exit(1)
 		}
+		/** 
+		 *  Split the deps ... the first element and the rest... the head element has the
+		 *  jar name where this lib lives (assuming that the sbtProjDependencies.scala script was used
+		 *  to prepare the dependencies).  For the jar, we only need the jar's name... strip the path
+		 */
+		val depsArr : Array[String] = depsIn.split(',').map(_.trim)
+		val jarName = depsArr.head.split('/').last
+		val deps : Array[String] = depsArr.tail
+		
 		val justObjectsFcns : String = clsName.split('.').last.trim
 		logger.trace(s"Just catalog the functions found in $clsName")
 
 		if (excludeListStr != null) {
 			excludeList = excludeListStr.split(',').map(fn => fn.trim)
+		} else {
+			excludeList = Array[String]()
 		}
 		/** get the members */
 		val mbrs = companion[com.ligadata.pmml.udfs.UdfBase](clsName).members
@@ -112,6 +141,8 @@ object MethodExtract extends App with LogTrait{
 		initFcnNameNodes.addString(initFcnBuffer,"_")
 		val initFcnName : String = initFcnBuffer.toString
 		initFcnBuffer.append(s"\ndef init_$initFcnName {\n")
+				
+		val mgr : MdMgr = InitializeMdMgr
 
 		/** filter out the methods and then only utilize those that are in the object ... ignore inherited trait methods */ 
 		mbrs.filter(_.toString.startsWith("method")).foreach{ fcnMethod => 
@@ -127,9 +158,12 @@ object MethodExtract extends App with LogTrait{
 				val ts : String = typeSig.toString
 				val notExcluded : Boolean = (excludeList.filter( exclnm => nm.contains(exclnm) || rt.contains(exclnm)).length == 0)
 				if (notExcluded && ! nm.contains("$")) {		  
-					val cmd : MethodCmd = new MethodCmd(logger, namespace, typeMap, typeArray, nm, fnm, rt, ts)
+					val cmd : MethodCmd = new MethodCmd(mgr, versionNumber, namespace, typeMap, typeArray, nm, fnm, rt, ts)
 					if (cmd != null) {
-						val cmdStr : String = cmd.toString
+						val (funcInfo,cmdStr) : (FuncDefArgs,String) = cmd.makeFuncDef
+						if (funcInfo != null) {
+							funcDefArgs += funcInfo
+						}
 						initFcnBuffer.append(s"\t$cmdStr")
 					}
 				} else {
@@ -139,22 +173,34 @@ object MethodExtract extends App with LogTrait{
 		}
 		initFcnBuffer.append(s"}\n")
 		val fcnStr = initFcnBuffer.toString
-		logger.info(s"$fcnStr")
+		//logger.info(s"$fcnStr")
 
-		/** similarly, dump the type creation function */
-	  	val initTypeBuffer : StringBuilder = new StringBuilder()
-		initTypeBuffer.append(s"\ndef initTypesFor_$initFcnName {\n")
-		/** print the type commands out in the order encountered s.t. types that refer to other (sub) types can find them in mgr */
-		/** print out the scalars first ... then the others */
-		typeArray.filter(_.contains("MakeScalar")).foreach( typeCmd => {
-			initTypeBuffer.append(s"\t$typeCmd\n")
+		/** Serialize the types that were generated during the UDF lib introspection and print them to stdout */
+		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",typeArray.toSet.toArray)	
+		println
+		println(typesAsJson)
+		println
+		println
+
+		/** Create the FunctionDef objects to be serialized by combining the FuncDefArgs collected with the version and deps info */
+		val features: Set[FcnMacroAttr.Feature] = null
+		val funcDefs : Array[FunctionDef] = funcDefArgs.toArray.map( fArgs => {
+			
+			mgr.MakeFunc(fArgs.namespace
+						, fArgs.fcnName
+						, fArgs.physicalName
+						, (fArgs.returnNmSpc, fArgs.returnTypeName)
+						, fArgs.argTriples.toList
+						, features
+						, fArgs.versionNo
+						, jarName
+						, deps)
 		})
-		typeArray.filterNot(_.contains("MakeScalar")).foreach( typeCmd => {
-			initTypeBuffer.append(s"\t$typeCmd\n")
-		})
-		initTypeBuffer.append(s"}\n")
-		val typeCmdsStr = initTypeBuffer.toString
-		logger.info(s"$typeCmdsStr")
+		
+		/** And serialize and print them */
+		val functionsAsJson : String = JsonSerializer.SerializeObjectListToJson("Functions",funcDefs.toArray)
+		println
+		println(functionsAsJson)
 		
 		logger.trace("Complete!")
 	}
@@ -162,18 +208,75 @@ object MethodExtract extends App with LogTrait{
 	def usage : String = {
 """	
 Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed scala object name> 
-											  --namespace <the onlep namespace> 
-											  --exclude <a list of functions to ignore>
+                                                    --namespace <the onlep namespace> 
+                                                    --exclude <a list of functions to ignore>
+                                                    --versionNumber <N>
+                                                    --deps <jar dependencies comma delimited list>
          where 	<fully qualifed scala object name> (required) is the scala object name that contains the 
 					functions to be cataloged
 				<the onlep namespace> in which these UDFs should be cataloged
 				<a list of functions to ignore> is a comma delimited list of functions to ignore (OPTIONAL)
-       NOTE: The jar containing this scala object must be on the class path.  Both arguments are mandatory.
+				<N> is the version number to be assigned to all functions in the UDF lib.  It should be greater than
+					the prior versions that may have been for a prior version of the UDFs.
+				<jar dependencies comma delimited list> this is the list of jars that this UDF lib (jar) depends upon.
+					A complete dependency list can be obtained by running the sbtProjDependencies.scala script.
+	  
+       NOTE: The jar containing this scala object and jars upon which it depends should be on the class path.  Except for
+	   the exclusion list, all arguments are mandatory.
 
 """
 	}
-}
+	
+	/** 
+	 *  Retrieve a fresh and empty MdMgr from MdMgr object.  Seed it with some essential scalars (and essential system containers) 
+	 *  to start the ball rolling.
+	 *  
+	 *  @return nearly empty MdMgr... seeded with essential scalars
+	 */
+	def InitializeMdMgr : MdMgr = {
+		val versionNumber : Int = 1
+		val mgr : MdMgr = MdMgr.GetMdMgr
 
+		/** seed essential types */
+		mgr.AddScalar(MdMgr.sysNS, "Any", ObjType.tAny, "Any", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.AnyImpl")
+		mgr.AddScalar(MdMgr.sysNS, "String", ObjType.tString, "String", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.StringImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Int", ObjType.tInt, "Int", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.IntImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Integer", ObjType.tInt, "Int", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.IntImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Long", ObjType.tLong, "Long", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.LongImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Boolean", ObjType.tBoolean, "Boolean", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.BoolImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Bool", ObjType.tBoolean, "Boolean", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.BoolImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Double", ObjType.tDouble, "Double", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.DoubleImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Float", ObjType.tFloat, "Float", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.FloatImpl")
+		mgr.AddScalar(MdMgr.sysNS, "Char", ObjType.tChar, "Char", versionNumber, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.CharImpl")
+
+		mgr.AddFixedContainer(MdMgr.sysNS
+						    , "Context"
+						    , "com.ligadata.Pmml.Runtime.Context"
+					  		, List()) 
+		 		  		
+		mgr.AddFixedContainer(MdMgr.sysNS
+						    , "EnvContext"
+						    , "com.ligadata.OnLEPBase.EnvContext"
+					  		, List()) 
+		 		  		
+		mgr.AddFixedContainer(MdMgr.sysNS
+							    , "BaseMsg"
+							    , "com.ligadata.OnLEPBase.BaseMsg"
+						  		, List()) 
+		  		
+		mgr.AddFixedContainer(MdMgr.sysNS
+							    , "BaseContainer"
+							    , "com.ligadata.OnLEPBase.BaseContainer"
+						  		, List()) 		
+				  		
+		mgr.AddFixedContainer(MdMgr.sysNS
+							    , "MessageContainerBase"
+							    , "com.ligadata.OnLEPBase.MessageContainerBase"
+						  		, List()) 		
+
+		mgr
+	}
+}
 
 
  
