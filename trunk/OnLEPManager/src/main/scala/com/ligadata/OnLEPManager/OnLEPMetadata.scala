@@ -234,8 +234,7 @@ class OnLEPMetadata {
       allJars = elem.DependencyJarNames :+ jarname
     } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
       allJars = elem.DependencyJarNames
-    }
-    if (jarname.size > 0) {
+    } else if (jarname.size > 0) {
       allJars = Array(jarname)
     } else {
       return retVal
