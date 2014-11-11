@@ -4,12 +4,12 @@ installPath=$1
 srcPath=$2
 
 if [ ! -d "$installPath" ]; then
-        echo "No install path supplied. Usage: PrepKvStores.sh <installPath> <sourcePath>
+        echo "No install path supplied. Usage: PrepKvStores.sh <installPath> <sourcePath>"
         exit 1
 fi
 
 if [ ! -d "$srcPath" ]; then
-        echo "No source path supplied. Usage: PrepKvStores.sh <installPath> <sourcePath>
+        echo "No source path supplied. Usage: PrepKvStores.sh <installPath> <sourcePath>"
         exit 1
 fi
 
@@ -17,7 +17,8 @@ export ONLEPLIBPATH=$installPath
 
 for file in $installPath/*.jar;
 do
-  CLASSPATH=$CLASSPATH:$file
+	echo "Adding $file to classpath..."
+	CLASSPATH=$CLASSPATH:$file
 done
 
 echo "Prepare the test kvstore - Dyspnea Codes map..."
