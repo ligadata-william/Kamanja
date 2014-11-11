@@ -667,6 +667,17 @@ object JsonSerializer {
 		      ("DependantJars"   -> o.dependencyJarNames.toList))
 	  pretty(render(json))
 	}
+	case o:ImmutableMapTypeDef => {
+	  val json = (("ObjectType"      -> "ImmutableMapTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
 	case _ => {
             throw new UnsupportedObjectException("zkSerializeObjectToJson doesn't support the  objects of type objectType of " + mdObj.getClass().getName() + " yet.")
 	}
