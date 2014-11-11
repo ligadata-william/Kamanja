@@ -1,7 +1,7 @@
 {
   "Message": {
     "NameSpace": "System",
-    "Name": "OutpatientClaim_test",
+    "Name": "OutpatientClaim",
     "Version": "00.01.00",
     "Description": "Outpatient Claim",
     "Fixed": "true",
