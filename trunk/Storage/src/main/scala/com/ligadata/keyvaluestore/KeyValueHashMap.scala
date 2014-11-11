@@ -21,6 +21,7 @@ class KeyValueHashMapTx(owner: DataStore) extends Transaction {
   def del(key: Key) = { owner.del(key) }
   def del(source: IStorage) = { owner.del(source) }
   def getAllKeys(handler: (Key) => Unit) = { owner.getAllKeys(handler) }
+  def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
 }
 
 class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
@@ -66,6 +67,15 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
   def put(source: IStorage) =
     {
       map.put(source.Key.toArray[Byte], source.Value.toArray[Byte])
+      if (withTransactions)
+        db.commit() //persist changes into disk
+    }
+
+  def putBatch(sourceArray: Array[IStorage]) =
+    {
+      sourceArray.foreach( source => {
+	map.put(source.Key.toArray[Byte], source.Value.toArray[Byte])
+      })
       if (withTransactions)
         db.commit() //persist changes into disk
     }

@@ -6,6 +6,7 @@ import com.datastax.driver.core.Session
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.BatchStatement
 import java.nio.ByteBuffer
 
 /*
@@ -35,8 +36,8 @@ class KeyValueCassandraTx(owner : DataStore) extends Transaction
 	def get( key: Key, handler : (Value) => Unit) = { owner.get(key, handler) }
 	def del(key: Key) = { owner.del(key) }
 	def del(source: IStorage) = { owner.del(source) }
-	
 	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
+	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
 }
 
 class KeyValueCassandra(parameter: PropertyMap) extends DataStore
@@ -95,6 +96,18 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 		var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
 		var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
 		session.execute(updateStmt.bind(value,key).setConsistencyLevel(consistencylevelWrite))
+	}
+
+
+        def putBatch(sourceArray: Array[IStorage]) = 
+	{
+	  val batch = new BatchStatement
+	  sourceArray.foreach ( source => {
+	    var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
+	    var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
+	    batch.add(updateStmt.bind(value,key));
+	  })
+	  session.execute(batch);
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =

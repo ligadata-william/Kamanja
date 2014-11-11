@@ -39,24 +39,24 @@ case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
 case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
 
-case class UnsupportedObjectException(e: String) extends Throwable(e)
-case class Json4sSerializationException(e: String) extends Throwable(e)
-case class Json4sParsingException(e: String) extends Throwable(e)
-case class FunctionListParsingException(e: String) extends Throwable(e)
-case class FunctionParsingException(e: String) extends Throwable(e)
-case class TypeDefListParsingException(e: String) extends Throwable(e)
-case class TypeParsingException(e: String) extends Throwable(e)
-case class TypeDefProcessingException(e: String) extends Throwable(e)
-case class ConceptListParsingException(e: String) extends Throwable(e)
-case class ConceptParsingException(e: String) extends Throwable(e)
-case class MessageDefParsingException(e: String) extends Throwable(e)
-case class ContainerDefParsingException(e: String) extends Throwable(e)
-case class ModelDefParsingException(e: String) extends Throwable(e)
-case class ApiResultParsingException(e: String) extends Throwable(e)
-case class UnexpectedMetadataAPIException(e: String) extends Throwable(e)
-case class ObjectNotFoundException(e: String) extends Throwable(e)
-case class CreateStoreFailedException(e: String) extends Throwable(e)
-case class ZkTransactionParsingException(e: String) extends Throwable(e)
+case class UnsupportedObjectException(e: String) extends Exception(e)
+case class Json4sSerializationException(e: String) extends Exception(e)
+case class Json4sParsingException(e: String) extends Exception(e)
+case class FunctionListParsingException(e: String) extends Exception(e)
+case class FunctionParsingException(e: String) extends Exception(e)
+case class TypeDefListParsingException(e: String) extends Exception(e)
+case class TypeParsingException(e: String) extends Exception(e)
+case class TypeDefProcessingException(e: String) extends Exception(e)
+case class ConceptListParsingException(e: String) extends Exception(e)
+case class ConceptParsingException(e: String) extends Exception(e)
+case class MessageDefParsingException(e: String) extends Exception(e)
+case class ContainerDefParsingException(e: String) extends Exception(e)
+case class ModelDefParsingException(e: String) extends Exception(e)
+case class ApiResultParsingException(e: String) extends Exception(e)
+case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
+case class ObjectNotFoundException(e: String) extends Exception(e)
+case class CreateStoreFailedException(e: String) extends Exception(e)
+case class ZkTransactionParsingException(e: String) extends Exception(e)
 
 // The implementation class
 object JsonSerializer {
@@ -155,6 +155,11 @@ object JsonSerializer {
 	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
 	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
 	  typeDef = MdMgr.GetMdMgr.MakeMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
+	}
+	case "ImmutableMapTypeDef" => {
+	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
+	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
+	  typeDef = MdMgr.GetMdMgr.MakeImmutableMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
 	}
 	case "HashMapTypeDef" => {
 	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
@@ -850,6 +855,25 @@ object JsonSerializer {
       }
       case o:MapTypeDef => {
 	val json =  (("MetadataType" -> "MapTypeDef") ~
+		     ("NameSpace" -> o.nameSpace) ~
+		     ("Name" -> o.name) ~
+		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
+		     ("TypeNameSpace" -> o.nameSpace ) ~
+		     ("TypeName" -> o.name ) ~
+		     ("PhysicalName" -> o.physicalName ) ~
+		     ("Version" -> o.ver) ~
+		     ("JarName" -> o.jarName) ~
+		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("Implementation" -> o.implementationName) ~
+		     ("Fixed" -> o.IsFixed) ~
+		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
+		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
+		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+	pretty(render(json))
+      }
+      case o:ImmutableMapTypeDef => {
+	val json =  (("MetadataType" -> "ImmutableMapTypeDef") ~
 		     ("NameSpace" -> o.nameSpace) ~
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
