@@ -19,6 +19,10 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	val expandingContainerFields = true
 	  	
+	  	if (fcnSelector.isIterableFcn) {
+	  		return (null,null)
+	  	}
+	  	
 	  	var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  			= fcnSelector.collectArgKeys(expandingContainerFields)
 
@@ -32,9 +36,11 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 	  	
+	  	var winningKey : String = null
+	  	
 	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.info(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
 	  	if (macroDef == null) {
 	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
@@ -44,6 +50,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 	  		  		if (macroDef != null) {
 	  		  			logger.trace(s"selectMacro ...found macroDef with $key")
+	  		  			winningKey = key
 	  		  			break
 	  		  		}
 	  		  	})	  		  
@@ -54,15 +61,6 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  		val expandingContainerFields = false
 	  		var returnedArgsNoExp : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  			= fcnSelector.collectArgKeys(expandingContainerFields)
-
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
-	  		/** FIXME:  WALK THRU HERE... this may not be correct */	
 
 	  		val argTypesNoExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgsNoExp.map( tuple => tuple._1)
 	  		val returnTypes : Array[String] = returnedArgsNoExp.map( tuple => tuple._5)
@@ -84,6 +82,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 		  		  		if (macroDef != null) {
 		  		  			ctx.logger.trace(s"selectMacro ...found macroDef with $key")
+		  		  			winningKey = key
 		  		  			break
 		  		  		}
 		  		  	})	  		  
@@ -91,7 +90,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  	}
 	  	  
 	  	}
-	  	val foundDef : String = if (macroDef != null)  "YES" else "NO!!"
+	  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
 	  	logger.trace(s"selectMacro ...macroDef produced?  $foundDef")
 	  	(macroDef, argTypes)
 	}

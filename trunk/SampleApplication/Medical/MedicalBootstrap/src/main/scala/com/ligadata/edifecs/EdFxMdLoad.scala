@@ -67,7 +67,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	// CMS messages + the dimensional data (treated as Containers)
 	def InitFixedMsgsForEdifecs : Unit = {
 		logger.trace("MetadataLoad...loading Edifecs messages and containers")
-		
+/*
 		logger.trace("MetadataLoad...loading HL7")
 		mgr.AddFixedMsg(MdMgr.sysNS
 				, "HL7"
@@ -257,8 +257,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 
 		
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfConflictMedicalCode", MdMgr.sysNS, "ConflictMedicalCode", 1, baseTypesVer)
-
-		
+    mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, baseTypesVer)
+*/
 		logger.trace("MetadataLoad...loading EnvContext")		
 		mgr.AddFixedContainer(MdMgr.sysNS
 			    , "EnvContext"
@@ -285,8 +285,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	}
 
 	def InitFixedMsgsForEdifecs1 : Unit = {
-
-
+    /*
 		logger.trace("MetadataLoad...loading Beneficiary")
 		mgr.AddFixedMsg(MdMgr.sysNS
 				, "Beneficiary"
@@ -438,6 +437,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfEnvCodes", MdMgr.sysNS, "EnvCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfCoughCodes", MdMgr.sysNS, "CoughCodes", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayBufferOfDyspnoeaCodes", MdMgr.sysNS, "DyspnoeaCodes", 1, baseTypesVer)
+*/
 	}
 
 
@@ -648,7 +648,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	}
 
 	def InitTypesForEdifecs1 : Unit = {
-
+/*
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, baseTypesVer)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "InpatientClaim", 1, baseTypesVer)
 		mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
@@ -688,7 +688,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", baseTypesVer)
 		mgr.AddSortedSet(MdMgr.sysNS, "SortedSetOfHL7", MdMgr.sysNS, "HL7", baseTypesVer)
 
-	
+	*/
 	}
 
 	/**
@@ -2132,7 +2132,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	}
 
 	def InitModelDefs = {
-	  			
+	  			/*
 		logger.trace("MetadataLoad...loading COPDRiskAssessment model")
 		mgr.AddModelDef(
 		       MdMgr.sysNS
@@ -2162,7 +2162,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 			 , baseTypesVer
 			 , "copd_000100_2.10-1.0.jar"
 			 , Array("medenvcontext_2.10-1.0.jar", "pmmludfs_2.10-1.0.jar", "pmmlruntime_2.10-1.0.jar", "metadata_2.10-1.0.jar", "medicalbootstrap_2.10-1.0.jar", "onlepbase_2.10-1.0.jar")
-		)  
+		)
+		*/
 	}
 }
 

@@ -102,6 +102,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.trace(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
+	  	
+	  	if (scalaFcnName == "MapValues") {
+	  		val stop : Int = 0
+	  	}
+	  	
 	  	//var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  	//		= collectArgKeys()
 	  	var argTypesExpanded : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)] 
@@ -134,7 +139,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(scalaFcnName, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
-		  		  		logger.trace(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
+		  		  		logger.info(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
 		  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
 		  		  		if (funcDef != null) {
 		  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
@@ -153,8 +158,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		winningKey = simpleKey
 	  		new FcnTypeInfo(funcDef, argTypes, argTypesExp, winningKey)
 	  	}
-	  	val foundDef : String = if (typeInfo != null)  "YES" else "NO!!"
-	  	logger.trace(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}!!"
+	  	logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	typeInfo
 	}
 	
@@ -223,6 +228,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	var elementFcn : FunctionDef = null
 	  	val fcnNamePresentInArgs : Boolean = (elemFcnName != null) 
 	  	if (fcnNamePresentInArgs) {
+	  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with key ... $elemFKey")
 	  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(elemFKey)
 	  	}
 	  	if (elementFcn == null && fcnNamePresentInArgs) {
@@ -239,7 +245,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 																, returnTypes)
 		  	breakable {
 	  		  	addlElemKeys.foreach(key => {
-	  		  		logger.trace(s"selectIterableFcn ...searching mdmgr for mbr fcn with a relaxed key ... $key")
+	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with a relaxed key ... $key")
 	  		  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (elementFcn != null) {
 	  		  			winningMbrKey = key
@@ -250,8 +256,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		logger.trace("selectIterableFcn ...there were no keys to search for mbr function... must be fIdent-less mbr to be mapped/tupled")
 	  		  	}
 	  		}
-	  		val foundMbrDef : String = if (winningMbrKey != null)  "YES" else "NO!!"
-	  		logger.trace(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  		val foundMbrDef : String = if (winningMbrKey != null)  s"YES ...mbr key $winningMbrKey found ${node.function}" else s"NO mbr function $elemFcnName for ${node.function}!!"
+	  		logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  	}
 	  	
 	  	/** Perform the iterable function lookup in any event.  It is currently acceptable
@@ -259,6 +265,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  container fields is an example
 	  	 */
 	  	var winningKey : String = null
+	  	logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with key ... $iterableFKey")
   		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(iterableFKey)
   		val typeInfo : FcnTypeInfo = if (iterableFcn == null) {
   			/** redo the Iterable fcn key too (chg container type to its parent or Any) */
@@ -274,7 +281,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   																	, returnTypes)
  		  	breakable {
 	  		  	addlIterableKeys.foreach(key => {
-	  		  		logger.trace(s"selectIterableFcn ...searching mdmgr for iterable fcn with a relaxed key ... $key")
+	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with a relaxed key ... $key")
 	  		  		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (iterableFcn != null) {
 	  		  			winningKey = key
@@ -282,8 +289,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		}
 	  		  	})
 	  		}
-  			val foundIterableFcnDef : String = if (winningKey != null)  "YES" else "NO!!"
-	  		logger.trace(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+  			val foundIterableFcnDef : String = if (winningKey != null)  s"YES ...$winningKey found ${node.function}" else s"NO!! ${node.function}"
+	  		logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
 
   			/** 
   			 *  Record information that will be used by the printer to print the right phrase for the function invocation
@@ -653,7 +660,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  member type(s) is not changed. Non container arguments are left unchanged. In certain cases, it is possible
 	  	 *  to have no candidates returned... hence the guard.
 	  	 */
-	  	if (fcnName == "MapValues") {
+	  	if (fcnName == "GroupBy") {
 	  		val debug : Boolean = true
 	  	}
 	  	val containerArgsWithPromotedMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypesToFirstTraitOrAbstractClass(argTypes)
@@ -715,13 +722,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract
 	  	 *  class or trait 
 	  	 */
-	  	
-	  	val argsWithPromotedContainerClasses : Array[(String,Boolean,BaseTypeDef)] = relaxToFirstTraitOrAbstractClass(argTypes)
-	  	val relaxedTypes2 : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
-	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
-	  		arg
-	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes2)
+	  	if (! isIterableFcn) {
+		  	val argsWithPromotedContainerClasses : Array[(String,Boolean,BaseTypeDef)] = relaxToFirstTraitOrAbstractClass(argTypes)
+		  	val relaxedTypes2 : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
+		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+		  		arg
+		  	})
+		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes2)
+	  	}
 	  		  	
 	  	/** 3. */
 	  	val relaxedTypes3 : Array[String] = argTypes.map( argInfo => {
@@ -782,12 +790,20 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			  				val notNestedCollection : Boolean = (superClsTypes.size == 1)
 			  				if (notNestedCollection) {
 			  					superClsTypes.foreach( mbrSupTypeCandidate => {
-				  					val (clssym, symbol, typ) : (String, ClassSymbol, Type) = mbrSupTypeCandidate.apply(0)
-					  				
-					  				if (symbol != null && (symbol.isAbstractClass || symbol.isTrait)) {
-					  					newTypes += symbol.fullName
-					  					break
-					  				}	  				  		  				  
+			  						val classesSuperClasseTriples : List[(String, ClassSymbol, Type)] = mbrSupTypeCandidate
+			  						/** take the first abstract class or trait */
+			  						val traitOrAbstractClasses : List[(String, ClassSymbol, Type)] = classesSuperClasseTriples.filter( triple => {
+			  							val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
+						  				(symbol != null && (symbol.isAbstractClass || symbol.isTrait)) 
+			  						  
+			  						})
+			  						
+			  						if (traitOrAbstractClasses != null && traitOrAbstractClasses.size > 0) {
+			  							val traitOrAbstractFirstOne : (String, ClassSymbol, Type) = traitOrAbstractClasses.head
+			  							val (clssym, symbol, typ) : (String, ClassSymbol, Type) = traitOrAbstractFirstOne
+			  						 	newTypes += symbol.fullName 						 	
+			  						 	break
+			  						}
 				  				})
 			  				}
 			  			})
@@ -1232,20 +1248,24 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val baseArgTypes : Map[String, Array[(String, ClassSymbol, Type)]] = collectContainerSuperClasses(argTypes)  	
 	  	val newArgTypes : Array[(String,Boolean,BaseTypeDef)] = argTypes.map( argType => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argType
-	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer) {
-	  			val argTypeInfo = baseArgTypes(arg)
-				var newType : String = null
-		  		breakable {
-		  			argTypeInfo.foreach( triple => {
-		  				val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
-		  				val typName = 
-		  				if (symbol.isAbstractClass || symbol.isTrait) {
-		  					newType = symbol.fullName
-		  					break
-		  				}	  				  
-		  			})
-		  		}
-	  			(newType, isContainer, elem)
+	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer && baseArgTypes.size > 0) {
+	  			val argTypeInfo = if (baseArgTypes.contains(arg)) baseArgTypes(arg) else null
+	  			if (argTypeInfo != null) {
+					var newType : String = null
+			  		breakable {
+			  			argTypeInfo.foreach( triple => {
+			  				val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
+			  				val typName = 
+			  				if (symbol.isAbstractClass || symbol.isTrait) {
+			  					newType = symbol.fullName
+			  					break
+			  				}	  				  
+			  			})
+			  		}
+		  			(newType, isContainer, elem)
+	  			} else {
+	  				(arg, isContainer, elem)
+	  			}
 	  		} else {
 	  			(arg, isContainer, elem)
 	  		}
@@ -1308,6 +1328,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	containersWithSuperClasses.foreach( pair => {
 	  		val arg : String = pair._1
 	  		val containerTypeSuperClasses : Array[(String, ClassSymbol, Type)] = pair._2
+	  		println(s"processing $arg of function ${node.function}")
 	  		map += (arg -> containerTypeSuperClasses)
 	  	})
 	  	map

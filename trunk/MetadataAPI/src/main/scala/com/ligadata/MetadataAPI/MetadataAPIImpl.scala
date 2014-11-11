@@ -62,7 +62,28 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath:String, ZooKeeperConnectString: String)
+case class ParameterMap(RootDir:String
+    , GitRootDir: String
+    , Database: String
+    , DatabaseHost: String
+    , DatabaseSchema: Option[String]
+    , DatabaseLocation: Option[String]
+	, JarTargetDir : String
+	, ScalaHome : String
+	, JavaHome : String
+	, ManifestPath : String
+	, ClassPath : String
+	, NotifyEngine : String
+	, ZnodePath :String
+	, ZooKeeperConnectString : String
+	, MODEL_FILES_DIR : String
+	, TYPE_FILES_DIR : String
+	, FUNCTION_FILES_DIR : String
+	, CONCEPT_FILES_DIR : String
+	, MESSAGE_FILES_DIR : String
+	, CONTAINER_FILES_DIR : String
+);
+
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
@@ -3409,6 +3430,42 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("ZooKeeperConnectString => " + zooKeeperConnectString)
 
+      var MODEL_FILES_DIR = configMap.APIConfigParameters.MODEL_FILES_DIR
+      if (MODEL_FILES_DIR == null ){
+    	  MODEL_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+      }
+      logger.trace("MODEL_FILES_DIR => " + MODEL_FILES_DIR)
+
+      var TYPE_FILES_DIR = configMap.APIConfigParameters.TYPE_FILES_DIR
+      if (TYPE_FILES_DIR == null ){
+    	  TYPE_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+      }
+      logger.trace("TYPE_FILES_DIR => " + TYPE_FILES_DIR)
+
+      var FUNCTION_FILES_DIR = configMap.APIConfigParameters.FUNCTION_FILES_DIR
+      if (FUNCTION_FILES_DIR == null ){
+    	  FUNCTION_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+      }
+      logger.trace("FUNCTION_FILES_DIR => " + FUNCTION_FILES_DIR)
+
+      var CONCEPT_FILES_DIR = configMap.APIConfigParameters.CONCEPT_FILES_DIR
+      if (CONCEPT_FILES_DIR == null ){
+    	  CONCEPT_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+      }
+      logger.trace("CONCEPT_FILES_DIR => " + CONCEPT_FILES_DIR)
+
+      var MESSAGE_FILES_DIR = configMap.APIConfigParameters.MESSAGE_FILES_DIR
+      if (MESSAGE_FILES_DIR == null ){
+    	  MESSAGE_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+      }
+      logger.trace("MESSAGE_FILES_DIR => " + MESSAGE_FILES_DIR)
+
+      var CONTAINER_FILES_DIR = configMap.APIConfigParameters.CONTAINER_FILES_DIR
+      if (CONTAINER_FILES_DIR == null ){
+    	  CONTAINER_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+      }
+      logger.trace("CONTAINER_FILES_DIR => " + CONTAINER_FILES_DIR)
+
 
       metadataAPIConfig.setProperty("ROOT_DIR",rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT",gitRootDir)
@@ -3424,7 +3481,13 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
       metadataAPIConfig.setProperty("ZNODE_PATH",znodePath)
       metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zooKeeperConnectString)
-
+      metadataAPIConfig.setProperty("MODEL_FILES_DIR",MODEL_FILES_DIR)
+      metadataAPIConfig.setProperty("TYPE_FILES_DIR",TYPE_FILES_DIR)
+      metadataAPIConfig.setProperty("FUNCTION_FILES_DIR",FUNCTION_FILES_DIR)
+      metadataAPIConfig.setProperty("CONCEPT_FILES_DIR",CONCEPT_FILES_DIR)
+      metadataAPIConfig.setProperty("MESSAGE_FILES_DIR",MESSAGE_FILES_DIR)
+      metadataAPIConfig.setProperty("CONTAINER_FILES_DIR",CONTAINER_FILES_DIR)
+      
       propertiesAlreadyLoaded = true;
 
     } catch { 
