@@ -106,8 +106,8 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	    var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
 	    var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
 	    batch.add(updateStmt.bind(value,key));
-	    session.execute(batch);
 	  })
+	  session.execute(batch);
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =
