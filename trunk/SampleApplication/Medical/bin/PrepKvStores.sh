@@ -38,4 +38,4 @@ java -cp $installPath/coughcodes.jar -jar $ONLEPLIBPATH/KVInit-1.0 --classname c
 
 echo "Prepare the test kvstore - Smoking Codes map..."
 
-java -cp smokecodes.jar -jar $ONLEPLIBPATH/KVInit-1.0 --classname com.ligadata.edifecs.SmokeCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code
+java -cp $installPath/smokecodes.jar -jar $ONLEPLIBPATH/KVInit-1.0 --classname com.ligadata.edifecs.SmokeCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code
