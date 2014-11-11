@@ -1540,7 +1540,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  objectsAdded(3) = immutableMapOfIntArrayType
 
 	  // ImmutableMapOfString<TypeName>
-	  val immutableMapOfStringArrayType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof"+msgDef.name, ("System","String"), (msgDef.nameSpace,"arrayof"+msgDef.name), msgDef.ver)
+	  val immutableMapOfStringArrayType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof"+msgDef.name, ("System","String"), (msgDef.nameSpace,"arrayof"+msgDef.name), msgDef.ver)
 	  immutableMapOfStringArrayType.dependencyJarNames = depJars 
 	  SaveObject(immutableMapOfStringArrayType)
 	  objectsAdded(4) = immutableMapOfStringArrayType
