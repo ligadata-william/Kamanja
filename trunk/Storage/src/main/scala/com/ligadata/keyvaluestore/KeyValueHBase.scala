@@ -30,6 +30,7 @@ class KeyValueHBaseTx(owner : DataStore) extends Transaction
 	def del(key: Key) = { owner.del(key) }
 	def del(source: IStorage) = { owner.del(source) }
 	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
+	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
 }
 
 class KeyValueHBase(parameter: PropertyMap) extends DataStore
@@ -70,6 +71,15 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 
 		tableHBase.put(p)
 
+	}
+
+	def putBatch(sourceArray: Array[IStorage]) =
+	{
+	  sourceArray.foreach( source => {
+	    var p = new Put(source.Key.toArray[Byte])
+	    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte] )
+	    tableHBase.put(p)
+	  })
 	}
 
 	def get(key: Key, handler : (Value) => Unit) =

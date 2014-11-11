@@ -26,6 +26,7 @@ class KeyValueVoldemortTx(owner : DataStore) extends Transaction
 	def del(key: Key) = { owner.del(key) }
 	def del(source: IStorage) = { owner.del(source) }
 	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
+	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
 }
 
 class KeyValueVoldemort(parameter: PropertyMap) extends DataStore
@@ -57,6 +58,17 @@ class KeyValueVoldemort(parameter: PropertyMap) extends DataStore
 	    val value = base64.encodeToString(source.Value.toArray[Byte])
         store.put(key, value);
 	}
+
+
+	def putBatch(sourceArray: Array[IStorage]) =
+	{
+	  sourceArray.foreach( source => {
+	    val key = base64key.encodeToString(source.Key.toArray[Byte])
+	    val value = base64.encodeToString(source.Value.toArray[Byte])
+            store.put(key, value);
+	  })
+	}
+
 
 	def get(key: Key, handler : (Value) => Unit) =
 	{
