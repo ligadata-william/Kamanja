@@ -68,29 +68,29 @@ case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 case class APIResultInfo(statusCode:Int, statusDescription: String, resultData: String)
 case class APIResultJsonProxy(APIResults: APIResultInfo)
 
-case class UnsupportedObjectException(e: String) extends Throwable(e)
-case class Json4sParsingException(e: String) extends Throwable(e)
-case class FunctionListParsingException(e: String) extends Throwable(e)
-case class FunctionParsingException(e: String) extends Throwable(e)
-case class TypeDefListParsingException(e: String) extends Throwable(e)
-case class TypeParsingException(e: String) extends Throwable(e)
-case class TypeDefProcessingException(e: String) extends Throwable(e)
-case class ConceptListParsingException(e: String) extends Throwable(e)
-case class ConceptParsingException(e: String) extends Throwable(e)
-case class MessageDefParsingException(e: String) extends Throwable(e)
-case class ContainerDefParsingException(e: String) extends Throwable(e)
-case class ModelDefParsingException(e: String) extends Throwable(e)
-case class ApiResultParsingException(e: String) extends Throwable(e)
-case class UnexpectedMetadataAPIException(e: String) extends Throwable(e)
-case class ObjectNotFoundException(e: String) extends Throwable(e)
-case class CreateStoreFailedException(e: String) extends Throwable(e)
-case class UpdateStoreFailedException(e: String) extends Throwable(e)
+case class UnsupportedObjectException(e: String) extends Exception(e)
+case class Json4sParsingException(e: String) extends Exception(e)
+case class FunctionListParsingException(e: String) extends Exception(e)
+case class FunctionParsingException(e: String) extends Exception(e)
+case class TypeDefListParsingException(e: String) extends Exception(e)
+case class TypeParsingException(e: String) extends Exception(e)
+case class TypeDefProcessingException(e: String) extends Exception(e)
+case class ConceptListParsingException(e: String) extends Exception(e)
+case class ConceptParsingException(e: String) extends Exception(e)
+case class MessageDefParsingException(e: String) extends Exception(e)
+case class ContainerDefParsingException(e: String) extends Exception(e)
+case class ModelDefParsingException(e: String) extends Exception(e)
+case class ApiResultParsingException(e: String) extends Exception(e)
+case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
+case class ObjectNotFoundException(e: String) extends Exception(e)
+case class CreateStoreFailedException(e: String) extends Exception(e)
+case class UpdateStoreFailedException(e: String) extends Exception(e)
 
-case class LoadAPIConfigException(e: String) extends Throwable(e)
-case class MissingPropertyException(e: String) extends Throwable(e)
-case class InvalidPropertyException(e: String) extends Throwable(e)
-case class KryoSerializationException(e: String) extends Throwable(e)
-case class InternalErrorException(e: String) extends Throwable(e)
+case class LoadAPIConfigException(e: String) extends Exception(e)
+case class MissingPropertyException(e: String) extends Exception(e)
+case class InvalidPropertyException(e: String) extends Exception(e)
+case class KryoSerializationException(e: String) extends Exception(e)
+case class InternalErrorException(e: String) extends Exception(e)
 
 
 class KeyValuePair extends IStorage{
@@ -212,7 +212,7 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore){
-    object i extends IStorage{
+    object obj extends IStorage{
       var k = new com.ligadata.keyvaluestore.Key
       var v = new com.ligadata.keyvaluestore.Value
       for(c <- key ){
@@ -227,13 +227,47 @@ object MetadataAPIImpl extends MetadataAPI{
     }
     try{
       val t = store.beginTx
-      store.put(i)
+      store.put(obj)
       store.commitTx(t)
     }
     catch{
       case e:Exception => {
 	logger.trace("Failed to insert/update object for : " + key)
 	throw new UpdateStoreFailedException("Failed to insert/update object for : " + key)
+      }
+    }
+  }
+
+
+  def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore){
+    var i = 0
+    var storeObjects = new Array[IStorage](keyList.length)
+    keyList.foreach( key => {
+      var value = valueList(i)
+      object obj extends IStorage{
+	var k = new com.ligadata.keyvaluestore.Key
+	var v = new com.ligadata.keyvaluestore.Value
+	for(c <- key ){
+	  k += c.toByte
+	}
+	for(c <- value ){
+	  v += c
+	}
+	def Key = k
+	def Value = v
+	def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+      }
+      storeObjects(i) = obj
+    })
+    try{
+      val t = store.beginTx
+      store.putBatch(storeObjects)
+      store.commitTx(t)
+    }
+    catch{
+      case e:Exception => {
+	logger.trace("Failed to insert/update object for : " + keyList.mkString(","))
+	throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
       }
     }
   }
@@ -276,6 +310,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
   }
+
 
   def SaveObject(obj: BaseElemDef){
     try{
@@ -354,6 +389,11 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
 	  SaveObject(key,value,typeStore)
 	  MdMgr.GetMdMgr.AddMap(o)
+	}
+	case o:ImmutableMapTypeDef => {
+	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
+	  SaveObject(key,value,typeStore)
+	  MdMgr.GetMdMgr.AddImmutableMap(o)
 	}
 	case o:HashMapTypeDef => {
 	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
@@ -448,6 +488,10 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
 	  UpdateObject(key,value,typeStore)
 	}
+	case o:ImmutableMapTypeDef => {
+	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
+	  UpdateObject(key,value,typeStore)
+	}
 	case o:HashMapTypeDef => {
 	  logger.trace("Updating the Type in the DB: name of the object =>  " + key)
 	  UpdateObject(key,value,typeStore)
@@ -518,6 +562,9 @@ object MetadataAPIImpl extends MetadataAPI{
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:MapTypeDef => {
+	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
+	}
+	case o:ImmutableMapTypeDef => {
 	  updatedObject = MdMgr.GetMdMgr.ModifyType(o.nameSpace,o.name,o.ver,operation)
 	}
 	case o:HashMapTypeDef => {
@@ -609,6 +656,10 @@ object MetadataAPIImpl extends MetadataAPI{
 	case o:MapTypeDef => {
 	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
 	  MdMgr.GetMdMgr.AddMap(o)
+	}
+	case o:ImmutableMapTypeDef => {
+	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
+	  MdMgr.GetMdMgr.AddImmutableMap(o)
 	}
 	case o:HashMapTypeDef => {
 	  logger.trace("Adding the Type to the cache: name of the object =>  " + key)
@@ -707,6 +758,11 @@ object MetadataAPIImpl extends MetadataAPI{
 	case o:MapTypeDef => {
 	  logger.trace("Adding the type to the cache: name of the object =>  " + o.FullNameWithVer)
 	  MdMgr.GetMdMgr.AddMap(o)
+	  o
+	}
+	case o:ImmutableMapTypeDef => {
+	  logger.trace("Adding the type to the cache: name of the object =>  " + o.FullNameWithVer)
+	  MdMgr.GetMdMgr.AddImmutableMap(o)
 	  o
 	}
 	case o:HashMapTypeDef => {
@@ -1450,7 +1506,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   def AddMessageTypes(msgDef:BaseElemDef): Array[BaseElemDef] = {
-    val objectsAdded = new Array[BaseElemDef](3)
+    val objectsAdded = new Array[BaseElemDef](4)
     logger.trace("The class name => " + msgDef.getClass().getName())
     try{
       msgDef.getClass().getName() match{
@@ -1474,6 +1530,18 @@ object MetadataAPIImpl extends MetadataAPI{
 	  sortedSetType.dependencyJarNames = depJars 
 	  SaveObject(sortedSetType)
 	  objectsAdded(2) = sortedSetType
+
+	  val key = ("System","Int")
+	  val value = (msgDef.nameSpace,"arrayof"+msgDef.name)
+	  val immutableMapType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace,
+								 "immutablemapofintarrayof"+msgDef.name,
+								 key,
+								 value,
+								 msgDef.ver)
+	  immutableMapType.dependencyJarNames = depJars 
+	  SaveObject(immutableMapType)
+	  objectsAdded(3) = immutableMapType
+
 	  objectsAdded
 	}
 	case _ => {
@@ -2739,7 +2807,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      }
 	    }
 	  }
-	  case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
+	  case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
 	    zkMessage.Operation match{
 	      case "Add" => {
 		LoadTypeIntoCache(key)
