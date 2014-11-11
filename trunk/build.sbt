@@ -57,7 +57,7 @@ lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRunt
 
 lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRuntime, OnLEPBase)
 
-lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, OnLEPBase)
+lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, OnLEPBase, Serialize)
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase)
 
@@ -69,11 +69,10 @@ lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(M
 
 lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 
-lazy val SimpleKafkaProducer = project.in(file("SampleApplication/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
+lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
 lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (MedicalBootstrap, Storage)
 
 lazy val MedEnvContext = project.in(file("SampleApplication/Medical/MedEnvContext")) dependsOn (OnLEPBase, Storage, Serialize)
 
 lazy val COPD_000100 = project.in(file("modeldbg/COPD_000100")) dependsOn (OnLEPBase, PmmlUdfs, PmmlRuntime, MedicalBootstrap)
-

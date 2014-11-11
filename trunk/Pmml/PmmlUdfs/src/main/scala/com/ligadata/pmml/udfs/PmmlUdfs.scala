@@ -2871,6 +2871,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     q.toArray
   }
   
+  /** 
+
+    Suppress stack to array coercion until Stack based types are supported in the MdMgr ....
+
  def ToArray[T : ClassTag](stack: Stack[T]): Array[T] = {
     if (stack == null || stack.size == 0)
       return Array[T]()
@@ -2882,7 +2886,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
       return Array[Any]()
     stack.toArray
   }
-  
+  */
   
   /** ToArrayOf<Scalar> for Tuple1 */
   def ToArray(tuple : Tuple1[Any]) : Array[Any] = {
@@ -3573,6 +3577,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     q.toMap
   }
   
+  /** 
+    Suppress Stack type functions until MdMgr supports them properly 
  def ToMap[T : ClassTag, U : ClassTag](stack: Stack[(T,U)]): Map[T,U] = {
     if (stack == null || stack.size == 0)
       return Map[T,U]()
@@ -3584,7 +3590,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
       return Map[Any,Any]()
     stack.toMap
   }
-  
+  */
+
   def Zip[T : ClassTag, U : ClassTag](receiver : Array[T], other : Array[U]) :  Array[(T,U)] = {
 	if (receiver == null || receiver.size == 0) {
 		return Array[(T,U)]()
@@ -3614,7 +3621,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
   
   /**
-   * 	NOTE: Zipping mutable.Set and immutable.Set is typically not a good idea unless the pairing
+   * 	NOTE: Zipping mutable.Set and/or immutable.Set is typically not a good idea unless the pairing
    *  	done absolutely does not matter.  Use SortedSet or TreeSet for predictable pairings.
    */
   def Zip[T : ClassTag, U : ClassTag](receiver : Set[T], other : Set[U]) :  Set[(T,U)] = {
@@ -3714,17 +3721,21 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     coll.size
   }
   
-  def CollectionLength[T : ClassTag](coll : Vector[T]) : Int = {
-    coll.size
-  }
-  
   def CollectionLength[T : ClassTag](coll : Queue[T]) : Int = {
     coll.size
   }
   
+  /**
+    Suppress functions that use Stack  and Vector until Mdmgr supports it 
   def CollectionLength[T : ClassTag](coll : Stack[T]) : Int = {
     coll.size
   }
+
+  def CollectionLength[T : ClassTag](coll : Vector[T]) : Int = {
+    coll.size
+  }
+  
+  */
   
   def CollectionLength[K : ClassTag, V : ClassTag](coll : MutableMap[K,V]) : Int = {
     coll.size

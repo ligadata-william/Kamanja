@@ -234,8 +234,7 @@ class OnLEPMetadata {
       allJars = elem.DependencyJarNames :+ jarname
     } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
       allJars = elem.DependencyJarNames
-    }
-    if (jarname.size > 0) {
+    } else if (jarname.size > 0) {
       allJars = Array(jarname)
     } else {
       return retVal
@@ -367,7 +366,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, containerNames, true) // Containers
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
       }
     }
 
@@ -376,7 +375,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.storeType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.schemaName, topMessageNames, false) // Messages
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false) // Messages
       }
     }
 
@@ -429,7 +428,11 @@ object OnLEPMetadata {
   }
 
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String): Unit = {
-    new MetadataLoad(mdMgr, "", "", "", "").initialize
+
+    if (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0)
+      com.ligadata.MetadataAPI.MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, OnLEPConfiguration.metadataLocation, OnLEPConfiguration.metadataSchemaName, "")
+    else if ((OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
+      com.ligadata.MetadataAPI.MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, "", OnLEPConfiguration.metadataSchemaName, OnLEPConfiguration.metadataLocation)
 
     loadedJars = tmpLoadedJars
     loader = tmpLoader

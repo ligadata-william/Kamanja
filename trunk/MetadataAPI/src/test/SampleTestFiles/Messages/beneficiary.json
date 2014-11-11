@@ -1,7 +1,7 @@
 {
   "Message": {
     "NameSpace": "System",
-    "Name": "Beneficiary_test",
+    "Name": "Beneficiary",
     "Version": "00.01.00",
     "Description": "Beneficiary Data",
     "Fixed": "true",
