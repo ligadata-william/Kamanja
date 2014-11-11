@@ -1527,7 +1527,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   def AddMessageTypes(msgDef:BaseElemDef): Array[BaseElemDef] = {
-    val objectsAdded = new Array[BaseElemDef](4)
+    val objectsAdded = new Array[BaseElemDef](10)
     logger.trace("The class name => " + msgDef.getClass().getName())
     try{
       msgDef.getClass().getName() match{
@@ -1535,34 +1535,67 @@ object MetadataAPIImpl extends MetadataAPI{
 	  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
 	  // along with the messageDef.
 	  val depJars = if (msgDef.DependencyJarNames != null) 
-			   (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName) 
-	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace,
-					       msgDef.name,1,msgDef.ver)
+			   (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName)
+	  // ArrayOf<TypeName>
+	  val arrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace,"arrayof"+msgDef.name,msgDef.nameSpace, msgDef.name,1,msgDef.ver)
 	  arrayType.dependencyJarNames = depJars 
 	  SaveObject(arrayType)
 	  objectsAdded(0) = arrayType
-	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name,
-						    msgDef.nameSpace,msgDef.name,1,msgDef.ver)
+	  
+	  // ArrayBufferOf<TypeName>
+	  val arrayBufType = MdMgr.GetMdMgr.MakeArrayBuffer(msgDef.nameSpace,"arraybufferof"+msgDef.name, msgDef.nameSpace,msgDef.name,1,msgDef.ver)
 	  arrayBufType.dependencyJarNames = depJars 
 	  SaveObject(arrayBufType)
 	  objectsAdded(1) = arrayBufType
-	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name,
-							   msgDef.nameSpace,msgDef.name,msgDef.ver)
+	  
+	  // SortedSetOf<TypeName>
+	  val sortedSetType = MdMgr.GetMdMgr.MakeSortedSet(msgDef.nameSpace,"sortedsetof"+msgDef.name, msgDef.nameSpace,msgDef.name,msgDef.ver)
 	  sortedSetType.dependencyJarNames = depJars 
 	  SaveObject(sortedSetType)
 	  objectsAdded(2) = sortedSetType
 
-	  val key = ("System","Int")
-	  val value = (msgDef.nameSpace,"arrayof"+msgDef.name)
-	  val immutableMapType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace,
-								 "immutablemapofintarrayof"+msgDef.name,
-								 key,
-								 value,
-								 msgDef.ver)
-	  immutableMapType.dependencyJarNames = depJars 
-	  SaveObject(immutableMapType)
-	  objectsAdded(3) = immutableMapType
+	  // ImmutableMapOfIntArrayOf<TypeName>
+	  val immutableMapOfIntArrayType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof"+msgDef.name, ("System","Int"), (msgDef.nameSpace,"arrayof"+msgDef.name), msgDef.ver)
+	  immutableMapOfIntArrayType.dependencyJarNames = depJars 
+	  SaveObject(immutableMapOfIntArrayType)
+	  objectsAdded(3) = immutableMapOfIntArrayType
 
+	  // ImmutableMapOfString<TypeName>
+	  val immutableMapOfStringArrayType = MdMgr.GetMdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof"+msgDef.name, ("System","String"), (msgDef.nameSpace,"arrayof"+msgDef.name), msgDef.ver)
+	  immutableMapOfStringArrayType.dependencyJarNames = depJars 
+	  SaveObject(immutableMapOfStringArrayType)
+	  objectsAdded(4) = immutableMapOfStringArrayType
+
+	  // ArrayOfArrayOf<TypeName>
+	  val arrayOfArrayType = MdMgr.GetMdMgr.MakeArray(msgDef.nameSpace, "arrayofarrayof"+msgDef.name, msgDef.nameSpace, "arrayof"+msgDef.name, 1, msgDef.ver)
+	  arrayOfArrayType.dependencyJarNames = depJars 
+	  SaveObject(arrayOfArrayType)
+	  objectsAdded(5) = arrayOfArrayType
+	  
+	  // MapOfStringArrayOf<TypeName>
+	  val mapOfStringArrayType = MdMgr.GetMdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof"+msgDef.name, ("System", "String"), ("System", "arrayof"+msgDef.name), msgDef.ver)
+	  mapOfStringArrayType.dependencyJarNames = depJars 
+	  SaveObject(mapOfStringArrayType)
+	  objectsAdded(6) = mapOfStringArrayType
+	  
+	  // MapOfIntArrayOf<TypeName>
+	  val mapOfIntArrayType = MdMgr.GetMdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof"+msgDef.name, ("System", "Int"), ("System", "arrayof"+msgDef.name), msgDef.ver)
+	  mapOfIntArrayType.dependencyJarNames = depJars 
+	  SaveObject(mapOfIntArrayType)
+	  objectsAdded(7) = mapOfIntArrayType
+	  
+	  // SetOf<TypeName>
+	  val setType = MdMgr.GetMdMgr.MakeSet(msgDef.nameSpace,"setof"+msgDef.name,msgDef.nameSpace, msgDef.name,msgDef.ver)
+	  setType.dependencyJarNames = depJars 
+	  SaveObject(setType)
+	  objectsAdded(8) = setType
+	  
+	  // SetOf<TypeName>
+	  val treeSetType = MdMgr.GetMdMgr.MakeTreeSet(msgDef.nameSpace,"treesetof"+msgDef.name,msgDef.nameSpace, msgDef.name,msgDef.ver)
+	  treeSetType.dependencyJarNames = depJars 
+	  SaveObject(treeSetType)
+	  objectsAdded(9) = treeSetType
+	  
 	  objectsAdded
 	}
 	case _ => {
