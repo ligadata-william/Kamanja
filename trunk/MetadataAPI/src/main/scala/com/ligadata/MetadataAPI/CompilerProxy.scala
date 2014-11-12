@@ -270,6 +270,8 @@ class CompilerProxy{
       }
 
       msgDef.jarName = jarFile
+      if (msgDef.containerType.isInstanceOf[ContainerTypeDef])
+        msgDef.containerType.asInstanceOf[ContainerTypeDef].jarName = jarFile
       (classStr,msgDef)
     }
     catch{
