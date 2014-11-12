@@ -506,12 +506,26 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			logger.trace(s"(${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'})")
 		})
 		
+		val modelVer : Option[String] = ctx.pmmlTerms.apply("VersionNumber")
+		val modelVersion : Int = modelVer match {
+		  case Some(modelVer) => modelVer.toInt
+		  case _ => 100
+		}
+		
+		ctx.pmmlTerms("PMML") = Some(pmmlFilePath)  /** to document/identify originating file in source to be generated */
+		ctx.ClientName(clientName)
+		
+		val jarName : String = JarName(ctx)
+
 		val modelDef : ModelDef = mgr.MakeModelDef(modelNamespace
-		    , className
-		    , fqClassName
-		    , modelType
-		    , inputVars
-		    , outputVars)
+							    , className
+							    , fqClassName
+							    , modelType
+							    , inputVars
+							    , outputVars
+							    , modelVersion
+							    , jarName
+							    , ctx.classPathJars.toArray)
 
 		modelDef
 	  
@@ -613,6 +627,18 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		srcCode
 	}
 	
+	/** get the jar name (sans path) for this model */
+	private def JarName(ctx : PmmlContext) : String = {
+		val appNm : Option[String] = ctx.pmmlTerms.apply("ClassName")
+		val moduleName : String = appNm match {
+		  case Some(appNm) => appNm
+		  case _ => "None"
+		}
+		val moduleNameJar : String = s"$moduleName.jar"
+		moduleNameJar
+	}
+
+	
 	 /* 
 	  * Compile the supplied generated code and jar it, the originating pmml model, and the class output from the 
 	  * compile.  Add a registration module as well.  Note the classpath dependencies in the manifest.mf file
@@ -667,9 +693,9 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		logger.trace(s"create the manifest")
 		val manifestFileName : String =  s"manifest.mf"
 		createManifest(ctx, s"/tmp/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
-		
+
 		/** create the jar */
-		val moduleNameJar : String = s"$moduleName.jar"
+		val moduleNameJar : String = JarName(ctx)
 		logger.trace(s"create the jar $moduleNameJar")
 		val jarCmd : String = s"$javahome/bin/jar cvfm $moduleNameJar /tmp/$moduleName/$manifestFileName -C /tmp/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")

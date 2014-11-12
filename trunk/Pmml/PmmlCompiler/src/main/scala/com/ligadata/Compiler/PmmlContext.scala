@@ -422,12 +422,21 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 							} else {
 								logger.error(s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")	
 							}
+							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
+							val implJar : String  = containerDef.JarName
+							val depJars : Array[String] = containerDef.DependencyJarNames
+							collectClassPathJars(implJar, depJars)
 						}
 					} else {
 						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
 						if (containerDef == null) {
 							logger.error("The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
+							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
+							val implJar : String  = containerDef.JarName
+							val depJars : Array[String] = containerDef.DependencyJarNames
+							collectClassPathJars(implJar, depJars)
+						  
 							if (containerDef.isInstanceOf[ContainerTypeDef]) {
 								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
 							} else {
@@ -439,6 +448,22 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 					logger.error("The input message referenced in the messages field has not been declared in the data dictionary.  Do that before proceeding.")
 				}
 			})
+		}
+	}
+	
+	/** Mechanism to collect the container, message and (soon... function) jars for the class path */
+	val classPathJars : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+	
+	/** 
+	 *  Used by RegisterMessages and RegisterContainerAsNecessarys, et al... add the implementation jar and dependency jars 
+	 *  for each msg,container, and fcn element  
+	 */
+	def collectClassPathJars(implJar : String, depJars : Array[String]) : Unit = {
+		if (implJar != null) {
+			classPathJars.add(implJar)
+		}
+		if (depJars != null && depJars.size > 0) {
+			depJars.foreach(jar => classPathJars.add(jar))
 		}
 	}
 	
@@ -466,6 +491,11 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	def RegisterContainerAsNecessary(name : String, dataType : String) : Boolean = {
 		val elem : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, dataType)
 		val registered : Boolean = if (elem != null) {
+			/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
+			val implJar : String  = elem.JarName
+			val depJars : Array[String] = elem.DependencyJarNames
+			collectClassPathJars(implJar, depJars)
+			
 			elem match {
 			  case con : ContainerTypeDef => { 
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
