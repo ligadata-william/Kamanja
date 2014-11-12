@@ -75,4 +75,3 @@ lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (
 
 lazy val MedEnvContext = project.in(file("SampleApplication/Medical/MedEnvContext")) dependsOn (OnLEPBase, Storage, Serialize)
 
-lazy val COPD_000100 = project.in(file("modeldbg/COPD_000100")) dependsOn (OnLEPBase, PmmlUdfs, PmmlRuntime, MedicalBootstrap)

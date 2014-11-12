@@ -28,7 +28,7 @@
       },
       {
         "Name": "Prvdr_Num",
-        "Type": "System.Int"
+        "Type": "System.String"
       },
       {
         "Name": "Clm_Pmt_Amt",
@@ -36,7 +36,7 @@
       },
       {
         "Name": "Nch_Prmry_Pyr_Clm_Pd_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "At_Physn_Npi",
@@ -52,7 +52,7 @@
       },
       {
         "Name": "Nch_Bene_Blood_Ddctbl_Lblty_Am",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Icd9_Dgns_Cds",
@@ -64,11 +64,11 @@
       },
       {
         "Name": "Nch_Bene_Ptb_Ddctbl_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Nch_Bene_Ptb_Coinsrnc_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Admtng_Icd9_Dgns_Cd",

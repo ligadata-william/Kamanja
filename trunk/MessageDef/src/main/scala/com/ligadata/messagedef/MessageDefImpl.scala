@@ -607,10 +607,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def populatecsv = {
     """
   private def populateCSV(inputdata:DelimitedData): Unit = { 
-	val delimiter = inputdata.dataDelim
-	val dataStr = inputdata.dataInput
-	val list = inputdata.dataInput.split(delimiter)
-	val idx: Int = assignCsv(list,0)
+    inputdata.curPos = assignCsv(inputdata.tokens, inputdata.curPos)
    }
 	 """
   }
