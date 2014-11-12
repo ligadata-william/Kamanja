@@ -28,15 +28,15 @@
       },
       {
         "Name": "Prvdr_Num",
-        "Type": "System.Int"
+        "Type": "System.String"
       },
       {
         "Name": "Clm_Pmt_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Nch_Prmry_Pyr_Clm_Pd_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "At_Physn_Npi",
@@ -60,19 +60,19 @@
       },
       {
         "Name": "Clm_Pass_Thru_Per_Diem_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Nch_Bene_Ip_Ddctbl_Amt",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Nch_Bene_Pta_Coinsrnc_Lblty_Am",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Nch_Bene_Blood_Ddctbl_Lblty_Am",
-        "Type": "System.Float"
+        "Type": "System.Double"
       },
       {
         "Name": "Clm_Utlztn_Day_Cnt",
