@@ -162,9 +162,22 @@ class CompilerProxy{
     var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 
     var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+    
+    if (classPath.size == 0)
+      classPath = "."
 
+    val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
+
+    jarPaths.foreach(p => {
+      try {
+        val jarFiles = new java.io.File(p).listFiles.filter(_.getName.endsWith(".jar")).map(_.getPath).mkString(":")
+        classPath = classPath + ":" + jarFiles 
+      } catch {
+        case e: Exception => {}
+      }
+    })
+    
     if (modDef.DependencyJarNames != null) {
-      val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
       val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
       if (classPath != null && classPath.size > 0) {
         classPath = classPath + ":" + depJars 

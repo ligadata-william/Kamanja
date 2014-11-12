@@ -76,12 +76,12 @@ case class ParameterMap(RootDir:String
 	, NotifyEngine : String
 	, ZnodePath :String
 	, ZooKeeperConnectString : String
-	, MODEL_FILES_DIR : String
-	, TYPE_FILES_DIR : String
-	, FUNCTION_FILES_DIR : String
-	, CONCEPT_FILES_DIR : String
-	, MESSAGE_FILES_DIR : String
-	, CONTAINER_FILES_DIR : String
+	, MODEL_FILES_DIR : Option[String]
+	, TYPE_FILES_DIR : Option[String]
+	, FUNCTION_FILES_DIR : Option[String]
+	, CONCEPT_FILES_DIR : Option[String]
+	, MESSAGE_FILES_DIR : Option[String]
+	, CONTAINER_FILES_DIR : Option[String]
 );
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
@@ -3531,40 +3531,59 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("ZooKeeperConnectString => " + zooKeeperConnectString)
 
-      var MODEL_FILES_DIR = configMap.APIConfigParameters.MODEL_FILES_DIR
-      if (MODEL_FILES_DIR == null ){
+      var MODEL_FILES_DIR = ""
+      val MODEL_FILES_DIR1 = configMap.APIConfigParameters.MODEL_FILES_DIR
+      if (MODEL_FILES_DIR1 == None ){
     	  MODEL_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
       }
+      else
+    	  MODEL_FILES_DIR = MODEL_FILES_DIR1.get
       logger.trace("MODEL_FILES_DIR => " + MODEL_FILES_DIR)
 
-      var TYPE_FILES_DIR = configMap.APIConfigParameters.TYPE_FILES_DIR
-      if (TYPE_FILES_DIR == null ){
+      var TYPE_FILES_DIR = ""
+      val TYPE_FILES_DIR1 = configMap.APIConfigParameters.TYPE_FILES_DIR
+      if (TYPE_FILES_DIR1 == None ){
     	  TYPE_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       }
+      else
+    	  TYPE_FILES_DIR = TYPE_FILES_DIR1.get
       logger.trace("TYPE_FILES_DIR => " + TYPE_FILES_DIR)
 
-      var FUNCTION_FILES_DIR = configMap.APIConfigParameters.FUNCTION_FILES_DIR
-      if (FUNCTION_FILES_DIR == null ){
+      var FUNCTION_FILES_DIR = ""
+      val FUNCTION_FILES_DIR1 = configMap.APIConfigParameters.FUNCTION_FILES_DIR
+      if (FUNCTION_FILES_DIR1 == None ){
     	  FUNCTION_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
       }
+      else
+    	  FUNCTION_FILES_DIR = FUNCTION_FILES_DIR1.get
       logger.trace("FUNCTION_FILES_DIR => " + FUNCTION_FILES_DIR)
 
-      var CONCEPT_FILES_DIR = configMap.APIConfigParameters.CONCEPT_FILES_DIR
-      if (CONCEPT_FILES_DIR == null ){
+      var CONCEPT_FILES_DIR = ""
+      val CONCEPT_FILES_DIR1 = configMap.APIConfigParameters.CONCEPT_FILES_DIR
+      if (CONCEPT_FILES_DIR1 == None ){
     	  CONCEPT_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       }
+      else
+    	  CONCEPT_FILES_DIR = CONCEPT_FILES_DIR1.get
       logger.trace("CONCEPT_FILES_DIR => " + CONCEPT_FILES_DIR)
 
-      var MESSAGE_FILES_DIR = configMap.APIConfigParameters.MESSAGE_FILES_DIR
-      if (MESSAGE_FILES_DIR == null ){
+      var MESSAGE_FILES_DIR = ""
+      val MESSAGE_FILES_DIR1 = configMap.APIConfigParameters.MESSAGE_FILES_DIR
+      if (MESSAGE_FILES_DIR1 == None ){
     	  MESSAGE_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
       }
+      else
+    	  MESSAGE_FILES_DIR = MESSAGE_FILES_DIR1.get
       logger.trace("MESSAGE_FILES_DIR => " + MESSAGE_FILES_DIR)
 
-      var CONTAINER_FILES_DIR = configMap.APIConfigParameters.CONTAINER_FILES_DIR
-      if (CONTAINER_FILES_DIR == null ){
+      var CONTAINER_FILES_DIR = ""
+      val CONTAINER_FILES_DIR1 = configMap.APIConfigParameters.CONTAINER_FILES_DIR
+      if (CONTAINER_FILES_DIR1 == None ){
     	  CONTAINER_FILES_DIR = gitRootDir + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
       }
+      else
+    	  CONTAINER_FILES_DIR = CONTAINER_FILES_DIR1.get
+        
       logger.trace("CONTAINER_FILES_DIR => " + CONTAINER_FILES_DIR)
 
 

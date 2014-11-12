@@ -691,7 +691,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 		logger.trace(s"move of jar $moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
 		
-		(0, s"$jarTargetDir/$moduleNameJar")
+		(0, s"$moduleNameJar")
 	}
 	
 	private def compile (ctx: PmmlContext
