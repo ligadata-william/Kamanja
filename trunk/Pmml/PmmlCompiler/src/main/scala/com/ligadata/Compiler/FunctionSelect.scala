@@ -103,7 +103,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.trace(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	
-	  	if (scalaFcnName == "MapValues") {
+	  	if (scalaFcnName == "MapKeys") {
 	  		val stop : Int = 0
 	  	}
 	  	
@@ -172,6 +172,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 */
 	def selectIterableFcn : FcnTypeInfo = {
 	  	var iterableFcn : FunctionDef = null
+	  	if (node.function == "ContainerMap") {
+	  		val stop : Int = 0
+	  	}
 	  	var returnedArgs : 	Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)] =  collectIterableArgKeys(true)
 	  	/** The 'returnedArgs' contains information for all arguments of the current apply function args
 	  	 *  Since this is an iterable function, the first argument should be the collection (that possesses this Iterable trait) with
@@ -216,7 +219,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   			null
   		}
 	  	
-  		if (elemFcnName == "Sum") {
+  		if (elemFcnName == "MapKeys") {
   			val stop : Int = 0
   		}
 	  		

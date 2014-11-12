@@ -1220,9 +1220,10 @@ object TestMetadataAPI{
 			  7 ->  "SortedSetTypeDef",
 			  8 ->  "MapTypeDef",
 			  9 ->  "HashMapTypeDef",
-			  10 ->  "ListTypeDef",
-			  11 ->  "QueueTypeDef",
-			  12 ->  "TupleTypeDef")
+			  10 ->  "ImmutableMapTypeDef",
+			  11 ->  "ListTypeDef",
+			  12 ->  "QueueTypeDef",
+			  13 ->  "TupleTypeDef")
       var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
       var done = false
       while ( done == false ){

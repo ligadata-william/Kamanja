@@ -91,7 +91,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	  
 	  	}
 	  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
-	  	logger.trace(s"selectMacro ...macroDef produced?  $foundDef")
+	  	logger.info(s"selectMacro ...macroDef produced?  $foundDef")
 	  	(macroDef, argTypes)
 	}
 	
