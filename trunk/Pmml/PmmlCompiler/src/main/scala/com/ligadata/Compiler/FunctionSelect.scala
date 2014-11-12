@@ -1177,7 +1177,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  						val stop : Boolean = true
 	  						
 	  					} else {	  					  
-		  					LoadJarIfNeeded(mbrContainer, pmmlLoader.loadedJars, pmmlLoader.loader)
+		  					// LoadJarIfNeeded(mbrContainer, pmmlLoader.loadedJars, pmmlLoader.loader)
 		  					val useThisName = mbrContainer.typeString
 					  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 							// Convert class into class symbol
@@ -1286,23 +1286,25 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 */
 	def collectContainerSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[(String, ClassSymbol, Type)]] = {
 
-		val mirror = runtimeMirror(this.getClass.getClassLoader)
-	  	val containerNamefullPkgNames : Array[(String,String)] = argTypes.filter(arg => arg._3.isInstanceOf[ContainerTypeDef] && ! arg._3.isInstanceOf[TupleTypeDef]).map( argInfo => {
+	  	val containerNamefullPkgNamesAndElem : Array[(String,String,BaseTypeDef)] = argTypes.filter(arg => arg._3.isInstanceOf[ContainerTypeDef] && ! arg._3.isInstanceOf[TupleTypeDef]).map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
-	  		(arg, elem.typeString)
+	  		(arg, elem.typeString, elem)
 	  	})
 
-	  	val containersWithSuperClasses : Array[(String,Array[(String, ClassSymbol, Type)])] = containerNamefullPkgNames.map( pair => {
-	  		val (nm, fqClassname) : (String, String) = pair
+		val pmmlLoader = new PMMLLoaderInfo
+	  	
+	  	val containersWithSuperClasses : Array[(String,Array[(String, ClassSymbol, Type)])] = containerNamefullPkgNamesAndElem.map( nmsAndElem => {
+	  		val (nm, fqClassname) : (String, String) = (nmsAndElem._1, nmsAndElem._2)
+	  		LoadJarIfNeeded(nmsAndElem._3, pmmlLoader.loadedJars, pmmlLoader.loader)
 	  		// Convert class name into a class
 	  		//val ru = scala.reflect.runtime.universe
 	  		//val clsz1 = ru.newTermName(fqClassname)
 	  		//val cm = mirror.reflectClass(clsz1)
 	  		//val classC = ru.typeOf[clsz1].typeSymbol.asClass
 	  		val useThisName = if (fqClassname.contains("[")) fqClassname.split('[').head else fqClassname
-	  		val clz = Class.forName(useThisName)
+	  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 			// Convert class into class symbol
-			val clsSymbol = mirror.classSymbol(clz)
+			val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
 			// Info about the class
 			val isTrait = clsSymbol.isTrait			 
 			val isAbstractClass = clsSymbol.isAbstractClass
@@ -1318,8 +1320,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				if (clssym == "scala.Any") {
 					(clssym, null, null)
 				} else {
-					val cls = Class.forName(clssym)
-					val symbol = mirror.classSymbol(cls)
+					val cls = Class.forName(clssym, true, pmmlLoader.loader)
+					val symbol = pmmlLoader.mirror.classSymbol(cls)
 					val typ = symbol.toType
 					(clssym, symbol, typ)
 				}
