@@ -1,7 +1,7 @@
 {
   "Message": {
     "NameSpace": "System",
-    "Name": "HL7_test",
+    "Name": "HL7",
     "Version": "00.01.00",
     "Description": "HL7",
     "Fixed": "true",
