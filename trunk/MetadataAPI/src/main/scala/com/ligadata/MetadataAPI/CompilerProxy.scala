@@ -167,7 +167,7 @@ class CompilerProxy{
       classPath = "."
 
     val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
-
+/*
     jarPaths.foreach(p => {
       try {
         val jarFiles = new java.io.File(p).listFiles.filter(_.getName.endsWith(".jar")).map(_.getPath).mkString(":")
@@ -176,7 +176,8 @@ class CompilerProxy{
         case e: Exception => {}
       }
     })
-    
+*/
+
     if (modDef.DependencyJarNames != null) {
       val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
       if (classPath != null && classPath.size > 0) {
@@ -196,6 +197,7 @@ class CompilerProxy{
 			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
 			 false)
     modDef.jarName = jarFile
+    modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
     if( modDef.ver == 0 ){
       modDef.ver     = 1
     }
