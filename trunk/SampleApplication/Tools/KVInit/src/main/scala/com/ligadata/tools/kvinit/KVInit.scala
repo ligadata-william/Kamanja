@@ -29,7 +29,8 @@ object KVInit extends App with LogTrait {
   def usage: String = {
     """ 
 Usage: scala com.ligadata.kvinit.KVInit 
-    --kvname <full package qualified class name of a BaseContainer or BaseMsg derivative> 
+    --kvname <full package qualified name of a Container or Message> 
+    --classpath <full package qualified class name of a BaseContainer or BaseMsg derivative>
     --kvpath <where to put kvname db> 
     --csvpath <input to load> 
     --keyfieldname  <name of one of the fields in the first line of the csvpath file>
@@ -45,12 +46,7 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      scala -cp <path> --classname com.ligadata.edifecs.SputumCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/sputumCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
-      scala -cp <path> --classname com.ligadata.edifecs.SmokeCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
-      scala -cp <path> --classname com.ligadata.edifecs.EnvCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/envExposureCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
-      scala -cp <path> --classname com.ligadata.edifecs.CoughCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/coughCodes.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores      
-      scala -cp <path> --classname com.ligadata.edifecs.DyspnoeaCodes_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/dyspnoea.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores      
-      scala -cp <path> --classname com.ligadata.edifecs.System_Beneficiary_100 --csvpath <gitPath>/trunk/SampleApplication/Medical/MedEnvContext/src/main/resources/beneficiary.csv --keyfieldname icd9Code --kvpath /tmp/OnLEPInstall/kvstores       
+      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname --classname com.ligadata.edifecs.SputumCodes_100        --kvpath /tmp/OnLEPInstall/kvstores --csvpath /tmp/OnLEPInstall/sampledata/sputumCodes.csv       --keyfieldname icd9Code       
       
 """
   }
@@ -68,6 +64,8 @@ Sample uses:
         case Nil => map
         case "--classname" :: value :: tail =>
           nextOption(map ++ Map('classname -> value), tail)
+        case "--kvname" :: value :: tail =>
+          nextOption(map ++ Map('kvname -> value), tail)
         case "--kvpath" :: value :: tail =>
           nextOption(map ++ Map('kvpath -> value), tail)
         case "--csvpath" :: value :: tail =>
@@ -85,15 +83,16 @@ Sample uses:
     val options = nextOption(Map(), arglist)
 
     val classname = if (options.contains('classname)) options.apply('classname) else null
+    val kvname = if (options.contains('kvname)) options.apply('kvname) else null
     val kvpath = if (options.contains('kvpath)) options.apply('kvpath) else null
     val csvpath = if (options.contains('csvpath)) options.apply('csvpath) else null
     val keyfieldname = if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
     val dump = if (options.contains('dump)) options.apply('dump) else null
 
-    var valid: Boolean = (classname != null && kvpath != null && csvpath != null && keyfieldname != null)
+    var valid: Boolean = (classname != null && kvpath != null && csvpath != null && keyfieldname != null && kvname != null)
 
     if (valid) {
-      val kvmaker: KVInit = new KVInit(classname, kvpath, csvpath, keyfieldname)
+      val kvmaker: KVInit = new KVInit(classname, kvname.toLowerCase, kvpath, csvpath, keyfieldname)
 
       if (dump != null && dump.toLowerCase().startsWith("y")) {
         val dstore: DataStore = kvmaker.openstore
@@ -111,18 +110,12 @@ Sample uses:
   }
 }
 
-class KVInit(val classname: String, val kvpath: String, val csvpath: String, val keyfieldname: String, val kvstyle: String = "hashmap") extends LogTrait {
+class KVInit(val classname: String, val kvname: String, val kvpath: String, val csvpath: String, val keyfieldname: String, val kvstyle: String = "hashmap") extends LogTrait {
 
   val csvdata: List[String] = Source.fromFile(csvpath).mkString.split("\n", -1).toList
   val header: Array[String] = csvdata.head.split(",", -1).map(_.trim.toLowerCase)
   val isOk: Boolean = header.contains(keyfieldname.toLowerCase())
-  var messageOrContainer: MessageContainerBase = _
   var keyPos: Int = 0
-
-  // Load class first
-  val cls = Class.forName(classname)
-  messageOrContainer = cls.newInstance().asInstanceOf[MessageContainerBase]
-  val kvname = messageOrContainer.FullName.toLowerCase
 
   def openstore: DataStore = {
 
@@ -172,7 +165,6 @@ class KVInit(val classname: String, val kvpath: String, val csvpath: String, val
         val inputData = new DelimitedData(tuples, ",")
         inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
         inputData.curPos = 0
-        messageOrContainer.populate(inputData)
 
         val key: String = inputData.tokens(keyPos)
         SaveObject(key, tuples, kvstore, "CSV")
@@ -192,8 +184,7 @@ class KVInit(val classname: String, val kvpath: String, val csvpath: String, val
     val inputData = new DelimitedData(tuples, ",")
     inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
     inputData.curPos = 0
-    messageOrContainer.populate(inputData)
-    logger.info(s"\n$messageOrContainer")
+    logger.info(s"\n$kvname")
   }
 
   def dump(datastore: DataStore): Unit = {
