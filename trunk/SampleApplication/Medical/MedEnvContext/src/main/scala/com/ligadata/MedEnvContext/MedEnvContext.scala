@@ -62,7 +62,7 @@ object MedEnvContext extends EnvContext with LogTrait {
           // We already have this
         } else {
           val newMsgOrContainer = new MsgContainerInfo
-          newMsgOrContainer.dataStore = GetDataStoreHandle(storeType, tableName, tableName, dataLocation)
+          newMsgOrContainer.dataStore = GetDataStoreHandle(storeType, schemaName, tableName, dataLocation)
           newMsgOrContainer.containerType = containerType
 
           newMsgOrContainer.tableName = tableName
@@ -182,13 +182,13 @@ object MedEnvContext extends EnvContext with LogTrait {
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
         }
         case "treemap" => {
           connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
         }

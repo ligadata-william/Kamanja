@@ -181,13 +181,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
         }
         case "treemap" => {
           connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
           connectinfo += ("inmemory" -> "false")
           connectinfo += ("withtransaction" -> "false")
         }
