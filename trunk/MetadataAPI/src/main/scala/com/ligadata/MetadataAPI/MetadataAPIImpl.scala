@@ -154,10 +154,8 @@ object MetadataAPIImpl extends MetadataAPI{
     val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
     logger.trace("Connect To ZooKeeper using " + zkcConnectString)
     try{
+      CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
       zkc = CreateClient.createSimple(zkcConnectString)
-      if(zkc.checkExists().forPath(znodePath) == null ){
-	zkc.create().withMode(CreateMode.PERSISTENT).forPath(znodePath,null);
-      }
     }catch{
 	case e:Exception => {
 	  throw new InternalErrorException("Failed to start a zookeeper session with(" +  zkcConnectString + "): " + e.getMessage())

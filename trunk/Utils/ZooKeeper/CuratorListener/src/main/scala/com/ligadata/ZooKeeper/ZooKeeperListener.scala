@@ -11,9 +11,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.curator.utils._
 import java.util.concurrent.locks._
 import org.apache.log4j._
-import org.apache.zookeeper.CreateMode
 import scala.util.control.Breaks._
-import scala.collection.mutable.ArrayBuffer
 
 object ZooKeeperListener {
 
@@ -40,36 +38,7 @@ object ZooKeeperListener {
   }
 
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
-    try {
-      zkc = CreateClient.createSimple(zkcConnectString)
-
-      // Get all paths
-      val allZNodePaths = new ArrayBuffer[String]
-      var nFromPos = 0
-
-      while (nFromPos != -1) {
-        nFromPos = znodePath.indexOf('/', nFromPos + 1)
-        if (nFromPos == -1) {
-          allZNodePaths += znodePath
-        } else {
-          allZNodePaths += znodePath.substring(0, nFromPos)
-        }
-      }
-
-      allZNodePaths.foreach(path => {
-        if (zkc.checkExists().forPath(path) == null) {
-          zkc.create().withMode(CreateMode.PERSISTENT).forPath(path, null);
-        }
-      })
-    } catch {
-      case e: Exception => {
-        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
-      }
-    } finally {
-      if (zkc != null) {
-        zkc.close()
-      }
-    }
+    CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
   }
 
   def CreateListener(zkcConnectString: String, znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
