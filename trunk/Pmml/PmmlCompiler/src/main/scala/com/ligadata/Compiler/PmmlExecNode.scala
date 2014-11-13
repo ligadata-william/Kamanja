@@ -1849,9 +1849,9 @@ object PmmlExecNode extends LogTrait {
 							s"ctx.valueFor(${'"'}$field${'"'})"
 						}
 					} else {
-						logger.error(s"Field reference $field did not produce any type(s)... is it mis-spelled?")
+						logger.error(s"Field reference '$field' did not produce any type(s)... is it mis-spelled?")
 						
-						"UNKNOWN FIELD"
+						s"UNKNOWN FIELD $field"
 					}
 				}
 			}
