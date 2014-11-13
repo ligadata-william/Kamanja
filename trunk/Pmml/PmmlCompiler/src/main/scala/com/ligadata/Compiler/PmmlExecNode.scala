@@ -9,7 +9,7 @@ import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
 
 
-class PmmlExecNode (val qName : String)  { 
+class PmmlExecNode (val qName : String) extends LogTrait  { 
 	var children : Queue[PmmlExecNode] = new Queue[PmmlExecNode]()
 	
 	def addChild(child : PmmlExecNode) = {
@@ -1344,7 +1344,7 @@ class xValue(val value : String, val property : String) extends PmmlExecNode("Va
 
 
 
-object PmmlExecNode {
+object PmmlExecNode extends LogTrait {
 
  
 
@@ -1836,16 +1836,22 @@ object PmmlExecNode {
 					 */
 					val expandCompoundFieldTypes : Boolean = true
 					val typeStrs : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(field, ! expandCompoundFieldTypes)
-					val typeStr : String = typeStrs(0)._1
-					if (typeStr != "Unknown") {
-						val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
-						if (dataValueType == "AnyDataValue")
-							s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value.asInstanceOf[$typeStr]"
-						else
-							s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value"
+					if (typeStrs != null && typeStrs.size > 0) {
+						val typeStr : String = typeStrs(0)._1
+						if (typeStr != "Unknown") {
+							val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
+							if (dataValueType == "AnyDataValue")
+								s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value.asInstanceOf[$typeStr]"
+							else
+								s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value"
+						} else {
+							ctx.logger.error("Field '$field' is not known in either the data or transaction dictionary... fix this ")
+							s"ctx.valueFor(${'"'}$field${'"'})"
+						}
 					} else {
-						ctx.logger.error("Field '$field' is not known in either the data or transaction dictionary... fix this ")
-						s"ctx.valueFor(${'"'}$field${'"'})"
+						logger.error(s"Field reference $field did not produce any type(s)... is it mis-spelled?")
+						
+						"UNKNOWN FIELD"
 					}
 				}
 			}
