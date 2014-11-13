@@ -89,18 +89,8 @@ xcopy %srcPath%\Pmml\PmmlRuntime\target\scala-2.10\pmmlruntime_2.10-1.0.jar %ONL
 xcopy %srcPath%\Pmml\PmmlUdfs\target\scala-2.10\pmmludfs_2.10-1.0.jar %ONLEPLIBPATH%
 xcopy %srcPath%\Pmml\PmmlCompiler\target\scala-2.10\pmmlcompiler_2.10-1.0.jar %ONLEPLIBPATH%
 
-REM Med Application jars
-echo "xcopy Med Application jars..."
-xcopy %srcPath%\SampleApplication\Medical\MedicalBootstrap\target\scala-2.10\medicalbootstrap_2.10-1.0.jar %ONLEPLIBPATH%
-xcopy %srcPath%\SampleApplication\Medical\MedEnvContext\target\scala-2.10\medenvcontext_2.10-1.0.jar %ONLEPLIBPATH%
-
-REM model debug jars (if any)
-echo "xcopy model debug jars (if any)..."
-xcopy %srcPath%\modeldbg\COPD_000100\target\scala-2.10\copd_000100_2.10-1.0.jar %ONLEPLIBPATH%
-
 REM sample configs
 REMecho "xcopy sample configs..."
-REMxcopy %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\*cfg %ONLEPLIBPATH%
 xcopy %srcPath%\SampleApplication\Tools\KVInit\src\main\resources\*cfg %ONLEPLIBPATH%
 
 REM other jars 
@@ -121,26 +111,6 @@ REM 7za -tgzip messages_old_format.csv.gz messages_old_format.csv
 REM 7za -tgzip messages_new_format_all.csv.gz messages_new_format_all.csv
 
 xcopy *gz %ONLEPLIBPATH%\msgdata\
-
-echo "Prepare the test kvstore - Dyspnea Codes map..."
-
-java -jar %ONLEPLIBPATH%\KVInit-1.0 --classname com.ligadata.edifecs.DyspnoeaCodes_100 --kvpath %ONLEPLIBPATH%\kvstores\ --csvpath %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\dyspnoea.csv --keyfieldname icd9Code
-
-echo "Prepare the test kvstore - Environmental Exposure Codes map..."
-
-java -jar %ONLEPLIBPATH%\KVInit-1.0 --classname com.ligadata.edifecs.EnvCodes_100 --kvpath %ONLEPLIBPATH%\kvstores\ --csvpath %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\envExposureCodes.csv --keyfieldname icd9Code
-
-echo "Prepare the test kvstore - Sputum Codes map..."
-
-java -jar %ONLEPLIBPATH%\KVInit-1.0 --classname com.ligadata.edifecs.SputumCodes_100 --kvpath %ONLEPLIBPATH%\kvstores\ --csvpath %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\sputumCodes.csv --keyfieldname icd9Code
-
-echo "Prepare the test kvstore - Cough Codes map..."
-
-java -jar %ONLEPLIBPATH%\KVInit-1.0 --classname com.ligadata.edifecs.CoughCodes_100 --kvpath %ONLEPLIBPATH%\kvstores\ --csvpath %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\coughCodes.csv --keyfieldname icd9Code
-
-echo "Prepare the test kvstore - Smoking Codes map..."
-
-java -jar %ONLEPLIBPATH%\KVInit-1.0 --classname com.ligadata.edifecs.SmokeCodes_100 --kvpath %ONLEPLIBPATH%\kvstores\ --csvpath %srcPath%\SampleApplication\Medical\MedEnvContext\src\main\resources\smokingCodes.csv --keyfieldname icd9Code
 
 REM *******************************
 REM All that is left is to run the OnLEPManager

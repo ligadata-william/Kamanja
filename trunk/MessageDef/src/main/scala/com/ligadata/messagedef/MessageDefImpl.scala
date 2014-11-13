@@ -459,7 +459,7 @@ class MessageDefImpl {
       imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj}"
 
     """
-package com.ligadata.edifecs
+package com.ligadata.messagescontainers
     
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
@@ -885,7 +885,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
-    var pkg: String = "com.ligadata.edifecs"
+    var pkg: String = "com.ligadata.messagescontainers"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -914,7 +914,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var tdata: TransformData = null
     var tdataexists: Boolean = false
     var container: Message = null
-    var pkg: String = "com.ligadata.edifecs"
+    var pkg: String = "com.ligadata.messagescontainers"
     val tkey: String = "TransformData"
     var pKey: String = ""
     var partitionKeysList: List[String] = null

@@ -62,14 +62,6 @@ class MessageFilter {
 
   private[this] def getFilterMessage(msgType: String): TransformMessage = {
     // Hard coding the stuff for now until we connect to Metadata Manager and get it
-    if (msgType.equalsIgnoreCase("Ligadata.BankPocMsg")) {
-      val fltrMsg = new TransformMessage
-      fltrMsg.messageType = msgType
-      fltrMsg.outputKeys = Array("CUST_ID", "ENT_ACC_NUM")
-      fltrMsg.inputFields = Array("CUST_ID", "ENT_ACC_NUM", "ENT_SEG_TYP", "ENT_DTE", "ENT_TME", "ENT_SRC", "ENT_AMT_TYP", "ENT_AMT", "ODR_LMT", "ANT_LMT", "RUN_LDG_XAU", "Partition Key", "Entry Sequence Number", "STO Source Code", "STO Center Code", "STO Seq Num", "CDI Seq Num", "BBank Posting Date", "BBAnk ATM LTerm", "BBank ATM Tran Number", "BBank Posting Date2", "BBank BCH Num", "BBank BCH Tran Num", "Term Addr", "Term Seq No", "Posting Date", "Version Num", "Reject Reason", "Reject Account", "Original Branch", "Original Account", "Branch", "Product ID", "Business Class", "Op Limit Ind", "Bad Doubtful Ind", "Refer Ind", "Refer Stream", "Refer Reason", "Target Source Id", "Entry Amount Time", "Entry Source", "Entry Type", "Entry Code", "Entry TLA", "Entry Desc", "Benorig Branch", "Benorig Account", "Source Rec Ref", "Benrem User No", "CLRD Notice Ind", "Num Items", "Amount Cash", "Amount Uncleared Day 0", "Amount Uncleared Day 1", "Amount Uncleared Day 2", "Amount Uncleared Day 3", "Amount Uncleared Day 4", "Sub Branch", "Waste Type", "Same Day Entry Type", "Entry Type Ind", "Sort Code", "Service Branch", "Service Branch Account", "Days Notice", "Stops Flag", "Authorisation Date Time", "Authorisation Balance Type", "Authorisation System ID", "Authorisation Type", "Authorisation Status", "Matching System ID", "Reserve Limit", "Last Nights Ledger Balance", "Last Nights Clrd Int Balance", "Last Nights Clrd Fate Balance", "Amoubt Clrd Int Today", "Run C Int Balance Excluding Auths", "Run C Fate Balance Exceluding Auths", "Pred EOD Ledger Balance", "Pred CFI Ledger Balance", "Pred CFF Ledger Balance", "Funds Available Balance", "Amount CMTD outstanding ents", "Number CMTD Outstanding ents", "Amount Non CMTD Outstanding Ents", "Number Non CMTD Outstanding Ents", "Fate Clearance Amount Day 1", "Fate Clearance Amount Day 2", "Fate Clearance Amount Day 3", "Fate Clearance Amount Day 4", "Fate Clearance Amount Day 5", "Fate Clearance Amount Day 6", "Fate Clearance Amount Day 7", "Interest Clearance Amount Day 1", "Interest Clearance Amount Day 2", "Interest Clearance Amount Day 3", "Interest Clearance Amount Day 4", "Interest Clearance Amount Day 5", "PNP Error Flag", "NAR Error Flag", "Auths Error Flag", "Auths SDEP Type", "Narrative Line 1", "Narrative Line 2", "Narrative Line 3", "Narrative Line 4", "Narrative Line 5")
-      fltrMsg.outputFields = Array("CUST_ID", "ENT_ACC_NUM", "ENT_SEG_TYP", "ENT_DTE", "ENT_TME", "ENT_SRC", "ENT_AMT_TYP", "ENT_AMT", "ODR_LMT", "ANT_LMT", "RUN_LDG_XAU")
-      return fltrMsg
-    }
     null // If nothing matches
   }
 
@@ -105,7 +97,7 @@ class MessageFilter {
     val str_arr = inputData.split(",", -1)
     if (str_arr.size == 0)
       throw new Exception("Not found any fields to get Message Type")
-    val msgType = "BankPocMsg"
+    val msgType = "PocMsg"
     val fltrMsgFldsMap = getFilterMsgsFldsMap(msgType)
     if (fltrMsgFldsMap == null)
       throw new Exception("Not found Message Type \"" + msgType + "\"")

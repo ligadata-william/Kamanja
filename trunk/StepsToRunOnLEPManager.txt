@@ -18,7 +18,6 @@ copy /Y InputOutputAdapters\KafkaSimpleInputOutputAdapters\target\scala-2.10\kaf
 copy /Y MessageDef\target\scala-2.10\messagedef_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y Metadata\target\scala-2.10\metadata_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y MetadataAPI\target\scala-2.10\metadataapi_2.10-1.0.jar %ONLEPLIBPATH%
-copy /Y MetadataBootstrap\BankPOC\target\scala-2.10\bankpoc_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y MetadataBootstrap\MsgsAndContainers\target\scala-2.10\msgsandcontainers_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y OnLEPBase\target\scala-2.10\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y OnLEPManager\target\scala-2.10\onlepmanager_2.10-1.0.jar %ONLEPLIBPATH%
@@ -32,7 +31,6 @@ copy /Y Tools\LoadtestCommon\target\scala-2.10\loadtestcommon_2.10-0.0.0.1.jar %
 copy /Y Tools\LoadtestMaster\target\scala-2.10\loadtestmaster_2.10-0.0.0.1.jar %ONLEPLIBPATH%
 copy /Y Tools\LoadtestRunner\target\scala-2.10\loadtestrunner_2.10-0.0.0.1.jar %ONLEPLIBPATH%
 copy /Y Tools\MetadataBootstrap\target\scala-2.10\metadatabootstrap_2.10-1.0.jar %ONLEPLIBPATH%
-copy /Y Tools\OnLEPBankPocMsgsContainers\target\scala-2.10\onlepbankpocmsgscontainers_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y Tools\OnLEPEBModel\target\scala-2.10\onlepebmodel_2.10-1.0.jar %ONLEPLIBPATH%
 
 -- Copy Sample Config & Log properties
@@ -54,7 +52,7 @@ mkdir \tmp
 copy /Y %ONLEPLIBPATH%\events_20140807.csv.gz \tmp\
 
 -- Start Manager
-scala  -J-Xmx1024M -cp %ONLEPLIBPATH%\log4j-1.2.17.jar;%ONLEPLIBPATH%\bankpoc_2.10-1.0.jar;%ONLEPLIBPATH%\metadata_2.10-1.0.jar;%ONLEPLIBPATH%\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%\onlepmanager_2.10-1.0.jar --config %ONLEPLIBPATH%\simp_samp_node1_config.cfg
+scala  -J-Xmx1024M -cp %ONLEPLIBPATH%\log4j-1.2.17.jar;%ONLEPLIBPATH%\metadata_2.10-1.0.jar;%ONLEPLIBPATH%\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%\onlepmanager_2.10-1.0.jar --config %ONLEPLIBPATH%\simp_samp_node1_config.cfg
 
 
 
@@ -79,7 +77,6 @@ cp InputOutputAdapters/KafkaSimpleInputOutputAdapters/target/scala-2.10/kafkasim
 cp MessageDef/target/scala-2.10/messagedef_2.10-1.0.jar $ONLEPLIBPATH
 cp Metadata/target/scala-2.10/metadata_2.10-1.0.jar $ONLEPLIBPATH
 cp MetadataAPI/target/scala-2.10/metadataapi_2.10-1.0.jar $ONLEPLIBPATH
-cp MetadataBootstrap/BankPOC/target/scala-2.10/bankpoc_2.10-1.0.jar $ONLEPLIBPATH
 cp MetadataBootstrap/MsgsAndContainers/target/scala-2.10/msgsandcontainers_2.10-1.0.jar $ONLEPLIBPATH
 cp OnLEPBase/target/scala-2.10/onlepbase_2.10-1.0.jar $ONLEPLIBPATH
 cp OnLEPManager/target/scala-2.10/onlepmanager_2.10-1.0.jar $ONLEPLIBPATH
@@ -93,7 +90,6 @@ cp Tools/LoadtestCommon/target/scala-2.10/loadtestcommon_2.10-0.0.0.1.jar $ONLEP
 cp Tools/LoadtestMaster/target/scala-2.10/loadtestmaster_2.10-0.0.0.1.jar $ONLEPLIBPATH
 cp Tools/LoadtestRunner/target/scala-2.10/loadtestrunner_2.10-0.0.0.1.jar $ONLEPLIBPATH
 cp Tools/MetadataBootstrap/target/scala-2.10/metadatabootstrap_2.10-1.0.jar $ONLEPLIBPATH
-cp Tools/OnLEPBankPocMsgsContainers/target/scala-2.10/onlepbankpocmsgscontainers_2.10-1.0.jar $ONLEPLIBPATH
 cp Tools/OnLEPEBModel/target/scala-2.10/onlepebmodel_2.10-1.0.jar $ONLEPLIBPATH
 
 -- Copy Sample Config & Log properties
@@ -131,12 +127,10 @@ copy /Y BaseTypes\target\scala-2.10\basetypes_2.10-0.1.0.jar %ONLEPLIBPATH%
 copy /Y EnvContexts\SimpleEnvContextImpl\target\scala-2.10\simpleenvcontextimpl_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y InputOutputAdapters\FileSimpleInputOutputAdapters\target\scala-2.10\filesimpleinputoutputadapters_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y InputOutputAdapters\FileSimpleInputOutputAdapters\target\scala-2.10\kafkasimpleinputoutputadapters_2.10-1.0.jar %ONLEPLIBPATH%
-copy /Y MetadataBootstrap\BankPOC\target\scala-2.10\bankpoc_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y OnLEPBase\target\scala-2.10\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y OnLEPManager\target\scala-2.10\onlepmanager_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y Storage\target\scala-2.10\storage_2.10-0.0.0.2.jar %ONLEPLIBPATH%
 copy /Y Metadata\target\scala-2.10\metadata_2.10-1.0.jar %ONLEPLIBPATH%
-copy /Y Tools\OnLEPBankPocMsgsContainers\target\scala-2.10\onlepbankpocmsgscontainers_2.10-1.0.jar %ONLEPLIBPATH%
 copy /Y Tools\OnLEPEBModel\target\scala-2.10\onlepebmodel_2.10-1.0.jar %ONLEPLIBPATH%
 
 -- Copy Sample Config & Log properties
@@ -149,7 +143,7 @@ copy /Y ..\externals\log4j\log4j-1.2.17.jar %ONLEPLIBPATH%
 copy /Y ..\externals\SampleData\EngineSampleData\events_20140807.csv.gz %ONLEPLIBPATH%
 
 -- Start Manager
-scala  -J-Xmx1024M -cp %ONLEPLIBPATH%\log4j-1.2.17.jar;%ONLEPLIBPATH%\bankpoc_2.10-1.0.jar;%ONLEPLIBPATH%\metadata_2.10-1.0.jar;%ONLEPLIBPATH%\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%\onlepmanager_2.10-1.0.jar --config %ONLEPLIBPATH%\simp_samp_node1_config.cfg
+scala  -J-Xmx1024M -cp %ONLEPLIBPATH%\log4j-1.2.17.jar;%ONLEPLIBPATH%\metadata_2.10-1.0.jar;%ONLEPLIBPATH%\onlepbase_2.10-1.0.jar %ONLEPLIBPATH%\onlepmanager_2.10-1.0.jar --config %ONLEPLIBPATH%\simp_samp_node1_config.cfg
 
 
 
@@ -165,12 +159,10 @@ cp BaseFunctions/target/scala-2.10/basefunctions_2.10-0.1.0.jar $ONLEPLIBPATH
 cp BaseTypes/target/scala-2.10/basetypes_2.10-0.1.0.jar $ONLEPLIBPATH
 cp EnvContexts/SimpleEnvContextImpl/target/scala-2.10/simpleenvcontextimpl_2.10-1.0.jar $ONLEPLIBPATH
 cp InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/filesimpleinputoutputadapters_2.10-1.0.jar $ONLEPLIBPATH
-cp MetadataBootstrap/BankPOC/target/scala-2.10/bankpoc_2.10-1.0.jar $ONLEPLIBPATH
 cp OnLEPBase/target/scala-2.10/onlepbase_2.10-1.0.jar $ONLEPLIBPATH
 cp OnLEPManager/target/scala-2.10/onlepmanager_2.10-1.0.jar $ONLEPLIBPATH
 cp Storage/target/scala-2.10/storage_2.10-0.0.0.2.jar $ONLEPLIBPATH
 cp Metadata/target/scala-2.10/metadata_2.10-1.0.jar $ONLEPLIBPATH
-cp Tools/OnLEPBankPocMsgsContainers/target/scala-2.10/onlepbankpocmsgscontainers_2.10-1.0.jar $ONLEPLIBPATH
 cp Tools/OnLEPEBModel/target/scala-2.10/onlepebmodel_2.10-1.0.jar $ONLEPLIBPATH
 
 
@@ -193,7 +185,7 @@ mkdir -p /tmp
 cp $ONLEPLIBPATH/events_20140807.csv.gz /tmp/
 
 -- Start Manager
-scala  -J-Xmx1024M -cp $ONLEPLIBPATH/log4j-1.2.17.jar:$ONLEPLIBPATH/bankpoc_2.10-1.0.jar:$ONLEPLIBPATH/metadata_2.10-1.0.jar:$ONLEPLIBPATH/onlepbase_2.10-1.0.jar $ONLEPLIBPATH/onlepmanager_2.10-1.0.jar --config $ONLEPLIBPATH/simp_samp_node1_config.cfg
+scala  -J-Xmx1024M -cp $ONLEPLIBPATH/log4j-1.2.17.jar:$ONLEPLIBPATH/metadata_2.10-1.0.jar:$ONLEPLIBPATH/onlepbase_2.10-1.0.jar $ONLEPLIBPATH/onlepmanager_2.10-1.0.jar --config $ONLEPLIBPATH/simp_samp_node1_config.cfg
 
 ======================================= Steps with updated metadata bootstrap (Updated on 2014-08-27) End =======================================
 
@@ -218,7 +210,7 @@ java -jar $HOME/ligadata/trunk/MetadataAPI/target/scala-2.10/MetadataAPI-1.0
 ## DEBUGGING - Starting the onlep manager for remote debugging
 
 export ONLEPPATH=/tmp/OnLEPNew
-java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar ~/ligadata/barc/svn/ligadata/trunk/OnLEPManager/target/scala-2.10/OnLEPManager-1.0 --config $ONLEPPATH/BankPoc.cfg
+java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar ~/ligadata/barc/svn/ligadata/trunk/OnLEPManager/target/scala-2.10/OnLEPManager-1.0 --config $ONLEPPATH/Poc.cfg
 
 # From eclipse create a remote debug application with the host where the command above was executed 
 # (e.g., localhost if debugging on your own machine) and port 8998
@@ -236,15 +228,6 @@ gzip -c OneCustomerTransactionsAlerts.csv > OneCustomerTransactionsAlerts.gz
 gzip -c OneCustomerTransactionsNoAlerts.csv > OneCustomerTransactionsNoAlerts.gz
 
 # That will leave the csv files there in addition to creating the compressed versions.  If -c is omitted above, the csv file is replaced by the gz file.
-
-
-# Build the EnvContext input for the BankPoc based upon a superset of the keys supplied in the messages from prior step (transactionsNoAlerts.csv + transactionsAlerts.csv)
-
-scala -Dlog4j.configuration=file:/<yourpath>/ligadata/trunk/Pmml/PmmlCompiler/src/main/resources/log4j.properties -cp <yourpath> com.ligadata.alchemy.kvinit.AlchemyKV --kvname AlertHistory_100 --kvpath /tmp/OnLEPNew --csvpath /home/rich/ligadata/barc/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertHistory.csv  --keyfieldname ENT_ACC_NUM
-
-scala -Dlog4j.configuration=file:/<yourpath>/ligadata/trunk/Pmml/PmmlCompiler/src/main/resources/log4j.properties -cp <yourpath> com.ligadata.alchemy.kvinit.AlchemyKV --kvname AlertParameters_100 --kvpath /tmp/OnLEPNew --csvpath <yourpath>/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/AlertParameters.csv  --keyfieldname ALERT
-
-scala -Dlog4j.configuration=file:/<yourpath>/ligadata/trunk/Pmml/PmmlCompiler/src/main/resources/log4j.properties -cp <yourpath> com.ligadata.alchemy.kvinit.AlchemyKV --kvname CustomerPreferences_100 --kvpath /tmp/OnLEPNew --csvpath <yourpath>/svn/ligadata/trunk/MetadataBootstrap/AlchemyKVInit/src/main/resources/EnvContextContainerData/CustomerPreferences.csv  --keyfieldname ENT_ACC_NUM
 
 #
 Now, if we look at the scalac man page, the scalac compiler has a –g option that can take the following values:

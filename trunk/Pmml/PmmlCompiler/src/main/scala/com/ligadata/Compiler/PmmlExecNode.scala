@@ -571,7 +571,7 @@ class xExtension(val extender : String, val name : String , val value : String )
  *  Vectors of Tuples are supported.  The expectation is that the field will contain the necessary
  *  field names to name the content in the 'map'.  For the standard use case (a standard key/value map), 
  *  the fieldColumnMap will have the "database" field name as the key (e.g., beneficiary.pufId or 
- *  a schema qualified one - edifecs.beneficiary.pufId) and the value will be the "internal" column name 
+ *  a schema qualified one - cms.beneficiary.pufId) and the value will be the "internal" column name 
  *  to use to refer to the data in the loaded table (whether it is from an external database or file, 
  *  or an in-line table declaration. 
  *  

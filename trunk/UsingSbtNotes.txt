@@ -90,8 +90,6 @@ Think of this file as a companion to the devmachine-setup.txt
 		[info] 	ModuleInfo(PmmlCompiler,PmmlCompiler,None,None,List(),pmmlcompiler,None,None)
 		[info] MetadataBootstrap/*:projectInfo
 		[info] 	ModuleInfo(MetadataBootstrap,MetadataBootstrap,None,None,List(),metadatabootstrap,None,None)
-		[info] RichsBankPOC/*:projectInfo
-		[info] 	ModuleInfo(BankPOC,BankPOC,None,None,List(),bankpoc,None,None)
 		[info] MetadataAPI/*:projectInfo
 		[info] 	ModuleInfo(MetadataAPI,MetadataAPI,None,None,List(),metadataapi,None,None)
 		[info] LoadtestCommon/*:projectInfo

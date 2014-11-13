@@ -17,7 +17,7 @@ import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.OnLEPBase._
-import com.ligadata.edifecs._
+import com.ligadata.olep.metadataload.MetadataLoad
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -46,7 +46,7 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname --classname com.ligadata.edifecs.SputumCodes_100        --kvpath /tmp/OnLEPInstall/kvstores --csvpath /tmp/OnLEPInstall/sampledata/sputumCodes.csv       --keyfieldname icd9Code       
+      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname --classname com.ligadata.messagescontainers.SputumCodes_100 --kvpath /tmp/OnLEPInstall/kvstores --csvpath /tmp/OnLEPInstall/sampledata/sputumCodes.csv --keyfieldname icd9Code       
       
 """
   }

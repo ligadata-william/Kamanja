@@ -5,7 +5,7 @@ import com.ligadata.olep.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadata.MdMgr._
 
-import com.ligadata.edifecs.MetadataLoad
+import com.ligadata.olep.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
 import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }

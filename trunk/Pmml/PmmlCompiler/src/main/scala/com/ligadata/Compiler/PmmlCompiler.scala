@@ -18,7 +18,7 @@ import org.xml.sax.XMLReader
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadata._
-import com.ligadata.edifecs._
+import com.ligadata.olep.metadataload.MetadataLoad
 
 
 /** 
@@ -117,7 +117,7 @@ import com.ligadata.edifecs._
 		c) The data and transformation dictionary variables are traversed and the 'var' statements are generated for each element.
 		d) If one or more MapValues is/are present in the transformation dictionary, these maps are constructed.
 		If more than one is present a mapOfMapValues is generated keyed by field name.  
-		e) The functions found in the transformation dictionary and RuleSet are generated (AS REQUIRED)MetadataBootstrap/BankPOC using the 
+		e) The functions found in the transformation dictionary and RuleSet are generated (AS REQUIRED)MetadataBootstrap using the 
 		derived names associated with each PmmlExecNode. 
 			i) The function signature will be derived based upon the 
 			ii) The function bodies will include possible setup	of local variables.  
@@ -224,7 +224,7 @@ Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --java
                 <jhome> (required) is the equivalent of $JAVA_HOME
                 <jar path> (required) is the destination directory path for the jar file to be produced
 				<manifest path> (required) is the path of the manifest template to use for inclusion/generation of the jar
-                <clientname> (required) is the name of the customer whose pmml models are being compiledMetadataBootstrap/BankPOC
+                <clientname> (required) is the name of the customer whose pmml models are being compiledMetadataBootstrap
                  <output path> (optional) is an output file path where a copy of the generated source will be left
                 skipjar (optional) is a flag that when used suppresses the compilation/jar step.. often used with the --srcOut option
 				instrumentWithLogInfo (optional) if true model derived field classes are instrumented with enter and result 
@@ -232,7 +232,7 @@ Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --java
 
 Note that the sources will be included in the jar produced.  The optional scala source described by <output path> is for immediate
 inspection in addition to the jar version.  Note that the clientName value supplied is used for scala package name generation, et al.
-As such, it must be simple name with alphanumerics and ideally all lower case.  For example, use 'edifecs' instead of 'Edifecs Corp."
+As such, it must be simple name with alphanumerics and ideally all lower case.
 """
 	}
 	
@@ -308,7 +308,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.  
 			val msgCtnPath : String = ""
 			val mgr : MdMgr = MdMgr.GetMdMgr
 			
-			val mdLoader = new com.ligadata.edifecs.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 			
 			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging, Array("."))

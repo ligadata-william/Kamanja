@@ -8,7 +8,7 @@ import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
-import com.ligadata.edifecs._
+import com.ligadata.olep.metadataload.MetadataLoad
 import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }

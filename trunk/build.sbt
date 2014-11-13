@@ -29,7 +29,7 @@ lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener"))
 
 lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
 
-lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata, OnLEPBase, MedicalBootstrap, MetadataAPI, Serialize, ZooKeeperListener)
+lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
 
@@ -41,7 +41,7 @@ lazy val Storage = project.in(file("Storage"))
 
 lazy val Metadata = project.in(file("Metadata")) 
 
-lazy val MessageDef = project.in(file("MessageDef")) dependsOn(Metadata,MedicalBootstrap)
+lazy val MessageDef = project.in(file("MessageDef")) dependsOn(Metadata,MetadataBootstrap)
 
 lazy val LoadtestCommon = project.in(file("Tools/LoadtestCommon")) dependsOn(Storage)
 
@@ -53,13 +53,13 @@ lazy val Loadtest = project.in(file("Tools/Loadtest")) dependsOn(Storage)
 
 lazy val PmmlRuntime = project.in(file("Pmml/PmmlRuntime")) dependsOn(Metadata, OnLEPBase) 
 
-lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, OnLEPBase, MedicalBootstrap, MedicalBootstrap)
+lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, OnLEPBase, MetadataBootstrap)
 
 lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRuntime, OnLEPBase)
 
 lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, OnLEPBase, Serialize)
 
-lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase)
+lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 
 lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient)
 
@@ -67,11 +67,7 @@ lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(M
 
 // lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
-lazy val MedicalBootstrap = project.in(file("SampleApplication/Medical/MedicalBootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
-
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
-lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (MedicalBootstrap, Storage)
-
-lazy val MedEnvContext = project.in(file("SampleApplication/Medical/MedEnvContext")) dependsOn (OnLEPBase, Storage, Serialize)
+lazy val KVInit = project.in(file("SampleApplication/Tools/KVInit")) dependsOn (MetadataBootstrap, Storage)
 

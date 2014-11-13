@@ -24,8 +24,6 @@ cp $HOME/github/RTD/trunk/BaseTypes/target/scala-2.10/basetypes_2.10-0.1.0.jar $
 cp $HOME/github/RTD/trunk/MessageDef/target/scala-2.10/messagedef_2.10-1.0.jar $HOME/OnLEP
 cp $HOME/github/RTD/trunk/Metadata/target/scala-2.10/metadata_2.10-1.0.jar $HOME/OnLEP
 cp $HOME/github/RTD/trunk/OnLEPBase/target/scala-2.10/onlepbase_2.10-1.0.jar $HOME/OnLEP
-cp $HOME/github/RTD/trunk/SampleApplication/Medical/MedicalBootstrap/target/scala-2.10/medicalbootstrap_2.10-1.0.jar $HOME/OnLEP
-cp $HOME/github/RTD/trunk/SampleApplication/Medical/MedicalBootstrap/target/scala-2.10/medicalbootstrap_2.10-1.0.jar $HOME/OnLEP
 cp $HOME/github/RTD/trunk/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $HOME/OnLEP
 cp $HOME/github/RTD/trunk/Pmml/PmmlRuntime/target/scala-2.10/pmmlruntime_2.10-1.0.jar $HOME/OnLEP
 cp $HOME/github/RTD/trunk/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $HOME/OnLEP
@@ -40,7 +38,6 @@ cp $HOME/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar
 cp $HOME/.ivy2/cache/org.json4s/json4s-jackson_2.10/jars/json4s-jackson_2.10-3.2.9.jar $HOME/OnLEP/
 cp $HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $HOME/OnLEP/
 cp $HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar $HOME/OnLEP/
-cp $HOME/github/RTD/trunk/SampleApplication/Medical/MedEnvContext/target/scala-2.10/medenvcontext_2.10-1.0.jar $HOME/OnLEP
 
 ** I have decided to use the json file as the config file for MetadataAPI. (ignore the MetadataAPI.properties from now)
 ** I have  hard-coded the default config file as $HOME/MetadataAPIConfig.json where $HOME is your home directory.
@@ -66,7 +63,7 @@ cp $HOME/github/RTD/trunk/SampleApplication/Medical/MedEnvContext/target/scala-2
 		 "ScalaHome"  	: "/home/vmandava/scala-2.10.4",
 		 "JavaHome"  	: "/home/vmandava/jdk1.8.0_05",
 		 "ManifestPath"	: "/home/vmandava/git_hub/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf",
-		 "ClassPath"  	: ".:/tmp/OnLEPInstall/metadata_2.10-1.0.jar:/tmp/OnLEPInstall/basefunctions_2.10-0.1.0.jar:/tmp/OnLEPInstall/messagedef_2.10-1.0.jar:/tmp/OnLEPInstall/methodextractor_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlcompiler_2.10-1.0.jar:/tmp/OnLEPInstall/bankenvcontext_2.10-1.0.jar:/tmp/OnLEPInstall/onlepbase_2.10-1.0.jar:/tmp/OnLEPInstall/bankbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/OnLEPInstall/medicalbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/joda-time-2.3.jar:/tmp/OnLEPInstall/joda-convert-1.6.jar:/tmp/OnLEPInstall/basetypes_2.10-0.1.0.jar:/tmp/OnLEPInstall/pmmludfs_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlruntime_2.10-1.0.jar:/tmp/OnLEPInstall/json4s-native_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-core_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-ast_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-databind-2.3.1.jar:/tmp/OnLEPInstall/jackson-annotations-2.3.0.jar:/tmp/OnLEPInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-core-2.3.1.jar:/tmp/OnLEPInstall/log4j-1.2.17.jar",
+		 "ClassPath"  	: ".:/tmp/OnLEPInstall/metadata_2.10-1.0.jar:/tmp/OnLEPInstall/basefunctions_2.10-0.1.0.jar:/tmp/OnLEPInstall/messagedef_2.10-1.0.jar:/tmp/OnLEPInstall/methodextractor_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlcompiler_2.10-1.0.jar:/tmp/OnLEPInstall/onlepbase_2.10-1.0.jar:/tmp/OnLEPInstall/bootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/joda-time-2.3.jar:/tmp/OnLEPInstall/joda-convert-1.6.jar:/tmp/OnLEPInstall/basetypes_2.10-0.1.0.jar:/tmp/OnLEPInstall/pmmludfs_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlruntime_2.10-1.0.jar:/tmp/OnLEPInstall/json4s-native_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-core_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-ast_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-databind-2.3.1.jar:/tmp/OnLEPInstall/jackson-annotations-2.3.0.jar:/tmp/OnLEPInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-core-2.3.1.jar:/tmp/OnLEPInstall/log4j-1.2.17.jar",
 		 "NotifyEngine" : "NO",
 		 "ZnodePath" : "/ligadata/metadata",
 		 "ZooKeeperConnectString" : "localhost:2181"

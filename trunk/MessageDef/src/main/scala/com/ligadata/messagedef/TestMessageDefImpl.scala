@@ -10,7 +10,7 @@ import com.ligadata.olep.metadata.MdMgr
 import com.ligadata.olep.metadata.ContainerDef
 import com.ligadata.olep.metadata.MessageDef
 import scala.collection.mutable.ListBuffer
-import com.ligadata.edifecs.MetadataLoad
+import com.ligadata.olep.metadataload.MetadataLoad
 
 trait LogTrait {
   val loggerName = this.getClass.getName()

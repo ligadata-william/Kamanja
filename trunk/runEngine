@@ -11,6 +11,6 @@ export MAPDB_JARS=$HOME/.ivy2/cache/org.mapdb/mapdb/bundles/mapdb-1.0.6.jar:$HOM
 
 export JODA_JARS=$HOME/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar:$HOME/my_libs/joda-time-2.4.jar
 
-export olep_classpath=$ONLEPLIBPATH/log4j-1.2.17.jar:$ONLEPLIBPATH/bankpoc_2.10-1.0.jar:$ONLEPLIBPATH/msgsandcontainers_2.10-1.0.jar:$ONLEPLIBPATH/metadata_2.10-1.0.jar:$ONLEPLIBPATH/onlepbase_2.10-1.0.jar:$ONLEPLIBPATH/basetypes_2.10-0.1.0.jar:$ONLEPLIBPATH/metadataapi_2.10-1.0.jar:$ONLEPLIBPATH/storage_2.10-0.0.0.2.jar:$ONLEPLIBPATH/pmmlruntime_2.10-1.0.jar:$ONLEPLIBPATH/pmmludfs_2.10-1.0.jar:$JODA_JARS:$JSON_JARS:$MAPDB_JARS:$JACKSON_JARS
+export olep_classpath=$ONLEPLIBPATH/log4j-1.2.17.jar:$ONLEPLIBPATH/msgsandcontainers_2.10-1.0.jar:$ONLEPLIBPATH/metadata_2.10-1.0.jar:$ONLEPLIBPATH/onlepbase_2.10-1.0.jar:$ONLEPLIBPATH/basetypes_2.10-0.1.0.jar:$ONLEPLIBPATH/metadataapi_2.10-1.0.jar:$ONLEPLIBPATH/storage_2.10-0.0.0.2.jar:$ONLEPLIBPATH/pmmlruntime_2.10-1.0.jar:$ONLEPLIBPATH/pmmludfs_2.10-1.0.jar:$JODA_JARS:$JSON_JARS:$MAPDB_JARS:$JACKSON_JARS
 echo $olep_classpath
 scala  -J-Xmx1024M -cp $olep_classpath $ONLEPLIBPATH/onlepmanager_2.10-1.0.jar --config $ONLEPLIBPATH/simp_samp_node1_config.cfg
