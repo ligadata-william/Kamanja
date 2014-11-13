@@ -176,7 +176,9 @@ object MethodExtract extends App with LogTrait{
 		//logger.info(s"$fcnStr")
 
 		/** Serialize the types that were generated during the UDF lib introspection and print them to stdout */
-		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",typeArray.toSet.toArray)	
+		val uniqueTypes : Map[String, BaseElemDef] = Map[String, BaseElemDef]()
+		typeArray.foreach( typ => uniqueTypes += ((typ.NameSpace + "." + typ.Name) -> typ))
+		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",uniqueTypes.values.toArray)	
 		println
 		println(typesAsJson)
 		println
