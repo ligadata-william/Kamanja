@@ -727,33 +727,36 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			val name = fld.name
 			
 			val typeInfo : Array[(String,Boolean,BaseTypeDef)] = getFieldType(name, expandCompoundFieldTypes)
-			if (typeInfo == null || (typeInfo != null && typeInfo(0)._3 == null)) {
-				throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
-			}
-			
-			/** FIXME: if a container is present (typeInfo.size > 1), should the container itself be added to the list of output
-			 	vars instead of the field?  I think so... otoh, there is likely just one row out of this message container.. can
-			 	the engine pull that row given the information provided.  Shouldn't there be a key emitted to select that row?  Or? */
-			if (typeInfo.size > 1) {
-				/** ... write them both for now and bring it up tomorrow */
-				val (containerType, isContainer, containerBaseTypeDef) = typeInfo(0)
-				val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(1)
-				val containerName : String = fld.name.split('.').head
-				val containervalue = (containerName, containerBaseTypeDef.NameSpace, containerBaseTypeDef.typeString)
-				/** give the full container.name for the field reference */
-				val typeStr : String = fieldBaseTypeDef.typeString
-				val fldTypeName : String = fieldBaseTypeDef.Name
-				val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
-				val fldvalue = (name, fldTypeNameSp, fldType)
-				//modelOutputs(containerName.toLowerCase()) = containervalue
-				modelOutputs(name.toLowerCase()) = fldvalue
+			if (typeInfo == null || (typeInfo != null && typeInfo.size == 0) || (typeInfo != null && typeInfo.size > 0 && typeInfo(0)._3 == null)) {
+				//throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
+				logger.error(s"mining field named '$name' does not exist... your model is going to fail... however, let's see how far we can go to find any other issues...")
+				modelOutputs(name.toLowerCase()) = (name, "is a bad mining variable referring to no valid dictionary item", null)
 			} else {
-				val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(0)
-				val typeStr : String = fldType
-				val fldTypeName : String = fieldBaseTypeDef.Name
-				val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
-				val fldvalue = (name, fldTypeNameSp, fldTypeName)
-				modelOutputs(name.toLowerCase()) = fldvalue
+			
+				/** FIXME: if a container is present (typeInfo.size > 1), should the container itself be added to the list of output
+				 	vars instead of the field?  I think so... otoh, there is likely just one row out of this message container.. can
+				 	the engine pull that row given the information provided.  Shouldn't there be a key emitted to select that row?  Or? */
+				if (typeInfo.size > 1) {
+					/** ... write them both for now and bring it up tomorrow */
+					val (containerType, isContainer, containerBaseTypeDef) = typeInfo(0)
+					val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(1)
+					val containerName : String = fld.name.split('.').head
+					val containervalue = (containerName, containerBaseTypeDef.NameSpace, containerBaseTypeDef.typeString)
+					/** give the full container.name for the field reference */
+					val typeStr : String = fieldBaseTypeDef.typeString
+					val fldTypeName : String = fieldBaseTypeDef.Name
+					val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
+					val fldvalue = (name, fldTypeNameSp, fldType)
+					//modelOutputs(containerName.toLowerCase()) = containervalue
+					modelOutputs(name.toLowerCase()) = fldvalue
+				} else {
+					val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(0)
+					val typeStr : String = fldType
+					val fldTypeName : String = fieldBaseTypeDef.Name
+					val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
+					val fldvalue = (name, fldTypeNameSp, fldTypeName)
+					modelOutputs(name.toLowerCase()) = fldvalue
+				}
 			}
 			
 		})
