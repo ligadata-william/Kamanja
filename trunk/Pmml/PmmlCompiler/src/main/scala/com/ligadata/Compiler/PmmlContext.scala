@@ -730,7 +730,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			if (typeInfo == null || (typeInfo != null && typeInfo.size == 0) || (typeInfo != null && typeInfo.size > 0 && typeInfo(0)._3 == null)) {
 				//throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
 				logger.error(s"mining field named '$name' does not exist... your model is going to fail... however, let's see how far we can go to find any other issues...")
-				modelOutputs(name.toLowerCase()) = (name, "is a bad mining variable referring to no valid dictionary item", null)
+				modelOutputs(name.toLowerCase()) = (name, "is a bad mining variable referring to no valid dictionary item", "UNKNOWN TYPE")
 			} else {
 			
 				/** FIXME: if a container is present (typeInfo.size > 1), should the container itself be added to the list of output
