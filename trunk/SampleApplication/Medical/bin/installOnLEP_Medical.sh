@@ -52,7 +52,7 @@ cd $srcPath
 echo "copy the fat jars to $ONLEPLIBPATH ..."
 
 cd $srcPath
-cp SampleApplication/Tools/KVInit/target/scala-2.10/KVInit* $ONLEPLIBPATH
+cp Utils/KVInit/target/scala-2.10/KVInit* $ONLEPLIBPATH
 cp MetadataAPI/target/scala-2.10/MetadataAPI* $ONLEPLIBPATH
 cp OnLEPManager/target/scala-2.10/OnLEPManager* $ONLEPLIBPATH
 
@@ -95,7 +95,7 @@ cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $ONLEP
 
 # sample configs
 #echo "copy sample configs..."
-cp $srcPath/SampleApplication/Tools/KVInit/src/main/resources/*cfg $ONLEPLIBPATH
+cp $srcPath/Utils/KVInit/src/main/resources/*cfg $ONLEPLIBPATH
 
 # other jars 
 echo "copy other jars..."
@@ -214,7 +214,7 @@ cp $HOME/.ivy2/cache/com.twitter/chill_2.10/jars/chill_2.10-0.3.6.jar $ONLEPLIBP
 # Prepare test messages and copy them into place
 
 echo "Prepare test messages and copy them into place..."
-cd $srcPath/SampleApplication/Tools/KVInit/src/main/resources
+cd $srcPath/Utils/KVInit/src/main/resources
 gzip -c beneficiaries.csv > beneficiaries.gz
 gzip -c messages_new_format.csv > messages_new_format.gz
 gzip -c messages_old_format.csv > messages_old_format.gz

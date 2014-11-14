@@ -48,7 +48,7 @@ REM Move them into place
 echo "xcopy the fat jars to %ONLEPLIBPATH% ..."
 
 cd %srcPath%
-xcopy SampleApplication\Tools\KVInit\target\scala-2.10\KVInit* %ONLEPLIBPATH%
+xcopy Utils\KVInit\target\scala-2.10\KVInit* %ONLEPLIBPATH%
 xcopy MetadataAPI\target\scala-2.10\MetadataAPI* %ONLEPLIBPATH%
 xcopy OnLEPManager\target\scala-2.10\OnLEPManager* %ONLEPLIBPATH%
 
@@ -91,7 +91,7 @@ xcopy %srcPath%\Pmml\PmmlCompiler\target\scala-2.10\pmmlcompiler_2.10-1.0.jar %O
 
 REM sample configs
 REMecho "xcopy sample configs..."
-xcopy %srcPath%\SampleApplication\Tools\KVInit\src\main\resources\*cfg %ONLEPLIBPATH%
+xcopy %srcPath%\Utils\KVInit\src\main\resources\*cfg %ONLEPLIBPATH%
 
 REM other jars 
 echo "xcopy other jars..."
@@ -104,7 +104,7 @@ REM *******************************
 REM Prepare test messages and xcopy them into place
 
 echo "Prepare test messages and xcopy them into place..."
-cd %srcPath%\SampleApplication\Tools\KVInit\src\main\resources
+cd %srcPath%\Utils\KVInit\src\main\resources
 REM 7za -tgzip beneficiaries.csv.gz beneficiaries.csv
 REM 7za -tgzip messages_new_format.csv.gz messages_new_format.csv
 REM 7za -tgzip messages_old_format.csv.gz messages_old_format.csv
