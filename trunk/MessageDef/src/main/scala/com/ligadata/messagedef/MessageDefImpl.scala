@@ -248,7 +248,7 @@ class MessageDefImpl {
 
     // for (e <- message.Elements) {
     //  var fields = e.Fields
-    
+
     if (message.Elements != null)
       for (f <- message.Elements) {
         // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
@@ -294,8 +294,9 @@ class MessageDefImpl {
             if (typ.get.implementationName.isEmpty())
               throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
 
-            if (typ.isEmpty)
-              throw new Exception("Type %s not found in metadata for namespace %s" + f.Ttype)
+            if (typ.getOrElse("None").equals("None"))
+              throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
+
             // if (!typ.get.physicalName.equals("String")){
             //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
             if (typ.get.typeString.isEmpty())
@@ -325,7 +326,10 @@ class MessageDefImpl {
 
         } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
 
-          val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true) // message.Version.toInt
+          val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
+
+          if (typ.getOrElse("None").equals("None"))
+            throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
           if (typ.getOrElse(null) != null)
             if (typ.get.tType.toString().equals("tArrayBuf")) {
@@ -350,7 +354,7 @@ class MessageDefImpl {
 
               if (f.ElemType.equals("Container")) {
 
-                var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
+                var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, ftypeVersion, true).getOrElse(null)
 
                 scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
                 assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
@@ -361,13 +365,13 @@ class MessageDefImpl {
                   jarset = jarset + ctrDef.JarName ++ ctrDef.dependencyJarNames
                 } else if ((ctrDef.jarName != null))
                   jarset = jarset + ctrDef.JarName
-                val typ = MdMgr.GetMdMgr.Type(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true)
+                // val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true)
 
                 argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
               } else if (f.ElemType.equals("Message")) {
 
-                var msgDef: MessageDef = mdMgr.Message(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).getOrElse(null)
+                var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
 
                 scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
                 assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
@@ -407,7 +411,7 @@ class MessageDefImpl {
             }
         } else if (f.ElemType.equals("Concepts")) {
 
-          var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, message.Version.replaceAll("[.]", "").toInt, true).asInstanceOf[BaseAttributeDef]
+          var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).asInstanceOf[BaseAttributeDef]
           scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
           assignCsvdata.append("%sidx = %s.assignCSV(list, idx);\n%sidx = idx+1\n".format(pad2, f.Name, pad2))
 
