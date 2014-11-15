@@ -23,19 +23,18 @@ object extractUdfLibMetadata extends App {
     def usage : String = {
 """
 extractUdfLibMetadata.scala --sbtProject <projectName> 
-                       --fullObjectPath <full pkg qualifed object name> 
-                       --namespace <namespace to use when generating JSON fcn objects> 
-                       --versionNumber <numeric version to use>
-        where sbtProject (Required) contains the 'money' result (output line containing 'List(Attributed') from an sbt project fullClasspath task 
-              fullObjectPath will cause a ':' separated class path style string to be printed 
-              namespace will cause a ';' separated class path style string to be printed 
-              versionNumber will print the jars with full path names (one jar per line)
-              emitJarNamesOnly will print the jar names without paths (one jar per line)
-              emitJarNamesOnlyList will print the jar names without paths as a comma delimited list
-              emitAll will print all of the above. 
+                       		--fullObjectPath <full pkg qualifed object name> 
+                       		--namespace <namespace to use when generating JSON fcn objects> 
+                       		--versionNumber <numeric version to use>
+        where sbtProject is the sbt project name (presumably with udfs in one of its object definitions)
+              fullObjectPath is the object that contains the methods for which to generate the json metadata
+              namespace is the namespace to use for the udfs in the object's generated json
+              versionNumber is the version number to use for the udfs in the object's generated json
       
-        Note: If multiple emits are requested, there will be one blank line between each emission to stdout.  At least
-        one 'emit' named parameter must be supplied with a 't' or '1' value.
+        Notes: This script must run from the top level sbt project directory (e.g., ~/github/RTD/trunk)
+        The object argument supplied must inherit from com.ligadata.pmml.udfs.UdfBase for extraction to be successful.
+        Obviously it is helpful if the project actually builds.  This script executes the fat jar version of the 
+        MethodExtractor (<sbtRoot>/trunk/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0)
 
       
 """
@@ -92,10 +91,17 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
         }
         val versionNoArg : String = versionNo.toString
 
+        val pwd : String = Process(s"pwd").!!.trim
+		if (pwd == null) {
+			println(s"Error: Unable to obtain the value of the present working directory")
+			return
+		}
    
-		val depJarsCmd = s"/home/rich/bin/sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitJarNamesOnlyList 1"
+		//val depJarsCmd = s"/home/rich/bin/sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitJarNamesOnlyList 1"
+		val depJarsCmd = s"sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitJarNamesOnlyList 1"
 		val depJarsCmdSeq : Seq[String] = Seq("bash", "-c", depJarsCmd)
-		val classPathCmd = s"/home/rich/bin/sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitCp 1"
+		// val classPathCmd = s"/home/rich/bin/sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitCp 1"
+		val classPathCmd = s"sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show PmmlUdfs/fullClasspath' | grep 'List(Attributed'`${'"'} --emitCp 1"
 		val classPathCmdSeq : Seq[String] = Seq("bash", "-c", classPathCmd)
 
 		//println(s"depJarsCmd = $depJarsCmd")
@@ -107,15 +113,15 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
 		val classPathStr : String = Process(classPathCmdSeq).!!.trim
 		//println(s"classPathStr = $classPathStr")
 
-		val extractCmd = s"/home/rich/github/Med/RTD/trunk/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0"
+		val extractCmd = s"$pwd/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0"
 		val extractCmdSeq : Seq[String] = Seq("java", "-jar", extractCmd, 
 			"--object", fullObjectPath,"--namespace", namespace,"--versionNumber", versionNumber,"--deps" , quotedDepJarsStr)
 		val jsonMetadataStr : String = Process(extractCmdSeq).!!.trim
-		println(s"jsonMetadataStr = $jsonMetadataStr")
+		println(jsonMetadataStr)
 
 
-		println
-		println("complete!")
+		//println
+		//println("complete!")
 	}
 }
 
