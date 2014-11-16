@@ -2,6 +2,7 @@ package com.ligadata.udf.extract
 
 import scala.reflect.runtime.universe._
 import scala.collection.mutable._
+import scala.collection.immutable.{Set, TreeMap}
 import scala.Symbol
 import sys.process._
 import java.io.BufferedWriter
@@ -125,7 +126,7 @@ object MethodExtract extends App with LogTrait{
 		val deps : Array[String] = depsArr.tail
 		
 		val justObjectsFcns : String = clsName.split('.').last.trim
-		logger.trace(s"Just catalog the functions found in $clsName")
+		//logger.trace(s"Just catalog the functions found in $clsName")
 
 		if (excludeListStr != null) {
 			excludeList = excludeListStr.split(',').map(fn => fn.trim)
@@ -176,16 +177,18 @@ object MethodExtract extends App with LogTrait{
 		//logger.info(s"$fcnStr")
 
 		/** Serialize the types that were generated during the UDF lib introspection and print them to stdout */
-		val uniqueTypes : Map[String, BaseElemDef] = Map[String, BaseElemDef]()
-		typeArray.foreach( typ => uniqueTypes += ((typ.NameSpace + "." + typ.Name) -> typ))
-		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",uniqueTypes.values.toArray)	
-		println
+		val sortedTypeMap : LinkedHashMap[String, BaseElemDef] = LinkedHashMap(typeMap.toSeq.sortBy(_._1):_*)
+		//sortedTypeMap.keys.toArray.foreach( typ => println(typ))
+		//println
+
+		//val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",typeMap.values.toArray)	
+		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",sortedTypeMap.values.toArray)	
+
 		println(typesAsJson)
-		println
 		println
 
 		/** Create the FunctionDef objects to be serialized by combining the FuncDefArgs collected with the version and deps info */
-		val features: Set[FcnMacroAttr.Feature] = null
+		val features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = null
 		val funcDefs : Array[FunctionDef] = funcDefArgs.toArray.map( fArgs => {
 			
 			mgr.MakeFunc(fArgs.namespace
@@ -201,10 +204,10 @@ object MethodExtract extends App with LogTrait{
 		
 		/** And serialize and print them */
 		val functionsAsJson : String = JsonSerializer.SerializeObjectListToJson("Functions",funcDefs.toArray)
-		println
 		println(functionsAsJson)
+		println
 		
-		logger.trace("Complete!")
+		//logger.trace("Complete!")
 	}
 
 	def usage : String = {

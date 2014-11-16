@@ -697,7 +697,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		/** create the jar */
 		val moduleNameJar : String = JarName(ctx)
 		logger.trace(s"create the jar $moduleNameJar")
-		val jarCmd : String = s"$javahome/bin/jar cvfm $moduleNameJar /tmp/$moduleName/$manifestFileName -C /tmp/$moduleName/ ."
+		val jarCmd : String = s"$javahome/bin/jar cvfm $moduleNameJar -C /tmp/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")
 		logger.info(s"Jar $moduleNameJar produced.  Its contents:")
 		val jarRc : Int = Process(jarCmd).!
@@ -717,7 +717,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 		logger.trace(s"move of jar $moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
 		
-		(0, s"$moduleNameJar")
+		(jarRc, s"$moduleNameJar")
 	}
 	
 	private def compile (ctx: PmmlContext

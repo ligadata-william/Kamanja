@@ -38,6 +38,7 @@ call sbt package
 call sbt OnLEPManager/assembly 
 call sbt MetadataAPI/assembly 
 call sbt KVInit/assembly 
+call sbt MethodExtractor/assembly 
 
 REM recreate eclipse projects
 REM echo "refresh the eclipse projects ..."

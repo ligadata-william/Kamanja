@@ -37,7 +37,7 @@ mkdir -p $ONLEPLIBPATH/logs
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package OnLEPManager/assembly MetadataAPI/assembly KVInit/assembly
+sbt clean package OnLEPManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly
 #sbt package 
 #sbt OnLEPManager/assembly 
 #sbt MetadataAPI/assembly 

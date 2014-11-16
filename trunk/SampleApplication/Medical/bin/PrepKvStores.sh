@@ -23,20 +23,20 @@ done
 
 echo "Prepare the test kvstore - Dyspnea Codes map..."
 
-java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.DyspnoeaCodes --classname com.ligadata.edifecs.DyspnoeaCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/dyspnoea.csv --keyfieldname icd9Code
+java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.DyspnoeaCodes --classname com.ligadata.edifecs.DyspnoeaCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/SampleData/dyspnoea.csv --keyfieldname icd9Code
 
 echo "Prepare the test kvstore - Environmental Exposure Codes map..."
 
-java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.EnvCodes --classname com.ligadata.edifecs.EnvCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/envExposureCodes.csv --keyfieldname icd9Code
+java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.EnvCodes --classname com.ligadata.edifecs.EnvCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/SampleData/envExposureCodes.csv --keyfieldname icd9Code
 
 echo "Prepare the test kvstore - Sputum Codes map..."
 
-java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.SputumCodes --classname com.ligadata.edifecs.SputumCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/sputumCodes.csv --keyfieldname icd9Code
+java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.SputumCodes --classname com.ligadata.edifecs.SputumCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/SampleData/sputumCodes.csv --keyfieldname icd9Code
 
 echo "Prepare the test kvstore - Cough Codes map..."
 
-java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.CoughCodes --classname com.ligadata.edifecs.CoughCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/coughCodes.csv --keyfieldname icd9Code
+java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.CoughCodes --classname com.ligadata.edifecs.CoughCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/SampleData/coughCodes.csv --keyfieldname icd9Code
 
 echo "Prepare the test kvstore - Smoking Codes map..."
 
-java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.SmokeCodes --classname com.ligadata.edifecs.SmokeCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/MedEnvContext/src/main/resources/smokingCodes.csv --keyfieldname icd9Code
+java -jar $ONLEPLIBPATH/KVInit-1.0 --kvname System.SmokeCodes --classname com.ligadata.edifecs.SmokeCodes_100 --kvpath $ONLEPLIBPATH/kvstores/ --csvpath $srcPath/SampleApplication/Medical/SampleData/smokingCodes.csv --keyfieldname icd9Code
