@@ -34,6 +34,8 @@ class CompilerProxy{
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
+  lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
+
   def setLoggerLevel(level: Level){
     logger.setLevel(level);
   }
@@ -73,7 +75,7 @@ class CompilerProxy{
   {  
     val scalaSrcFileName : String = s"$moduleName.scala"
     createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
-		
+
     val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$scalaSrcFileName")
     logger.debug(s"scalac cmd used: $scalacCmd")
     val scalaCompileRc = Process(scalacCmd).!
@@ -84,7 +86,7 @@ class CompilerProxy{
     }
     else{
       //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir
-      val mvCmd : String = s"mv com /tmp/$moduleName/"
+      val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
 	logger.error(s"unable to classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
@@ -105,33 +107,33 @@ class CompilerProxy{
   {
     //val (prop,envVars) = MetadataAPIImpl.readProperties
     /** prep the workspace and go there*/
-    val killDir = s"rm -Rf /tmp/$moduleName"
+    val killDir = s"rm -Rf $compiler_work_dir/$moduleName"
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
     if (killDirRc != 0) {
-      logger.error(s"Unable to rm /tmp/$moduleName ... rc = $killDirRc")
+      logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
       return (killDirRc, "")
     }
-    val buildDir = s"mkdir /tmp/$moduleName"
+    val buildDir = s"mkdir $compiler_work_dir/$moduleName"
     val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
     if (tmpdirRc != 0) {
       logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
       return (tmpdirRc, "")
     }
     /** create a copy of the pmml source in the work directory */
-    val cpRc = Process(s"cp $pmmlFilePath /tmp/$moduleName/").!
+    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/$moduleName/").!
     if (cpRc != 0) {
       logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
       return (cpRc, "")
     }
     /** compile the generated code */
-    val rc : Int = compile(s"/tmp/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)
+    val rc : Int = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)
     if (rc != 0) {
       return (rc, "")
     }
 
     /** create the jar */
     val moduleNameJar : String = s"$moduleName.jar"
-    val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C /tmp/$moduleName/ ."
+    val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.info(s"Jar $moduleNameJar produced.  Its contents:")
     val jarRc : Int = Process(jarCmd).!
@@ -150,7 +152,6 @@ class CompilerProxy{
 		
     (0, s"$moduleNameJar")
   }
-
 
   def compilePmml(pmmlStr: String) : (String,ModelDef) = {
 
