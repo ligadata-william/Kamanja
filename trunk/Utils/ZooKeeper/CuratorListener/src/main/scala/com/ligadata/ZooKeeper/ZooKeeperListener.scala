@@ -15,6 +15,8 @@ import scala.util.control.Breaks._
 
 object ZooKeeperListener {
 
+  private type OptionMap = Map[Symbol, Any]
+
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var zkc: CuratorFramework = null
@@ -95,19 +97,55 @@ object ZooKeeperListener {
     }
   }
 
+  private def PrintUsage(): Unit = {
+    logger.warn("    --config <configfilename>")
+  }
+
+  private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
+    def isSwitch(s: String) = (s(0) == '-')
+    list match {
+      case Nil => map
+      case "--config" :: value :: tail =>
+        nextOption(map ++ Map('config -> value), tail)
+      case option :: tail => {
+        logger.error("Unknown option " + option)
+        sys.exit(1)
+      }
+    }
+  }
+
   def main(args: Array[String]) = {
+    var databaseOpen = false
+    var jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+    if (args.length == 0) {
+      logger.error("Config File defaults to " + jsonConfigFile)
+      logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
+      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+    }
+    else{
+      val options = nextOption(Map(), args.toList)
+      val cfgfile = options.getOrElse('config, null)
+      if (cfgfile == null) {
+	logger.error("Need configuration file as parameter")
+	throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+      }
+      jsonConfigFile = cfgfile.asInstanceOf[String]
+    }
     try {
-      MetadataAPIImpl.InitMdMgrFromBootStrap
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(jsonConfigFile)
+      databaseOpen = true
       StartLocalListener
     } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }
     } finally {
-      MetadataAPIImpl.CloseDbStore
+      if( databaseOpen ){
+	MetadataAPIImpl.CloseDbStore
+      }
       if (zkc != null) {
         zkc.close()
       }
