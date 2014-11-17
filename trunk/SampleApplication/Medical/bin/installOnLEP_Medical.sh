@@ -3,6 +3,9 @@
 installPath=$1
 srcPath=$2
 
+echo $installPath
+echo $srcPath
+
 if [ ! -d "$installPath" ]; then
         echo "No install path supplied.  It should be a directory that can be written to and whose current content is of no value (will be overwritten) "
         echo "$0 <install path> <src tree trunk directory>"
@@ -44,8 +47,8 @@ sbt clean package OnLEPManager/assembly MetadataAPI/assembly KVInit/assembly Met
 #sbt KVInit/assembly 
 
 # recreate eclipse projects
-echo "refresh the eclipse projects ..."
-cd $srcPath
+#echo "refresh the eclipse projects ..."
+#cd $srcPath
 #sbt eclipse
 
 # Move them into place
