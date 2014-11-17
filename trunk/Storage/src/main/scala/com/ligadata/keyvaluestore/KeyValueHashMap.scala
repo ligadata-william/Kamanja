@@ -77,7 +77,7 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 	map.put(source.Key.toArray[Byte], source.Value.toArray[Byte])
       })
       if (withTransactions)
-        db.commit() //persist changes into disk
+	db.commit() //persist changes into disk
     }
 
   def get(key: Key, handler: (Value) => Unit) =
