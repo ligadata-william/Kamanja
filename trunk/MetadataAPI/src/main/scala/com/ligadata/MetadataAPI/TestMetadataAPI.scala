@@ -127,7 +127,7 @@ object TestMetadataAPI{
 
       println("\nPick the type to be presented from the following list: ")
       var seq = 0
-      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
 
       print("\nEnter your choice: ")
       val choice:Int = readInt()
@@ -137,7 +137,7 @@ object TestMetadataAPI{
 	      return
       }
 
-      val typKey = MetadataAPIImpl.KeyAsStr(typKeys(choice-1))
+      val typKey = typKeys(choice-1)
 
       val typKeyTokens = typKey.split("\\.")
       val typNameSpace = typKeyTokens(0)
@@ -181,7 +181,7 @@ object TestMetadataAPI{
 
       println("\nPick the Type to be deleted from the following list: ")
       var seq = 0
-      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      typKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
 
       print("\nEnter your choice: ")
       val choice:Int = readInt()
@@ -191,7 +191,7 @@ object TestMetadataAPI{
         return
       }
 
-      val typKey = MetadataAPIImpl.KeyAsStr(typKeys(choice-1))
+      val typKey = typKeys(choice-1)
       val typKeyTokens = typKey.split("\\.")
       val typNameSpace = typKeyTokens(0)
       val typName = typKeyTokens(1)
@@ -303,7 +303,7 @@ object TestMetadataAPI{
       println("\nPick the message to be presented from the following list: ")
 
       var seq = 0
-      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
 
       print("\nEnter your choice: ")
       val choice:Int = readInt()
@@ -312,7 +312,7 @@ object TestMetadataAPI{
 	println("Invalid choice " + choice + ",start with main menu...")
 	return
       }
-      val msgKey = MetadataAPIImpl.KeyAsStr(msgKeys(choice-1))
+      val msgKey = msgKeys(choice-1)
 
       val msgKeyTokens = msgKey.split("\\.")
       val msgNameSpace = msgKeyTokens(0)
@@ -428,7 +428,7 @@ object TestMetadataAPI{
 
       println("\nPick the model to be presented from the following list: ")
       var seq = 0
-      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
 
       print("\nEnter your choice: ")
       val choice:Int = readInt()
@@ -438,7 +438,7 @@ object TestMetadataAPI{
 	return
       }
 
-      val modKey = MetadataAPIImpl.KeyAsStr(modKeys(choice-1))
+      val modKey = modKeys(choice-1)
 
       val modKeyTokens = modKey.split("\\.")
       val modNameSpace = modKeyTokens(0)
@@ -513,7 +513,7 @@ object TestMetadataAPI{
 
       println("\nPick the message to be deleted from the following list: ")
       var seq = 0
-      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
 
       print("\nEnter your choice: ")
       val choice:Int = readInt()
@@ -523,7 +523,7 @@ object TestMetadataAPI{
 	return
       }
 
-      val msgKey = MetadataAPIImpl.KeyAsStr(msgKeys(choice-1))
+      val msgKey = msgKeys(choice-1)
 
       val msgKeyTokens = msgKey.split("\\.")
       val msgNameSpace = msgKeyTokens(0)
@@ -794,7 +794,7 @@ object TestMetadataAPI{
 	return
       }
       var seq = 0
-      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -867,7 +867,7 @@ object TestMetadataAPI{
       }
 
       var seq = 0
-      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
+      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -1294,8 +1294,8 @@ object TestMetadataAPI{
   }
 
 
-  def TestKryoSerialize{
-    MetadataAPIImpl.InitMdMgrFromBootStrap
+  def TestKryoSerialize(configFile: String){
+    MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
     val msgDefs = MdMgr.GetMdMgr.Types(true,true)
     msgDefs match{
       case None => {
@@ -1549,28 +1549,24 @@ object TestMetadataAPI{
       serializer.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
 
-      val jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+      var jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
       if (args.length == 0) {
 	logger.error("Config File defaults to " + jsonConfigFile)
 	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
 	logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
-	MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(jsonConfigFile)
       }
       else{
 	val options = nextOption(Map(), args.toList)
 	val cfgfile = options.getOrElse('config, null)
 	if (cfgfile == null) {
 	  logger.error("Need configuration file as parameter")
-	  throw new MissingArgumentException("configFile must be supplied")
+	  throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
 	}
-	MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(cfgfile.asInstanceOf[String])
+	jsonConfigFile = cfgfile.asInstanceOf[String]
       }
-      MetadataAPIImpl.InitMdMgrFromBootStrap
+      MetadataAPIImpl.InitMdMgrFromBootStrap(jsonConfigFile)
       databaseOpen = true
       StartTest
-      //testDbOp
-
-
     }catch {
       case e: Exception => {
 	e.printStackTrace()
