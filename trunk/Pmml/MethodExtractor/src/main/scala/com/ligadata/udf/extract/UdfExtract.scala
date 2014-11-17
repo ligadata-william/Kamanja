@@ -180,9 +180,29 @@ object MethodExtract extends App with LogTrait{
 		val sortedTypeMap : LinkedHashMap[String, BaseElemDef] = LinkedHashMap(typeMap.toSeq.sortBy(_._1):_*)
 		//sortedTypeMap.keys.toArray.foreach( typ => println(typ))
 		//println
-
+		
+		
+		/**
+		 * What is above (the sorted map) is fine for understanding what types are actually needed by the 
+		 * UDF lib supplied, however it cannot be emitted that way for intake by the MetadataAPI.  The types build
+		 * upon themselves with the inner types of an array of array of tupleN having the tupleN emitted first.
+		 * 
+		 * Therefore the typeArray is iterated.  To avoid duplicate emissions, a set is used to track what has been 
+		 * emitted.  Only one type with a given name should be emitted.  These are collected in the emitTheseTypes array.
+		 */
+		var trackEmission : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+		var emitTheseTypes : ArrayBuffer[BaseElemDef] = ArrayBuffer[BaseElemDef]()
+		var i : Int = 0
+		typeArray.foreach( typ => 
+		  	if (! trackEmission.contains(typ.Name)) {
+		  		i += 1
+		  		emitTheseTypes += typ
+  				trackEmission += typ.Name
+		  	})
+		//println(s"There are $i unique types")
+		
 		//val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",typeMap.values.toArray)	
-		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",sortedTypeMap.values.toArray)	
+		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",emitTheseTypes.toArray)	
 
 		println(typesAsJson)
 		println
