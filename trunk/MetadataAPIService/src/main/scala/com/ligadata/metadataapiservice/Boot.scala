@@ -15,6 +15,8 @@ import org.apache.log4j._
 
 object Boot extends App {
 
+  private type OptionMap = Map[Symbol, Any]
+
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("metadata-api-service")
   val log = Logging(system, getClass)
@@ -25,8 +27,42 @@ object Boot extends App {
   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
   MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
 
+  private def PrintUsage(): Unit = {
+    logger.warn("    --config <configfilename>")
+  }
+
+  private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
+    def isSwitch(s: String) = (s(0) == '-')
+    list match {
+      case Nil => map
+      case "--config" :: value :: tail =>
+        nextOption(map ++ Map('config -> value), tail)
+      case option :: tail => {
+        logger.error("Unknown option " + option)
+        sys.exit(1)
+      }
+    }
+  }
+
+  var databaseOpen = false
   try{
-    MetadataAPIImpl.InitMdMgrFromBootStrap
+    var jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+    if (args.length == 0) {
+      logger.error("Config File defaults to " + jsonConfigFile)
+      logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
+      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+    }
+    else{
+      val options = nextOption(Map(), args.toList)
+      val cfgfile = options.getOrElse('config, null)
+      if (cfgfile == null) {
+	logger.error("Need configuration file as parameter")
+	throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+      }
+      jsonConfigFile = cfgfile.asInstanceOf[String]
+    }
+    MetadataAPIImpl.InitMdMgrFromBootStrap(jsonConfigFile)
+    databaseOpen = true
 
     val callbackActor = actor(new Act {
       become {
@@ -43,9 +79,12 @@ object Boot extends App {
     IO(Http).tell(Http.Bind(service, "localhost", 8080), callbackActor)
 
   } catch {
-    case e: Exception => {
-      MetadataAPIImpl.CloseDbStore
+     case e: Exception => {
       e.printStackTrace()
+    }
+  } finally {
+    if( databaseOpen ){
+      MetadataAPIImpl.CloseDbStore
     }
   }
 }
