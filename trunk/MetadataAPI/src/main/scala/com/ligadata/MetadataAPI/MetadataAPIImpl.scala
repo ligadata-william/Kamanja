@@ -944,14 +944,14 @@ object MetadataAPIImpl extends MetadataAPI{
 	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
-	  connectinfo+= ("withtransaction" -> "false")
+	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "treemap" => {
 	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
 	  connectinfo+= ("path" -> databaseLocation)
 	  connectinfo+= ("schema" -> storeName)
 	  connectinfo+= ("inmemory" -> "false")
-	  connectinfo+= ("withtransaction" -> "false")
+	  connectinfo+= ("withtransaction" -> "true")
 	}
 	case "cassandra" => {
 	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
@@ -2649,32 +2649,68 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def GetAllKeys(objectType: String) : Array[com.ligadata.keyvaluestore.Key] = {
-    var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
-    objectType match{
-      case "TypeDef" => {
-	typeStore.getAllKeys( {(key : Key) => keys.add(key) } )
+  private def IsTypeObject(typeName: String) : Boolean = {
+      typeName match{
+	  case "scalartypedef" | "arraytypedef" | "arraybuftypedef" | "listtypedef" | "settypedef" | "treesettypedef" | "queuetypedef" | "maptypedef" | "immutablemaptypedef" | "hashmaptypedef" | "tupletypedef" | "structtypedef" | "sortedsettypedef" => { 
+	    return true }
+	  case _ => {
+	    return false
+	  }
       }
-      case "FunctionDef" => {
-	functionStore.getAllKeys( {(key : Key) => keys.add(key) } )
-      }
-      case "MessageDef" => {
-	messageStore.getAllKeys( {(key : Key) => keys.add(key) } )
-      }
-      case "ContainerDef" => {
-	containerStore.getAllKeys( {(key : Key) => keys.add(key) } )
-      }
-      case "Concept" => {
-	conceptStore.getAllKeys( {(key : Key) => keys.add(key) } )
-      }
-      case "ModelDef" => {
-	modelStore.getAllKeys( {(key : Key) => keys.add(key) } )
-      }
-      case _ => {
-	logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+  }
+
+  def GetAllKeys(objectType: String) : Array[String] = {
+    try{
+      var keys = scala.collection.mutable.Set[String]()
+      typeStore.getAllKeys( {(key : Key) => { 
+	val strKey = KeyAsStr(key)
+	val i = strKey.indexOf(".")
+	val objType = strKey.substring(0,i)
+	val typeName = strKey.substring(i+1)
+	objectType match{
+	  case "TypeDef" => {
+	    if (IsTypeObject(objType)){
+	      keys.add(typeName)
+	    }
+	  }
+	  case "FunctionDef" => {
+	    if(objType == "functiondef" ){
+	      keys.add(typeName)
+	    }
+	  }
+	  case "MessageDef" => {
+	    if(objType == "messagedef" ){
+	      keys.add(typeName)
+	    }
+	  }
+	  case "ContainerDef" => {
+	    if(objType == "containerdef" ){
+	      keys.add(typeName)
+	    }
+	  }
+	  case "Concept" => {
+	    if(objType == "attributedef" ){
+	      keys.add(typeName)
+	    }
+	  }
+	  case "ModelDef" => {
+	    if(objType == "modeldef" ){
+	      keys.add(typeName)
+	    }
+	  }
+	  case _ => {
+	    logger.error("Unknown object type " + objectType + " in GetAllKeys function")
+	    throw InternalErrorException("Unknown object type " + objectType + " in GetAllKeys function")
+	  }
+	}
+      }})
+      keys.toArray
+    }catch {
+      case e: Exception => {
+	e.printStackTrace()
+	throw InternalErrorException("Failed to get keys from persistent store")
       }
     }
-    keys.toArray
   }
 
   def LoadAllObjectsIntoCache{
@@ -2708,8 +2744,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       typeKeys.foreach(key => { 
-	val typeKey = KeyAsStr(key)
-	val obj = GetObject(typeKey.toLowerCase,typeStore)
+	val obj = GetObject(key.toLowerCase,typeStore)
 	val typ =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	if( typ != null ){
 	  AddObjectToCache(typ,MdMgr.GetMdMgr)
@@ -2731,8 +2766,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       conceptKeys.foreach(key => { 
-	val conceptKey = KeyAsStr(key)
-	val obj = GetObject(conceptKey.toLowerCase,conceptStore)
+	val obj = GetObject(key.toLowerCase,conceptStore)
 	val concept =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	AddObjectToCache(concept.asInstanceOf[AttributeDef],MdMgr.GetMdMgr)
       })
@@ -2752,8 +2786,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       functionKeys.foreach(key => { 
-	val functionKey = KeyAsStr(key)
-	val obj = GetObject(functionKey.toLowerCase,functionStore)
+	val obj = GetObject(key.toLowerCase,functionStore)
 	val function =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	AddObjectToCache(function.asInstanceOf[FunctionDef],MdMgr.GetMdMgr)
       })
@@ -2773,8 +2806,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       msgKeys.foreach(key => { 
-	val msgKey = KeyAsStr(key)
-	val obj = GetObject(msgKey.toLowerCase,messageStore)
+	val obj = GetObject(key.toLowerCase,messageStore)
 	val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	AddObjectToCache(msg.asInstanceOf[MessageDef],MdMgr.GetMdMgr)
       })
@@ -2878,7 +2910,7 @@ object MetadataAPIImpl extends MetadataAPI{
     var key:String = null
     try{
       zkTransaction.Notifications.foreach( zkMessage => {
-	key = zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+	key = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
 	zkMessage.ObjectType match {
 	  case "ModelDef" => {
 	    zkMessage.Operation match{
@@ -3018,8 +3050,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       contKeys.foreach(key => { 
-	val contKey = KeyAsStr(key)
-	val obj = GetObject(contKey.toLowerCase,containerStore)
+	val obj = GetObject(key.toLowerCase,containerStore)
 	val contDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	AddObjectToCache(contDef.asInstanceOf[ContainerDef],MdMgr.GetMdMgr)
       })
@@ -3038,8 +3069,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	return
       }
       modKeys.foreach(key => { 
-	val modKey = KeyAsStr(key)
-	val obj = GetObject(modKey.toLowerCase,modelStore)
+	val obj = GetObject(key.toLowerCase,modelStore)
 	val modDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
 	AddObjectToCache(modDef.asInstanceOf[ModelDef],MdMgr.GetMdMgr)
       })
@@ -3059,25 +3089,6 @@ object MetadataAPIImpl extends MetadataAPI{
     LoadAllTypesIntoCache
   }
 
-  def ListAllModels{
-    try{
-      logger.setLevel(Level.TRACE);
-
-      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
-      if( modKeys.length == 0 ){
-	println("No models available in the Metadata")
-	return
-      }
-
-      var seq = 0
-      modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + MetadataAPIImpl.KeyAsStr(key))})
-
-    }catch {
-      case e: Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
 
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
   def GetMessageDef(objectName:String,formatType:String) : String  = {
@@ -3745,23 +3756,21 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def InitMdMgr {
+  def InitMdMgr(configFile: String){
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr, "","","","")
     mdLoader.initialize
     MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
-    //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
   }
 
-  def InitMdMgrFromBootStrap{
+  def InitMdMgrFromBootStrap(configFile: String){
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr,"","","","")
     mdLoader.initialize
     MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
-    //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
   }
