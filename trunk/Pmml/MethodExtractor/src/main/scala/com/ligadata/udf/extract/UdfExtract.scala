@@ -1,6 +1,7 @@
 package com.ligadata.udf.extract
 
 import scala.reflect.runtime.universe._
+import scala.reflect.runtime.{ universe => ru }
 import scala.collection.mutable._
 import scala.collection.immutable.{Set, TreeMap}
 import scala.Symbol
@@ -19,6 +20,7 @@ import scala.util.parsing.json.{JSONObject, JSONArray}
 import org.json4s._
 import org.json4s.JsonDSL._
 import com.ligadata.Serialize._
+import java.net.URLClassLoader
 
 
 /**
@@ -79,6 +81,8 @@ object MethodExtract extends App with LogTrait{
 		    	case Nil => map
 		    	case "--object" :: value :: tail =>
 		    						nextOption(map ++ Map('object -> value), tail)
+		    	case "--cp" :: value :: tail =>
+		    						nextOption(map ++ Map('cp -> value), tail)
 		    	case "--namespace" :: value :: tail =>
 		    						nextOption(map ++ Map('namespace -> value), tail)
 		    	case "--exclude" :: value :: tail =>
@@ -87,6 +91,10 @@ object MethodExtract extends App with LogTrait{
 		    						nextOption(map ++ Map('versionNumber -> value), tail)
 		    	case "--deps" :: value :: tail =>
 		    						nextOption(map ++ Map('deps -> value), tail)
+		    	case "--typeDefsPath" :: value :: tail =>
+		    						nextOption(map ++ Map('typeDefsPath -> value), tail)
+		    	case "--fcnDefsPath" :: value :: tail =>
+		    						nextOption(map ++ Map('fcnDefsPath -> value), tail)
 		    	case option :: tail => {
 		    		logger.error("Unknown option " + option)
 					val usageMsg : String = usage
@@ -99,24 +107,28 @@ object MethodExtract extends App with LogTrait{
 		
 		val options = nextOption(Map(),arglist)
 		val clsName = if (options.contains('object)) options.apply('object) else null 
+		val classPath = if (options.contains('cp)) options.apply('cp) else null
 		val namespace = if (options.contains('namespace)) options.apply('namespace) else null
 		val excludeListStr = if (options.contains('excludeList)) options.apply('excludeList) else null
 		var excludeList : Array[String] = null
 		val versionNumberStr = if (options.contains('versionNumber)) options.apply('versionNumber) else null
-		var versionNumber : Int = 1
+		var versionNumber : Int = 100
 		try {
-			if (versionNumberStr != null) versionNumberStr.toInt
+			if (versionNumberStr != null) versionNumber = versionNumberStr.toInt
 		} catch {
-		  case _:Throwable => versionNumber = 1
+		  case _:Throwable => versionNumber = 100
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
-		if (clsName == null || namespace == null || depsIn == null) {
+		val typedefPath = if (options.contains('typeDefsPath)) options.apply('typeDefsPath) else null
+		val fcndefPath = if (options.contains('fcnDefsPath)) options.apply('fcnDefsPath) else null
+		
+		if (clsName == null || classPath == null || namespace == null || depsIn == null || typedefPath == null || fcndefPath == null) {
 			val usageStr = usage
-			logger.error("There must be a fully qualified class name supplied as an argument.")
+			logger.error("Missing arguments...")
 			logger.error(usageStr)
 			sys.exit(1)
 		}
-		/** 
+		/**  
 		 *  Split the deps ... the first element and the rest... the head element has the
 		 *  jar name where this lib lives (assuming that the sbtProjDependencies.scala script was used
 		 *  to prepare the dependencies).  For the jar, we only need the jar's name... strip the path
@@ -124,6 +136,11 @@ object MethodExtract extends App with LogTrait{
 		val depsArr : Array[String] = depsIn.split(',').map(_.trim)
 		val jarName = depsArr.head.split('/').last
 		val deps : Array[String] = depsArr.tail
+		
+		/** prepare the class path array so that the udf can be loaded (and its udfs introspected) */
+		val cp : Array[String] = classPath.split(':').map(_.trim)
+		val udfLoaderInfo = new UdfExtractLoaderInfo
+		LoadJarIfNeeded(cp, udfLoaderInfo.loadedJars, udfLoaderInfo.loader)
 		
 		val justObjectsFcns : String = clsName.split('.').last.trim
 		//logger.trace(s"Just catalog the functions found in $clsName")
@@ -199,13 +216,11 @@ object MethodExtract extends App with LogTrait{
 		  		emitTheseTypes += typ
   				trackEmission += typ.Name
 		  	})
-		//println(s"There are $i unique types")
+		/** println(s"There are $i unique types with ${typeArray.size} instances") */
 		
-		//val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",typeMap.values.toArray)	
+		/** Serialize and write json type definitions to file */
 		val typesAsJson : String = JsonSerializer.SerializeObjectListToJson("Types",emitTheseTypes.toArray)	
-
-		println(typesAsJson)
-		println
+		writeFile(typesAsJson, typedefPath)
 
 		/** Create the FunctionDef objects to be serialized by combining the FuncDefArgs collected with the version and deps info */
 		val features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = null
@@ -222,21 +237,29 @@ object MethodExtract extends App with LogTrait{
 						, deps)
 		})
 		
-		/** And serialize and print them */
-		val functionsAsJson : String = JsonSerializer.SerializeObjectListToJson("Functions",funcDefs.toArray)
-		println(functionsAsJson)
-		println
+		/** Serialize and write json function definitions to file */
+		val functionsAsJson : String = JsonSerializer.SerializeObjectListToJson("Functions",funcDefs.toArray)		
+		writeFile(functionsAsJson, fcndefPath)
 		
 		//logger.trace("Complete!")
 	}
 
 	def usage : String = {
 """	
+Collect the function definitions from the supplied object that is found in the supplied class path.  The classpath contains
+the object and any supporting libraries it might require.  The supplied namespace and version number will be used for the namespace 
+and version values respectively for all function definitions produced.  The deps string contains the same jars as the classpath argument
+but without paths.  These are used to create the deps values for the function definitions.  The results for the types and function
+definitions are written to the supplied typeDefsPath and fcnDefsPath respectively.
+	  
 Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed scala object name> 
+													--cp <classpath>
                                                     --namespace <the onlep namespace> 
                                                     --exclude <a list of functions to ignore>
                                                     --versionNumber <N>
                                                     --deps <jar dependencies comma delimited list>
+													--typeDefsPath <types file path>
+													--fcnDefsPath <function definition file path>
          where 	<fully qualifed scala object name> (required) is the scala object name that contains the 
 					functions to be cataloged
 				<the onlep namespace> in which these UDFs should be cataloged
@@ -245,6 +268,10 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 					the prior versions that may have been for a prior version of the UDFs.
 				<jar dependencies comma delimited list> this is the list of jars that this UDF lib (jar) depends upon.
 					A complete dependency list can be obtained by running the sbtProjDependencies.scala script.
+				<types file path> the file path that will receive any type definitions that may be needed to catalog the functions
+					being collected
+				<function definition file path> the file path that will receive the function definitions
+				
 	  
        NOTE: The jar containing this scala object and jars upon which it depends should be on the class path.  Except for
 	   the exclusion list, all arguments are mandatory.
@@ -301,7 +328,83 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 
 		mgr
 	}
+	
+	/**
+	 * 	Write the supplied text to the supplied path.
+	 *  
+	 *   @param text a string with either type or function definition declarations as its content
+	 *   @param targetPath the file path that will receive the text. 
+	 */
+	
+	private def writeFile(text : String, targetPath : String) {
+		val file = new File(targetPath);
+		val bufferedWriter = new BufferedWriter(new FileWriter(file))
+		bufferedWriter.write(text)
+		bufferedWriter.close
+	}
+	
+
+	/**
+	 * 	Load any jars that were supplied on the command line in the --cp argument
+	 *  
+	 *  @param jars the --cp values supplied on command line
+	 *  @loadedJars a TreeSet for avoiding multiple loads of same jar 
+	 *  @param loader the class loader to use 
+	 *  
+	 *  @return true if loading was successful, else false
+	 */
+
+	private def LoadJarIfNeeded(jars : Array[String], loadedJars: TreeSet[String], loader: UDFClassLoader): Boolean = {
+
+	    // Loading all jars
+	    for (j <- jars) {
+	      //logger.info("Processing Jar " + j.trim)
+	      val fl = new File(j.trim)
+	      if (fl.exists) {
+	        try {
+	          if (loadedJars(fl.getPath())) {
+	            //logger.info("Jar " + j.trim + " already loaded to class path.")
+	          } else {
+	            loader.addURL(fl.toURI().toURL())
+	            //logger.info("Jar " + j.trim + " added to class path.")
+	            loadedJars += fl.getPath()
+	          }
+	        } catch {
+	          case e: Exception => {
+	            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+	            return false
+	          }
+	        }
+	      } else {
+	        logger.error("Jar " + j.trim + " not found")
+	        return false
+	      }
+	    }
+	
+	    true
+	}
+	
+
 }
+
+
+class UDFClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+	override def addURL(url: URL) {
+		super.addURL(url)
+	}
+} 
+
+
+class UdfExtractLoaderInfo {
+	// Class loader
+	val loader: UDFClassLoader = new UDFClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+	// Loaded jars
+	val loadedJars: TreeSet[String] = new TreeSet[String];
+	// Get a mirror for reflection
+	val mirror: scala.reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+}
+
+
 
 
  
