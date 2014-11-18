@@ -12,6 +12,12 @@ import org.apache.curator.utils._
 import java.util.concurrent.locks._
 import org.apache.log4j._
 import scala.util.control.Breaks._
+import org.scalatest.Assertions._
+
+import java.util.Properties
+import java.io._
+import scala.io._
+import java.util.concurrent._
 
 object ZooKeeperListener {
 
@@ -41,6 +47,45 @@ object ZooKeeperListener {
 
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
     CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
+  }
+
+
+  def CreatePathChildrenCache(client: CuratorFramework,zNodePath: String) = {
+    try {
+      val cache = new PathChildrenCache(client,zNodePath,true);
+
+      
+      val childAddedLatch = new CountDownLatch(1);
+      val lostLatch = new CountDownLatch(1);
+      val reconnectedLatch = new CountDownLatch(1);
+      val removedLatch = new CountDownLatch(1);
+      cache.getListenable().addListener(new PathChildrenCacheListener{
+	@Override
+        def childEvent(client:CuratorFramework,event:PathChildrenCacheEvent) =  {
+          if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED ){
+	    logger.debug("child_added")
+            childAddedLatch.countDown();
+          }
+          else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_LOST ){
+	    logger.debug("connection_lost")
+            lostLatch.countDown();
+          }
+          else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED ){
+	    logger.debug("connection_reconnected")
+            reconnectedLatch.countDown();
+          }
+          else if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED ){
+	    logger.debug("child_removed")
+            removedLatch.countDown();
+          }
+        }
+      })
+      cache.start();
+    }catch {
+      case e: Exception => {
+        throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
+      }
+    }
   }
 
   def CreateListener(zkcConnectString: String, znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
@@ -76,7 +121,7 @@ object ZooKeeperListener {
       JsonSerializer.SetLoggerLevel(Level.TRACE)
       CreateNodeIfNotExists(zkcConnectString, znodePath)
       CreateListener(zkcConnectString, znodePath, null)
-
+      CreatePathChildrenCache(zkc,znodePath)
       breakable {
         for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
           if (zkc != null)
