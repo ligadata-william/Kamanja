@@ -42,6 +42,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _serInfoBufBytes = 32
 
   private[this] var _kryoSer: Serializer = null
+  private[this] var classLoader: java.lang.ClassLoader = null
+
+  override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
+    classLoader = cl
+  }
 
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
@@ -154,8 +159,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       case "kryo" => {
         val valInfo = getValueInfo(tupleBytes)
-        if (_kryoSer == null)
+        if (_kryoSer == null) {
           _kryoSer = SerializerManager.GetSerializer("kryo")
+          if (_kryoSer != null && classLoader != null) {
+            _kryoSer.SetClassLoader(classLoader)
+          }
+        }
         if (_kryoSer != null) {
           objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[MessageContainerBase]
         }
@@ -319,8 +328,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (container != null) {
       val k = key.toLowerCase
       container.data(k) = value
-      if (_kryoSer == null)
+      if (_kryoSer == null) {
         _kryoSer = SerializerManager.GetSerializer("kryo")
+        if (_kryoSer != null && classLoader != null) {
+          _kryoSer.SetClassLoader(classLoader)
+        }
+      }
       try {
         val v = _kryoSer.SerializeObjectToByteArray(value)
         writeThru(k, v, container.dataStore, "kryo")
@@ -340,8 +353,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val key: String = elementkey.toString.toLowerCase
       container.data(key) = value
       logger.info(s"Replacing container '$containerName' entry for key '$key' ... value = \n${value.toString}")
-      if (_kryoSer == null)
+      if (_kryoSer == null) {
         _kryoSer = SerializerManager.GetSerializer("kryo")
+        if (_kryoSer != null && classLoader != null) {
+          _kryoSer.SetClassLoader(classLoader)
+        }
+      }
       try {
         val v = _kryoSer.SerializeObjectToByteArray(value)
         writeThru(key, v, container.dataStore, "kryo")

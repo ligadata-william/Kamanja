@@ -116,9 +116,6 @@ class OnLEPLoaderInfo {
 class OnLEPManager {
   private val LOG = Logger.getLogger(getClass);
 
-  // Base loader
-  private val baseLoader = new OnLEPLoaderInfo
-
   // metadata loader
   private val metadataLoader = new OnLEPLoaderInfo
 
@@ -164,7 +161,7 @@ class OnLEPManager {
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
       if (jars.length > 0)
-        return ManagerUtils.LoadJars(jars, baseLoader.loadedJars, baseLoader.loader)
+        return ManagerUtils.LoadJars(jars, metadataLoader.loadedJars, metadataLoader.loader)
     }
 
     true
@@ -411,6 +408,7 @@ class OnLEPManager {
         val objinst = obj.instance
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
+          envCtxt.SetClassLoader(metadataLoader.loader)
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
