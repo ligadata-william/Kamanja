@@ -113,6 +113,7 @@ case class MissingPropertyException(e: String) extends Exception(e)
 case class InvalidPropertyException(e: String) extends Exception(e)
 case class KryoSerializationException(e: String) extends Exception(e)
 case class InternalErrorException(e: String) extends Exception(e)
+case class TranIdNotFoundException(e: String) extends Exception(e)
 
 
 // The implementation class
@@ -167,6 +168,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   private var metadataStore:   DataStore = _
+  private var transStore:   DataStore = _
   private var modelStore:      DataStore = _
   private var messageStore:    DataStore = _
   private var containerStore:  DataStore = _
@@ -338,11 +340,13 @@ object MetadataAPIImpl extends MetadataAPI{
   // 
   def SaveObjectList(objList: Array[BaseElemDef], store: DataStore){
     logger.trace("Save " + objList.length + " objects in a single transaction ")
+    val tranId = GetNewTranId
     var keyList = new Array[String](objList.length)
     var valueList = new Array[Array[Byte]](objList.length)
     try{
       var i = 0;
       objList.foreach(obj => {
+	obj.tranId = tranId
 	val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
 	var value = serializer.SerializeObjectToByteArray(obj)
 	keyList(i) = key
@@ -365,12 +369,14 @@ object MetadataAPIImpl extends MetadataAPI{
   // of datastore, such as cassandra, hbase, etc..)
   def SaveObjectList(objList: Array[BaseElemDef]){
     logger.trace("Save " + objList.length + " objects in a single transaction ")
+    val tranId = GetNewTranId
     var keyList = new Array[String](objList.length)
     var valueList = new Array[Array[Byte]](objList.length)
     var tableList = new Array[String](objList.length)
     try{
       var i = 0;
       objList.foreach(obj => {
+	obj.tranId = tranId
 	val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
 	var value = serializer.SerializeObjectToByteArray(obj)
 	keyList(i) = key
@@ -451,6 +457,7 @@ object MetadataAPIImpl extends MetadataAPI{
       val notifyEngine = GetMetadataAPIConfig.getProperty("NOTIFY_ENGINE")
       if( notifyEngine != "YES"){
 	logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
+	PutTranId(objList(0).tranId)
 	return
       }
       val data = ZooKeeperMessage(objList,operations)
@@ -458,6 +465,7 @@ object MetadataAPIImpl extends MetadataAPI{
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
       logger.trace("Set the data on the zookeeper node " + znodePath)
       zkc.setData().forPath(znodePath,data)
+      PutTranId(objList(0).tranId)
     }catch{
       case e:Exception => {
 	  throw new InternalErrorException("Failed to notify a zookeeper message from the objectList " + e.getMessage())
@@ -465,11 +473,52 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+  def GetNewTranId : Long = {
+    try{
+      val key = "transaction_id"
+      val obj = GetObject(key,transStore)
+      val idStr = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      idStr.toLong + 1
+    }catch {
+      case e:ObjectNotFoundException => {
+	  // first time
+	  1
+      }
+      case e:Exception =>{
+	throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString)
+      }
+    }
+  }
+
+  def GetTranId : Long = {
+    try{
+      val key = "transaction_id"
+      val obj = GetObject(key,transStore)
+      val idStr = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
+      idStr.toLong
+    }catch {
+      case e:Exception =>{
+	throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString)
+      }
+    }
+  }
+
+  def PutTranId(tId:Long) = {
+    try{
+      val key = "transaction_id"
+      val value = tId.toString
+      SaveObject(key,value,transStore)
+    }catch {
+      case e:Exception =>{
+	throw new UpdateStoreFailedException("Unable to Save the transaction id " + tId + ":" + e.getMessage())
+      }
+    }
+  }
 
   def SaveObject(obj: BaseElemDef,mdMgr: MdMgr){
     try{
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
-
+      obj.tranId = GetNewTranId
       //val value = JsonSerializer.SerializeObjectToJson(obj)
       logger.trace("Serialize the object: name of the object => " + key)
       var value = serializer.SerializeObjectToByteArray(obj)
@@ -981,14 +1030,15 @@ object MetadataAPIImpl extends MetadataAPI{
   def OpenDbStore(storeType:String) {
     try{
       logger.info("Opening datastore")
-      metadataStore  = GetDataStoreHandle(storeType,"metadata_store","metadata_objects")
-      modelStore     = metadataStore
-      messageStore   = metadataStore
-      containerStore = metadataStore
-      functionStore  = metadataStore
-      conceptStore   = metadataStore
-      typeStore      = metadataStore
-      otherStore     = metadataStore
+      metadataStore     = GetDataStoreHandle(storeType,"metadata_store","metadata_objects")
+      transStore  = GetDataStoreHandle(storeType,"metadata_store","transaction_id")
+      modelStore        = metadataStore
+      messageStore      = metadataStore
+      containerStore    = metadataStore
+      functionStore     = metadataStore
+      conceptStore      = metadataStore
+      typeStore         = metadataStore
+      otherStore        = metadataStore
       tableStoreMap = Map("models"     -> modelStore,
 		       "messages"   -> messageStore,
 		       "containers" -> containerStore,
@@ -1012,6 +1062,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       logger.info("Closing datastore")
       metadataStore.Shutdown()
+      transStore.Shutdown()
     }catch{
       case e:Exception => {
 	throw e;
@@ -2105,6 +2156,10 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
     catch {
+      case e:ModelCompilationFailedException =>{
+	var apiResult = new ApiResult(-1,"Failed to add the model:","Error in producing scala file or Jar file..")
+	apiResult.toString()
+      } 
       case e:AlreadyExistsException =>{
 	var apiResult = new ApiResult(-1,"Failed to add the model:",e.getMessage())
 	apiResult.toString()
@@ -2715,6 +2770,10 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def LoadAllObjectsIntoCache{
     try{
+      var objectsChanged = new Array[BaseElemDef](0)
+      var operations = new Array[String](0)
+      val maxTranId = GetTranId
+      logger.trace("Max Transaction Id => " + maxTranId)
       var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
       metadataStore.getAllKeys( {(key : Key) => keys.add(key) } )
       val keyArray = keys.toArray
@@ -2724,11 +2783,31 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       keyArray.foreach(key => { 
 	val obj = GetObject(key,metadataStore)
-	val mObj =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	if(mObj != null ){
-	  AddObjectToCache(mObj,MdMgr.GetMdMgr)
+	val mObj =  serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[BaseElemDef]
+	if( mObj != null ){
+	  if( mObj.tranId <= maxTranId ){
+	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
+	  }
+	  else{
+	    logger.trace("The transaction id of the object => " + mObj.tranId)
+	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
+	    logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
+	    objectsChanged = objectsChanged :+ mObj
+	    if( mObj.IsActive ){
+	      operations = for (op <- objectsChanged) yield "Add"
+	    }
+	    else{
+	      operations = for (op <- objectsChanged) yield "Add"
+	    }
+	  }
+	}
+	else{
+	  throw InternalErrorException("serializer.Deserialize returned a null object")
 	}
       })
+      if(objectsChanged.length > 0 ){
+	NotifyEngine(objectsChanged,operations)
+      }
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -3235,7 +3314,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	  var apiResult = new ApiResult(-1,"Failed to Fetch Derived concepts","No Derived Concepts Available")
 	  apiResult.toString()
 	case Some(cs) => 
-	  val csa = cs.toArray.filter(t => {t.getClass.getName == "DerivedAttributeDef"})
+	  val csa = cs.toArray.filter(t => {t.getClass.getName.contains("DerivedAttributeDef")})
 	  if( csa.length > 0 ) {
 	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	    apiResult.toString()
@@ -3263,7 +3342,7 @@ object MetadataAPIImpl extends MetadataAPI{
 					"No Concepts Available")
 	  apiResult.toString()
 	case Some(cs) => 
-	  val csa = cs.toArray.filter(t => {t.getClass.getName == "DerivedAttributeDef"})
+	  val csa = cs.toArray.filter(t => {t.getClass.getName.contains("DerivedAttributeDef")})
 	  if( csa.length > 0 ) {
 	    var apiResult = new ApiResult(0,"Successfully Fetched all concepts",JsonSerializer.SerializeObjectListToJson("Concepts",csa))
 	    apiResult.toString()
