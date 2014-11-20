@@ -110,6 +110,7 @@ REM 7za -tgzip beneficiaries.csv.gz beneficiaries.csv
 REM 7za -tgzip messages_new_format.csv.gz messages_new_format.csv
 REM 7za -tgzip messages_old_format.csv.gz messages_old_format.csv
 REM 7za -tgzip messages_new_format_all.csv.gz messages_new_format_all.csv
+REM 7za -tgzip messages50_2014_BIOH.csv.gz messages50_2014_BIOH.csv
 
 xcopy *gz %ONLEPLIBPATH%\msgdata\
 

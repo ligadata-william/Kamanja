@@ -36,9 +36,9 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 	  	
-	  	var winningKey : String = null
 	  	
 	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
+	  	var winningKey : String = simpleKey
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
 	  	logger.info(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)

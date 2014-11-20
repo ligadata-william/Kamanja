@@ -742,7 +742,8 @@ object JsonSerializer {
 				  }) ~
 		    ("Version"    -> o.ver) ~
 		    ("JarName"    -> o.jarName) ~
-		    ("DependantJars" -> o.dependencyJarNames.toList))
+		    ("DependantJars" -> o.dependencyJarNames.toList)~
+		    ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:MessageDef => {
@@ -754,7 +755,8 @@ object JsonSerializer {
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
+		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
+		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	o.containerType match{
 	  case c:StructTypeDef => {
@@ -778,7 +780,8 @@ object JsonSerializer {
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList))
+		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
+		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	o.containerType match{
 	  case c:StructTypeDef => {
@@ -803,7 +806,8 @@ object JsonSerializer {
 		    ("PhysicalName" -> o.typeString) ~
 		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
 		    ("Deleted"         -> o.deleted) ~
-		    ("Active"          -> o.active))
+		    ("Active"          -> o.active) ~
+		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	jsonStr = jsonStr.replaceAll("}","").trim
 	jsonStr = jsonStr + ",\n\"InputAttributes\": "
@@ -821,7 +825,8 @@ object JsonSerializer {
 	val json = (("NameSpace" -> o.nameSpace) ~
 		    ("Name" -> o.name) ~
 		    ("Version" -> o.ver) ~
-		    ("CollectionType" -> ObjType.asString(o.collectionType)))
+		    ("CollectionType" -> ObjType.asString(o.collectionType)) ~
+		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
 	var memberDefJson = SerializeObjectToJson(o.typeDef)
@@ -840,7 +845,8 @@ object JsonSerializer {
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
+		     ("Implementation" -> o.implementationName) ~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:SetTypeDef => {
@@ -857,7 +863,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
+		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType))~
+		     ("TransactionId" -> o.tranId))
 
 	pretty(render(json))
       }
@@ -875,8 +882,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
-
+		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:SortedSetTypeDef => {
@@ -893,8 +900,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
-		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)))
-
+		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:MapTypeDef => {
@@ -913,7 +920,8 @@ object JsonSerializer {
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
 		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:ImmutableMapTypeDef => {
@@ -932,7 +940,8 @@ object JsonSerializer {
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
 		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:HashMapTypeDef => {
@@ -951,7 +960,8 @@ object JsonSerializer {
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
 		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType)) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:ListTypeDef => {
@@ -968,7 +978,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:QueueTypeDef => {
@@ -985,7 +996,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
-		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType)))
+		     ("ValueTypeName" -> ObjType.asString(o.valDef.tType))~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:ArrayTypeDef => {
@@ -1000,7 +1012,8 @@ object JsonSerializer {
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
 		     ("Implementation" -> o.implementationName) ~
-		     ("NumberOfDimensions" -> o.arrayDims))
+		     ("NumberOfDimensions" -> o.arrayDims)~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:ArrayBufTypeDef => {
@@ -1015,7 +1028,8 @@ object JsonSerializer {
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
 		     ("Implementation" -> o.implementationName) ~
-		     ("NumberOfDimensions" -> o.arrayDims))
+		     ("NumberOfDimensions" -> o.arrayDims)~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:TupleTypeDef => {
@@ -1029,7 +1043,8 @@ object JsonSerializer {
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName) )
+		     ("Implementation" -> o.implementationName)~
+		     ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = SerializeObjectListToJson(o.tupleDefs)
@@ -1048,7 +1063,8 @@ object JsonSerializer {
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
+		     ("Implementation" -> o.implementationName)~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case o:AnyTypeDef => {
@@ -1062,7 +1078,8 @@ object JsonSerializer {
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
-		     ("Implementation" -> o.implementationName))
+		     ("Implementation" -> o.implementationName)~
+		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
       }
       case _ => {
