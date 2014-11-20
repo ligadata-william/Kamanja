@@ -116,9 +116,6 @@ class OnLEPLoaderInfo {
 class OnLEPManager {
   private val LOG = Logger.getLogger(getClass);
 
-  // Base loader
-  private val baseLoader = new OnLEPLoaderInfo
-
   // metadata loader
   private val metadataLoader = new OnLEPLoaderInfo
 
@@ -138,11 +135,13 @@ class OnLEPManager {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown: Unit = {
+  private def Shutdown(exitCode:Int): Unit = {
     ShutdownAdapters
+    if (OnLEPMetadata.envCtxt != null)
+        OnLEPMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
-    sys.exit(0)
+    sys.exit(exitCode)
   }
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -164,7 +163,7 @@ class OnLEPManager {
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
       if (jars.length > 0)
-        return ManagerUtils.LoadJars(jars, baseLoader.loadedJars, baseLoader.loader)
+        return ManagerUtils.LoadJars(jars, metadataLoader.loadedJars, metadataLoader.loader)
     }
 
     true
@@ -411,6 +410,7 @@ class OnLEPManager {
         val objinst = obj.instance
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
+          envCtxt.SetClassLoader(metadataLoader.loader)
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
@@ -589,10 +589,6 @@ class OnLEPManager {
     return retval
   }
 
-  private def quit(): Unit = {
-    Shutdown
-  }
-
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
       if (ln.compareToIgnoreCase("Quit") == 0)
@@ -604,7 +600,7 @@ class OnLEPManager {
   def run(args: Array[String]): Unit = {
     if (args.length == 0) {
       PrintUsage()
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -612,18 +608,18 @@ class OnLEPManager {
     val cfgfile = options.getOrElse('config, null)
     if (cfgfile == null) {
       LOG.error("Need configuration file as parameter")
-      Shutdown
+      Shutdown(1)
       return
     }
 
     val (loadConfigs, failStr) = Utils.loadConfiguration(cfgfile.toString, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
-      Shutdown
+      Shutdown(1)
       return
     }
     if (loadConfigs == null) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -642,12 +638,12 @@ class OnLEPManager {
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
     if (initialize == false) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -681,7 +677,7 @@ class OnLEPManager {
       }
     }
     scheduledThreadPool.shutdownNow()
-    Shutdown
+    Shutdown(0)
   }
 
 }

@@ -42,6 +42,20 @@ object CreateClient {
     }
   }
 
+  def createSimple(connectionString: String, sessionTimeoutMs: Int, connectionTimeoutMs: Int): CuratorFramework = {
+    // these are reasonable arguments for the ExponentialBackoffRetry. The first
+    // retry will wait 1 second - the second will wait up to 2 seconds - the
+    // third will wait up to 4 seconds.
+    val retryPolicy = new ExponentialBackoffRetry(1000, 3)
+
+    // The simplest way to get a CuratorFramework instance. This will use default values.
+    // The only required arguments are the connection string and the retry policy
+    val curatorZookeeperClient = CuratorFrameworkFactory.newClient(connectionString, sessionTimeoutMs, connectionTimeoutMs, retryPolicy);
+    curatorZookeeperClient.start
+    curatorZookeeperClient.getZookeeperClient.blockUntilConnectedOrTimedOut
+    curatorZookeeperClient
+  }
+
   def createSimple(connectionString: String): CuratorFramework = {
     // these are reasonable arguments for the ExponentialBackoffRetry. The first
     // retry will wait 1 second - the second will wait up to 2 seconds - the

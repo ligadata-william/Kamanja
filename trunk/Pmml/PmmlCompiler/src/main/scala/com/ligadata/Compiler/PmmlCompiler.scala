@@ -697,7 +697,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		/** create the jar */
 		val moduleNameJar : String = JarName(ctx)
 		logger.trace(s"create the jar $moduleNameJar")
-		val jarCmd : String = s"$javahome/bin/jar cvfm $moduleNameJar -C /tmp/$moduleName/ ."
+		val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C /tmp/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")
 		logger.info(s"Jar $moduleNameJar produced.  Its contents:")
 		val jarRc : Int = Process(jarCmd).!
