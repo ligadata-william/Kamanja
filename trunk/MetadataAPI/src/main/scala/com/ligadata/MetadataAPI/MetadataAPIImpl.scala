@@ -168,7 +168,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
 
   private var metadataStore:   DataStore = _
-  private var transStore:   DataStore = _
+  private var transStore:      DataStore = _
   private var modelStore:      DataStore = _
   private var messageStore:    DataStore = _
   private var containerStore:  DataStore = _
@@ -497,6 +497,10 @@ object MetadataAPIImpl extends MetadataAPI{
       val idStr = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[String]
       idStr.toLong
     }catch {
+      case e:ObjectNotFoundException => {
+	  // first time
+	  0
+      }
       case e:Exception =>{
 	throw new TranIdNotFoundException("Unable to retrieve the transaction id " + e.toString)
       }
@@ -1031,7 +1035,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       logger.info("Opening datastore")
       metadataStore     = GetDataStoreHandle(storeType,"metadata_store","metadata_objects")
-      transStore  = GetDataStoreHandle(storeType,"metadata_store","transaction_id")
+      transStore        = GetDataStoreHandle(storeType,"metadata_trans","transaction_id")
       modelStore        = metadataStore
       messageStore      = metadataStore
       containerStore    = metadataStore
@@ -1045,7 +1049,8 @@ object MetadataAPIImpl extends MetadataAPI{
 		       "functions"  -> functionStore,
 		       "concepts"   -> conceptStore,
 		       "types"      -> typeStore,
-		       "others"     -> otherStore)
+		       "others"     -> otherStore,
+		       "transaction_id" -> transStore)
     }catch{
       case e:CreateStoreFailedException => {
 	e.printStackTrace()
