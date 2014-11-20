@@ -130,6 +130,7 @@ trait BaseElem {
   def IsActive: Boolean // Return true if the Element is active, otherwise false
   def IsDeactive: Boolean // Return true if the Element is de-active, otherwise false
   def IsDeleted: Boolean // Return true if the Element is deleted, otherwise false
+  def TranId : Long // a unique number representing the transaction that modifies this object
   def Active: Unit // Make the element as Active
   def Deactive: Unit // Make the element as de-active
   def Deleted: Unit // Mark the element as deleted
@@ -155,6 +156,7 @@ class BaseElemDef extends BaseElem {
   override def IsActive: Boolean = active // Return true if the Element is active, otherwise false
   override def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
   override def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
+  override def TranId : Long = tranId// a unique number representing the transaction that modifies this object
   override def Active: Unit = active = true // Make the element as Active
   override def Deactive: Unit = active = false // Make the element as de-active
   override def Deleted: Unit = deleted = true // Mark the element as deleted
@@ -183,6 +185,7 @@ class BaseElemDef extends BaseElem {
   var physicalName: String = _ // Mapping from Logical name to Physical Name when we generate code. This is Case sensitive.
   var active: Boolean = true // Represent whether element is active or deactive. By default it is active.
   var deleted: Boolean = false // Represent whether element is deleted. By default it is false.
+  var tranId: Long = 0				    
 }
 
 // All these metadata elements should have specialized serialization and deserialization 
