@@ -754,25 +754,27 @@ object NodePrinterHelpers extends LogTrait {
 				generateClassName(ctx)
 			}
 			
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		if (ctx.injectLogging) {
-			objBuffer.append(s"object $nmspc$classname extends ModelBaseObj with LogTrait {\n") 
-		} else {
-			objBuffer.append(s"object $nmspc$classname extends ModelBaseObj {\n") 
-		}
-		
-		/** generate static variables */
-		val somePkg : Option[String] = ctx.pmmlTerms.apply("ModelPackageName")
-		val modelName = somePkg match {
-		  case Some(somePkg) => s"${'"'}$somePkg.$nmspc$classname${'"'}"
-		  case _ => "None"
-		}
-
 		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
 		val versionNo : String = optVersion match {
 		  case Some(optVersion) => optVersion.toString
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
+		val verNoStr : String = "_" + versionNo.toString
+		
+		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		if (ctx.injectLogging) {
+			objBuffer.append(s"object $nmspc$classname$verNoStr extends ModelBaseObj with LogTrait {\n") 
+		} else {
+			objBuffer.append(s"object $nmspc$classname$verNoStr extends ModelBaseObj {\n") 
+		}
+		
+		/** generate static variables */
+		val somePkg : Option[String] = ctx.pmmlTerms.apply("ModelPackageName")
+		val modelName = somePkg match {
+		  case Some(somePkg) => s"${'"'}$somePkg.$nmspc$classname$verNoStr${'"'}"
+		  case _ => "None"
+		}
+
 
 		objBuffer.append(s"    def getModelName: String = $modelName\n")
 		objBuffer.append(s"    def getVersion: String = ${'"'}$versionNo${'"'}\n")
@@ -816,7 +818,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		objBuffer.append(s"    def CreateNewModel(gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
 		objBuffer.append(s"    {\n") 
-		objBuffer.append(s"           new $nmspc$classname(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId)\n")
+		objBuffer.append(s"           new $nmspc$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId)\n")
 		objBuffer.append(s"    }\n") 	
 		objBuffer.append(s"\n")
 
@@ -859,8 +861,15 @@ object NodePrinterHelpers extends LogTrait {
 		})
 		val ctorGtxAndMessagesStr : String = ctorMsgsBuffer.toString
 
+		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no class name for this model... incredible as it seems"
+		}
+		val verNoStr : String = "_" + versionNo.toString
+
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
+		clsBuffer.append(s"class $nmspc$classname$verNoStr($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelBase with LogTrait {\n") 
 		} else {
@@ -869,8 +878,8 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
-		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname.getModelName\n")
-		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname.getVersion\n")
+		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
+		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname$verNoStr.getVersion\n")
 		clsBuffer.append(s"    override def getTenantId : String = tenantId\n")
 		
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
@@ -894,7 +903,7 @@ object NodePrinterHelpers extends LogTrait {
 		/** 
 		 *  Add the initialize function to the the class body 
 		 */
-		clsBuffer.append(s"    def initialize : $nmspc$classname = {\n")
+		clsBuffer.append(s"    def initialize : $nmspc$classname$verNoStr = {\n")
 		clsBuffer.append(s"\n")
 		
 		val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
@@ -1162,8 +1171,14 @@ object NodePrinterHelpers extends LogTrait {
 		prepResultBuffer.append(s"            val dateMillis : Long = now.getMillis.toLong - millisecsSinceMidnight \n")
 
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no class name for this model... incredible as it seems"
+		}
+		val verNoStr : String = "_" + versionNo.toString
 
-		prepResultBuffer.append(s"            new ModelResult(dateMillis, nowStr, $nmspc$classname.getModelName, $nmspc$classname.getModelVersion, results) \n")
+		prepResultBuffer.append(s"            new ModelResult(dateMillis, nowStr, $nmspc$classname$verNoStr.getModelName, $nmspc$classname$verNoStr.getModelVersion, results) \n")
 		prepResultBuffer.append(s"        } else { null }\n")
 		prepResultBuffer.append(s"\n")
 		prepResultBuffer.append(s"        modelResult\n")
