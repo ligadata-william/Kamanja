@@ -488,9 +488,17 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		  case Some(optClassName) => optClassName
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
+
+		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no class name for this model... incredible as it seems"
+		}
 		/** FIXME: The model namespace perhaps should be specified in the model xml ? */
 		val modelNamespace = MdMgr.sysNS
-		val fqClassName : String = modelPkg + "." + className
+		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		
+		val fqClassName : String = modelPkg + "." + nmspc + className + "_" + versionNo
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
 		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
@@ -634,8 +642,14 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		  case Some(appNm) => appNm
 		  case _ => "None"
 		}
-		val moduleNameJar : String = s"$moduleName.jar"
-		moduleNameJar
+		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no class name for this model... incredible as it seems"
+		}
+		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		val moduleNameJar : String = s"$nmspc$moduleName${'_'}$versionNo.jar"
+		moduleNameJar.toLowerCase
 	}
 
 	
