@@ -222,6 +222,7 @@ gzip -c beneficiaries.csv > beneficiaries.gz
 gzip -c messages_new_format.csv > messages_new_format.gz
 gzip -c messages_old_format.csv > messages_old_format.gz
 gzip -c messages_new_format_all.csv > messages_new_format_all.csv.gz
+gzip -c messages50_2014_BIOH.csv > messages50_2014_BIOH.csv.gz
 
 cp *gz $ONLEPLIBPATH/msgdata/
 
