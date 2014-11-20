@@ -72,6 +72,7 @@ class ModelResult(var eventDate: Long, var executedTime: String, var mdlName: St
 }
 
 trait EnvContext {
+  def Shutdown: Unit
   def SetClassLoader(cl : java.lang.ClassLoader): Unit
   def AddNewMessageOrContainers(mgr : MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData:Boolean): Unit
   def getObjects(containerName: String, key: String): Array[MessageContainerBase]

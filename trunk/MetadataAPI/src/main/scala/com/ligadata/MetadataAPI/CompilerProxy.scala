@@ -20,8 +20,8 @@ import com.ligadata.Compiler._
 
 import com.ligadata.Serialize._
 
-case class MsgCompilationFailedException(e: String) extends Throwable(e)
-case class ModelCompilationFailedException(e: String) extends Throwable(e)
+case class MsgCompilationFailedException(e: String) extends Exception(e)
+case class ModelCompilationFailedException(e: String) extends Exception(e)
 
 // CompilerProxy has utility functions to:
 // Call MessageDefinitionCompiler, 
@@ -154,59 +154,64 @@ class CompilerProxy{
   }
 
   def compilePmml(pmmlStr: String) : (String,ModelDef) = {
+    try{
+      /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
+      val injectLoggingStmts : Boolean = false 
+      val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
+				       Array(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")))
+      val (classStr,modDef) = compiler.compile(pmmlStr)
 
-    /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
-    val injectLoggingStmts : Boolean = false 
-    val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, Array(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")))
-    val (classStr,modDef) = compiler.compile(pmmlStr)
+      var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 
-    var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
+      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+      
+      if (classPath.size == 0)
+	classPath = "."
 
-    var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
-    
-    if (classPath.size == 0)
-      classPath = "."
+      val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
 
-    val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
-/*
-    jarPaths.foreach(p => {
-      try {
-        val jarFiles = new java.io.File(p).listFiles.filter(_.getName.endsWith(".jar")).map(_.getPath).mkString(":")
-        classPath = classPath + ":" + jarFiles 
-      } catch {
-        case e: Exception => {}
+      if (modDef.DependencyJarNames != null) {
+	val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
+	if (classPath != null && classPath.size > 0) {
+          classPath = classPath + ":" + depJars 
+	} else {
+          classPath = depJars 
+	}
       }
-    })
-*/
 
-    if (modDef.DependencyJarNames != null) {
-      val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
-      if (classPath != null && classPath.size > 0) {
-        classPath = classPath + ":" + depJars 
-      } else {
-        classPath = depJars 
+      val (jarFile,depJars) = 
+	compiler.createJar(classStr,
+			   classPath,
+			   pmmlScalaFile,
+			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+			   false)
+
+      /* The following check require cleanup at some point */
+      if(jarFile.compareToIgnoreCase("Not Set") == 0 ){
+	throw new ModelCompilationFailedException("Failed to produce the jar file")
+      }
+	
+      modDef.jarName = jarFile
+      modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
+      if( modDef.ver == 0 ){
+	modDef.ver     = 1
+      }
+      if( modDef.modelType == null){
+	modDef.modelType = "RuleSet"
+      }
+      (classStr,modDef)
+    } catch{
+      case e:Exception =>{
+	logger.trace("Failed to compile the model definition " + e.toString)
+	//e.printStackTrace
+	throw new ModelCompilationFailedException(pmmlStr)
       }
     }
-
-    val (jarFile,depJars) = 
-      compiler.createJar(classStr,
-			 classPath,
-			 pmmlScalaFile,
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-			 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-			 false)
-    modDef.jarName = jarFile
-    modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
-    if( modDef.ver == 0 ){
-      modDef.ver     = 1
-    }
-    if( modDef.modelType == null){
-      modDef.modelType = "RuleSet"
-    }
-    (classStr,modDef)
   }
+
 
   private def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found

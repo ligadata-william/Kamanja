@@ -48,6 +48,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     classLoader = cl
   }
 
+  override def Shutdown: Unit = _lock.synchronized {
+    _messagesOrContainers.foreach(mrc => {
+      if (mrc._2.dataStore != null)
+        mrc._2.dataStore.Shutdown
+    })
+    _messagesOrContainers.clear
+    _filterArrays.clear
+  }
+
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
     containerNames.foreach(c1 => {
