@@ -1,0 +1,27 @@
+{
+	"APIConfigParameters" :
+	{ 
+		"RootDir"      : "/home/rich",
+		"GitRootDir"   : "/home/rich/github/Med",
+		"Database"     : "hashmap",
+		"DatabaseHost" : "localhost",
+		"DatabaseLocation" : "/tmp/OnLEPInstall/metadata",
+		"DatabaseSchema" : "machokamacho",
+		"JarTargetDir"	: "/tmp/OnLEPInstall",
+		"ScalaHome"  	: "/home/rich/tarballs/scala/scala-2.10.4",
+		"JavaHome"  	: "/usr/lib/jvm/jdk1.7.0_45",
+		"ManifestPath"	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Models/manifest.mf",
+		"ClassPath"  	: ".:/tmp/OnLEPInstall/bootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/metadata_2.10-1.0.jar:/tmp/OnLEPInstall/basefunctions_2.10-0.1.0.jar:/tmp/OnLEPInstall/messagedef_2.10-1.0.jar:/tmp/OnLEPInstall/methodextractor_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlcompiler_2.10-1.0.jar:/tmp/OnLEPInstall/onlepbase_2.10-1.0.jar:/tmp/OnLEPInstall/joda-time-2.3.jar:/tmp/OnLEPInstall/joda-convert-1.6.jar:/tmp/OnLEPInstall/basetypes_2.10-0.1.0.jar:/tmp/OnLEPInstall/pmmludfs_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlruntime_2.10-1.0.jar:/tmp/OnLEPInstall/json4s-native_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-core_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-ast_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-databind-2.3.1.jar:/tmp/OnLEPInstall/jackson-annotations-2.3.0.jar:/tmp/OnLEPInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-core-2.3.1.jar:/tmp/OnLEPInstall/log4j-1.2.17.jar",
+		"NotifyEngine" : "NO",
+		"ZnodePath" : "/ligadata/metadata",
+		"ZooKeeperConnectString" : "localhost:2181",
+		"MODEL_FILES_DIR"   		: "/home/rich/william/models",
+		"TYPE_FILES_DIR"      		: "/home/rich/william",
+		"FUNCTION_FILES_DIR"      	: "/home/rich/william",
+		"CONCEPT_FILES_DIR"      	: "/home/rich/william",
+		"MESSAGE_FILES_DIR"      	: "/home/rich/william/messages",
+		"CONTAINER_FILES_DIR"      	: "/home/rich/william/containers"
+
+	}
+}
+

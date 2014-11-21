@@ -1,0 +1,114 @@
+{
+  "Container" : {
+    "NameSpace" : "system",
+    "Name" : "alertparameters",
+    "FullName" : "system.alertparameters",
+    "Version" : 100,
+    "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
+    "PhysicalName" : "com.ligadata.OnLEPBankPoc.AlertParameters_100",
+    "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
+    "TransactionId" : 0,
+  "Attributes": [ 
+{
+  "NameSpace" : "system",
+  "Name" : "alert",
+  "Version" : 100,
+  "CollectionType" : "None",
+  "TransactionId" : 0,
+  "Type": {
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "string",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "string",
+  "PhysicalName" : "String",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
+  "TransactionId" : 0
+}},
+{
+  "NameSpace" : "system",
+  "Name" : "max_alerts_per_day",
+  "Version" : 100,
+  "CollectionType" : "None",
+  "TransactionId" : 0,
+  "Type": {
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "int",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "int",
+  "PhysicalName" : "Int",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
+  "TransactionId" : 0
+}},
+{
+  "NameSpace" : "system",
+  "Name" : "online_start_time",
+  "Version" : 100,
+  "CollectionType" : "None",
+  "TransactionId" : 0,
+  "Type": {
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "long",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "long",
+  "PhysicalName" : "Long",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
+  "TransactionId" : 0
+}},
+{
+  "NameSpace" : "system",
+  "Name" : "online_end_time",
+  "Version" : 100,
+  "CollectionType" : "None",
+  "TransactionId" : 0,
+  "Type": {
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "long",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "long",
+  "PhysicalName" : "Long",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
+  "TransactionId" : 0
+}},
+{
+  "NameSpace" : "system",
+  "Name" : "alert_expiry_time",
+  "Version" : 100,
+  "CollectionType" : "None",
+  "TransactionId" : 0,
+  "Type": {
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "long",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "long",
+  "PhysicalName" : "Long",
+  "Version" : 100,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
+  "TransactionId" : 0
+}} ]
+}
+}
+

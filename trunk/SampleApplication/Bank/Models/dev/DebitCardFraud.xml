@@ -1,0 +1,219 @@
+<!-- 
+Fraud Detection Example Ruleset:
+
+	1) detect more than N (e.g., 3) bank machine withdrawals have occurred within the past hour.
+	2) detect more than N (e.g., 6) transactions have occurred within the 24 hours
+	3) detect more than N (e.g., 15) transactions have occurred in the past week.
+
+Description:
+
+	When a bank transaction processing message is presented to the online learning
+	engine, the transaction history for the past eight days are retrieved.  The 
+	current message precipitating the rule evaluation is appended to the 
+	recent history of transactions and presented to the model.
+
+	Slightly more than needs to be considered by the rules are maintained to allow an
+	offline or other online ruleset that keeps the data trimmed (eliminating old
+	information ... i.e., greater than 7 days worth).  
+
+	The latest transaction's BankPOCMsg field, ENT_ACC_NUM, is used to locate the
+	client preferences for this customer.  Threshold values that trigger fraud
+	alerts are client centric... presumably based upon the client's account
+	characteristic and credit worthiness.
+
+	Each of the three threshold tests are applied and all results are returned
+	should any of the tests succeed.  The generated executable from this pmml will have 
+	a class constructor argument that specifies whether results are postively reported,
+	when the prediction is true, or when the prediction is a change from the 
+	last prediction made by the model for this client.  
+
+	For this model, the parameter will be set to produce full data only if the 
+	prediction is true.  This is defined in the model metadata when it is registered 
+	with the online learning system.
+
+-->
+
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Barclay Bank" description="Rules used to determine whether emergency borrowing notification should be made for overdraft plan subscribers ">
+		<Application name="AlchemyAlerts" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="3">
+		<DataField name="transactionHistory" displayName="transactionHistory" optype="categorical" dataType="ArrayOfBankPocMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="messageTypes" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="transactionHistory" property="valid"/>
+	    </DataField>
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!-- ***********************
+			Derived fields 
+		 *********************** -->
+
+		<DerivedField name="latestXaction" dataType="BankPocMsg" optype="categorical">
+			<Apply function="last">
+				<FieldRef field="transactionHistory"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="ClientPrefs" dataType="ClientPreferences" optype="categorical">
+			<Apply function="Get">
+			    <FieldRef field="gCtx"/>
+			    <Constant dataType="ident">"ClientPreferences"</Constant>
+				<FieldRef field="lastXaction.ENT_ACC_NUM"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="Now" dataType="long" optype="continous">
+			<Apply function="AsSeconds">
+				<Apply function="Timenow"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="AnHourAsSeconds" dataType="long" optype="continous">
+			<Apply function="*"
+				<Constant dataType="long">60</Constant>
+				<Constant dataType="long">60</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TwentyFourHoursAsSeconds" dataType="long" optype="continous">
+			<Apply function="*"
+				<Constant dataType="long">24</Constant>
+				<FieldRef field="AnHourAsSeconds"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="AWeekAsSeconds" dataType="long" optype="continous">
+			<Apply function="*"
+				<FieldRef field="TwentyFourHoursAsSeconds"/>
+				<Constant dataType="long">7</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TimeAnHourAgo" dataType="long" optype="continous">
+			<Apply function="-"
+				<FieldRef field="Now"/>
+				<FieldRef field="AnHourAsSeconds"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TimeTwentyFourHoursAgo" dataType="long" optype="continous">
+			<Apply function="-"
+				<FieldRef field="Now"/>
+				<FieldRef field="TwentyFourHoursAsSeconds"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TimeAWeekAgo" dataType="long" optype="continous">
+			<Apply function="-"
+				<FieldRef field="Now"/>
+				<FieldRef field="AWeekAsSeconds"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TransactionsInThePastHour" dataType="integer" optype="continuous">
+			<Apply function="Size">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="TransactionHistory"/>
+		       		<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">TransactionTime</Constant> 
+					<FieldRef field="TimeAnHourAgo"/>
+					<FieldRef field="Now"/>
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TransactionsInThePast24Hours" dataType="integer" optype="continuous">
+			<Apply function="Size">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="TransactionHistory"/>
+		       		<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">TransactionTime</Constant> 
+					<FieldRef field="TimeTwentyFourHoursAgo"/>
+					<FieldRef field="Now"/>
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="TransactionsInThePastWeek" dataType="integer" optype="continuous">
+			<Apply function="Size">
+				<Apply function="ContainerFilter">
+		       		<FieldRef field="TransactionHistory"/>
+		       		<Constant dataType="fIdent">Between</Constant> 
+		 			<Constant dataType="ident">TransactionTime</Constant> 
+					<FieldRef field="TimeAWeekAgo"/>
+					<FieldRef field="Now"/>
+					<Constant dataType="boolean">true</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="MightBeFraudLastHour" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<FieldRef field="TransactionsInThePastHour"/>
+				<FieldRef field="ClientPrefs.TransactionCountThresholdForHour"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="MightBeFraudLast24Hours" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<FieldRef field="TransactionsInThePast24Hours"/>
+				<FieldRef field="ClientPrefs.TransactionCountThresholdForDay"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="MightBeFraudPastWeek" dataType="boolean" optype="categorical">
+			<Apply function="greaterThan">
+				<FieldRef field="TransactionsInThePastWeek"/>
+				<FieldRef field="ClientPrefs.TransactionCountThresholdForWeek"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="MightBeFraud" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="latestXaction.ENT_SEG_TYP"/>
+					<Constant dataType="string">W</Constant>  <!-- i.e., a withdrawal -->
+				</Apply>
+				<Apply function="or">
+					<FieldRef field="MightBeFraudLastHour"/>
+					<FieldRef field="MightBeFraudLast24Hours"/>
+					<FieldRef field="MightBeFraudPastWeek"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="DebitCardFraudAlerts" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="MightBeFraud" usageType="predicted"/>
+			<MiningField name="TransactionsInThePastHour" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.TransactionCountThresholdForHour" usageType="supplementary"/>
+			<MiningField name="TransactionsInThePast24Hours" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.TransactionCountThresholdForDay" usageType="supplementary"/>
+			<MiningField name="TransactionsInThePastWeek" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.TransactionCountThresholdForWeek" usageType="supplementary"/>		
+			<MiningField name="msg.AccountId" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="msg.DATE" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="FraudRule" score="1">
+				<SimplePredicate field="MightBeFraud" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

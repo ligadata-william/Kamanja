@@ -1,0 +1,360 @@
+
+<!--
+	Emergency Borrowing Alert (EB001, EB002)
+
+	1) If the TGNERQT.ANT_LMT is less than zero, the account has an EB limit. If no EB limit held (i.e. TGNERQT.ANT_LMT not < 0) an EB alert will not be triggered and processing will skip to Overdraft Alerts. 
+
+	2) IF (RUN_LDG_XAU equal or greater than (ODR_LMT + ANT_LMT + UNP-BUFF) and (RUN-LEDG-BAL-EXCL-AUTHS less than ODR_LMT + EB_BUFFER) 
+		(balance is within the Emergency Borrowing tier)
+		Continue 
+	ELSE
+		Exit the model (consider the Overdraft Limit alerts)
+
+	3) Calculation - Calculate PREVIOUS_BAL as RUN_LDG_XAU minus ENTRY_AMOUNT
+	IF PREVIOUS_BAL equal or greater than (ODR_LMT + EB_BUFFER) and 
+		RUN-LEDG-BAL-EXCL-AUTHS less than (ODR_LMT + EB_BUFFER)
+		(i.e. the debit has caused the balance to move into the EB tier)
+		Continue to next step below
+	ELSE
+		No EB alert required.  Terminate processing for the event as the Overdraft and Low Balance alert would not be triggered as balance is in the EB tier. 
+
+	4) Offline Alert (current time between 17:00 and 07:30). Determine whether a pending alert has already been written for the same business date to the Alert History Table (i.e. any one of LBN001, OD001, OD002, OD003, NOL001, EB001, or EB002).  If not already present, write it to the table.
+
+	5) Online Alert.  Determine whether an alert higher in the alert hierarchy has already been triggered today, and whether the daily threshold for EB alerts has been reached.  In either case, an alert would not be triggered.
+		IF number of EB alerts sent today (from Alert History Table) equals the daily threshold (configurable parameter set to 1) 
+			No EB alert required.  Terminate processing for the event as the Overdraft and Low Balance alerts would not be triggered either, on account of the fact that an EB alert has already been sent and is higher in the alert hierarchy. 
+		ELSE - Determine which flavor of alert is required
+		IF UTF (unpaid transaction fee) or PTF (paid transaction fee) alert has already been triggered today for the customer/account 
+			No EB alert required.  Terminate processing for the event as the Overdraft and Low Balance alerts would not be triggered either, on account of the fact that a UTF/PTF alert has already been sent and is higher in the alert hierarchy.  Skip all subsquent processing.
+		ELSE
+			EB Alert is required
+		If an EB alert is required, this step determines whether an EB001 or EB002 alert is required depending on the number of EB fees charged, which will have been loaded into Consolidated Preference Data table for the alert.
+			IF MAX_EB_CNT = ‘N’ 
+				EB1 alert required (borrower hit the limit)
+			ELSE
+				EB2 alert required 
+
+	6) Pass back specific parameters required for the alert, i.e:
+		Key Stage Event ID (Alert Type) = EB1 or EB2
+		Balance = RUN-LEDG-BAL-EXCL-AUTHS
+		Account Short Name (from Customer Preferences) 
+		Expiry Date (set according to rule 001 on Alert Parameters table, i.e. from TGNERQT.DATE)
+		Expiry Time (set from Expiry Time on Alert Parameters Table). 	
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Barclay Bank" description="Rules used to determine whether emergency borrowing notification should be made for overdraft plan subscribers ">
+		<Application name="EmergencyBorrowAlert" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="3">
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="BankPocMsg"/>
+	    <DataField name="params" displayName="params to model constructor" dataType="container">
+	       <Value value="msg" property="valid"/>
+	       <Value value="gCtx" property="valid"/>
+	    </DataField>
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!-- -----------------------
+			Derived fields 
+		 ----------------------- -->
+
+		<!--
+			Obtain the Alert History for this client
+		-->
+		<DerivedField name="ClientAlertsToday" dataType="AlertHistory" optype="categorical">
+			<Apply function="gCtx.Get">
+			    <FieldRef field="AlertHistory"/>
+			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Obtains this client's preferences
+		-->
+		<DerivedField name="ClientPrefs" dataType="CustomerPrefs" optype="categorical">
+			<Apply function="gCtx.Get">
+			    <FieldRef field="CustomerPrefs"/>
+			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Use the EBOO1 parms for now.  
+		-->
+		<DerivedField name="EBAlertParms" dataType="AlertParameters" optype="categorical">
+			<Apply function="gCtx.Get">
+			    <FieldRef field="AlertParameters"/>
+			    <Constant dataType="String">"EB001"</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether an online event notification is to be issued
+		-->
+		<DerivedField name="ShouldOnlineEventBeIssued" dataType="Boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="or">
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.EB001Sent"/>
+							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+						</Apply>
+						<FieldRef field="EBAlertParms.MAX_ALERTS_PER_DAY"/>
+					</Apply>
+					<Apply function="greaterOrEqual">
+						<Apply function="+">
+							<FieldRef field="ClientAlertsToday.UTFSent"/>
+							<FieldRef field="ClientAlertsToday.PTFSent"/>
+						</Apply>
+						<Constant dataType="Int">0</Constant>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Classify the emergency borrowing severity
+		-->
+		<DerivedField name="AlertType" dataType="String" optype="categorical">
+			<Apply function="if">
+				<Apply function="equal">
+					<FieldRef field="ClientPrefs.MAX_EB_CNT"/>
+					<Constant>N</Constant>
+				</Apply>
+				<Constant dataType="String">EBOO1</Constant> 
+				<Constant dataType="String">EBOO2</Constant>       
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Increment the appropriate alert tally if AlertType is one of the EB alerts...
+			NOTE: the increment function returns true if it succeeds (i.e., always)
+				Maybe a more natural way is to return the incremented value and check
+				for it being > 0?
+
+			NOTE: This function is currently ONLY called when AlertType is one of these 
+				EB alerts.  See SendResultDetermination for use.
+		-->
+		<DerivedField name="ClientAlertsTodayUpdated" dataType="Boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="AlertType"/>
+						<Constant>EBOO1</Constant>
+					</Apply>
+					<Apply function="incrementBy">
+						<FieldRef field="ClientAlertsToday.EB001Sent"/>
+						<Constant dataType="Int">1</Constant> 
+					</Apply>
+				</Apply>
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="AlertType"/>
+						<Constant>EBOO2</Constant>
+					</Apply>
+					<Apply function="incrementBy">
+						<FieldRef field="ClientAlertsToday.EB002Sent"/>
+						<Constant dataType="Int">1</Constant> 
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+
+		<!--
+			Note if the event being considered occurred after hours
+		-->
+		<DerivedField name="OfflineEvent" dataType="Boolean" optype="categorical">
+			<Apply function="not">
+				<Apply function="Between">
+					<Apply function="CompressedTimeHHMMSSCC2Secs">
+						<FieldRef field="msg.TIME"/>
+					</Apply>
+					<FieldRef field="EBAlertParms.ONLINE_START_TIME"/>
+					<FieldRef field="EBAlertParms.ONLINE_END_TIME"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			For offline events, assess whether an offline event notification should be posted
+		-->
+		<DerivedField name="ShouldOfflineEventBeIssued" dataType="Boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="OfflineEvent"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<Apply function="+">
+						<FieldRef field="ClientAlertsToday.LB001Sent"/>
+						<FieldRef field="ClientAlertsToday.OD001Sent"/>
+						<FieldRef field="ClientAlertsToday.OD002Sent"/>
+						<FieldRef field="ClientAlertsToday.OD003Sent"/>
+						<FieldRef field="ClientAlertsToday.NO001Sent"/>
+						<FieldRef field="ClientAlertsToday.EB001Sent"/>
+						<FieldRef field="ClientAlertsToday.EB002Sent"/>
+					</Apply>
+					<Constant dataType="Int">0</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Calculate the prior balance (excl)
+		-->
+		<DerivedField name="PreviousBalance" dataType="Double" optype="continuous">
+			<Apply function="-">
+				<FieldRef field="msg.RUN_LDG_XAU"/>
+				<FieldRef field="msg.ENT_AMT"/>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Answer whether the debit in current message caused an emergency borrowing condition
+		-->
+		<DerivedField name="DebitHasCausedEBCondition" dataType="Boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterOrEqual">
+					<FieldRef field="PreviousBalance"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is the auth run ledger balance in the emergency borrowing range?
+		-->
+		<DerivedField name="InEmergencyBorrowRange" dataType="Boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="greaterThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.ANT_LMT"/>
+						<FieldRef field="msg.UNP_BUFF"/>
+					</Apply>
+				</Apply>
+				<Apply function="lessThan">
+					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<Apply function="+">
+						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.EB_BUFFER"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Does this client subscribe to the emergency borrowing account feature
+		-->
+		<DerivedField name="AcctHasEBLimit" dataType="Boolean" optype="categorical">
+			<Apply function="lessThan">
+				<FieldRef field="msg.ANT_LMT"/>
+				<Constant dataType="Double">0</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether we need to send a result.
+		-->
+		<DerivedField name="ValidOnlineOfflineEventTrigger" dataType="Boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="equal">
+					<FieldRef field="ShouldOfflineEventBeIssued"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="ShouldOnlineEventBeIssued"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Assess whether we need to send a result.
+		-->
+		<DerivedField name="SendResult" dataType="Boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="AcctHasEBLimit"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="InEmergencyBorrowRange"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="DebitHasCausedEBCondition"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="ValidOnlineOfflineEventTrigger"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+		<!--
+			Determine whether to send result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="SendResultDetermination" dataType="Boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="equal">
+					<FieldRef field="SendResult"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="equal">
+					<FieldRef field="ClientAlertsTodayUpdated"/>
+					<Constant dataType="Boolean">true</Constant>
+				</Apply>
+				<Apply function="put">
+				    <FieldRef field="AlertHistory"/>
+				    <FieldRef field="msg.ENT_ACC_NUM"/>
+					<FieldRef field="ClientAlertsToday"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<RuleSetModel modelName="AlchemyEmerBorrowRules" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="SendResult" usageType="predicted"/>
+			<MiningField name="OfflineEvent" usageType="supplementary"/>
+			<MiningField name="AlertType" usageType="supplementary"/>
+			<MiningField name="msg.RUN_LDG_XAU" usageType="supplementary"/>
+			<MiningField name="ClientPrefs.ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="msg.DATE" usageType="supplementary"/>
+			<MiningField name="EBAlertParms.ALERT_EXPIRY_TIME" usageType="supplementary"/>
+			<MiningField name="EBAlertParms.MOBILE_NUMBER" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="RULE1" score="1">
+				<SimplePredicate field="SendResultDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>
