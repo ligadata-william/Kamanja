@@ -152,7 +152,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
-          if (topMsgTypeAndHasParent._2 || (topObj == null))
+          if (topMsgTypeAndHasParent._2 || (topObj == null || topObj != finalTopMsgOrContainer))
             envContext.setObject(topMsgTypeAndHasParent._1, keyData, finalTopMsgOrContainer)
         }
       }
