@@ -221,6 +221,17 @@ class MessageDefImpl {
     }
     addMessageFunc
   }
+  
+  private def assignJsonForArray(fname : String, typeImpl:String) = {
+	  """
+		if (map.getOrElse(""""+fname+"""", null).isInstanceOf[tList])
+			arr = map.getOrElse(""""+fname+"""", null).asInstanceOf[List[String]]
+		if (arr != null) {
+			"""+fname+"""  = arr.map(v => """+typeImpl+"""(v)).toArray
+		}
+      """
+  }
+  
   //generates the variables string and assign string
   def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -247,7 +258,6 @@ class MessageDefImpl {
     //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     try {
       scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
-
       // for (e <- message.Elements) {
       //  var fields = e.Fields
 
@@ -276,10 +286,12 @@ class MessageDefImpl {
                 else
                   fname = arrayType.elemDef.implementationName + ".Input"
                 assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
+                           
+                 assignJsondata.append( assignJsonForArray( f.Name, fname))
               } else {
-                if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer"))
+                if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")){
                   assignCsvdata.append(newline + getArrayStr(f.Name, arrayType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
-
+                }
                 if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage"))
                   if (typ.get.typeString.toString().split("\\[").size == 2) {
                     addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
@@ -328,7 +340,7 @@ class MessageDefImpl {
               scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
 
               assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-              assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad1, f.Name, fname, f.Name, dval, newline))
+              assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
               assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
 
             }
@@ -347,13 +359,11 @@ class MessageDefImpl {
 
                 argsList = (message.NameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
                 scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-                if (f.ElemType.equals("Container"))
+                if (f.ElemType.equals("Container")) {
                   assignCsvdata.append("%s//%s Implementation of messages is not handled at this time%s".format(pad2, f.Name, newline))
-
-                // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
-
-                // assignCsvdata.append("%s//%s Implementation of messages is not handled at this time".format(pad2, f.Name))
-
+                // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
+                  // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
+                }
                 if (typ.get.typeString.toString().split("\\[").size == 2) {
                   addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
                   addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
@@ -398,8 +408,7 @@ class MessageDefImpl {
                     jarset = jarset + msgDef.JarName
 
                   argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-                
-                  
+
                   /*
         	Messages in Message is not handled at this moment
        
@@ -704,29 +713,34 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   private def populateJson(json:JsonData) : Unit = {
 	try{
-    	if(json == null) throw new Exception("Invalid json data")
-     	val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
-     	assignJsonData(parsed.asInstanceOf[Map[String, Any]])
+         if (json == null || json.cur_json == null || json.cur_json == None) throw new Exception("Invalid json data")
+     	 val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
+     	 assignJsonData(json)
 	}catch{
-	  case e:Exception =>{
-   	    e.printStackTrace()
-   	  	throw e	    	
+	    case e:Exception =>{
+   	    	e.printStackTrace()
+   	  		throw e	    	
+	  	}
 	  }
 	}
-  }
 	  """
   }
 
   def assignJsonData(assignJsonData: String) = {
     """
-  private def assignJsonData(map:Map[String,Any]) : Unit =  {
-    try{
-	  if(map == null)  throw new Exception("Invalid json data")
-""" + assignJsonData +
-      """
-	}catch{
-  		case e:Exception =>{
-   			e.printStackTrace()
+  private def assignJsonData(json: JsonData) : Unit =  {
+	type tList = List[String]
+	type tMap = Map[String, Any]
+	var arr: List[String] = null
+	try{
+	 	 val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
+	  	 if (map == null)
+        	throw new Exception("Invalid json data")
+"""+ assignJsonData +
+  """
+	  }catch{
+  			case e:Exception =>{
+   				e.printStackTrace()
    			throw e	    	
 	  	}
 	}
