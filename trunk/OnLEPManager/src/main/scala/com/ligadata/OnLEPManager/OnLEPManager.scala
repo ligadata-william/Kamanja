@@ -551,8 +551,8 @@ class OnLEPManager {
 
       OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
       OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("zkNodeBasePath".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
-      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
 
       // Taking minimum values in case if needed
       OnLEPConfiguration.zkSessionTimeoutMs = if (OnLEPConfiguration.zkSessionTimeoutMs <= 0) 250 else OnLEPConfiguration.zkSessionTimeoutMs
