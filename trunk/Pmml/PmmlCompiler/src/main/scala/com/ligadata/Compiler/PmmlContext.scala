@@ -358,7 +358,8 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  	PMML (see the PmmlCompiler.scala source for use)
 	 *      
 	 *  These will be used if present:
-	 *   	Version (from the Header)
+	 *   	Version (string version from the Header)
+	 *    	ApplicationName (from the Header)
 	 *    	Copyright (from the Header)
 	 *      Description (from the Header)
 	 *      ModelName (from the RulesetModel ... and other model types we are to support)

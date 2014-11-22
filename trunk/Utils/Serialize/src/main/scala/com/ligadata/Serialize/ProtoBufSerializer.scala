@@ -23,6 +23,7 @@ class ProtoBufSerializer extends Serializer{
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+  private[this] var classLoader: java.lang.ClassLoader = null
 
   def SetLoggerLevel(level: Level){
     logger.setLevel(level);
@@ -157,7 +158,7 @@ class ProtoBufSerializer extends Serializer{
   }
 
 
-  def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
+  override def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
     try{
       obj match {
 	case o:AttributeDef => {
@@ -181,7 +182,7 @@ class ProtoBufSerializer extends Serializer{
   }
 
 
-  def DeserializeObjectFromByteArray(ba: Array[Byte], objectType:String) : Object = {
+  override def DeserializeObjectFromByteArray(ba: Array[Byte], objectType:String) : Object = {
     logger.trace("Parse " + ba.length + " bytes to create a " + objectType + " object ")
     try{
       objectType match{
@@ -208,7 +209,12 @@ class ProtoBufSerializer extends Serializer{
   }
 
 
-  def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
+  override def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
     throw new ProtoBufSerializationException("Failed to DeSerialize the object: Unable to deserialize the object without ObjectType")
   }
+
+  override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {
+    classLoader = cl
+  }
+
 }

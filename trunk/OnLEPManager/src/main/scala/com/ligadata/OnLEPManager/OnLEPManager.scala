@@ -80,7 +80,9 @@ object OnLEPConfiguration {
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
-  var znodePath: String = _
+  var zkNodeBasePath: String = _
+  var zkSessionTimeoutMs: Int = _
+  var zkConnectionTimeoutMs: Int = _
 
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
@@ -116,9 +118,6 @@ class OnLEPLoaderInfo {
 class OnLEPManager {
   private val LOG = Logger.getLogger(getClass);
 
-  // Base loader
-  private val baseLoader = new OnLEPLoaderInfo
-
   // metadata loader
   private val metadataLoader = new OnLEPLoaderInfo
 
@@ -138,11 +137,15 @@ class OnLEPManager {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown: Unit = {
+  private def Shutdown(exitCode: Int): Unit = {
+    OnLEPLeader.Shutdown
+    OnLEPMetadata.Shutdown
     ShutdownAdapters
+    if (OnLEPMetadata.envCtxt != null)
+      OnLEPMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
-    sys.exit(0)
+    sys.exit(exitCode)
   }
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -164,7 +167,7 @@ class OnLEPManager {
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
       if (jars.length > 0)
-        return ManagerUtils.LoadJars(jars, baseLoader.loadedJars, baseLoader.loader)
+        return ManagerUtils.LoadJars(jars, metadataLoader.loadedJars, metadataLoader.loader)
     }
 
     true
@@ -411,6 +414,7 @@ class OnLEPManager {
         val objinst = obj.instance
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
+          envCtxt.SetClassLoader(metadataLoader.loader)
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
@@ -546,7 +550,13 @@ class OnLEPManager {
       }
 
       OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.znodePath = loadConfigs.getProperty("ZnodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("zkNodeBasePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
+
+      // Taking minimum values in case if needed
+      OnLEPConfiguration.zkSessionTimeoutMs = if (OnLEPConfiguration.zkSessionTimeoutMs <= 0) 250 else OnLEPConfiguration.zkSessionTimeoutMs
+      OnLEPConfiguration.zkConnectionTimeoutMs = if (OnLEPConfiguration.zkConnectionTimeoutMs <= 0) 30000 else OnLEPConfiguration.zkConnectionTimeoutMs
 
       val nodePort: Int = loadConfigs.getProperty("nodePort".toLowerCase, "0").replace("\"", "").trim.toInt
       if (nodePort <= 0) {
@@ -554,7 +564,18 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.znodePath)
+      var engineLeaderZkNodePath = ""
+      var engineDistributionZkNodePath = ""
+      var metadataUpdatesZkNodePath = ""
+
+      if (OnLEPConfiguration.zkNodeBasePath.size > 0) {
+
+        engineDistributionZkNodePath
+      }
+
+      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+
+      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)
@@ -589,10 +610,6 @@ class OnLEPManager {
     return retval
   }
 
-  private def quit(): Unit = {
-    Shutdown
-  }
-
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
       if (ln.compareToIgnoreCase("Quit") == 0)
@@ -604,7 +621,7 @@ class OnLEPManager {
   def run(args: Array[String]): Unit = {
     if (args.length == 0) {
       PrintUsage()
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -612,18 +629,18 @@ class OnLEPManager {
     val cfgfile = options.getOrElse('config, null)
     if (cfgfile == null) {
       LOG.error("Need configuration file as parameter")
-      Shutdown
+      Shutdown(1)
       return
     }
 
     val (loadConfigs, failStr) = Utils.loadConfiguration(cfgfile.toString, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
-      Shutdown
+      Shutdown(1)
       return
     }
     if (loadConfigs == null) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -642,12 +659,12 @@ class OnLEPManager {
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
     if (initialize == false) {
-      Shutdown
+      Shutdown(1)
       return
     }
 
@@ -681,7 +698,7 @@ class OnLEPManager {
       }
     }
     scheduledThreadPool.shutdownNow()
-    Shutdown
+    Shutdown(0)
   }
 
 }

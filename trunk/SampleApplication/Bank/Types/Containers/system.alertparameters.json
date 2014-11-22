@@ -1,0 +1,46 @@
+{
+    "Container": {
+        "NameSpace": "System",
+        "Name": "AlertParameters",
+        "Version": "1.00",
+        "Description": "Alert Parameters",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ALERT",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MAX_ALERTS_PER_DAY",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ONLINE_START_TIME",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ONLINE_END_TIME",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ALERT_EXPIRY_TIME",
+                    "Type": "System.Long"
+                }
+            }
+        ]
+    }
+}

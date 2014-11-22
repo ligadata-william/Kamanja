@@ -5,7 +5,7 @@ import com.ligadata.OnLEPBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvCo
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
-import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, InputAdapter, OutputAdapter }
+import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -143,7 +143,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           handleMsg = topObj != null
         }
         if (handleMsg) {
-          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null) topObj else msg
+          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null && topObj.isInstanceOf[BaseContainer]) topObj else msg
           if (topMsgTypeAndHasParent._2)
             finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           // Run all models

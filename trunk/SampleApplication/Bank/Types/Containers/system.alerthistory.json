@@ -1,0 +1,88 @@
+{
+    "Container": {
+        "NameSpace": "System",
+        "Name": "AlertHistory",
+        "Version": "1.00",
+        "Description": "Alert History",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "CUST_ID",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENT_ACC_NUM",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "LB001Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD001Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD002Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD003Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "NO001Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "EB001Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "EB002Sent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "UTFSent",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "PTFSent",
+                    "Type": "System.Int"
+                }
+            }
+        ]
+    }
+}

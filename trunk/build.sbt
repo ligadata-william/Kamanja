@@ -29,7 +29,7 @@ lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener"))
 
 lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
 
-lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener)
+lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
 

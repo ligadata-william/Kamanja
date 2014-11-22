@@ -16,6 +16,7 @@ case class KryoSerializationException(e: String) extends Throwable(e)
 class KryoSerializer extends Serializer{
 
   lazy val kryoFactory = new ScalaKryoInstantiator
+  private[this] var classLoader: java.lang.ClassLoader = null
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
@@ -24,12 +25,17 @@ class KryoSerializer extends Serializer{
     logger.setLevel(level);
   }
 
+  override def SetClassLoader(cl : java.lang.ClassLoader): Unit = {
+    classLoader = cl
+  }
 
-  def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
+  override def SerializeObjectToByteArray(obj : Object) : Array[Byte] = {
     try{
       val kryo = kryoFactory.newKryo()
       val baos = new ByteArrayOutputStream
       val output = new Output(baos)
+      if (classLoader != null)
+        kryo.setClassLoader(classLoader)
       kryo.writeClassAndObject(output,obj)
       output.close()
       val ba = baos.toByteArray()
@@ -43,11 +49,13 @@ class KryoSerializer extends Serializer{
   }
 
 
-  def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
+  override def DeserializeObjectFromByteArray(ba: Array[Byte]) : Object = {
     try{
       val kryo = kryoFactory.newKryo()
       val bais = new ByteArrayInputStream(ba);
       val inp = new Input(bais)
+      if (classLoader != null)
+        kryo.setClassLoader(classLoader)
       val m = kryo.readClassAndObject(inp)
       logger.trace("DeSerialized object => " + m.getClass().getName())
       inp.close()
@@ -59,7 +67,7 @@ class KryoSerializer extends Serializer{
     }
   }
 
-  def DeserializeObjectFromByteArray(ba: Array[Byte],objectType: String) : Object = {
+  override def DeserializeObjectFromByteArray(ba: Array[Byte],objectType: String) : Object = {
     DeserializeObjectFromByteArray(ba)
   }
 }
