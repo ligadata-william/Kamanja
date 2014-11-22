@@ -22,7 +22,7 @@ object OnLEPLeader {
   private[this] val lock = new Object()
   private[this] var clusterStatus = ClusterStatus("", false, "", null)
   private[this] var zkLeaderLatch: ZkLeaderLatch = _
-  private[this] var nodeId: Int = _
+  private[this] var nodeId: String = _
   private[this] var zkConnectString: String = _
   private[this] var engineLeaderZkNodePath: String = _
   private[this] var engineDistributionZkNodePath: String = _
@@ -58,8 +58,8 @@ object OnLEPLeader {
     // Start Processing
   }
 
-  def Init(nodeId1: Int, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
-    nodeId = nodeId1
+  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
+    nodeId = nodeId1.toLowerCase
     zkConnectString = zkConnectString1
     engineLeaderZkNodePath = engineLeaderZkNodePath1
     engineDistributionZkNodePath = engineDistributionZkNodePath1
@@ -71,7 +71,7 @@ object OnLEPLeader {
         zkListener = new ZooKeeperListener
         zkListener.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath)
         zkListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-        zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId.toString, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
       } catch {
         case e: Exception => {

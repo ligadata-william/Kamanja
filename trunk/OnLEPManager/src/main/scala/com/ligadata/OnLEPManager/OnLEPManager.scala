@@ -140,6 +140,8 @@ class OnLEPManager {
   }
 
   private def Shutdown(exitCode: Int): Unit = {
+    OnLEPLeader.Shutdown
+    OnLEPMetadata.Shutdown
     ShutdownAdapters
     if (OnLEPMetadata.envCtxt != null)
       OnLEPMetadata.envCtxt.Shutdown
@@ -566,7 +568,7 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPLeader.Init(OnLEPConfiguration.nodeId, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.engineLeaderZkNodePath, OnLEPConfiguration.engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.engineLeaderZkNodePath, OnLEPConfiguration.engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
