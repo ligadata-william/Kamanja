@@ -23,6 +23,8 @@ class ZooKeeperListener {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var zkc: CuratorFramework = null
+  var nodeCache: NodeCache = _
+  var pathChildCache: PathChildrenCache = _
 
   private def ProcessData(newData: ChildData, ListenCallback: (String) => Unit) = {
     try {
@@ -47,7 +49,7 @@ class ZooKeeperListener {
   def CreateListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-      val nodeCache = new NodeCache(zkc, znodePath)
+      nodeCache = new NodeCache(zkc, znodePath)
       nodeCache.getListenable.addListener(new NodeCacheListener {
         @Override
         def nodeChanged = {
@@ -66,6 +68,38 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
+      }
+    }
+  }
+
+  private def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+    try {
+      zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+      pathChildCache = new PathChildrenCache(zkc, znodePath, true);
+
+      pathChildCache.getListenable().addListener(new PathChildrenCacheListener {
+        @Override
+        def childEvent(client: CuratorFramework, event: PathChildrenCacheEvent) = {
+
+          /////////// BUGBUG: Need to call this.
+          if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
+            logger.debug("child_added")
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_LOST) {
+            logger.debug("connection_lost")
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED) {
+            logger.debug("connection_reconnected")
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
+            logger.debug("child_removed")
+          }
+          
+          
+          
+        }
+      })
+      pathChildCache.start();
+    } catch {
+      case e: Exception => {
+        throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + znodePath + "):" + e.getMessage())
       }
     }
   }

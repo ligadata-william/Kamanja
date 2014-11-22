@@ -30,7 +30,8 @@ object OnLEPLeader {
   private[this] var zkConnectionTimeoutMs: Int = _
   private[this] var zkListener: ZooKeeperListener = _
 
-  private def UpdatePartitionsIfNeeded(cs: ClusterStatus): Unit = lock.synchronized {
+  private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
+    if (cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
     // Update New partitions for all nodes and Set the text 
   }
 
@@ -38,7 +39,8 @@ object OnLEPLeader {
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
     clusterStatus = cs
 
-    UpdatePartitionsIfNeeded(cs)
+    if (cs.leader == cs.nodeId) // Leader node
+      UpdatePartitionsIfNeededOnLeader(cs)
 
     val isLeader = if (cs.isLeader) "true" else "false"
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))

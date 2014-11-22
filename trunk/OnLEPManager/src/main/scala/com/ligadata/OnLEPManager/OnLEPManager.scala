@@ -80,9 +80,7 @@ object OnLEPConfiguration {
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
-  var metadataUpdatesZkNodePath: String = _
-  var engineLeaderZkNodePath: String = _
-  var engineDistributionZkNodePath: String = _
+  var zkNodeBasePath: String = _
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
@@ -552,9 +550,7 @@ class OnLEPManager {
       }
 
       OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.metadataUpdatesZkNodePath = loadConfigs.getProperty("metadataUpdatesZkNodePath".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.engineLeaderZkNodePath = loadConfigs.getProperty("engineLeaderZkNodePath".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.engineDistributionZkNodePath = loadConfigs.getProperty("engineDistributionZkNodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("zkNodeBasePath".toLowerCase, "").replace("\"", "").trim
       OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
       OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
 
@@ -568,9 +564,18 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.engineLeaderZkNodePath, OnLEPConfiguration.engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      var engineLeaderZkNodePath = ""
+      var engineDistributionZkNodePath = ""
+      var metadataUpdatesZkNodePath = ""
 
-      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      if (OnLEPConfiguration.zkNodeBasePath.size > 0) {
+
+        engineDistributionZkNodePath
+      }
+
+      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+
+      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)
