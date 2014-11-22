@@ -258,7 +258,6 @@ class MessageDefImpl {
     //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     try {
       scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
-
       // for (e <- message.Elements) {
       //  var fields = e.Fields
 
