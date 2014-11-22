@@ -14,6 +14,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
@@ -427,12 +428,12 @@ object OnLEPMetadata {
     }
   }
 
-  def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String): Unit = {
+  def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
 
     if (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0)
-      com.ligadata.MetadataAPI.MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, OnLEPConfiguration.metadataLocation, OnLEPConfiguration.metadataSchemaName, "")
+      MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, OnLEPConfiguration.metadataLocation, OnLEPConfiguration.metadataSchemaName, "")
     else if ((OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
-      com.ligadata.MetadataAPI.MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, "", OnLEPConfiguration.metadataSchemaName, OnLEPConfiguration.metadataLocation)
+      MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, "", OnLEPConfiguration.metadataSchemaName, OnLEPConfiguration.metadataLocation)
 
     loadedJars = tmpLoadedJars
     loader = tmpLoader
@@ -458,7 +459,7 @@ object OnLEPMetadata {
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
         ZooKeeperListener.CreateNodeIfNotExists(zkConnectString, znodePath)
-        ZooKeeperListener.CreateListener(zkConnectString, znodePath, UpdateMetadata)
+        ZooKeeperListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       } catch {
         case e: Exception => {
           LOG.error("Failed to initialize ZooKeeper Connection." + e.getMessage)
@@ -469,7 +470,15 @@ object OnLEPMetadata {
   }
 
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
-  def UpdateMetadata(zkTransaction: ZooKeeperTransaction, mdMgr: MdMgr): Unit = {
+  def UpdateMetadata(receivedJsonStr: String): Unit = {
+    if (receivedJsonStr == null || receivedJsonStr.size == 0) {
+      // nothing to do
+      return
+    }
+
+    val zkTransaction = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
+    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
+
     if (zkTransaction == null || zkTransaction.Notifications.size == 0) {
       // nothing to do
       return

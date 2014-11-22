@@ -80,7 +80,11 @@ object OnLEPConfiguration {
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
-  var znodePath: String = _
+  var metadataUpdatesZkNodePath: String = _
+  var engineLeaderZkNodePath: String = _
+  var engineDistributionZkNodePath: String = _
+  var zkSessionTimeoutMs: Int = _
+  var zkConnectionTimeoutMs: Int = _
 
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
@@ -135,10 +139,10 @@ class OnLEPManager {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown(exitCode:Int): Unit = {
+  private def Shutdown(exitCode: Int): Unit = {
     ShutdownAdapters
     if (OnLEPMetadata.envCtxt != null)
-        OnLEPMetadata.envCtxt.Shutdown
+      OnLEPMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
     sys.exit(exitCode)
@@ -546,7 +550,15 @@ class OnLEPManager {
       }
 
       OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.znodePath = loadConfigs.getProperty("ZnodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.metadataUpdatesZkNodePath = loadConfigs.getProperty("metadataUpdatesZkNodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.engineLeaderZkNodePath = loadConfigs.getProperty("engineLeaderZkNodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.engineDistributionZkNodePath = loadConfigs.getProperty("engineDistributionZkNodePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "").replace("\"", "").trim.toInt
+
+      // Taking minimum values in case if needed
+      OnLEPConfiguration.zkSessionTimeoutMs = if (OnLEPConfiguration.zkSessionTimeoutMs <= 0) 250 else OnLEPConfiguration.zkSessionTimeoutMs
+      OnLEPConfiguration.zkConnectionTimeoutMs = if (OnLEPConfiguration.zkConnectionTimeoutMs <= 0) 30000 else OnLEPConfiguration.zkConnectionTimeoutMs
 
       val nodePort: Int = loadConfigs.getProperty("nodePort".toLowerCase, "0").replace("\"", "").trim.toInt
       if (nodePort <= 0) {
@@ -554,7 +566,9 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.znodePath)
+      OnLEPLeader.Init(OnLEPConfiguration.nodeId, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.engineLeaderZkNodePath, OnLEPConfiguration.engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+
+      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, OnLEPConfiguration.metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)
