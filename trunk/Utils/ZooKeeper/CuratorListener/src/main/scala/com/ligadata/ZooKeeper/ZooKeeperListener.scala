@@ -19,24 +19,19 @@ import java.io._
 import scala.io._
 import java.util.concurrent._
 
-object ZooKeeperListener {
-
-  private type OptionMap = Map[Symbol, Any]
-
+class ZooKeeperListener {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var zkc: CuratorFramework = null
 
-  private def ProcessData(newData: ChildData, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
+  private def ProcessData(newData: ChildData, ListenCallback: (String) => Unit) = {
     try {
       val data = newData.getData()
       if (data != null) {
         val receivedJsonStr = new String(data)
         logger.debug("New data received => " + receivedJsonStr)
-        val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-        MetadataAPIImpl.UpdateMdMgr(zkMessage)
-        if (UpdOnLepMetadataCallback != null)
-          UpdOnLepMetadataCallback(zkMessage, com.ligadata.olep.metadata.MdMgr.GetMdMgr)
+        if (ListenCallback != null)
+          ListenCallback(receivedJsonStr)
       }
     } catch {
       case e: Exception => {
@@ -49,55 +44,16 @@ object ZooKeeperListener {
     CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
   }
 
-
-  def CreatePathChildrenCache(client: CuratorFramework,zNodePath: String) = {
+  def CreateListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
-      val cache = new PathChildrenCache(client,zNodePath,true);
-
-      
-      val childAddedLatch = new CountDownLatch(1);
-      val lostLatch = new CountDownLatch(1);
-      val reconnectedLatch = new CountDownLatch(1);
-      val removedLatch = new CountDownLatch(1);
-      cache.getListenable().addListener(new PathChildrenCacheListener{
-	@Override
-        def childEvent(client:CuratorFramework,event:PathChildrenCacheEvent) =  {
-          if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED ){
-	    logger.debug("child_added")
-            childAddedLatch.countDown();
-          }
-          else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_LOST ){
-	    logger.debug("connection_lost")
-            lostLatch.countDown();
-          }
-          else if ( event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED ){
-	    logger.debug("connection_reconnected")
-            reconnectedLatch.countDown();
-          }
-          else if ( event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED ){
-	    logger.debug("child_removed")
-            removedLatch.countDown();
-          }
-        }
-      })
-      cache.start();
-    }catch {
-      case e: Exception => {
-        throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
-      }
-    }
-  }
-
-  def CreateListener(zkcConnectString: String, znodePath: String, UpdOnLepMetadataCallback: (ZooKeeperTransaction, MdMgr) => Unit) = {
-    try {
-      zkc = CreateClient.createSimple(zkcConnectString)
+      zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       val nodeCache = new NodeCache(zkc, znodePath)
       nodeCache.getListenable.addListener(new NodeCacheListener {
         @Override
         def nodeChanged = {
           try {
             val dataFromZNode = nodeCache.getCurrentData
-            ProcessData(dataFromZNode, UpdOnLepMetadataCallback)
+            ProcessData(dataFromZNode, ListenCallback)
           } catch {
             case ex: Exception => {
               logger.error("Exception while fetching properties from zookeeper ZNode, reason " + ex.getCause())
@@ -114,19 +70,71 @@ object ZooKeeperListener {
     }
   }
 
+  def Shutdown: Unit = {
+    if (zkc != null)
+      zkc.close
+    zkc = null
+  }
+}
+
+object ZooKeeperListenerTest {
+
+  private type OptionMap = Map[Symbol, Any]
+
+  val loggerName = this.getClass.getName
+  lazy val logger = Logger.getLogger(loggerName)
+
+  private def CreatePathChildrenCache(client: CuratorFramework, zNodePath: String) = {
+    try {
+      val cache = new PathChildrenCache(client, zNodePath, true);
+
+      val childAddedLatch = new CountDownLatch(1);
+      val lostLatch = new CountDownLatch(1);
+      val reconnectedLatch = new CountDownLatch(1);
+      val removedLatch = new CountDownLatch(1);
+      cache.getListenable().addListener(new PathChildrenCacheListener {
+        @Override
+        def childEvent(client: CuratorFramework, event: PathChildrenCacheEvent) = {
+          if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
+            logger.debug("child_added")
+            childAddedLatch.countDown();
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_LOST) {
+            logger.debug("connection_lost")
+            lostLatch.countDown();
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED) {
+            logger.debug("connection_reconnected")
+            reconnectedLatch.countDown();
+          } else if (event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
+            logger.debug("child_removed")
+            removedLatch.countDown();
+          }
+        }
+      })
+      cache.start();
+    } catch {
+      case e: Exception => {
+        throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
+      }
+    }
+  }
+
+  private def UpdateMetadata(receivedJsonStr: String): Unit = {
+    val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
+    MetadataAPIImpl.UpdateMdMgr(zkMessage)
+  }
+
   def StartLocalListener = {
+    val zkListener = new ZooKeeperListener
     try {
       val znodePath = "/ligadata/metadata"
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
-      CreateNodeIfNotExists(zkcConnectString, znodePath)
-      CreateListener(zkcConnectString, znodePath, null)
-      CreatePathChildrenCache(zkc,znodePath)
+      zkListener.CreateNodeIfNotExists(zkcConnectString, znodePath)
+      zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
+      CreatePathChildrenCache(zkListener.zkc, znodePath)
       breakable {
         for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
-          if (zkc != null)
-            zkc.close
-          zkc = null
+          zkListener.Shutdown
           println("Exiting")
           break
         }
@@ -136,9 +144,7 @@ object ZooKeeperListener {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }
     } finally {
-      if (zkc != null) {
-        zkc.close()
-      }
+      zkListener.Shutdown
     }
   }
 
@@ -166,13 +172,12 @@ object ZooKeeperListener {
       logger.error("Config File defaults to " + jsonConfigFile)
       logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
       logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
-    }
-    else{
+    } else {
       val options = nextOption(Map(), args.toList)
       val cfgfile = options.getOrElse('config, null)
       if (cfgfile == null) {
-	logger.error("Need configuration file as parameter")
-	throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+        logger.error("Need configuration file as parameter")
+        throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
       }
       jsonConfigFile = cfgfile.asInstanceOf[String]
     }
@@ -188,11 +193,8 @@ object ZooKeeperListener {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }
     } finally {
-      if( databaseOpen ){
-	MetadataAPIImpl.CloseDbStore
-      }
-      if (zkc != null) {
-        zkc.close()
+      if (databaseOpen) {
+        MetadataAPIImpl.CloseDbStore
       }
     }
   }
