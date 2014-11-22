@@ -19,7 +19,7 @@ import java.io._
 import scala.io._
 import java.util.concurrent._
 
-object ZooKeeperListener {
+class ZooKeeperListener {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   var zkc: CuratorFramework = null
@@ -69,6 +69,12 @@ object ZooKeeperListener {
       }
     }
   }
+
+  def Shutdown: Unit = {
+    if (zkc != null)
+      zkc.close
+    zkc = null
+  }
 }
 
 object ZooKeeperListenerTest {
@@ -77,7 +83,6 @@ object ZooKeeperListenerTest {
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  var zkc: CuratorFramework = null
 
   private def CreatePathChildrenCache(client: CuratorFramework, zNodePath: String) = {
     try {
@@ -119,19 +124,17 @@ object ZooKeeperListenerTest {
   }
 
   def StartLocalListener = {
+    val zkListener = new ZooKeeperListener
     try {
       val znodePath = "/ligadata/metadata"
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
-      ZooKeeperListener.CreateNodeIfNotExists(zkcConnectString, znodePath)
-      ZooKeeperListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
-      zkc = ZooKeeperListener.zkc
-      CreatePathChildrenCache(zkc, znodePath)
+      zkListener.CreateNodeIfNotExists(zkcConnectString, znodePath)
+      zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
+      CreatePathChildrenCache(zkListener.zkc, znodePath)
       breakable {
         for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
-          if (zkc != null)
-            zkc.close
-          zkc = null
+          zkListener.Shutdown
           println("Exiting")
           break
         }
@@ -141,9 +144,7 @@ object ZooKeeperListenerTest {
         throw new Exception("Failed to start a zookeeper session: " + e.getMessage())
       }
     } finally {
-      if (zkc != null) {
-        zkc.close()
-      }
+      zkListener.Shutdown
     }
   }
 
@@ -194,9 +195,6 @@ object ZooKeeperListenerTest {
     } finally {
       if (databaseOpen) {
         MetadataAPIImpl.CloseDbStore
-      }
-      if (zkc != null) {
-        zkc.close()
       }
     }
   }

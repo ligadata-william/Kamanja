@@ -328,6 +328,7 @@ object OnLEPMetadata {
 
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
+  private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val lock = new Object()
 
@@ -458,8 +459,9 @@ object OnLEPMetadata {
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
-        ZooKeeperListener.CreateNodeIfNotExists(zkConnectString, znodePath)
-        ZooKeeperListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkListener = new ZooKeeperListener
+        zkListener.CreateNodeIfNotExists(zkConnectString, znodePath)
+        zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       } catch {
         case e: Exception => {
           LOG.error("Failed to initialize ZooKeeper Connection." + e.getMessage)
@@ -635,5 +637,11 @@ object OnLEPMetadata {
   }
 
   def getMdMgr: MdMgr = mdMgr
+
+  def Shutdown: Unit = {
+    if (zkListener != null)
+      zkListener.Shutdown
+    zkListener = null
+  }
 }
 

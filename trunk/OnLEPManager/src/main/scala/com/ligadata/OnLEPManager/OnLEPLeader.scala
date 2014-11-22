@@ -28,6 +28,7 @@ object OnLEPLeader {
   private[this] var engineDistributionZkNodePath: String = _
   private[this] var zkSessionTimeoutMs: Int = _
   private[this] var zkConnectionTimeoutMs: Int = _
+  private[this] var zkListener: ZooKeeperListener = _
 
   private def UpdatePartitionsIfNeeded(cs: ClusterStatus): Unit = lock.synchronized {
     // Update New partitions for all nodes and Set the text 
@@ -51,7 +52,7 @@ object OnLEPLeader {
     // Stop processing
 
     // Update New partitions
-    
+
     // Wait for Few seconds
 
     // Start Processing
@@ -67,8 +68,9 @@ object OnLEPLeader {
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {
-        ZooKeeperListener.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath)
-        ZooKeeperListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkListener = new ZooKeeperListener
+        zkListener.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath)
+        zkListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId.toString, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
       } catch {
@@ -80,6 +82,12 @@ object OnLEPLeader {
     } else {
       LOG.error("Not connected to elect Leader and not distributing data between nodes.")
     }
+  }
+
+  def Shutdown: Unit = {
+    if (zkListener != null)
+      zkListener.Shutdown
+    zkListener = null
   }
 }
 
