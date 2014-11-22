@@ -400,7 +400,7 @@ class MessageDefImpl {
                   argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
                
                   /*
-         * Messages in Message is not handled at this moment
+        	Messages in Message is not handled at this moment
        
         if (typ.get.tType.toString().equals("tArrayBuf")) {
           arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
