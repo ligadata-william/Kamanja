@@ -42,10 +42,6 @@ class ZooKeeperListener {
     }
   }
 
-  def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
-    CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
-  }
-
   def CreateListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
@@ -81,6 +77,8 @@ class ZooKeeperListener {
         @Override
         def childEvent(client: CuratorFramework, event: PathChildrenCacheEvent) = {
 
+          val path = event.getData().getPath()
+          val nodePath = ZKPaths.getNodeFromPath(path)
           /////////// BUGBUG: Need to call this.
           if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
             logger.debug("child_added")
@@ -163,7 +161,7 @@ object ZooKeeperListenerTest {
       val znodePath = "/ligadata/metadata"
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
-      zkListener.CreateNodeIfNotExists(zkcConnectString, znodePath)
+      CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
       zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
       CreatePathChildrenCache(zkListener.zkc, znodePath)
       breakable {

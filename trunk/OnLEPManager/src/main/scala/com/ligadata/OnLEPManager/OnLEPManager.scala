@@ -567,13 +567,17 @@ class OnLEPManager {
       var engineLeaderZkNodePath = ""
       var engineDistributionZkNodePath = ""
       var metadataUpdatesZkNodePath = ""
+      var adaptersStatusPath = ""
 
       if (OnLEPConfiguration.zkNodeBasePath.size > 0) {
-
-        engineDistributionZkNodePath
+        val zkNodeBasePath = OnLEPConfiguration.zkNodeBasePath.stripSuffix("/").trim
+        engineLeaderZkNodePath = zkNodeBasePath + "/engineleader"
+        engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
+        metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
+        adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
       }
 
-      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      // OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
