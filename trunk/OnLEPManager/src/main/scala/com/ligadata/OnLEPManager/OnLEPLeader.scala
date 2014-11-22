@@ -26,9 +26,11 @@ object OnLEPLeader {
   private[this] var zkConnectString: String = _
   private[this] var engineLeaderZkNodePath: String = _
   private[this] var engineDistributionZkNodePath: String = _
+  private[this] var adaptersStatusPath: String = _
   private[this] var zkSessionTimeoutMs: Int = _
   private[this] var zkConnectionTimeoutMs: Int = _
-  private[this] var zkListener: ZooKeeperListener = _
+  private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
+  private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
 
   private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
     if (cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
@@ -60,19 +62,24 @@ object OnLEPLeader {
     // Start Processing
   }
 
-  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
+  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
     nodeId = nodeId1.toLowerCase
     zkConnectString = zkConnectString1
     engineLeaderZkNodePath = engineLeaderZkNodePath1
     engineDistributionZkNodePath = engineDistributionZkNodePath1
+    adaptersStatusPath = adaptersStatusPath1
     zkSessionTimeoutMs = zkSessionTimeoutMs1
     zkConnectionTimeoutMs = zkConnectionTimeoutMs1
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {
-        zkListener = new ZooKeeperListener
-        zkListener.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath)
-        zkListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
+        CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
+        CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
+        zkEngineDistributionNodeListener = new ZooKeeperListener
+        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkAdapterStatusNodeListener =  new ZooKeeperListener
+        // zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptrStatusPathForNode, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
       } catch {
@@ -87,9 +94,12 @@ object OnLEPLeader {
   }
 
   def Shutdown: Unit = {
-    if (zkListener != null)
-      zkListener.Shutdown
-    zkListener = null
+    if (zkEngineDistributionNodeListener != null)
+      zkEngineDistributionNodeListener.Shutdown
+    zkEngineDistributionNodeListener = null
+    if (zkAdapterStatusNodeListener != null)
+      zkAdapterStatusNodeListener.Shutdown
+    zkAdapterStatusNodeListener = null
   }
 }
 
