@@ -1,334 +1,123 @@
 {
-  "Container" : {
-    "NameSpace" : "system",
-    "Name" : "customerpreferences",
-    "FullName" : "system.customerpreferences",
-    "Version" : 100,
-    "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-    "PhysicalName" : "com.ligadata.OnLEPBankPoc.CustomerPreferences_100",
-    "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
-    "TransactionId" : 0,
-  "Attributes": [ 
-{
-  "NameSpace" : "system",
-  "Name" : "cust_id",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "long",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "long",
-  "PhysicalName" : "Long",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "sort_code",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "ent_acc_num",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "long",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "long",
-  "PhysicalName" : "Long",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "acct_short_nm",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "string",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "string",
-  "PhysicalName" : "String",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "risk_tier_id",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "string",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "string",
-  "PhysicalName" : "String",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "lb_reg_flg",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "lb_limit",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "od_reg_flg",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "max_eb_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "last_update_ts",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "string",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "string",
-  "PhysicalName" : "String",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "cont_id",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "long",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "long",
-  "PhysicalName" : "Long",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "mobile_number",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "string",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "string",
-  "PhysicalName" : "String",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "deceased_marker",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "long",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "long",
-  "PhysicalName" : "Long",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "od_t2_limit",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "od_t1_limit",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "no_factor",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}} ]
+    "Container": {
+        "NameSpace": "System",
+        "Name": "CustomerPreferences",
+        "Version": "1.00",
+        "Description": "Customer Preferences",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "CUST_ID",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "SORT_CODE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENT_ACC_NUM",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ACCT_SHORT_NM",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "RISK_TIER_ID",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "LB_REG_FLG",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "LB_LIMIT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD_REG_FLG",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MAX_EB_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "LAST_UPDATE_TS",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "CONT_ID",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MOBILE_NUMBER",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "DECEASED_MARKER",
+                    "Type": "System.Long"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD_T2_LIMIT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "OD_T1_LIMIT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "NO_FACTOR",
+                    "Type": "System.Double"
+                }
+            }
+        ]
+    }
 }
-}
-

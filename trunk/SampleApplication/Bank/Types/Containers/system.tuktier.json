@@ -1,754 +1,270 @@
 {
-  "Container" : {
-    "NameSpace" : "system",
-    "Name" : "tuktier",
-    "FullName" : "system.tuktier",
-    "Version" : 100,
-    "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-    "PhysicalName" : "com.ligadata.OnLEPBankPoc.TukTier_100",
-    "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
-    "TransactionId" : 0,
-  "Attributes": [ 
-{
-  "NameSpace" : "system",
-  "Name" : "tierset_id",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "long",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "long",
-  "PhysicalName" : "Long",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t1_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t2_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t3_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t4_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t5_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_start_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_end_date",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_start_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_end_amt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_fee",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "double",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "double",
-  "PhysicalName" : "Double",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.DoubleImpl",
-  "TransactionId" : 0
-}},
-{
-  "NameSpace" : "system",
-  "Name" : "t6_max_per_period_cnt",
-  "Version" : 100,
-  "CollectionType" : "None",
-  "TransactionId" : 0,
-  "Type": {
-  "MetadataType" : "ScalarTypeDef",
-  "NameSpace" : "system",
-  "Name" : "int",
-  "TypeTypeName" : "tScalar",
-  "TypeNameSpace" : "System",
-  "TypeName" : "int",
-  "PhysicalName" : "Int",
-  "Version" : 100,
-  "JarName" : "basetypes_2.10-0.1.0.jar",
-  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
-  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
-  "TransactionId" : 0
-}} ]
+    "Container": {
+        "NameSpace": "System",
+        "Name": "TukTier",
+        "Version": "1.00",
+        "Description": "Overdraft Tiers",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "TIERSET_ID",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T1_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T2_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T3_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T4_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T5_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T5_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T5_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "SYSTEM",
+                    "Name": "T5_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T5_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T5_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_START_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_END_DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_START_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_END_AMT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_FEE",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "T6_MAX_PER_PERIOD_CNT",
+                    "Type": "System.Int"
+                }
+            }
+        ]
+    }
 }
-}
-

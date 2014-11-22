@@ -96,10 +96,6 @@ cp $srcPath/Pmml/PmmlRuntime/target/scala-2.10/pmmlruntime_2.10-1.0.jar $ONLEPLI
 cp $srcPath/Pmml/PmmlUdfs/target/scala-2.10/pmmludfs_2.10-1.0.jar $ONLEPLIBPATH
 cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $ONLEPLIBPATH
 
-# sample configs
-#echo "copy sample configs..."
-cp $srcPath/Utils/KVInit/src/main/resources/*cfg $ONLEPLIBPATH
-
 # other jars 
 echo "copy other jars..."
 cp $srcPath/../externals/log4j/log4j-1.2.17.jar $ONLEPLIBPATH
@@ -211,18 +207,6 @@ cp $HOME/.ivy2/cache/com.twitter/chill_2.10/jars/chill_2.10-0.3.6.jar $ONLEPLIBP
 
 
 # *******************************
-# messages data prep
-# *******************************
-
-# Prepare test messages and copy them into place
-
-echo "Prepare test messages and copy them into place..."
-cd $srcPath/trunk/SampleApplication/Bank/SampleData/EnvContextContainerData
-gzip -c OneCustomerTransactionsAlerts_LBOD123EB2.csv > $ONLEPLIBPATH/OneCustomerTransactionsAlerts_LBOD123EB2.csv.gz
-gzip -c OneCustomerTransactionsAlerts_OD123.csv > $ONLEPLIBPATH/OneCustomerTransactionsAlerts_OD123.csv.gz
-gzip -c OneCustomerTransactionsAlerts_OD123EB12.csv > $ONLEPLIBPATH/OneCustomerTransactionsAlerts_OD123EB12.csv.gz
-
-# *******************************
 # All that is left is to run the OnLEPManager
 # *******************************
 
@@ -233,4 +217,4 @@ gzip -c OneCustomerTransactionsAlerts_OD123EB12.csv > $ONLEPLIBPATH/OneCustomerT
 # java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar $ONLEPLIBPATH/OnLEPManager-1.0 --config /tmp/OnLEPInstall/COPD.cfg
 
 
-echo "installOnLEP complete..."
+echo "installOnLEP.sh complete..."

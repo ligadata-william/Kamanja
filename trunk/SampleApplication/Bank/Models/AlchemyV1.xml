@@ -51,7 +51,7 @@
 		<DerivedField name="ClientAlertsToday" dataType="AlertHistory" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertHistory</Constant>
+			    <Constant dataType="string">System.AlertHistory</Constant>
 			    <FieldRef field="msg.ENT_ACC_NUM"/>
 			</Apply>
 		</DerivedField>
@@ -62,7 +62,7 @@
 		<DerivedField name="ClientPrefs" dataType="CustomerPreferences" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">CustomerPreferences</Constant>
+			    <Constant dataType="string">System.CustomerPreferences</Constant>
 			    <FieldRef field="msg.ENT_ACC_NUM"/>
 			</Apply>
 		</DerivedField>
@@ -73,7 +73,7 @@
 		<DerivedField name="ClientTierLimits" dataType="TukTier" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">TukTier</Constant>
+			    <Constant dataType="string">System.TukTier</Constant>
 			    <FieldRef field="ClientPrefs.RISK_TIER_ID"/>
 			</Apply>
 		</DerivedField>
@@ -84,7 +84,7 @@
 		<DerivedField name="EBAlertParms" dataType="AlertParameters" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">System.AlertParameters</Constant>
 			    <Constant dataType="string">EB</Constant>
 			</Apply>
 		</DerivedField>
@@ -95,7 +95,7 @@
 		<DerivedField name="NOAlertParms" dataType="AlertParameters" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">System.AlertParameters</Constant>
 			    <Constant dataType="string">NO</Constant>
 			</Apply>
 		</DerivedField>
@@ -106,7 +106,7 @@
 		<DerivedField name="ODAlertParms" dataType="AlertParameters" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">System.AlertParameters</Constant>
 			    <Constant dataType="string">OD</Constant>
 			</Apply>
 		</DerivedField>
@@ -117,7 +117,7 @@
 		<DerivedField name="LBAlertParms" dataType="AlertParameters" optype="categorical">
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertParameters</Constant>
+			    <Constant dataType="string">System.AlertParameters</Constant>
 			    <Constant dataType="string">LB</Constant>
 			</Apply>
 		</DerivedField>
