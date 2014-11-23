@@ -410,7 +410,7 @@ class MessageDefImpl {
         jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
       else if (arrayBufType.JarName != null)
         jarset = jarset + arrayBufType.JarName
-
+    
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -617,7 +617,7 @@ class MessageDefImpl {
               addMsg = addMsg.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._7)
               keysStr = keysStr.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._8)
               typeImpl = typeImpl.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._9)
-              jarset = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._10
+             jarset = jarset ++ handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._10
 
             }
 
@@ -637,7 +637,7 @@ class MessageDefImpl {
                 list = handleArrayBuffer(message.NameSpace, typ, f)._5
                 argsList = handleArrayBuffer(message.NameSpace, typ, f)._6
                 addMsg = addMsg.append(handleArrayBuffer(message.NameSpace, typ, f)._7)
-                jarset = handleArrayBuffer(message.NameSpace, typ, f)._8
+                jarset = jarset ++ handleArrayBuffer(message.NameSpace, typ, f)._8
                 
               } else {
 
@@ -649,7 +649,7 @@ class MessageDefImpl {
                   list = handleContainer(mdMgr, ftypeVersion, typ, f)._5
                   argsList = handleContainer(mdMgr, ftypeVersion, typ, f)._6
                   addMsg = addMsg.append(handleContainer(mdMgr, ftypeVersion, typ, f)._7)
-                  jarset = handleContainer(mdMgr, ftypeVersion, typ, f)._8
+                 jarset = jarset ++ handleContainer(mdMgr, ftypeVersion, typ, f)._8
 
                 } else if (f.ElemType.equals("Message")) {
                   scalaclass = scalaclass.append(handleMessage(mdMgr, ftypeVersion, typ, f)._1)
@@ -659,7 +659,7 @@ class MessageDefImpl {
                   list = handleMessage(mdMgr, ftypeVersion, typ, f)._5
                   argsList = handleMessage(mdMgr, ftypeVersion, typ, f)._6
                   addMsg = addMsg.append(handleMessage(mdMgr, ftypeVersion, typ, f)._7)
-                 jarset = handleMessage(mdMgr, ftypeVersion, typ, f)._8
+                 jarset = jarset ++ handleMessage(mdMgr, ftypeVersion, typ, f)._8
                 }
               }
           } else if (f.ElemType.equals("Concepts")) {
@@ -670,7 +670,7 @@ class MessageDefImpl {
             list = handleConcept(mdMgr, ftypeVersion, f)._5
             argsList = handleConcept(mdMgr, ftypeVersion, f)._6
             addMsg = addMsg.append(handleConcept(mdMgr, ftypeVersion, f)._7)
-            jarset = handleConcept(mdMgr, ftypeVersion, f)._8
+           jarset = jarset ++ handleConcept(mdMgr, ftypeVersion, f)._8
           }
           count = count + 1
         }
