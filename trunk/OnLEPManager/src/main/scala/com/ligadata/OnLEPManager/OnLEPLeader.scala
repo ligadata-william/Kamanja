@@ -17,6 +17,9 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 object OnLEPLeader {
   private[this] val LOG = Logger.getLogger(getClass);
@@ -33,19 +36,47 @@ object OnLEPLeader {
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
+  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[PartitionUniqueRecordKey]]()
 
   private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
-    if (cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
+    if (cs.isLeader && cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
+
+    // Clear Previous Distribution Map
+    distributionMap.clear
+
+    var tmpDistMap = ArrayBuffer[(String, ArrayBuffer[PartitionUniqueRecordKey])]()
+
+    // Create ArrayBuffer for each node participating at this moment
+    cs.participants.foreach(p => {
+      tmpDistMap += ((p, new ArrayBuffer[PartitionUniqueRecordKey]))
+    })
+
+    // BUGBUG:: Get all PartitionUniqueRecordKey for all Input Adapters
+    val allPartitionUniqueRecordKeys = Array[PartitionUniqueRecordKey]()
+
     // Update New partitions for all nodes and Set the text
+    var cntr: Int = 0
+    val totalParticipents: Int = cs.participants.size
+    if (allPartitionUniqueRecordKeys != null) {
+      allPartitionUniqueRecordKeys.foreach(k => {
+        tmpDistMap(cntr % totalParticipents)._2 += k
+        cntr += 1
+      })
+    }
+
+    tmpDistMap.foreach(tup => {
+      distributionMap(tup._1) = tup._2
+    })
 
     // Set STOP Action on engineDistributionZkNodePath
+    zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"stop\" }".getBytes("UTF8"))
   }
 
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
     clusterStatus = cs
 
-    if (cs.leader == cs.nodeId) // Leader node
+    if (cs.isLeader && cs.leader == cs.nodeId) // Leader node
       UpdatePartitionsIfNeededOnLeader(cs)
 
     val isLeader = if (cs.isLeader) "true" else "false"
@@ -58,10 +89,47 @@ object OnLEPLeader {
       return
     }
 
-    // Perform the action here (STOP or START for now)
+    try {
+      // Perform the action here (STOP or DISTRIBUTE for now)
+      val json = parse(receivedJsonStr)
+      if (json == null || json.values != null) // Not doing any action if not found valid json
+        return
+      val values = json.values.asInstanceOf[Map[String, Any]]
+      val action = values.getOrElse("action", "").toString.toLowerCase
+
+      action match {
+        case "stop" => {
+          // BUGBUG:: STOP all Input Adapters on local node
+
+          // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
+          val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
+          zkcForSetData.setData().forPath(adaptrStatusPathForNode, "{ \"action\": \"stopped\" }".getBytes("UTF8"))
+        }
+        case "distribute" => {
+          // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
+          // val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
+          // zkcForSetData.setData().forPath(adaptrStatusPathForNode, "{ \"action\": \"stopped\" }".getBytes("UTF8"))
+          // BUGBUG:: START all Input Adapters on local node using new distribution map 
+        }
+        case _ => {
+          LOG.info("No action performed, because of invalid action %s in json %s".format(action, receivedJsonStr))
+        }
+      }
+
+      // 
+    } catch {
+      case e: Exception => {
+        LOG.info("Found invalid JSON: %s".format(receivedJsonStr))
+      }
+    }
+
   }
 
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, childs: Array[(String, Array[Byte])]): Unit = {
+    if (clusterStatus.isLeader == false || clusterStatus.leader != clusterStatus.nodeId) // Not Leader node
+      return
+
+    // BUGBUG:: On Leader node, Go thru all active Participent nodes data and see whether it is stopped or not before we send "distribute" action 
 
   }
 
