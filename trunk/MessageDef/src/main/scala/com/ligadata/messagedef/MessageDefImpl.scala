@@ -85,7 +85,6 @@ class MessageDefImpl {
     val newline = "\n"
     val cbrace = "}"
     val isFixed = getIsFixed(msg)
-
     if (msg.msgtype.equals("Message")) {
       if (msg.TDataExists) {
         tdataexists = gettdataexists + msg.TDataExists.toString
