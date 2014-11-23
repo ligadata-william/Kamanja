@@ -221,17 +221,35 @@ class MessageDefImpl {
     }
     addMessageFunc
   }
-  
-  private def assignJsonForArray(fname : String, typeImpl:String) = {
-	  """
-		if (map.getOrElse(""""+fname+"""", null).isInstanceOf[tList])
-			arr = map.getOrElse(""""+fname+"""", null).asInstanceOf[List[String]]
+
+  private def assignJsonForArray(fname: String, typeImpl: String) = {
+    """
+		if (map.getOrElse("""" + fname + """", null).isInstanceOf[tList])
+			arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
 		if (arr != null) {
-			"""+fname+"""  = arr.map(v => """+typeImpl+"""(v)).toArray
+			""" + fname + """  = arr.map(v => """ + typeImpl + """(v)).toArray
 		}
       """
   }
-  
+
+  private def assignJsonForCntrArrayBuffer(fname: String, typeImpl: String) = {
+	    """
+		    
+		 if (map.getOrElse("""" + fname + """", null).isInstanceOf[tMap])
+	        list = map.getOrElse("""" + fname + """", null).asInstanceOf[List[Map[String, Any]]]
+         if (list != null) {
+        	""" + fname + """++= list.map(item => {
+        	val inputData = new JsonData(json.dataInput)
+        	inputData.root_json = json.root_json
+        	inputData.cur_json = Option(item)
+        	val elem = new """ + typeImpl + """
+        	elem.populate(inputData)
+        	elem
+        	})
+	     }
+	    """
+  }
+
   //generates the variables string and assign string
   def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -286,10 +304,10 @@ class MessageDefImpl {
                 else
                   fname = arrayType.elemDef.implementationName + ".Input"
                 assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-                           
-                 assignJsondata.append( assignJsonForArray( f.Name, fname))
+
+                assignJsondata.append(assignJsonForArray(f.Name, fname))
               } else {
-                if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")){
+                if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")) {
                   assignCsvdata.append(newline + getArrayStr(f.Name, arrayType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
                 }
                 if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage"))
@@ -361,7 +379,10 @@ class MessageDefImpl {
                 scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
                 if (f.ElemType.equals("Container")) {
                   assignCsvdata.append("%s//%s Implementation of messages is not handled at this time%s".format(pad2, f.Name, newline))
-                // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
+                  if (typ.get.typeString.toString().split("\\[").size == 2) {
+                    assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, typ.get.typeString.toString().split("\\[")(1).split("\\]")(0)))
+                  }
+                  // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
                   // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
                 }
                 if (typ.get.typeString.toString().split("\\[").size == 2) {
@@ -732,12 +753,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	type tList = List[String]
 	type tMap = Map[String, Any]
 	var arr: List[String] = null
+    var list : List[Map[String, Any]] = null 
 	try{
 	 	 val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
 	  	 if (map == null)
         	throw new Exception("Invalid json data")
-"""+ assignJsonData +
-  """
+""" + assignJsonData +
+      """
 	  }catch{
   			case e:Exception =>{
    				e.printStackTrace()
