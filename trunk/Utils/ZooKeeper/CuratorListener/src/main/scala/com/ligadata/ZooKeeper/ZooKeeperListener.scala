@@ -18,6 +18,7 @@ import java.util.Properties
 import java.io._
 import scala.io._
 import java.util.concurrent._
+import scala.collection.JavaConverters._
 
 class ZooKeeperListener {
   val loggerName = this.getClass.getName
@@ -68,7 +69,11 @@ class ZooKeeperListener {
     }
   }
 
-  private def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, ListenCallback: (String) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+  // ListenCallback send back the following things
+  //  - Current Event Type as String
+  //  - Current Event Path
+  //  - All Childs Paths & Data.
+  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, ListenCallback: (String, String, Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       pathChildCache = new PathChildrenCache(zkc, znodePath, true);
@@ -76,22 +81,16 @@ class ZooKeeperListener {
       pathChildCache.getListenable().addListener(new PathChildrenCacheListener {
         @Override
         def childEvent(client: CuratorFramework, event: PathChildrenCacheEvent) = {
+          try {
+            // val nodePath = ZKPaths.getNodeFromPath(path)
+            val childsData = pathChildCache.getCurrentData.asScala.map(c => { (c.getPath, c.getData) }).toArray
+            ListenCallback(event.getType.toString, event.getData.getPath, childsData)
 
-          val path = event.getData().getPath()
-          val nodePath = ZKPaths.getNodeFromPath(path)
-          /////////// BUGBUG: Need to call this.
-          if (event.getType() == PathChildrenCacheEvent.Type.CHILD_ADDED) {
-            logger.debug("child_added")
-          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_LOST) {
-            logger.debug("connection_lost")
-          } else if (event.getType() == PathChildrenCacheEvent.Type.CONNECTION_RECONNECTED) {
-            logger.debug("connection_reconnected")
-          } else if (event.getType() == PathChildrenCacheEvent.Type.CHILD_REMOVED) {
-            logger.debug("child_removed")
+          } catch {
+            case e: Exception => {
+              logger.error("Exception while processing event from zookeeper ZNode %s, reason %s, message %s".format(znodePath, e.getCause, e.getMessage))
+            }
           }
-          
-          
-          
         }
       })
       pathChildCache.start();

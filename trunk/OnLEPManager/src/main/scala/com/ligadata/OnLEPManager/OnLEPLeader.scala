@@ -16,6 +16,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
+import org.apache.curator.framework._
 
 object OnLEPLeader {
   private[this] val LOG = Logger.getLogger(getClass);
@@ -31,10 +32,13 @@ object OnLEPLeader {
   private[this] var zkConnectionTimeoutMs: Int = _
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
+  private[this] var zkcForSetData: CuratorFramework = null
 
   private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
     if (cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
-    // Update New partitions for all nodes and Set the text 
+    // Update New partitions for all nodes and Set the text
+
+    // Set STOP Action on engineDistributionZkNodePath
   }
 
   // Here Leader can change or Participants can change
@@ -48,18 +52,17 @@ object OnLEPLeader {
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
   }
 
-  private def RestartInputAdapters(receivedJsonStr: String): Unit = {
+  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
       return
     }
-    // Stop processing
 
-    // Update New partitions
+    // Perform the action here (STOP or START for now)
+  }
 
-    // Wait for Few seconds
+  private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, childs: Array[(String, Array[Byte])]): Unit = {
 
-    // Start Processing
   }
 
   def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
@@ -76,10 +79,11 @@ object OnLEPLeader {
         val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
+        zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkEngineDistributionNodeListener = new ZooKeeperListener
-        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-        zkAdapterStatusNodeListener =  new ZooKeeperListener
-        // zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptrStatusPathForNode, RestartInputAdapters, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkAdapterStatusNodeListener = new ZooKeeperListener
+        zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
       } catch {
@@ -94,12 +98,18 @@ object OnLEPLeader {
   }
 
   def Shutdown: Unit = {
+    if (zkLeaderLatch != null)
+      zkLeaderLatch.Shutdown
+    zkLeaderLatch = null
     if (zkEngineDistributionNodeListener != null)
       zkEngineDistributionNodeListener.Shutdown
     zkEngineDistributionNodeListener = null
     if (zkAdapterStatusNodeListener != null)
       zkAdapterStatusNodeListener.Shutdown
     zkAdapterStatusNodeListener = null
+    if (zkcForSetData != null)
+      zkcForSetData.close
+    zkcForSetData = null
   }
 }
 

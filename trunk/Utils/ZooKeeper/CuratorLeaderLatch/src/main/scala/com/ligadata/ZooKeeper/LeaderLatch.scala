@@ -33,6 +33,12 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
     }
   }
 
+  def Shutdown: Unit = {
+    if (curatorFramework != null)
+      curatorFramework.close
+    curatorFramework = null
+  }
+
   def getClsuterStatus = clstStatus
 
   def SelectLeader = {
@@ -55,7 +61,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
 
   private def updateClusterStatus {
     val participants = leaderLatch.getParticipants.asScala
-    
+
     clstStatus = ClusterStatus(leaderLatch.getId, leaderLatch.hasLeadership, leaderLatch.getLeader.getId, participants.map(_.getId))
 
     val isLeader = if (clstStatus.isLeader) "true" else "false"
