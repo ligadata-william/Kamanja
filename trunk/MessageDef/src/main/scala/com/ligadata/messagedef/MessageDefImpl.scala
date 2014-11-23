@@ -767,7 +767,7 @@ trait BaseContainer {
   def partitionkeyStr(msg: Message): String = {
 
     if (msg.PartitionKey != null)
-      "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0)
+      "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0).toLowerCase()
     else
       "\n	override def PartitionKeyData: String = \"\""
   }
@@ -796,26 +796,26 @@ class XmlData(var dataInput: String) extends InputData(){ }
   //input function conversion
   def getDefVal(valType: String): String = {
     valType match {
-      case "System.Int" => "0"
-      case "System.Float" => "0"
-      case "System.Boolean" => "false"
-      case "System.Double" => "0.0"
-      case "System.Long" => "0"
-      case "System.Char" => "\' \'"
-      case "System.String" => "\"\""
+      case "system.int" => "0"
+      case "system.float" => "0"
+      case "system.boolean" => "false"
+      case "system.double" => "0.0"
+      case "system.long" => "0"
+      case "system.char" => "\' \'"
+      case "system.string" => "\"\""
       case _ => ""
     }
   }
 
   def getMemberType(valType: String): String = {
     valType match {
-      case "System.Int" => "Int"
-      case "System.Float" => "Float"
-      case "System.Boolean" => "Boolean"
-      case "System.Double" => "Double"
-      case "System.Long" => "Long"
-      case "System.Char" => "OptChar"
-      case "System.String" => "String"
+      case "system.int" => "Int"
+      case "system.float" => "Float"
+      case "system.boolean" => "Boolean"
+      case "system.double" => "Double"
+      case "system.long" => "Long"
+      case "system.char" => "OptChar"
+      case "system.string" => "String"
       case _ => ""
     }
   }
@@ -1424,7 +1424,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
             partitionKeysList = message.getOrElse("PartitionKey", null).asInstanceOf[List[String]]
             for (partitionKey: String <- partitionKeysList) {
               if (partitionKeysList.size == 1)
-                pKey = partitionKey
+                pKey = partitionKey.toLowerCase()
             }
           }
 
@@ -1685,21 +1685,21 @@ class XmlData(var dataInput: String) extends InputData(){ }
         namespace = field.get("NameSpace").get.asInstanceOf[String]
 
       if (field.contains("Name") && (field.get("Name").get.isInstanceOf[String]))
-        name = field.get("Name").get.asInstanceOf[String]
+        name = field.get("Name").get.asInstanceOf[String].toLowerCase()
       else throw new Exception("Field Name do not exist in " + key)
 
       if (field.contains("Type") && (field.get("Type").get.isInstanceOf[string])) {
         val fieldstr = field.get("Type").get.toString.split("\\.")
         if ((fieldstr != null) && (fieldstr.size == 2)) {
-          namespace = fieldstr(0)
-          ttype = field.get("Type").get.asInstanceOf[String]
+          namespace = fieldstr(0).toLowerCase()
+          ttype = field.get("Type").get.asInstanceOf[String].toLowerCase()
         } else
-          ttype = field.get("Type").get.asInstanceOf[String]
+          ttype = field.get("Type").get.asInstanceOf[String].toLowerCase()
         if (field.contains("CollectionType") && (field.get("CollectionType").get.isInstanceOf[string])) {
-          collectionType = field.get("CollectionType").get.asInstanceOf[String]
+          collectionType = field.get("CollectionType").get.asInstanceOf[String].toLowerCase()
         }
         if (field.contains("Version") && (field.get("Version").get.isInstanceOf[string])) {
-          fldTypeVer = field.get("Version").get.asInstanceOf[String]
+          fldTypeVer = field.get("Version").get.asInstanceOf[String].toLowerCase()
         }
 
       } else throw new Exception("Field Type do not exist in " + key)
