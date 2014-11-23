@@ -136,14 +136,15 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
         // Get top level Msg for the current msg
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
-        val keyData = msg.PartitionKeyData
-        val topObj = envContext.getObject(topMsgTypeAndHasParent._1, keyData)
+        val partitionKeyData = msg.PartitionKeyData
+        val isValidPartitionKey = (partitionKeyData != null && partitionKeyData.size > 0) 
+        val topObj = if (isValidPartitionKey) envContext.getObject(topMsgTypeAndHasParent._1, partitionKeyData) else null
         var handleMsg: Boolean = true
         if (topMsgTypeAndHasParent._2) {
           handleMsg = topObj != null
         }
         if (handleMsg) {
-          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null && topObj.isInstanceOf[BaseContainer]) topObj else msg
+          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null) topObj else msg
           if (topMsgTypeAndHasParent._2)
             finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           // Run all models
@@ -152,8 +153,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
-          if (topMsgTypeAndHasParent._2 || (topObj == null || topObj != finalTopMsgOrContainer))
-            envContext.setObject(topMsgTypeAndHasParent._1, keyData, finalTopMsgOrContainer)
+          if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null))
+            envContext.setObject(topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
         }
       }
     } catch {
