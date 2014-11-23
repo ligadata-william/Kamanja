@@ -605,7 +605,10 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//HashMap not handled at this momemt" + newline)
               assignJsondata.append(newline + "//HashMap not handled at this momemt" + newline)
             } else {
-              val paritionkey = message.PartitionKey(0).toLowerCase()
+              var paritionkey: String = ""
+              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
+                paritionkey = message.PartitionKey(0).toLowerCase()
+
               scalaclass = scalaclass.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._1)
               assignCsvdata = assignCsvdata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._2)
               assignJsondata = assignJsondata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._3)
