@@ -250,7 +250,7 @@ class MessageDefImpl {
 	    """
   }
 
-  private def handleBaseTypes(partitionkey: String, fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String) = {
+  private def handleBaseTypes(partitionkey: String, fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -311,10 +311,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, keysStr.toString, typeImpl.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, keysStr.toString, typeImpl.toString, jarset)
   }
 
-  private def handleArrayType(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def handleArrayType(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -369,10 +369,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleArrayBuffer(msgNameSpace: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def handleArrayBuffer(msgNameSpace: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -417,10 +417,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -458,10 +458,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -499,10 +499,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleConcept(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def handleConcept(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -537,7 +537,7 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
   //generates the variables string and assign string
   def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
@@ -606,9 +606,8 @@ class MessageDefImpl {
               assignJsondata.append(newline + "//HashMap not handled at this momemt" + newline)
             } else {
               var paritionkey: String = ""
-              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
+              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != "") )
                 paritionkey = message.PartitionKey(0).toLowerCase()
-
               scalaclass = scalaclass.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._1)
               assignCsvdata = assignCsvdata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._2)
               assignJsondata = assignJsondata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._3)
@@ -618,6 +617,7 @@ class MessageDefImpl {
               addMsg = addMsg.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._7)
               keysStr = keysStr.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._8)
               typeImpl = typeImpl.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._9)
+              jarset = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._10
 
             }
 
@@ -637,6 +637,8 @@ class MessageDefImpl {
                 list = handleArrayBuffer(message.NameSpace, typ, f)._5
                 argsList = handleArrayBuffer(message.NameSpace, typ, f)._6
                 addMsg = addMsg.append(handleArrayBuffer(message.NameSpace, typ, f)._7)
+                jarset = handleArrayBuffer(message.NameSpace, typ, f)._8
+                
               } else {
 
                 if (f.ElemType.equals("Container")) {
@@ -647,6 +649,7 @@ class MessageDefImpl {
                   list = handleContainer(mdMgr, ftypeVersion, typ, f)._5
                   argsList = handleContainer(mdMgr, ftypeVersion, typ, f)._6
                   addMsg = addMsg.append(handleContainer(mdMgr, ftypeVersion, typ, f)._7)
+                  jarset = handleContainer(mdMgr, ftypeVersion, typ, f)._8
 
                 } else if (f.ElemType.equals("Message")) {
                   scalaclass = scalaclass.append(handleMessage(mdMgr, ftypeVersion, typ, f)._1)
@@ -656,6 +659,7 @@ class MessageDefImpl {
                   list = handleMessage(mdMgr, ftypeVersion, typ, f)._5
                   argsList = handleMessage(mdMgr, ftypeVersion, typ, f)._6
                   addMsg = addMsg.append(handleMessage(mdMgr, ftypeVersion, typ, f)._7)
+                 jarset = handleMessage(mdMgr, ftypeVersion, typ, f)._8
                 }
               }
           } else if (f.ElemType.equals("Concepts")) {
@@ -666,6 +670,7 @@ class MessageDefImpl {
             list = handleConcept(mdMgr, ftypeVersion, f)._5
             argsList = handleConcept(mdMgr, ftypeVersion, f)._6
             addMsg = addMsg.append(handleConcept(mdMgr, ftypeVersion, f)._7)
+            jarset = handleConcept(mdMgr, ftypeVersion, f)._8
           }
           count = count + 1
         }
@@ -694,6 +699,7 @@ class MessageDefImpl {
         throw e
       }
     }
+   
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage)
 
   }
@@ -1223,6 +1229,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
+   
     try {
       if (msg.PartitionKey != null)
         msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
