@@ -410,7 +410,7 @@ class MessageDefImpl {
         jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
       else if (arrayBufType.JarName != null)
         jarset = jarset + arrayBufType.JarName
-    
+
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -591,13 +591,17 @@ class MessageDefImpl {
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
             if (typ.get.tType.toString().equals("tArray")) {
-              scalaclass = scalaclass.append(handleArrayType(typ, f)._1)
-              assignCsvdata = assignCsvdata.append(handleArrayType(typ, f)._2)
-              assignJsondata = assignJsondata.append(handleArrayType(typ, f)._3)
-              assignXmldata = assignXmldata.append(handleArrayType(typ, f)._4)
-              list = handleArrayType(typ, f)._5
-              argsList = handleArrayType(typ, f)._6
-              addMsg = addMsg.append(handleArrayType(typ, f)._7)
+
+              val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8) = handleArrayType(typ, f)
+
+              scalaclass = scalaclass.append(arr_1)
+              assignCsvdata = assignCsvdata.append(arr_2)
+              assignJsondata = assignJsondata.append(arr_3)
+              assignXmldata = assignXmldata.append(arr_4)
+              list = arr_5
+              argsList = arr_6
+              addMsg = addMsg.append(arr_7)
+              jarset = jarset ++ arr_8
 
               //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
             } else if (typ.get.tType.toString().equals("tHashMap")) {
@@ -606,19 +610,20 @@ class MessageDefImpl {
               assignJsondata.append(newline + "//HashMap not handled at this momemt" + newline)
             } else {
               var paritionkey: String = ""
-              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != "") )
+              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
                 paritionkey = message.PartitionKey(0).toLowerCase()
-              scalaclass = scalaclass.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._1)
-              assignCsvdata = assignCsvdata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._2)
-              assignJsondata = assignJsondata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._3)
-              assignXmldata = assignXmldata.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._4)
-              list = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._5
-              argsList = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._6
-              addMsg = addMsg.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._7)
-              keysStr = keysStr.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._8)
-              typeImpl = typeImpl.append(handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._9)
-             jarset = jarset ++ handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)._10
 
+              val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10) = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)
+              scalaclass = scalaclass.append(baseTyp_1)
+              assignCsvdata = assignCsvdata.append(baseTyp_2)
+              assignJsondata = assignJsondata.append(baseTyp_3)
+              assignXmldata = assignXmldata.append(baseTyp_4)
+              list = baseTyp_5
+              argsList = baseTyp_6
+              addMsg = addMsg.append(baseTyp_7)
+              keysStr = keysStr.append(baseTyp_8)
+              typeImpl = typeImpl.append(baseTyp_9)
+              jarset = jarset ++ baseTyp_10
             }
 
           } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
@@ -630,47 +635,51 @@ class MessageDefImpl {
 
             if (typ.getOrElse(null) != null)
               if (typ.get.tType.toString().equals("tArrayBuf")) {
-                scalaclass = scalaclass.append(handleArrayBuffer(message.NameSpace, typ, f)._1)
-                assignCsvdata = assignCsvdata.append(handleArrayBuffer(message.NameSpace, typ, f)._2)
-                assignJsondata = assignJsondata.append(handleArrayBuffer(message.NameSpace, typ, f)._3)
-                assignXmldata = assignXmldata.append(handleArrayBuffer(message.NameSpace, typ, f)._4)
-                list = handleArrayBuffer(message.NameSpace, typ, f)._5
-                argsList = handleArrayBuffer(message.NameSpace, typ, f)._6
-                addMsg = addMsg.append(handleArrayBuffer(message.NameSpace, typ, f)._7)
-                jarset = jarset ++ handleArrayBuffer(message.NameSpace, typ, f)._8
-                
-              } else {
+                val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8) = handleArrayBuffer(message.NameSpace, typ, f)
+                scalaclass = scalaclass.append(arrayBuf_1)
+                assignCsvdata = assignCsvdata.append(arrayBuf_2)
+                assignJsondata = assignJsondata.append(arrayBuf_3)
+                assignXmldata = assignXmldata.append(arrayBuf_4)
+                list = arrayBuf_5
+                argsList = arrayBuf_6
+                addMsg = addMsg.append(arrayBuf_7)
+                jarset = jarset ++ arrayBuf_8
 
+              } else {
                 if (f.ElemType.equals("Container")) {
-                  scalaclass = scalaclass.append(handleContainer(mdMgr, ftypeVersion, typ, f)._1)
-                  assignCsvdata = assignCsvdata.append(handleContainer(mdMgr, ftypeVersion, typ, f)._2)
-                  assignJsondata = assignJsondata.append(handleContainer(mdMgr, ftypeVersion, typ, f)._3)
-                  assignXmldata = assignXmldata.append(handleContainer(mdMgr, ftypeVersion, typ, f)._4)
-                  list = handleContainer(mdMgr, ftypeVersion, typ, f)._5
-                  argsList = handleContainer(mdMgr, ftypeVersion, typ, f)._6
-                  addMsg = addMsg.append(handleContainer(mdMgr, ftypeVersion, typ, f)._7)
-                 jarset = jarset ++ handleContainer(mdMgr, ftypeVersion, typ, f)._8
+                  val (cntnr_1, cntnr_2, cntnr_3, cntnr_4, cntnr_5, cntnr_6, cntnr_7, cntnr_8) = handleContainer(mdMgr, ftypeVersion, typ, f)
+                  scalaclass = scalaclass.append(cntnr_1)
+                  assignCsvdata = assignCsvdata.append(cntnr_2)
+                  assignJsondata = assignJsondata.append(cntnr_3)
+                  assignXmldata = assignXmldata.append(cntnr_4)
+                  list = cntnr_5
+                  argsList = cntnr_6
+                  addMsg = addMsg.append(cntnr_7)
+                  jarset = jarset ++ cntnr_8
 
                 } else if (f.ElemType.equals("Message")) {
-                  scalaclass = scalaclass.append(handleMessage(mdMgr, ftypeVersion, typ, f)._1)
-                  assignCsvdata = assignCsvdata.append(handleMessage(mdMgr, ftypeVersion, typ, f)._2)
-                  assignJsondata = assignJsondata.append(handleMessage(mdMgr, ftypeVersion, typ, f)._3)
-                  assignXmldata = assignXmldata.append(handleMessage(mdMgr, ftypeVersion, typ, f)._4)
-                  list = handleMessage(mdMgr, ftypeVersion, typ, f)._5
-                  argsList = handleMessage(mdMgr, ftypeVersion, typ, f)._6
-                  addMsg = addMsg.append(handleMessage(mdMgr, ftypeVersion, typ, f)._7)
-                 jarset = jarset ++ handleMessage(mdMgr, ftypeVersion, typ, f)._8
+                  val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8) = handleMessage(mdMgr, ftypeVersion, typ, f)
+                  scalaclass = scalaclass.append(msg_1)
+                  assignCsvdata = assignCsvdata.append(msg_2)
+                  assignJsondata = assignJsondata.append(msg_3)
+                  assignXmldata = assignXmldata.append(msg_4)
+                  list = msg_5
+                  argsList = msg_6
+                  addMsg = addMsg.append(msg_7)
+                  jarset = jarset ++ msg_8
                 }
               }
+
           } else if (f.ElemType.equals("Concepts")) {
-            scalaclass = scalaclass.append(handleConcept(mdMgr, ftypeVersion, f)._1)
-            assignCsvdata = assignCsvdata.append(handleConcept(mdMgr, ftypeVersion, f)._2)
-            assignJsondata = assignJsondata.append(handleConcept(mdMgr, ftypeVersion, f)._3)
-            assignXmldata = assignXmldata.append(handleConcept(mdMgr, ftypeVersion, f)._4)
-            list = handleConcept(mdMgr, ftypeVersion, f)._5
-            argsList = handleConcept(mdMgr, ftypeVersion, f)._6
-            addMsg = addMsg.append(handleConcept(mdMgr, ftypeVersion, f)._7)
-           jarset = jarset ++ handleConcept(mdMgr, ftypeVersion, f)._8
+            val (ccpt_1, ccpt_2, ccpt_3, ccpt_4, ccpt_5, ccpt_6, ccpt_7, ccpt_8) = handleConcept(mdMgr, ftypeVersion, f)
+            scalaclass = scalaclass.append(ccpt_1)
+            assignCsvdata = assignCsvdata.append(ccpt_2)
+            assignJsondata = assignJsondata.append(ccpt_3)
+            assignXmldata = assignXmldata.append(ccpt_4)
+            list = ccpt_5
+            argsList = ccpt_6
+            addMsg = addMsg.append(ccpt_7)
+            jarset = jarset ++ ccpt_8
           }
           count = count + 1
         }
@@ -699,7 +708,7 @@ class MessageDefImpl {
         throw e
       }
     }
-   
+
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage)
 
   }
@@ -1229,7 +1238,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
-   
+
     try {
       if (msg.PartitionKey != null)
         msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
