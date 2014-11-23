@@ -286,6 +286,8 @@ class MessageDefImpl {
         jarset = jarset + typ.get.JarName ++ typ.get.dependencyJarNames
       else if (typ.get.JarName != null)
         jarset = jarset + typ.get.JarName
+      else if (typ.get.dependencyJarNames != null)
+        jarset = jarset ++ typ.get.dependencyJarNames
 
       val dval: String = getDefVal(f.Ttype)
       list = (f.Name, f.Ttype) :: list
@@ -362,6 +364,8 @@ class MessageDefImpl {
         jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
       else if (arrayType.JarName != null)
         jarset = jarset + arrayType.JarName
+      else if (arrayType.dependencyJarNames != null)
+        jarset = jarset ++ arrayType.dependencyJarNames
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -409,6 +413,8 @@ class MessageDefImpl {
         jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
       else if (arrayBufType.JarName != null)
         jarset = jarset + arrayBufType.JarName
+      else if (arrayBufType.dependencyJarNames != null)
+        jarset = jarset ++ arrayBufType.dependencyJarNames
 
     } catch {
       case e: Exception => {
@@ -447,6 +453,8 @@ class MessageDefImpl {
         jarset = jarset + ctrDef.JarName ++ ctrDef.dependencyJarNames
       } else if ((ctrDef.jarName != null))
         jarset = jarset + ctrDef.JarName
+      else if (ctrDef.dependencyJarNames != null)
+        jarset = jarset ++ ctrDef.dependencyJarNames
       // val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true)
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
@@ -489,6 +497,8 @@ class MessageDefImpl {
         jarset = jarset + msgDef.JarName ++ msgDef.dependencyJarNames
       } else if ((msgDef.jarName != null))
         jarset = jarset + msgDef.JarName
+      else if (msgDef.dependencyJarNames != null)
+        jarset = jarset ++ msgDef.dependencyJarNames
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
@@ -527,6 +537,8 @@ class MessageDefImpl {
         jarset = jarset + attribute.JarName ++ attribute.dependencyJarNames
       } else if ((attribute.jarName != null))
         jarset = jarset + attribute.JarName
+      else if (attribute.dependencyJarNames != null)
+        jarset = jarset ++ attribute.dependencyJarNames
 
       argsList = (attribute.NameSpace, attribute.Name, attribute.typeDef.NameSpace, attribute.typeDef.Name, true, null) :: argsList
 
