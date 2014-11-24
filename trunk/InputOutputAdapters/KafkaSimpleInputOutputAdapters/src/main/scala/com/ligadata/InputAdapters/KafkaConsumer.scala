@@ -24,6 +24,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
+  private[this] val uniqueKeys = new ArrayBuffer[KafkaPartitionUniqueRecordKey]
+  private[this] val lock = new Object()
+
+  private def AddUniqueKey(uniqueKey: KafkaPartitionUniqueRecordKey): Unit = lock.synchronized {
+    uniqueKeys += uniqueKey
+  }
+
+  private def GetUniqueKeys: Array[KafkaPartitionUniqueRecordKey] = lock.synchronized {
+    uniqueKeys.toArray
+  }
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
@@ -107,6 +117,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                 return ;
               checkForPartition = false
               uniqueKey.PartitionId = curPartitionId
+              AddUniqueKey(uniqueKey)
               execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
             }
             try {
@@ -127,9 +138,26 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     });
   }
 
-  override def Shutdown(): Unit = {
+  override def Shutdown: Unit = {
     consumerConnector.shutdown
     executor.shutdownNow()
   }
+
+  override def StopProcessing: Unit = {
+
+  }
+
+  override def StartProcessing(partitionUniqueRecordKeys: Array[String]): Unit = {
+
+  }
+
+  override def GetAllPartitionUniqueRecordKey: Array[String] = {
+    val uniqueKeys = GetUniqueKeys
+    if (uniqueKeys != null) {
+      return uniqueKeys.map(k => { k.Serialize })
+    }
+    null
+  }
+
 }
 
