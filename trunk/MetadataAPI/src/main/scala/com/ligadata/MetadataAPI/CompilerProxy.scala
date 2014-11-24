@@ -96,7 +96,9 @@ class CompilerProxy{
     }
   }
 
-  def jarCode ( moduleName: String
+  def jarCode ( moduleNamespace: String
+		, moduleName: String
+		, moduleVersion: String
 		, scalaGeneratedCode : String
 		, classpath : String
 		, jarTargetDir : String
@@ -132,7 +134,7 @@ class CompilerProxy{
     }
 
     /** create the jar */
-    val moduleNameJar : String = s"$moduleName.jar"
+    val moduleNameJar : String = moduleNamespace + "_" + moduleName + "_" + moduleVersion + ".jar"
     val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.info(s"Jar $moduleNameJar produced.  Its contents:")
@@ -252,14 +254,16 @@ class CompilerProxy{
         }
       }
 
-      var(status,jarFile) = jarCode(msgDef.name,
-	    classStr,
-	    classPath,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-	    "Test Client",
-	    msgDefFilePath,
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-	    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
+      var(status,jarFile) = jarCode(msgDef.nameSpace,
+				    msgDef.name,
+				    msgDef.ver.toString,
+				    classStr,
+				    classPath,
+				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+				    "Test Client",
+				    msgDefFilePath,
+				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
 
 
       logger.trace("Status => " + status)

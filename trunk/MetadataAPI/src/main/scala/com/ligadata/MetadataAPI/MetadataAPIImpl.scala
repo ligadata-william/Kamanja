@@ -39,6 +39,7 @@ import org.apache.curator.framework.CuratorFramework
 import org.apache.zookeeper.CreateMode
 
 import com.ligadata.Serialize._
+import com.ligadata.Utils._
 
 case class JsonException(message: String) extends Exception(message)
 
@@ -2802,7 +2803,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	      operations = for (op <- objectsChanged) yield "Add"
 	    }
 	    else{
-	      operations = for (op <- objectsChanged) yield "Add"
+	      operations = for (op <- objectsChanged) yield "Remove"
 	    }
 	  }
 	}
@@ -3513,10 +3514,11 @@ object MetadataAPIImpl extends MetadataAPI{
       if( propertiesAlreadyLoaded ){
 	return;
       }
-      //val input = MetadataAPIImpl.getClass.getClassLoader().getResourceAsStream(configFile)
+
       val input = new FileInputStream(configFile)
       val prop = new Properties()
       prop.load(input)
+
       val root_dir = prop.getProperty("ROOT_DIR")
       if (root_dir == null ){
 	throw new MissingPropertyException("The property ROOT_DIR must be defined in the config file " + configFile)
@@ -3534,6 +3536,22 @@ object MetadataAPIImpl extends MetadataAPI{
 	database_host = "localhost"
       }
       logger.trace("database_host => " + database_host)
+
+
+      var database_schema = "metadata"
+      val database_schema1 = prop.getProperty("DATABASE_SCHEMA")
+      if (database_schema1 != null){
+	database_schema = database_schema1
+      }
+      logger.trace("DATABASE_SCHEMA(applicable to cassandra only) => " + database_schema)
+
+      var database_location = "/tmp"
+      val database_location1 = prop.getProperty("DATABASE_LOCATION")
+      if (database_location1 != null ){
+	database_location = database_location1
+      }
+      logger.trace("DATABASE_LOCATION(applicable to treemap or hashmap databases only) => " + database_location1)
+
 
       var git_root = prop.getProperty("GIT_ROOT")
       if (git_root == null ){
@@ -3609,9 +3627,144 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("ZOOKEEPER_CONNECT_STRING => " + zkConnString)
 
+      var nodeid = zkConnString
+      var nodeid1 = prop.getProperty("NODE_ID")
+      if (nodeid1 == null ){
+	logger.trace("The property NODE_ID is not defined in the properties file:" + configFile)
+	logger.trace("The property NODE_ID defaults to " + nodeid)
+      }
+      else{
+	nodeid = nodeid1
+      }
+      logger.trace("NODE_ID => " + nodeid)
+
+      var servicehost = "localhost"
+      var servicehost1 = prop.getProperty("SERVICE_HOST")
+      if (servicehost1 == null ){
+	logger.trace("The property SERVICE_HOST is not defined in the properties file:" + configFile)
+	logger.trace("The property SERVICE_HOST defaults to " + servicehost)
+      }
+      else{
+	servicehost = servicehost1
+      }
+      logger.trace("SERVICE_HOST => " + servicehost)
+
+
+      var serviceport = "8080"
+      var serviceport1 = prop.getProperty("SERVICE_PORT")
+      if (serviceport1 == null ){
+	logger.trace("The property SERVICE_PORT is not defined in the properties file:" + configFile)
+	logger.trace("The property SERVICE_PORT defaults to " + serviceport)
+      }
+      else{
+	serviceport = serviceport1
+      }
+      logger.trace("SERVICE_PORT => " + serviceport)
+
+
+
+      var apiLeaderSelectionZkNode = "/ligadata/apileader"
+      val apiLeaderSelectionZkNode1 = prop.getProperty("API_LEADER_SELECTION_ZK_NODE")
+      if (apiLeaderSelectionZkNode1 == null ){
+	logger.warn("The property ApiLeaderSelectionZkNode is not defined in the config file " + configFile)
+	logger.warn("The property ApiLeaderSelectionZkNode defaults to " + apiLeaderSelectionZkNode)
+      }
+      else{
+	apiLeaderSelectionZkNode = apiLeaderSelectionZkNode1
+      }
+      logger.trace("API_LEADER_SELECTION_ZK_NODE => " + apiLeaderSelectionZkNode)
+
+      var zkSessionTimeoutMs = "4000"
+      val zkSessionTimeoutMs1 = prop.getProperty("ZK_SESSION_TIMEOUT_MS")
+      if (zkSessionTimeoutMs1 == null ){
+	logger.warn("The property zkSessionTimeoutMs defaults to " + zkSessionTimeoutMs)
+      }
+      else{
+	zkSessionTimeoutMs = zkSessionTimeoutMs1
+      }
+      logger.trace("ZK_SESSION_TIMEOUT_MS => " + zkSessionTimeoutMs)
+
+      var zkConnectionTimeoutMs = "30000"
+      val zkConnectionTimeoutMs1 =  prop.getProperty("ZK_CONNECTION_TIMEOUT_MS")
+      if (zkConnectionTimeoutMs1 == null ){
+	logger.warn("The property zkConnectionTimeoutMs defaults to " + zkConnectionTimeoutMs)
+      }
+      else{
+	zkConnectionTimeoutMs = zkConnectionTimeoutMs1
+      }
+      logger.trace("ZK_CONNECTION_TIMEOUT_MS => " + zkConnectionTimeoutMs)
+
+      var MODEL_FILES_DIR = ""
+      val MODEL_FILES_DIR1 = prop.getProperty("MODEL_FILES_DIR")
+      if (MODEL_FILES_DIR1 == null ){
+    	  MODEL_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+      }
+      else
+    	  MODEL_FILES_DIR = MODEL_FILES_DIR1
+      logger.trace("MODEL_FILES_DIR => " + MODEL_FILES_DIR)
+
+      var TYPE_FILES_DIR = ""
+      val TYPE_FILES_DIR1 = prop.getProperty("TYPE_FILES_DIR")
+      if (TYPE_FILES_DIR1 == null ){
+    	  TYPE_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+      }
+      else
+    	  TYPE_FILES_DIR = TYPE_FILES_DIR1
+      logger.trace("TYPE_FILES_DIR => " + TYPE_FILES_DIR)
+
+      var FUNCTION_FILES_DIR = ""
+      val FUNCTION_FILES_DIR1 = prop.getProperty("FUNCTION_FILES_DIR")
+      if (FUNCTION_FILES_DIR1 == null ){
+    	  FUNCTION_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+      }
+      else
+    	  FUNCTION_FILES_DIR = FUNCTION_FILES_DIR1
+      logger.trace("FUNCTION_FILES_DIR => " + FUNCTION_FILES_DIR)
+
+      var CONCEPT_FILES_DIR = ""
+      val CONCEPT_FILES_DIR1 = prop.getProperty("CONCEPT_FILES_DIR")
+      if (CONCEPT_FILES_DIR1 == null ){
+    	  CONCEPT_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+      }
+      else
+    	  CONCEPT_FILES_DIR = CONCEPT_FILES_DIR1
+      logger.trace("CONCEPT_FILES_DIR => " + CONCEPT_FILES_DIR)
+
+      var MESSAGE_FILES_DIR = ""
+      val MESSAGE_FILES_DIR1 = prop.getProperty("MESSAGE_FILES_DIR")
+      if (MESSAGE_FILES_DIR1 == null ){
+    	  MESSAGE_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+      }
+      else
+    	  MESSAGE_FILES_DIR = MESSAGE_FILES_DIR1
+      logger.trace("MESSAGE_FILES_DIR => " + MESSAGE_FILES_DIR)
+
+      var CONTAINER_FILES_DIR = ""
+      val CONTAINER_FILES_DIR1 = prop.getProperty("CONTAINER_FILES_DIR")
+      if (CONTAINER_FILES_DIR1 == null ){
+    	  CONTAINER_FILES_DIR = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+      }
+      else
+    	  CONTAINER_FILES_DIR = CONTAINER_FILES_DIR1
+        
+      logger.trace("CONTAINER_FILES_DIR => " + CONTAINER_FILES_DIR)
+
+      var COMPILER_WORK_DIR = ""
+      val COMPILER_WORK_DIR1 = prop.getProperty("COMPILER_WORK_DIR")
+      if (COMPILER_WORK_DIR1 == null ){
+    	  COMPILER_WORK_DIR = "/tmp"
+      }
+      else
+    	  COMPILER_WORK_DIR = COMPILER_WORK_DIR1
+        
+      logger.trace("COMPILER_WORK_DIR => " + COMPILER_WORK_DIR)
+
+
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
       metadataAPIConfig.setProperty("DATABASE",database)
       metadataAPIConfig.setProperty("DATABASE_HOST",database_host)
+      metadataAPIConfig.setProperty("DATABASE_SCHEMA",database_schema)
+      metadataAPIConfig.setProperty("DATABASE_LOCATION",database_location)
       metadataAPIConfig.setProperty("GIT_ROOT",git_root)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR",jar_target_dir)
       metadataAPIConfig.setProperty("SCALA_HOME",scala_home)
@@ -3621,6 +3774,19 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("NOTIFY_ENGINE",notifyEngine)
       metadataAPIConfig.setProperty("ZNODE_PATH",znodePath)
       metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING",zkConnString)
+      metadataAPIConfig.setProperty("NODE_ID",nodeid)
+      metadataAPIConfig.setProperty("SERVICE_HOST",servicehost)
+      metadataAPIConfig.setProperty("SERVICE_PORT",serviceport)
+      metadataAPIConfig.setProperty("API_LEADER_SELECTION_ZK_NODE",apiLeaderSelectionZkNode)
+      metadataAPIConfig.setProperty("ZK_SESSION_TIMEOUT_MS",zkSessionTimeoutMs)
+      metadataAPIConfig.setProperty("ZK_CONNECTION_TIMEOUT_MS",zkConnectionTimeoutMs)
+      metadataAPIConfig.setProperty("MODEL_FILES_DIR",MODEL_FILES_DIR)
+      metadataAPIConfig.setProperty("TYPE_FILES_DIR",TYPE_FILES_DIR)
+      metadataAPIConfig.setProperty("FUNCTION_FILES_DIR",FUNCTION_FILES_DIR)
+      metadataAPIConfig.setProperty("CONCEPT_FILES_DIR",CONCEPT_FILES_DIR)
+      metadataAPIConfig.setProperty("MESSAGE_FILES_DIR",MESSAGE_FILES_DIR)
+      metadataAPIConfig.setProperty("CONTAINER_FILES_DIR",CONTAINER_FILES_DIR)
+      metadataAPIConfig.setProperty("COMPILER_WORK_DIR",COMPILER_WORK_DIR)
 
       propertiesAlreadyLoaded = true;
       
@@ -3630,7 +3796,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	sys.exit(1)
     }
   }
-
 
 
   @throws(classOf[MissingPropertyException])
@@ -3736,7 +3901,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
       var zooKeeperConnectString = configMap.APIConfigParameters.ZooKeeperConnectString
       if (zooKeeperConnectString == null ){
-	throw new MissingPropertyException("The property NotifyEngine must be defined in the config file " + configFile)
+	throw new MissingPropertyException("The property ZooKeeperConnectString must be defined in the config file " + configFile)
       }
       logger.trace("ZooKeeperConnectString => " + zooKeeperConnectString)
 
@@ -3844,7 +4009,15 @@ object MetadataAPIImpl extends MetadataAPI{
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr, "","","","")
     mdLoader.initialize
-    MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    if( configFile.endsWith(".json") ){
+      MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    }
+    else if( configFile.endsWith(".properties") ){
+          MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
+    }
+    else{
+      throw LoadAPIConfigException("Invalid name for config file, it should have a suffix  .json or .properties: " + configFile)
+    }
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
@@ -3854,7 +4027,15 @@ object MetadataAPIImpl extends MetadataAPI{
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad (MdMgr.mdMgr,"","","","")
     mdLoader.initialize
-    MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    if( configFile.endsWith(".json") ){
+      MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
+    }
+    else if( configFile.endsWith(".properties") ){
+          MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
+    }
+    else{
+      throw LoadAPIConfigException("Invalid name for config file, it should have a suffix  .json or .properties: " + configFile)
+    }
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
   }

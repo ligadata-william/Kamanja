@@ -33,9 +33,14 @@ class GetMessageService(requestContext: RequestContext) extends Actor {
   def process(nameSpace:String, name:String, version:String) = { 
 
     log.info("Requesting GetMessage {},{},{}",nameSpace,name,version)
-
-    val apiResult = MetadataAPIImpl.GetMessageDefFromCache(nameSpace,name,"JSON",version)
-    
-    requestContext.complete(apiResult)
+    if ( MetadataAPIServiceLeader.IsLeader == true ){
+      val apiResult = MetadataAPIImpl.GetMessageDefFromCache(nameSpace,name,"JSON",version)
+      requestContext.complete(apiResult)
+    }
+    else{
+      val apiResult = new ApiResult(-1,"Failed to execute the request, I am not the leader node",
+				    "Please execute the request on the leader node " + MetadataAPIServiceLeader.LeaderNode)
+      requestContext.complete(apiResult.toString())
+    }
   }
 }

@@ -14,9 +14,9 @@ scalaVersion := "2.10.4"
 
 resolvers += "spring-milestones" at "http://repo.springsource.org/libs-milestone"
 
-libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-parent" % "2.0.2"
+libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-parent" % "2.1.2"
 
-libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.2"
+libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.2"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.0" % "test"
 

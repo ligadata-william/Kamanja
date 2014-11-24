@@ -73,6 +73,6 @@ object GetModel {
     val dirName = "/home/vmandava/github/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
     val pmmlFilePath = dirName + "/COPD_V200.xml"
     val pmmlStr = Source.fromFile(pmmlFilePath).mkString    
-    logger.trace(GetResponse("http://127.0.0.1:8080/api/AddModel",Some(pmmlStr)))
+    //logger.trace(GetResponse("http://127.0.0.1:8080/api/AddModel",Some(pmmlStr)))
   }
 }

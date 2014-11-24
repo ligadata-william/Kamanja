@@ -61,7 +61,7 @@ class ZooKeeperListener {
         }
       })
       nodeCache.start
-      logger.setLevel(Level.TRACE);
+      // logger.setLevel(Level.TRACE);
     } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
@@ -73,7 +73,7 @@ class ZooKeeperListener {
   //  - Current Event Type as String
   //  - Current Event Path
   //  - All Childs Paths & Data.
-  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, ListenCallback: (String, String, Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
+  def CreatePathChildrenCacheListener(zkcConnectString: String, znodePath: String, getAllChildsData:Boolean, ListenCallback: (String, String,  Array[Byte], Array[(String, Array[Byte])]) => Unit, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int) = {
     try {
       zkc = CreateClient.createSimple(zkcConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       pathChildCache = new PathChildrenCache(zkc, znodePath, true);
@@ -83,8 +83,9 @@ class ZooKeeperListener {
         def childEvent(client: CuratorFramework, event: PathChildrenCacheEvent) = {
           try {
             // val nodePath = ZKPaths.getNodeFromPath(path)
-            val childsData = pathChildCache.getCurrentData.asScala.map(c => { (c.getPath, c.getData) }).toArray
-            ListenCallback(event.getType.toString, event.getData.getPath, childsData)
+            val childsData = if (getAllChildsData) pathChildCache.getCurrentData.asScala.map(c => { (c.getPath, c.getData) }).toArray else null
+            val eventData = event.getData
+            ListenCallback(event.getType.toString, eventData.getPath, eventData.getData, childsData)
 
           } catch {
             case e: Exception => {
