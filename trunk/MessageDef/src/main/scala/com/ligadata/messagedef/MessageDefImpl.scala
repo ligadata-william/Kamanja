@@ -1758,6 +1758,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       log.info("Type => " + concept.Type.getOrElse(None));
       log.info("=========>");
     }
+    
   }
 
   /*
