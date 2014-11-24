@@ -550,9 +550,9 @@ class OnLEPManager {
       }
 
       OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("zkNodeBasePath".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("zkSessionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
-      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("zkConnectionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("ZooKeeperNodeBasePath".toLowerCase, "").replace("\"", "").trim
+      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("ZooKeeperSessionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
+      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("ZooKeeperConnectionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
 
       // Taking minimum values in case if needed
       OnLEPConfiguration.zkSessionTimeoutMs = if (OnLEPConfiguration.zkSessionTimeoutMs <= 0) 250 else OnLEPConfiguration.zkSessionTimeoutMs
@@ -577,7 +577,7 @@ class OnLEPManager {
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
       }
 
-      // OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 
       OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
 

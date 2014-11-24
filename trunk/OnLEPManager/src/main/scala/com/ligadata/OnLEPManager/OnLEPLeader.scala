@@ -37,24 +37,53 @@ object OnLEPLeader {
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
-  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[PartitionUniqueRecordKey]]()
-  private[this] var nodesStatus = scala.collection.mutable.Map[String, String]() // NodeId & actionId
-  private[this] var curNodesAction: String = _
+  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[PartitionUniqueRecordKey]]() // Nodeid & Unique Keys
+  private[this] var nodesStatus = scala.collection.mutable.Set[String]() // NodeId
+  private[this] var expectedNodesAction: String = _
+  private[this] var curParticipents = Set[String]() // Derived from clusterStatus.participants
 
   private def UpdatePartitionsNodeData(eventType: String, eventPath: String, eventPathData: Array[Byte]): Unit = lock.synchronized {
-    println("Got Event" + eventType)
-    /*
-    val participants = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
+    try {
+      val evntPthData = if (eventPathData != null) (new String(eventPathData)) else "{}"
+      val extractedNode = ZKPaths.getNodeFromPath(eventPath)
+      LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s".format(eventType, eventPath, evntPthData, extractedNode))
 
-    if (childs != null) {
-      val allNodesNameAndData = childs.map(c => ((ZKPaths.getNodeFromPath(c._1), c._2)))
-      val validNodesNameAndData = allNodesNameAndData.filter(nodeInfo => participants(nodeInfo._1))
+      if (eventType.compareToIgnoreCase("CHILD_UPDATED") == 0) {
+        if (curParticipents(extractedNode)) { // If this node is one of the participent, then work on this, otherwise ignore
+          val json = parse(evntPthData)
+          if (json == null || json.values == null) // Not doing any action if not found valid json
+            return
+          val values = json.values.asInstanceOf[Map[String, Any]]
+          val action = values.getOrElse("action", "").toString.toLowerCase
+
+          if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
+            nodesStatus += extractedNode
+            if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
+              nodesStatus.clear
+              expectedNodesAction = "distributed"
+              // Set STOP Action on engineDistributionZkNodePath
+              // BUGBUG:: Send all Unique keys to corresponding nodes 
+              zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"distribute\" }".getBytes("UTF8"))
+            }
+          } else {
+            // Got different action. May be re-distribute. For now any non-expected action we will redistribute
+            LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s. Redistributing.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action))
+            UpdatePartitionsIfNeededOnLeader(clusterStatus)
+          }
+        }
+        // expectedNodesAction
+
+      } else if (eventType.compareToIgnoreCase("CHILD_REMOVED") == 0) {
+        // Not expected this. Need to check what is going on
+        LOG.error("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s".format(eventType, eventPath, evntPthData))
+      } else if (eventType.compareToIgnoreCase("CHILD_ADDED") == 0) {
+        // Not doing anything here
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Exception while UpdatePartitionsNodeData, reason %s, message %s".format(e.getCause, e.getMessage))
+      }
     }
-*/
-    // BUGBUG:: On Leader node, Go thru all active Participent nodes data and see whether it is stopped or not before we send "distribute" action 
-    // If we get redistribute from any node, just go and redistribute again
-    // UpdatePartitionsIfNeededOnLeader(clusterStatus)
-
   }
 
   private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
@@ -62,6 +91,9 @@ object OnLEPLeader {
 
     // Clear Previous Distribution Map
     distributionMap.clear
+    nodesStatus.clear
+    expectedNodesAction = ""
+    curParticipents = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
 
     var tmpDistMap = ArrayBuffer[(String, ArrayBuffer[PartitionUniqueRecordKey])]()
 
@@ -89,7 +121,7 @@ object OnLEPLeader {
       })
     }
 
-    curNodesAction = "stop"
+    expectedNodesAction = "stopped"
     // Set STOP Action on engineDistributionZkNodePath
     zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"stop\" }".getBytes("UTF8"))
   }
@@ -111,10 +143,12 @@ object OnLEPLeader {
       return
     }
 
+    LOG.info("ActionOnAdaptersDistribution => receivedJsonStr: " + receivedJsonStr)
+
     try {
       // Perform the action here (STOP or DISTRIBUTE for now)
       val json = parse(receivedJsonStr)
-      if (json == null || json.values != null) // Not doing any action if not found valid json
+      if (json == null || json.values == null) // Not doing any action if not found valid json
         return
       val values = json.values.asInstanceOf[Map[String, Any]]
       val action = values.getOrElse("action", "").toString.toLowerCase
@@ -170,6 +204,7 @@ object OnLEPLeader {
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {
         val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
+        LOG.info("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath))
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
