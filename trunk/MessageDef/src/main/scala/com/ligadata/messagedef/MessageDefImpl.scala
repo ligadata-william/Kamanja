@@ -610,7 +610,7 @@ class MessageDefImpl {
               assignJsondata = assignJsondata.append(arr_3)
               assignXmldata = assignXmldata.append(arr_4)
               list = arr_5
-              argsList = arr_6
+              argsList =  argsList ::: arr_6
               addMsg = addMsg.append(arr_7)
               jarset = jarset ++ arr_8
 
@@ -630,7 +630,7 @@ class MessageDefImpl {
               assignJsondata = assignJsondata.append(baseTyp_3)
               assignXmldata = assignXmldata.append(baseTyp_4)
               list = baseTyp_5
-              argsList = baseTyp_6
+              argsList = argsList ::: baseTyp_6
               addMsg = addMsg.append(baseTyp_7)
               keysStr = keysStr.append(baseTyp_8)
               typeImpl = typeImpl.append(baseTyp_9)
@@ -652,7 +652,7 @@ class MessageDefImpl {
                 assignJsondata = assignJsondata.append(arrayBuf_3)
                 assignXmldata = assignXmldata.append(arrayBuf_4)
                 list = arrayBuf_5
-                argsList = arrayBuf_6
+                argsList = argsList ::: arrayBuf_6
                 addMsg = addMsg.append(arrayBuf_7)
                 jarset = jarset ++ arrayBuf_8
 
@@ -664,7 +664,7 @@ class MessageDefImpl {
                   assignJsondata = assignJsondata.append(cntnr_3)
                   assignXmldata = assignXmldata.append(cntnr_4)
                   list = cntnr_5
-                  argsList = cntnr_6
+                  argsList = argsList ::: cntnr_6
                   addMsg = addMsg.append(cntnr_7)
                   jarset = jarset ++ cntnr_8
 
@@ -675,7 +675,7 @@ class MessageDefImpl {
                   assignJsondata = assignJsondata.append(msg_3)
                   assignXmldata = assignXmldata.append(msg_4)
                   list = msg_5
-                  argsList = msg_6
+                  argsList = argsList ::: msg_6
                   addMsg = addMsg.append(msg_7)
                   jarset = jarset ++ msg_8
                 }
@@ -688,7 +688,7 @@ class MessageDefImpl {
             assignJsondata = assignJsondata.append(ccpt_3)
             assignXmldata = assignXmldata.append(ccpt_4)
             list = ccpt_5
-            argsList = ccpt_6
+            argsList = argsList ::: ccpt_6
             addMsg = addMsg.append(ccpt_7)
             jarset = jarset ++ ccpt_8
           }
