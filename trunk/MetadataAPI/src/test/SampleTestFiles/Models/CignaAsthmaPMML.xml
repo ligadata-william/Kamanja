@@ -24,13 +24,13 @@ AsthmaPMML.xml
 		<DerivedField name="YoungMales" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="Between">
-					<FieldRef field="msg.beneficiaryBase.Bene_Birth_Dt"/>
+					<FieldRef field="msg.beneficiarybase.bene_birth_dt"/>
 				    <Constant dataType="integer">19800101</Constant>  
 				    <Constant dataType="integer">20121231</Constant>  
 				    <Constant dataType="boolean">true</Constant>  
 				</Apply>
 				<Apply function="equal">
-					<FieldRef field="msg.beneficiaryBase.Bene_Sex_Ident_Cd"/>
+					<FieldRef field="msg.beneficiarybase.bene_sex_ident_cd"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 			</Apply>   
@@ -58,7 +58,7 @@ AsthmaPMML.xml
 		<!-- Inpatient_Claims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
 		<DerivedField name="InClaimAdmitDgnsFilter" dataType="ArrayBufferOfInpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.Inpatient_Claims"/>
+	       		<FieldRef field="msg.inpatient_claims"/>
 	 			<Constant dataType="fIdent">Between</Constant> 
 	 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
 	 			<Constant dataType="string">49300</Constant> 
@@ -70,7 +70,7 @@ AsthmaPMML.xml
 		<!-- Outpatient_Claims with an Admtng_Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
 		<DerivedField name="OutClaimAdmitDgnsFilter" dataType="ArrayBufferOfOutpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.Outpatient_Claims"/>
+	       		<FieldRef field="msg.outpatient_claims"/>
 	 			<Constant dataType="fIdent">Between</Constant> 
 	 			<Constant dataType="ident">Admtng_Icd9_Dgns_Cd</Constant> 
 	 			<Constant dataType="string">49300</Constant> 
@@ -82,7 +82,7 @@ AsthmaPMML.xml
 		<!-- Inpatient_Claims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
 		<DerivedField name="InClaimIcd9DgnsFilter" dataType="ArrayBufferOfInpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.Inpatient_Claims"/>
+	       		<FieldRef field="msg.inpatient_claims"/>
 	 			<Constant dataType="fIdent">AnyBetween</Constant> 
 	 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 	 			<Constant dataType="string">49300</Constant> 
@@ -94,7 +94,7 @@ AsthmaPMML.xml
 		<!-- Outpatient_Claims with Icd9_Dgns_Cd between "49300" and "49392" inclusive -->
 		<DerivedField name="OutClaimIcd9DgnsFilter" dataType="ArrayBufferOfOutpatientClaim" optype="categorical">
 			<Apply function="ContainerFilter">
-	       		<FieldRef field="msg.Outpatient_Claims"/>
+	       		<FieldRef field="msg.outpatient_claims"/>
 	 			<Constant dataType="fIdent">AnyBetween</Constant> 
 	 			<Constant dataType="ident">Icd9_Dgns_Cds</Constant> 
 	 			<Constant dataType="string">49300</Constant> 

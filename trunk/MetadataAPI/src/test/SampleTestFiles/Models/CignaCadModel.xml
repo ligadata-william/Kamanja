@@ -115,7 +115,7 @@
 
 		<DerivedField name="Age" dataType="integer" optype="continuous">
 			<Apply function="AgeCalc">
-	       		<FieldRef field="beneficiary.beneficiaryBase.Bene_Birth_Dt"/>
+	       		<FieldRef field="beneficiary.beneficiarybase.bene_birth_dt"/>
 			</Apply>
 		</DerivedField>
 
@@ -132,7 +132,7 @@
 			<Apply function="if">
 				<Apply function="and">
 					<Apply function="equal">
-						<FieldRef field="beneficiary.beneficiaryBase.Bene_Sex_Ident_Cd"/>
+						<FieldRef field="beneficiary.beneficiarybase.bene_sex_ident_cd"/>
 						<Constant dataType="integer">1</Constant> 
 					</Apply>
 					<Apply function="equal">
@@ -149,7 +149,7 @@
 
 		<DerivedField name="HL7MsgsDiabetes" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseEqual">
-		    	<FieldRef field="beneficiary.HL7Messages"/>  
+		    	<FieldRef field="beneficiary.hl7messages"/>  
 			    <Constant>Sp_Diabetes</Constant> 
 			    <Constant dataType="integer">1</Constant>
 			</Apply>
@@ -201,7 +201,7 @@
 
 		<DerivedField name="DxCodesForChestPain" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseContainingSlice">
-		    	<FieldRef field="dims.icd9DiagnosisCodes.idCodeArr"/>  
+		    	<FieldRef field="dims.icd9diagnosiscodes.idcodearr"/>  
 			    <Constant>Description</Constant> 
 			    <Constant>"Chest pain"</Constant>
 			    <Constant dataType="boolean">true</Constant>
@@ -210,7 +210,7 @@
 
 		<DerivedField name="DxCodesForHeartBurn" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseContainingSlice">
-		    	<FieldRef field="dims.icd9DiagnosisCodes.idCodeArr"/>  
+		    	<FieldRef field="dims.icd9diagnosiscodes.idcodearr"/>  
 			    <Constant>Description</Constant> 
 			    <Constant>"Heart Burn"</Constant>
 			    <Constant dataType="boolean">true</Constant>
@@ -219,7 +219,7 @@
 
 		<DerivedField name="DxCodesForShortBreath" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseContainingSlice">
-		    	<FieldRef field="dims.icd9DiagnosisCodes.idCodeArr"/>  
+		    	<FieldRef field="dims.icd9diagnosiscodes.idcodearr"/>  
 			    <Constant>Description</Constant> 
 			    <Constant>"Shortness of breath"</Constant>
 			    <Constant dataType="boolean">true</Constant>
@@ -251,7 +251,7 @@
 
 		<DerivedField name="InPatientAdmitCadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseIn">
-		    	<FieldRef field="beneficiary.Inpatient_Claims"/>  
+		    	<FieldRef field="beneficiary.inpatient_claims"/>  
 			    <Constant>Admtng_Icd9_Dgns_Cd</Constant> 
 		    	<FieldRef field="DxCodesForCad"/>  
 			</Apply>
@@ -259,7 +259,7 @@
 
 		<DerivedField name="InPatientIcd9CadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterAnyIn">
-		    	<FieldRef field="beneficiary.Inpatient_Claims"/>  
+		    	<FieldRef field="beneficiary.inpatient_claims"/>  
 			    <Constant>Icd9_Dgns_Cds</Constant> 
 		    	<FieldRef field="DxCodesForCad"/>  
 			</Apply>
@@ -294,7 +294,7 @@
 
 		<DerivedField name="OutPatientAdmitCadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterThoseIn">
-		    	<FieldRef field="beneficiary.Outpatient_Claims"/>  
+		    	<FieldRef field="beneficiary.outpatient_claims"/>  
 			    <Constant>Admtng_Icd9_Dgns_Cd</Constant> 
 		    	<FieldRef field="DxCodesForCad"/>  
 			</Apply>
@@ -302,7 +302,7 @@
 
 		<DerivedField name="OutPatientIcd9CadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterAnyIn">
-		    	<FieldRef field="beneficiary.Outpatient_Claims"/>  
+		    	<FieldRef field="beneficiary.outpatient_claims"/>  
 			    <Constant>Icd9_Dgns_Cds</Constant> 
 		    	<FieldRef field="DxCodesForCad"/>  
 			</Apply>
@@ -337,7 +337,7 @@
 
 		<DerivedField name="ClaimIcd9CadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterAnyIn">
-		    	<FieldRef field="beneficiary.Carrier_Claims"/>  
+		    	<FieldRef field="beneficiary.carrier_claims"/>  
 			    <Constant>carrierClaimBase.Icd9_Dgns_Cds</Constant> 
 		    	<FieldRef field="DxCodesForCad"/>  
 			</Apply>
@@ -345,7 +345,7 @@
 
 		<DerivedField name="ClaimLineItmsIcd9CadIssues" dataType="array" optype="categorical">
 			<Apply function="ContainerFilterAnyInChild">
-		    	<FieldRef field="beneficiary.Carrier_Claims"/>  
+		    	<FieldRef field="beneficiary.carrier_claims"/>  
 			    <Constant>LineItmsInfo</Constant> 
 		    	<Constant>Line_Icd9_Dgns_Cd</Constant>  
 		    	<FieldRef field="DxCodesForCad"/>  
