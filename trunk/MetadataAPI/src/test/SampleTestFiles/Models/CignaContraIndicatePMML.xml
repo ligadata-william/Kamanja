@@ -55,7 +55,7 @@
 			<Apply function="ToArray">
 				<Apply function="ToSet">
 					<Apply function="ContainerMap">
-			       		<FieldRef field="msg.Medications"/>
+			       		<FieldRef field="msg.medications"/>
 			 			<Constant dataType="ident">MedicationIdentifier</Constant> 
 					</Apply>
 				</Apply>
@@ -66,14 +66,14 @@
 		  <!-- Current event Medication Record -->
 		<DerivedField name="CurrentMedicationRecord" dataType="Medication" optype="categorical">
 			<Apply function="Last">
-	       		<FieldRef field="msg.Medications"/>
+	       		<FieldRef field="msg.medications"/>
 			</Apply>
 		</DerivedField>
 
 		   <!--Making ordered pairs between current & history of MedicationIdentifiers -->
 		<DerivedField name="MedicationIdOrderedPairs" dataType="ArrayofTupleOfStringString" optype="categorical">
 			<Apply function="MakeOrderedPairs">
-	       		<FieldRef field="CurrentMedicationRecord.MedicationIdentifier"/>
+	       		<FieldRef field="CurrentMedicationRecord.medicationidentifier"/>
 	       		<FieldRef field="AllUniqueHistoryMedicationIdentifiers"/>
 			</Apply>
 		</DerivedField>

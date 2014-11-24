@@ -61,7 +61,7 @@ class ZooKeeperListener {
         }
       })
       nodeCache.start
-      logger.setLevel(Level.TRACE);
+      // logger.setLevel(Level.TRACE);
     } catch {
       case e: Exception => {
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())

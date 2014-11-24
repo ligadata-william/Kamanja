@@ -49,7 +49,8 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  			if (strRep == ctx.applyElementName) {
 	  			   s"${ctx.applyElementName}"  /** When the value is _each, the item is being passed as a whole ... common with collection args ... */
 	  			} else {
-	  			   s"${ctx.applyElementName}.$strRep"  /** don't change '_each.' without adjusting IterableFcnPrinter.iterablePrint */
+	  			  val strRep1 = strRep.toLowerCase
+	  			   s"${ctx.applyElementName}.$strRep1"  /** don't change '_each.' without adjusting IterableFcnPrinter.iterablePrint */
 	  			}
 	  		}
 	  		case "typename"  => { 

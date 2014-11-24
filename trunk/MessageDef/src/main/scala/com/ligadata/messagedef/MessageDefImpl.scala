@@ -394,6 +394,8 @@ class MessageDefImpl {
 
     try {
       arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
+      if(arrayBufType == null) throw new Exception("Array Byffer of " +f.Name+ " do not exists throwing Null Pointer" )
+      
       argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
       scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
       if (f.ElemType.equals("Container")) {
@@ -443,7 +445,8 @@ class MessageDefImpl {
 
     try {
       var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, ftypeVersion, true).getOrElse(null)
-
+      if(ctrDef == null) throw new Exception("Container "+ctrDef +" do not exists throwing null pointer")
+      
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
       assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
@@ -487,7 +490,8 @@ class MessageDefImpl {
 
     try {
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
-
+      if(msgDef == null) throw new Exception(msgDef +" do ot exists throwing null pointer")
+      
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
       //  assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
@@ -529,7 +533,11 @@ class MessageDefImpl {
     var fname: String = ""
 
     try {
-      var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).asInstanceOf[BaseAttributeDef]
+      
+      var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).getOrElse(null)
+
+      if(attribute == null) throw new Exception("Attribute "+f.Ttype+" do not exists throwing Null pointer")
+      
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
 
@@ -598,9 +606,12 @@ class MessageDefImpl {
             log.trace("message.Version " + message.Version.replaceAll("[.]", "").toInt)
 
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
+           
             if (typ.getOrElse("None").equals("None"))
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
+            if(typ.get.tType == null) throw new Exception("tType in Type do not exists")
+              
             if (typ.get.tType.toString().equals("tArray")) {
 
               val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8) = handleArrayType(typ, f)
@@ -610,7 +621,7 @@ class MessageDefImpl {
               assignJsondata = assignJsondata.append(arr_3)
               assignXmldata = assignXmldata.append(arr_4)
               list = arr_5
-              argsList = arr_6
+              argsList =  argsList ::: arr_6
               addMsg = addMsg.append(arr_7)
               jarset = jarset ++ arr_8
 
@@ -630,7 +641,7 @@ class MessageDefImpl {
               assignJsondata = assignJsondata.append(baseTyp_3)
               assignXmldata = assignXmldata.append(baseTyp_4)
               list = baseTyp_5
-              argsList = baseTyp_6
+              argsList = argsList ::: baseTyp_6
               addMsg = addMsg.append(baseTyp_7)
               keysStr = keysStr.append(baseTyp_8)
               typeImpl = typeImpl.append(baseTyp_9)
@@ -652,7 +663,7 @@ class MessageDefImpl {
                 assignJsondata = assignJsondata.append(arrayBuf_3)
                 assignXmldata = assignXmldata.append(arrayBuf_4)
                 list = arrayBuf_5
-                argsList = arrayBuf_6
+                argsList = argsList ::: arrayBuf_6
                 addMsg = addMsg.append(arrayBuf_7)
                 jarset = jarset ++ arrayBuf_8
 
@@ -664,7 +675,7 @@ class MessageDefImpl {
                   assignJsondata = assignJsondata.append(cntnr_3)
                   assignXmldata = assignXmldata.append(cntnr_4)
                   list = cntnr_5
-                  argsList = cntnr_6
+                  argsList = argsList ::: cntnr_6
                   addMsg = addMsg.append(cntnr_7)
                   jarset = jarset ++ cntnr_8
 
@@ -675,7 +686,7 @@ class MessageDefImpl {
                   assignJsondata = assignJsondata.append(msg_3)
                   assignXmldata = assignXmldata.append(msg_4)
                   list = msg_5
-                  argsList = msg_6
+                  argsList = argsList ::: msg_6
                   addMsg = addMsg.append(msg_7)
                   jarset = jarset ++ msg_8
                 }
@@ -688,7 +699,7 @@ class MessageDefImpl {
             assignJsondata = assignJsondata.append(ccpt_3)
             assignXmldata = assignXmldata.append(ccpt_4)
             list = ccpt_5
-            argsList = ccpt_6
+            argsList = argsList ::: ccpt_6
             addMsg = addMsg.append(ccpt_7)
             jarset = jarset ++ ccpt_8
           }
@@ -1501,7 +1512,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     if (ccpts == null) throw new Exception("Concepts List is null")
     try {
       for (l <- ccpts)
-        lbuffer += new Element(null, l.toString(), null, null, key, null)
+        lbuffer += new Element(null, l.toString(), l.toString(), null, key, null)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1537,6 +1548,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var container: Message = null
     type messageList = List[Map[String, Any]]
     type keyMap = Map[String, Any]
+    type typList = List[String]
+    var cntrList: List[String] = null
     try {
       if (message.get(key).get.isInstanceOf[messageList]) {
         val eList = message.get(key).get.asInstanceOf[List[Map[String, Any]]]
@@ -1551,19 +1564,45 @@ class XmlData(var dataInput: String) extends InputData(){ }
             } else if (key.equals("Fields")) {
               lbuffer += getElementData(eMap.asInstanceOf[Map[String, String]], key)
             } else if (eMap.contains("Container")) {
-              val containerMap: Map[String, Any] = eMap.get("Container").get.asInstanceOf[Map[String, Any]]
-              // container = getContainerObj(containerMap)
-              lbuffer += getElementData(containerMap.asInstanceOf[Map[String, String]], "Container")
+              if (eMap.get("Container").get.isInstanceOf[keyMap]) {
+                val containerMap: Map[String, Any] = eMap.get("Container").get.asInstanceOf[Map[String, Any]]
+                lbuffer += getElementData(containerMap.asInstanceOf[Map[String, String]], "Container")
+              } else if (eMap.get("Container").get.isInstanceOf[typList]) {
+                lbuffer ++= getConceptData(eMap.get("Container").get.asInstanceOf[List[String]], "Container")
+              } else if (eMap.get("Container").get.isInstanceOf[String]) {
+                var cntrList: ListBuffer[String] = new ListBuffer[String]()
+                cntrList += eMap.get("Container").get.toString
+                lbuffer ++= getConceptData(cntrList.toList, "Container")
+              }
 
             } else if (eMap.contains("Message")) {
-              val msgMap: Map[String, Any] = eMap.get("Message").get.asInstanceOf[Map[String, Any]]
-              // container = getContainerObj(containerMap)
-              lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Message")
+
+              if (eMap.get("Message").get.isInstanceOf[keyMap]) {
+                val msgMap: Map[String, Any] = eMap.get("Message").get.asInstanceOf[Map[String, Any]]
+                lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Message")
+              } else if (eMap.get("Message").get.isInstanceOf[typList]) {
+                lbuffer ++= getConceptData(eMap.get("Message").get.asInstanceOf[List[String]], "Message")
+              } else if (eMap.get("Message").get.isInstanceOf[String]) {
+                var cntrList: ListBuffer[String] = new ListBuffer[String]()
+                cntrList += eMap.get("Message").get.toString
+                lbuffer ++= getConceptData(cntrList.toList, "Message")
+              }
 
             } else if (eMap.contains("Concepts")) {
-              val msgMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
-              // container = getContainerObj(containerMap)
-              lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Concepts")
+
+              if (eMap.get("Concepts").get.isInstanceOf[keyMap]) {
+                val ccptMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
+                lbuffer += getElementData(ccptMap.asInstanceOf[Map[String, String]], "Concepts")
+              } else if (eMap.get("Concepts").get.isInstanceOf[typList]) {
+                lbuffer ++= getConceptData(eMap.get("Message").get.asInstanceOf[List[String]], "Concepts")
+              } else if (eMap.get("Concepts").get.isInstanceOf[String]) {
+                var cntrList: ListBuffer[String] = new ListBuffer[String]()
+                cntrList += eMap.get("Concepts").get.toString
+                lbuffer ++= getConceptData(cntrList.toList, "Concepts")
+              }
+
+              //val msgMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
+              //lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Concepts")
 
             } else throw new Exception("Either Fields or Container or Message or Concepts  do not exist in " + key + " json")
           }
@@ -1719,7 +1758,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       log.info("Type => " + concept.Type.getOrElse(None));
       log.info("=========>");
     }
-
+    
   }
 
   /*
