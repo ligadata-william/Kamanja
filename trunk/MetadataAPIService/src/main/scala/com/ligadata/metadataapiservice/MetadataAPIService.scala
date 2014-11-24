@@ -14,6 +14,7 @@ class MetadataAPIServiceActor extends Actor with MetadataAPIService {
 }
 
 trait MetadataAPIService extends HttpService {
+
   val metadataAPIRoute =
     pathPrefix("api") {
       (get & path("GetModel" / Segment / Segment / Segment)) { (nameSpace,name,version) =>
