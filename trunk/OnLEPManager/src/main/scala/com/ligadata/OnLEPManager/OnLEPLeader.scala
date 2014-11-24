@@ -41,6 +41,11 @@ object OnLEPLeader {
   private[this] var nodesStatus = scala.collection.mutable.Set[String]() // NodeId
   private[this] var expectedNodesAction: String = _
   private[this] var curParticipents = Set[String]() // Derived from clusterStatus.participants
+  private[this] var canRedistribute = false
+
+  private def SetCanRedistribute(redistFlag: Boolean): Unit = lock.synchronized {
+    canRedistribute = redistFlag
+  }
 
   private def UpdatePartitionsNodeData(eventType: String, eventPath: String, eventPathData: Array[Byte]): Unit = lock.synchronized {
     try {
@@ -66,13 +71,13 @@ object OnLEPLeader {
               zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"distribute\" }".getBytes("UTF8"))
             }
           } else {
+            val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
             // Got different action. May be re-distribute. For now any non-expected action we will redistribute
-            LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s. Redistributing.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action))
-            UpdatePartitionsIfNeededOnLeader(clusterStatus)
+            LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
+            if (canRedistribute)
+              UpdatePartitionsIfNeededOnLeader(clusterStatus)
           }
         }
-        // expectedNodesAction
-
       } else if (eventType.compareToIgnoreCase("CHILD_REMOVED") == 0) {
         // Not expected this. Need to check what is going on
         LOG.error("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s".format(eventType, eventPath, evntPthData))
@@ -208,10 +213,18 @@ object OnLEPLeader {
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-        zkEngineDistributionNodeListener = new ZooKeeperListener
-        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkAdapterStatusNodeListener = new ZooKeeperListener
         zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, false, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkEngineDistributionNodeListener = new ZooKeeperListener
+        zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        try {
+          Thread.sleep(500)
+        } catch {
+          case e: Exception => {
+            // Not doing anything
+          }
+        }
+        SetCanRedistribute(true)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
       } catch {

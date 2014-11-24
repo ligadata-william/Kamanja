@@ -20,6 +20,12 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   private var leaderLatch: LeaderLatch = _
   private val LOG = Logger.getLogger(getClass);
   private var clstStatus: ClusterStatus = _
+  private var isShuttingDown: Boolean = false
+  private[this] val lock = new Object()
+
+  def SetIsShuttingDown(isIt: Boolean) = lock.synchronized {
+    isShuttingDown = isIt
+  }
 
   class ZkLeaderLatchListener extends LeaderLatchListener {
     override def isLeader() {
@@ -34,6 +40,10 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   }
 
   def Shutdown: Unit = {
+    SetIsShuttingDown(true)
+    if (leaderLatch != null)
+      leaderLatch.close
+    leaderLatch = null
     if (curatorFramework != null)
       curatorFramework.close
     curatorFramework = null
@@ -48,6 +58,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
       leaderLatch = new LeaderLatch(curatorFramework, leaderPath, nodeId, LeaderLatch.CloseMode.NOTIFY_LEADER)
 
       leaderLatch.addListener(new ZkLeaderLatchListener)
+
       leaderLatch.start()
 
       // Optional, only if you need notification on cluster changes
@@ -76,9 +87,11 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
     curatorFramework.getChildren.usingWatcher(
       new CuratorWatcher {
         def process(event: WatchedEvent) {
-          updateClusterStatus
-          // Re-set watch
-          curatorFramework.getChildren.usingWatcher(this).inBackground.forPath(leaderPath)
+          if (isShuttingDown == false) {
+            updateClusterStatus
+            // Re-set watch
+            curatorFramework.getChildren.usingWatcher(this).inBackground.forPath(leaderPath)
+          }
         }
       }).inBackground.forPath(leaderPath)
   }

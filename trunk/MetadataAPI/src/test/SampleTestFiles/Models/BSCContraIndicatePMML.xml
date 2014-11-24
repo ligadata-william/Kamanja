@@ -83,7 +83,7 @@
 		  } -->
 		<DerivedField name="AllUniqueHistoryMedicationIdentifiers" dataType="any" optype="categorical">
 			<Apply function="ContainerFieldToSet">
-	       		<FieldRef field="beneficiary.Medications"/>
+	       		<FieldRef field="beneficiary.medications"/>
 	 			<Constant>MedicationIdentofier</Constant> 
 			</Apply>
 		</DerivedField>
@@ -95,7 +95,7 @@
 		  } -->
 		<DerivedField name="CurrentMedicationIdentifier" dataType="string" optype="categorical">
 			<Apply function="ContainerFieldLast">
-	       		<FieldRef field="beneficiary.Medications"/>
+	       		<FieldRef field="beneficiary.medications"/>
 	 			<Constant>MedicationIdentofier</Constant> 
 			</Apply>
 		</DerivedField>
@@ -137,7 +137,7 @@
 			<Apply function="Intersect">
 				<FieldRef field="MedicationIdPairStrings"/>
 				<Apply function="ToSet">
-		       		<FieldRef field="dims.conflictMedCds"/>
+		       		<FieldRef field="dims.conflictmedcds"/>
 				</Apply>
 			</Apply>
 		</DerivedField>

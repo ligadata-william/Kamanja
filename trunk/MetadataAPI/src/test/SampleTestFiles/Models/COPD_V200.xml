@@ -49,7 +49,7 @@ AsthmaPMML.xml
 		<DerivedField name="FortyYrsOrOlder" dataType="boolean" optype="categorical">
 			<Apply function="greaterOrEqual">
 				<Apply function="AgeCalc">
-					<FieldRef field="msg.Bene_Birth_Dt"/>
+					<FieldRef field="msg.bene_birth_dt"/>
 				</Apply>
 				<Constant dataType="integer">40</Constant> 
 			</Apply>
@@ -61,7 +61,7 @@ AsthmaPMML.xml
 		<DerivedField name="hl7InfoThisLastYear" dataType="ArrayOfHL7" optype="categorical">
 			<Apply function="ToArray">
 				<Apply function="ContainerFilter">
-		       		<FieldRef field="msg.HL7Messages"/>
+		       		<FieldRef field="msg.hl7messages"/>
 		 			<Constant dataType="fIdent">Between</Constant> 
 		 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
 		 			<FieldRef field="AYearAgo"/> 
@@ -92,7 +92,7 @@ AsthmaPMML.xml
 		<DerivedField name="inpatientInfoThisLastYear" dataType="ArrayOfInpatientClaim" optype="categorical">
 			<Apply function="ToArray">
 				<Apply function="ContainerFilter">
-		       		<FieldRef field="msg.Inpatient_Claims"/>
+		       		<FieldRef field="msg.inpatient_claims"/>
 		 			<Constant dataType="fIdent">Between</Constant> 
 		 			<Constant dataType="ident">Clm_Thru_Dt</Constant> 
 		 			<FieldRef field="AYearAgo"/> 
@@ -260,7 +260,7 @@ AsthmaPMML.xml
 		<DerivedField name="FamilyHistory" dataType="boolean" optype="categorical">
 			<Apply function="or">
 				<Apply function="equal">
-					<FieldRef field="msg.Sp_Copd"/>
+					<FieldRef field="msg.sp_copd"/>
 					<Constant dataType="integer">1</Constant>
 				</Apply>
 				<Apply function="greaterThan">
