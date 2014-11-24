@@ -268,6 +268,7 @@ class MessageDefImpl {
 
     var fname: String = ""
     try {
+
       if (typ.get.implementationName.isEmpty())
         throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
 
@@ -334,7 +335,7 @@ class MessageDefImpl {
     try {
       arrayType = typ.get.asInstanceOf[ArrayTypeDef]
 
-      if (arrayType == null) throw new Exception("array type do not exist")
+      if (arrayType == null) throw new Exception("Array type "+ f.Ttype + " do not exist")
 
       if ((arrayType.elemDef.physicalName.equals("String")) || (arrayType.elemDef.physicalName.equals("Int")) || (arrayType.elemDef.physicalName.equals("Float")) || (arrayType.elemDef.physicalName.equals("Double")) || (arrayType.elemDef.physicalName.equals("Char"))) {
         if (arrayType.elemDef.implementationName.isEmpty())
@@ -394,8 +395,8 @@ class MessageDefImpl {
 
     try {
       arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
-      if(arrayBufType == null) throw new Exception("Array Byffer of " +f.Name+ " do not exists throwing Null Pointer" )
-      
+      if (arrayBufType == null) throw new Exception("Array Byffer of " + f.Ttype + " do not exists throwing Null Pointer")
+
       argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
       scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
       if (f.ElemType.equals("Container")) {
@@ -445,8 +446,8 @@ class MessageDefImpl {
 
     try {
       var ctrDef: ContainerDef = mdMgr.Container(f.Ttype, ftypeVersion, true).getOrElse(null)
-      if(ctrDef == null) throw new Exception("Container "+ctrDef +" do not exists throwing null pointer")
-      
+      if (ctrDef == null) throw new Exception("Container  " +  f.Ttype+ " do not exists throwing null pointer")
+
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
       assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
@@ -490,8 +491,8 @@ class MessageDefImpl {
 
     try {
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
-      if(msgDef == null) throw new Exception(msgDef +" do ot exists throwing null pointer")
-      
+      if (msgDef == null) throw new Exception(  f.Ttype + " do not exists throwing null pointer")
+
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
       //  assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
@@ -533,11 +534,11 @@ class MessageDefImpl {
     var fname: String = ""
 
     try {
-      
+
       var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).getOrElse(null)
 
-      if(attribute == null) throw new Exception("Attribute "+f.Ttype+" do not exists throwing Null pointer")
-      
+      if (attribute == null) throw new Exception("Attribute " + f.Ttype + " do not exists throwing Null pointer")
+
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
       assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
 
@@ -606,12 +607,12 @@ class MessageDefImpl {
             log.trace("message.Version " + message.Version.replaceAll("[.]", "").toInt)
 
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
-           
+
             if (typ.getOrElse("None").equals("None"))
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
-            if(typ.get.tType == null) throw new Exception("tType in Type do not exists")
-              
+            if (typ.get.tType == null) throw new Exception("tType in Type do not exists")
+
             if (typ.get.tType.toString().equals("tArray")) {
 
               val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8) = handleArrayType(typ, f)
@@ -621,7 +622,7 @@ class MessageDefImpl {
               assignJsondata = assignJsondata.append(arr_3)
               assignXmldata = assignXmldata.append(arr_4)
               list = arr_5
-              argsList =  argsList ::: arr_6
+              argsList = argsList ::: arr_6
               addMsg = addMsg.append(arr_7)
               jarset = jarset ++ arr_8
 
@@ -630,6 +631,10 @@ class MessageDefImpl {
 
               assignCsvdata.append(newline + "//HashMap not handled at this momemt" + newline)
               assignJsondata.append(newline + "//HashMap not handled at this momemt" + newline)
+            } else if (typ.get.tType.toString().equals("tTreeSet")) {
+
+              assignCsvdata.append(newline + "//Tree Set not handled at this momemt" + newline)
+              assignJsondata.append(newline + "//Tree Set not handled at this momemt" + newline)
             } else {
               var paritionkey: String = ""
               if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
@@ -716,7 +721,7 @@ class MessageDefImpl {
 
       }
       // if (message.PartitionKey != null)
-      scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods)
+      scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
@@ -862,15 +867,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  def getsetMethods = {
+  def getsetMethods(msgFixed: String): String = {
 
-    """
+    var getsetters = new StringBuilder(8 * 1024)
+    if (msgFixed.toLowerCase().equals("true")) {
+      getsetters = getsetters.append("""
     override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
     override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
     override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
-    """
-  }
+    """)
+    } else if (msgFixed.toLowerCase().equals("false")) {
 
+      getsetters = getsetters.append("""
+    override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+    override def get(key: String): Any = {       
+    	var value :Any = null
+    	try{
+    		value = fields.get(key)
+    		if(value == null) throw new Exception("Value do not exist fro Key" +key)
+    	}catch {
+    		case e: Exception => {
+        	e.printStackTrace()
+        	throw e
+    		}
+    	}
+    	value
+   }
+    
+    override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+    """)
+
+    }
+    getsetters.toString
+  }
   //input function conversion
   def getDefVal(valType: String): String = {
     valType match {
@@ -1758,7 +1787,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       log.info("Type => " + concept.Type.getOrElse(None));
       log.info("=========>");
     }
-    
+
   }
 
   /*
