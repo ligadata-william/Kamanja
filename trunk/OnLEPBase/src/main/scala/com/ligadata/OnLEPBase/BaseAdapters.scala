@@ -30,7 +30,10 @@ trait InputAdapter {
   val envCtxt: EnvContext // Environment Context
 
   def Category = "Input"
-  def Shutdown(): Unit
+  def Shutdown: Unit
+  def StopProcessing: Unit
+  def StartProcessing(partitionUniqueRecordKeys : Array[String]): Unit
+  def GetAllPartitionUniqueRecordKey: Array[String]
 }
 
 // Output Adapter Object to create Adapter
@@ -44,7 +47,7 @@ trait OutputAdapter {
 
   def send(message: String, partKey: String): Unit
   def send(message: Array[Byte], partKey: Array[Byte]): Unit
-  def Shutdown(): Unit
+  def Shutdown: Unit
   def Category = "Output"
 }
 
