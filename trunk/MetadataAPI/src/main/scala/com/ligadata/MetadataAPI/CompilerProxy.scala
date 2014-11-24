@@ -135,7 +135,8 @@ class CompilerProxy{
 
     /** create the jar */
     val moduleNameJar : String = moduleNamespace + "_" + moduleName + "_" + moduleVersion + ".jar"
-    val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C $compiler_work_dir/$moduleName/ ."
+    val jarPath = compiler_work_dir + "/" + moduleNameJar
+    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.info(s"Jar $moduleNameJar produced.  Its contents:")
     val jarRc : Int = Process(jarCmd).!
@@ -145,7 +146,8 @@ class CompilerProxy{
     }
 		
     /** move the new jar to the target dir where it is to live */
-    val mvCmd : String = s"mv $moduleNameJar $jarTargetDir/"
+    val mvCmd : String = s"mv $jarPath $jarTargetDir/"
+    logger.debug(s"mv cmd used: $mvCmd")
     val mvCmdRc : Int = Process(mvCmd).!
     if (mvCmdRc != 0) {
       logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
