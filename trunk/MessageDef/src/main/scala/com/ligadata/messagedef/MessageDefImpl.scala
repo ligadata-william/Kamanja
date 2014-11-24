@@ -1797,10 +1797,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
 
   }
-
-  /*
-   * get non fixed message object
-   * 
-   */
+ 
 
 }
