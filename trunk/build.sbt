@@ -63,7 +63,7 @@ lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dep
 
 lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient)
 
-lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(MetadataAPI)
+lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(OnLEPBase,MetadataAPI,ZooKeeperLeaderLatch)
 
 lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
