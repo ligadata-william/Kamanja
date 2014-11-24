@@ -52,7 +52,7 @@
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.AlertHistory</Constant>
-			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			    <FieldRef field="msg.ent_acc_num"/>
 			</Apply>
 		</DerivedField>
 
@@ -63,7 +63,7 @@
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.CustomerPreferences</Constant>
-			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			    <FieldRef field="msg.ent_acc_num"/>
 			</Apply>
 		</DerivedField>
 
@@ -74,7 +74,7 @@
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.TukTier</Constant>
-			    <FieldRef field="ClientPrefs.RISK_TIER_ID"/>
+			    <FieldRef field="ClientPrefs.risk_tier_id"/>
 			</Apply>
 		</DerivedField>
 
@@ -134,8 +134,8 @@
 		-->
 		<DerivedField name="PreviousBalance" dataType="double" optype="continuous">
 			<Apply function="-">
-				<FieldRef field="msg.RUN_LDG_XAU"/>
-				<FieldRef field="msg.ENT_AMT"/>
+				<FieldRef field="msg.run_ldg_xau"/>
+				<FieldRef field="msg.ent_amt"/>
 			</Apply>
 		</DerivedField>
 
@@ -149,19 +149,19 @@
 			<Apply function="and">
 				<Apply function="Put">  
 					<Constant dataType="string">RUN_LDG_XAU</Constant>
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 				</Apply>
 				<Apply function="Put">  
 					<Constant dataType="string">ACCT_SHORT_NM</Constant>
-					<FieldRef field="ClientPrefs.ACCT_SHORT_NM"/>
+					<FieldRef field="ClientPrefs.acct_short_nm"/>
 				</Apply>
 				<Apply function="Put">  
 					<Constant dataType="string">ENT_DTE</Constant>
-					<FieldRef field="msg.ENT_DTE"/>
+					<FieldRef field="msg.ent_dte"/>
 				</Apply>
 				<Apply function="Put">  
 					<Constant dataType="string">MOBILE_NUMBER</Constant>
-					<FieldRef field="ClientPrefs.MOBILE_NUMBER"/>
+					<FieldRef field="ClientPrefs.mobile_number"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -173,7 +173,7 @@
 			<Apply function="Put">
 			    <FieldRef field="gCtx"/>
 			    <Constant dataType="string">AlertHistory</Constant>
-			    <FieldRef field="msg.ENT_ACC_NUM"/>
+			    <FieldRef field="msg.ent_acc_num"/>
 				<FieldRef field="ClientAlertsToday"/>
 			</Apply>
 		</DerivedField>
@@ -184,13 +184,13 @@
 		-->
 		<DerivedField name="SumOfAlertsSeenToday" dataType="integer" optype="continuous">
 			<Apply function="+">
-				<FieldRef field="ClientAlertsToday.LB001Sent"/>
-				<FieldRef field="ClientAlertsToday.OD001Sent"/>
-				<FieldRef field="ClientAlertsToday.OD002Sent"/>
-				<FieldRef field="ClientAlertsToday.OD003Sent"/>
-				<FieldRef field="ClientAlertsToday.NO001Sent"/>
-				<FieldRef field="ClientAlertsToday.EB001Sent"/>
-				<FieldRef field="ClientAlertsToday.EB002Sent"/>
+				<FieldRef field="ClientAlertsToday.lb001sent"/>
+				<FieldRef field="ClientAlertsToday.od001sent"/>
+				<FieldRef field="ClientAlertsToday.od002sent"/>
+				<FieldRef field="ClientAlertsToday.od003sent"/>
+				<FieldRef field="ClientAlertsToday.no001sent"/>
+				<FieldRef field="ClientAlertsToday.eb001sent"/>
+				<FieldRef field="ClientAlertsToday.eb002sent"/>
 			</Apply>
 		</DerivedField>
 
@@ -207,10 +207,10 @@
 			<Apply function="not">
 				<Apply function="Between">
 					<Apply function="CompressedTimeHHMMSSCC2Secs">
-						<FieldRef field="msg.ENT_TME"/>
+						<FieldRef field="msg.ent_tme"/>
 					</Apply>
-					<FieldRef field="EBAlertParms.ONLINE_START_TIME"/>
-					<FieldRef field="EBAlertParms.ONLINE_END_TIME"/>
+					<FieldRef field="EBAlertParms.online_start_time"/>
+					<FieldRef field="EBAlertParms.online_end_time"/>
 					<Constant dataType="boolean">true</Constant>
 				</Apply>
 			</Apply>
@@ -224,8 +224,8 @@
 		<DerivedField name="EBAlertType" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="greaterOrEqual">
-					<FieldRef field="ClientPrefs.MAX_EB_CNT"/>
-					<FieldRef field="ClientTierLimits.T6_MAX_PER_PERIOD_CNT"/>
+					<FieldRef field="ClientPrefs.max_eb_cnt"/>
+					<FieldRef field="ClientTierLimits.t6_max_per_period_cnt"/>
 				</Apply>
 				<Apply function="Put">  <!-- Set AlertType -->
 					<Constant dataType="string">AlertType</Constant>
@@ -246,15 +246,15 @@
 				<Apply function="or">
 					<Apply function="greaterOrEqual">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
 						</Apply>
-						<FieldRef field="EBAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="EBAlertParms.max_alerts_per_day"/>
 					</Apply>
 					<Apply function="greaterThan">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
@@ -267,7 +267,7 @@
 		-->
 		<DerivedField name="AcctHasEBLimit" dataType="boolean" optype="categorical">
 			<Apply function="lessThan">
-				<FieldRef field="msg.ANT_LMT"/>
+				<FieldRef field="msg.ant_lmt"/>
 				<Constant dataType="double">0</Constant>
 			</Apply>
 		</DerivedField>
@@ -278,18 +278,18 @@
 		<DerivedField name="InEmergencyBorrowRange" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.ANT_LMT"/>
-						<FieldRef field="msg.UNP_BUFF"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.ant_lmt"/>
+						<FieldRef field="msg.unp_buff"/>
 					</Apply>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -303,15 +303,15 @@
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -328,7 +328,7 @@
 				</Apply>
 
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.EB001Sent"/>
+					<FieldRef field="ClientAlertsToday.eb001sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<Constant dataType="boolean">false</Constant> 
@@ -347,7 +347,7 @@
 				</Apply>
 
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.EB002Sent"/>
+					<FieldRef field="ClientAlertsToday.eb002sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<Constant dataType="boolean">false</Constant> 
@@ -454,13 +454,13 @@
 		-->
 		<DerivedField name="NearOverdraftLimit" dataType="double" optype="continuous">
 			<Apply function="-">
-				<FieldRef field="msg.ODR_LMT"/>
+				<FieldRef field="msg.odr_lmt"/>
 				<Apply function="-">
-					<FieldRef field="msg.ODR_LMT"/>
+					<FieldRef field="msg.odr_lmt"/>
 					<Apply function="*">
-						<FieldRef field="msg.ODR_LMT"/>
+						<FieldRef field="msg.odr_lmt"/>
 						<Apply function="/">
-							<FieldRef field="ClientPrefs.NO_FACTOR"/>
+							<FieldRef field="ClientPrefs.no_factor"/>
 							<Constant dataType="double">100</Constant>
 						</Apply>
 					</Apply>
@@ -474,14 +474,14 @@
 		<DerivedField name="InNearOverdraftRange" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<FieldRef field="NearOverdraftLimit"/>
 				</Apply>
 				<Apply function="greaterThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -494,10 +494,10 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<FieldRef field="NearOverdraftLimit"/>
 				</Apply>
 			</Apply>
@@ -509,10 +509,10 @@
 			<Apply function="not">
 				<Apply function="Between">
 					<Apply function="CompressedTimeHHMMSSCC2Secs">
-						<FieldRef field="msg.ENT_TME"/>
+						<FieldRef field="msg.ent_tme"/>
 					</Apply>
-					<FieldRef field="NOAlertParms.ONLINE_START_TIME"/>
-					<FieldRef field="NOAlertParms.ONLINE_END_TIME"/>
+					<FieldRef field="NOAlertParms.online_start_time"/>
+					<FieldRef field="NOAlertParms.online_end_time"/>
 					<Constant dataType="boolean">true</Constant>
 				</Apply>
 			</Apply>
@@ -548,16 +548,16 @@
 				<Apply function="or">
 					<Apply function="greaterThan">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual">
-						<FieldRef field="ClientAlertsToday.NO001Sent"/>
-						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="ClientAlertsToday.no001sent"/>
+						<FieldRef field="ODAlertParms.max_alerts_per_day"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -593,7 +593,7 @@
 					<Constant dataType="string">NO1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.NO001Sent"/>
+					<FieldRef field="ClientAlertsToday.no001sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 
@@ -631,7 +631,7 @@
 		-->
 		<DerivedField name="AcctHasODLimit" dataType="boolean" optype="categorical">
 			<Apply function="greaterThan">
-				<FieldRef field="msg.ODR_LMT"/>
+				<FieldRef field="msg.odr_lmt"/>
 				<Constant dataType="double">0</Constant>
 			</Apply>
 		</DerivedField>
@@ -642,14 +642,14 @@
 		<DerivedField name="InOD3Range" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t2_end_amt"/>
 				</Apply>
 				<Apply function="greaterThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -662,11 +662,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
+					<FieldRef field="ClientTierLimits.t2_end_amt"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t2_end_amt"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -677,12 +677,12 @@
 		<DerivedField name="InOD2Range" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T2_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t2_end_amt"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t1_end_amt"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -694,11 +694,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
+					<FieldRef field="ClientTierLimits.t1_end_amt"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t1_end_amt"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -709,19 +709,19 @@
 		<DerivedField name="InOD1Range" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
+					<FieldRef field="msg.run_ldg_xau"/>
 					<Apply function="+">
-						<FieldRef field="msg.ODR_LMT"/>
-						<FieldRef field="msg.EB_BUFFER"/>
+						<FieldRef field="msg.odr_lmt"/>
+						<FieldRef field="msg.eb_buffer"/>
 					</Apply>
 				</Apply>
 				<Apply function="greaterOrEqual">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="ClientTierLimits.T1_END_AMT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="ClientTierLimits.t1_end_amt"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="msg.OD_BUFFER"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="msg.od_buffer"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -733,11 +733,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="msg.OD_BUFFER"/>
+					<FieldRef field="msg.od_buffer"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="msg.OD_BUFFER"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="msg.od_buffer"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -750,10 +750,10 @@
 				<Apply function="not">
 					<Apply function="Between">
 						<Apply function="CompressedTimeHHMMSSCC2Secs">
-							<FieldRef field="msg.ENT_TME"/>
+							<FieldRef field="msg.ent_tme"/>
 						</Apply>
-						<FieldRef field="ODAlertParms.ONLINE_START_TIME"/>
-						<FieldRef field="ODAlertParms.ONLINE_END_TIME"/>
+						<FieldRef field="ODAlertParms.online_start_time"/>
+						<FieldRef field="ODAlertParms.online_end_time"/>
 						<Constant dataType="boolean">true</Constant>
 					</Apply>
 				</Apply>
@@ -789,17 +789,17 @@
 				<Apply function="or">
 					<Apply function="greaterThan">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
+							<FieldRef field="ClientAlertsToday.no001sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual">
-						<FieldRef field="ClientAlertsToday.OD003Sent"/>
-						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="ClientAlertsToday.od003sent"/>
+						<FieldRef field="ODAlertParms.max_alerts_per_day"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -813,18 +813,18 @@
 				<Apply function="or">
 					<Apply function="greaterThan">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD003Sent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
+							<FieldRef field="ClientAlertsToday.no001sent"/>
+							<FieldRef field="ClientAlertsToday.od003sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual">
-						<FieldRef field="ClientAlertsToday.OD002Sent"/>
-						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="ClientAlertsToday.od002sent"/>
+						<FieldRef field="ODAlertParms.max_alerts_per_day"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -838,19 +838,19 @@
 				<Apply function="or">
 					<Apply function="greaterThan">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD003Sent"/>
-							<FieldRef field="ClientAlertsToday.OD002Sent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
+							<FieldRef field="ClientAlertsToday.no001sent"/>
+							<FieldRef field="ClientAlertsToday.od003sent"/>
+							<FieldRef field="ClientAlertsToday.od002sent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual">
-						<FieldRef field="ClientAlertsToday.OD001Sent"/>
-						<FieldRef field="ODAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="ClientAlertsToday.od001sent"/>
+						<FieldRef field="ODAlertParms.max_alerts_per_day"/>
 					</Apply>
 				</Apply>
 			</Apply>
@@ -922,7 +922,7 @@
 					<Constant dataType="string">OD3</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.OD003Sent"/>
+					<FieldRef field="ClientAlertsToday.od003sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<FieldRef field="AlertHistoryUpdate"/>
@@ -959,7 +959,7 @@
 					<Constant dataType="string">OD2</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.OD002Sent"/>
+					<FieldRef field="ClientAlertsToday.od002sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<FieldRef field="AlertHistoryUpdate"/>
@@ -996,7 +996,7 @@
 					<Constant dataType="string">OD1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.OD001Sent"/>
+					<FieldRef field="ClientAlertsToday.od001sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<FieldRef field="AlertHistoryUpdate"/>
@@ -1033,7 +1033,7 @@
 		-->
 		<DerivedField name="AcctHasLBLimit" dataType="boolean" optype="categorical">
 			<Apply function="greaterThan">
-				<FieldRef field="ClientPrefs.LB_LIMIT"/>
+				<FieldRef field="ClientPrefs.lb_limit"/>
 				<Constant dataType="double">0</Constant>
 			</Apply>
 		</DerivedField>
@@ -1044,12 +1044,12 @@
 		<DerivedField name="InLowBalanceRange" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="msg.LB_LIMIT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="msg.lb_limit"/>
 				</Apply>
 				<Apply function="greaterOrEqual">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="msg.OD_BUFFER"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="msg.od_buffer"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -1061,11 +1061,11 @@
 			<Apply function="and">
 				<Apply function="greaterOrEqual">
 					<FieldRef field="PreviousBalance"/>
-					<FieldRef field="msg.LB_LIMIT"/>
+					<FieldRef field="msg.lb_limit"/>
 				</Apply>
 				<Apply function="lessThan">
-					<FieldRef field="msg.RUN_LDG_XAU"/>
-					<FieldRef field="msg.LB_LIMIT"/>
+					<FieldRef field="msg.run_ldg_xau"/>
+					<FieldRef field="msg.lb_limit"/>
 				</Apply>
 			</Apply>
 		</DerivedField>
@@ -1078,10 +1078,10 @@
 				<Apply function="not">
 					<Apply function="Between">
 						<Apply function="CompressedTimeHHMMSSCC2Secs">
-							<FieldRef field="msg.ENT_TME"/>
+							<FieldRef field="msg.ent_tme"/>
 						</Apply>
-						<FieldRef field="LBAlertParms.ONLINE_START_TIME"/>
-						<FieldRef field="LBAlertParms.ONLINE_END_TIME"/>
+						<FieldRef field="LBAlertParms.online_start_time"/>
+						<FieldRef field="LBAlertParms.online_end_time"/>
 						<Constant dataType="boolean">true</Constant>
 					</Apply>
 				</Apply>
@@ -1117,20 +1117,20 @@
 				<Apply function="or">
 					<Apply function="greaterOrEqual">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.EB001Sent"/>
-							<FieldRef field="ClientAlertsToday.EB002Sent"/>
-							<FieldRef field="ClientAlertsToday.NO001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD001Sent"/>
-							<FieldRef field="ClientAlertsToday.OD002Sent"/>
-							<FieldRef field="ClientAlertsToday.OD003Sent"/>
-							<FieldRef field="ClientAlertsToday.LB001Sent"/>
+							<FieldRef field="ClientAlertsToday.eb001sent"/>
+							<FieldRef field="ClientAlertsToday.eb002sent"/>
+							<FieldRef field="ClientAlertsToday.no001sent"/>
+							<FieldRef field="ClientAlertsToday.od001sent"/>
+							<FieldRef field="ClientAlertsToday.od002sent"/>
+							<FieldRef field="ClientAlertsToday.od003sent"/>
+							<FieldRef field="ClientAlertsToday.lb001sent"/>
 						</Apply>
-						<FieldRef field="LBAlertParms.MAX_ALERTS_PER_DAY"/>
+						<FieldRef field="LBAlertParms.max_alerts_per_day"/>
 					</Apply>
 					<Apply function="greaterOrEqual">
 						<Apply function="+">
-							<FieldRef field="ClientAlertsToday.UTFSent"/>
-							<FieldRef field="ClientAlertsToday.PTFSent"/>
+							<FieldRef field="ClientAlertsToday.utfsent"/>
+							<FieldRef field="ClientAlertsToday.ptfsent"/>
 						</Apply>
 						<Constant dataType="integer">0</Constant>
 					</Apply>
@@ -1185,7 +1185,7 @@
 					<Constant dataType="string">LB1</Constant> 
 				</Apply>
 				<Apply function="incrementBy">
-					<FieldRef field="ClientAlertsToday.LB001Sent"/>
+					<FieldRef field="ClientAlertsToday.lb001sent"/>
 					<Constant dataType="integer">1</Constant> 
 				</Apply>
 				<FieldRef field="AlertHistoryUpdate"/>
