@@ -6,6 +6,15 @@ import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.util.Bytes
 
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
+import org.apache.hadoop.conf.Configuration;
+
+import org.apache.hadoop.hbase._
+
 import java.nio.ByteBuffer
 import java.io.IOException
 
@@ -48,7 +57,20 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	config.set("hbase.zookeeper.quorum", hostnames);
 
 	var connection = HConnectionManager.createConnection(config);
+	createTable(table)
 	var tableHBase = connection.getTable(table);
+
+        def createTable(tableName:String) : Unit = {
+	  val  admin = new HBaseAdmin(config);
+	  if (! admin.tableExists(tableName)) {
+	    val  tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
+	    val  colDesc1 =  new HColumnDescriptor("key".getBytes())
+	    val  colDesc2 =  new HColumnDescriptor("value".getBytes())
+	    tableDesc.addFamily(colDesc1)
+	    tableDesc.addFamily(colDesc2)
+	    admin.createTable(tableDesc);
+	  }
+	}
 
 	def add(source: IStorage) =
 	{
@@ -84,6 +106,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 
 	def get(key: Key, handler : (Value) => Unit) =
 	{
+	  try{
 		var p = new Get(key.toArray[Byte])
 
 		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
@@ -97,10 +120,16 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 			value+=b
 
 		handler(value)
+	  } catch {
+	    case e:Exception => {
+	      throw new KeyNotFoundException(e.getMessage())
+	    }
+	  }
 	}
 	
 	def get(key: Key, target: IStorage)  =
 	{
+	  try{
 		var p = new Get(key.toArray[Byte])
 
 		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
@@ -114,6 +143,11 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 			value+=b
 
 		target.Construct(key, value)
+	  } catch {
+	    case e:Exception => {
+	      throw new KeyNotFoundException(e.getMessage())
+	    }
+	  }
 	}
 
 	def del(key: Key) =
