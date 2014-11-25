@@ -747,9 +747,9 @@ class MessageDefImpl {
   }
 
   private def getKeysStr(keysStr: String) = {
-    """ var keys = Array(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
+"""    var keys = Array(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
       """
-	 var fields: Map[String, Any] = new HashMap[String, Any];
+	var fields: Map[String, Any] = new HashMap[String, Any];
  """
   }
 
@@ -1229,7 +1229,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
   private def getFields = {
     """
-    var fields: Map[String, Any] = new HashMap[String, Any];
+   var fields: Map[String, Any] = new HashMap[String, Any];
     """
   }
 
