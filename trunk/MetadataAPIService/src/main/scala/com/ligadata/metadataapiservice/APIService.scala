@@ -47,6 +47,7 @@ class APIService {
   }
 
   private def Shutdown(exitCode: Int): Unit = {
+    MetadataAPIServiceLeader.Shutdown
     if( databaseOpen ){
       MetadataAPIImpl.CloseDbStore
       databaseOpen = false;
@@ -112,6 +113,10 @@ class APIService {
 
       // start a new HTTP server on port 8080 with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
+
+      logger.trace("Started the service")
+
+      Thread.sleep(365*24*60*60*1000L)
 
 
     } catch {
