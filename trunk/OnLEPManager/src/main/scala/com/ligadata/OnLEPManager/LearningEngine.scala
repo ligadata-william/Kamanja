@@ -107,7 +107,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           // LOG.info("Found Invalid Message:" + msgData)
         }
       } catch {
-        case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Error: " + e.getMessage /* + "\n Trace:\n" + e.printStackTrace() */ ) }
+        case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage /* + "\n Trace:\n" + e.printStackTrace() */ ) }
       }
     })
 
@@ -158,7 +158,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         }
       }
     } catch {
-      case e: Exception => LOG.error("Failed to create and run message. Error:" + e.getMessage)
+      case e: Exception => LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
     }
 
     cntr += 1

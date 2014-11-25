@@ -115,7 +115,7 @@ class OnLEPMetadata {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate message object:" + clsName + ". Message:" + e.getMessage())
+          LOG.error("Failed to instantiate message object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage())
         }
       }
     } else {
@@ -160,7 +160,7 @@ class OnLEPMetadata {
           } else
             LOG.error("Failed to instantiate container object :" + clsName)
         } catch {
-          case e: Exception => LOG.error("Failed to instantiate container object:" + clsName + ". Message:" + e.getMessage())
+          case e: Exception => LOG.error("Failed to instantiate container object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage())
         }
       }
 */
@@ -218,7 +218,7 @@ class OnLEPMetadata {
           LOG.info("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate model object:" + clsName + ". Message:" + e.getMessage)
+        case e: Exception => LOG.error("Failed to instantiate model object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage)
       }
     } else {
       LOG.error("Failed to instantiate model object :" + clsName)
@@ -452,7 +452,7 @@ object OnLEPMetadata {
       UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to load messages, containers & models from metadata manager. Message:" + e.getMessage)
+        LOG.error("Failed to load messages, containers & models from metadata manager. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         throw e
       }
     }
@@ -464,7 +464,7 @@ object OnLEPMetadata {
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       } catch {
         case e: Exception => {
-          LOG.error("Failed to initialize ZooKeeper Connection." + e.getMessage)
+          LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
           throw e
         }
       }

@@ -37,7 +37,7 @@ object OnLEPLeader {
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
-  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[String]]() // Nodeid & Unique Keys
+  private[this] var distributionMap = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ArrayBuffer[String]]]() // Nodeid & Unique Keys (adapter unique name & unique key)
   private[this] var nodesStatus = scala.collection.mutable.Set[String]() // NodeId
   private[this] var expectedNodesAction: String = _
   private[this] var curParticipents = Set[String]() // Derived from clusterStatus.participants
@@ -69,9 +69,14 @@ object OnLEPLeader {
             if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
               nodesStatus.clear
               expectedNodesAction = "distributed"
-              // Set STOP Action on engineDistributionZkNodePath
-              // BUGBUG:: Send all Unique keys to corresponding nodes 
-              zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"distribute\" }".getBytes("UTF8"))
+
+              // Set DISTRIBUTE Action on engineDistributionZkNodePath
+              // Send all Unique keys to corresponding nodes 
+              val distribute =
+                ("action" -> "distribute") ~
+                  ("distributionmap" -> distributionMap)
+              val sendJson = compact(render(distribute))
+              zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
             }
           } else {
             val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
@@ -103,30 +108,43 @@ object OnLEPLeader {
     expectedNodesAction = ""
     curParticipents = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
 
-    var tmpDistMap = ArrayBuffer[(String, ArrayBuffer[String])]()
+    var tmpDistMap = ArrayBuffer[(String, scala.collection.mutable.Map[String, ArrayBuffer[String]])]()
 
     if (cs.participants != null) {
       // Create ArrayBuffer for each node participating at this moment
       cs.participants.foreach(p => {
-        tmpDistMap += ((p, new ArrayBuffer[String]))
+        tmpDistMap += ((p, scala.collection.mutable.Map[String, ArrayBuffer[String]]()))
       })
 
-      val allPartitionUniqueRecordKeys = ArrayBuffer[String]()
+      val allPartitionUniqueRecordKeys = ArrayBuffer[(String, String)]()
 
-      // BUGBUG:: Get all PartitionUniqueRecordKey for all Input Adapters
+      // Get all PartitionUniqueRecordKey for all Input Adapters
       inputAdapters.foreach(ia => {
         val uk = ia.GetAllPartitionUniqueRecordKey
+        val name = ia.UniqueName
         if (uk != null && uk.size > 0) {
-          allPartitionUniqueRecordKeys ++= uk
+          allPartitionUniqueRecordKeys ++= uk.map(k => {
+            LOG.info("Unique Key in %s => %s".format(name, k))
+            (name, k)
+          })
         }
       })
 
       // Update New partitions for all nodes and Set the text
       var cntr: Int = 0
       val totalParticipents: Int = cs.participants.size
-      if (allPartitionUniqueRecordKeys != null) {
+      if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
+        LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
         allPartitionUniqueRecordKeys.foreach(k => {
-          tmpDistMap(cntr % totalParticipents)._2 += k
+          // tmpDistMap(cntr % totalParticipents)._2 += k
+          val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
+          if (af == null) {
+            val af1 = new ArrayBuffer[String]
+            af1 += k._2
+            tmpDistMap(cntr % totalParticipents)._2(k._1) = af1
+          } else {
+            af += k._2
+          }
           cntr += 1
         })
       }
@@ -138,7 +156,9 @@ object OnLEPLeader {
 
     expectedNodesAction = "stopped"
     // Set STOP Action on engineDistributionZkNodePath
-    zkcForSetData.setData().forPath(engineDistributionZkNodePath, "{ \"action\": \"stop\" }".getBytes("UTF8"))
+    val act = ("action" -> "stop")
+    val sendJson = compact(render(act))
+    zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
   }
 
   // Here Leader can change or Participants can change
@@ -152,8 +172,67 @@ object OnLEPLeader {
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
   }
 
+  private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String): Boolean = {
+    if (nodeKeysMap == null) return false
+    inputAdapters.foreach(ia => {
+      val name = ia.UniqueName
+      try {
+        val uniqKeysForAdap = nodeKeysMap.getOrElse(name, null)
+        if (uniqKeysForAdap != null) {
+          val uAK = uniqKeysForAdap.asInstanceOf[List[String]]
+          LOG.info("On Node %s for Adapter %s UniqueKeys %s".format(nodeId, name, uAK.mkString(",")))
+          ia.StartProcessing(uAK.toArray)
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to print final Unique Keys. JsonString:" + receivedJsonStr)
+        }
+      }
+    })
+
+    return true
+  }
+
+  private def StartUniqueKeysForNode(uniqueKeysForNode: Any, receivedJsonStr: String): Boolean = {
+    if (uniqueKeysForNode == null) return false
+    try {
+      uniqueKeysForNode match {
+        case m: Map[_, _] => {
+          return StartNodeKeysMap(m.asInstanceOf[Map[String, Any]], receivedJsonStr)
+        }
+        case l: List[Any] => {
+          val data = l.asInstanceOf[List[Any]]
+          data.foreach(d => {
+            d match {
+              case m1: Map[_, _] => {
+                val rv = StartNodeKeysMap(m1.asInstanceOf[Map[String, Any]], receivedJsonStr)
+                if (rv == false) return false
+              }
+              case _ => {
+                LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
+                return false
+              }
+            }
+          })
+          return true
+        }
+        case _ => {
+          LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
+          return false
+        }
+      }
+
+      return true
+    } catch {
+      case e: Exception => {
+        LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+      }
+    }
+    return false
+  }
+
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
-    if (receivedJsonStr == null || receivedJsonStr.size == 0) {
+    if (receivedJsonStr == null || receivedJsonStr.size == 0 || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0) {
       // nothing to do
       return
     }
@@ -170,25 +249,80 @@ object OnLEPLeader {
 
       action match {
         case "stop" => {
-          // BUGBUG:: STOP all Input Adapters on local node
+          // STOP all Input Adapters on local node
           inputAdapters.foreach(ia => {
             ia.StopProcessing
           })
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-          zkcForSetData.setData().forPath(adaptrStatusPathForNode, "{ \"action\": \"stopped\" }".getBytes("UTF8"))
+          val act = ("action" -> "stopped")
+          val sendJson = compact(render(act))
+          zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
         }
         case "distribute" => {
-          // get Unique Keys for this nodeId
-          val uniqueKeysForNode = values.getOrElse(nodeId, null)
-          if (uniqueKeysForNode != null) {
-            // BUGBUG:: START all Input Adapters on local node from uniqueKeysForNode (new distribution map) 
+          var distributed = true
+          try {
+            // get Unique Keys for this nodeId
+            // Distribution Map 
+            val distributionMap = values.getOrElse("distributionmap", null)
+            if (distributionMap != null) {
+              distributionMap match {
+                case m: Map[_, _] => {
+                  val data = m.asInstanceOf[Map[String, Any]]
+                  distributed = StartUniqueKeysForNode(data.getOrElse(nodeId, null), receivedJsonStr)
+                }
+                case l: List[Any] => {
+                  val data = l.asInstanceOf[List[Any]]
+                  data.foreach(d => {
+                    d match {
+                      case m1: Map[_, _] => {
+                        val data1 = m1.asInstanceOf[Map[String, Any]]
+                        distributed = distributed && StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr)
+                      }
+                      case _ => {
+                        LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
+                        distributed = false
+                      }
+                    }
+                  })
+                }
+                case _ => {
+                  LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
+                  distributed = false
+                }
+              }
+            }
+
+          } catch {
+            case e: Exception => {
+              LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+              distributed = false
+            }
           }
 
-          // Set DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-          zkcForSetData.setData().forPath(adaptrStatusPathForNode, "{ \"action\": \"distributed\" }".getBytes("UTF8"))
+          var sentDistributed = false
+          if (distributed) {
+            try {
+              // Set DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
+              val act = ("action" -> "distributed")
+              val sendJson = compact(render(act))
+              zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+              sentDistributed = true
+            } catch {
+              case e: Exception => {
+                LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+              }
+            }
+          }
+
+          if (sentDistributed == false) {
+            // Set RE-DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
+            val act = ("action" -> "re-distribute")
+            val sendJson = compact(render(act))
+            zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+          }
         }
         case _ => {
           LOG.info("No action performed, because of invalid action %s in json %s".format(action, receivedJsonStr))
@@ -245,7 +379,7 @@ object OnLEPLeader {
         zkLeaderLatch.SelectLeader
       } catch {
         case e: Exception => {
-          LOG.error("Failed to initialize ZooKeeper Connection." + e.getMessage)
+          LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
           throw e
         }
       }
