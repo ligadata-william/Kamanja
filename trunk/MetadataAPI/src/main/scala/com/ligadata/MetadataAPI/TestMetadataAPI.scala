@@ -1,7 +1,7 @@
 package com.ligadata.MetadataAPI
 
 import org.scalatest.Assertions._
-
+import scala.collection.mutable.{ArrayBuffer}
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadataload.MetadataLoad
@@ -879,44 +879,67 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-	logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+		dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+		logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
-	logger.fatal("Invalid Directory " + dirName)
-	return
+		logger.fatal("Invalid Directory " + dirName)
+		return
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-	logger.fatal("No json container files in the directory " + dirName)
-	return
+		logger.fatal("No json container files in the directory " + dirName)
+		return
       }
 
-      println("\nPick a Container Definition file from below choices\n")
+      println("\nPick a Container Definition file(s) from below choices\n")
 
       var seq = 0
       contFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
       seq += 1
       println("[" + seq + "] Main Menu")
 
-      print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr:String = readLine()
 
-      if( choice == contFiles.length + 1){
-	return
+      var valid : Boolean = true
+      var choices : List [Int] = List[Int]()
+      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
+      try {
+    	  choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _:Throwable => valid = false
       }
-      if( choice < 1 || choice > contFiles.length + 1 ){
-	logger.fatal("Invalid Choice : " + choice)
-	return
+      
+      if (valid) {
+    	  choices.foreach(choice => {
+		       if( choice == contFiles.length + 1){
+		    	   return
+		       }
+		       if( choice < 1 || choice > contFiles.length + 1 ){
+					logger.fatal("Invalid Choice : " + choice)
+					return
+		       }
+  		  
+		       val contDefFile = contFiles(choice-1).toString
+    		   logger.setLevel(Level.TRACE);
+		       val contStr = Source.fromFile(contDefFile).mkString
+    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		   val res : String = MetadataAPIImpl.AddContainer(contStr,"JSON")
+    		   results += Tuple3(choice.toString, contDefFile, res)
+    	  })
+      } else {
+          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          return
       }
+      
+      results.foreach(triple => {
+    	  val (choice,filePath,result) : (String,String,String) = triple
+    	  println(s"Results for container [$choice] $filePath => \n$result")
+      })
 
-      val contDefFile = contFiles(choice-1).toString
-
-      logger.setLevel(Level.TRACE);
-      val contStr = Source.fromFile(contDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddContainer(contStr,"JSON"))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Container Already in the metadata...." + e.getMessage())
@@ -936,11 +959,11 @@ object TestMetadataAPI{
   def AddMessage{
     try{
 
-      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
-      if ( dirName == null  ){
+	  var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
+	  if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
 	logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
-      }
+	  }
 
       if ( ! IsValidDir(dirName) ){
 	logger.fatal("Invalid Directory " + dirName)
@@ -952,30 +975,54 @@ object TestMetadataAPI{
 	logger.fatal("No json message files in the directory " + dirName)
 	return
       }
-      println("\nPick a Message Definition file from below choices\n")
+      println("\nPick a Message Definition file(s) from below choices\n")
 
       var seq = 0
       msgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
       seq += 1
       println("[" + seq + "] Main Menu")
 
-      print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr:String = readLine()
 
-      if( choice == msgFiles.length + 1){
-	return
+      var valid : Boolean = true
+      var choices : List [Int] = List[Int]()
+      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
+      try {
+    	  choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _:Throwable => valid = false
       }
-      if( choice < 1 || choice > msgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
-	  return
+      
+      if (valid) {
+
+    	  choices.foreach(choice => {
+		       if( choice == msgFiles.length + 1){
+		    	   return
+		       }
+		       if( choice < 1 || choice > msgFiles.length + 1 ){
+					logger.fatal("Invalid Choice : " + choice)
+					return
+		       }
+  		  
+		       val msgDefFile = msgFiles(choice-1).toString
+    		   logger.setLevel(Level.TRACE);
+		       val msgStr = Source.fromFile(msgDefFile).mkString
+    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		   val res : String = MetadataAPIImpl.AddContainer(msgStr,"JSON")
+    		   results += Tuple3(choice.toString, msgDefFile, res)
+    	  })
+      } else {
+          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          return
       }
-
-      val msgDefFile = msgFiles(choice-1).toString
-
-      logger.setLevel(Level.TRACE);
-      val msgStr = Source.fromFile(msgDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddMessage(msgStr,"JSON"))
+      
+      results.foreach(triple => {
+    	  val (choice,filePath,result) : (String,String,String) = triple
+    	  println(s"Results for message [$choice] $filePath => \n$result")
+      })
+      
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Message Already in the metadata....")
