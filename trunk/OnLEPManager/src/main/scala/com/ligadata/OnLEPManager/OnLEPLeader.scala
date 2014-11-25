@@ -171,6 +171,10 @@ object OnLEPLeader {
     val isLeader = if (cs.isLeader) "true" else "false"
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
   }
+  
+  private def GetUniqueKeyValue(uk: String) : String = {
+    null
+  }
 
   private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String): Boolean = {
     if (nodeKeysMap == null) return false
@@ -180,8 +184,9 @@ object OnLEPLeader {
         val uniqKeysForAdap = nodeKeysMap.getOrElse(name, null)
         if (uniqKeysForAdap != null) {
           val uAK = uniqKeysForAdap.asInstanceOf[List[String]]
-          LOG.info("On Node %s for Adapter %s UniqueKeys %s".format(nodeId, name, uAK.mkString(",")))
-          ia.StartProcessing(uAK.toArray)
+          val uKV = uAK.map(uk => { GetUniqueKeyValue(uk) })
+          LOG.info("On Node %s for Adapter %s UniqueKeys %s, UniqueValues %s".format(nodeId, name, uAK.mkString(","), uKV.mkString(",")))
+          ia.StartProcessing(uAK.toArray, uKV.toArray)
         }
       } catch {
         case e: Exception => {
