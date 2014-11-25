@@ -44,7 +44,7 @@ object APIInit {
       // start Leader detection component
       val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
       val zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("API_LEADER_SELECTION_ZK_NODE")
-      val zkConnStr  = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
+      val zkConnStr  = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING") + "/metadataleader"
       val sesTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_SESSION_TIMEOUT_MS").toInt
       val conTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_CONNECTION_TIMEOUT_MS").toInt
 
@@ -56,5 +56,3 @@ object APIInit {
     }
   }
 }
- 
-
