@@ -84,19 +84,9 @@ class APIService {
 	return
       }
 
-      
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile.toString)
-      databaseOpen = true
+      APIInit.SetConfigFile(configFile.toString)
 
-      // start Leader detection component
-      val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
-      val zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("API_LEADER_SELECTION_ZK_NODE")
-      val zkConnStr  = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
-      val sesTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_SESSION_TIMEOUT_MS").toInt
-      val conTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_CONNECTION_TIMEOUT_MS").toInt
-
-      MetadataAPIServiceLeader.Init(nodeId,zkConnStr,zkNode,sesTimeOut,conTimeOut)
-      
+      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)      
       // Identify the host and port the service is listening on
       val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_HOST")
       val servicePort = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_PORT").toInt
