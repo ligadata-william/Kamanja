@@ -146,7 +146,7 @@ object MetadataAPIImpl extends MetadataAPI{
     }
 
     val zkcConnectString = GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
-    val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
+    val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
     logger.trace("Connect To ZooKeeper using " + zkcConnectString)
     try{
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
@@ -463,7 +463,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       val data = ZooKeeperMessage(objList,operations)
       InitZooKeeper
-      val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH")
+      val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
       logger.trace("Set the data on the zookeeper node " + znodePath)
       zkc.setData().forPath(znodePath,data)
       PutTranId(objList(0).tranId)
@@ -993,6 +993,10 @@ object MetadataAPIImpl extends MetadataAPI{
       connectinfo+= ("connectiontype" -> storeType)
       connectinfo+= ("table" -> tableName)
       storeType match{
+	case "hbase" => {
+	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+	  connectinfo+= ("schema" -> storeName)
+	}
 	case "hashmap" => {
 	  var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
 	  connectinfo+= ("path" -> databaseLocation)
@@ -1010,9 +1014,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	case "cassandra" => {
 	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
 	  var databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-	  if( databaseHost == null ){
-	    databaseHost = "localhost"
-	  }
 	  connectinfo+= ("hostlist" -> databaseHost) 
 	  connectinfo+= ("schema" -> databaseSchema)
 	  connectinfo+= ("ConsistencyLevelRead" -> "ONE")
@@ -3837,7 +3838,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
       var databaseHost = configMap.APIConfigParameters.DatabaseHost
       if (databaseHost == null ){
-	databaseHost = "hashmap"
+	databaseHost = "localhost"
       }
       logger.trace("DatabaseHost => " + databaseHost)
 
@@ -4041,6 +4042,8 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def InitMdMgr(mgr:MdMgr, database:String, databaseHost:String, databaseSchema:String, databaseLocation:String){
+
+    SetLoggerLevel(Level.TRACE)
     val mdLoader = new MetadataLoad (mgr,"","","","")
     mdLoader.initialize
 
