@@ -17,6 +17,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
   private[this] val LOG = Logger.getLogger(getClass);
 
   private[this] val fc = new FileAdapterConfiguration
+  private[this] var uniqueKey: FilePartitionUniqueRecordKey = _
 
   //BUGBUG:: Not Checking whether inputConfig is really FileAdapterConfiguration or not. 
 
@@ -73,7 +74,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         return
     }
 
-    val uniqueKey = new FilePartitionUniqueRecordKey
+    uniqueKey = new FilePartitionUniqueRecordKey
     val uniqueVal = new FilePartitionUniqueRecordValue
 
     uniqueKey.Name = "File"
@@ -219,7 +220,23 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     }
   });
 
-  override def Shutdown(): Unit = {
+  override def Shutdown: Unit = {
   }
+  
+  override def StopProcessing: Unit = {
+    
+  }
+
+  override def StartProcessing(partitionUniqueRecordKeys : Array[String]): Unit = {
+    
+  }
+  
+  override def GetAllPartitionUniqueRecordKey: Array[String] = {
+    if (uniqueKey != null) {
+      return Array(uniqueKey.Serialize)
+    }
+    null
+  }
+  
 }
 

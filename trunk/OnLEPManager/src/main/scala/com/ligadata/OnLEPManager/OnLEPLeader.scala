@@ -37,11 +37,14 @@ object OnLEPLeader {
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
-  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[PartitionUniqueRecordKey]]() // Nodeid & Unique Keys
+  private[this] var distributionMap = scala.collection.mutable.Map[String, ArrayBuffer[String]]() // Nodeid & Unique Keys
   private[this] var nodesStatus = scala.collection.mutable.Set[String]() // NodeId
   private[this] var expectedNodesAction: String = _
   private[this] var curParticipents = Set[String]() // Derived from clusterStatus.participants
   private[this] var canRedistribute = false
+  private[this] var inputAdapters: ArrayBuffer[InputAdapter] = _
+  private[this] var outputAdapters: ArrayBuffer[OutputAdapter] = _
+  private[this] var statusAdapters: ArrayBuffer[OutputAdapter] = _
 
   private def SetCanRedistribute(redistFlag: Boolean): Unit = lock.synchronized {
     canRedistribute = redistFlag
@@ -100,16 +103,23 @@ object OnLEPLeader {
     expectedNodesAction = ""
     curParticipents = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
 
-    var tmpDistMap = ArrayBuffer[(String, ArrayBuffer[PartitionUniqueRecordKey])]()
+    var tmpDistMap = ArrayBuffer[(String, ArrayBuffer[String])]()
 
     if (cs.participants != null) {
       // Create ArrayBuffer for each node participating at this moment
       cs.participants.foreach(p => {
-        tmpDistMap += ((p, new ArrayBuffer[PartitionUniqueRecordKey]))
+        tmpDistMap += ((p, new ArrayBuffer[String]))
       })
 
+      val allPartitionUniqueRecordKeys = ArrayBuffer[String]()
+
       // BUGBUG:: Get all PartitionUniqueRecordKey for all Input Adapters
-      val allPartitionUniqueRecordKeys = Array[PartitionUniqueRecordKey]()
+      inputAdapters.foreach(ia => {
+        val uk = ia.GetAllPartitionUniqueRecordKey
+        if (uk != null && uk.size > 0) {
+          allPartitionUniqueRecordKeys ++= uk
+        }
+      })
 
       // Update New partitions for all nodes and Set the text
       var cntr: Int = 0
@@ -161,6 +171,9 @@ object OnLEPLeader {
       action match {
         case "stop" => {
           // BUGBUG:: STOP all Input Adapters on local node
+          inputAdapters.foreach(ia => {
+            ia.StopProcessing
+          })
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
@@ -197,7 +210,7 @@ object OnLEPLeader {
     UpdatePartitionsNodeData(eventType, eventPath, eventPathData)
   }
 
-  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
+  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
     nodeId = nodeId1.toLowerCase
     zkConnectString = zkConnectString1
     engineLeaderZkNodePath = engineLeaderZkNodePath1
@@ -205,6 +218,9 @@ object OnLEPLeader {
     adaptersStatusPath = adaptersStatusPath1
     zkSessionTimeoutMs = zkSessionTimeoutMs1
     zkConnectionTimeoutMs = zkConnectionTimeoutMs1
+    inputAdapters = inputAdap
+    outputAdapters = outputAdap
+    statusAdapters = statusAdap
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {
