@@ -51,11 +51,11 @@ class MessageDefImpl {
   val logger = this.getClass.getName
   lazy val log = Logger.getLogger(logger)
 
-  def error[T](prefix: String): Option[T] =
+  private def error[T](prefix: String): Option[T] =
     throw MessageException("%s must be specified".format(prefix))
 
   //creates the class string
-  def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -78,7 +78,7 @@ class MessageDefImpl {
     (message.Name, ver.toString, scalaclass.toString, list, argsList)
   }
 
-  def createObj(msg: Message): (StringBuilder) = {
+  private def createObj(msg: Message): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
     var tdataexists: String = ""
     var tattribs: String = ""
@@ -104,13 +104,13 @@ class MessageDefImpl {
     cobj
   }
 
-  def getName(msg: Message) = {
+  private def getName(msg: Message) = {
     "\toverride def FullName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\"" + "\n" +
       "\toverride def NameSpace: String = " + "\"" + msg.NameSpace + "\"" + "\n" +
       "\toverride def Name: String = " + "\"" + msg.Name + "\""
   }
 
-  def getMessageName(msg: Message) = {
+  private def getMessageName(msg: Message) = {
     if (msg.msgtype.equals("Message"))
       "\toverride def getMessageName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\""
     else if (msg.msgtype.equals("Container"))
@@ -118,26 +118,26 @@ class MessageDefImpl {
 
   }
 
-  def getVersion(msg: Message) = {
+  private def getVersion(msg: Message) = {
     "\toverride def Version: String = " + "\"" + msg.Version + "\""
 
   }
-  def createNewMessage(msg: Message) = {
+  private def createNewMessage(msg: Message) = {
     "\toverride def CreateNewMessage: BaseMsg  = new " + msg.NameSpace + "_" + msg.Name + "_" + msg.Version.replaceAll("[.]", "").toInt + "()"
   }
 
-  def createNewContainer(msg: Message) = {
+  private def createNewContainer(msg: Message) = {
     "\toverride def CreateNewContainer: BaseContainer  = new " + msg.NameSpace + "_" + msg.Name + "_" + msg.Version.replaceAll("[.]", "").toInt + "()"
   }
 
-  def gettdataexists = {
+  private def gettdataexists = {
     "\toverride def NeedToTransformData: Boolean = "
   }
-  def notdataattribs = {
+  private def notdataattribs = {
     "\toverride def TransformDataAttributes: TransformMessage = null"
   }
 
-  def tdataattribs(msg: Message) = {
+  private def tdataattribs(msg: Message) = {
     """
 	def TransformDataAttributes: TransformMessage = {
 	    val rearr = new TransformMessage()
@@ -154,7 +154,7 @@ class MessageDefImpl {
     """
   }
 
-  def gettdataattribs(a: Array[String]): String = {
+  private def gettdataattribs(a: Array[String]): String = {
     var str: String = "Array ("
     var i: Int = 0
     for (s <- a) {
@@ -167,7 +167,7 @@ class MessageDefImpl {
     str + ")"
   }
 
-  def getBaseTrait(message: Message): (String, String, String) = {
+  private def getBaseTrait(message: Message): (String, String, String) = {
     var btrait: String = ""
     var strait: String = ""
     var csetters: String = ""
@@ -565,7 +565,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
   //generates the variables string and assign string
-  def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def classStr(message: Message, mdMgr: MdMgr): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -753,7 +753,7 @@ class MessageDefImpl {
  """
   }
 
-  def getIsFixed(message: Message): String = {
+  private def getIsFixed(message: Message): String = {
     val pad1 = "\t"
     val pad2 = "\t\t"
     val pad3 = "\t\t\t"
@@ -769,7 +769,7 @@ class MessageDefImpl {
     isfixed.toString
   }
 
-  def getArrayStr(mbrVar: String, classname: String): String = {
+  private def getArrayStr(mbrVar: String, classname: String): String = {
 
     "\t\tfor (i <- 0 until " + mbrVar + ".length) {\n" +
       "\t\t\tvar ctrVar: " + classname + " = i.asInstanceOf[" + classname + "]\n\t\t\t" +
@@ -786,7 +786,7 @@ class MessageDefImpl {
     """
   }
 
-  def importStmts(msgtype: String): String = {
+  private def importStmts(msgtype: String): String = {
     var imprt: String = ""
     if (msgtype.equals("Message"))
       imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer}"
@@ -808,7 +808,7 @@ import scala.collection.mutable.{ Map, HashMap }
 
   }
 
-  def classname(msg: Message): (StringBuilder, StringBuilder) = {
+  private def classname(msg: Message): (StringBuilder, StringBuilder) = {
     var sname: String = ""
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
@@ -841,7 +841,7 @@ trait BaseMsg {
 	  """
   }
 
-  def traitBaseContainer = {
+  private def traitBaseContainer = {
     """
 trait BaseContainer {
   def Fixed: Boolean
@@ -853,7 +853,7 @@ trait BaseContainer {
 	  """
   }
 
-  def partitionkeyStr(msg: Message): String = {
+  private def partitionkeyStr(msg: Message): String = {
 
     if (msg.PartitionKey != null)
       "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0).toLowerCase()
@@ -861,7 +861,7 @@ trait BaseContainer {
       "\n	override def PartitionKeyData: String = \"\""
   }
 
-  def inputData = {
+  private def inputData = {
     """ 
 trait InputData {
 	var dataInput: String
@@ -873,7 +873,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  def getsetMethods(msgFixed: String): String = {
+  private def getsetMethods(msgFixed: String): String = {
 
     var getsetters = new StringBuilder(8 * 1024)
     if (msgFixed.toLowerCase().equals("true")) {
@@ -907,7 +907,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     getsetters.toString
   }
   //input function conversion
-  def getDefVal(valType: String): String = {
+  private def getDefVal(valType: String): String = {
     valType match {
       case "system.int" => "0"
       case "system.float" => "0"
@@ -920,7 +920,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def getMemberType(valType: String): String = {
+  private def getMemberType(valType: String): String = {
     valType match {
       case "system.int" => "Int"
       case "system.float" => "Float"
@@ -933,7 +933,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def cSetter() = ""
+  private def cSetter() = ""
   /*{
     """
     def get(key: String): Any ={
@@ -948,7 +948,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }*/
   //populate method in msg-TransactionMsg class
-  def populate = {
+  private def populate = {
     """
   def populate(inputdata:InputData) = {
 	  if (inputdata.isInstanceOf[DelimitedData])	
@@ -973,7 +973,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
    * """
    * }
    */
-  def populateMappedCSV(assignCsvdata: String, count: Int): String = {
+  private def populateMappedCSV(assignCsvdata: String, count: Int): String = {
     """
   private def populateCSV(inputdata:DelimitedData): Unit = {
 	val list = inputdata.tokens
@@ -994,7 +994,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   ////populateCSV fucntion in msg class
-  def populatecsv(assignCsvdata: String, count: Int): String = {
+  private def populatecsv(assignCsvdata: String, count: Int): String = {
     """
   private def populateCSV(inputdata:DelimitedData): Unit = {
 	val list = inputdata.tokens
@@ -1014,12 +1014,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  def populateJson = {
+  private def populateJson = {
     """
   private def populateJson(json:JsonData) : Unit = {
 	try{
          if (json == null || json.cur_json == null || json.cur_json == None) throw new Exception("Invalid json data")
-     	 val parsed = parse(json.dataInput).values.asInstanceOf[Map[String, Any]]
      	 assignJsonData(json)
 	}catch{
 	    case e:Exception =>{
@@ -1031,16 +1030,19 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  def assignJsonData(assignJsonData: String) = {
+  private def assignJsonData(assignJsonData: String) = {
     """
   private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
 	var arr: List[String] = null
     var list : List[Map[String, Any]] = null 
-	try{
-	 	 val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	 if (map == null)
+	try{ 
+	  	json.root_json = Option(parse(json.dataInput).values.asInstanceOf[Map[String, Any]])
+      	json.cur_json = json.root_json
+
+	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
+	  	if (map == null)
         	throw new Exception("Invalid json data")
 """ + assignJsonData +
       """
@@ -1053,7 +1055,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 	"""
   }
-  def assignMappedJsonData(assignJsonData: String) = {
+  private def assignMappedJsonData(assignJsonData: String) = {
     """
   private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
@@ -1061,12 +1063,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	var arr: List[String] = null
     var list : List[Map[String, Any]] = null 
 	try{
-	 	 val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	 if (map == null)
+	  	json.root_json = Option(parse(json.dataInput).values.asInstanceOf[Map[String, Any]])
+      	json.cur_json = json.root_json
+
+	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
+	  	if (map == null)
         	throw new Exception("Invalid json data")
    
-	  	 for (i <- 0 until keys.length) {
-         	val k = keys(i)._1
+	  	for (i <- 0 until keys.length) {
+        	val k = keys(i)._1
           	val v = map.getOrElse(keys(i)._1, null)
 	  		if (v == null) {
           	} else {
@@ -1074,7 +1079,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
             	val v1 = keys(i)._2.Input(v.toString)
             	fields.put(k, v1)
           	}
-        	}
+        }
     """ + assignJsonData +
       """
 	  } catch {
@@ -1087,7 +1092,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   """
   }
 
-  def populateXml = {
+  private def populateXml = {
     """
   private def populateXml(xmlData:XmlData) : Unit = {	  
 	try{
@@ -1103,7 +1108,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  def assignXmlData(xmlData: String) = {
+  private def assignXmlData(xmlData: String) = {
     """
   private def assignXml(xml:Elem) : Unit = {
 	try{
@@ -1120,7 +1125,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 """
   }
 
-  def assignMappedXmlData(xmlData: String) = {
+  private def assignMappedXmlData(xmlData: String) = {
     """
   private def assignXml(xml:Elem) : Unit = {
 	try{
@@ -1138,7 +1143,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
-  def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -1182,7 +1187,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  def createNonFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
@@ -1199,7 +1204,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  def createMappedClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createMappedClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -1222,13 +1227,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (message.Name, ver.toString, scalaclass.toString, list, argsList)
 
   }
-  def getFields = {
+  private def getFields = {
     """
     var fields: Map[String, Any] = new HashMap[String, Any];
     """
   }
 
-  def createFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
@@ -1245,7 +1250,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
+  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
 
     try {
@@ -1263,7 +1268,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
+  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
     try {
       if (msg.PartitionKey != null)
@@ -1279,7 +1284,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msgDef
   }
 
-  def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
+  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     try {
       if (msg.PartitionKey != null)
@@ -1295,7 +1300,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
+  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
 
     try {
@@ -1349,7 +1354,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 */
-  def processJson(json: String, mdMgr: MdMgr): Message = {
+  private def processJson(json: String, mdMgr: MdMgr): Message = {
     var message: Message = null
     var jtype: String = null
     //val parsed = JSON.parseFull(json)
@@ -1370,7 +1375,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     message
   }
 
-  def geJsonType(map: Map[String, Any]): String = {
+  private def geJsonType(map: Map[String, Any]): String = {
     var jtype: String = null
     try {
       if (map.contains("Message"))
@@ -1388,7 +1393,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     jtype
   }
 
-  def processJsonMap(key: String, map: Map[String, Any]): Message = {
+  private def processJsonMap(key: String, map: Map[String, Any]): Message = {
     var msg1: Message = null
     type messageMap = Map[String, Any]
     try {
@@ -1438,7 +1443,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null)
   }
 
-  def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+  private def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
     var ele: List[Element] = null
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -1488,7 +1493,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList)
   }
 
-  def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
+  private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
     var iarr: Array[String] = null
     var oarr: Array[String] = null
     var karr: Array[String] = null
@@ -1508,7 +1513,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     new TransformData(iarr, oarr, karr)
   }
 
-  def gettData(tmap: Map[String, Any], key: String): Array[String] = {
+  private def gettData(tmap: Map[String, Any], key: String): Array[String] = {
     type tList = List[String]
     var tlist: List[String] = null
     if (tmap.contains(key) && tmap.get(key).get.isInstanceOf[tList])
@@ -1516,7 +1521,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     tlist.toArray
   }
 
-  def getElementsObj(message: Map[String, Any], key: String): List[Element] = {
+  private def getElementsObj(message: Map[String, Any], key: String): List[Element] = {
     // type list = List[Element]
     var elist: List[Element] = null
     var containerList: List[String] = null
@@ -1542,7 +1547,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     elist
   }
 
-  def getConceptData(ccpts: List[String], key: String): List[Element] = {
+  private def getConceptData(ccpts: List[String], key: String): List[Element] = {
     var element: Element = null
     var lbuffer = new ListBuffer[Element]
     type string = String;
@@ -1559,7 +1564,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     lbuffer.toList
   }
 
-  def getConcepts(message: Map[String, Any], key: String): List[String] = {
+  private def getConcepts(message: Map[String, Any], key: String): List[String] = {
     var list: List[Element] = Nil
     var lbuffer = new ListBuffer[Element]
     type ccptList = List[String]
@@ -1579,7 +1584,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     conceptList
   }
 
-  def getElements(message: Map[String, Any], key: String): List[Element] = {
+  private def getElements(message: Map[String, Any], key: String): List[Element] = {
     // var fbuffer = new ListBuffer[Field]
     var lbuffer = new ListBuffer[Element]
     var container: Message = null
@@ -1691,7 +1696,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   }*/
 
-  def getConcept(eMap: Map[String, Any], key: String): List[Field] = {
+  private def getConcept(eMap: Map[String, Any], key: String): List[Field] = {
     var lbuffer = new ListBuffer[Field]
     var concept: Concept = null
     if (eMap == null) throw new Exception("Concept Map is null")
@@ -1717,11 +1722,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
     lbuffer.toList
   }
 
-  def getcElement(concept: Concept, eType: String): Field = {
+  private def getcElement(concept: Concept, eType: String): Field = {
     new Field(concept.NameSpace.getOrElse(null), concept.Name.getOrElse(null), concept.Type.getOrElse(null), null, eType, null)
   }
 
-  def getElement(eMap: Map[String, Any]): Element = {
+  private def getElement(eMap: Map[String, Any]): Element = {
     var fld: Element = null
     type keyMap = Map[String, String]
     if (eMap == null) throw new Exception("element Map is null")
@@ -1741,7 +1746,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     fld
   }
 
-  def getElementData(field: Map[String, String], key: String): Element = {
+  private def getElementData(field: Map[String, String], key: String): Element = {
     var fld: Element = null
     var name: String = ""
     var fldTypeVer: String = null
@@ -1784,7 +1789,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     fld
   }
 
-  def processConcept(conceptsStr: String, formatType: String) {
+  private def processConcept(conceptsStr: String, formatType: String) {
     val json = parse(conceptsStr)
     //println(json.values.asInstanceOf[Map[Any, Any]].contains("Concepts"))
     implicit val jsonFormats: Formats = DefaultFormats
