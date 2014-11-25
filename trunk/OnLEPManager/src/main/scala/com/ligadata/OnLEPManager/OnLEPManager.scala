@@ -32,7 +32,7 @@ class OnLEPServer(var mgr: OnLEPManager, port: Int) extends Runnable {
         (new Thread(new ConnHandler(socket, mgr))).start()
       }
     } catch {
-      case e: Exception => { LOG.error("Socket Error: " + e.getMessage) }
+      case e: Exception => { LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -62,7 +62,7 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
         }
       }
     } catch {
-      case e: Exception => { LOG.error("Error: " + e.getMessage) }
+      case e: Exception => { LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       socket.close;
     }
@@ -217,7 +217,7 @@ class OnLEPManager {
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Message:" + e.getMessage)
+        case e: Exception => LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
       }
     } else {
       LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
@@ -268,7 +268,7 @@ class OnLEPManager {
           LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Message:" + e.getMessage)
+        case e: Exception => LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
       }
     } else {
       LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -328,7 +328,7 @@ class OnLEPManager {
           inputAdapters += adapter
         } catch {
           case e: Exception =>
-            LOG.error("Failed to get input adapter for %s. Message:%s".format(ac, e.getMessage))
+            LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
             return false
         }
       })
@@ -359,7 +359,7 @@ class OnLEPManager {
           outputAdapters += adapter
         } catch {
           case e: Exception =>
-            LOG.error("Failed to get output adapter for %s. Message:%s".format(ac, e.getMessage))
+            LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
             return false
         }
       })
@@ -426,7 +426,7 @@ class OnLEPManager {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Message:" + e.getMessage)
+          LOG.error("Failed to instantiate Environment Context object for Class:" + className+ ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           e.printStackTrace
         }
       }
@@ -577,10 +577,6 @@ class OnLEPManager {
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
       }
 
-      OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
-
-      OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
-
       val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
       if (envCtxt == null)
         return false
@@ -591,19 +587,23 @@ class OnLEPManager {
       retval = LoadAdapters(loadConfigs, envCtxt)
 
       if (retval) {
+        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+        OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+      }
+      if (retval) {
         try {
           serviceObj = new OnLEPServer(this, nodePort)
           (new Thread(serviceObj)).start()
         } catch {
           case e: Exception => {
-            LOG.error("Failed to create server to accept connection on port:" + nodePort + ". Message:" + e.getMessage)
+            LOG.error("Failed to create server to accept connection on port:" + nodePort+ ". Reason:" + e.getCause + ". Message:" + e.getMessage)
             retval = false
           }
         }
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to initialize. Message:" + e.getMessage)
+        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         // LOG.info("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }

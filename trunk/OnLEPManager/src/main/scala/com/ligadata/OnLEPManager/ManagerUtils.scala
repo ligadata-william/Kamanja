@@ -55,7 +55,7 @@ object ManagerUtils {
           }
         } catch {
           case e: Exception => {
-            LOG.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
             return false
           }
         }

@@ -17,7 +17,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to execute message. Error:" + e.getMessage)
+        LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
       }
     }
   }
