@@ -15,14 +15,15 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
     try {
       val xformed = xform.execute(data)
       engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs)
-      val uk = uniqueKey.Serialize
-      val uv = uniqueVal.Serialize
-      LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
-      envCtxt.setAdapterUniqueKeyValue(uk, uv)
     } catch {
       case e: Exception => {
         LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
       }
+    } finally {
+      val uk = uniqueKey.Serialize
+      val uv = uniqueVal.Serialize
+      // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
+      envCtxt.setAdapterUniqueKeyValue(uk, uv)
     }
   }
 }

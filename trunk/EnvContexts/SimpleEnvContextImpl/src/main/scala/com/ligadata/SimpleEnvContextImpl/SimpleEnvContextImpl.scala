@@ -65,7 +65,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
-    if (_adapterUniqKvDataStore != null)
+    logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
+    if (_adapterUniqKvDataStore == null)
       _adapterUniqKvDataStore = GetDataStoreHandle(storeType, schemaName, "AdapterUniqKvData", dataLocation)
 
     containerNames.foreach(c1 => {
@@ -394,7 +395,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private def writeThru(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
     object i extends IStorage {
       val k = makeKey(key)
-      val v = makeValue(value, "kryo")
+      val v = makeValue(value, serializerInfo)
 
       def Key = k
       def Value = v
@@ -447,23 +448,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   override def setAdapterUniqueKeyValue(key: String, value: String): Unit = {
     _adapterUniqKeyValData(key) = value
-    if (_kryoSer == null) {
-      _kryoSer = SerializerManager.GetSerializer("kryo")
-      if (_kryoSer != null && classLoader != null) {
-        _kryoSer.SetClassLoader(classLoader)
-      }
-    }
-
     try {
-      val v = _kryoSer.SerializeObjectToByteArray(value)
-      writeThru(key, v, _adapterUniqKvDataStore, "kryo")
+      writeThru(key, value.getBytes("UTF8"), _adapterUniqKvDataStore, "CSV")
     } catch {
       case e: Exception => {
-        logger.error("Failed to serialize/write data.")
+        logger.error("Failed to write data.")
         e.printStackTrace
       }
     }
-
   }
 
   private def buildAdapterUniqueValue(tupleBytes: Value, objs: Array[String]) {
@@ -473,6 +465,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       logger.error(errMsg)
       throw new Exception(errMsg)
     }
+
+    val valInfo = getValueInfo(tupleBytes)
+
+    objs(0) = new String(valInfo)
   }
 
   override def getAdapterUniqueKeyValue(key: String): String = {

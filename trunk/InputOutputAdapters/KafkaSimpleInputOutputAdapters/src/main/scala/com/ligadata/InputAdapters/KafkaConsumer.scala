@@ -16,6 +16,7 @@ import kafka.utils.ZKStringSerializer
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import kafka.consumer.ConsoleConsumer
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -29,11 +30,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   private[this] val zookeeper_session_timeout_ms = 30000
   private[this] val zookeeper_connection_timeout_ms = 30000
   private[this] val zookeeper_sync_time_ms = 5000
+  private[this] val auto_commit_time = 24 * 60 * 60 * 1000
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
   private[this] val lock = new Object()
-  private[this] val lock1 = new Object()
   private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue)]()
 
   qc.Typ = inputConfig.Typ
@@ -63,21 +64,21 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   props.put("zookeeper.session.timeout.ms", zookeeper_session_timeout_ms.toString)
   props.put("zookeeper.connection.timeout.ms", zookeeper_connection_timeout_ms.toString)
   props.put("zookeeper.sync.time.ms", zookeeper_sync_time_ms.toString)
-  // props.put("auto.commit", "false")
-  // props.put("auto.commit.enable", "false")
-  // props.put("autooffset.reset", "smallest")
+  props.put("auto.commit.enable", "false")
+  props.put("auto.commit.interval.ms", auto_commit_time.toString)
+  props.put("auto.offset.reset", if (true) "smallest" else "largest")
 
   val consumerConfig = new ConsumerConfig(props)
   var consumerConnector: ConsumerConnector = _
   var executor: ExecutorService = _
-  var tmpHoldPtrs: ArrayBuffer[Any] = new ArrayBuffer[Any]()
   val input = this
 
-  override def Shutdown: Unit = lock1.synchronized {
+  override def Shutdown: Unit = lock.synchronized {
     StopProcessing
   }
 
-  override def StopProcessing: Unit = lock1.synchronized {
+  override def StopProcessing: Unit = lock.synchronized {
+    LOG.info("===============> Called StopProcessing")
     if (consumerConnector != null)
       consumerConnector.shutdown
     if (executor != null) {
@@ -89,10 +90,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     consumerConnector = null
     executor = null
-    tmpHoldPtrs.clear
   }
 
-  override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock1.synchronized {
+  override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+    LOG.info("===============> Called StartProcessing")
     if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
       return
 
@@ -100,6 +101,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       LOG.error("Keys Size:%d not same as Values Size:%d".format(partitionUniqueRecordKeys.size, partitionUniqueRecordValues.size))
       return
     }
+
+    // Cleaning GroupId so that we can start from begining
+    ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), qc.groupName)
 
     consumerConnector = Consumer.create(consumerConfig)
 
@@ -121,8 +125,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     LOG.info("Deserializing Values")
     val vals = partitionUniqueRecordValues.map(v => {
       val vl = new KafkaPartitionUniqueRecordValue
-      if (v != null)
-        vl.Deserialize(v)
+      if (v != null) {
+        try {
+          vl.Deserialize(v)
+        } catch {
+          case e: Exception => {
+            LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+            throw e
+          }
+        }
+      }
       vl
     })
 
@@ -136,7 +148,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     // create the consumer streams
     val topicMessageStreams = consumerConnector.createMessageStreams(Predef.Map(qc.Name -> threads))
     LOG.info("All Message Streams")
-    tmpHoldPtrs += topicMessageStreams
 
     executor = Executors.newFixedThreadPool(threads)
 
@@ -153,21 +164,18 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       LOG.info("Key:%s => Val:%s".format(kv._2._1.Serialize, kv._2._2.Serialize))
     })
 
-    return
-
     try {
       LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
       // get the streams for the topic
       val testTopicStreams = topicMessageStreams.get(qc.Name).get
-      tmpHoldPtrs += testTopicStreams
       LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
 
       for (stream <- testTopicStreams) {
         LOG.info("Streams Creating => ")
-        tmpHoldPtrs += stream
         executor.execute(new Runnable() {
-          tmpHoldPtrs += this
           override def run() {
+            val topicMessageStrmsPtr = topicMessageStreams
+            val testTopicStrmsPtr = testTopicStreams
             var curPartitionId = 0
             var checkForPartition = true
             var execThread: ExecContext = null
@@ -185,6 +193,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                     currentOffset = message.offset
                     var readTmNs = System.nanoTime
                     var readTmMs = System.currentTimeMillis
+                    var executeCurMsg = true
                     if (checkForPartition) {
                       // For first message, check whether this stream we are going to handle it or not
                       // If not handle, just return
@@ -201,11 +210,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                       uniqueKey.PartitionId = curPartitionId
                       execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
                       val kv = kvs.getOrElse(curPartitionId, null)
-                      if (kv != null && kv._2.Offset != -1) {
+                      if (kv != null && kv._2.Offset != -1 && message.offset <= kv._2.Offset) {
+                        executeCurMsg = false
                         currentOffset = kv._2.Offset
                       }
                     }
-                    if (message.offset > currentOffset) {
+                    if (executeCurMsg) {
                       try {
                         // Creating new string to convert from Byte Array to string
                         val msg = new String(message.message)
@@ -218,7 +228,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                       } catch {
                         case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                       }
+                    } else {
+                      // LOG.info("Ignoring Message:%s".format(new String(message.message)))
                     }
+                  } else {
+                    // LOG.info("Ignoring Message:%s".format(new String(message.message)))
                   }
                   if (executor.isShutdown)
                     break
@@ -235,7 +249,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case e: Exception => {
         LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-
       }
     }
   }
@@ -262,7 +275,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     dataAndStat
   }
 
-  private def GetAllPartitionsUniqueKeys: Array[String] = lock1.synchronized {
+  private def GetAllPartitionsUniqueKeys: Array[String] = lock.synchronized {
     val zkClient = new ZkClient(qc.hosts.mkString(","), 30000, 30000, ZKStringSerializer)
 
     val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.Name))._1
@@ -294,11 +307,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       uniqueKey
     }).map(k => { k.Serialize }).toArray
   }
+
   // *********** These are temporary methods -- End *********** ///
 
-  override def GetAllPartitionUniqueRecordKey: Array[String] = lock1.synchronized {
+  override def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
     GetAllPartitionsUniqueKeys
   }
-
 }
 
