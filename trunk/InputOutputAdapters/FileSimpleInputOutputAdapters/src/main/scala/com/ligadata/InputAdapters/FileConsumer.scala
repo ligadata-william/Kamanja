@@ -215,7 +215,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     executor = null
   }
 
-  override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
     if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
       return
 

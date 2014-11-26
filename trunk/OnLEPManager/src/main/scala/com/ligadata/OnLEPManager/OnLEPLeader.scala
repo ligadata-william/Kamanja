@@ -38,6 +38,7 @@ object OnLEPLeader {
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
   private[this] var distributionMap = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ArrayBuffer[String]]]() // Nodeid & Unique Keys (adapter unique name & unique key)
+  private[this] var adapterMaxPartitions = scala.collection.mutable.Map[String, Int]() // Adapters & Max Partitions
   private[this] var nodesStatus = scala.collection.mutable.Set[String]() // NodeId
   private[this] var expectedNodesAction: String = _
   private[this] var curParticipents = Set[String]() // Derived from clusterStatus.participants
@@ -75,6 +76,7 @@ object OnLEPLeader {
               // Send all Unique keys to corresponding nodes 
               val distribute =
                 ("action" -> "distribute") ~
+                  ("adaptermaxpartitions" -> adapterMaxPartitions) ~
                   ("distributionmap" -> distributionMap)
               val sendJson = compact(render(distribute))
               zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
@@ -105,6 +107,7 @@ object OnLEPLeader {
 
     // Clear Previous Distribution Map
     distributionMap.clear
+    adapterMaxPartitions.clear
     nodesStatus.clear
     expectedNodesAction = ""
     curParticipents = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
@@ -123,7 +126,9 @@ object OnLEPLeader {
       inputAdapters.foreach(ia => {
         val uk = ia.GetAllPartitionUniqueRecordKey
         val name = ia.UniqueName
-        if (uk != null && uk.size > 0) {
+        val ukCnt = if (uk != null) uk.size else 0
+        adapterMaxPartitions(name) = ukCnt
+        if (ukCnt > 0) {
           allPartitionUniqueRecordKeys ++= uk.map(k => {
             LOG.info("Unique Key in %s => %s".format(name, k))
             (name, k)
@@ -177,7 +182,7 @@ object OnLEPLeader {
     envCtxt.getAdapterUniqueKeyValue(uk)
   }
 
-  private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String): Boolean = {
+  private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String, adapMaxPartsMap : Map[String, Int]): Boolean = {
     if (nodeKeysMap == null) return false
     inputAdapters.foreach(ia => {
       val name = ia.UniqueName
@@ -186,8 +191,9 @@ object OnLEPLeader {
         if (uniqKeysForAdap != null) {
           val uAK = uniqKeysForAdap.asInstanceOf[List[String]]
           val uKV = uAK.map(uk => { GetUniqueKeyValue(uk) })
-          LOG.info("On Node %s for Adapter %s UniqueKeys %s, UniqueValues %s".format(nodeId, name, uAK.mkString(","), uKV.mkString(",")))
-          ia.StartProcessing(uAK.toArray, uKV.toArray)
+          val maxParts = adapMaxPartsMap.getOrElse(name, 0)
+          LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
+          ia.StartProcessing(maxParts, uAK.toArray, uKV.toArray)
         }
       } catch {
         case e: Exception => {
@@ -199,13 +205,13 @@ object OnLEPLeader {
     return true
   }
 
-  private def StartUniqueKeysForNode(uniqueKeysForNode: Any, receivedJsonStr: String): Boolean = {
+  private def StartUniqueKeysForNode(uniqueKeysForNode: Any, receivedJsonStr: String, adapMaxPartsMap : Map[String, Int]): Boolean = {
     if (uniqueKeysForNode == null) return false
     try {
       uniqueKeysForNode match {
         case m: Map[_, _] => {
           // LOG.info("StartUniqueKeysForNode => Map: " + uniqueKeysForNode.toString)
-          return StartNodeKeysMap(m.asInstanceOf[Map[String, Any]], receivedJsonStr)
+          return StartNodeKeysMap(m.asInstanceOf[Map[String, Any]], receivedJsonStr, adapMaxPartsMap)
         }
         case l: List[Any] => {
           // LOG.info("StartUniqueKeysForNode => List: " + uniqueKeysForNode.toString)
@@ -215,7 +221,7 @@ object OnLEPLeader {
             d match {
               case m1: Map[_, _] => {
                 // LOG.info("StartUniqueKeysForNode => List, Map: " + uniqueKeysForNode.toString)
-                val rv = StartNodeKeysMap(m1.asInstanceOf[Map[String, Any]], receivedJsonStr)
+                val rv = StartNodeKeysMap(m1.asInstanceOf[Map[String, Any]], receivedJsonStr, adapMaxPartsMap)
                 if (rv)
                   found = true
               }
@@ -240,6 +246,49 @@ object OnLEPLeader {
       }
     }
     return false
+  }
+
+  def GetAdaptersMaxPartitioinsMap(adaptermaxpartitions: Any): Map[String, Int] = {
+    val adapterMax = scala.collection.mutable.Map[String, Int]() // Adapters & Max Partitions
+    if (adaptermaxpartitions != null) {
+      try {
+        adaptermaxpartitions match {
+          case m: Map[_, _] => {
+            val mp = m.asInstanceOf[Map[String, Int]]
+            mp.foreach(v => {
+              adapterMax(v._1) = v._2
+            })
+          }
+          case l: List[Any] => {
+            // LOG.info("StartUniqueKeysForNode => List: " + uniqueKeysForNode.toString)
+            val data = l.asInstanceOf[List[Any]]
+            var found = false
+            data.foreach(d => {
+              d match {
+                case m1: Map[_, _] => {
+                  val mp = m1.asInstanceOf[Map[String, Int]]
+                  mp.foreach(v => {
+                    adapterMax(v._1) = v._2
+                  })
+                }
+                case _ => {
+                  LOG.error("Failed to get Max partitions for Adapters")
+                }
+              }
+            })
+          }
+          case _ => {
+            LOG.error("Failed to get Max partitions for Adapters")
+          }
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+        }
+      }
+    }
+
+    adapterMax.toMap
   }
 
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
@@ -278,11 +327,12 @@ object OnLEPLeader {
             // Distribution Map 
             val distributionMap = values.getOrElse("distributionmap", null)
             if (distributionMap != null) {
+              val adapMaxPartsMap = GetAdaptersMaxPartitioinsMap(values.getOrElse("adaptermaxpartitions", null))
               distributionMap match {
                 case m: Map[_, _] => {
                   val data = m.asInstanceOf[Map[String, Any]]
                   // LOG.info("ActionOnAdaptersDistribution => action => distribute. Map")
-                  distributed = StartUniqueKeysForNode(data.getOrElse(nodeId, null), receivedJsonStr)
+                  distributed = StartUniqueKeysForNode(data.getOrElse(nodeId, null), receivedJsonStr, adapMaxPartsMap)
                 }
                 case l: List[Any] => {
                   val data = l.asInstanceOf[List[Any]]
@@ -292,7 +342,7 @@ object OnLEPLeader {
                       case m1: Map[_, _] => {
                         val data1 = m1.asInstanceOf[Map[String, Any]]
                         // LOG.info("ActionOnAdaptersDistribution => action => distribute. List, Map. Map => " + data1.mkString(","))
-                        val valid = StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr)
+                        val valid = StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr, adapMaxPartsMap)
                         if (valid)
                           found = true
                       }

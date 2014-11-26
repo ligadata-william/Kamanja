@@ -92,7 +92,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     executor = null
   }
 
-  override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
     if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
       return
@@ -127,6 +127,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       val vl = new KafkaPartitionUniqueRecordValue
       if (v != null) {
         try {
+          LOG.info("Deserializing Value:" + v)
           vl.Deserialize(v)
         } catch {
           case e: Exception => {
@@ -137,11 +138,14 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       }
       vl
     })
+    LOG.info("Deserializing Keys & Values done")
 
     qc.instancePartitions = keys.map(k => { k.PartitionId }).toSet
 
     // var threads: Int = if (qc.maxPartitions > qc.instancePartitions.size) qc.maxPartitions else qc.instancePartitions.size
-    var threads: Int = if (qc.instancePartitions == null) 0 else qc.instancePartitions.size
+    var threads: Int = maxParts
+    if (threads == 0)
+      threads = if (qc.instancePartitions == null) 0 else qc.instancePartitions.size
     if (threads == 0)
       threads = 1
 
@@ -229,10 +233,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                         case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                       }
                     } else {
-                      // LOG.info("Ignoring Message:%s".format(new String(message.message)))
+                      LOG.info("Ignoring Message:%s".format(new String(message.message)))
                     }
                   } else {
-                    // LOG.info("Ignoring Message:%s".format(new String(message.message)))
+                    LOG.info("Ignoring Message:%s".format(new String(message.message)))
                   }
                   if (executor.isShutdown)
                     break
@@ -282,10 +286,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     zkClient.close
 
-    if (jsonPartitionMapOpt == None)
+    if (jsonPartitionMapOpt == None) {
+      LOG.info("Not found any JSON Partitions for Queue: " + qc.Name)
       return null
+    }
 
-    LOG.info("JSON Partitiions:%s".format(jsonPartitionMapOpt.get))
+    LOG.info("JSON Partitions:%s".format(jsonPartitionMapOpt.get))
 
     val json = parse(jsonPartitionMapOpt.get)
     if (json == null || json.values == null) // Not doing anything

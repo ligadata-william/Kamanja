@@ -36,7 +36,7 @@ trait InputAdapter {
   def Category = "Input"
   def Shutdown: Unit
   def StopProcessing: Unit
-  def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit
+  def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit
   def GetAllPartitionUniqueRecordKey: Array[String]
 }
 
