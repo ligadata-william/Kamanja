@@ -237,7 +237,7 @@ object OnLEPLeader {
     return false
   }
 
-  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
+  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0) {
       // nothing to do
       return
@@ -384,6 +384,12 @@ object OnLEPLeader {
         SetCanRedistribute(true)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
+        /*
+        // Set RE-DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
+        val act = ("action" -> "re-distribute")
+        val sendJson = compact(render(act))
+        zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+        */
       } catch {
         case e: Exception => {
           LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
