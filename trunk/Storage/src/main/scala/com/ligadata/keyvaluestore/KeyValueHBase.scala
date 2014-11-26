@@ -56,7 +56,16 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	
 	config.set("hbase.zookeeper.quorum", hostnames);
 
-	var connection = HConnectionManager.createConnection(config);
+	var connection:HConnection = _
+	try{
+	  connection = HConnectionManager.createConnection(config);
+	}
+        catch{
+	  case e:Exception => {
+	     throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+	  }
+	}
+	
 	createTable(table)
 	var tableHBase = connection.getTable(table);
 

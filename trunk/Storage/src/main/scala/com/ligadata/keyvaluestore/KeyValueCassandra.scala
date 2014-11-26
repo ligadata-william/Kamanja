@@ -25,6 +25,7 @@ import java.nio.ByteBuffer
 	CREATE TABLE default (key blob, value blob, primary key(key) );
  */
 
+case class CreateKeySpaceFailedException(e: String) extends Exception(e)
 
 class KeyValueCassandraTx(owner : DataStore) extends Transaction
 {
@@ -51,20 +52,33 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore
 	val consistencylevelRead = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelRead", "ONE"))
 	val consistencylevelWrite = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelWrite", "ANY"))
 	val consistencylevelDelete = ConsistencyLevel.valueOf(parameter.getOrElse("ConsistencyLevelDelete", "ANY"))
-
-
 	var clusterBuilder = Cluster.builder()
-	clusterBuilder.addContactPoints(hostnames)
-	if(parameter.contains("user"))
+	var cluster:Cluster = _
+	var session:Session = _
+        try{
+	  clusterBuilder.addContactPoints(hostnames)
+	  if(parameter.contains("user"))
 		clusterBuilder.withCredentials(parameter("user") ,  parameter.getOrElse("password", ""))
-	val cluster = clusterBuilder.build()
-
-	// create a session that is not associated with a key space yet so we can create one if needed
-	var session = cluster.connect();
+	  cluster = clusterBuilder.build()
+	  // create a session that is not associated with a key space yet so we can create one if needed
+	  session = cluster.connect();
+	}
+        catch{
+	  case e:Exception => {
+	     throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
+	  }
+	}
 
 	// Check keyspace if not exists
 	val createKeySpaceStmt = "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " with replication = {'class':'" + replication_class + "', 'replication_factor':" + replication_factor + "};"
-	session.execute(createKeySpaceStmt);
+	try{
+	  session.execute(createKeySpaceStmt);
+	}
+        catch{
+	  case e:Exception => {
+	     throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
+	  }
+	}
 
         // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
 	session.close()
