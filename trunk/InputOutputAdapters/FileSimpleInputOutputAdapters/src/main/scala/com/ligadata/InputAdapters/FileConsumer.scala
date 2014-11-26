@@ -216,6 +216,19 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
   }
 
   override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+    if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
+      return
+
+    // BUGBUG:: Not really handling partitionUniqueRecordKeys & partitionUniqueRecordValues
+
+    /*
+    val keys = partitionUniqueRecordKeys.map(k => {
+      val key = new FilePartitionUniqueRecordKey
+      key.Deserialize(k)
+      key
+    })
+*/
+
     executor = Executors.newFixedThreadPool(1)
     executor.execute(new Runnable() {
       override def run() {

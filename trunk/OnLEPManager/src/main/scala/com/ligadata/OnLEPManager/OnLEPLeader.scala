@@ -45,6 +45,7 @@ object OnLEPLeader {
   private[this] var inputAdapters: ArrayBuffer[InputAdapter] = _
   private[this] var outputAdapters: ArrayBuffer[OutputAdapter] = _
   private[this] var statusAdapters: ArrayBuffer[OutputAdapter] = _
+  private[this] var envCtxt: EnvContext = _
 
   private def SetCanRedistribute(redistFlag: Boolean): Unit = lock.synchronized {
     canRedistribute = redistFlag
@@ -171,9 +172,9 @@ object OnLEPLeader {
     val isLeader = if (cs.isLeader) "true" else "false"
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
   }
-  
-  private def GetUniqueKeyValue(uk: String) : String = {
-    null
+
+  private def GetUniqueKeyValue(uk: String): String = {
+    envCtxt.getAdapterUniqueKeyValue(uk)
   }
 
   private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String): Boolean = {
@@ -349,7 +350,7 @@ object OnLEPLeader {
     UpdatePartitionsNodeData(eventType, eventPath, eventPathData)
   }
 
-  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
+  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], enviCxt: EnvContext, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
     nodeId = nodeId1.toLowerCase
     zkConnectString = zkConnectString1
     engineLeaderZkNodePath = engineLeaderZkNodePath1
@@ -360,6 +361,7 @@ object OnLEPLeader {
     inputAdapters = inputAdap
     outputAdapters = outputAdap
     statusAdapters = statusAdap
+    envCtxt = enviCxt
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {

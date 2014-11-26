@@ -13,6 +13,8 @@ class KafkaQueueAdapterConfiguration extends AdapterConfiguration {
   var instancePartitions: Set[Int] = _ // Valid only for Input Queues. These are the partitions we handle for this Queue. For now we are treating Partitions as Ints. (Kafka handle it as ints)
 }
 
+case class KafkaKeyData(Version: Int, Type: String, TopicName: Option[String], PartitionId: Option[Int]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
+
 class KafkaPartitionUniqueRecordKey extends PartitionUniqueRecordKey {
   val Version: Int = 1
   val Type: String = "Kafka"
@@ -30,8 +32,7 @@ class KafkaPartitionUniqueRecordKey extends PartitionUniqueRecordKey {
 
   override def Deserialize(key: String): Unit = { // Making Key from Serialized String
     implicit val jsonFormats: Formats = DefaultFormats
-    case class KeyData(Version: Int, Type: String, TopicName: Option[String], PartitionId: Option[Int]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
-    val keyData = parse(key).extract[KeyData]
+    val keyData = parse(key).extract[KafkaKeyData]
     if (keyData.Version == Version && keyData.Type.compareTo(Type) == 0) {
       TopicName = keyData.TopicName.get
       PartitionId = keyData.PartitionId.get
@@ -40,9 +41,12 @@ class KafkaPartitionUniqueRecordKey extends PartitionUniqueRecordKey {
   }
 }
 
+case class KafkaRecData(Version: Int, Offset: Option[Long]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
+
 class KafkaPartitionUniqueRecordValue extends PartitionUniqueRecordValue {
   val Version: Int = 1
-  var Offset: Long = _ // Offset 
+  var Offset: Long = -1 // Offset 
+
   override def Serialize: String = { // Making String from Value
     val json =
       ("Version" -> Version) ~
@@ -52,8 +56,7 @@ class KafkaPartitionUniqueRecordValue extends PartitionUniqueRecordValue {
 
   override def Deserialize(key: String): Unit = { // Making Value from Serialized String
     implicit val jsonFormats: Formats = DefaultFormats
-    case class RecData(Version: Int, Offset: Option[Long]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
-    val recData = parse(key).extract[RecData]
+    val recData = parse(key).extract[KafkaRecData]
     if (recData.Version == Version) {
       Offset = recData.Offset.get
     }

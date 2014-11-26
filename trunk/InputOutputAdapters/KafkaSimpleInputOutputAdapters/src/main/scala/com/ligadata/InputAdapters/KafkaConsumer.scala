@@ -32,17 +32,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
-  private[this] val uniqueKeys = new ArrayBuffer[KafkaPartitionUniqueRecordKey]
   private[this] val lock = new Object()
   private[this] val lock1 = new Object()
-
-  private def AddUniqueKey(uniqueKey: KafkaPartitionUniqueRecordKey): Unit = lock.synchronized {
-    uniqueKeys += uniqueKey
-  }
-
-  private def GetUniqueKeys: Array[KafkaPartitionUniqueRecordKey] = lock.synchronized {
-    uniqueKeys.toArray
-  }
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue)]()
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
@@ -67,116 +59,184 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not validating the values in QueueAdapterConfiguration 
   props.put("zookeeper.connect", qc.hosts.mkString(","))
   props.put("group.id", qc.groupName)
-  // props.put("fetch.size", fetchsize.toString)
-  // props.put("auto.offset.reset", "smallest")
   props.put("rebalance.backoff.ms", rebalance_backoff_ms.toString)
   props.put("zookeeper.session.timeout.ms", zookeeper_session_timeout_ms.toString)
   props.put("zookeeper.connection.timeout.ms", zookeeper_connection_timeout_ms.toString)
   props.put("zookeeper.sync.time.ms", zookeeper_sync_time_ms.toString)
+  // props.put("auto.commit", "false")
+  // props.put("auto.commit.enable", "false")
+  // props.put("autooffset.reset", "smallest")
 
+  val consumerConfig = new ConsumerConfig(props)
   var consumerConnector: ConsumerConnector = _
   var executor: ExecutorService = _
+  var tmpHoldPtrs: ArrayBuffer[Any] = new ArrayBuffer[Any]()
+  val input = this
 
   override def Shutdown: Unit = lock1.synchronized {
     StopProcessing
   }
 
   override def StopProcessing: Unit = lock1.synchronized {
-    if (consumerConnector != null && executor != null) {
+    if (consumerConnector != null)
       consumerConnector.shutdown
+    if (executor != null) {
+      executor.shutdownNow()
       while (executor.isTerminated == false) {
         Thread.sleep(100) // sleep 100ms and then check
       }
     }
 
-    if (consumerConnector != null)
-      consumerConnector.shutdown
     consumerConnector = null
-    if (executor != null)
-      executor.shutdownNow()
     executor = null
+    tmpHoldPtrs.clear
   }
 
   override def StartProcessing(partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock1.synchronized {
-    val consumerConfig = new ConsumerConfig(props)
+    if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
+      return
+
+    if (partitionUniqueRecordKeys.size != partitionUniqueRecordValues.size) {
+      LOG.error("Keys Size:%d not same as Values Size:%d".format(partitionUniqueRecordKeys.size, partitionUniqueRecordValues.size))
+      return
+    }
+
     consumerConnector = Consumer.create(consumerConfig)
 
-    var threads: Int = if (qc.maxPartitions > qc.instancePartitions.size) qc.maxPartitions else qc.instancePartitions.size
+    LOG.info("Deserializing Keys")
+    val keys = partitionUniqueRecordKeys.map(k => {
+      LOG.info("Deserializing Key:" + k)
+      val key = new KafkaPartitionUniqueRecordKey
+      try {
+        key.Deserialize(k)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+      key
+    })
+
+    LOG.info("Deserializing Values")
+    val vals = partitionUniqueRecordValues.map(v => {
+      val vl = new KafkaPartitionUniqueRecordValue
+      if (v != null)
+        vl.Deserialize(v)
+      vl
+    })
+
+    qc.instancePartitions = keys.map(k => { k.PartitionId }).toSet
+
+    // var threads: Int = if (qc.maxPartitions > qc.instancePartitions.size) qc.maxPartitions else qc.instancePartitions.size
+    var threads: Int = if (qc.instancePartitions == null) 0 else qc.instancePartitions.size
     if (threads == 0)
       threads = 1
 
     // create the consumer streams
     val topicMessageStreams = consumerConnector.createMessageStreams(Predef.Map(qc.Name -> threads))
+    LOG.info("All Message Streams")
+    tmpHoldPtrs += topicMessageStreams
 
     executor = Executors.newFixedThreadPool(threads)
 
-    val input = this
+    kvs.clear
 
-    // get the streams for the topic
-    val testTopicStreams = topicMessageStreams.get(qc.Name).get
-    LOG.debug("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
+    LOG.info("Creating KV Map")
+    for (i <- 0 until keys.size) {
+      val key = keys(i)
+      kvs(key.PartitionId) = ((key, vals(i)))
+    }
 
-    for (stream <- testTopicStreams) {
-      executor.execute(new Runnable() {
-        override def run() {
-          var curPartitionId = 0
-          var checkForPartition = true
-          var execThread: ExecContext = null
-          var cntr: Long = 0
-          var currentOffset: Long = -1
-          val uniqueKey = new KafkaPartitionUniqueRecordKey
-          val uniqueVal = new KafkaPartitionUniqueRecordValue
+    LOG.info("KV Map =>")
+    kvs.foreach(kv => {
+      LOG.info("Key:%s => Val:%s".format(kv._2._1.Serialize, kv._2._2.Serialize))
+    })
 
-          uniqueKey.TopicName = qc.Name
+    return
 
-          try {
-            breakable {
-              for (message <- stream) {
-                if (message.offset > currentOffset) {
-                  currentOffset = message.offset
-                  var readTmNs = System.nanoTime
-                  var readTmMs = System.currentTimeMillis
-                  if (checkForPartition) {
-                    // For first message, check whether this stream we are going to handle it or not
-                    // If not handle, just return
-                    curPartitionId = message.partition
-                    var isValid = false
-                    qc.instancePartitions.foreach(p => {
-                      if (p == curPartitionId)
-                        isValid = true
-                    })
-                    LOG.debug("Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, curPartitionId, isValid.toString))
-                    if (isValid == false)
-                      return ;
-                    checkForPartition = false
-                    uniqueKey.PartitionId = curPartitionId
-                    AddUniqueKey(uniqueKey)
-                    execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
+    try {
+      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
+      // get the streams for the topic
+      val testTopicStreams = topicMessageStreams.get(qc.Name).get
+      tmpHoldPtrs += testTopicStreams
+      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
+
+      for (stream <- testTopicStreams) {
+        LOG.info("Streams Creating => ")
+        tmpHoldPtrs += stream
+        executor.execute(new Runnable() {
+          tmpHoldPtrs += this
+          override def run() {
+            var curPartitionId = 0
+            var checkForPartition = true
+            var execThread: ExecContext = null
+            var cntr: Long = 0
+            var currentOffset: Long = -1
+            val uniqueKey = new KafkaPartitionUniqueRecordKey
+            val uniqueVal = new KafkaPartitionUniqueRecordValue
+
+            uniqueKey.TopicName = qc.Name
+
+            try {
+              breakable {
+                for (message <- stream) {
+                  if (message.offset > currentOffset) {
+                    currentOffset = message.offset
+                    var readTmNs = System.nanoTime
+                    var readTmMs = System.currentTimeMillis
+                    if (checkForPartition) {
+                      // For first message, check whether this stream we are going to handle it or not
+                      // If not handle, just return
+                      curPartitionId = message.partition
+                      var isValid = false
+                      qc.instancePartitions.foreach(p => {
+                        if (p == curPartitionId)
+                          isValid = true
+                      })
+                      LOG.info("Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, curPartitionId, isValid.toString))
+                      if (isValid == false)
+                        return ;
+                      checkForPartition = false
+                      uniqueKey.PartitionId = curPartitionId
+                      execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
+                      val kv = kvs.getOrElse(curPartitionId, null)
+                      if (kv != null && kv._2.Offset != -1) {
+                        currentOffset = kv._2.Offset
+                      }
+                    }
+                    if (message.offset > currentOffset) {
+                      try {
+                        // Creating new string to convert from Byte Array to string
+                        val msg = new String(message.message)
+                        uniqueVal.Offset = currentOffset
+                        execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                        // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
+                        cntr += 1
+                        val key = Category + "/" + qc.Name + "/evtCnt"
+                        cntrAdapter.addCntr(key, 1) // for now adding each row
+                      } catch {
+                        case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                      }
+                    }
                   }
-                  try {
-                    // Creating new string to convert from Byte Array to string
-                    val msg = new String(message.message)
-                    uniqueVal.Offset = currentOffset
-                    execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
-                    consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
-                    cntr += 1
-                    val key = Category + "/" + qc.Name + "/evtCnt"
-                    cntrAdapter.addCntr(key, 1) // for now adding each row
-                  } catch {
-                    case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
-                  }
+                  if (executor.isShutdown)
+                    break
                 }
-                if (executor.isShutdown)
-                  break
+              }
+            } catch {
+              case e: Exception => {
+                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
               }
             }
-          } catch {
-            case e: Exception => {
-              LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
-            }
           }
-        }
-      });
+        });
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+
+      }
     }
   }
 
@@ -208,7 +268,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.Name))._1
 
     zkClient.close
-    
+
     if (jsonPartitionMapOpt == None)
       return null
 

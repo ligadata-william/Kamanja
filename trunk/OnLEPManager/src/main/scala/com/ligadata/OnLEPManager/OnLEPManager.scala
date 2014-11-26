@@ -426,7 +426,7 @@ class OnLEPManager {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate Environment Context object for Class:" + className+ ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           e.printStackTrace
         }
       }
@@ -587,9 +587,11 @@ class OnLEPManager {
       retval = LoadAdapters(loadConfigs, envCtxt)
 
       if (retval) {
-        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, envCtxt, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
         OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
       }
+
+      /*
       if (retval) {
         try {
           serviceObj = new OnLEPServer(this, nodePort)
@@ -601,6 +603,8 @@ class OnLEPManager {
           }
         }
       }
+*/
+
     } catch {
       case e: Exception => {
         LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))

@@ -43,12 +43,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private[this] var _kryoSer: Serializer = null
   private[this] var classLoader: java.lang.ClassLoader = null
+  private[this] var _adapterUniqKvDataStore: DataStore = null
+  private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, String]()
 
   override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
     classLoader = cl
   }
 
   override def Shutdown: Unit = _lock.synchronized {
+    if (_adapterUniqKvDataStore != null)
+      _adapterUniqKvDataStore.Shutdown
+    _adapterUniqKvDataStore = null
+    _adapterUniqKeyValData.clear
     _messagesOrContainers.foreach(mrc => {
       if (mrc._2.dataStore != null)
         mrc._2.dataStore.Shutdown
@@ -59,6 +65,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
+    if (_adapterUniqKvDataStore != null)
+      _adapterUniqKvDataStore = GetDataStoreHandle(storeType, schemaName, "AdapterUniqKvData", dataLocation)
+
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
       val names: Array[String] = c.split('.')
@@ -436,6 +445,52 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     isPresent
   }
 
+  override def setAdapterUniqueKeyValue(key: String, value: String): Unit = {
+    _adapterUniqKeyValData(key) = value
+    if (_kryoSer == null) {
+      _kryoSer = SerializerManager.GetSerializer("kryo")
+      if (_kryoSer != null && classLoader != null) {
+        _kryoSer.SetClassLoader(classLoader)
+      }
+    }
+
+    try {
+      val v = _kryoSer.SerializeObjectToByteArray(value)
+      writeThru(key, v, _adapterUniqKvDataStore, "kryo")
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to serialize/write data.")
+        e.printStackTrace
+      }
+    }
+
+  }
+
+  private def buildAdapterUniqueValue(tupleBytes: Value, objs: Array[String]) {
+    // Get first _serInfoBufBytes bytes
+    if (tupleBytes.size < _serInfoBufBytes) {
+      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
+      logger.error(errMsg)
+      throw new Exception(errMsg)
+    }
+  }
+
+  override def getAdapterUniqueKeyValue(key: String): String = {
+    val v = _adapterUniqKeyValData.getOrElse(key, null)
+    if (v != null) return v
+    var objs: Array[String] = new Array[String](1)
+    val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
+    try {
+      _adapterUniqKvDataStore.get(makeKey(key), buildAdapOne)
+    } catch {
+      case e: Exception => {
+        logger.trace("Data not found for key:" + key)
+      }
+    }
+    if (objs(0) != null)
+      _adapterUniqKeyValData(key) = objs(0)
+    return objs(0)
+  }
 }
 
 

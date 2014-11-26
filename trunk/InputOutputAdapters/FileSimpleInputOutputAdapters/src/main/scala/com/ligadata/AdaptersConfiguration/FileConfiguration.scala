@@ -14,6 +14,8 @@ class FileAdapterConfiguration extends AdapterConfiguration {
   var AddTS2MsgFlag: Boolean = false // Add TS after the Prefix Msg
 }
 
+case class FileKeyData(Version: Int, Type: String, Name: Option[String]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
+
 class FilePartitionUniqueRecordKey extends PartitionUniqueRecordKey {
   val Version: Int = 1
   val Type: String = "File"
@@ -29,14 +31,15 @@ class FilePartitionUniqueRecordKey extends PartitionUniqueRecordKey {
 
   override def Deserialize(key: String): Unit = { // Making Key from Serialized String
     implicit val jsonFormats: Formats = DefaultFormats
-    case class KeyData(Version: Int, Type: String, Name: Option[String]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
-    val keyData = parse(key).extract[KeyData]
+    val keyData = parse(key).extract[FileKeyData]
     if (keyData.Version == Version && keyData.Type.compareTo(Type) == 0) {
       Name = keyData.Name.get
     }
     // else { } // Not yet handling other versions
   }
 }
+
+case class FileRecData(Version: Int, FileFullPath: Option[String], Offset: Option[Long]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
 
 class FilePartitionUniqueRecordValue extends PartitionUniqueRecordValue {
   val Version: Int = 1
@@ -53,8 +56,7 @@ class FilePartitionUniqueRecordValue extends PartitionUniqueRecordValue {
 
   override def Deserialize(key: String): Unit = { // Making Value from Serialized String
     implicit val jsonFormats: Formats = DefaultFormats
-    case class RecData(Version: Int, FileFullPath: Option[String], Offset: Option[Long]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
-    val recData = parse(key).extract[RecData]
+    val recData = parse(key).extract[FileRecData]
     if (recData.Version == Version) {
       FileFullPath = recData.FileFullPath.get
       Offset = recData.Offset.get

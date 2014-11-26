@@ -83,6 +83,10 @@ trait EnvContext {
   def contains(containerName : String, key : String) : Boolean
   def containsAny(containerName : String, keys : Array[String]) : Boolean
   def containsAll(containerName : String, keys : Array[String]) : Boolean
+
+  // Adapters Keys & values
+  def setAdapterUniqueKeyValue(key: String, value: String): Unit
+  def getAdapterUniqueKeyValue(key: String): String
 }
 
 trait ModelBase {
