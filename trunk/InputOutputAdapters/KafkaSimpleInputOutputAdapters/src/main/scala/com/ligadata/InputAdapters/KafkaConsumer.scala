@@ -52,6 +52,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
   qc.groupName = inputConfig.adapterSpecificTokens(1)
+  // qc.groupName = inputConfig.adapterSpecificTokens(1) + "_" + hashCode
+  // qc.groupName = hashCode.toString
   if (inputConfig.adapterSpecificTokens(2).size > 0)
     qc.maxPartitions = inputConfig.adapterSpecificTokens(2).toInt
   if (inputConfig.adapterSpecificTokens(3).size > 0)
@@ -102,8 +104,13 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       return
     }
 
-    // Cleaning GroupId so that we can start from begining
-    ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), qc.groupName)
+    try {
+      // Cleaning GroupId so that we can start from begining
+      ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), qc.groupName)
+    } catch {
+      case e: Exception => {
+      }
+    }
 
     consumerConnector = Consumer.create(consumerConfig)
 
