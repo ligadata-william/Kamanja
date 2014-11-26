@@ -30,6 +30,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var containerType: BaseTypeDef = null
     var loadedAll: Boolean = false
     var tableName: String = ""
+    var objFullName: String = ""
   }
 
   private[this] val _lock = new Object()
@@ -66,8 +67,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit = _lock.synchronized {
     logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
-    if (_adapterUniqKvDataStore == null)
+    if (_adapterUniqKvDataStore == null) {
+      logger.info("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
       _adapterUniqKvDataStore = GetDataStoreHandle(storeType, schemaName, "AdapterUniqKvData", dataLocation)
+    }
 
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
@@ -77,21 +80,23 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       var containerType = mgr.ActiveType(namespace, name)
       if (containerType != null) {
 
-        val tableName: String = containerType.FullName.toLowerCase
+        val objFullName: String = containerType.FullName.toLowerCase
 
-        val fnd = _messagesOrContainers.getOrElse(tableName, null)
+        val fnd = _messagesOrContainers.getOrElse(objFullName, null)
 
         if (fnd != null) {
           // We already have this
         } else {
           val newMsgOrContainer = new MsgContainerInfo
+          val tableName = objFullName.replace('.', '_');
+
           newMsgOrContainer.dataStore = GetDataStoreHandle(storeType, schemaName, tableName, dataLocation)
           newMsgOrContainer.containerType = containerType
-
+          newMsgOrContainer.objFullName = objFullName
           newMsgOrContainer.tableName = tableName
 
           /** create a map to cache the entries to be resurrected from the mapdb */
-          _messagesOrContainers(tableName) = newMsgOrContainer
+          _messagesOrContainers(objFullName) = newMsgOrContainer
 
           if (loadAllData) {
             val keys: ArrayBuffer[String] = ArrayBuffer[String]()
@@ -228,6 +233,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           throw new Exception("The database type " + storeType + " is not supported yet ")
         }
       }
+      logger.info("Getting DB Connection: " + connectinfo.mkString(","))
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
