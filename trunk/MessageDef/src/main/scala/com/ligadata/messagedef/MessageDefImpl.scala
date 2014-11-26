@@ -55,28 +55,6 @@ class MessageDefImpl {
     throw MessageException("%s must be specified".format(prefix))
 
   //creates the class string
-  private def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
-    var scalaclass = new StringBuilder(8 * 1024)
-    val ver = message.Version.replaceAll("[.]", "").toInt.toString
-    val newline = "\n"
-    var addMsgStr: String = ""
-    val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
-    try {
-      addMsgStr = addMessage(addMsg, message)
-      val (btrait, striat, csetters) = getBaseTrait(message)
-      val cobj = createObj(message)
-      val isFixed = getIsFixed(message)
-      val (clsstr, objstr) = classname(message)
-      scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + populateXml + assignXmlData(xmlStr) + " \n}")
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw e
-      }
-    }
-    (message.Name, ver.toString, scalaclass.toString, list, argsList)
-  }
 
   private def createObj(msg: Message): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
@@ -191,18 +169,18 @@ class MessageDefImpl {
 
       if ((addMsg != null) && (addMsg.trim() != "")) {
         addMessageFunc = """
-          override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
-          if (childPath == null || childPath.size == 0) { // Invalid case
-    	  return
-       }
-       val curVal = childPath(0)
-       if (childPath.size == 1) { // If this is last level
-     """ + addMsg + """
-      	} else { // Yet to handle it. Make sure we add the message to one of the value given
-      		throw new Exception("Not yet handled messages more than one level")
-     	}
-     }
-     
+    override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {
+	    if (childPath == null || childPath.size == 0) { // Invalid case
+		  return
+	    }
+	   val curVal = childPath(0)
+	   if (childPath.size == 1) { // If this is last level
+	 """ + addMsg + """
+	  	} else { // Yet to handle it. Make sure we add the message to one of the value given
+	  		throw new Exception("Not yet handled messages more than one level")
+	 	}
+	}
+	 
      """
       } else {
 
@@ -233,10 +211,10 @@ class MessageDefImpl {
 
   private def assignJsonForCntrArrayBuffer(fname: String, typeImpl: String) = {
     """
-		    
-		 if (map.getOrElse("""" + fname + """", null).isInstanceOf[tMap])
-	        list = map.getOrElse("""" + fname + """", null).asInstanceOf[List[Map[String, Any]]]
-         if (list != null) {
+	 
+		if (map.getOrElse("""" + fname + """", null).isInstanceOf[tMap])
+	    	list = map.getOrElse("""" + fname + """", null).asInstanceOf[List[Map[String, Any]]]
+        if (list != null) {
         	""" + fname + """++= list.map(item => {
         	val inputData = new JsonData(json.dataInput)
         	inputData.root_json = json.root_json
@@ -245,7 +223,15 @@ class MessageDefImpl {
         	elem.populate(inputData)
         	elem
         	})
-	     }
+	    }
+	    """
+  }
+  private def assignJsonDataMessage(mName: String) = {
+    """   
+        val inputData = new JsonData(json.dataInput)
+        inputData.root_json = json.root_json
+        inputData.cur_json = Option(map.getOrElse("hl7messages", null))
+	    """ + mName + """.populate(inputData)
 	    """
   }
 
@@ -345,7 +331,7 @@ class MessageDefImpl {
 
         if (fixed.toLowerCase().equals("true")) {
           assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-        } else if (fixed.toLowerCase().equals("true")) {
+        } else if (fixed.toLowerCase().equals("false")) {
           assignCsvdata.append(" ")
         }
         assignJsondata.append(assignJsonForArray(f.Name, fname))
@@ -404,17 +390,20 @@ class MessageDefImpl {
 
       argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
       scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-      if (f.ElemType.equals("Container") || f.ElemType.equals("Message")) {
-        assignCsvdata.append("%s//%s Implementation of messages is not handled at this time%s".format(pad2, f.Name, newline))
+      if (f.ElemType.equals("Container")) {
+        assignCsvdata.append("%s//%s Implementation of Array Buffer of Container is not handled %s".format(pad2, f.Name, newline))
         if (typ.get.typeString.toString().split("\\[").size == 2) {
           assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, typ.get.typeString.toString().split("\\[")(1).split("\\]")(0)))
         }
         // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
         // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
-      }
-      if (typ.get.typeString.toString().split("\\[").size == 2) {
-        addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
-        addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
+      } else if (f.ElemType.equals("Message")) {
+        //  assignCsvdata.append("%s//%s Implementation of messages is not handled at this time%s".format(pad2, f.Name, newline))
+        //  assignJsondata.append("%s//%s Implementation of messages is not handled %s".format(pad2, f.Name, newline))
+        if (typ.get.typeString.toString().split("\\[").size == 2) {
+          addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
+          addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
+        }
       }
 
       if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
@@ -433,7 +422,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
+  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -454,9 +443,9 @@ class MessageDefImpl {
       if (ctrDef == null) throw new Exception("Container  " + f.Ttype + " do not exists throwing null pointer")
 
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
-      assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
-      assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
-      assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
+      assignCsvdata.append("%s%s.populate(inputdata);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
+      assignJsondata.append(assignJsonDataMessage(f.Name))
+      assignXmldata.append("%s%s.populate(xmlData)%s".format(pad3, f.Name, newline))
 
       if ((ctrDef.dependencyJarNames != null) && (ctrDef.jarName != null)) {
         jarset = jarset + ctrDef.JarName ++ ctrDef.dependencyJarNames
@@ -465,8 +454,9 @@ class MessageDefImpl {
       else if (ctrDef.dependencyJarNames != null)
         jarset = jarset ++ ctrDef.dependencyJarNames
       // val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true)
+      argsList = (f.NameSpace, f.Name, ctrDef.NameSpace, ctrDef.Name, false, null) :: argsList
 
-      argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+      // argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
     } catch {
       case e: Exception => {
@@ -477,7 +467,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset)
   }
 
-  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
+  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -495,13 +485,17 @@ class MessageDefImpl {
     var fname: String = ""
 
     try {
+
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
       if (msgDef == null) throw new Exception(f.Ttype + " do not exists throwing null pointer")
 
       scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, msgDef.PhysicalName, msgDef.PhysicalName, newline))
-      assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
-      //  assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
-      //  assignXmldata.append("%s%s.assignXml(xml)%s".format(pad3, f.Name, newline))
+      assignCsvdata.append("%s//Not Handling CSV Populate for member type Message".format(pad2))
+      assignJsondata.append("%s//Not Handling JSON Populate for member type Message".format(pad2))
+      assignXmldata.append("%s//Not Handling XML Populate for member type Message".format(pad2))
+      //  assignCsvdata.append("%s%s.populate(inputdata);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
+      // assignJsondata.append(assignJsonDataMessage(f.Name))
+      //  assignXmldata.append("%s%s.populate(xmlData)%s".format(pad3, f.Name, newline))
 
       if ((msgDef.dependencyJarNames != null) && (msgDef.jarName != null)) {
         jarset = jarset + msgDef.JarName ++ msgDef.dependencyJarNames
@@ -510,7 +504,9 @@ class MessageDefImpl {
       else if (msgDef.dependencyJarNames != null)
         jarset = jarset ++ msgDef.dependencyJarNames
 
-      argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
+      argsList = (f.NameSpace, f.Name, msgDef.NameSpace, msgDef.Name, false, null) :: argsList
+      addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
+      addMsg.append(pad3 + f.Name + " = msg.asInstanceOf[" + msgDef.typeString + "]" + newline + pad3 + "} else ")
 
     } catch {
       case e: Exception => {
@@ -544,8 +540,29 @@ class MessageDefImpl {
 
       if (attribute == null) throw new Exception("Attribute " + f.Ttype + " do not exists throwing Null pointer")
 
-      scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.PhysicalName, attribute.PhysicalName, newline))
-      assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
+      if ((attribute.typeString.equals("String")) || (attribute.typeString.equals("Int")) || (attribute.typeString.equals("Float")) || (attribute.typeString.equals("Double")) || (attribute.typeString.equals("Char"))) {
+        if (attribute.typeDef.implementationName.isEmpty())
+          throw new Exception("Implementation Name not found in metadata for namespace %s" + f.Ttype)
+        else
+          fname = attribute.typeDef.implementationName + ".Input"
+
+        if (f.Name.split("\\.").size == 2) {
+
+          val dval: String = getDefVal("system." + attribute.typeString.toLowerCase())
+
+          scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name.split("\\.")(1), attribute.typeString, newline))
+          assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name.split("\\.")(1), fname, pad2))
+          assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name.split("\\.")(1), fname, f.Name.split("\\.")(1), dval, newline))
+          assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name.split("\\.")(1), f.Name.split("\\.")(1), newline, pad3, f.Name.split("\\.")(1), pad2, f.Name.split("\\.")(1), fname, f.Name.split("\\.")(1), f.Name.split("\\.")(1), dval, newline))
+
+        }
+
+        // assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
+
+      } else {
+        scalaclass = scalaclass.append("%svar %s:%s = new %s();%s".format(pad1, f.Name, attribute.typeString, attribute.typeString, newline))
+      }
+      //assignCsvdata.append("%sinputdata.curPos = %s.assignCSV(list, inputdata.curPos);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
 
       if ((attribute.dependencyJarNames != null) && (attribute.jarName != null)) {
         jarset = jarset + attribute.JarName ++ attribute.dependencyJarNames
@@ -589,6 +606,7 @@ class MessageDefImpl {
     var fname: String = ""
     var count: Int = 0
     var concepts: String = "concepts"
+    var keysSet: Set[String] = Set()
 
     var ftypeVersion: Int = -1
     var addMessage: String = ""
@@ -601,9 +619,12 @@ class MessageDefImpl {
 
       if (message.Elements != null)
         for (f <- message.Elements) {
+
           // val typ = MdMgr.GetMdMgr.Type(key, ver, onlyActive)(f.Ttype)
           //val attr = MdMgr.GetMdMgr.Attribute(message.NameSpace, message.Name)
           //  val container = MdMgr.GetMdMgr.Containers(onlyActive, latestVersion)
+          if (keysSet.contains(f.Name)) throw new Exception("Duplicate Key " + f.Name + " Exists, please check Message Definition JSON")
+          keysSet = keysSet + f.Name
 
           if (f.FieldtypeVer != null)
             ftypeVersion = message.Version.replaceAll("[.]", "").toInt
@@ -666,7 +687,7 @@ class MessageDefImpl {
             if (typ.getOrElse("None").equals("None"))
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
 
-            if (typ.getOrElse(null) != null)
+            if (typ.getOrElse(null) != null) {
               if (typ.get.tType.toString().equals("tArrayBuf")) {
                 val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8) = handleArrayBuffer(message.NameSpace, typ, f)
                 scalaclass = scalaclass.append(arrayBuf_1)
@@ -679,8 +700,10 @@ class MessageDefImpl {
                 jarset = jarset ++ arrayBuf_8
 
               } else {
+
                 if (f.ElemType.equals("Container")) {
-                  val (cntnr_1, cntnr_2, cntnr_3, cntnr_4, cntnr_5, cntnr_6, cntnr_7, cntnr_8) = handleContainer(mdMgr, ftypeVersion, typ, f)
+
+                  val (cntnr_1, cntnr_2, cntnr_3, cntnr_4, cntnr_5, cntnr_6, cntnr_7, cntnr_8) = handleContainer(mdMgr, ftypeVersion, f)
                   scalaclass = scalaclass.append(cntnr_1)
                   assignCsvdata = assignCsvdata.append(cntnr_2)
                   assignJsondata = assignJsondata.append(cntnr_3)
@@ -691,7 +714,7 @@ class MessageDefImpl {
                   jarset = jarset ++ cntnr_8
 
                 } else if (f.ElemType.equals("Message")) {
-                  val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8) = handleMessage(mdMgr, ftypeVersion, typ, f)
+                  val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8) = handleMessage(mdMgr, ftypeVersion, f)
                   scalaclass = scalaclass.append(msg_1)
                   assignCsvdata = assignCsvdata.append(msg_2)
                   assignJsondata = assignJsondata.append(msg_3)
@@ -702,8 +725,8 @@ class MessageDefImpl {
                   jarset = jarset ++ msg_8
                 }
               }
-
-          } else if (f.ElemType.equals("Concepts")) {
+            }
+          } else if (f.ElemType.equals("Concept")) {
             val (ccpt_1, ccpt_2, ccpt_3, ccpt_4, ccpt_5, ccpt_6, ccpt_7, ccpt_8) = handleConcept(mdMgr, ftypeVersion, f)
             scalaclass = scalaclass.append(ccpt_1)
             assignCsvdata = assignCsvdata.append(ccpt_2)
@@ -747,7 +770,7 @@ class MessageDefImpl {
   }
 
   private def getKeysStr(keysStr: String) = {
-"""    var keys = Array(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
+    """    var keys = Array(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
       """
 	var fields: Map[String, Any] = new HashMap[String, Any];
  """
@@ -1062,6 +1085,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	type tMap = Map[String, Any]
 	var arr: List[String] = null
     var list : List[Map[String, Any]] = null 
+    var keySet: Set[Any] = Set();
 	try{
 	  	json.root_json = Option(parse(json.dataInput).values.asInstanceOf[Map[String, Any]])
       	json.cur_json = json.root_json
@@ -1071,6 +1095,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         	throw new Exception("Invalid json data")
    
 	  	for (i <- 0 until keys.length) {
+	  		keySet = keySet ++ keys(i)._1
         	val k = keys(i)._1
           	val v = map.getOrElse(keys(i)._1, null)
 	  		if (v == null) {
@@ -1081,7 +1106,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
           	}
         }
     """ + assignJsonData +
+      addInputJsonLeftOverKeys +
       """
+    
 	  } catch {
       	case e: Exception => {
         e.printStackTrace()
@@ -1092,6 +1119,19 @@ class XmlData(var dataInput: String) extends InputData(){ }
   """
   }
 
+  private def addInputJsonLeftOverKeys = {
+    """
+        var dataKeySet: Set[Any] = Set();
+        dataKeySet = dataKeySet ++ map.keySet
+        dataKeySet = dataKeySet.diff(keySet)
+        var lftoverkeys: Array[Any] = dataKeySet.toArray
+        for (i <- 0 until lftoverkeys.length) {
+        	val v = map.getOrElse(lftoverkeys(i).asInstanceOf[String], null)
+         	if (v != null)
+          	fields.put(lftoverkeys(i).asInstanceOf[String], v)
+      	}
+   """
+  }
   private def populateXml = {
     """
   private def populateXml(xmlData:XmlData) : Unit = {	  
@@ -1110,8 +1150,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def assignXmlData(xmlData: String) = {
     """
-  private def assignXml(xml:Elem) : Unit = {
+  private def populateXml(xmlData:XmlData) : Unit = {
 	try{
+	  val xml = XML.loadString(xmlData.dataInput)
 	  if(xml == null) throw new Exception("Invalid xml data")
 """ + xmlData +
       """
@@ -1127,11 +1168,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def assignMappedXmlData(xmlData: String) = {
     """
-  private def assignXml(xml:Elem) : Unit = {
+   private def populateXml(xmlData:XmlData) : Unit = {
 	try{
-	  if(xml == null) throw new Exception("Invalid xml data")
-""" + xmlData +
-      """
+	  //XML Population is not handled at this time      
+     
 	}catch{
 	  case e:Exception =>{
 	    e.printStackTrace()
@@ -1169,12 +1209,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
         message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
+          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr)
+          classstr_1 = classStrVal
+          containerDef = containerDefVal
 
-          classstr_1 = createFixedMsgClass(message, mdMgr)._1
-          containerDef = createFixedMsgClass(message, mdMgr)._2
         } else if (message.Fixed.equals("false")) {
-          classstr_1 = createNonFixedMsgClass(message, mdMgr)._1
-          containerDef = createNonFixedMsgClass(message, mdMgr)._2
+          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr)
+          classstr_1 = classStrVal
+          containerDef = containerDefVal
         }
 
       } else throw new Exception("MsgDef Type JSON is only supported")
@@ -1187,21 +1229,77 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
-    val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr)
-    classstr_1 = classstr
-    createScalaFile(classstr, ver, classname)
-    val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
+    try {
+      val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr)
+      classstr_1 = classstr
+      createScalaFile(classstr, ver, classname)
+      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
-    if (message.msgtype.equals("Message"))
-      containerDef = createMappedMsgDef(message, list, mdMgr, argsList)
-    else if (message.msgtype.equals("Container"))
-      containerDef = createMappedContainerDef(message, list, mdMgr, argsList)
-
+      if (message.msgtype.equals("Message"))
+        containerDef = createFixedMsgDef(message, list, mdMgr, argsList)
+      else if (message.msgtype.equals("Container"))
+        containerDef = createFixedContainerDef(message, list, mdMgr, argsList)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
     (classstr_1, containerDef)
+  }
+
+  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+    var containerDef: ContainerDef = null
+    var classstr_1: String = null
+    try {
+      val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr)
+      classstr_1 = classstr
+      createScalaFile(classstr, ver, classname)
+      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
+
+      if (message.msgtype.equals("Message"))
+        containerDef = createMappedMsgDef(message, list, mdMgr, argsList)
+      else if (message.msgtype.equals("Container"))
+        containerDef = createMappedContainerDef(message, list, mdMgr, argsList)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
+    (classstr_1, containerDef)
+  }
+
+  private def createClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+    var scalaclass = new StringBuilder(8 * 1024)
+    val ver = message.Version.replaceAll("[.]", "").toInt.toString
+    val newline = "\n"
+    var addMsgStr: String = ""
+    var list_msg = List[(String, String)]()
+    var argsList_msg = List[(String, String, String, String, Boolean, String)]()
+
+    try {
+      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
+      list_msg = list
+      argsList_msg = argsList
+      addMsgStr = addMessage(addMsg, message)
+      val (btrait, striat, csetters) = getBaseTrait(message)
+      val cobj = createObj(message)
+      val isFixed = getIsFixed(message)
+      val (clsstr, objstr) = classname(message)
+      scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + " \n}")
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw e
+      }
+    }
+    (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg)
   }
 
   private def createMappedClassStr(message: Message, mdMgr: MdMgr): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
@@ -1209,45 +1307,32 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
     var addMsgStr: String = ""
-    val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
+    var list_msg = List[(String, String)]()
+    var argsList_msg = List[(String, String, String, String, Boolean, String)]()
     try {
+      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg) = classStr(message, mdMgr)
+      list_msg = list
+      argsList_msg = argsList
       addMsgStr = addMessage(addMsg, message)
       val (btrait, striat, csetters) = getBaseTrait(message)
       val cobj = createObj(message)
       val isFixed = getIsFixed(message)
       val (clsstr, objstr) = classname(message)
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + populateXml + assignMappedXmlData(xmlStr) + " \n}")
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + " \n}")
     } catch {
       case e: Exception => {
         e.printStackTrace()
         throw e
       }
     }
-    (message.Name, ver.toString, scalaclass.toString, list, argsList)
+    (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg)
 
   }
   private def getFields = {
     """
    var fields: Map[String, Any] = new HashMap[String, Any];
     """
-  }
-
-  private def createFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
-    var containerDef: ContainerDef = null
-    var classstr_1: String = null
-
-    val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr)
-    classstr_1 = classstr
-    createScalaFile(classstr, ver, classname)
-    val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
-
-    if (message.msgtype.equals("Message"))
-      containerDef = createFixedMsgDef(message, list, mdMgr, argsList)
-    else if (message.msgtype.equals("Container"))
-      containerDef = createFixedContainerDef(message, list, mdMgr, argsList)
-
-    (classstr_1, containerDef)
   }
 
   private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
@@ -1598,53 +1683,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
         for (l <- eList) {
           if (l.isInstanceOf[keyMap]) {
             val eMap: Map[String, Any] = l.asInstanceOf[Map[String, Any]]
-            if (eMap.contains("Concept")) {
-              // lbuffer += getConcept(eMap, "Concept")
 
-            } else if (eMap.contains("Field")) {
+            if (eMap.contains("Field")) {
               lbuffer += getElement(eMap)
+
             } else if (key.equals("Fields")) {
               lbuffer += getElementData(eMap.asInstanceOf[Map[String, String]], key)
-            } else if (eMap.contains("Container")) {
-              if (eMap.get("Container").get.isInstanceOf[keyMap]) {
-                val containerMap: Map[String, Any] = eMap.get("Container").get.asInstanceOf[Map[String, Any]]
-                lbuffer += getElementData(containerMap.asInstanceOf[Map[String, String]], "Container")
-              } else if (eMap.get("Container").get.isInstanceOf[typList]) {
-                lbuffer ++= getConceptData(eMap.get("Container").get.asInstanceOf[List[String]], "Container")
-              } else if (eMap.get("Container").get.isInstanceOf[String]) {
+
+            } else if (eMap.contains("Container") || eMap.contains("Message") || eMap.contains("Containers") || eMap.contains("Messages") || eMap.contains("Concept") || eMap.contains("Concepts")) {
+
+              var key: String = ""
+              if (eMap.contains("Container"))
+                key = "Container"
+              else if (eMap.contains("Containers"))
+                key = "Containers"
+              else if (eMap.contains("Message"))
+                key = "Message"
+              else if (eMap.contains("Messages"))
+                key = "Messages"
+              else if (eMap.contains("Concepts"))
+                key = "Concepts"
+              else if (eMap.contains("Concept"))
+                key = "Concept"
+
+              if (eMap.get(key).get.isInstanceOf[keyMap]) {
+                val containerMap: Map[String, Any] = eMap.get(key).get.asInstanceOf[Map[String, Any]]
+                lbuffer += getElementData(containerMap.asInstanceOf[Map[String, String]], key)
+              } else if (eMap.get(key).get.isInstanceOf[typList]) {
+                lbuffer ++= getConceptData(eMap.get(key).get.asInstanceOf[List[String]], key)
+              } else if (eMap.get(key).get.isInstanceOf[String]) {
                 var cntrList: ListBuffer[String] = new ListBuffer[String]()
-                cntrList += eMap.get("Container").get.toString
-                lbuffer ++= getConceptData(cntrList.toList, "Container")
+                cntrList += eMap.get(key).get.toString
+                lbuffer ++= getConceptData(cntrList.toList, key)
               }
-
-            } else if (eMap.contains("Message")) {
-
-              if (eMap.get("Message").get.isInstanceOf[keyMap]) {
-                val msgMap: Map[String, Any] = eMap.get("Message").get.asInstanceOf[Map[String, Any]]
-                lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Message")
-              } else if (eMap.get("Message").get.isInstanceOf[typList]) {
-                lbuffer ++= getConceptData(eMap.get("Message").get.asInstanceOf[List[String]], "Message")
-              } else if (eMap.get("Message").get.isInstanceOf[String]) {
-                var cntrList: ListBuffer[String] = new ListBuffer[String]()
-                cntrList += eMap.get("Message").get.toString
-                lbuffer ++= getConceptData(cntrList.toList, "Message")
-              }
-
-            } else if (eMap.contains("Concepts")) {
-
-              if (eMap.get("Concepts").get.isInstanceOf[keyMap]) {
-                val ccptMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
-                lbuffer += getElementData(ccptMap.asInstanceOf[Map[String, String]], "Concepts")
-              } else if (eMap.get("Concepts").get.isInstanceOf[typList]) {
-                lbuffer ++= getConceptData(eMap.get("Message").get.asInstanceOf[List[String]], "Concepts")
-              } else if (eMap.get("Concepts").get.isInstanceOf[String]) {
-                var cntrList: ListBuffer[String] = new ListBuffer[String]()
-                cntrList += eMap.get("Concepts").get.toString
-                lbuffer ++= getConceptData(cntrList.toList, "Concepts")
-              }
-
-              //val msgMap: Map[String, Any] = eMap.get("Concepts").get.asInstanceOf[Map[String, Any]]
-              //lbuffer += getElementData(msgMap.asInstanceOf[Map[String, String]], "Concepts")
 
             } else throw new Exception("Either Fields or Container or Message or Concepts  do not exist in " + key + " json")
           }
@@ -1802,6 +1873,5 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
 
   }
- 
 
 }
