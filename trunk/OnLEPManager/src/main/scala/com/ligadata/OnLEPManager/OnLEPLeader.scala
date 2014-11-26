@@ -204,15 +204,20 @@ object OnLEPLeader {
     try {
       uniqueKeysForNode match {
         case m: Map[_, _] => {
+          // LOG.info("StartUniqueKeysForNode => Map: " + uniqueKeysForNode.toString)
           return StartNodeKeysMap(m.asInstanceOf[Map[String, Any]], receivedJsonStr)
         }
         case l: List[Any] => {
+          // LOG.info("StartUniqueKeysForNode => List: " + uniqueKeysForNode.toString)
           val data = l.asInstanceOf[List[Any]]
+          var found = false
           data.foreach(d => {
             d match {
               case m1: Map[_, _] => {
+                // LOG.info("StartUniqueKeysForNode => List, Map: " + uniqueKeysForNode.toString)
                 val rv = StartNodeKeysMap(m1.asInstanceOf[Map[String, Any]], receivedJsonStr)
-                if (rv == false) return false
+                if (rv)
+                  found = true
               }
               case _ => {
                 LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
@@ -220,7 +225,7 @@ object OnLEPLeader {
               }
             }
           })
-          return true
+          return found
         }
         case _ => {
           LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
@@ -238,7 +243,7 @@ object OnLEPLeader {
   }
 
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
-    if (receivedJsonStr == null || receivedJsonStr.size == 0 || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0) {
+    if (receivedJsonStr == null || receivedJsonStr.size == 0 /* || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0 */ ) {
       // nothing to do
       return
     }
@@ -276,22 +281,28 @@ object OnLEPLeader {
               distributionMap match {
                 case m: Map[_, _] => {
                   val data = m.asInstanceOf[Map[String, Any]]
+                  // LOG.info("ActionOnAdaptersDistribution => action => distribute. Map")
                   distributed = StartUniqueKeysForNode(data.getOrElse(nodeId, null), receivedJsonStr)
                 }
                 case l: List[Any] => {
                   val data = l.asInstanceOf[List[Any]]
+                  var found = false
                   data.foreach(d => {
                     d match {
                       case m1: Map[_, _] => {
                         val data1 = m1.asInstanceOf[Map[String, Any]]
-                        distributed = distributed && StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr)
+                        // LOG.info("ActionOnAdaptersDistribution => action => distribute. List, Map. Map => " + data1.mkString(","))
+                        val valid = StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr)
+                        if (valid)
+                          found = true
                       }
                       case _ => {
                         LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
-                        distributed = false
+                        found = false
                       }
                     }
                   })
+                  distributed = found
                 }
                 case _ => {
                   LOG.error("Not found valid JSON for distribute:" + receivedJsonStr)
