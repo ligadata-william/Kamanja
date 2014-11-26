@@ -1596,11 +1596,11 @@ object TestMetadataAPI{
       serializer.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
 
-      var jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+      var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.error("Config File defaults to " + jsonConfigFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
-	logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+	logger.error("Config File defaults to " + myConfigFile)
+	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+	logger.error("The config file supplied is a complete path name of a config file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       }
       else{
 	val options = nextOption(Map(), args.toList)
@@ -1609,9 +1609,9 @@ object TestMetadataAPI{
 	  logger.error("Need configuration file as parameter")
 	  throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
 	}
-	jsonConfigFile = cfgfile.asInstanceOf[String]
+	myConfigFile = cfgfile.asInstanceOf[String]
       }
-      MetadataAPIImpl.InitMdMgrFromBootStrap(jsonConfigFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
       databaseOpen = true
       StartTest
     }catch {

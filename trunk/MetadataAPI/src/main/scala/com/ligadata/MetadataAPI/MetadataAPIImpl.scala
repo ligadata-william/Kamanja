@@ -995,6 +995,7 @@ object MetadataAPIImpl extends MetadataAPI{
       storeType match{
 	case "hbase" => {
 	  var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+	  connectinfo+= ("hostlist" -> databaseHost) 
 	  connectinfo+= ("schema" -> storeName)
 	}
 	case "hashmap" => {
