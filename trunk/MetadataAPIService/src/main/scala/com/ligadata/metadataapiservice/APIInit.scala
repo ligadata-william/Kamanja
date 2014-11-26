@@ -24,12 +24,11 @@ object APIInit {
   var configFile:String = _
 
   def Shutdown(exitCode: Int): Unit = {
-    MetadataAPIServiceLeader.Shutdown
     if( databaseOpen ){
       MetadataAPIImpl.CloseDbStore
       databaseOpen = false;
     }
-    sys.exit(exitCode)
+    MetadataAPIServiceLeader.Shutdown
   }
 
   def SetConfigFile(cfgFile:String): Unit = {

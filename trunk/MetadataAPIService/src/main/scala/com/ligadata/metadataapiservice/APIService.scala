@@ -13,6 +13,7 @@ import com.ligadata.olep.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
 import org.apache.log4j._
 import com.ligadata.Utils._
+import scala.util.control.Breaks._
 
 class APIService {
 
@@ -47,12 +48,8 @@ class APIService {
   }
 
   private def Shutdown(exitCode: Int): Unit = {
-    MetadataAPIServiceLeader.Shutdown
-    if( databaseOpen ){
-      MetadataAPIImpl.CloseDbStore
-      databaseOpen = false;
-    }
-    sys.exit(exitCode)
+    APIInit.Shutdown(0)
+    System.exit(0)
   }
 
   private def StartService(args: Array[String]) : Unit = {
@@ -106,9 +103,19 @@ class APIService {
 
       logger.trace("Started the service")
 
-      Thread.sleep(365*24*60*60*1000L)
+      sys.addShutdownHook({
+	logger.trace("ShutdownHook called")
+	Shutdown(0)
+      })
 
+      breakable {
+        for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
+          println("Exiting")
+          break
+        }
+      }
 
+      //Thread.sleep(365*24*60*60*1000L)
     } catch {
       case e: InterruptedException => {
 	  logger.trace("Unexpected Interrupt")
