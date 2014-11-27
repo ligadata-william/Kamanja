@@ -60,35 +60,42 @@ object OnLEPLeader {
 
       if (eventType.compareToIgnoreCase("CHILD_UPDATED") == 0) {
         if (curParticipents(extractedNode)) { // If this node is one of the participent, then work on this, otherwise ignore
-          val json = parse(evntPthData)
-          if (json == null || json.values == null) // Not doing any action if not found valid json
-            return
-          val values = json.values.asInstanceOf[Map[String, Any]]
-          val action = values.getOrElse("action", "").toString.toLowerCase
+          try {
+            val json = parse(evntPthData)
+            if (json == null || json.values == null) // Not doing any action if not found valid json
+              return
+            val values = json.values.asInstanceOf[Map[String, Any]]
+            val action = values.getOrElse("action", "").toString.toLowerCase
 
-          if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
-            nodesStatus += extractedNode
-            if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
-              nodesStatus.clear
-              expectedNodesAction = "distributed"
+            if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
+              nodesStatus += extractedNode
+              if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
+                nodesStatus.clear
+                expectedNodesAction = "distributed"
 
-              // Set DISTRIBUTE Action on engineDistributionZkNodePath
-              // Send all Unique keys to corresponding nodes 
-              val distribute =
-                ("action" -> "distribute") ~
-                  ("adaptermaxpartitions" -> adapterMaxPartitions) ~
-                  ("distributionmap" -> distributionMap)
-              val sendJson = compact(render(distribute))
-              zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
+                // Set DISTRIBUTE Action on engineDistributionZkNodePath
+                // Send all Unique keys to corresponding nodes 
+                val distribute =
+                  ("action" -> "distribute") ~
+                    ("adaptermaxpartitions" -> adapterMaxPartitions) ~
+                    ("distributionmap" -> distributionMap)
+                val sendJson = compact(render(distribute))
+                zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
+              }
+            } else {
+              val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
+              // Got different action. May be re-distribute. For now any non-expected action we will redistribute
+              LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
+              if (canRedistribute)
+                UpdatePartitionsIfNeededOnLeader(clusterStatus)
             }
-          } else {
-            val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
-            // Got different action. May be re-distribute. For now any non-expected action we will redistribute
-            LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
-            if (canRedistribute)
-              UpdatePartitionsIfNeededOnLeader(clusterStatus)
+          } catch {
+            case e: Exception => {
+              LOG.error("UpdatePartitionsNodeData => Failed eventType: %s, eventPath: %s, eventPathData: %s, Reason:%s, Message:%s".format(eventType, eventPath, evntPthData, e.getCause, e.getMessage))
+            }
           }
         }
+
       } else if (eventType.compareToIgnoreCase("CHILD_REMOVED") == 0) {
         // Not expected this. Need to check what is going on
         LOG.error("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s".format(eventType, eventPath, evntPthData))
@@ -169,6 +176,7 @@ object OnLEPLeader {
 
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
+    LOG.info("EventChangeCallback => Enter")
     clusterStatus = cs
 
     if (cs.isLeader && cs.leader == cs.nodeId) // Leader node
@@ -176,6 +184,7 @@ object OnLEPLeader {
 
     val isLeader = if (cs.isLeader) "true" else "false"
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
+    LOG.info("EventChangeCallback => Exit")
   }
 
   private def GetUniqueKeyValue(uk: String): String = {
@@ -312,8 +321,11 @@ object OnLEPLeader {
 
   // Using canRedistribute as startup mechanism here, because until we do bootstap ignore all the messages from this 
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
+    LOG.info("ActionOnAdaptersDistribution1 => Enter. receivedJsonStr: " + receivedJsonStr)
+
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || canRedistribute == false /* || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0 */ ) {
       // nothing to do
+      LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
       return
     }
 
@@ -322,8 +334,10 @@ object OnLEPLeader {
     try {
       // Perform the action here (STOP or DISTRIBUTE for now)
       val json = parse(receivedJsonStr)
-      if (json == null || json.values == null) // Not doing any action if not found valid json
+      if (json == null || json.values == null) { // Not doing any action if not found valid json
+        LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
         return
+      }
       val values = json.values.asInstanceOf[Map[String, Any]]
       val action = values.getOrElse("action", "").toString.toLowerCase
 
@@ -435,12 +449,17 @@ object OnLEPLeader {
       }
     }
 
+    LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
   }
 
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {
-    if (clusterStatus.isLeader == false || clusterStatus.leader != clusterStatus.nodeId) // Not Leader node
+    LOG.info("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    if (clusterStatus.isLeader == false || clusterStatus.leader != clusterStatus.nodeId) { // Not Leader node
+      LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
       return
+    }
     UpdatePartitionsNodeData(eventType, eventPath, eventPathData)
+    LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
   }
 
   def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], enviCxt: EnvContext, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {

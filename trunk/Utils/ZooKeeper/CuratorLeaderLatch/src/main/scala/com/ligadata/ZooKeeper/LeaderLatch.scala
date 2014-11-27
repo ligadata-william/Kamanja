@@ -53,6 +53,9 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
 
   def SelectLeader = {
     try {
+      // Make sure we have the path created before we execute this
+      CreateClient.CreateNodeIfNotExists(zkcConnectString, leaderPath)
+
       curatorFramework = CreateClient.createSimple(zkcConnectString, sessionTimeoutMs, connectionTimeoutMs)
 
       leaderLatch = new LeaderLatch(curatorFramework, leaderPath, nodeId, LeaderLatch.CloseMode.NOTIFY_LEADER)
@@ -61,7 +64,6 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
 
       leaderLatch.start()
 
-      // Optional, only if you need notification on cluster changes
       watchLeaderChildren()
     } catch {
       case e: Exception => {
@@ -71,16 +73,22 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   }
 
   private def updateClusterStatus {
-    val participants = leaderLatch.getParticipants.asScala
+    try {
+      val participants = leaderLatch.getParticipants.asScala
 
-    clstStatus = ClusterStatus(leaderLatch.getId, leaderLatch.hasLeadership, leaderLatch.getLeader.getId, participants.map(_.getId))
+      clstStatus = ClusterStatus(leaderLatch.getId, leaderLatch.hasLeadership, leaderLatch.getLeader.getId, participants.map(_.getId))
 
-    val isLeader = if (clstStatus.isLeader) "true" else "false"
+      val isLeader = if (clstStatus.isLeader) "true" else "false"
 
-    // Do something with cluster status (log leadership change, etc)
-    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
-    if (EventChangeCallback != null)
-      EventChangeCallback(clstStatus)
+      // Do something with cluster status (log leadership change, etc)
+      LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
+      if (EventChangeCallback != null)
+        EventChangeCallback(clstStatus)
+    } catch {
+      case e: Exception => {
+        LOG.error("Leader callback has some error. Reason:%s, Message:%s".format(e.getCause, e.getMessage))
+      }
+    }
   }
 
   private def watchLeaderChildren() {
