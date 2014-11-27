@@ -58,8 +58,8 @@ cd $srcPath
 cp Utils/KVInit/target/scala-2.10/KVInit* $ONLEPLIBPATH
 cp MetadataAPI/target/scala-2.10/MetadataAPI* $ONLEPLIBPATH
 cp OnLEPManager/target/scala-2.10/OnLEPManager* $ONLEPLIBPATH
-cp MethodExtractor/target/scala-2.10/MethodExtractor* $ONLEPLIBPATH
-cp SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $ONLEPLIBPATH
+cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $ONLEPLIBPATH
+cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $ONLEPLIBPATH
 
 # *******************************
 # Copy jars required (more than required if the fat jars are used)
