@@ -58,8 +58,8 @@ cd $srcPath
 cp Utils/KVInit/target/scala-2.10/KVInit* $ONLEPLIBPATH
 cp MetadataAPI/target/scala-2.10/MetadataAPI* $ONLEPLIBPATH
 cp OnLEPManager/target/scala-2.10/OnLEPManager* $ONLEPLIBPATH
-cp MethodExtractor/target/scala-2.10/MethodExtractor* $ONLEPLIBPATH
-cp SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $ONLEPLIBPATH
+cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $ONLEPLIBPATH
+cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $ONLEPLIBPATH
 
 # *******************************
 # Copy jars required (more than required if the fat jars are used)
@@ -214,7 +214,7 @@ cp $HOME/.ivy2/cache/commons-pool/commons-pool/jars/commons-pool-1.5.2.jar $ONLE
 cp $HOME/.ivy2/cache/com.twitter/chill_2.10/jars/chill_2.10-0.3.6.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/org.apache.kafka/kafka_2.10/jars/*.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/net.sf.jopt-simple/jars/*.jar $ONLEPLIBPATH
-cp $HOME/.ivy2/cache/com.101tec/zkclient/jars/zkclient-0.3.jar
+cp $HOME/.ivy2/cache/com.101tec/zkclient/jars/zkclient-0.3.jar $ONLEPLIBPATH
 
 
 # *******************************
