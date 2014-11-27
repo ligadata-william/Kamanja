@@ -25,18 +25,14 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   qc.dependencyJars = inputConfig.dependencyJars
 
   // For Kafka Queue we expect the format "Type~Name~Host/Brokers~Group/Client~MaxPartitions~InstancePartitions~ClassName~JarName~DependencyJars"
-  if (inputConfig.adapterSpecificTokens.size != 4) {
-    val err = "We should find only Type, Name, ClassName, JarName, DependencyJarsm Host/Brokers, Group/Client, MaxPartitions & Set of Handled Partitions for Kafka Queue Adapter Config:" + inputConfig.Name
+  if (inputConfig.adapterSpecificTokens.size < 2) {
+    val err = "We should find only Type, Name, ClassName, JarName, DependencyJarsm Host/Brokers, Group/Client for Kafka Queue Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
 
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
   qc.groupName = inputConfig.adapterSpecificTokens(1)
-  if (inputConfig.adapterSpecificTokens(2).size > 0)
-    qc.maxPartitions = inputConfig.adapterSpecificTokens(2).toInt
-  if (inputConfig.adapterSpecificTokens(3).size > 0)
-    qc.instancePartitions = inputConfig.adapterSpecificTokens(3).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => str.toInt).toSet
 
   val compress: Boolean = false
   val synchronously: Boolean = false

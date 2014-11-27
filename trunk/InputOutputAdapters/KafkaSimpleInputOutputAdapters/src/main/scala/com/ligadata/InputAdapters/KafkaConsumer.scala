@@ -44,20 +44,15 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   qc.dependencyJars = inputConfig.dependencyJars
 
   // For Kafka Queue we expect the format "Type~Name~Host/Brokers~Group/Client~MaxPartitions~InstancePartitions~ClassName~JarName~DependencyJars"
-  if (inputConfig.adapterSpecificTokens.size != 4) {
-    val err = "We should find only Type, Name, ClassName, JarName, DependencyJarsm Host/Brokers, Group/Client, MaxPartitions & Set of Handled Partitions for Kafka Queue Adapter Config:" + inputConfig.Name
+  if (inputConfig.adapterSpecificTokens.size == 0) {
+    val err = "We should find only Type, Name, ClassName, JarName, DependencyJars, Host/Brokers for Kafka Queue Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
 
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
-  qc.groupName = inputConfig.adapterSpecificTokens(1)
-  // qc.groupName = inputConfig.adapterSpecificTokens(1) + "_" + hashCode
-  // qc.groupName = hashCode.toString
-  if (inputConfig.adapterSpecificTokens(2).size > 0)
-    qc.maxPartitions = inputConfig.adapterSpecificTokens(2).toInt
-  if (inputConfig.adapterSpecificTokens(3).size > 0)
-    qc.instancePartitions = inputConfig.adapterSpecificTokens(3).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => str.toInt).toSet
+  qc.groupName = "T" + hashCode.toString
+  qc.instancePartitions = Set[Int]()
 
   //BUGBUG:: Not validating the values in QueueAdapterConfiguration 
   props.put("zookeeper.connect", qc.hosts.mkString(","))
@@ -176,10 +171,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     })
 
     try {
-      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
+      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, maxParts, qc.instancePartitions.mkString(",")))
       // get the streams for the topic
       val testTopicStreams = topicMessageStreams.get(qc.Name).get
-      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, qc.maxPartitions, qc.instancePartitions.mkString(",")))
+      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, maxParts, qc.instancePartitions.mkString(",")))
 
       for (stream <- testTopicStreams) {
         LOG.info("Streams Creating => ")
