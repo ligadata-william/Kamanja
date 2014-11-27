@@ -3552,7 +3552,7 @@ object MetadataAPIImpl extends MetadataAPI{
       if (database_location1 != null ){
 	database_location = database_location1
       }
-      logger.trace("DATABASE_LOCATION(applicable to treemap or hashmap databases only) => " + database_location1)
+      logger.trace("DATABASE_LOCATION(applicable to treemap or hashmap databases only) => " + database_location)
 
 
       var git_root = prop.getProperty("GIT_ROOT")
@@ -3618,14 +3618,12 @@ object MetadataAPIImpl extends MetadataAPI{
       logger.trace("ZNODE_PATH => " + znodePath)
       
       var zkConnString = "localhost:2181"
-      if( notifyEngine == "YES"){
-	val zkStr = prop.getProperty("ZOOKEEPER_CONNECT_STRING")
-	if (zkStr != null ){
-	  zkConnString = zkStr
-	}
-	else{
-	  logger.warn("The property ZOOKEEPER_CONNECT_STRING must be defined in the config file " + configFile + ". It is set to " + zkConnString)
-	}
+      val zkStr = prop.getProperty("ZOOKEEPER_CONNECT_STRING")
+      if (zkStr != null ){
+	zkConnString = zkStr
+      }
+      else{
+	logger.warn("The property ZOOKEEPER_CONNECT_STRING must be defined in the config file " + configFile + ". It is set to " + zkConnString)
       }
       logger.trace("ZOOKEEPER_CONNECT_STRING => " + zkConnString)
 
@@ -3663,9 +3661,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       logger.trace("SERVICE_PORT => " + serviceport)
 
-
-
-      var apiLeaderSelectionZkNode = "/ligadata/apileader"
+      var apiLeaderSelectionZkNode = znodePath
       val apiLeaderSelectionZkNode1 = prop.getProperty("API_LEADER_SELECTION_ZK_NODE")
       if (apiLeaderSelectionZkNode1 == null ){
 	logger.warn("The property ApiLeaderSelectionZkNode is not defined in the config file " + configFile)
