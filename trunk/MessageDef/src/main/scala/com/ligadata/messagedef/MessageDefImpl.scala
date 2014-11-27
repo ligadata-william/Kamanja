@@ -1892,6 +1892,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     fld
   }
 
+  
   private def processConcept(conceptsStr: String, formatType: String) {
     val json = parse(conceptsStr)
     //println(json.values.asInstanceOf[Map[Any, Any]].contains("Concepts"))
