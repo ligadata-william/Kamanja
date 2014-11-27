@@ -30,7 +30,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   private[this] val zookeeper_session_timeout_ms = 30000
   private[this] val zookeeper_connection_timeout_ms = 30000
   private[this] val zookeeper_sync_time_ms = 5000
-  private[this] val auto_commit_time = 24 * 60 * 60 * 1000
+  private[this] val auto_commit_time = 365 * 24 * 60 * 60 * 1000
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
@@ -182,7 +182,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
           override def run() {
             val topicMessageStrmsPtr = topicMessageStreams
             val testTopicStrmsPtr = testTopicStreams
-            var curPartitionId = 0
+            var curPartitionId = -1
             var checkForPartition = true
             var execThread: ExecContext = null
             var cntr: Long = 0
@@ -195,53 +195,61 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             try {
               breakable {
                 for (message <- stream) {
-                  if (message.offset > currentOffset) {
-                    currentOffset = message.offset
-                    var readTmNs = System.nanoTime
-                    var readTmMs = System.currentTimeMillis
-                    var executeCurMsg = true
-                    if (checkForPartition) {
-                      // For first message, check whether this stream we are going to handle it or not
-                      // If not handle, just return
-                      curPartitionId = message.partition
-                      var isValid = false
-                      qc.instancePartitions.foreach(p => {
-                        if (p == curPartitionId)
-                          isValid = true
-                      })
-                      LOG.info("Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, curPartitionId, isValid.toString))
-                      if (isValid == false)
-                        return ;
-                      checkForPartition = false
-                      uniqueKey.PartitionId = curPartitionId
-                      execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
-                      val kv = kvs.getOrElse(curPartitionId, null)
-                      if (kv != null && kv._2.Offset != -1 && message.offset <= kv._2.Offset) {
-                        executeCurMsg = false
-                        currentOffset = kv._2.Offset
+                  // LOG.info("Partition:%d Message:%s".format(message.partition, new String(message.message)))
+                  if (qc.instancePartitions(message.partition)) 
+                  {
+                    if (message.offset > currentOffset) {
+                      currentOffset = message.offset
+                      var readTmNs = System.nanoTime
+                      var readTmMs = System.currentTimeMillis
+                      var executeCurMsg = true
+                      if (checkForPartition) {
+                        // For first message, check whether this stream we are going to handle it or not
+                        // If not handle, just return
+                        curPartitionId = message.partition
+                        var isValid = false
+                        qc.instancePartitions.foreach(p => {
+                          if (p == curPartitionId)
+                            isValid = true
+                        })
+                        LOG.info("Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, curPartitionId, isValid.toString))
+                        if (isValid == false) {
+                          LOG.info("Returning from stream of Partitionid : " + curPartitionId)
+                          return ;
+                        }
+                        checkForPartition = false
+                        uniqueKey.PartitionId = curPartitionId
+                        execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
+                        val kv = kvs.getOrElse(curPartitionId, null)
+                        if (kv != null && kv._2.Offset != -1 && message.offset <= kv._2.Offset) {
+                          executeCurMsg = false
+                          currentOffset = kv._2.Offset
+                        }
                       }
-                    }
-                    if (executeCurMsg) {
-                      try {
-                        // Creating new string to convert from Byte Array to string
-                        val msg = new String(message.message)
-                        uniqueVal.Offset = currentOffset
-                        execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
-                        // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
-                        cntr += 1
-                        val key = Category + "/" + qc.Name + "/evtCnt"
-                        cntrAdapter.addCntr(key, 1) // for now adding each row
-                      } catch {
-                        case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                      if (executeCurMsg) {
+                        try {
+                          // Creating new string to convert from Byte Array to string
+                          val msg = new String(message.message)
+                          uniqueVal.Offset = currentOffset
+                          execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
+                          cntr += 1
+                          val key = Category + "/" + qc.Name + "/evtCnt"
+                          cntrAdapter.addCntr(key, 1) // for now adding each row
+                        } catch {
+                          case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                        }
+                      } else {
+                        LOG.info("Ignoring Message:%s".format(new String(message.message)))
                       }
                     } else {
                       LOG.info("Ignoring Message:%s".format(new String(message.message)))
                     }
-                  } else {
-                    LOG.info("Ignoring Message:%s".format(new String(message.message)))
                   }
-                  if (executor.isShutdown)
+                  if (executor.isShutdown) {
+                    LOG.info("Executor is shutting down for partitionId: " + curPartitionId)
                     break
+                  }
                 }
               }
             } catch {
@@ -249,6 +257,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                 LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
               }
             }
+            LOG.info("===========================> Exiting Thread for Partition:" + curPartitionId)
           }
         });
       }
