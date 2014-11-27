@@ -294,7 +294,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     zkClient.close
 
     if (jsonPartitionMapOpt == None) {
-      LOG.info("Not found any JSON Partitions for Queue: " + qc.Name)
+      LOG.error("Not found any JSON Partitions for Queue: " + qc.Name)
       return null
     }
 
