@@ -177,7 +177,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, maxParts, qc.instancePartitions.mkString(",")))
 
       for (stream <- testTopicStreams) {
-        LOG.info("Streams Creating => ")
+        // LOG.info("Streams Creating => ")
         executor.execute(new Runnable() {
           override def run() {
             val topicMessageStrmsPtr = topicMessageStreams

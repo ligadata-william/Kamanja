@@ -21,10 +21,12 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.curator.utils.ZKPaths
+import scala.actors.threadpool.{ Executors, ExecutorService }
 
 object OnLEPLeader {
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val lock = new Object()
+  private[this] val lock1 = new Object()
   private[this] var clusterStatus = ClusterStatus("", false, "", null)
   private[this] var zkLeaderLatch: ZkLeaderLatch = _
   private[this] var nodeId: String = _
@@ -47,6 +49,8 @@ object OnLEPLeader {
   private[this] var outputAdapters: ArrayBuffer[OutputAdapter] = _
   private[this] var statusAdapters: ArrayBuffer[OutputAdapter] = _
   private[this] var envCtxt: EnvContext = _
+  private[this] var updatePartitionsFlag = false
+  private[this] var distributionExecutor = Executors.newFixedThreadPool(1)
 
   private def SetCanRedistribute(redistFlag: Boolean): Unit = lock.synchronized {
     canRedistribute = redistFlag
@@ -87,7 +91,7 @@ object OnLEPLeader {
               // Got different action. May be re-distribute. For now any non-expected action we will redistribute
               LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
               if (canRedistribute)
-                UpdatePartitionsIfNeededOnLeader(clusterStatus)
+                SetUpdatePartitionsFlag
             }
           } catch {
             case e: Exception => {
@@ -109,15 +113,18 @@ object OnLEPLeader {
     }
   }
 
-  private def UpdatePartitionsIfNeededOnLeader(cs: ClusterStatus): Unit = lock.synchronized {
-    if (cs.isLeader && cs.leader != nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
+  private def UpdatePartitionsIfNeededOnLeader: Unit = lock.synchronized {
+    val cs = GetClusterStatus
+    if (cs.isLeader == false || cs.leader != cs.nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
+
+    LOG.info("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
 
     // Clear Previous Distribution Map
     distributionMap.clear
     adapterMaxPartitions.clear
     nodesStatus.clear
     expectedNodesAction = ""
-    curParticipents = if (clusterStatus.participants != null) clusterStatus.participants.toSet else Set[String]()
+    curParticipents = if (cs.participants != null) cs.participants.toSet else Set[String]()
 
     var tmpDistMap = ArrayBuffer[(String, scala.collection.mutable.Map[String, ArrayBuffer[String]])]()
 
@@ -174,16 +181,45 @@ object OnLEPLeader {
     zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
   }
 
+  private def SetClusterStatus(cs: ClusterStatus): Unit = lock1.synchronized {
+    clusterStatus = cs
+    updatePartitionsFlag = true
+  }
+
+  private def GetClusterStatus: ClusterStatus = lock1.synchronized {
+    return clusterStatus
+  }
+
+  private def IsLeaderNode: Boolean = lock1.synchronized {
+    return (clusterStatus.isLeader && clusterStatus.leader == clusterStatus.nodeId)
+  }
+
+  private def IsLeaderNodeAndUpdatePartitionsFlagSet: Boolean = lock1.synchronized {
+    if (clusterStatus.isLeader && clusterStatus.leader == clusterStatus.nodeId)
+      return updatePartitionsFlag
+    else
+      return false
+  }
+
+  private def SetUpdatePartitionsFlag: Unit = lock1.synchronized {
+    updatePartitionsFlag = true
+  }
+
+  private def GetUpdatePartitionsFlag: Boolean = lock1.synchronized {
+    return updatePartitionsFlag
+  }
+
+  private def GetUpdatePartitionsFlagAndReset: Boolean = lock1.synchronized {
+    val retVal = updatePartitionsFlag
+    updatePartitionsFlag = false
+    retVal
+  }
+
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
     LOG.info("EventChangeCallback => Enter")
-    clusterStatus = cs
-
-    if (cs.isLeader && cs.leader == cs.nodeId) // Leader node
-      UpdatePartitionsIfNeededOnLeader(cs)
-
-    val isLeader = if (cs.isLeader) "true" else "false"
-    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeader, cs.leader, cs.participants.mkString(",")))
+    SetClusterStatus(cs)
+    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
     LOG.info("EventChangeCallback => Exit")
   }
 
@@ -321,11 +357,16 @@ object OnLEPLeader {
 
   // Using canRedistribute as startup mechanism here, because until we do bootstap ignore all the messages from this 
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
-    LOG.info("ActionOnAdaptersDistribution1 => Enter. receivedJsonStr: " + receivedJsonStr)
+    // LOG.info("ActionOnAdaptersDistribution1 => receivedJsonStr: " + receivedJsonStr)
 
-    if (receivedJsonStr == null || receivedJsonStr.size == 0 || canRedistribute == false /* || clusterStatus == null || clusterStatus.participants == null || clusterStatus.participants.size == 0 */ ) {
+    if (receivedJsonStr == null || receivedJsonStr.size == 0 || canRedistribute == false) {
       // nothing to do
       LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
+      return
+    }
+
+    if (IsLeaderNodeAndUpdatePartitionsFlagSet) {
+      LOG.info("Already got Re-distribution request. Ignoring any actions from ActionOnAdaptersDistribution") // Atleast this happens on main node
       return
     }
 
@@ -453,13 +494,19 @@ object OnLEPLeader {
   }
 
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {
-    LOG.info("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
-    if (clusterStatus.isLeader == false || clusterStatus.leader != clusterStatus.nodeId) { // Not Leader node
-      LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    // LOG.info("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    if (IsLeaderNode == false) { // Not Leader node
+      // LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
       return
     }
+
+    if (IsLeaderNodeAndUpdatePartitionsFlagSet) {
+      LOG.info("Already got Re-distribution request. Ignoring any actions from ParticipentsAdaptersStatus")
+      return
+    }
+
     UpdatePartitionsNodeData(eventType, eventPath, eventPathData)
-    LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    // LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
   }
 
   def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], enviCxt: EnvContext, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
@@ -493,6 +540,18 @@ object OnLEPLeader {
             // Not doing anything
           }
         }
+
+        distributionExecutor.execute(new Runnable() {
+          override def run() = {
+            while (distributionExecutor.isShutdown == false) {
+              Thread.sleep(1000) // Waiting for 1sec
+              if (distributionExecutor.isShutdown == false && GetUpdatePartitionsFlagAndReset) {
+                UpdatePartitionsIfNeededOnLeader
+              }
+            }
+          }
+        })
+
         SetCanRedistribute(true)
         zkLeaderLatch = new ZkLeaderLatch(zkConnectString, engineLeaderZkNodePath, nodeId, EventChangeCallback, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkLeaderLatch.SelectLeader
@@ -514,6 +573,7 @@ object OnLEPLeader {
   }
 
   def Shutdown: Unit = {
+    distributionExecutor.shutdown
     if (zkLeaderLatch != null)
       zkLeaderLatch.Shutdown
     zkLeaderLatch = null
