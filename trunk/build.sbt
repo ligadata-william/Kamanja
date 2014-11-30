@@ -69,7 +69,7 @@ lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
-lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (MetadataBootstrap, Storage)
+lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Storage)
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient)
 

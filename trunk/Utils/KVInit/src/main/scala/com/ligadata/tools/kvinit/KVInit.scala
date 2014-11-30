@@ -18,6 +18,15 @@ import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.OnLEPBase._
 import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.Utils.Utils
+import java.util.Properties
+import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.olep.metadata.MdMgr._
+import com.ligadata.olep.metadata._
+import java.net.URL
+import java.net.URLClassLoader
+import scala.reflect.runtime.{ universe => ru }
+import com.ligadata.Serialize._
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -62,12 +71,10 @@ Sample uses:
     def nextOption(map: OptionMap, list: List[String]): OptionMap = {
       list match {
         case Nil => map
-        case "--classname" :: value :: tail =>
-          nextOption(map ++ Map('classname -> value), tail)
+        case "--config" :: value :: tail =>
+          nextOption(map ++ Map('config -> value), tail)
         case "--kvname" :: value :: tail =>
           nextOption(map ++ Map('kvname -> value), tail)
-        case "--kvpath" :: value :: tail =>
-          nextOption(map ++ Map('kvpath -> value), tail)
         case "--csvpath" :: value :: tail =>
           nextOption(map ++ Map('csvpath -> value), tail)
         case "--keyfieldname" :: value :: tail =>
@@ -82,27 +89,47 @@ Sample uses:
 
     val options = nextOption(Map(), arglist)
 
-    val classname = if (options.contains('classname)) options.apply('classname) else null
-    val kvname = if (options.contains('kvname)) options.apply('kvname) else null
-    val kvpath = if (options.contains('kvpath)) options.apply('kvpath) else null
-    val csvpath = if (options.contains('csvpath)) options.apply('csvpath) else null
-    val keyfieldname = if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
+    var cfgfile = if (options.contains('config)) options.apply('config) else null
+    var kvname = if (options.contains('kvname)) options.apply('kvname) else null
+    var csvpath = if (options.contains('csvpath)) options.apply('csvpath) else null
+    var keyfieldname = if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
     val dump = if (options.contains('dump)) options.apply('dump) else null
 
-    var valid: Boolean = (classname != null && kvpath != null && csvpath != null && keyfieldname != null && kvname != null)
+    var valid: Boolean = (cfgfile != null && csvpath != null && keyfieldname != null && kvname != null)
 
     if (valid) {
-      val kvmaker: KVInit = new KVInit(classname, kvname.toLowerCase, kvpath, csvpath, keyfieldname)
+      cfgfile = cfgfile.trim
+      csvpath = csvpath.trim
+      keyfieldname = keyfieldname.trim
+      kvname = kvname.trim
+      valid = (cfgfile.size != 0 && csvpath.size != 0 && keyfieldname.size != 0 && kvname.size != 0)
+    }
 
-      if (dump != null && dump.toLowerCase().startsWith("y")) {
-        val dstore: DataStore = kvmaker.openstore
-        kvmaker.dump(dstore)
-        dstore.Shutdown()
-      } else {
-        val dstore: DataStore = kvmaker.build
-        //kvmaker.dump(dstore)
-        dstore.Shutdown()
+    if (valid) {
+      val (loadConfigs, failStr) = Utils.loadConfiguration(cfgfile.toString, true)
+      if (failStr != null && failStr.size > 0) {
+        logger.error(failStr)
+        return
       }
+      if (loadConfigs == null) {
+        logger.error("Failed to load configurations from configuration file")
+        return
+      }
+
+      val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldname)
+      if (kvmaker.isOk) {
+        if (dump != null && dump.toLowerCase().startsWith("y")) {
+          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, kvmaker.kvTableName, kvmaker.dataLocation)
+          kvmaker.dump(dstore)
+          dstore.Shutdown()
+        } else {
+          val dstore: DataStore = kvmaker.buildContainerOrMessage
+          //kvmaker.dump(dstore)
+          dstore.Shutdown()
+        }
+
+      }
+
     } else {
       logger.error("Illegal and/or missing arguments")
       logger.error(usage)
@@ -110,25 +137,285 @@ Sample uses:
   }
 }
 
-class KVInit(val classname: String, val kvname: String, val kvpath: String, val csvpath: String, val keyfieldname: String, val kvstyle: String = "hashmap") extends LogTrait {
+class KvInitClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  override def addURL(url: URL) {
+    super.addURL(url)
+  }
+}
+
+class KvInitLoaderInfo {
+  // class loader
+  val loader: KvInitClassLoader = new KvInitClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+
+  // Loaded jars
+  val loadedJars: TreeSet[String] = new TreeSet[String];
+
+  // Get a mirror for reflection
+  val mirror: reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+}
+
+object KvInitConfiguration {
+  var jarPaths: collection.immutable.Set[String] = _
+  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
+}
+
+class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: String, val keyfieldname: String) extends LogTrait {
 
   val csvdata: List[String] = Source.fromFile(csvpath).mkString.split("\n", -1).toList
   val header: Array[String] = csvdata.head.split(",", -1).map(_.trim.toLowerCase)
-  val isOk: Boolean = header.contains(keyfieldname.toLowerCase())
+  var isOk: Boolean = header.contains(keyfieldname.toLowerCase())
   var keyPos: Int = 0
 
-  def openstore: DataStore = {
+  val kvInitLoader = new KvInitLoaderInfo
 
-    var connectinfo: PropertyMap = new PropertyMap
-    connectinfo += ("connectiontype" -> "hashmap")
-    connectinfo += ("path" -> s"$kvpath")
-    connectinfo += ("schema" -> s"$kvname")
-    connectinfo += ("table" -> s"$kvname")
-    connectinfo += ("inmemory" -> "false")
-    connectinfo += ("withtransaction" -> "false")
+  KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+  if (KvInitConfiguration.jarPaths.size == 0) {
+    KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+    if (KvInitConfiguration.jarPaths.size == 0) {
+      logger.error("Not found valid JarPaths.")
+      isOk = false
+    }
+  }
 
-    val kvstore: DataStore = KeyValueManager.Get(connectinfo)
-    kvstore
+  val metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
+  if (metadataStoreType.size == 0) {
+    logger.error("Not found valid MetadataStoreType.")
+    isOk = false
+  }
+
+  val metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
+  if (metadataSchemaName.size == 0) {
+    logger.error("Not found valid MetadataSchemaName.")
+    isOk = false
+  }
+
+  val metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
+  if (metadataLocation.size == 0) {
+    logger.error("Not found valid MetadataLocation.")
+    isOk = false
+  }
+
+  val dataStoreType = loadConfigs.getProperty("DataStoreType".toLowerCase, "").replace("\"", "").trim
+  if (dataStoreType.size == 0) {
+    logger.error("Not found valid DataStoreType.")
+    isOk = false
+  }
+
+  val dataSchemaName = loadConfigs.getProperty("DataSchemaName".toLowerCase, "").replace("\"", "").trim
+  if (dataSchemaName.size == 0) {
+    logger.error("Not found valid DataSchemaName.")
+    isOk = false
+  }
+
+  val dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
+  if (dataLocation.size == 0) {
+    logger.error("Not found valid DataLocation.")
+    isOk = false
+  }
+
+  if (isOk && metadataStoreType.compareToIgnoreCase("cassandra") == 0)
+    MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
+  else if (isOk && ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0)))
+    MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
+
+  var kvNameCorrType: BaseTypeDef = _
+  var kvTableName: String = _
+  var messageObj: BaseMsgObj = _
+  var containerObj: BaseContainerObj = _
+  var kryoSer: Serializer = null
+
+  if (isOk) {
+    kvNameCorrType = mdMgr.ActiveType(kvname.toLowerCase)
+    if (kvNameCorrType == null || kvNameCorrType == None) {
+      logger.error("Not found valid type for " + kvname.toLowerCase)
+      isOk = false
+    } else {
+      kvTableName = kvNameCorrType.FullName.toLowerCase.replace('.', '_')
+    }
+  }
+
+  var isMsg = false
+  var isContainer = false
+
+  if (isOk) {
+    isOk = LoadJarIfNeeded(kvNameCorrType, kvInitLoader.loadedJars, kvInitLoader.loader)
+  }
+
+  if (isOk) {
+    var clsName = kvNameCorrType.PhysicalName.trim
+    if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') // if no $ at the end we are taking $
+      clsName = clsName + "$"
+
+    if (isMsg == false) {
+      // Checking for Message
+      try {
+        // If required we need to enable this test
+        // Convert class name into a class
+        var curClz = Class.forName(clsName, true, kvInitLoader.loader)
+
+        isContainer = false
+
+        while (curClz != null && isContainer == false) {
+          isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
+          if (isContainer == false)
+            curClz = curClz.getSuperclass()
+        }
+      } catch {
+        case e: Exception => {
+          logger.error("Failed to get classname:%s as message".format(clsName))
+          e.printStackTrace
+        }
+      }
+    }
+
+    if (isContainer == false) {
+      // Checking for container
+      try {
+        // If required we need to enable this test
+        // Convert class name into a class
+        var curClz = Class.forName(clsName, true, kvInitLoader.loader)
+
+        isMsg = false
+
+        while (curClz != null && isMsg == false) {
+          isMsg = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
+          if (isMsg == false)
+            curClz = curClz.getSuperclass()
+        }
+      } catch {
+        case e: Exception => {
+          logger.error("Failed to get classname:%s as container".format(clsName))
+          e.printStackTrace
+        }
+      }
+    }
+
+    if (isMsg || isContainer) {
+      try {
+        val module = kvInitLoader.mirror.staticModule(clsName)
+        val obj = kvInitLoader.mirror.reflectModule(module)
+        val objinst = obj.instance
+        if (objinst.isInstanceOf[BaseMsgObj]) {
+          messageObj = objinst.asInstanceOf[BaseMsgObj]
+          logger.info("Created Message Object")
+        } else if (objinst.isInstanceOf[BaseContainerObj]) {
+          containerObj = objinst.asInstanceOf[BaseContainerObj]
+          logger.info("Created Container Object")
+        } else {
+          logger.error("Failed to instantiate message or conatiner object :" + clsName)
+          isOk = false
+        }
+      } catch {
+        case e: Exception => {
+          logger.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          isOk = false
+        }
+      }
+    } else {
+      logger.error("Failed to instantiate message or conatiner object :" + clsName)
+      isOk = false
+    }
+
+    if (isOk) {
+      kryoSer = SerializerManager.GetSerializer("kryo")
+      if (kryoSer != null)
+        kryoSer.SetClassLoader(kvInitLoader.loader)
+    }
+
+  }
+
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KvInitClassLoader): Boolean = {
+    if (KvInitConfiguration.jarPaths == null) return false
+
+    var retVal: Boolean = true
+    var allJars: Array[String] = null
+
+    val jarname = if (elem.JarName == null) "" else elem.JarName.trim
+
+    if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0 && jarname.size > 0) {
+      allJars = elem.DependencyJarNames :+ jarname
+    } else if (elem.DependencyJarNames != null && elem.DependencyJarNames.size > 0) {
+      allJars = elem.DependencyJarNames
+    } else if (jarname.size > 0) {
+      allJars = Array(jarname)
+    } else {
+      return retVal
+    }
+
+    val jars = allJars.map(j => KvInitConfiguration.GetValidJarFile(KvInitConfiguration.jarPaths, j))
+
+    // Loading all jars
+    for (j <- jars) {
+      logger.info("Processing Jar " + j.trim)
+      val fl = new File(j.trim)
+      if (fl.exists) {
+        try {
+          if (loadedJars(fl.getPath())) {
+            logger.info("Jar " + j.trim + " already loaded to class path.")
+          } else {
+            loader.addURL(fl.toURI().toURL())
+            logger.info("Jar " + j.trim + " added to class path.")
+            loadedJars += fl.getPath()
+          }
+        } catch {
+          case e: Exception => {
+            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+            return false
+          }
+        }
+      } else {
+        logger.error("Jar " + j.trim + " not found")
+        return false
+      }
+    }
+
+    true
+  }
+
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
+    try {
+      var connectinfo = new PropertyMap
+      connectinfo += ("connectiontype" -> storeType)
+      connectinfo += ("table" -> tableName)
+      storeType match {
+        case "hashmap" => {
+          connectinfo += ("path" -> dataLocation)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
+          connectinfo += ("inmemory" -> "false")
+          connectinfo += ("withtransaction" -> "false")
+        }
+        case "treemap" => {
+          connectinfo += ("path" -> dataLocation)
+          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
+          connectinfo += ("inmemory" -> "false")
+          connectinfo += ("withtransaction" -> "false")
+        }
+        case "cassandra" => {
+          connectinfo += ("hostlist" -> dataLocation)
+          connectinfo += ("schema" -> storeName)
+          connectinfo += ("ConsistencyLevelRead" -> "ONE")
+        }
+        case _ => {
+          throw new Exception("The database type " + storeType + " is not supported yet ")
+        }
+      }
+      logger.info("Getting DB Connection: " + connectinfo.mkString(","))
+      KeyValueManager.Get(connectinfo)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new Exception(e.getMessage())
+      }
+    }
   }
 
   def locateKeyPos: Unit = {
@@ -145,14 +432,29 @@ class KVInit(val classname: String, val kvname: String, val kvpath: String, val 
     }
   }
 
-  def build: DataStore = {
-    buildContainerOrMessage
+  def isDerivedFrom(clz: Class[_], clsName: String): Boolean = {
+    var isIt: Boolean = false
+
+    val interfecs = clz.getInterfaces()
+    logger.info("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
+
+    breakable {
+      for (intf <- interfecs) {
+        logger.info("Interface:" + intf.getName())
+        if (intf.getName().equals(clsName)) {
+          isIt = true
+          break
+        }
+      }
+    }
+
+    isIt
   }
 
   def buildContainerOrMessage: DataStore = {
     if (!isOk) return null
 
-    val kvstore: DataStore = openstore
+    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, kvTableName, dataLocation)
     kvstore.TruncateStore
 
     locateKeyPos
@@ -166,8 +468,29 @@ class KVInit(val classname: String, val kvname: String, val kvpath: String, val 
         inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
         inputData.curPos = 0
 
+        var messageOrContainer: MessageContainerBase = null
+
+        if (isMsg) {
+          messageOrContainer = messageObj.CreateNewMessage
+        } else if (isContainer) {
+          messageOrContainer = containerObj.CreateNewContainer
+        } else { // This should not happen
+
+        }
+
         val key: String = inputData.tokens(keyPos)
-        SaveObject(key, tuples, kvstore, "CSV")
+        if (messageOrContainer == null) {
+          messageOrContainer.populate(inputData)
+          try {
+            val v = kryoSer.SerializeObjectToByteArray(messageOrContainer)
+            SaveObject(key, v, kvstore, "kryo")
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to serialize/write data.")
+              e.printStackTrace
+            }
+          }
+        }
       }
     })
 
@@ -256,7 +579,7 @@ class KVInit(val classname: String, val kvname: String, val kvpath: String, val 
     v
   }
 
-  private def SaveObject(key: String, value: String, store: DataStore, serializerInfo: String) {
+  private def SaveObject(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
     object i extends IStorage {
       var k = makeKey(key)
       var v = makeValue(value, serializerInfo)
