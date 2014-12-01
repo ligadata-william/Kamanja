@@ -49,7 +49,7 @@ class APIService {
 
   private def Shutdown(exitCode: Int): Unit = {
     APIInit.Shutdown(0)
-    System.exit(0)
+    //System.exit(0)
   }
 
   private def StartService(args: Array[String]) : Unit = {
@@ -108,14 +108,7 @@ class APIService {
 	Shutdown(0)
       })
 
-      breakable {
-        for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
-          println("Exiting")
-          break
-        }
-      }
-
-      //Thread.sleep(365*24*60*60*1000L)
+      Thread.sleep(365*24*60*60*1000L)
     } catch {
       case e: InterruptedException => {
 	  logger.trace("Unexpected Interrupt")
