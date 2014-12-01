@@ -38,9 +38,8 @@ object KVInit extends App with LogTrait {
   def usage: String = {
     """ 
 Usage: scala com.ligadata.kvinit.KVInit 
+    --config <config file while has jarpaths, metadata store information & data store information>
     --kvname <full package qualified name of a Container or Message> 
-    --classpath <full package qualified class name of a BaseContainer or BaseMsg derivative>
-    --kvpath <where to put kvname db> 
     --csvpath <input to load> 
     --keyfieldname  <name of one of the fields in the first line of the csvpath file>
     --dump <if any{Y | y | yes | Yes} just dump an existing store>
@@ -55,8 +54,8 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname --classname com.ligadata.messagescontainers.SputumCodes_100 --kvpath /tmp/OnLEPInstall/kvstores --csvpath /tmp/OnLEPInstall/sampledata/sputumCodes.csv --keyfieldname icd9Code       
-      
+      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/OnLEPInstall/EngineConfig.cfg --csvpath /tmp/OnLEPInstall/sampledata/TestContainer.csv --keyfieldname Id
+
 """
   }
 
@@ -457,6 +456,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     locateKeyPos
     /** locate key idx */
 
+    var processedRows: Int = 0
+
     val csvdataRecs: List[String] = csvdata.tail
     csvdataRecs.foreach(tuples => {
       if (tuples.size > 0) {
@@ -476,11 +477,12 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
 
         val key: String = inputData.tokens(keyPos)
-        if (messageOrContainer == null) {
+        if (messageOrContainer != null) {
           messageOrContainer.populate(inputData)
           try {
             val v = kryoSer.SerializeObjectToByteArray(messageOrContainer)
             SaveObject(key, v, kvstore, "kryo")
+            processedRows += 1
           } catch {
             case e: Exception => {
               logger.error("Failed to serialize/write data.")
@@ -490,6 +492,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       }
     })
+
+    logger.info("Inserted %d values in KVName %s".format(processedRows, kvname))
 
     kvstore
   }
