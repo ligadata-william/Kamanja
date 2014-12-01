@@ -3926,11 +3926,8 @@ object MetadataAPIImpl extends MetadataAPI{
     if( configFile.endsWith(".json") ){
       MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
     }
-    else if( configFile.endsWith(".properties") ){
-          MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
-    }
-    else{
-      throw LoadAPIConfigException("Invalid name for config file, it should have a suffix  .json or .properties: " + configFile)
+    else {
+      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
@@ -3944,12 +3941,10 @@ object MetadataAPIImpl extends MetadataAPI{
     if( configFile.endsWith(".json") ){
       MetadataAPIImpl.readMetadataAPIConfigFromJsonFile(configFile)
     }
-    else if( configFile.endsWith(".properties") ){
-          MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
-    }
     else{
-      throw LoadAPIConfigException("Invalid name for config file, it should have a suffix  .json or .properties: " + configFile)
+      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
+
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
   }
