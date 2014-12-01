@@ -213,7 +213,7 @@ cp $HOME/.ivy2/cache/xmlenc/xmlenc/jars/xmlenc-0.52.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/commons-pool/commons-pool/jars/commons-pool-1.5.2.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/com.twitter/chill_2.10/jars/chill_2.10-0.3.6.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/org.apache.kafka/kafka_2.10/jars/*.jar $ONLEPLIBPATH
-cp $HOME/.ivy2/cache/net.sf.jopt-simple/jars/*.jar $ONLEPLIBPATH
+cp $HOME/.ivy2/cache/net.sf.jopt-simple/jopt-simple/jars/jopt-simple-3.2.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/com.101tec/zkclient/jars/zkclient-0.3.jar $ONLEPLIBPATH
 
 
