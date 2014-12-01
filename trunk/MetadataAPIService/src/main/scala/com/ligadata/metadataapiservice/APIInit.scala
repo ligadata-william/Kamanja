@@ -22,8 +22,9 @@ object APIInit {
   MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
   var configFile:String = _
+  private[this] val lock = new Object()
 
-  def Shutdown(exitCode: Int): Unit = {
+  def Shutdown(exitCode: Int): Unit = lock.synchronized{
     if( databaseOpen ){
       MetadataAPIImpl.CloseDbStore
       databaseOpen = false;

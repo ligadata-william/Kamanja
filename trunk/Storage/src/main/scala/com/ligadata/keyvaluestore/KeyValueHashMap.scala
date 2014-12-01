@@ -4,7 +4,7 @@ import org.mapdb._;
 import com.ligadata.keyvaluestore._
 import java.io.File;
 import java.nio.ByteBuffer
-
+import org.apache.log4j._
 /*
 
 No schema setup
@@ -32,6 +32,9 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
   val InMemory = parameter.getOrElse("inmemory", "false").toBoolean
   val withTransactions = parameter.getOrElse("withtransaction", "false").toBoolean
 
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
+
   var db: DB = null
 
   if (InMemory == true) {
@@ -45,8 +48,6 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
     }
     db = DBMaker.newFileDB(new File(path + "/" + keyspace + ".hdb"))
       .closeOnJvmShutdown()
-      .asyncWriteEnable()
-      .asyncWriteFlushDelay(100)
       .mmapFileEnable()
       .transactionDisable()
       .commitFileSyncDisable()
@@ -125,11 +126,23 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 
   def commitTx(tx: Transaction) = {}
 
-  override def Shutdown() =
-    {
-      db.commit(); //persist changes into disk
-      map.close();
+  override def Shutdown() = {
+    if( db != null && db.isClosed() == false ){
+      logger.info("Trying to shutdown hashmap db")
+      try{
+	db.commit(); //persist changes into disk
+	db = null
+	map.close();
+      }catch{
+	case e:NullPointerException =>{
+	  logger.error("Unexpected Null pointer exception when closing hashmap, seems like internal bug related to mapdb ")
+	}
+	case e:Exception =>{
+	  logger.error("Unexpected error when closing hashmap " + e.getMessage())
+	}
+      }
     }
+  }
 
   def TruncateStore() {
     map.clear()
