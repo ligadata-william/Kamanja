@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.hbase._
+import org.apache.log4j._
 
 import java.nio.ByteBuffer
 import java.io.IOException
@@ -44,6 +45,9 @@ class KeyValueHBaseTx(owner : DataStore) extends Transaction
 
 class KeyValueHBase(parameter: PropertyMap) extends DataStore
 {
+	val loggerName = this.getClass.getName
+	val logger = Logger.getLogger(loggerName)
+
 	var keyspace = parameter.getOrElse("schema", "default") ;
 	var hostnames = parameter.getOrElse("hostlist", "localhost") ;
 	var table = parameter.getOrElse("table", "default")

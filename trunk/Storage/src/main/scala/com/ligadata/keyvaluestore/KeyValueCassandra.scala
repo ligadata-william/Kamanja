@@ -8,7 +8,7 @@ import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.BatchStatement
 import java.nio.ByteBuffer
-
+import org.apache.log4j._
 /*
   	You open connection to a cluster hostname[,hostname]:port
   	You could provide username/password
@@ -41,6 +41,9 @@ class KeyValueCassandraTx(owner: DataStore) extends Transaction {
 }
 
 class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
+
   // Read all cassandra parameters
   var hostnames = parameter.getOrElse("hostlist", "localhost");
   var keyspace = parameter.getOrElse("schema", "default");
@@ -53,32 +56,41 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
   var clusterBuilder = Cluster.builder()
   var cluster: Cluster = _
   var session: Session = _
+
+  var keyspace_exists = false
+
   try {
     clusterBuilder.addContactPoints(hostnames)
     if (parameter.contains("user"))
       clusterBuilder.withCredentials(parameter("user"), parameter.getOrElse("password", ""))
     cluster = clusterBuilder.build()
-    // create a session that is not associated with a key space yet so we can create one if needed
-    session = cluster.connect();
+
+    if (cluster.getMetadata().getKeyspace(keyspace) == null){
+      logger.warn("The keyspace " + keyspace + " doesn't exist yet, we will create a new keyspace and continue")
+      // create a session that is not associated with a key space yet so we can create one if needed
+      session = cluster.connect();
+      // create keyspace if not exists
+      val createKeySpaceStmt = "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " with replication = {'class':'" + replication_class + "', 'replication_factor':" + replication_factor + "};"
+      try {
+	session.execute(createKeySpaceStmt);
+      } catch {
+	case e: Exception => {
+	  throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
+	}
+      }
+      // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
+      session.close()
+      session = cluster.connect(keyspace)
+    }
+    else{
+      keyspace_exists = true
+      session = cluster.connect(keyspace)
+    }
   } catch {
     case e: Exception => {
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }
-
-  // Check keyspace if not exists
-  val createKeySpaceStmt = "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " with replication = {'class':'" + replication_class + "', 'replication_factor':" + replication_factor + "};"
-  try {
-    session.execute(createKeySpaceStmt);
-  } catch {
-    case e: Exception => {
-      throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
-    }
-  }
-
-  // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
-  session.close()
-  session = cluster.connect(keyspace)
 
   // Check if table exists or create if needed
   val createTblStmt = "CREATE TABLE IF NOT EXISTS " + table + " (key blob, value blob, primary key(key) );"
