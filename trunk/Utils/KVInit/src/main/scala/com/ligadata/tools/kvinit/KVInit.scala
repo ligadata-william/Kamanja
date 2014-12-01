@@ -127,8 +127,8 @@ Sample uses:
           //kvmaker.dump(dstore)
           dstore.Shutdown()
         }
-
       }
+      MetadataAPIImpl.CloseDbStore
 
     } else {
       logger.error("Illegal and/or missing arguments")
@@ -222,10 +222,12 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
-  if (isOk && metadataStoreType.compareToIgnoreCase("cassandra") == 0)
-    MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
-  else if (isOk && ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0)))
-    MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
+  if (isOk) {
+    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0)
+      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
+    else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
+      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
+  }
 
   var kvNameCorrType: BaseTypeDef = _
   var kvTableName: String = _
@@ -262,8 +264,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
-        isContainer = false
-
         while (curClz != null && isContainer == false) {
           isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
           if (isContainer == false)
@@ -283,8 +283,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         // If required we need to enable this test
         // Convert class name into a class
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
-
-        isMsg = false
 
         while (curClz != null && isMsg == false) {
           isMsg = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
@@ -330,7 +328,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       if (kryoSer != null)
         kryoSer.SetClassLoader(kvInitLoader.loader)
     }
-
   }
 
   private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KvInitClassLoader): Boolean = {
