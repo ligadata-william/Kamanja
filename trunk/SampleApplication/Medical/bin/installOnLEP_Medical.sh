@@ -83,8 +83,6 @@ echo "copy Metadata jars..."
 cp $srcPath/Metadata/target/scala-2.10/metadata_2.10-1.0.jar $ONLEPLIBPATH
 cp $srcPath/MessageDef/target/scala-2.10/messagedef_2.10-1.0.jar $ONLEPLIBPATH
 cp $srcPath/MetadataAPI/target/scala-2.10/metadataapi_2.10-1.0.jar $ONLEPLIBPATH
-cp $srcPath/MetadataAPIService/target/scala-2.10/metadataapiservice_2.10-0.1.jar $ONLEPLIBPATH
-cp $srcPath/MetadataAPIServiceClient/target/scala-2.10/metadataapiserviceclient_2.10-0.1.jar $ONLEPLIBPATH # Didn't build... Not included anymore?
 cp $srcPath/Pmml/MethodExtractor/target/scala-2.10/methodextractor_2.10-1.0.jar $ONLEPLIBPATH
 
 # OnLEP jars
@@ -205,7 +203,6 @@ cp $HOME/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.7.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/org.slf4j/slf4j-log4j12/jars/slf4j-log4j12-1.7.5.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/org.tukaani/xz/jars/xz-1.0.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/org.xerial.snappy/snappy-java/bundles/snappy-java-1.0.4.1.jar $ONLEPLIBPATH
-cp $HOME/.ivy2/cache/org.xerial.snappy/snappy-java/jars/snappy-java-1.0.5.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/tomcat/jasper-runtime/jars/jasper-runtime-5.5.23.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/voldemort/voldemort/jars/voldemort-0.96.jar $ONLEPLIBPATH
