@@ -612,8 +612,8 @@ object JsonSerializer {
 		      ("DependantJars"   -> o.dependencyJarNames.toList))
 	  pretty(render(json))
 	}
-	case o:ContainerDef => {
-	  val json = (("ObjectType"      -> "ContainerDef") ~
+	case o:MappedMsgTypeDef => {
+	  val json = (("ObjectType"      -> "MappedMsgTypeDef") ~
 		      ("Operation"       -> operation) ~
 		      ("NameSpace"       -> o.nameSpace) ~
 		      ("Name"            -> o.name) ~
@@ -625,6 +625,17 @@ object JsonSerializer {
 	}
 	case o:StructTypeDef => {
 	  val json = (("ObjectType"      -> "StructTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
+	case o:ContainerDef => {
+	  val json = (("ObjectType"      -> "ContainerDef") ~
 		      ("Operation"       -> operation) ~
 		      ("NameSpace"       -> o.nameSpace) ~
 		      ("Name"            -> o.name) ~
@@ -766,9 +777,16 @@ object JsonSerializer {
 	    jsonStr += memberDefJson
 	    jsonStr
 	  }
+	  case c:MappedMsgTypeDef => {
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
+	    memberDefJson = memberDefJson + "}\n}"
+	    jsonStr += memberDefJson
+	    jsonStr
+	  }
 	  case _ => {
-            throw new UnsupportedObjectException(s"SerializeObjectToJson doesn't support the " +
-						 "objectType of $mdObj.name  yet")
+            throw new UnsupportedObjectException("SerializeObjectToJson doesn't support the " +
+						 "objectType of " + o.containerType.getClass().getName() + " yet")
 	  }
 	}
       }
@@ -787,6 +805,13 @@ object JsonSerializer {
 	  case c:StructTypeDef => {
 	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
 	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
+	    memberDefJson = memberDefJson + "}\n}"
+	    jsonStr += memberDefJson
+	    jsonStr
+	  }
+	  case c:MappedMsgTypeDef => {
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr
@@ -1052,8 +1077,23 @@ object JsonSerializer {
 	jsonStr += tupleDefJson
 	jsonStr
       }
-      case o:ContainerTypeDef => {
-	val json =  (("MetadataType" -> "ContainerTypeDef") ~
+      case o:StructTypeDef => {
+	val json =  (("MetadataType" -> "StructTypeDef") ~
+		     ("NameSpace" -> o.nameSpace) ~
+		     ("Name" -> o.name) ~
+		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
+		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
+		     ("TypeName" -> o.name ) ~
+		     ("PhysicalName" -> o.physicalName ) ~
+		     ("Version" -> o.ver) ~
+		     ("JarName" -> o.jarName) ~
+		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("Implementation" -> o.implementationName)~
+		     ("TransactionId" -> o.tranId))
+	pretty(render(json))
+      }
+      case o:MappedMsgTypeDef => {
+	val json =  (("MetadataType" -> "MappedMsgTypeDef") ~
 		     ("NameSpace" -> o.nameSpace) ~
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
