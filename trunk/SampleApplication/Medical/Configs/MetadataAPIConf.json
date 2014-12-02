@@ -3,10 +3,10 @@
 	{ 
 		"RootDir"      : "/home/rich",
 		"GitRootDir"   : "/home/rich/github/Med",
-		"Database"     : "treemap",
+		"Database"     : "hashmap",
 		"DatabaseHost" : "localhost",
 		"DatabaseLocation" : "/tmp/OnLEPInstall/metadata",
-		"DatabaseSchema" : "machokamacho",
+		"DatabaseSchema" : "metadata",
 		"JarTargetDir"	: "/tmp/OnLEPInstall",
 		"ScalaHome"  	: "/home/rich/tarballs/scala/scala-2.10.4",
 		"JavaHome"  	: "/usr/lib/jvm/jdk1.7.0_45",
@@ -15,12 +15,12 @@
 		"NotifyEngine" : "NO",
 		"ZnodePath" : "/ligadata/metadata",
 		"ZooKeeperConnectString" : "localhost:2181",
-		"MODEL_FILES_DIR"   		: "/home/rich/william/models",
-		"TYPE_FILES_DIR"      		: "/home/rich/william",
-		"FUNCTION_FILES_DIR"      	: "/home/rich/william",
-		"CONCEPT_FILES_DIR"      	: "/home/rich/william",
-		"MESSAGE_FILES_DIR"      	: "/home/rich/william/messages",
-		"CONTAINER_FILES_DIR"      	: "/home/rich/william/containers"
+		"MODEL_FILES_DIR"   		: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Models",
+		"TYPE_FILES_DIR"      		: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
+		"FUNCTION_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
+		"CONCEPT_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
+		"MESSAGE_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Mapped/Messages",
+		"CONTAINER_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Mapped/Containers"
 
 	}
 }
