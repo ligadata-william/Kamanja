@@ -99,6 +99,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	}
   
 	def selectSimpleFcn : FcnTypeInfo = {
+	  
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.trace(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
@@ -160,6 +161,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	}
 	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}!!"
 	  	logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  	
 	  	typeInfo
 	}
 	
@@ -171,6 +173,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *    
 	 */
 	def selectIterableFcn : FcnTypeInfo = {
+
 	  	var iterableFcn : FunctionDef = null
 	  	if (node.function == "ContainerMap") {
 	  		val stop : Int = 0
@@ -185,7 +188,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val hasFIdent : Boolean = checkForMemberFcn
 	  	val reasonableArgMinimum : Int = if (hasFIdent) 2 else 1 
 	  	if (returnedArgs.size < reasonableArgMinimum) {
-	  		logger.error("collectIterableArgKeys returned the wrong number of type info arrays... there should be 1 for iterable and one for the member function")
+	  		PmmlError.logError(ctx, "collectIterableArgKeys returned the wrong number of type info arrays... there should be 1 for iterable and one for the member function")
 	  	}
 	  	 	
 	  	/** Project the various returnedArgs pieces into their own arrays */
@@ -209,7 +212,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   			val fcnInfoFull : Array[(String,Boolean,BaseTypeDef)] = elemFcnArgs.tail.head /** trim off the iterable collection that is null and grab the first type which should be the fIdent */
   			val fcnInfoFullSize : Int = fcnInfoFull.size
   			if (fcnInfoFullSize != 1) {
-  				logger.error("collectIterableArgKeys member function has compound name... either bad mbr function name or not an fIdent in this position")
+  				PmmlError.logError(ctx, "collectIterableArgKeys member function has compound name... either bad mbr function name or not an fIdent in this position")
   			}
   			val fcnInfo : (String,Boolean,BaseTypeDef) = fcnInfoFull.head 
 	  		val (fnm, _, _) = fcnInfo
@@ -325,7 +328,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   							, winningMbrKey
   							, returnTypes)
   		}
-  		
+	  	
 	  	typeInfo
 	} 
 	
@@ -589,7 +592,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			  		val iterableCollBaseType : BaseTypeDef = collectionsElementTypes.last /** FIXME: supporting single member collections only ... need to support maps here */
 			  		val iterableContainerType : ContainerTypeDef = if (iterableCollBaseType.isInstanceOf[ContainerTypeDef]) iterableCollBaseType.asInstanceOf[ContainerTypeDef] else null
 			  		if (iterableContainerType == null) {
-			  			logger.error("buildIterableKey .. The supplied mbr type for is not a container... this will minimally produce a compile error")
+			  			PmmlError.logError(ctx, "buildIterableKey .. The supplied mbr type for is not a container... this will minimally produce a compile error")
 			  		} 
 			  		keyBuff.append(s"$fcnName(")
 			  		val collectionNameOnly : String = iterableContainerType.typeString.split('[').head
@@ -900,7 +903,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	
 	  	var idx : Int = 0
 	  	if (returnTypes.size != argTypes.size) {
-	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
+	  		PmmlError.logError(ctx, "Inappropriate returnTypes array supplied here... investigate")
 	  	}
 	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
@@ -961,7 +964,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	
 	  	var idx : Int = 0
 	  	if (returnTypes.size != argTypes.size) {
-	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
+	  		PmmlError.logError(ctx, "Inappropriate returnTypes array supplied here... investigate")
 	  	}
 	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
@@ -993,7 +996,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	
 	  	var idx : Int = 0
 	  	if (returnTypes.size != argTypes.size) {
-	  		logger.error("Inappropriate returnTypes array supplied here... investigate")
+	  		PmmlError.logError(ctx, "Inappropriate returnTypes array supplied here... investigate")
 	  	}
 	  	val newArgInfo : Array[String] = argTypes.map ( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
@@ -1112,20 +1115,20 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
       if (fl.exists) {
         try {
           if (loadedJars(fl.getPath())) {
-            logger.info("Jar " + j.trim + " already loaded to class path.")
+            logger.trace("Jar " + j.trim + " already loaded to class path.")
           } else {
             loader.addURL(fl.toURI().toURL())
-            logger.info("Jar " + j.trim + " added to class path.")
+            logger.trace("Jar " + j.trim + " added to class path.")
             loadedJars += fl.getPath()
           }
         } catch {
           case e: Exception => {
-            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+            PmmlError.logError(ctx, "Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
             return false
           }
         }
       } else {
-        logger.error("Jar " + j.trim + " not found")
+        PmmlError.logError(ctx, "Jar " + j.trim + " not found")
         return false
       }
     }
@@ -1403,7 +1406,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	    	(funcArgs, mbrArgs, container, containerMbrTypes, fcnRetType)
 	    }
 	    case _ => {
-	    	logger.error("This kind of function argument is currently not supported") 
+	    	PmmlError.logError(ctx, "This kind of function argument is currently not supported") 
 	    	(null, null, null, null, null)
 	    }
 	  }
@@ -1421,9 +1424,6 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				ctx.getFieldType(constNode.Value.toString, expandCompoundFieldTypes)
 			}
 			case "fident" => {
-				//logger.error("During function match... usage of 'fIdent' type arguments in simple functions are not currently supported. ")
-				//logger.error("Their use is for the 'iterable' class functions.")
-				//Array[(String,Boolean,BaseTypeDef)](("Any",false,null))
 				val fcnName : String = constNode.Value.toString
 				logger.trace(s"constantKeyForSimpleNode - fIdent value : $fcnName ... fident usage for simple fcn case must be the mbr fcn of an iterable function")
 				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
@@ -1433,7 +1433,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				val scalaType : String = PmmlTypes.scalaDataType(constNode.dataType)
 				val (typestr, typedef) : (String, BaseTypeDef) = ctx.MetadataHelper.getType(constNode.dataType)
 				if (typedef == null) {
-					logger.error("Unable to find a constant's type for apply function argument ... fcn = '${node.function} ") 
+					PmmlError.logError(ctx, "Unable to find a constant's type for apply function argument ... fcn = '${node.function} ") 
 				}
 				val isContainerWithFieldNames : Boolean = ctx.MetadataHelper.isContainerWithFieldOrKeyNames(typedef)
 				Array[(String,Boolean,BaseTypeDef)]((typestr, isContainerWithFieldNames, typedef))
@@ -1541,6 +1541,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			, ContainerTypeDef
 			, Array[BaseTypeDef]) = {
 	  
+		ctx.elementStack.push(fcnNode) /** track the element as it is processed */
 	  	val fcnNodeSelector : FunctionSelect = new FunctionSelect(ctx, mgr, fcnNode)
 		val isIterable = fcnNodeSelector.isIterableFcn
 		var typestring : String = null 
@@ -1612,6 +1613,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				"Any"
 			}
 		}
+		ctx.elementStack.pop
 
 		(typestring, funcDef, argTypes, mbrFuncDef, mbrsArgTypes, collectionType, collElemTypes)
 	}
@@ -1690,7 +1692,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val reasonableArgMinimum : Int = if (hasFIdent) 2 else 1 
 
 	  	if (returnTypes.size <= reasonableArgMinimum) {
-	  		logger.error("Insufficient return types to split in between iterable portion and member function portion")
+	  		PmmlError.logError(ctx, "Insufficient return types to split in between iterable portion and member function portion")
 	  	}
 	  	val iterableRetTypes : Array[String] = returnTypes.take(2)
 	  	val elemRetTypes : Array[String] = returnTypes.tail.tail
@@ -1733,7 +1735,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		    	Array[(String,Boolean,BaseTypeDef)](("NoSubFcnsSupportedInIterableFcnSoFar",false,null))
 		    }
 		    case _ => {
-		    	logger.error("This kind of function argument is currently not supported... only xConstant and xFieldRef nodes can be used for iterable functions") 
+		    	PmmlError.logError(ctx, "This kind of function argument is currently not supported... only xConstant and xFieldRef nodes can be used for iterable functions") 
 		    	Array[(String,Boolean,BaseTypeDef)](("None",false,null))
 		    }
 		}
@@ -1857,7 +1859,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				    		  //Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollElemType))
 				    	  } else {
 					    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
-					    	  logger.error(s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
+					    	  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
 					    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
 				    	  }
 				        
@@ -1887,7 +1889,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				val scalaType : String = PmmlTypes.scalaDataType(constNode.dataType)
 				val (typestr, typedef) : (String, BaseTypeDef) = ctx.MetadataHelper.getType(constNode.dataType)
 				if (typedef == null) {
-					logger.error("Unable to find a constant's type for apply function argument ... fcn = '${node.function} ") 
+					PmmlError.logError(ctx, "Unable to find a constant's type for apply function argument ... fcn = '${node.function} ") 
 				}
 				val isContainerWithFieldNames : Boolean = ctx.MetadataHelper.isContainerWithFieldOrKeyNames(typedef)
 				Array[(String,Boolean,BaseTypeDef)]((typestr, isContainerWithFieldNames, typedef))

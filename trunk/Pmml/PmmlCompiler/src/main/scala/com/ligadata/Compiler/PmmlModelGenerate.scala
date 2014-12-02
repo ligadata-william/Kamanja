@@ -418,11 +418,11 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 				  	}
 					case _ => {
 						val nodeName : String = node.qName
-						logger.error(s"pmml model generate ... un handled node ... name = $nodeName")
+						PmmlError.logError(ctx, s"pmml model generate ... un handled node ... name = $nodeName")
 					}
 				}
 			}
-			case _ => logger.error(s"pmml model generate ... UnknownNode ... name = $node.qName")
+			case _ => PmmlError.logError(ctx, s"pmml model generate ... UnknownNode ... name = $node.qName")
 		}
 	}
 }

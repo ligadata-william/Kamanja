@@ -70,6 +70,8 @@ object NodePrinterHelpers extends LogTrait {
 		 *         	b) "builds" code is a string that is printed out of line just before closure of the current class.
 		 *          	See MacroSelect.scala for the details and use cases. 
 		 */
+
+		ctx.elementStack.push(node) /** track the element as it is processed */
 		if (isPmmlBuiltin) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
 			simpleFcnPrint(scalaFcnName
@@ -138,17 +140,20 @@ object NodePrinterHelpers extends LogTrait {
 						val matchFcnBuff : StringBuilder = new StringBuilder()
 						matchFcnBuff.append("Any{")
 						fcnsThatWouldMatchWithRightTypeSig.addString(matchFcnBuff, s"${'"'},${'"'}").append(s"${'"'}}")
-						logger.error(s"Function '$fcnName' could not be located in the Metadata.")
+						PmmlError.logError(ctx, s"Function '$fcnName' could not be located in the Metadata.")
 						logger.error(s"One or more functions named '$fcnName' is/are known, but your key is not good enough to locate one")
 						logger.error(s"Any of these keys would return a version of $fcnName:")
 						val fcnSetStr : String = matchFcnBuff.toString
 						logger.error(s"    $fcnSetStr")
 					} else {
-						logger.error(s"Function $fcnName is not known in the metadata...")
+						PmmlError.logError(ctx, s"Function $fcnName is not known in the metadata...")
 					}
 				}
 			} 
 		}
+		
+		ctx.elementStack.pop 
+		
 		val fcnExprStr : String = fcnBuffer.toString
 	  	fcnExprStr
 	  
@@ -534,7 +539,7 @@ object NodePrinterHelpers extends LogTrait {
 		val clsBuffer : StringBuilder = new StringBuilder()
 		
 		if (ctx.UpdateClassQueue.size > 0) {
-			logger.error("There are items in the update class queue.. evidently they were not dumped. They are:")
+			PmmlError.logError(ctx, "There are items in the update class queue.. evidently they were not dumped. They are:")
 			for ( updateClsStr <- ctx.UpdateClassQueue) {
 				logger.error(s"\n$updateClsStr")
 			}	  
@@ -781,7 +786,7 @@ object NodePrinterHelpers extends LogTrait {
 		objBuffer.append(s"    def getModelVersion: String = getVersion\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
-			logger.error("No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
+			PmmlError.logError(ctx, "No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
 			ArrayBuffer[(String, Boolean, BaseTypeDef, String)]()
 		} else {
 			/** select any containers in scope that are not = gCtx and have been marked as constructor parameter (container._2._1) */
@@ -973,7 +978,7 @@ object NodePrinterHelpers extends LogTrait {
 		val ddNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("DataDictionary") 
 		ddNode match {
 		  case Some(ddNode) => generator.generateCode1(Some(ddNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => logger.error(s"there was no data dictionary avaialble... whoops!\n")
+		  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!\n")
 		}
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"\n")
@@ -984,7 +989,7 @@ object NodePrinterHelpers extends LogTrait {
 		dictBuffer.clear
 		xNode match {
 		  case Some(xNode) => generator.generateCode1(Some(xNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => logger.error(s"there was no data dictionary avaialble... whoops!")
+		  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!")
 		}		
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"\n")
@@ -996,7 +1001,7 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"        //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
 		rsmNode match {
 		  case Some(rsmNode) => generator.generateCode1(Some(rsmNode), dictBuffer, generator, CodeFragment.MININGFIELD)
-		  case _ => logger.error(s"no mining fields... whoops!\n")
+		  case _ => PmmlError.logError(ctx, s"no mining fields... whoops!\n")
 		}
 		clsBuffer.append(dictBuffer.toString)
 		clsBuffer.append(s"        /** put a reference of the mining schema map in the context for convenience. */\n")

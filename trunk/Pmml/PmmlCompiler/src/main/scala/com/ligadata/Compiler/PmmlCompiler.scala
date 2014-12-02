@@ -630,7 +630,23 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			srcCode = generator.ComposePmmlModelSource
 			
 		} catch {
-			case t: Throwable => t.printStackTrace()
+			case t: Throwable => {
+			  /** 
+			   *  Something bad has happened ... 
+			   *  If there are elements on the ctx's elementStack print them 
+			   */
+			  val buffer : StringBuilder = new StringBuilder
+			  while (ctx.elementStack.nonEmpty) { 
+				  buffer.append(ctx.elementStack.pop.toString)
+				  if (ctx.elementStack.nonEmpty)
+				    buffer.append(" found in ")
+			  }
+			  if (buffer.size > 0) {
+				  val errorVicinity : String = buffer.toString
+				  logger.error(s"Exception detected in $errorVicinity")
+			  }
+			  t.printStackTrace() 
+			}
 		}
 		srcCode
 	}

@@ -22,6 +22,8 @@ class PmmlExecNode (val qName : String) extends LogTrait  {
 	def ElementValue : String = qName
 	
 	def asString(ctx : PmmlContext) : String = "PMML"
+	  
+	override def toString : String = s"Node $qName"
 	
 	def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order) : String = 
 	{
@@ -180,7 +182,7 @@ class xDataField(val name : String
 						}
 					} 
 					case _ => { 
-						ctx.logger.error("DataField node - unsupported CodeFragment.Kind") 
+						PmmlError.logError(ctx, "DataField node - unsupported CodeFragment.Kind") 
 						""
 					}
 				}
@@ -251,7 +253,7 @@ class xDataDictionary extends PmmlExecNode("DataDictionary") {
 		val dictDecl : String = order match {
 			case Traversal.PREORDER => asCode
 			case _ => {
-				ctx.logger.error(s"TransformationDictionary only supports Traversal.PREORDER")
+				PmmlError.logError(ctx, s"TransformationDictionary only supports Traversal.PREORDER")
 				""
 			}
 		}
@@ -283,9 +285,11 @@ class xDerivedField(val name : String
 	}
 	
 	def Name(ctx : PmmlContext) : String = { 
-	  name + "_Fcn"
+	  name
 	}
 	
+	override def toString : String = s"DerivedField '$name'"
+
 	override def asString(ctx : PmmlContext) : String = 
 	{
 		val typ = PmmlTypes.scalaDataType(dataType)
@@ -296,6 +300,8 @@ class xDerivedField(val name : String
 	
 	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
 	{
+		ctx.elementStack.push(this) /** track the element as it is processed */
+		
 		val typeStr : String = PmmlTypes.scalaDataType(dataType)
 		
 		val fieldDecl : String = order match {
@@ -317,12 +323,14 @@ class xDerivedField(val name : String
 					  ""
 					} 
 					case _ => { 
-						ctx.logger.error("DerivedField node - unsupported CodeFragment.Kind") 
+						PmmlError.logError(ctx, "DerivedField node - unsupported CodeFragment.Kind") 
 						""
 					}
 				}
 			}
 		}
+		ctx.elementStack.pop 	/** done discard the current element */
+		
 		fieldDecl
 	}
 }
@@ -399,13 +407,13 @@ class xTransformationDictionary() extends PmmlExecNode("TransformationDictionary
 				    	clsBuffer.toString
 				  }
 				  case _ => { 
-					  ctx.logger.error(s"fragment kind $kind not supported by TransformationDictionary")
+					  PmmlError.logError(ctx, s"fragment kind $kind not supported by TransformationDictionary")
 				      ""
 				  }
 				}
 			}
 			case _ => {
-				ctx.logger.error(s"TransformationDictionary only supports Traversal.PREORDER")
+				PmmlError.logError(ctx, s"TransformationDictionary only supports Traversal.PREORDER")
 				""
 			}
 		}
@@ -515,6 +523,10 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 		}
 		fcn
 	}
+	
+	override def toString : String = s"Apply function '$function'"
+
+
 }
 
 class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExecNode("FieldRef") {
@@ -945,7 +957,7 @@ class xMiningField(val name : String
 			    	  s"ruleSet.AddMiningField(${'"'}$name${'"'}, new MiningField(${'"'}$name${'"'},${'"'}$usageType${'"'},${'"'}$opType${'"'},${'"'}$importance${'"'},${'"'}$outliers${'"'},${'"'}$lowValue${'"'},${'"'}$highValue${'"'},${'"'}$missingValueReplacement${'"'},${'"'}$missingValueTreatment${'"'},${'"'}$invalidValueTreatment${'"'}))\n"
 			      }
 			      case _ => {
-			    	  ctx.logger.error("MiningField .. Only CodeFragment.MININGFIELD is supported")
+			    	  PmmlError.logError(ctx, "MiningField .. Only CodeFragment.MININGFIELD is supported")
 			    	  ""
 			      }
 			    }
@@ -1034,7 +1046,7 @@ class xRuleSetModel(val modelName : String
 					}
 					case _ => { 
 						val kindStr : String = kind.toString
-						ctx.logger.error(s"RuleSetModel node - unsupported CodeFragment.Kind - $kindStr") 
+						PmmlError.logError(ctx, s"RuleSetModel node - unsupported CodeFragment.Kind - $kindStr") 
 						""
 					}
 				}
@@ -1135,7 +1147,7 @@ class xSimpleRule(val id : Option[String]
 					}
 					case _ => { 
 						val kindStr : String = generate.toString
-						ctx.logger.error(s"SimpleRule node - unsupported CodeFragment.Kind - $kindStr") 
+						PmmlError.logError(ctx, s"SimpleRule node - unsupported CodeFragment.Kind - $kindStr") 
 						""
 					}
 				}
@@ -1552,7 +1564,7 @@ object PmmlExecNode extends LogTrait {
 					  case _ => 
 					}
 				} else {
-					ctx.logger.error(s"Currently only 2 tuple rows (simple maps) are supported for InlineTables... row has $valuelen elements")
+					PmmlError.logError(ctx, s"Currently only 2 tuple rows (simple maps) are supported for InlineTables... row has $valuelen elements")
 				}
 		  }
 		  case _ => None
@@ -1579,10 +1591,10 @@ object PmmlExecNode extends LogTrait {
 						top match {
 						  	case xMap : xMapValuesMap => xMap.addExtensions(extensions) 
 						  	case xArr : xMapValuesArray => xArr.addExtensions(extensions) 
-						  	case _ => ctx.logger.error("Parent of TableLocator is not a kind MapValues...discarded")
+						  	case _ => PmmlError.logError(ctx, "Parent of TableLocator is not a kind MapValues...discarded")
 						}
 					}
-					case _ => ctx.logger.error("TableLocator cannot be added")
+					case _ => PmmlError.logError(ctx, "TableLocator cannot be added")
 				}
 			}
 		}
@@ -1608,10 +1620,10 @@ object PmmlExecNode extends LogTrait {
 						top match {
 						  	case xMap : xMapValuesMap => xMap.addExtensions(extensions) 
 						  	case xArr : xMapValuesArray => xArr.addExtensions(extensions) 
-						  	case _ => ctx.logger.error("Parent of InlineTable is not a kind MapValues...discarded")
+						  	case _ => PmmlError.logError(ctx, "Parent of InlineTable is not a kind MapValues...discarded")
 						}
 					}
-					case _ => ctx.logger.error("inline table cannot be added")
+					case _ => PmmlError.logError(ctx, "inline table cannot be added")
 				}
 			}
 		}
@@ -1846,11 +1858,11 @@ object PmmlExecNode extends LogTrait {
 							else
 								s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value"
 						} else {
-							ctx.logger.error("Field '$field' is not known in either the data or transaction dictionary... fix this ")
+							PmmlError.logError(ctx, "Field '$field' is not known in either the data or transaction dictionary... fix this ")
 							s"ctx.valueFor(${'"'}$field${'"'})"
 						}
 					} else {
-						logger.error(s"Field reference '$field' did not produce any type(s)... is it mis-spelled?")
+						PmmlError.logError(ctx, s"Field reference '$field' did not produce any type(s)... is it mis-spelled?")
 						
 						s"UNKNOWN FIELD $field"
 					}

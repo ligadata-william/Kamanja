@@ -160,7 +160,7 @@ class IterableFcnPrinter(val fcnName : String
 				}
 				
 			}  else {
-				logger.error(s"Not only are there There are no arguments.. is there no function too? ... '$mbrFcnNm'... investigate this.")
+				PmmlError.logError(ctx, s"Not only are there There are no arguments.. is there no function too? ... '$mbrFcnNm'... investigate this.")
 			}
 		}
 		mbrFcnBuffer.toString

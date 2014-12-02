@@ -17,8 +17,40 @@ import org.joda.time.Years
 
 import com.ligadata.Pmml.Runtime._
 
-object PmmlTypes {
+object PmmlError extends LogTrait {
+  
+	/** Process the supplied error, first printing the geo location info in the element stack.
+	 *  Leave the stack intact so other error messages that may follow also have this information.
+	 *  PmmlError.logError
+	 */
+	def logError(ctx : PmmlContext, errorMsg : String) : Unit = {
+		
+		if (ctx.elementStack.nonEmpty) { 
+			val buffer : StringBuilder = new StringBuilder
+			
+			val sizeofStack : Int = ctx.elementStack.size
+			var i : Int = 0
+			ctx.elementStack.foreach( elem => {
+				val elemStr : String = elem.toString
+				if (elemStr != null && elemStr.size > 0) {
+					buffer.append(elem.toString)
+					i += 1
+					if (i < sizeofStack) {
+						buffer.append(" found in ")
+					} 
+				}
+			})
+			val errorVicinity : String = buffer.toString
+			logger.error(s"While processing $errorVicinity...")
+			logger.error(errorMsg)
+		}
+	  
+	}
+}
 
+
+object PmmlTypes extends LogTrait {
+  
   	def scalaDataType(dataType : String) : String = {
 	  		val typ = dataType match {
 		      case "string" => "String"

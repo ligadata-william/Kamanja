@@ -96,6 +96,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	
 	/** This value used in all map/filter/groupBy apply functions as the element reference */
 	val applyElementName : String = "_each"
+	  
+	/** While processing elements this stack tracks where we are in the transformation dictionary generation */
+	val elementStack : Stack[PmmlExecNode] = Stack[PmmlExecNode]()
 	
 	/** FIXME: This needs to be pulled from either the metadata manager or possibly specified
 	 *  in some way in the PMML model itself.  At the moment this is hard coded to get something
@@ -177,7 +180,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			  		Array[(String,Boolean,BaseTypeDef)]((memberType, false, containerTypedef))
 			  	}
 			} else {
-				logger.error(s"getFieldType($nmSpc, $container, $nm) dDict didnt produce a container for this container search")
+				PmmlError.logError(this, s"getFieldType($nmSpc, $container, $nm) dDict didnt produce a container for this container search")
 				Array[(String,Boolean,BaseTypeDef)](("None",false,null))		
 			}
 		} else {
@@ -214,11 +217,11 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				  	}
 				} else {
 					val cntrName : String = ctnrFld.name
-					logger.error(s"getFieldType($nmSpc, $container, $nm) no type found in mdmgr for $cntrName found in xDict")
+					PmmlError.logError(this, s"getFieldType($nmSpc, $container, $nm) no type found in mdmgr for $cntrName found in xDict")
 					Array[(String,Boolean,BaseTypeDef)](("None",false,null))
 				}
 			} else {
-				logger.error(s"getFieldType($nmSpc, $container, $nm) xDict didn't produce a container for this container search")
+				PmmlError.logError(this, s"getFieldType($nmSpc, $container, $nm) xDict didn't produce a container for this container search")
 				Array[(String,Boolean,BaseTypeDef)](("None",false,null))
 			} 
 			scalaTypeFromXDict
@@ -330,7 +333,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		val containerTypeDef = baseTypeDef match {
 		  case c : ContainerTypeDef => baseTypeDef.asInstanceOf[ContainerTypeDef]
 		  case _ => {
-		    logger.error(s"getContainerType: the container $nmSpc.$container is not a container or message.  Did you forget to catalog it?")
+		    PmmlError.logError(this, s"getContainerType: the container $nmSpc.$container is not a container or message.  Did you forget to catalog it?")
 		    val objStr : String = if (baseTypeDef == null) "null" else baseTypeDef.toString
 		    logger.error(s"getContainerType: the object returned is $objStr")
 		    null
