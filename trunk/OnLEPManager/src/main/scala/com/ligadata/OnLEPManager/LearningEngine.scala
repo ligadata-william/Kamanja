@@ -122,7 +122,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
         // Get top level Msg for the current msg
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
-        val partKeyData = Array(msg.PartitionKeyData)
+        val partKeyData = msg.PartitionKeyData
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
         val partitionKeyData = if (isValidPartitionKey) {
           val key = ("PartKey" -> partKeyData.toList)

@@ -678,7 +678,7 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Tree Set not handled at this momemt" + newline)
               assignJsondata.append(newline + "//Tree Set not handled at this momemt" + newline)
             } else {
-              var paritionkey = List[String]()
+              var paritionkey: List[String] = null
               // if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
               //    paritionkey = message.PartitionKey(0).toLowerCase()
               if (message.PartitionKey != null)
@@ -770,6 +770,7 @@ class MessageDefImpl {
         scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr)
 
       }
+/*
       var partitionKeyStr = new StringBuilder(8 * 1024)
       if (message.PartitionKey != null)
         message.PartitionKey.foreach { p =>
@@ -778,7 +779,8 @@ class MessageDefImpl {
       var partitionKeys: String = ""
       if (partitionKeyStr != null && partitionKeyStr.toString.trim() != "")
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
-
+*/
+      val partitionKeys = if (message.PartitionKey != null) ("Array( " + message.PartitionKey.map(p =>  p.toLowerCase).mkString(", ") + ")") else ""
       scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
@@ -918,9 +920,9 @@ trait BaseContainer {
   private def partitionkeyStr(paritionKeys: String): String = {
 
     if (paritionKeys != null && paritionKeys.trim() != "")
-      "\n	override def PartitionKeyData: scala.Array[String] = " + paritionKeys
+      "\n	override def PartitionKeyData: Array[String] = " + paritionKeys
     else
-      "\n	override def PartitionKeyData: = \"\""
+      "\n	override def PartitionKeyData: Array[String] = Array[String]()"
   }
 
   private def inputData = {
