@@ -235,7 +235,7 @@ class MessageDefImpl {
 	    """
   }
 
-  private def handleBaseTypes(partitionkey: String, fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String]) = {
+  private def handleBaseTypes(partitionkeys: List[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -285,12 +285,15 @@ class MessageDefImpl {
         assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
         assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
         assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
-      } else if (fixed.toLowerCase().equals("false")) {
-        if (f.Name.toLowerCase().equals(partitionkey))
-          scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
 
+      } else if (fixed.toLowerCase().equals("false")) {
+        partitionkeys.foreach { partitionkey =>
+          if (f.Name.toLowerCase().equals(partitionkey.toLowerCase()))
+            scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
+        }
         keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
         //  typeImpl.append("\"" + fname + "\",")
+
       }
 
     } catch {
@@ -675,9 +678,11 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Tree Set not handled at this momemt" + newline)
               assignJsondata.append(newline + "//Tree Set not handled at this momemt" + newline)
             } else {
-              var paritionkey: String = ""
-              if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
-                paritionkey = message.PartitionKey(0).toLowerCase()
+              var paritionkey = List[String]()
+              // if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
+              //    paritionkey = message.PartitionKey(0).toLowerCase()
+              if (message.PartitionKey != null)
+                paritionkey = message.PartitionKey
 
               val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10) = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)
               scalaclass = scalaclass.append(baseTyp_1)
@@ -765,8 +770,16 @@ class MessageDefImpl {
         scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr)
 
       }
-      // if (message.PartitionKey != null)
-      scalaclass = scalaclass.append(partitionkeyStr(message) + newline + getsetMethods(message.Fixed))
+      var partitionKeyStr = new StringBuilder(8 * 1024)
+      if (message.PartitionKey != null)
+        message.PartitionKey.foreach { p =>
+          partitionKeyStr = partitionKeyStr.append("\"" + p.toLowerCase() + "\",")
+        }
+      var partitionKeys: String = ""
+      if (partitionKeyStr != null && partitionKeyStr.toString.trim() != "")
+        partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
+
+      scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
@@ -902,12 +915,12 @@ trait BaseContainer {
 	  """
   }
 
-  private def partitionkeyStr(msg: Message): String = {
+  private def partitionkeyStr(paritionKeys: String): String = {
 
-    if (msg.PartitionKey != null)
-      "\n	override def PartitionKeyData: String = " + msg.PartitionKey(0).toLowerCase()
+    if (paritionKeys != null && paritionKeys.trim() != "")
+      "\n	override def PartitionKeyData: scala.Array[String] = " + paritionKeys
     else
-      "\n	override def PartitionKeyData: String = \"\""
+      "\n	override def PartitionKeyData: = \"\""
   }
 
   private def inputData = {
@@ -1892,7 +1905,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
     fld
   }
 
-  
   private def processConcept(conceptsStr: String, formatType: String) {
     val json = parse(conceptsStr)
     //println(json.values.asInstanceOf[Map[Any, Any]].contains("Concepts"))
