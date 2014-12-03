@@ -40,6 +40,7 @@ import org.apache.zookeeper.CreateMode
 
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
+import util.control.Breaks._
 
 case class JsonException(message: String) extends Exception(message)
 
@@ -178,6 +179,7 @@ object MetadataAPIImpl extends MetadataAPI{
   private var conceptStore:    DataStore = _
   private var typeStore:       DataStore = _
   private var otherStore:      DataStore = _
+  private var jarStore:        DataStore = _
 
   def oStore = otherStore
   
@@ -264,7 +266,6 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
   }
-
 
   def SaveObjectList(keyList: Array[String], valueList: Array[Array[Byte]], store: DataStore){
     var i = 0
@@ -728,6 +729,72 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+  def GetJarAsArrayOfBytes(jarName: String): Array[Byte] = {
+    try{
+      val iFile = new File(jarName)
+      val bis = new BufferedInputStream(new FileInputStream(iFile));
+      val baos = new ByteArrayOutputStream();
+      var readBuf = new Array[Byte](1024) // buffer size
+
+      // read until a single byte is available
+      while(bis.available()>0){
+        val c = bis.read();
+	baos.write(c)
+      }
+      bis.close();
+      baos.toByteArray()
+    } catch{
+      case e:Exception => {
+	e.printStackTrace()
+	throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+      }
+    }
+  }
+
+  def PutArrayOfBytesToJar(ba: Array[Byte], jarName: String) = {
+    try{
+      val iFile = new File(jarName)
+      val  bos = new BufferedOutputStream(new FileOutputStream(iFile));
+      bos.write(ba)
+      bos.close();
+    } catch{
+      case e:Exception => {
+	logger.error("Failed to dump array of bytes to the Jar file (" + jarName + "):  " + e.getMessage())
+      }
+    }
+  }
+
+  def UpdateJarInDB(obj: BaseElemDef){
+    try{
+      val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
+      val jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
+      val value = GetJarAsArrayOfBytes(jarName)
+      logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + key)
+      UpdateObject(key,value,jarStore)
+    }catch{
+      case e:AlreadyExistsException => {
+	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+      case e:Exception => {
+	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
+  def DownLoadJarFromDB(obj: BaseElemDef){
+    try{
+      val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
+      val mObj = GetObject(key,jarStore)
+      val bs =  mObj.Value.toArray[Byte]
+      val jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
+      PutArrayOfBytesToJar(bs,jarName)
+    } catch{
+      case e:Exception => {
+	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
   def UpdateObjectInCache(obj: BaseElemDef,operation:String,mdMgr:MdMgr): BaseElemDef = {
     var updatedObject:BaseElemDef = null
     try{
@@ -1039,6 +1106,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       logger.info("Opening datastore")
       metadataStore     = GetDataStoreHandle(storeType,"metadata_store","metadata_objects")
+      jarStore          = GetDataStoreHandle(storeType,"metadata_jars","jar_store")
       transStore        = GetDataStoreHandle(storeType,"metadata_trans","transaction_id")
       modelStore        = metadataStore
       messageStore      = metadataStore
@@ -1079,6 +1147,11 @@ object MetadataAPIImpl extends MetadataAPI{
 	transStore.Shutdown()
 	transStore = null
 	logger.info("transStore closed")
+      }
+      if( jarStore != null ){
+	jarStore.Shutdown()
+	jarStore = null
+	logger.info("jarStore closed")
       }
     }catch{
       case e:Exception => {
@@ -1687,6 +1760,7 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  AddObjectToCache(msg,MdMgr.GetMdMgr)
+	  UpdateJarInDB(msgDef)
 	  var objectsAdded = AddMessageTypes(msg,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ msg
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1697,6 +1771,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
 	case cont:ContainerDef =>{
 	  AddObjectToCache(cont,MdMgr.GetMdMgr)
+	  UpdateJarInDB(msgDef)
 	  var objectsAdded = AddMessageTypes(cont,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ cont
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1729,6 +1804,7 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  AddObjectToCache(msg,MdMgr.GetMdMgr)
+	  UpdateJarInDB(msgDef)
 	  var objectsAdded = AddMessageTypes(msg,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ msg
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1739,6 +1815,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
 	case cont:ContainerDef =>{
 	  AddObjectToCache(cont,MdMgr.GetMdMgr)
+	  UpdateJarInDB(msgDef)
 	  var objectsAdded = AddMessageTypes(cont,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ cont
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -2158,6 +2235,8 @@ object MetadataAPIImpl extends MetadataAPI{
 	isValid = IsValidVersion(latestVersion.get,modDef)
       }
       if ( isValid ){
+	// save the jar file first
+	UpdateJarInDB(modDef)
 	val apiResult = AddModel(modDef)
 	logger.trace("Model is added..")
 	var objectsAdded = new Array[BaseElemDef](0)
@@ -2201,6 +2280,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       if ( isValid ){
 	RemoveModel(latestVersion.get.nameSpace,latestVersion.get.name,latestVersion.get.ver)
+	UpdateJarInDB(modDef)
 	val result = AddModel(modDef)
 	var objectsUpdated = new Array[BaseElemDef](0)
 	var operations = new Array[String](0)
@@ -2227,6 +2307,43 @@ object MetadataAPIImpl extends MetadataAPI{
       }
     }
   }
+
+  def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Int) : Array[ModelDef] = {
+    try{
+      val msgObj = Array(msgNameSpace,msgName,msgVer).mkString(".").toLowerCase
+      val modDefs = MdMgr.GetMdMgr.Models(true,true)
+      var depModels = new Array[ModelDef](0)
+      modDefs match{
+	case None =>
+	  logger.trace("No Models found ")
+	case Some(ms) => 
+	  val msa = ms.toArray
+	  msa.foreach(mod => {
+	    logger.trace("Checking model " + mod.FullNameWithVer)
+	    breakable{
+	      mod.inputVars.foreach(ivar => {
+		if( ivar.FullNameWithVer.toLowerCase == msgObj ){
+		  depModels :+ mod
+		  break
+		}
+	      })
+	      mod.outputVars.foreach(ivar => {
+		if( ivar.FullNameWithVer.toLowerCase == msgObj ){
+		  depModels :+ mod
+		  break
+		}
+	      })
+	    }
+	  })
+      }
+      depModels
+    } catch {
+      case e:Exception =>{
+	throw new InternalErrorException("Unable to find dependent models " + e.getMessage())
+      }
+    }
+  }
+
 
   // All available models(format JSON or XML) as a String
   def GetAllModelDefs(formatType:String) : String = {
@@ -3537,15 +3654,15 @@ object MetadataAPIImpl extends MetadataAPI{
       
       val  eProps1 = prop.propertyNames();
       while (eProps1.hasMoreElements()) { 
-    val key = eProps1.nextElement().asInstanceOf[String]
+	val key = eProps1.nextElement().asInstanceOf[String]
 	val value = prop.getProperty(key); 
         logger.trace("The key=" + key + "; value=" + value);
 	      
-      if ( key.equalsIgnoreCase("ROOT_DIR") ){
+	if ( key.equalsIgnoreCase("ROOT_DIR") ){
 	  root_dir = value
 	  logger.trace("ROOT_DIR => " + root_dir)
 	}
-      else if ( key.equalsIgnoreCase("GIT_ROOT") ){
+	else if ( key.equalsIgnoreCase("GIT_ROOT") ){
 	  git_root = value
 	  logger.trace("GIT_ROOT => " + git_root)
 	}
@@ -3579,10 +3696,10 @@ object MetadataAPIImpl extends MetadataAPI{
       
       val eProps2 = prop.propertyNames();
       while (eProps2.hasMoreElements()) { 
-    val key = eProps2.nextElement().asInstanceOf[String]
+	val key = eProps2.nextElement().asInstanceOf[String]
 	val value = prop.getProperty(key); 
         logger.trace("The key=" + key + "; value=" + value);
-   if ( key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType") ){
+	if ( key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType") ){
 	  database = value
 	  logger.trace("database => " + database)
 	}

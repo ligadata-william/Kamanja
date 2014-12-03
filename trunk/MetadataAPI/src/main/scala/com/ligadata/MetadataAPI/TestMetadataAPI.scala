@@ -318,6 +318,10 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
+
+      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
+      logger.trace("DependentModels => " + depModels)
+	
       val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
@@ -359,6 +363,14 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
+
+      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
+      if( depModels.length > 0 ){
+	depModels.foreach(mod => {
+	  logger.trace("DependentModel => " + mod.FullNameWithVer)
+	})
+      }
+
       val apiResult = MetadataAPIImpl.GetMessageDefFromCache(msgNameSpace,msgName,"JSON",msgVersion)
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
