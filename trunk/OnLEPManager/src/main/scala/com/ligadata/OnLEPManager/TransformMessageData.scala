@@ -57,12 +57,12 @@ class TransformMessageData {
     else throw new Exception("Invalid input data type")
   }
 
-  def execute(data: String): (String, String, String) = {
+  def execute(data: String): Array[(String, String, String)] = {
     val output = parseInputData(new DelimitedData(data, ","))
     // cntr += 1
     // if (cntr % 1000 == 0)
     //   SimpleStats.addCntr("F-%10d".format(hashCode()), 1000)
-    ("csv", output._1, output._2)
+    Array(("csv", output._1, output._2))
   }
 }
 

@@ -12,18 +12,30 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
   def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
+
     try {
-      val xformed = xform.execute(data)
-      engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs)
-    } catch {
-      case e: Exception => {
-        LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-      }
-    } finally {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
-      // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
-      envCtxt.setAdapterUniqueKeyValue(uk, uv)
+      try {
+        val xformedmsgs = xform.execute(data)
+        var xformedMsgCntr = 0
+        val totalXformedMsgs = xformedmsgs.size
+        xformedmsgs.foreach(xformed => {
+          engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs)
+          xformedMsgCntr += 1
+        })
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        }
+      } finally {
+        // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
+        envCtxt.setAdapterUniqueKeyValue(uk, uv)
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      }
     }
   }
 }

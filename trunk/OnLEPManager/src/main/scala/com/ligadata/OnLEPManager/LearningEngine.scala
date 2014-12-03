@@ -1,7 +1,7 @@
 
 package com.ligadata.OnLEPManager
 
-import com.ligadata.OnLEPBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext }
+import com.ligadata.OnLEPBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult }
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
@@ -11,6 +11,10 @@ import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem
 import scala.util.parsing.json.JSON
+import scala.collection.mutable.ArrayBuffer
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
@@ -68,57 +72,39 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def RunAllModels(finalTopMsgOrContainer: MessageContainerBase, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
-    if (finalTopMsgOrContainer == null)
-      return
+  private def RunAllModels(finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
+    var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
 
-    val models: Array[MdlInfo] = OnLEPMetadata.getAllModels.map(mdl => mdl._2).toArray
-    var result: StringBuilder = new StringBuilder(8 * 1024)
+    if (finalTopMsgOrContainer != null) {
 
-    result ++= "{\"ModelsResult\" : ["
+      val models: Array[MdlInfo] = OnLEPMetadata.getAllModels.map(mdl => mdl._2).toArray
 
-    // var executedMdls = 0
-    var gotResults = 0
+      val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
 
-    val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
+      // Execute all modes here
+      models.foreach(md => {
+        try {
 
-    // Execute all modes here
-    models.foreach(md => {
-      try {
-
-        if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-          // LOG.info("Found Valid Message:" + msgData)
-          // executedMdls += 1
-          val curMd = md.mdl.CreateNewModel(envContext, finalTopMsgOrContainer, md.tenantId)
-          if (curMd != null) {
-            val res = curMd.execute(outputAlways)
-            if (res != null) {
-              if (gotResults > 0)
-                result ++= ","
-              result ++= res.toJsonString(readTmNs, rdTmMs)
-              gotResults = gotResults + 1
+          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
+            val curMd = md.mdl.CreateNewModel(envContext, finalTopMsgOrContainer, md.tenantId)
+            if (curMd != null) {
+              val res = curMd.execute(outputAlways)
+              if (res != null) {
+                results += res
+              } else {
+                // Nothing to output
+              }
             } else {
-              // Nothing to output
+              LOG.error("Failed to create model " + md.mdl.getModelName)
             }
           } else {
-            LOG.error("Failed to create model " + md.mdl.getModelName)
           }
-        } else {
-          // LOG.info("Found Invalid Message:" + msgData)
+        } catch {
+          case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace() ) }
         }
-      } catch {
-        case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage /* + "\n Trace:\n" + e.printStackTrace() */ ) }
-      }
-    })
-
-    result ++= "]}"
-
-    if (gotResults > 0 && output != null) {
-      val resStr = result.toString
-      output.foreach(o => {
-        o.send(resStr, cntr.toString)
       })
     }
+    return results.toArray
   }
 
   private def GetTopMsgName(msgName: String): (String, Boolean, MsgContainerObjAndTransformInfo) = {
@@ -127,7 +113,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long): Unit = {
+  def execute(msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
     // LOG.info("LE => " + msgData)
     try {
       // BUGBUG:: for now handling only CSV input data.
@@ -136,19 +122,71 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // BUGBUG::Get Previous History (through Key) of the top level message/container 
         // Get top level Msg for the current msg
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
-        val partitionKeyData = msg.PartitionKeyData
-        val isValidPartitionKey = (partitionKeyData != null && partitionKeyData.size > 0) 
+        val partKeyData = msg.PartitionKeyData
+        val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
+        val partitionKeyData = if (isValidPartitionKey) {
+          val key = ("PartKey" -> partKeyData.toList)
+          compact(render(key))
+        } else {
+          ""
+        }
         val topObj = if (isValidPartitionKey) envContext.getObject(topMsgTypeAndHasParent._1, partitionKeyData) else null
         var handleMsg: Boolean = true
         if (topMsgTypeAndHasParent._2) {
           handleMsg = topObj != null
         }
         if (handleMsg) {
-          val finalTopMsgOrContainer:MessageContainerBase = if (topObj != null) topObj else msg
+          val finalTopMsgOrContainer: MessageContainerBase = if (topObj != null) topObj else msg
           if (topMsgTypeAndHasParent._2)
             finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
+          var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
+          if (isValidPartitionKey && finalTopMsgOrContainer != null) {
+            allMdlsResults = envContext.getModelsResult(partitionKeyData)
+            if (allMdlsResults == null)
+              allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
+          }
           // Run all models
-          RunAllModels(finalTopMsgOrContainer, msgData, envContext, readTmNs, rdTmMs) //BUGBUG:: Simply casting to BaseMsg
+          val results = RunAllModels(finalTopMsgOrContainer, envContext)
+          if (results.size > 0) {
+            var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
+
+            if (elapseTmFromRead < 0)
+              elapseTmFromRead = 1
+            // Prepare final output and update the models persistance map
+            results.foreach(res => {
+              // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
+              res.uniqKey = uk
+              res.uniqVal = uv
+              res.xformedMsgCntr = xformedMsgCntr
+              res.totalXformedMsgs = totalXformedMsgs
+              allMdlsResults(res.mdlName) = res
+            })
+
+            val json =
+              ("ModelsResult" -> results.toList.map(res =>
+                ("EventDate" -> res.eventDate) ~
+                  ("ExecutionTime" -> res.executedTime) ~
+                  ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
+                  ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
+                  ("ModelName" -> res.mdlName) ~
+                  ("ModelVersion" -> res.mdlVersion) ~
+                  ("uniqKey" -> res.uniqKey) ~
+                  ("uniqVal" -> res.uniqVal) ~
+                  ("xformedMsgCntr" -> res.xformedMsgCntr) ~
+                  ("totalXformedMsgs" -> res.totalXformedMsgs) ~
+                  ("output" -> res.results.toList.map(r =>
+                    ("Name" -> r.name) ~
+                      ("Type" -> r.usage.toString) ~
+                      ("Value" -> res.ValueString(r.result))))))
+            val resStr = compact(render(json))
+
+            if (isValidPartitionKey && finalTopMsgOrContainer != null) {
+              envContext.saveModelsResult(partitionKeyData, allMdlsResults)
+            }
+            output.foreach(o => {
+              o.send(resStr, cntr.toString)
+            })
+          }
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
