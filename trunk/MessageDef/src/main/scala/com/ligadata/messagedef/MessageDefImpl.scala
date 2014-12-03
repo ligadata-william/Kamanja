@@ -781,7 +781,7 @@ class MessageDefImpl {
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
 */
       val partitionKeys = if (message.PartitionKey != null) ("Array( " + message.PartitionKey.map(p =>  p.toLowerCase).mkString(", ") + ")") else ""
-      scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + getsetMethods(message.Fixed))
+      scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr("") + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
@@ -918,12 +918,20 @@ trait BaseContainer {
   }
 
   private def partitionkeyStr(paritionKeys: String): String = {
-
     if (paritionKeys != null && paritionKeys.trim() != "")
       "\n	override def PartitionKeyData: Array[String] = " + paritionKeys
     else
       "\n	override def PartitionKeyData: Array[String] = Array[String]()"
   }
+  
+  private def primarykeyStr(primaryKeys: String): String = {
+    if (primaryKeys != null && primaryKeys.trim() != "")
+      "\n	override def PrimaryKeyData: Array[String] = " + primaryKeys
+    else
+      "\n	override def PrimaryKeyData: Array[String] = Array[String]()"
+  }
+  
+  
 
   private def inputData = {
     """ 
