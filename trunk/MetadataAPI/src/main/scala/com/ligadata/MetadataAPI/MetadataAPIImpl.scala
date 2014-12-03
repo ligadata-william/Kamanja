@@ -3530,12 +3530,31 @@ object MetadataAPIImpl extends MetadataAPI{
       val prop = new Properties()
       prop.load(input)
 
+      
+      
       var root_dir = System.getenv("HOME")
+      var git_root = root_dir + "/github"
+      
+      val  eProps1 = prop.propertyNames();
+      while (eProps1.hasMoreElements()) { 
+    val key = eProps1.nextElement().asInstanceOf[String]
+	val value = prop.getProperty(key); 
+        logger.trace("The key=" + key + "; value=" + value);
+	      
+      if ( key.equalsIgnoreCase("ROOT_DIR") ){
+	  root_dir = value
+	  logger.trace("ROOT_DIR => " + root_dir)
+	}
+      else if ( key.equalsIgnoreCase("GIT_ROOT") ){
+	  git_root = value
+	  logger.trace("GIT_ROOT => " + git_root)
+	}
+      }
+      
       var database = "hashmap"
       var database_host = "localhost"
       var database_schema = "metadata"
       var database_location = "/tmp"
-      var git_root = root_dir + "/github"
       var jar_target_dir = "/tmp/OnLEPInstall"
       var scala_home = root_dir + "/scala-2.10.4"
       var java_home = root_dir + "/jdk1.8.0_05"
@@ -3557,17 +3576,13 @@ object MetadataAPIImpl extends MetadataAPI{
       var concept_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       var type_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       var compiler_work_dir = root_dir + "/tmp"
-
-      val  eProps = prop.propertyNames();
-      while (eProps.hasMoreElements()) { 
-	val key = eProps.nextElement().asInstanceOf[String]
+      
+      val eProps2 = prop.propertyNames();
+      while (eProps2.hasMoreElements()) { 
+    val key = eProps2.nextElement().asInstanceOf[String]
 	val value = prop.getProperty(key); 
         logger.trace("The key=" + key + "; value=" + value);
-	if ( key.equalsIgnoreCase("ROOT_DIR") ){
-	  root_dir = value
-	  logger.trace("ROOT_DIR => " + root_dir)
-	}
-	else if ( key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType") ){
+   if ( key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType") ){
 	  database = value
 	  logger.trace("database => " + database)
 	}
@@ -3582,10 +3597,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	else if ( key.equalsIgnoreCase("DATABASE_LOCATION") || key.equalsIgnoreCase("MetadataLocation") ){
 	  database_location = value
 	  logger.trace("database_location(applicable to treemap or hashmap only) => " + database_location)
-	}
-	else if ( key.equalsIgnoreCase("GIT_ROOT") ){
-	  git_root = value
-	  logger.trace("GIT_ROOT => " + git_root)
 	}
 	else if ( key.equalsIgnoreCase("JAR_TARGET_DIR") ){
 	  jar_target_dir = value
@@ -3672,7 +3683,6 @@ object MetadataAPIImpl extends MetadataAPI{
 	  logger.trace("COMPILER_WORK_DIR => " + compiler_work_dir)
 	}
       }
-
 
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
       metadataAPIConfig.setProperty("DATABASE",database)
