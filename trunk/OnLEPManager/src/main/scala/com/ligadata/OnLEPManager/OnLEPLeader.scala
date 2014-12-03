@@ -255,7 +255,7 @@ object OnLEPLeader {
 
   private def StartUniqueKeysForNode(uniqueKeysForNode: Any, receivedJsonStr: String, adapMaxPartsMap: Map[String, Int]): Boolean = {
     if (uniqueKeysForNode == null) {
-      LOG.error("StartUniqueKeysForNode not found any Node Key Value Map.")
+      LOG.warn("StartUniqueKeysForNode not found any Node Key Value Map.")
       return true
     }
     try {

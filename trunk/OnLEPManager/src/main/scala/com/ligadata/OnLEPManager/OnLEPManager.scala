@@ -349,6 +349,10 @@ class OnLEPManager {
         return true
       }
     } else {
+      if (adapCfgNames.size > 1) {
+        LOG.error(" Got %d ouput adapters, but we are expecting only one output adapter.(%s).".format(adapCfgNames.size, adapCfgNames.mkString(",")))
+        return false
+      }
       adapCfgNames.foreach(ac => {
         val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac)
         if (adapterCfg == null) return false

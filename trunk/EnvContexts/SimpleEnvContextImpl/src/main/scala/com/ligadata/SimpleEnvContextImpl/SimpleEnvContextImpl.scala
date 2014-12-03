@@ -45,7 +45,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _kryoSer: Serializer = null
   private[this] var classLoader: java.lang.ClassLoader = null
   private[this] var _adapterUniqKvDataStore: DataStore = null
+  private[this] var _modelsResultDataStore: DataStore = null
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, String]()
+  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ModelResult]]()
 
   override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
     classLoader = cl
@@ -452,7 +454,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     isPresent
   }
 
-  override def setAdapterUniqueKeyValue(key: String, value: String): Unit = {
+  override def setAdapterUniqueKeyValue(key: String, value: String): Unit = _lock.synchronized {
     _adapterUniqKeyValData(key) = value
     try {
       writeThru(key, value.getBytes("UTF8"), _adapterUniqKvDataStore, "CSV")
@@ -477,7 +479,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     objs(0) = new String(valInfo)
   }
 
-  override def getAdapterUniqueKeyValue(key: String): String = {
+  override def getAdapterUniqueKeyValue(key: String): String = _lock.synchronized {
     val v = _adapterUniqKeyValData.getOrElse(key, null)
     if (v != null) return v
     var objs: Array[String] = new Array[String](1)
@@ -493,6 +495,73 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _adapterUniqKeyValData(key) = objs(0)
     return objs(0)
   }
-}
 
+  override def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = _lock.synchronized {
+    _modelsResult(key) = value
+    if (_kryoSer == null) {
+      _kryoSer = SerializerManager.GetSerializer("kryo")
+      if (_kryoSer != null && classLoader != null) {
+        _kryoSer.SetClassLoader(classLoader)
+      }
+    }
+    try {
+      val v = _kryoSer.SerializeObjectToByteArray(value)
+      writeThru(key, v, _modelsResultDataStore, "kryo")
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to write data.")
+        e.printStackTrace
+      }
+    }
+  }
+
+  private def buildModelsResult(tupleBytes: Value, objs: Array[scala.collection.mutable.Map[String, ModelResult]]) {
+    // Get first _serInfoBufBytes bytes
+    if (tupleBytes.size < _serInfoBufBytes) {
+      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
+      logger.error(errMsg)
+      throw new Exception(errMsg)
+    }
+
+    val serInfo = getSerializeInfo(tupleBytes)
+
+    serInfo.toLowerCase match {
+      case "kryo" => {
+        val valInfo = getValueInfo(tupleBytes)
+        if (_kryoSer == null) {
+          _kryoSer = SerializerManager.GetSerializer("kryo")
+          if (_kryoSer != null && classLoader != null) {
+            _kryoSer.SetClassLoader(classLoader)
+          }
+        }
+        if (_kryoSer != null) {
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[scala.collection.mutable.Map[String, ModelResult]]
+        }
+      }
+      case _ => {
+        throw new Exception("Found un-handled Serializer Info: " + serInfo)
+      }
+    }
+  }
+
+  override def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = _lock.synchronized {
+    val v = _modelsResult.getOrElse(key, null)
+    if (v != null) return v
+    var objs = new Array[scala.collection.mutable.Map[String, ModelResult]](1)
+    val buildAdapOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
+    try {
+      _modelsResultDataStore.get(makeKey(key), buildAdapOne)
+    } catch {
+      case e: Exception => {
+        logger.trace("Data not found for key:" + key)
+      }
+    }
+    if (objs(0) != null) {
+      _modelsResult(key) = objs(0)
+      return objs(0)
+    }
+    return scala.collection.mutable.Map[String, ModelResult]()
+  }
+
+}
 
