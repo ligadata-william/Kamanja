@@ -696,6 +696,7 @@ class MessageDefImpl {
               typeImpl = typeImpl.append(baseTyp_9)
               jarset = jarset ++ baseTyp_10
             }
+            count = count + 1
 
           } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
 
@@ -756,7 +757,7 @@ class MessageDefImpl {
             addMsg = addMsg.append(ccpt_7)
             jarset = jarset ++ ccpt_8
           }
-          count = count + 1
+
         }
       if (message.concepts != null) {
 
@@ -770,7 +771,7 @@ class MessageDefImpl {
         scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr)
 
       }
-/*
+      /*
       var partitionKeyStr = new StringBuilder(8 * 1024)
       if (message.PartitionKey != null)
         message.PartitionKey.foreach { p =>
@@ -780,7 +781,7 @@ class MessageDefImpl {
       if (partitionKeyStr != null && partitionKeyStr.toString.trim() != "")
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
 */
-      val partitionKeys = if (message.PartitionKey != null) ("Array( " + message.PartitionKey.map(p =>  p.toLowerCase).mkString(", ") + ")") else ""
+      val partitionKeys = if (message.PartitionKey != null) ("Array(" + message.PartitionKey.map(p => p.toLowerCase).mkString(", ") + ")") else ""
       scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr("") + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
@@ -923,15 +924,13 @@ trait BaseContainer {
     else
       "\n	override def PartitionKeyData: Array[String] = Array[String]()"
   }
-  
+
   private def primarykeyStr(primaryKeys: String): String = {
     if (primaryKeys != null && primaryKeys.trim() != "")
       "\n	override def PrimaryKeyData: Array[String] = " + primaryKeys
     else
       "\n	override def PrimaryKeyData: Array[String] = Array[String]()"
   }
-  
-  
 
   private def inputData = {
     """ 
