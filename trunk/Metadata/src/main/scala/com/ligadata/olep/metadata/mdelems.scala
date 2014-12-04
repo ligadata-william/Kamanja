@@ -10,7 +10,19 @@ import scala.util.parsing.json.{ JSONObject, JSONArray }
 // define some enumerations 
 object ObjFormatType extends Enumeration {
   type FormatType = Value
-  val fCSV, fJSON, fSERIALIZED = Value
+  val fCSV, fJSON, fXML, fSERIALIZED = Value
+
+  def asString(typ : FormatType) : String = {
+     val str = typ.toString match {
+	case "fCSV" =>  "CSV"
+	case "fJSON" => "JSON"
+	case "fXML" => "XML"
+	case "fSERIALIZED" => "SERIALIZED"
+	case _ => "Unknown"
+      }
+      str
+  }
+
 }
 import ObjFormatType._
 
@@ -127,6 +139,9 @@ trait BaseElem {
   def MdElemStructVer: Int // Metadata Element Structure version. By default whole metadata will have same number
   def PhysicalName: String // Getting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
   def PhysicalName(phyNm: String): Unit // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
+  def ObjectDefinition: String // Get Original XML/JSON string used during model/message compilation
+  def ObjectDefinition(definition: String): Unit // Set XML/JSON Original string used during model/message compilation
+  def ObjectFormat: ObjFormatType.FormatType // format type for Original string(json or xml) used during model/message compilation
   def IsActive: Boolean // Return true if the Element is active, otherwise false
   def IsDeactive: Boolean // Return true if the Element is de-active, otherwise false
   def IsDeleted: Boolean // Return true if the Element is deleted, otherwise false
@@ -153,6 +168,9 @@ class BaseElemDef extends BaseElem {
   override def MdElemStructVer: Int = mdElemStructVer // Metadata Element version. By default whole metadata will have same number
   override def PhysicalName: String = physicalName // Getting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code)
   override def PhysicalName(phyNm: String): Unit = physicalName = phyNm // Setting Physical name for Logical name (Mapping from Logical name to Physical Name when we generate code). Most of the elements will have Phsical name corresponds to Logical name like Types like System.Int maps to scala.Int as physical name.
+  override def ObjectDefinition: String = objectDefinition // Original XML/JSON string used during model/message compilation
+  override def ObjectDefinition(definition: String): Unit = objectDefinition = definition // Set XML/JSON Original string used during model/message compilation
+  override def ObjectFormat: ObjFormatType.FormatType = objectFormat // format type for Original string(json or xml) used during model/message compilation
   override def IsActive: Boolean = active // Return true if the Element is active, otherwise false
   override def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
   override def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
@@ -185,7 +203,9 @@ class BaseElemDef extends BaseElem {
   var physicalName: String = _ // Mapping from Logical name to Physical Name when we generate code. This is Case sensitive.
   var active: Boolean = true // Represent whether element is active or deactive. By default it is active.
   var deleted: Boolean = false // Represent whether element is deleted. By default it is false.
-  var tranId: Long = 0				    
+  var tranId: Long = 0	
+  var objectDefinition:String = _
+  var objectFormat: ObjFormatType.FormatType = fJSON
 }
 
 // All these metadata elements should have specialized serialization and deserialization 

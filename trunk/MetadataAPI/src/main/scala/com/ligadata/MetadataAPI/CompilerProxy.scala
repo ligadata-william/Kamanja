@@ -17,7 +17,7 @@ import com.ligadata.olep.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
 import com.ligadata.Compiler._
-
+import com.ligadata.olep.metadata.ObjFormatType._
 import com.ligadata.Serialize._
 
 case class MsgCompilationFailedException(e: String) extends Exception(e)
@@ -89,7 +89,7 @@ class CompilerProxy{
       val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
-	logger.error(s"unable to classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+	logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
 	logger.error(s"cmd used : $mvCmd")
       }		
       mvCmdRc
@@ -163,7 +163,7 @@ class CompilerProxy{
       val injectLoggingStmts : Boolean = false 
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
 				       Array(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")))
-      val (classStr,modDef) = compiler.compile(pmmlStr)
+      val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir)
 
       var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 
@@ -191,7 +191,8 @@ class CompilerProxy{
 			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
 			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
 			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-			   false)
+			   false,
+			   compiler_work_dir)
 
       /* The following check require cleanup at some point */
       if(jarFile.compareToIgnoreCase("Not Set") == 0 ){
@@ -206,6 +207,10 @@ class CompilerProxy{
       if( modDef.modelType == null){
 	modDef.modelType = "RuleSet"
       }
+
+      modDef.objectDefinition = pmmlStr
+      modDef.objectFormat = fXML
+
       (classStr,modDef)
     } catch{
       case e:Exception =>{
@@ -284,6 +289,10 @@ class CompilerProxy{
       msgDef.jarName = jarFile
       if (msgDef.containerType.isInstanceOf[ContainerTypeDef])
         msgDef.containerType.asInstanceOf[ContainerTypeDef].jarName = jarFile
+
+      msgDef.objectDefinition = msgDefStr
+      msgDef.objectFormat = fJSON
+      
       (classStr,msgDef)
     }
     catch{

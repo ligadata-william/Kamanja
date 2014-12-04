@@ -734,6 +734,14 @@ object JsonSerializer {
     }
   }
 
+  def replaceLast(inStr:String,toReplace:String,replacement:String):String = {
+    val pos = inStr.lastIndexOf(toReplace);
+    if (pos > -1) {
+        inStr.substring(0, pos) + replacement + inStr.substring(pos + toReplace.length(), inStr.length());
+    } else {
+        inStr;
+    }
+  }
 
   @throws(classOf[UnsupportedObjectException])
   def SerializeObjectToJson(mdObj: BaseElemDef): String = {
@@ -766,19 +774,23 @@ object JsonSerializer {
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
+		    ("ObjectDefinition" -> o.objectDefinition) ~
+		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
 		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
 		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	o.containerType match{
 	  case c:StructTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
 	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr
 	  }
 	  case c:MappedMsgTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    jsonStr = replaceLast(jsonStr,"}\n}","") + ",\n  \"MappedMsgTypeDef\": "
 	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
@@ -798,19 +810,23 @@ object JsonSerializer {
 		    ("Version"   -> o.ver) ~
 		    ("JarName"      -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
+		    ("ObjectDefinition" -> o.objectDefinition) ~
+		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
 		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
 		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
 	o.containerType match{
 	  case c:StructTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
+	    jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
 	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr
 	  }
 	  case c:MappedMsgTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    jsonStr = replaceLast(jsonStr,"}\n}","") + ",\n  \"MappedMsgTypeDef\": "
 	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
@@ -829,12 +845,15 @@ object JsonSerializer {
 		    ("ModelType"  -> o.modelType) ~
 		    ("JarName" -> o.jarName) ~
 		    ("PhysicalName" -> o.typeString) ~
+		    ("ObjectDefinition" -> o.objectDefinition) ~
+		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
 		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
 		    ("Deleted"         -> o.deleted) ~
 		    ("Active"          -> o.active) ~
 		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim
+	//jsonStr = jsonStr.replaceAll("}","").trim
+	jsonStr = replaceLast(jsonStr,"}\n}","").trim
 	jsonStr = jsonStr + ",\n\"InputAttributes\": "
 	var memberDefJson = SerializeObjectListToJson(o.inputVars)
 	jsonStr += memberDefJson
@@ -853,7 +872,8 @@ object JsonSerializer {
 		    ("CollectionType" -> ObjType.asString(o.collectionType)) ~
 		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
+	//jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Type\": "
+	jsonStr = replaceLast(jsonStr,"}","").trim + ",\n  \"Type\": "
 	var memberDefJson = SerializeObjectToJson(o.typeDef)
 	memberDefJson = memberDefJson + "}"
 	jsonStr += memberDefJson
@@ -1071,7 +1091,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
-	jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
+	//jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
+	jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = SerializeObjectListToJson(o.tupleDefs)
 	tupleDefJson = tupleDefJson + "}"
 	jsonStr += tupleDefJson
@@ -1123,7 +1144,7 @@ object JsonSerializer {
 	pretty(render(json))
       }
       case _ => {
-        throw new UnsupportedObjectException(s"SerializeObjectToJson doesn't support the objectType of $mdObj.name  yet")
+        throw new UnsupportedObjectException(s"SerializeObjectToJson doesn't support the objectType of " + mdObj.getClass().getName() + "  yet")
       }
     }
   }
