@@ -36,7 +36,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           msg.populate(inputData)
         } catch {
           case e: Exception => {
-            LOG.error("Failed to populate CSV data for messageType:" + msgType)
+            LOG.error("Failed to populate CSV data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
+            throw e
           }
         }
       } else if (msgFormat.equalsIgnoreCase("json")) {
@@ -47,7 +48,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           msg.populate(inputData)
         } catch {
           case e: Exception => {
-            LOG.error("Failed to populate JSON data for messageType:" + msgType)
+            LOG.error("Failed to populate JSON data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
+            throw e
           }
         }
       } else if (msgFormat.equalsIgnoreCase("xml")) {
@@ -58,7 +60,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           msg.populate(inputData)
         } catch {
           case e: Exception => {
-            LOG.error("Failed to populate XML data for messageType:" + msgType)
+            LOG.error("Failed to populate XML data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
+            throw e
           }
         }
       } else {
@@ -100,7 +103,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } else {
           }
         } catch {
-          case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace() ) }
+          case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
         }
       })
     }
@@ -194,6 +197,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null))
             envContext.setObject(topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
         }
+      } else {
+        LOG.error("Recieved null message object for input:" + msgData)
       }
     } catch {
       case e: Exception => LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
