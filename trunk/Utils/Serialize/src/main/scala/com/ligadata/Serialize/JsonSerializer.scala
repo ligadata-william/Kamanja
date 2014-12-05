@@ -779,7 +779,7 @@ object JsonSerializer {
 	  }
 	  case c:MappedMsgTypeDef => {
 	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
+	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr
@@ -811,7 +811,7 @@ object JsonSerializer {
 	  }
 	  case c:MappedMsgTypeDef => {
 	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
+	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr

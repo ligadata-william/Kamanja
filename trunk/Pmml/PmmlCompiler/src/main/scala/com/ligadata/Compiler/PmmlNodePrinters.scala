@@ -88,6 +88,8 @@ object NodePrinterHelpers extends LogTrait {
 			val isIterable = functionSelector.isIterableFcn
 			if (isIterable) { /** iterable functions in the form coll.<fcn>(mbr => ...) */
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectIterableFcn 
+				node.SetTypeInfo(fcnTypeInfo)
+				
 				val applysFcnName : String = node.function
 				val iterablePrinter : IterableFcnPrinter = new IterableFcnPrinter(applysFcnName
 																				, node
@@ -102,6 +104,7 @@ object NodePrinterHelpers extends LogTrait {
 			} else {  /** simple function...*/
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectSimpleFcn
 				if (fcnTypeInfo != null && fcnTypeInfo.fcnDef != null) {
+					node.SetTypeInfo(fcnTypeInfo)
 					val scalaFcnName : String = node.function
 					simpleFcnPrint(scalaFcnName
 								, node
