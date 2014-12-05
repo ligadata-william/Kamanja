@@ -26,7 +26,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String])
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String])
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -235,7 +235,7 @@ class MessageDefImpl {
 	    """
   }
 
-  private def handleBaseTypes(partitionkeys: List[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String]) = {
+  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -251,7 +251,6 @@ class MessageDefImpl {
     val newline = "\n"
     var keysStr = new StringBuilder(8 * 1024)
     var typeImpl = new StringBuilder(8 * 1024)
-
     var fname: String = ""
     try {
 
@@ -281,19 +280,17 @@ class MessageDefImpl {
 
       if (fixed.toLowerCase().equals("true")) {
         scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
-
         assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
         assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
         assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
 
       } else if (fixed.toLowerCase().equals("false")) {
-        partitionkeys.foreach { partitionkey =>
-          if (f.Name.toLowerCase().equals(partitionkey.toLowerCase()))
-            scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
-        }
+        if (keysSet != null)
+          keysSet.foreach { key =>
+            if (f.Name.toLowerCase().equals(key.toLowerCase()))
+              scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
+          }
         keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
-        //  typeImpl.append("\"" + fname + "\",")
-
       }
 
     } catch {
@@ -621,6 +618,7 @@ class MessageDefImpl {
     var count: Int = 0
     var concepts: String = "concepts"
     var keysSet: Set[String] = Set()
+    var keys: Set[String] = Set()
 
     var ftypeVersion: Int = -1
     var addMessage: String = ""
@@ -630,6 +628,25 @@ class MessageDefImpl {
       scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
       // for (e <- message.Elements) {
       //  var fields = e.Fields
+      var paritionkeys: List[String] = null
+      var primaryKeys: List[String] = null
+      // if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
+      //    paritionkey = message.PartitionKey(0).toLowerCase()
+      if (message.PartitionKey != null)
+        paritionkeys = message.PartitionKey
+
+      if (message.PrimaryKeys != null)
+        primaryKeys = message.PrimaryKeys
+
+      if (paritionkeys != null)
+        paritionkeys.foreach { partitionkey =>
+          keys = keys + partitionkey.toLowerCase()
+        }
+
+      if (primaryKeys != null)
+        primaryKeys.foreach { primarykey =>
+          keys = keys + primarykey.toLowerCase()
+        }
 
       if (message.Elements != null)
         for (f <- message.Elements) {
@@ -678,13 +695,8 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Tree Set not handled at this momemt" + newline)
               assignJsondata.append(newline + "//Tree Set not handled at this momemt" + newline)
             } else {
-              var paritionkey: List[String] = null
-              // if ((message.PartitionKey != null) && (message.PartitionKey(0) != null) && (message.PartitionKey(0).trim() != ""))
-              //    paritionkey = message.PartitionKey(0).toLowerCase()
-              if (message.PartitionKey != null)
-                paritionkey = message.PartitionKey
 
-              val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10) = handleBaseTypes(paritionkey, message.Fixed, typ, f, message.Version)
+              val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10) = handleBaseTypes(keys, message.Fixed, typ, f, message.Version)
               scalaclass = scalaclass.append(baseTyp_1)
               assignCsvdata = assignCsvdata.append(baseTyp_2)
               assignJsondata = assignJsondata.append(baseTyp_3)
@@ -782,7 +794,9 @@ class MessageDefImpl {
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
 */
       val partitionKeys = if (message.PartitionKey != null) ("Array(" + message.PartitionKey.map(p => p.toLowerCase).mkString(", ") + ")") else ""
-      scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr("") + newline + getsetMethods(message.Fixed))
+      val prmryKeys = if (message.PrimaryKeys != null) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase).mkString(", ") + ")") else ""
+
+      scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr(prmryKeys) + newline + getsetMethods(message.Fixed))
 
       if (addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
@@ -1579,7 +1593,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null, null)
   }
 
   private def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
@@ -1589,8 +1603,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var container: Message = null
     var pkg: String = "com.ligadata.messagescontainers"
     val tkey: String = "TransformData"
-    var pKey: String = ""
+    var pKey: String = null
+    var prmryKey: String = null
     var partitionKeysList: List[String] = null
+    var primaryKeysList: List[String] = null
     var conceptsList: List[String] = null
     try {
       if (message != null) {
@@ -1615,6 +1631,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
             }
           }
 
+          if (key.equals("PrimaryKey")) {
+            primaryKeysList = message.getOrElse("PrimaryKey", null).asInstanceOf[List[String]]
+            for (primaryKey: String <- primaryKeysList) {
+              if (primaryKeysList.size == 1)
+                prmryKey = primaryKey.toLowerCase()
+            }
+          }
+
           if (key.equals("Concepts")) {
             conceptsList = getConcepts(message, key)
           }
@@ -1629,7 +1653,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + message.get("Version").get.toString().replaceAll("[.]", "").toInt.toString
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, message.get("Version").get.toString(), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
