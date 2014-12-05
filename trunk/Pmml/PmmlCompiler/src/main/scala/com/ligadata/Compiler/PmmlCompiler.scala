@@ -315,7 +315,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.
 			//val (modelSrc, msgDef) : (String,ModelDef) = compiler.compileFile(pmmlFilePath)
 			/** create a string of it, parse and generate the scala and model definition */
 			val xmlSrcTxt : String  = Source.fromFile(pmmlFilePath).mkString
-			val (modelSrc, msgDef) : (String,ModelDef) = compiler.compile(xmlSrcTxt)
+			val (modelSrc, msgDef) : (String,ModelDef) = compiler.compile(xmlSrcTxt,"/tmp")
 			valid = if (   modelSrc != null 
 			    		&& msgDef != null
 		    			&& jarTargetDir != null 
@@ -343,7 +343,8 @@ As such, it must be simple name with alphanumerics and ideally all lower case.
 								, manifestpath
 								, scalahome
 								, javahome
-								, skipJar)
+								, skipJar
+							        , "/tmp")
 			} else {
 				("jar generation was suppressed by command option --skipjar", null)
 			}
@@ -424,7 +425,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	 *  FIXME: The jars required by the model is to be returned as the second object in the pair returned.
 	 *  This is not implemented.  The jars for any Message or ContainerDef encountered during parse needs to 
 	 *  collected in a set and returned. */
-	def compile(pmmlString : String)  : (String, ModelDef) = {
+	def compile(pmmlString : String,workDir: String)  : (String, ModelDef) = {
 	  
 		logger.trace("compile begins")
 		
@@ -454,8 +455,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			 */
 			val optXmlFileName : Option[String] = ctx.pmmlTerms.apply("ClassName")
 			val xmlFileName : String = optXmlFileName match {
-			  case Some(optXmlFileName) => "/tmp/" + optXmlFileName + ".xml"
-			  case _ => "/tmp/somePmmlFileName.xml"
+			  case Some(optXmlFileName) => workDir + "/" + optXmlFileName + ".xml"
+			  case _ => workDir + "/somePmmlFileName.xml"
 			}
 			writeSrcFile(pmmlString, xmlFileName)
 			pmmlFilePath = xmlFileName
@@ -550,7 +551,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 				, manifestpath : String
 				, scalahome : String
 				, javahome : String
-				, skipJar : Boolean) : (String,Array[String]) = {
+				, skipJar : Boolean
+			        , workDir: String) : (String,Array[String]) = {
 	  
 		logger.trace("createJar begins")
 
@@ -560,7 +562,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 		
 		val jarPath = if (! skipJar) {
-			val (jarRc, jarpath) = jarCode(ctx, srcCode, classpath, jarTargetDir, manifestpath, clientName, pmmlFilePath, scalahome, javahome)
+			val (jarRc, jarpath) = jarCode(ctx, srcCode, classpath, jarTargetDir, manifestpath, clientName, pmmlFilePath, scalahome, javahome,workDir)
 			if (jarRc == 0) {
 				jarpath 
 			} else {
@@ -682,7 +684,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			    , clientName : String
 			    , pmmlFilePath : String
 			    , scalahome : String
-			    , javahome : String) : (Int, String) =
+			    , javahome : String
+			    , workDir: String) : (Int, String) =
 	{
 		/** get the class name to create the file, make directories, jar, etc */
 		val appNm : Option[String] = ctx.pmmlTerms.apply("ClassName")
@@ -692,20 +695,20 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 		
 		/** prep the workspace and go there*/
-		val killDir = s"rm -Rf /tmp/$moduleName"
+		val killDir = s"rm -Rf $workDir/$moduleName"
 		val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
 		if (killDirRc != 0) {
-			logger.error(s"Unable to rm /tmp/$moduleName ... rc = $killDirRc")
+			logger.error(s"Unable to rm $workDir/$moduleName ... rc = $killDirRc")
 			return (killDirRc, "")
 		}
-		val buildDir = s"mkdir /tmp/$moduleName"
+		val buildDir = s"mkdir $workDir/$moduleName"
 		val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
 		if (tmpdirRc != 0) {
 			logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
 			return (tmpdirRc, "")
 		}
 		/** create a copy of the pmml source in the work directory */
-		val cpRc = Process(s"cp $pmmlFilePath /tmp/$moduleName/").!
+		val cpRc = Process(s"cp $pmmlFilePath $workDir/$moduleName/").!
 		if (cpRc != 0) {
 			logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
 			return (cpRc, "")
@@ -713,21 +716,21 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 
 		logger.trace(s"compile $moduleName")
 		/** compile the generated code */
-		val rc : Int = compile(ctx, s"/tmp/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)
+		val rc : Int = compile(ctx, s"$workDir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
 		if (rc != 0) {
 			return (rc, "")
 		}
 		logger.trace(s"compile or $moduleName ends...rc = $rc")
 		
 		/** build the manifest */
-		logger.trace(s"create the manifest")
-		val manifestFileName : String =  s"manifest.mf"
-		createManifest(ctx, s"/tmp/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
+		//logger.trace(s"create the manifest")
+		//val manifestFileName : String =  s"manifest.mf"
+		//createManifest(ctx, s"$workDir/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
 
 		/** create the jar */
 		val moduleNameJar : String = JarName(ctx)
-		logger.trace(s"create the jar $moduleNameJar")
-		val jarCmd : String = s"$javahome/bin/jar cvf $moduleNameJar -C /tmp/$moduleName/ ."
+		logger.trace(s"create the jar $workDir/$moduleNameJar")
+		val jarCmd : String = s"$javahome/bin/jar cvf $workDir/$moduleNameJar -C $workDir/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")
 		logger.info(s"Jar $moduleNameJar produced.  Its contents:")
 		val jarRc : Int = Process(jarCmd).!
@@ -738,14 +741,14 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		logger.trace(s"jar of $moduleNameJar complete ... $jarRc")
 		
 		/** move the new jar to the target dir where it is to live */
-		logger.trace(s"move the jar $moduleNameJar to the target $jarTargetDir")
-		val mvCmd : String = s"mv $moduleNameJar $jarTargetDir/"
+		logger.trace(s"move the jar $workDir/$moduleNameJar to the target $jarTargetDir")
+		val mvCmd : String = s"mv $workDir/$moduleNameJar $jarTargetDir/"
 		val mvCmdRc : Int = Process(mvCmd).!
 		if (mvCmdRc != 0) {
 			logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
 			logger.error(s"cmd used : $mvCmd")
 		}
-		logger.trace(s"move of jar $moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
+		logger.trace(s"move of jar $workDir/$moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
 		
 		(jarRc, s"$moduleNameJar")
 	}
@@ -756,7 +759,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 				, moduleName : String
 				, classpath : String
 				, scalaGeneratedCode : String
-				, clientName : String) : Int = 
+				, clientName : String
+			        , workDir : String) : Int = 
 	{  
 		val scalaSrcFileName : String = s"$moduleName.scala"
 		createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
@@ -770,10 +774,10 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 		
 		/** The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir*/
-		val mvCmd : String = s"mv com /tmp/$moduleName/"
+		val mvCmd : String = s"mv com $workDir/$moduleName/"
 		val mvCmdRc : Int = Process(mvCmd).!
 		if (mvCmdRc != 0) {
-			logger.error(s"unable to classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+			logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
 			logger.error(s"cmd used : $mvCmd")
 		}		
 		//(scalaCompileRc | regBldRc | mvCmdRc)
