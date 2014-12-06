@@ -957,6 +957,7 @@ class JsonData(var dataInput: String) extends InputData(){ }
 class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
+  
 
   private def getsetMethods(msgFixed: String): String = {
 
