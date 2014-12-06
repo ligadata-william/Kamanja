@@ -18,6 +18,7 @@ trait MetadataAPIService extends HttpService {
   APIInit.Init
 
   val metadataAPIRoute =
+  /*
     pathPrefix("api") {
       (get & path("GetModel" / Segment / Segment / Segment / Segment)) { (nameSpace, name, formatType, version) =>
         requestContext =>
@@ -53,6 +54,7 @@ trait MetadataAPIService extends HttpService {
             val allModelDefsService = actorRefFactory.actorOf(Props(new GetAllModelDefsService(requestContext)))
             allModelDefsService ! GetAllModelDefsService.Process(formatType)
         } ~
+        */
         (get & path("GetAllMessageDefs" / Segment)) { (formatType) =>
           requestContext =>
             val allMessageDefsService = actorRefFactory.actorOf(Props(new GetAllMessageDefsService(requestContext)))
