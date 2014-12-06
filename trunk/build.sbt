@@ -63,9 +63,9 @@ lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dep
 
 lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient)
 
-lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(OnLEPBase,MetadataAPI,ZooKeeperLeaderLatch)
+// lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(OnLEPBase,MetadataAPI,ZooKeeperLeaderLatch)
 
-lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
+// lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
 
