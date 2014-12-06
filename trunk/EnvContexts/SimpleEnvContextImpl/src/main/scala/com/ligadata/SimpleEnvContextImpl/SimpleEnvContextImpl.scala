@@ -231,6 +231,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           connectinfo += ("schema" -> storeName)
           connectinfo += ("ConsistencyLevelRead" -> "ONE")
         }
+        case "hbase" => {
+          connectinfo += ("hostlist" -> dataLocation)
+          connectinfo += ("schema" -> storeName)
+        }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
         }
