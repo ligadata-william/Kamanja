@@ -99,9 +99,38 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 											PmmlError.logError(ctx, s"Field $strRep1 is NOT a field name in the container with type ${mappedContainer.typeString}")
 											s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})" /** this will cause scala compile error */
 										}
-									} else {
-										val containerTypeStr : String = fcnTypeInfo.containerTypeDef.typeString
-										s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'}).asInstanceOf[$containerTypeStr]" 
+									} else { /** one more time... see if the element is also an array (i.e., array of array of some (mapped or fixed) struct */
+										if (baseElemType.isInstanceOf[StructTypeDef]) {
+											s"${ctx.applyElementName}.$strRep1"
+										} else {
+											val nestedElems : Array[BaseTypeDef] = if (baseElemType.isInstanceOf[ContainerTypeDef]) {
+													baseElemType.asInstanceOf[ContainerTypeDef].ElementTypes
+												} else {
+													null
+												}
+											if (nestedElems != null && nestedElems.size == 1) {
+												val nestedBaseElemType : BaseTypeDef = nestedElems.last
+												val nestedMappedContainerElemType : MappedMsgTypeDef = if (nestedBaseElemType.isInstanceOf[MappedMsgTypeDef]) 
+													nestedBaseElemType.asInstanceOf[MappedMsgTypeDef] else null
+												if (nestedMappedContainerElemType != null) {
+													val attrType : BaseAttributeDef = nestedMappedContainerElemType.attributeFor(strRep1)
+													val attrTypeStr : String = if (attrType != null) attrType.typeString else null
+													if (attrTypeStr != null) {
+														s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'}).asInstanceOf[$attrTypeStr]"
+													} else {
+														PmmlError.logError(ctx, s"Field $strRep1 is NOT a field name in the container with type ${mappedContainer.typeString}")
+														s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})" /** this will cause scala compile error */
+													}
+												} else {
+													s"${ctx.applyElementName}.$strRep1"
+												}										
+											} else {	
+												if (nestedElems != null) {
+													PmmlError.logWarning(ctx, s"Type ${baseElemType.typeString} has ${nestedElems.size} elements... we are only supporting collections with single 'mapped' type elements at the moment")
+												}
+												s"${ctx.applyElementName}.$strRep1"
+											}
+										}
 									}
 								} else {
 									PmmlError.logWarning(ctx, s"Type ${fcnTypeInfo.containerTypeDef.typeString} has ${elementTypes.size} elements... we are only supporting collections with single 'mapped' type elements at the moment")
