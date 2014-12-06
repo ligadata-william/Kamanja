@@ -92,22 +92,22 @@ trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit
-  def getObjects(containerName: String, key: String): Array[MessageContainerBase]
-  def getObject(containerName: String, key: String): MessageContainerBase
-  def setObject(containerName: String, key: String, value: MessageContainerBase): Unit
-  def setObject(containerName: String, elementkey: Any, value: MessageContainerBase): Unit
+  def getObjects(tempTransId: Long, containerName: String, key: String): Array[MessageContainerBase]
+  def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
+  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
+  def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit
 
-  def contains(containerName: String, key: String): Boolean
-  def containsAny(containerName: String, keys: Array[String]): Boolean
-  def containsAll(containerName: String, keys: Array[String]): Boolean
+  def contains(tempTransId: Long, containerName: String, key: String): Boolean
+  def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
+  def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(key: String, value: String): Unit
-  def getAdapterUniqueKeyValue(key: String): String
+  def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String): Unit
+  def getAdapterUniqueKeyValue(key: String): String // No need of under TransactionId.
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-  def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
-  def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult]
+  def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
+  def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult]
 }
 
 trait ModelBase {
@@ -116,17 +116,19 @@ trait ModelBase {
   val modelName: String
   val modelVersion: String
   val tenantId: String
+  val tempTransId: Long
 
   def getModelName: String = modelName // Model Name
   def getVersion: String = modelVersion // Model Version
   def getTenantId: String = tenantId // Tenant Id
+  def getTempTransId: Long = tempTransId // tempTransId
 
   def execute(outputDefault: Boolean): ModelResult // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
 trait ModelBaseObj {
   def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(gCtx: EnvContext, msg: MessageContainerBase, tenantId: String): ModelBase // Creating same type of object with given values 
+  def CreateNewModel(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String): ModelBase // Creating same type of object with given values 
 
   def getModelName: String // Model Name
   def getVersion: String // Model Version

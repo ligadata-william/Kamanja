@@ -39,15 +39,15 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   /** Exists checking implemented in the EnvContext */
   
   def Contains(gCtx : EnvContext, containerName : String, key : String) : Boolean = {
-	  val itExists : Boolean = if (gCtx != null) gCtx.contains(containerName, key) else false
+	  val itExists : Boolean = if (gCtx != null) gCtx.contains(0, containerName, key) else false
 	  itExists
   }
   def ContainsAny(gCtx : EnvContext, containerName : String, keys : Array[String]) : Boolean = {
-	  val itExists : Boolean = if (gCtx != null) gCtx.containsAny(containerName, keys) else false
+	  val itExists : Boolean = if (gCtx != null) gCtx.containsAny(0, containerName, keys) else false
 	  itExists
   }
   def ContainsAll(gCtx : EnvContext, containerName : String, keys : Array[String]) : Boolean = {
-	  val allExist : Boolean = if (gCtx != null) gCtx.containsAll(containerName, keys) else false
+	  val allExist : Boolean = if (gCtx != null) gCtx.containsAll(0, containerName, keys) else false
 	  allExist
   }
   
@@ -126,23 +126,23 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    */
     
   def Get(gCtx : EnvContext, containerId : String, key : String) : MessageContainerBase = {
-	  gCtx.getObject(containerId, key.toString) 
+	  gCtx.getObject(0, containerId, key.toString) 
   }
   
   def Get(gCtx : EnvContext, containerId : String, key : Int) : MessageContainerBase = {
-	  gCtx.getObject(containerId, key.toString) 
+	  gCtx.getObject(0, containerId, key.toString) 
   }
   
   def Get(gCtx : EnvContext, containerId : String, key : Long) : MessageContainerBase = {
-	  gCtx.getObject(containerId, key.toString) 
+	  gCtx.getObject(0, containerId, key.toString) 
   }
   
   def Get(gCtx : EnvContext, containerId : String, key : Double) : MessageContainerBase = {
-	  gCtx.getObject(containerId, key.toString) 
+	  gCtx.getObject(0, containerId, key.toString) 
   }
   
   def Get(gCtx : EnvContext, containerId : String, key : Float) : MessageContainerBase = {
-	  gCtx.getObject(containerId, key.toString) 
+	  gCtx.getObject(0, containerId, key.toString) 
   }
   
   /** 
@@ -151,23 +151,23 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    */
     
   def GetArray(gCtx : EnvContext, containerId : String, key : String) : Array[MessageContainerBase] = {
-	  gCtx.getObjects(containerId, key.toString) 
+	  gCtx.getObjects(0, containerId, key.toString) 
   }
   
   def GetArray(gCtx : EnvContext, containerId : String, key : Int) : Array[MessageContainerBase] = {
-	  gCtx.getObjects(containerId, key.toString) 
+	  gCtx.getObjects(0, containerId, key.toString) 
   }
   
   def GetArray(gCtx : EnvContext, containerId : String, key : Long) : Array[MessageContainerBase] = {
-	  gCtx.getObjects(containerId, key.toString) 
+	  gCtx.getObjects(0, containerId, key.toString) 
   }
   
   def GetArray(gCtx : EnvContext, containerId : String, key : Double) : Array[MessageContainerBase] = {
-	  gCtx.getObjects(containerId, key.toString) 
+	  gCtx.getObjects(0, containerId, key.toString) 
   }
    
   def GetArray(gCtx : EnvContext, containerId : String, key : Float) : Array[MessageContainerBase] = {
-	  gCtx.getObjects(containerId, key.toString) 
+	  gCtx.getObjects(0, containerId, key.toString) 
   }
  
   /** 
@@ -176,27 +176,27 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    */
     
   def Put(gCtx : EnvContext, containerId : String, key : String, value : MessageContainerBase) : Boolean = {
-	  gCtx.setObject(containerId, key.toString, value) 
+	  gCtx.setObject(0, containerId, key.toString, value) 
 	  true
   }
   
   def Put(gCtx : EnvContext, containerId : String, key : Int, value : MessageContainerBase) : Boolean = {
-	  gCtx.setObject(containerId, key.toString, value) 
+	  gCtx.setObject(0, containerId, key.toString, value) 
 	  true
   }
   
   def Put(gCtx : EnvContext, containerId : String, key : Long, value : MessageContainerBase) : Boolean = {
-	  gCtx.setObject(containerId, key.toString, value) 
+	  gCtx.setObject(0, containerId, key.toString, value) 
  	  true
  }
   
   def Put(gCtx : EnvContext, containerId : String, key : Double, value : MessageContainerBase) : Boolean = {
-	  gCtx.setObject(containerId, key.toString, value) 
+	  gCtx.setObject(0, containerId, key.toString, value) 
  	  true
  }
   
   def Put(gCtx : EnvContext, containerId : String, key : Float, value : MessageContainerBase) : Boolean = {
-	  gCtx.setObject(containerId, key.toString, value) 
+	  gCtx.setObject(0, containerId, key.toString, value) 
 	  true
   }
   

@@ -127,7 +127,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    *  @param dstore : the mapdb handle
    *  @param map : the map to be updated with key/MessageContainerBase pairs.
    */
-  def loadMap(containerType: BaseTypeDef, keys: ArrayBuffer[String], msgCntrInfo: MsgContainerInfo): Unit = {
+  private def loadMap(containerType: BaseTypeDef, keys: ArrayBuffer[String], msgCntrInfo: MsgContainerInfo): Unit = {
 
     var objs: Array[MessageContainerBase] = new Array[MessageContainerBase](1)
     keys.foreach(key => {
@@ -201,14 +201,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  def collectKey(key: Key, keys: ArrayBuffer[String]): Unit = {
+  private def collectKey(key: Key, keys: ArrayBuffer[String]): Unit = {
     val buffer: StringBuilder = new StringBuilder
     key.foreach(c => buffer.append(c.toChar))
     val containerKey: String = buffer.toString
     keys += containerKey
   }
 
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
+  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
@@ -246,7 +246,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   //BUGBUG:: For now we are expecting Container for this function call. May be we need to handle anything.
-  override def getObjects(containerName: String, key: String): Array[MessageContainerBase] = _lock.synchronized {
+  override def getObjects(tempTransId: Long, containerName: String, key: String): Array[MessageContainerBase] = _lock.synchronized {
     // bugbug: implement partial match
     //Array(getObject(containerName, key))
 
@@ -330,7 +330,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     v
   }
 
-  override def getObject(containerName: String, key: String): MessageContainerBase = _lock.synchronized {
+  override def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = _lock.synchronized {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     if (container != null) {
       val v = container.data.getOrElse(key.toLowerCase(), null)
@@ -350,7 +350,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     } else null
   }
 
-  override def setObject(containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
+  override def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     if (container != null) {
       val k = key.toLowerCase
@@ -374,7 +374,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     // bugbug: throw exception
   }
 
-  override def setObject(containerName: String, elementkey: Any, value: MessageContainerBase): Unit = _lock.synchronized {
+  override def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit = _lock.synchronized {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     if (container != null) {
       val key: String = elementkey.toString.toLowerCase
@@ -415,7 +415,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Does the supplied key exist in a container with the supplied name?
    */
-  override def contains(containerName: String, key: String): Boolean = {
+  override def contains(tempTransId: Long, containerName: String, key: String): Boolean = {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     val isPresent = if (container != null) {
       val lkey: String = key.toString.toLowerCase()
@@ -429,7 +429,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Does at least one of the supplied keys exist in a container with the supplied name?
    */
-  override def containsAny(containerName: String, keys: Array[String]): Boolean = {
+  override def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     val isPresent = if (container != null) {
       val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase())).size
@@ -443,7 +443,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Do all of the supplied keys exist in a container with the supplied name?
    */
-  override def containsAll(containerName: String, keys: Array[String]): Boolean = {
+  override def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     val isPresent = if (container != null) {
       val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase())).size
@@ -454,7 +454,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     isPresent
   }
 
-  override def setAdapterUniqueKeyValue(key: String, value: String): Unit = _lock.synchronized {
+  override def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String): Unit = _lock.synchronized {
     _adapterUniqKeyValData(key) = value
     try {
       writeThru(key, value.getBytes("UTF8"), _adapterUniqKvDataStore, "CSV")
@@ -496,7 +496,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return objs(0)
   }
 
-  override def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = _lock.synchronized {
+  override def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = _lock.synchronized {
     _modelsResult(key) = value
     if (_kryoSer == null) {
       _kryoSer = SerializerManager.GetSerializer("kryo")
@@ -544,7 +544,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  override def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = _lock.synchronized {
+  override def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult] = _lock.synchronized {
     val v = _modelsResult.getOrElse(key, null)
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, ModelResult]](1)

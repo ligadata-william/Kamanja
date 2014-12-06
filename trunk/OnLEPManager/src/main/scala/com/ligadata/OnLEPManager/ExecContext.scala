@@ -11,7 +11,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
+  def execute(tempTransId:Long, data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
 
     try {
       val uk = uniqueKey.Serialize
@@ -21,7 +21,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
-          engine.execute(xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs)
+          engine.execute(tempTransId, xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs)
           xformedMsgCntr += 1
         })
       } catch {
@@ -30,7 +30,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         }
       } finally {
         // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
-        envCtxt.setAdapterUniqueKeyValue(uk, uv)
+        envCtxt.setAdapterUniqueKeyValue(tempTransId, uk, uv)
       }
     } catch {
       case e: Exception => {

@@ -61,7 +61,7 @@ trait ExecContext {
   val output: Array[OutputAdapter]
   val envCtxt: EnvContext
 
-  def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
+  def execute(tempTransId: Long, data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
 }
 
 trait MakeExecContext {
