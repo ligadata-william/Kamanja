@@ -776,7 +776,7 @@ class MessageDefImpl {
       }
 
       if (message.Fixed.toLowerCase().equals("false")) {
-        if (keysVarStr != null || keysVarStr.toString.trim != "")
+        if (keysStr != null && keysStr.toString.trim != "")
           keysVarStr = getKeysStr(keysStr.toString)
         MsgsAndCntrsVarStr = getMsgAndCntnrs(msgAndCntnrsStr.toString)
         //typeImplStr = getTypeImplStr(typeImpl.toString)
@@ -971,21 +971,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
       getsetters = getsetters.append("""
     override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
-    override def get(key: String): Any = {       
-    	var value :Any = null
-    	try{
-    		value = fields.get(key)
-    		if(value == null) throw new Exception("Value do not exist fro Key" +key)
-    	}catch {
-    		case e: Exception => {
-        	e.printStackTrace()
-        	throw e
-    		}
-    	}
-    	value
-   }
-    
-    override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+    override def get(key: String): Any = {
+      fields.get(key)
+    }
+
+    override def getOrElse(key: String, default: Any): Any = {
+      fields.getOrElse(key, default)
+    }
     """)
 
     }

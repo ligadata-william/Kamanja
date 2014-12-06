@@ -13,7 +13,7 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
 object GetModelService {
-  case class Process(nameSpace:String, name:String, version:String)
+  case class Process(nameSpace:String, name:String, formatType:String, version:String)
 }
 
 class GetModelService(requestContext: RequestContext) extends Actor {
@@ -25,15 +25,15 @@ class GetModelService(requestContext: RequestContext) extends Actor {
   val log = Logging(system, getClass)
 
   def receive = {
-    case Process(nameSpace,name,version) =>
-      process(nameSpace,name,version)
+    case Process(nameSpace,name,formatType,version) =>
+      process(nameSpace,name,formatType,version)
       context.stop(self)
   }
 
-  def process(nameSpace:String, name:String, version:String) = { 
-    log.info("Requesting GetModel {},{},{}",nameSpace,name,version)
+  def process(nameSpace:String, name:String, formatType:String, version:String) = { 
+    log.info("Requesting GetModel {},{},{}",nameSpace,name,formatType,version)
     if ( MetadataAPIServiceLeader.IsLeader == true ){
-      val apiResult = MetadataAPIImpl.GetModelDefFromCache(nameSpace,name,"JSON",version)
+      val apiResult = MetadataAPIImpl.GetModelDefFromCache(nameSpace,name,formatType,version)
       requestContext.complete(apiResult)
     }
     else{

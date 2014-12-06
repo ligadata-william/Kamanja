@@ -75,7 +75,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def RunAllModels(finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
+  private def RunAllModels(tempTransId:Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
     var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
 
     if (finalTopMsgOrContainer != null) {
@@ -89,7 +89,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
 
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-            val curMd = md.mdl.CreateNewModel(envContext, finalTopMsgOrContainer, md.tenantId)
+            val curMd = md.mdl.CreateNewModel(tempTransId, envContext, finalTopMsgOrContainer, md.tenantId)
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
@@ -116,7 +116,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
+  def execute(tempTransId:Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
     // LOG.info("LE => " + msgData)
     try {
       // BUGBUG:: for now handling only CSV input data.
@@ -133,7 +133,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         } else {
           ""
         }
-        val topObj = if (isValidPartitionKey) envContext.getObject(topMsgTypeAndHasParent._1, partitionKeyData) else null
+        val topObj = if (isValidPartitionKey) envContext.getObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData) else null
         var handleMsg: Boolean = true
         if (topMsgTypeAndHasParent._2) {
           handleMsg = topObj != null
@@ -144,12 +144,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
           if (isValidPartitionKey && finalTopMsgOrContainer != null) {
-            allMdlsResults = envContext.getModelsResult(partitionKeyData)
+            allMdlsResults = envContext.getModelsResult(tempTransId, partitionKeyData)
             if (allMdlsResults == null)
               allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
           }
           // Run all models
-          val results = RunAllModels(finalTopMsgOrContainer, envContext)
+          val results = RunAllModels(tempTransId, finalTopMsgOrContainer, envContext)
           if (results.size > 0) {
             var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
 
@@ -184,7 +184,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             val resStr = compact(render(json))
 
             if (isValidPartitionKey && finalTopMsgOrContainer != null) {
-              envContext.saveModelsResult(partitionKeyData, allMdlsResults)
+              envContext.saveModelsResult(tempTransId, partitionKeyData, allMdlsResults)
             }
             output.foreach(o => {
               o.send(resStr, cntr.toString)
@@ -195,7 +195,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
           if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null))
-            envContext.setObject(topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
+            envContext.setObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
         }
       } else {
         LOG.error("Recieved null message object for input:" + msgData)

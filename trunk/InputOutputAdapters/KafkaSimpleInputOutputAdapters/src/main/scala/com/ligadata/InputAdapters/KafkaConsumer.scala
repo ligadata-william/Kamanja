@@ -192,12 +192,13 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
             uniqueKey.TopicName = qc.Name
 
+            var tempTransId: Long = 0
+
             try {
               breakable {
                 for (message <- stream) {
                   // LOG.info("Partition:%d Message:%s".format(message.partition, new String(message.message)))
-                  if (qc.instancePartitions(message.partition)) 
-                  {
+                  if (qc.instancePartitions(message.partition)) {
                     if (message.offset > currentOffset) {
                       currentOffset = message.offset
                       var readTmNs = System.nanoTime
@@ -225,13 +226,15 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           executeCurMsg = false
                           currentOffset = kv._2.Offset
                         }
+                        //BUGBUG:: Get & set tempTransId 
                       }
                       if (executeCurMsg) {
                         try {
                           // Creating new string to convert from Byte Array to string
                           val msg = new String(message.message)
                           uniqueVal.Offset = currentOffset
-                          execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          execThread.execute(tempTransId, msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"
