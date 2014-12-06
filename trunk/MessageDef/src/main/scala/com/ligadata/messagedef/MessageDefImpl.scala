@@ -957,7 +957,6 @@ class JsonData(var dataInput: String) extends InputData(){ }
 class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
-  
 
   private def getsetMethods(msgFixed: String): String = {
 
@@ -972,21 +971,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
       getsetters = getsetters.append("""
     override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
-    override def get(key: String): Any = {       
-    	var value :Any = null
-    	try{
-    		value = fields.getOrElseUpdate(key, null)
-    		if(value == null) throw new Exception("Value do not exist for Key" +key)
-    	}catch {
-    		case e: Exception => {
-        	e.printStackTrace()
-        	throw e
-    		}
-    	}
-    	value
-   }
-    
-    override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
+    override def get(key: String): Any = {
+      fields.get(key)
+    }
+
+    override def getOrElse(key: String, default: Any): Any = {
+      fields.getOrElse(key, default)
+    }
     """)
 
     }
