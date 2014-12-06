@@ -776,7 +776,7 @@ class MessageDefImpl {
       }
 
       if (message.Fixed.toLowerCase().equals("false")) {
-        if (keysVarStr != null || keysVarStr.toString.trim != "")
+        if (keysStr != null && keysStr.toString.trim != "")
           keysVarStr = getKeysStr(keysStr.toString)
         MsgsAndCntrsVarStr = getMsgAndCntnrs(msgAndCntnrsStr.toString)
         //typeImplStr = getTypeImplStr(typeImpl.toString)
@@ -974,8 +974,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     override def get(key: String): Any = {       
     	var value :Any = null
     	try{
-    		value = fields.get(key)
-    		if(value == null) throw new Exception("Value do not exist fro Key" +key)
+    		value = fields.getOrElseUpdate(key, null)
+    		if(value == null) throw new Exception("Value do not exist for Key" +key)
     	}catch {
     		case e: Exception => {
         	e.printStackTrace()
