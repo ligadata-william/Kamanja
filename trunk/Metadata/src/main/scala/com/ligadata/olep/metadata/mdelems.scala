@@ -476,13 +476,19 @@ trait EntityType {
 class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
 	def tType = tMsgMap
 
-	var attrMap = Map[String, BaseAttributeDef]()
+	var attrMap : Map[String, BaseAttributeDef] = Map[String, BaseAttributeDef]()
 
   	override def NumMems = attrMap.size
   	override def IsFixed: Boolean = false
   	def attributeFor(name : String) : BaseAttributeDef = { 
 	  	val key = name.toLowerCase()
-		if (attrMap.contains(name)) attrMap.apply(key) else null 
+	  	val hasName : Boolean = attrMap.contains(key)
+		val baseAttrDef : BaseAttributeDef = if (hasName) {
+			attrMap.apply(key) 
+		}  else {
+			null
+		}
+	  	baseAttrDef
   	}
 }
 

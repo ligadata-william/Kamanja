@@ -19,9 +19,13 @@ import com.ligadata.Pmml.Runtime._
 
 object PmmlError extends LogTrait {
   
-	/** Process the supplied error, first printing the geo location info in the element stack.
-	 *  Leave the stack intact so other error messages that may follow also have this information.
+	/** 
+	 *  Process the supplied error, first printing the geo location info in the element stack.
+	 *  Leave the stack intact so other error or warning messages that may follow also have this information.
 	 *  PmmlError.logError
+	 *  
+	 *  @param ctx the execution context for the compiler
+	 *  @param errorMsg the error message to print after printing the location information
 	 */
 	def logError(ctx : PmmlContext, errorMsg : String) : Unit = {
 		
@@ -43,6 +47,38 @@ object PmmlError extends LogTrait {
 			val errorVicinity : String = buffer.toString
 			logger.error(s"While processing $errorVicinity...")
 			logger.error(errorMsg)
+		}
+	  
+	}
+
+	/** 
+	 *  Process the supplied warning, first printing the geo location info in the element stack.
+	 *  Leave the stack intact so other warning or error messages that may follow also have this information.
+	 *  PmmlError.logError
+	 *  
+	 *  @param ctx the execution context for the compiler
+	 *  @param warningMsg the warning message to print after printing the location information
+	 */
+	def logWarning(ctx : PmmlContext, warningMsg : String) : Unit = {
+		
+		if (ctx.elementStack.nonEmpty) { 
+			val buffer : StringBuilder = new StringBuilder
+			
+			val sizeofStack : Int = ctx.elementStack.size
+			var i : Int = 0
+			ctx.elementStack.foreach( elem => {
+				val elemStr : String = elem.toString
+				if (elemStr != null && elemStr.size > 0) {
+					buffer.append(elem.toString)
+					i += 1
+					if (i < sizeofStack) {
+						buffer.append(" found in ")
+					} 
+				}
+			})
+			val warnVicinity : String = buffer.toString
+			logger.warn(s"While processing $warnVicinity...")
+			logger.warn(warningMsg)
 		}
 	  
 	}

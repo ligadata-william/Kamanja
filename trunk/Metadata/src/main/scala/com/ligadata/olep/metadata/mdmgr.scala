@@ -358,7 +358,7 @@ class MdMgr {
       val attr = MakeAttribDef(nmSp, nm, typnsp, typenm, ver, isGlobal, collectionType)
       if (attr.JarName != null) depJarSet += attr.JarName
       if (attr.DependencyJarNames != null) depJarSet ++= attr.DependencyJarNames
-      st.attrMap(elem._1) = attr
+      st.attrMap(elem._2) = attr
     })
 
     if (depJars != null) depJarSet ++= depJars
