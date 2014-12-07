@@ -130,6 +130,7 @@ object MetadataAPIImpl extends MetadataAPI{
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
   private[this] val lock = new Object
+  var startup = false
 
   private var tableStoreMap : Map[String,DataStore] = Map()
 
@@ -744,6 +745,10 @@ object MetadataAPIImpl extends MetadataAPI{
       bis.close();
       baos.toByteArray()
     } catch{
+      case e:IOException => {
+	e.printStackTrace()
+	throw new FileNotFoundException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
+      }
       case e:Exception => {
 	e.printStackTrace()
 	throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
@@ -752,6 +757,7 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
   def PutArrayOfBytesToJar(ba: Array[Byte], jarName: String) = {
+    logger.trace("Downloading the jar contents into the file " + jarName)
     try{
       val iFile = new File(jarName)
       val  bos = new BufferedOutputStream(new FileOutputStream(iFile));
@@ -764,33 +770,132 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
-  def UpdateJarInDB(obj: BaseElemDef){
-    try{
-      val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
-      val jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
-      val value = GetJarAsArrayOfBytes(jarName)
-      logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + key)
-      UpdateObject(key,value,jarStore)
-    }catch{
-      case e:AlreadyExistsException => {
-	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+
+  private def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
       }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
+
+  def UploadJarsToDB(obj: BaseElemDef){
+    try{
+      var keyList = new Array[String](0)
+      var valueList = new Array[Array[Byte]](0)
+
+      keyList = keyList :+ obj.jarName
+      var jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
+      var value = GetJarAsArrayOfBytes(jarName)
+      logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + obj.jarName)
+      valueList = valueList :+ value
+
+      if (obj.DependencyJarNames != null) {
+	obj.DependencyJarNames.foreach(j => { 
+	  keyList = keyList :+ j
+	  jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + j
+	  value = GetJarAsArrayOfBytes(jarName)
+	  logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + j)
+	  valueList = valueList :+ value
+	})
+      }
+      SaveObjectList(keyList,valueList,jarStore)
+    }catch{
       case e:Exception => {
-	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	throw new InternalErrorException("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
     }
   }
 
-  def DownLoadJarFromDB(obj: BaseElemDef){
+
+  def IsDownLoadNeeded(jar: String, obj: BaseElemDef): Boolean = {
     try{
-      val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
-      val mObj = GetObject(key,jarStore)
-      val bs =  mObj.Value.toArray[Byte]
-      val jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
-      PutArrayOfBytesToJar(bs,jarName)
+      if( jar == null ){
+	logger.error("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
+	false
+      }
+      val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+      val jarName = dirPath  + "/" + jar
+      val f = new File(jarName)
+      if( f.exists() ){
+	val key = jar
+	val mObj = GetObject(key,jarStore)
+	val ba =  mObj.Value.toArray[Byte]
+	val fs = f.length()
+	if(fs != ba.length ){
+	  logger.error("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
+		       jar + "," + ba.length + ") of the object(" + obj.FullNameWithVer + ")")
+	}
+	else{
+	  logger.error("A jar file already exists, and it's size (" + fs + ")  matches with the size of the existing Jar (" +
+		       jar + "," + ba.length + ") of the object(" + obj.FullNameWithVer + "), no need to download.")
+	}
+	false
+      }
+      else{
+	logger.trace("The jar " + jarName + " is not available, download from database. ")
+	true
+      }
+    }catch{
+      case e:Exception => {
+	throw new InternalErrorException("Failed to verify whether a download is required for the jar " + jar + " of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
+
+  def GetDependantJars(obj: BaseElemDef): Array[String] = {
+    try{
+      var allJars = new Array[String](0)
+      allJars = allJars :+ obj.JarName
+      if (obj.DependencyJarNames != null) {
+	obj.DependencyJarNames.foreach(j => { 
+	  allJars = allJars :+ j
+	})
+      }
+      allJars
     } catch{
       case e:Exception => {
-	logger.error("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+	throw new InternalErrorException("Failed to get dependant jars for the given object (" + obj.FullNameWithVer + "): " + e.getMessage())
+      }
+    }
+  }
+
+
+  def DownLoadJarFromDB(obj: BaseElemDef){
+    try{
+      //val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
+      if( obj.jarName == null ){
+	logger.error("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
+	return
+      }
+      var allJars = GetDependantJars(obj)
+      logger.trace("Found " + allJars.length + " dependant jars ")
+      if (allJars.length > 0 ){
+	allJars.foreach(jar => {
+	  // download only if it doesn't already exists
+	  val b = IsDownLoadNeeded(jar,obj)
+	  if (b == true ){
+	    val key = jar
+	    val mObj = GetObject(key,jarStore)
+	    val ba =  mObj.Value.toArray[Byte]
+	    val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+	    val dir = new File(dirPath)
+	    if (!dir.exists()){
+	      // attempt to create the missing directory
+	      dir.mkdir();
+	    }
+	    val jarName = dirPath  + "/" + jar
+	    PutArrayOfBytesToJar(ba,jarName)
+	  }
+	})
+      }
+    } catch{
+      case e:Exception => {
+	logger.error("Failed to download the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
     }
   }
@@ -1760,7 +1865,7 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  AddObjectToCache(msg,MdMgr.GetMdMgr)
-	  UpdateJarInDB(msgDef)
+	  UploadJarsToDB(msgDef)
 	  var objectsAdded = AddMessageTypes(msg,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ msg
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1771,7 +1876,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
 	case cont:ContainerDef =>{
 	  AddObjectToCache(cont,MdMgr.GetMdMgr)
-	  UpdateJarInDB(msgDef)
+	  UploadJarsToDB(msgDef)
 	  var objectsAdded = AddMessageTypes(cont,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ cont
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1804,7 +1909,7 @@ object MetadataAPIImpl extends MetadataAPI{
       msgDef match{
 	case msg:MessageDef =>{
 	  AddObjectToCache(msg,MdMgr.GetMdMgr)
-	  UpdateJarInDB(msgDef)
+	  UploadJarsToDB(msgDef)
 	  var objectsAdded = AddMessageTypes(msg,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ msg
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -1815,7 +1920,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	}
 	case cont:ContainerDef =>{
 	  AddObjectToCache(cont,MdMgr.GetMdMgr)
-	  UpdateJarInDB(msgDef)
+	  UploadJarsToDB(msgDef)
 	  var objectsAdded = AddMessageTypes(cont,MdMgr.GetMdMgr)
 	  objectsAdded = objectsAdded :+ cont
 	  SaveObjectList(objectsAdded,metadataStore)
@@ -2236,7 +2341,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       if ( isValid ){
 	// save the jar file first
-	UpdateJarInDB(modDef)
+	UploadJarsToDB(modDef)
 	val apiResult = AddModel(modDef)
 	logger.trace("Model is added..")
 	var objectsAdded = new Array[BaseElemDef](0)
@@ -2280,7 +2385,7 @@ object MetadataAPIImpl extends MetadataAPI{
       }
       if ( isValid ){
 	RemoveModel(latestVersion.get.nameSpace,latestVersion.get.name,latestVersion.get.ver)
-	UpdateJarInDB(modDef)
+	UploadJarsToDB(modDef)
 	val result = AddModel(modDef)
 	var objectsUpdated = new Array[BaseElemDef](0)
 	var operations = new Array[String](0)
@@ -2904,6 +3009,7 @@ object MetadataAPIImpl extends MetadataAPI{
 
   def LoadAllObjectsIntoCache{
     try{
+      startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
       val maxTranId = GetTranId
@@ -2921,10 +3027,12 @@ object MetadataAPIImpl extends MetadataAPI{
 	if( mObj != null ){
 	  if( mObj.tranId <= maxTranId ){
 	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
+	    DownLoadJarFromDB(mObj)
 	  }
 	  else{
 	    logger.trace("The transaction id of the object => " + mObj.tranId)
 	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
+	    DownLoadJarFromDB(mObj)
 	    logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
 	    objectsChanged = objectsChanged :+ mObj
 	    if( mObj.IsActive ){
@@ -2942,6 +3050,7 @@ object MetadataAPIImpl extends MetadataAPI{
       if(objectsChanged.length > 0 ){
 	NotifyEngine(objectsChanged,operations)
       }
+      startup = false
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -3037,8 +3146,11 @@ object MetadataAPIImpl extends MetadataAPI{
 	val obj = GetObject(key.toLowerCase,messageStore)
         logger.trace("Deserialize the object " + key)
 	val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        logger.trace("Get the jar from database ")
+        val msgDef = msg.asInstanceOf[MessageDef]
+        DownLoadJarFromDB(msgDef)
         logger.trace("Add the object " + key + " to the cache ")
-	AddObjectToCache(msg.asInstanceOf[MessageDef],MdMgr.GetMdMgr)
+	AddObjectToCache(msgDef,MdMgr.GetMdMgr)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -3071,8 +3183,11 @@ object MetadataAPIImpl extends MetadataAPI{
 	val obj = GetObject(key.toLowerCase,modelStore)
         logger.trace("Deserialize the object " + key)
 	val model = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+        logger.trace("Get the jar from database ")
+        val modDef = model.asInstanceOf[ModelDef]
+        DownLoadJarFromDB(modDef)
         logger.trace("Add the object " + key + " to the cache ")
-	AddObjectToCache(model.asInstanceOf[ModelDef],MdMgr.GetMdMgr)
+	AddObjectToCache(modDef,MdMgr.GetMdMgr)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -3085,7 +3200,10 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
 	val obj = GetObject(key.toLowerCase,containerStore)
 	val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	AddObjectToCache(cont.asInstanceOf[ContainerDef],MdMgr.GetMdMgr)
+        logger.trace("Get the jar from database ")
+        val contDef = cont.asInstanceOf[ContainerDef]
+        DownLoadJarFromDB(contDef)
+	AddObjectToCache(contDef,MdMgr.GetMdMgr)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
