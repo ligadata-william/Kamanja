@@ -646,3 +646,7 @@ class ModelDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
 
+
+class JarDef extends BaseElemDef{
+  def typeString: String = PhysicalName
+}

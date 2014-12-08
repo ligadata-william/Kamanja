@@ -2585,6 +2585,16 @@ class MdMgr {
 	  	}
 	  	modelDefs.addBinding(mdl.FullName, mdl)
   	}
+
+    
+	def MakeJarDef(nameSpace: String,
+		       name:      String,
+		       version:   String) : JarDef = {
+	  val jd = new JarDef
+	  var depJars = new Array[String](0)
+	  SetBaseElem(jd,nameSpace,name,version.toInt,name,depJars)
+	  jd
+	}
   	// External Functions -- End 
 
 }
