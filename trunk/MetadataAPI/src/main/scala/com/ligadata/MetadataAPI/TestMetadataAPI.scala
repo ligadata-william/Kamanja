@@ -58,7 +58,6 @@ object TestMetadataAPI{
     val session = cluster.connect(keyspace);
   }
 
-  
   // Type defs
   
   def AddType {
@@ -1094,6 +1093,53 @@ object TestMetadataAPI{
   }
 
 
+  def UploadJarFile {
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+      if ( dirName == null  ){
+	dirName = "/tmp/OnLEPInstall"
+	logger.info("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
+      }
+      val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
+      if ( jarFiles.length == 0 ){
+	logger.fatal("No jar files in the directory " + dirName)
+	return
+      }
+
+      var jarFilePath = ""
+      println("Pick a Jar file(xxxx.jar) from below choices")
+
+      var seq = 0
+      jarFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == jarFiles.length + 1){
+	return
+      }
+      if( choice < 1 || choice > jarFiles.length + 1 ){
+	  logger.fatal("Invalid Choice : " + choice)
+	  return
+      }
+
+      jarFilePath = jarFiles(choice-1).toString
+      // Save the jar
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath))
+    }catch {
+      case e: AlreadyExistsException => {
+	  logger.error("Model Already in the metadata....")
+      }
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
   def LoadFunctionsFromAFile {
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
@@ -1352,7 +1398,6 @@ object TestMetadataAPI{
     assert(deser.length == obj.length)
   }
 
-
   def TestKryoSerialize(configFile: String){
     MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
     val msgDefs = MdMgr.GetMdMgr.Types(true,true)
@@ -1526,6 +1571,7 @@ object TestMetadataAPI{
       val loadConceptsFromAFile = ()      => { LoadConceptsFromAFile }
       val dumpAllTypesByObjTypeAsJson = ()=> { DumpAllTypesByObjTypeAsJson }
       val loadTypesFromAFile = ()         => { LoadTypesFromAFile }
+      val uploadJarFile = ()              => { UploadJarFile }
 
       val topLevelMenu = List(("Add Model",addModel),
 			      ("Get Model",getModel),
@@ -1557,7 +1603,8 @@ object TestMetadataAPI{
 			      ("Dump All Metadata Keys",dumpMetadata),
 			      ("Dump All Functions",dumpAllFunctionsAsJson),
 			      ("Dump All Concepts",dumpAllConceptsAsJson),
-			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson))
+			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson),
+			      ("Upload Any Jar",uploadJarFile))
 
       var done = false
       while ( done == false ){

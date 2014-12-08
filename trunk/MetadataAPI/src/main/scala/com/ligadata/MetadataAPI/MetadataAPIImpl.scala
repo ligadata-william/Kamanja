@@ -477,6 +477,7 @@ object MetadataAPIImpl extends MetadataAPI{
     }
   }
 
+
   def GetNewTranId : Long = {
     try{
       val key = "transaction_id"
@@ -733,6 +734,10 @@ object MetadataAPIImpl extends MetadataAPI{
   def GetJarAsArrayOfBytes(jarName: String): Array[Byte] = {
     try{
       val iFile = new File(jarName)
+      if (! iFile.exists) {
+	throw new FileNotFoundException("Jar file (" + jarName + ") is not found: ")
+      }
+
       val bis = new BufferedInputStream(new FileInputStream(iFile));
       val baos = new ByteArrayOutputStream();
       var readBuf = new Array[Byte](1024) // buffer size
@@ -811,7 +816,24 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def IsDownLoadNeeded(jar: String, obj: BaseElemDef): Boolean = {
+  def UploadJarToDB(jarName: String){
+    try{
+      val f = new File(jarName)
+      if( f.exists() ){
+	var key = f.getName()
+	var value = GetJarAsArrayOfBytes(jarName)
+	logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
+	SaveObject(key,value,jarStore)
+      }
+    }catch{
+      case e:Exception => {
+	throw new InternalErrorException("Failed to Upload a Jar " + jarName + ":" + e.getMessage())
+      }
+    }
+  }
+
+
+  def IsDownloadNeeded(jar: String, obj: BaseElemDef): Boolean = {
     try{
       if( jar == null ){
 	logger.error("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
@@ -865,7 +887,7 @@ object MetadataAPIImpl extends MetadataAPI{
   }
 
 
-  def DownLoadJarFromDB(obj: BaseElemDef){
+  def DownloadJarFromDB(obj: BaseElemDef){
     try{
       //val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       if( obj.jarName == null ){
@@ -877,7 +899,7 @@ object MetadataAPIImpl extends MetadataAPI{
       if (allJars.length > 0 ){
 	allJars.foreach(jar => {
 	  // download only if it doesn't already exists
-	  val b = IsDownLoadNeeded(jar,obj)
+	  val b = IsDownloadNeeded(jar,obj)
 	  if (b == true ){
 	    val key = jar
 	    val mObj = GetObject(key,jarStore)
@@ -1421,9 +1443,30 @@ object MetadataAPIImpl extends MetadataAPI{
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   // Upload Jars into system. Dependency jars may need to upload first. Once we upload the jar, if we retry to upload it will throw an exception.
-  def UploadImplementation(implPath:String): String = {
-    var apiResult = new ApiResult(0,"Not Implemented Yet","No Result")
-    apiResult.toString()
+  def UploadJar(jarPath:String): String = {
+    try{
+      val iFile = new File(jarPath)
+      if (! iFile.exists) {
+	var apiResult = new ApiResult(-1,"File not found","Jar file (" + jarPath + ") is not found: ")
+	apiResult.toString()
+      }
+      else{
+	val jarName = iFile.getName()
+	val jarObject = MdMgr.GetMdMgr.MakeJarDef(MetadataAPIImpl.sysNS,jarName,"100")
+	var objectsAdded = new Array[BaseElemDef](0)
+	objectsAdded = objectsAdded :+ jarObject
+	UploadJarToDB(jarPath)
+	val operations = for (op <- objectsAdded) yield "Add"
+	NotifyEngine(objectsAdded,operations)
+	var apiResult = new ApiResult(0,"Uploaded jar successfully","Jar file (" + jarPath + ") is uploaded.")
+	apiResult.toString()
+      }
+    } catch{
+      case e:Exception => {
+	var apiResult = new ApiResult(-1,"Failed to upload Jar file (" + jarPath + ") : ",e.getMessage())
+	apiResult.toString()
+      }
+    }
   }
 
   def DumpAttributeDef(attrDef: AttributeDef){
@@ -3027,12 +3070,12 @@ object MetadataAPIImpl extends MetadataAPI{
 	if( mObj != null ){
 	  if( mObj.tranId <= maxTranId ){
 	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
-	    DownLoadJarFromDB(mObj)
+	    DownloadJarFromDB(mObj)
 	  }
 	  else{
 	    logger.trace("The transaction id of the object => " + mObj.tranId)
 	    AddObjectToCache(mObj,MdMgr.GetMdMgr)
-	    DownLoadJarFromDB(mObj)
+	    DownloadJarFromDB(mObj)
 	    logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
 	    objectsChanged = objectsChanged :+ mObj
 	    if( mObj.IsActive ){
@@ -3148,7 +3191,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
         logger.trace("Get the jar from database ")
         val msgDef = msg.asInstanceOf[MessageDef]
-        DownLoadJarFromDB(msgDef)
+        DownloadJarFromDB(msgDef)
         logger.trace("Add the object " + key + " to the cache ")
 	AddObjectToCache(msgDef,MdMgr.GetMdMgr)
     }catch {
@@ -3185,7 +3228,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	val model = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
         logger.trace("Get the jar from database ")
         val modDef = model.asInstanceOf[ModelDef]
-        DownLoadJarFromDB(modDef)
+        DownloadJarFromDB(modDef)
         logger.trace("Add the object " + key + " to the cache ")
 	AddObjectToCache(modDef,MdMgr.GetMdMgr)
     }catch {
@@ -3202,7 +3245,7 @@ object MetadataAPIImpl extends MetadataAPI{
 	val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
         logger.trace("Get the jar from database ")
         val contDef = cont.asInstanceOf[ContainerDef]
-        DownLoadJarFromDB(contDef)
+        DownloadJarFromDB(contDef)
 	AddObjectToCache(contDef,MdMgr.GetMdMgr)
     }catch {
       case e: Exception => {
@@ -3332,6 +3375,16 @@ object MetadataAPIImpl extends MetadataAPI{
 		    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
 		  }
 		}
+	      }
+	      case _ => {
+		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+	      }
+	    }
+	  }
+	  case "JarDef" => {
+	    zkMessage.Operation match{
+	      case "Add" => {
+		DownloadJarFromDB(MdMgr.GetMdMgr.MakeJarDef(zkMessage.NameSpace,zkMessage.Name,zkMessage.Version))
 	      }
 	      case _ => {
 		logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")

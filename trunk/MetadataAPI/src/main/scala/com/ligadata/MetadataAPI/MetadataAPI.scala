@@ -123,7 +123,7 @@ trait MetadataAPI {
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    *
    */
-  def UploadImplementation(implPath:String): String
+  def UploadJar(jarPath:String): String
 
   /** Add new functions 
    * @param functionsText an input String of functions in a format defined by the next parameter formatType
