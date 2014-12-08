@@ -1107,6 +1107,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
+  
   private def assignJsonData(assignJsonData: String) = {
     """
   private def assignJsonData(json: JsonData) : Unit =  {
