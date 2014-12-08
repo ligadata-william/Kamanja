@@ -1115,9 +1115,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	var arr: List[String] = null
     var list : List[Map[String, Any]] = null 
 	try{ 
-	  	json.root_json = Option(parse(json.dataInput).values.asInstanceOf[Map[String, Any]])
-      	json.cur_json = json.root_json
-
+	  	
 	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
 	  	if (map == null)
         	throw new Exception("Invalid json data")
@@ -1141,9 +1139,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var list : List[Map[String, Any]] = null 
     var keySet: Set[Any] = Set();
 	try{
-	  	json.root_json = Option(parse(json.dataInput).values.asInstanceOf[Map[String, Any]])
-      	json.cur_json = json.root_json
-
+	  
 	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
 	  	if (map == null)
         	throw new Exception("Invalid json data")
