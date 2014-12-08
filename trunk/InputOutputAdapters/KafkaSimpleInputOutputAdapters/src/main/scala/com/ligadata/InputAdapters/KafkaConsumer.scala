@@ -6,7 +6,7 @@ import java.util.Properties
 import kafka.consumer.{ ConsumerConfig, Consumer, ConsumerConnector }
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey }
+import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ KafkaQueueAdapterConfiguration, KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 import org.apache.zookeeper.data.Stat
@@ -90,7 +90,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     executor = null
   }
 
-  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[PartitionUniqueRecordKey], partitionUniqueRecordValues: Array[PartitionUniqueRecordValue]): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
     if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
       return
@@ -110,38 +110,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    LOG.info("Deserializing Keys")
-    val keys = partitionUniqueRecordKeys.map(k => {
-      LOG.info("Deserializing Key:" + k)
-      val key = new KafkaPartitionUniqueRecordKey
-      try {
-        key.Deserialize(k)
-      } catch {
-        case e: Exception => {
-          LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
-          throw e
-        }
-      }
-      key
-    })
-
-    LOG.info("Deserializing Values")
-    val vals = partitionUniqueRecordValues.map(v => {
-      val vl = new KafkaPartitionUniqueRecordValue
-      if (v != null) {
-        try {
-          LOG.info("Deserializing Value:" + v)
-          vl.Deserialize(v)
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
-            throw e
-          }
-        }
-      }
-      vl
-    })
-    LOG.info("Deserializing Keys & Values done")
+    val keys = partitionUniqueRecordKeys.map(k => k.asInstanceOf[KafkaPartitionUniqueRecordKey])
+    val vals = partitionUniqueRecordValues.map(v => v.asInstanceOf[KafkaPartitionUniqueRecordValue])
 
     qc.instancePartitions = keys.map(k => { k.PartitionId }).toSet
 
@@ -334,5 +304,36 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   override def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
     GetAllPartitionsUniqueKeys
   }
+
+  override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
+    val key = new KafkaPartitionUniqueRecordKey
+    try {
+      LOG.info("Deserializing Key:" + k)
+      key.Deserialize(k)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        throw e
+      }
+    }
+    key
+  }
+
+  override def DeserializeValue(v: String): PartitionUniqueRecordValue = {
+    val vl = new KafkaPartitionUniqueRecordValue
+    if (v != null) {
+      try {
+        LOG.info("Deserializing Value:" + v)
+        vl.Deserialize(v)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+    }
+    vl
+  }
+
 }
 

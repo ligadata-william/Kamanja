@@ -37,8 +37,10 @@ trait InputAdapter {
   def Category = "Input"
   def Shutdown: Unit
   def StopProcessing: Unit
-  def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit
+  def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[PartitionUniqueRecordKey], partitionUniqueRecordValues: Array[PartitionUniqueRecordValue]): Unit
   def GetAllPartitionUniqueRecordKey: Array[String]
+  def DeserializeKey(k: String): PartitionUniqueRecordKey
+  def DeserializeValue(v: String): PartitionUniqueRecordValue
 }
 
 // Output Adapter Object to create Adapter

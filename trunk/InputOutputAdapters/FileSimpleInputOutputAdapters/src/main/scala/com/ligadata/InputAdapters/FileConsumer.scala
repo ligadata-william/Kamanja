@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter }
+import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 
@@ -219,7 +219,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     executor = null
   }
 
-  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[PartitionUniqueRecordKey], partitionUniqueRecordValues: Array[PartitionUniqueRecordValue]): Unit = lock.synchronized {
     if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
       return
 
@@ -283,5 +283,34 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     null
   }
 
+  override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
+    val key = new FilePartitionUniqueRecordKey
+    try {
+      LOG.info("Deserializing Key:" + k)
+      key.Deserialize(k)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        throw e
+      }
+    }
+    key
+  }
+
+  override def DeserializeValue(v: String): PartitionUniqueRecordValue = {
+    val vl = new FilePartitionUniqueRecordValue
+    if (v != null) {
+      try {
+        LOG.info("Deserializing Value:" + v)
+        vl.Deserialize(v)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+    }
+    vl
+  }
 }
 
