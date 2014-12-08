@@ -35,7 +35,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue)]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long)]()
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
@@ -90,15 +90,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     executor = null
   }
 
-  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[PartitionUniqueRecordKey], partitionUniqueRecordValues: Array[PartitionUniqueRecordValue]): Unit = lock.synchronized {
+  // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)]): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
-    if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
+    if (partitionInfo == null || partitionInfo.size == 0)
       return
-
-    if (partitionUniqueRecordKeys.size != partitionUniqueRecordValues.size) {
-      LOG.error("Keys Size:%d not same as Values Size:%d".format(partitionUniqueRecordKeys.size, partitionUniqueRecordValues.size))
-      return
-    }
 
     try {
       // Cleaning GroupId so that we can start from begining
@@ -110,10 +106,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    val keys = partitionUniqueRecordKeys.map(k => k.asInstanceOf[KafkaPartitionUniqueRecordKey])
-    val vals = partitionUniqueRecordValues.map(v => v.asInstanceOf[KafkaPartitionUniqueRecordValue])
+    val partInfo = partitionInfo.map(trip => { (trip._1.asInstanceOf[KafkaPartitionUniqueRecordKey], trip._2.asInstanceOf[KafkaPartitionUniqueRecordValue], trip._3) })
 
-    qc.instancePartitions = keys.map(k => { k.PartitionId }).toSet
+    qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
     // var threads: Int = if (qc.maxPartitions > qc.instancePartitions.size) qc.maxPartitions else qc.instancePartitions.size
     var threads: Int = maxParts
@@ -131,10 +126,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     kvs.clear
 
     LOG.info("Creating KV Map")
-    for (i <- 0 until keys.size) {
-      val key = keys(i)
-      kvs(key.PartitionId) = ((key, vals(i)))
-    }
+
+    partInfo.foreach(trip => {
+      kvs(trip._1.PartitionId) = trip
+    })
 
     LOG.info("KV Map =>")
     kvs.foreach(kv => {
@@ -197,7 +192,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           executeCurMsg = false
                           currentOffset = kv._2.Offset
                         }
-                        //BUGBUG:: Get & set tempTransId 
+                        tempTransId = kv._3
                       }
                       if (executeCurMsg) {
                         try {
