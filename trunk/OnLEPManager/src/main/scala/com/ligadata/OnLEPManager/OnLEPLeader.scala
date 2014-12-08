@@ -241,7 +241,21 @@ object OnLEPLeader {
           val uKV = uAK.map(uk => { GetUniqueKeyValue(uk) })
           val maxParts = adapMaxPartsMap.getOrElse(name, 0)
           LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
-          ia.StartProcessing(maxParts, uAK.toArray, uKV.toArray)
+
+          LOG.info("Deserializing Keys")
+          val keys = uAK.map(k => ia.DeserializeKey(k))
+
+          LOG.info("Deserializing Values")
+          val vals = uKV.map(v => ia.DeserializeValue(v))
+          LOG.info("Deserializing Keys & Values done")
+
+          val trip = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)](keys.size)
+
+          for (i <- 0 until keys.size) {
+            val key = keys(i)
+            trip += ((key, vals(i), 0))
+          }
+          ia.StartProcessing(maxParts, trip.toArray)
         }
       } catch {
         case e: Exception => {

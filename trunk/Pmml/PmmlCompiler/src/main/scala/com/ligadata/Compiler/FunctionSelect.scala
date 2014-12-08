@@ -175,7 +175,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	def selectIterableFcn : FcnTypeInfo = {
 
 	  	var iterableFcn : FunctionDef = null
-	  	if (node.function == "ContainerMap") {
+	  	if (node.function == "ContainerFilter") {
 	  		val stop : Int = 0
 	  	}
 	  	var returnedArgs : 	Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)] =  collectIterableArgKeys(true)
@@ -225,7 +225,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   		if (elemFcnName == "MapKeys") {
   			val stop : Int = 0
   		}
-	  		
+  		
 	  	val leafElemArgs : Array[(String,Boolean,BaseTypeDef)] = elemFcnArgs.map(fullArgs => {if (fullArgs != null) fullArgs.last else null})
 	  	var elemFKey : String  = if (elemFcnName != null) buildIterableKey(true, elemFcnName, leafElemArgs, collectionType, collectionsElementTypes) else null
 	  	var iterableFKey : String  = buildIterableKey(false, node.function, iterableFcnArgs, collectionType, collectionsElementTypes)
@@ -1016,7 +1016,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  			val hasTuple : Boolean = (mbrType.contains("("))
 	  			val hasNestedColl : Boolean = (mbrType.contains("["))
 	  			if (hasTuple || hasNestedColl) {
-	  				logger.warn(s"For function ${node.function}, nested collections and/or collections with tuple members are not supported by function lookup.")
+	  				logger.trace(s"For function ${node.function}, nested collections and/or collections with tuple members detected.")
 	  				newArg
 	  			} else {	  			
 		  			if (mbrType != null && mbrType.size > 0) {	
@@ -1110,7 +1110,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
     // Loading all jars
     for (j <- jars) {
-      logger.info("Processing Jar " + j.trim)
+      logger.trace("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
@@ -1336,7 +1336,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	containersWithSuperClasses.foreach( pair => {
 	  		val arg : String = pair._1
 	  		val containerTypeSuperClasses : Array[(String, ClassSymbol, Type)] = pair._2
-	  		println(s"processing $arg of function ${node.function}")
+	  		logger.trace(s"processing $arg of function ${node.function}")
 	  		map += (arg -> containerTypeSuperClasses)
 	  	})
 	  	map
@@ -1605,6 +1605,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				mbrsArgTypes = typeInfo.mbrArgTypes 
 				collectionType = typeInfo.containerTypeDef
 				collElemTypes = typeInfo.collectionElementTypes
+				
+				fcnNode.SetTypeInfo(typeInfo)
+				
 			}
 
 			typestring = if (typeInfo != null && funcDef != null) {
@@ -1613,7 +1616,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				"Any"
 			}
 		}
-		ctx.elementStack.pop
+
+		if (ctx.elementStack.nonEmpty) {
+			ctx.elementStack.pop
+		}
 
 		(typestring, funcDef, argTypes, mbrFuncDef, mbrsArgTypes, collectionType, collElemTypes)
 	}

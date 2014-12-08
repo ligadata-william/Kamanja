@@ -4,6 +4,7 @@ package com.ligadata.OnLEPBase
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
   var Typ: String = _ // KafkaQueue/MQ/File
+  var format: String = _ // CSV/JSON/XML
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
@@ -36,8 +37,10 @@ trait InputAdapter {
   def Category = "Input"
   def Shutdown: Unit
   def StopProcessing: Unit
-  def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit
+  def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)]): Unit // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)
   def GetAllPartitionUniqueRecordKey: Array[String]
+  def DeserializeKey(k: String): PartitionUniqueRecordKey
+  def DeserializeValue(v: String): PartitionUniqueRecordValue
 }
 
 // Output Adapter Object to create Adapter
@@ -61,7 +64,7 @@ trait ExecContext {
   val output: Array[OutputAdapter]
   val envCtxt: EnvContext
 
-  def execute(data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit
 }
 
 trait MakeExecContext {

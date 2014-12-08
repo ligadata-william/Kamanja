@@ -88,6 +88,8 @@ object NodePrinterHelpers extends LogTrait {
 			val isIterable = functionSelector.isIterableFcn
 			if (isIterable) { /** iterable functions in the form coll.<fcn>(mbr => ...) */
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectIterableFcn 
+				node.SetTypeInfo(fcnTypeInfo)
+				
 				val applysFcnName : String = node.function
 				val iterablePrinter : IterableFcnPrinter = new IterableFcnPrinter(applysFcnName
 																				, node
@@ -102,6 +104,7 @@ object NodePrinterHelpers extends LogTrait {
 			} else {  /** simple function...*/
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectSimpleFcn
 				if (fcnTypeInfo != null && fcnTypeInfo.fcnDef != null) {
+					node.SetTypeInfo(fcnTypeInfo)
 					val scalaFcnName : String = node.function
 					simpleFcnPrint(scalaFcnName
 								, node
@@ -821,9 +824,9 @@ object NodePrinterHelpers extends LogTrait {
 		val msgTypeStr : String = msgTypedef.typeString
 		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 		
-		objBuffer.append(s"    def CreateNewModel(gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
+		objBuffer.append(s"    def CreateNewModel(tempTransId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
 		objBuffer.append(s"    {\n") 
-		objBuffer.append(s"           new $nmspc$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId)\n")
+		objBuffer.append(s"           new $nmspc$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
 		objBuffer.append(s"    }\n") 	
 		objBuffer.append(s"\n")
 
@@ -874,7 +877,7 @@ object NodePrinterHelpers extends LogTrait {
 		val verNoStr : String = "_" + versionNo.toString
 
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname$verNoStr($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String)\n")
+		clsBuffer.append(s"class $nmspc$classname$verNoStr($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelBase with LogTrait {\n") 
 		} else {
@@ -886,6 +889,7 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
 		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname$verNoStr.getVersion\n")
 		clsBuffer.append(s"    override def getTenantId : String = tenantId\n")
+		clsBuffer.append(s"    override def getTempTransId: Long = tempTransId\n")
 		
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
 		clsBuffer.append(s"    var ruleSetModel : RuleSetModel = null\n")

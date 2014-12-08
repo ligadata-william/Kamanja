@@ -115,6 +115,7 @@ object ZooKeeperListenerTest {
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+  var firstTime = false
 
   private def CreatePathChildrenCache(client: CuratorFramework, zNodePath: String) = {
     try {
@@ -158,11 +159,14 @@ object ZooKeeperListenerTest {
   def StartLocalListener = {
     val zkListener = new ZooKeeperListener
     try {
-      val znodePath = "/ligadata/metadata"
+      val znodePath = "/ligadata/metadata/metadataupdate"
       val zkcConnectString = "localhost:2181"
       JsonSerializer.SetLoggerLevel(Level.TRACE)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
       zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
+      if( firstTime == true ){
+	zkListener.zkc.setData().forPath(znodePath,null)
+      }
       CreatePathChildrenCache(zkListener.zkc, znodePath)
       breakable {
         for (ln <- io.Source.stdin.getLines) { // Exit after getting input from console
@@ -199,25 +203,26 @@ object ZooKeeperListenerTest {
 
   def main(args: Array[String]) = {
     var databaseOpen = false
-    var jsonConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
+    firstTime = true
+    var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
     if (args.length == 0) {
-      logger.error("Config File defaults to " + jsonConfigFile)
-      logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.json")
+      logger.error("Config File defaults to " + configFile)
+      logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
       logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
     } else {
       val options = nextOption(Map(), args.toList)
       val cfgfile = options.getOrElse('config, null)
       if (cfgfile == null) {
         logger.error("Need configuration file as parameter")
-        throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+        throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
       }
-      jsonConfigFile = cfgfile.asInstanceOf[String]
+      configFile = cfgfile.asInstanceOf[String]
     }
     try {
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
-      MetadataAPIImpl.InitMdMgrFromBootStrap(jsonConfigFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
       databaseOpen = true
       StartLocalListener
     } catch {

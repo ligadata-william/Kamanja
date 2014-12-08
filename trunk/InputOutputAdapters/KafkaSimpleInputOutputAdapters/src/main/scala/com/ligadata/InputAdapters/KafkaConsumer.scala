@@ -6,7 +6,7 @@ import java.util.Properties
 import kafka.consumer.{ ConsumerConfig, Consumer, ConsumerConnector }
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey }
+import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ KafkaQueueAdapterConfiguration, KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 import org.apache.zookeeper.data.Stat
@@ -35,10 +35,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue)]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long)]()
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
+  qc.format = inputConfig.format
   qc.className = inputConfig.className
   qc.jarName = inputConfig.jarName
   qc.dependencyJars = inputConfig.dependencyJars
@@ -89,15 +90,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     executor = null
   }
 
-  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
+  // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)]): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
-    if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
+    if (partitionInfo == null || partitionInfo.size == 0)
       return
-
-    if (partitionUniqueRecordKeys.size != partitionUniqueRecordValues.size) {
-      LOG.error("Keys Size:%d not same as Values Size:%d".format(partitionUniqueRecordKeys.size, partitionUniqueRecordValues.size))
-      return
-    }
 
     try {
       // Cleaning GroupId so that we can start from begining
@@ -109,40 +106,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    LOG.info("Deserializing Keys")
-    val keys = partitionUniqueRecordKeys.map(k => {
-      LOG.info("Deserializing Key:" + k)
-      val key = new KafkaPartitionUniqueRecordKey
-      try {
-        key.Deserialize(k)
-      } catch {
-        case e: Exception => {
-          LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
-          throw e
-        }
-      }
-      key
-    })
+    val partInfo = partitionInfo.map(trip => { (trip._1.asInstanceOf[KafkaPartitionUniqueRecordKey], trip._2.asInstanceOf[KafkaPartitionUniqueRecordValue], trip._3) })
 
-    LOG.info("Deserializing Values")
-    val vals = partitionUniqueRecordValues.map(v => {
-      val vl = new KafkaPartitionUniqueRecordValue
-      if (v != null) {
-        try {
-          LOG.info("Deserializing Value:" + v)
-          vl.Deserialize(v)
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
-            throw e
-          }
-        }
-      }
-      vl
-    })
-    LOG.info("Deserializing Keys & Values done")
-
-    qc.instancePartitions = keys.map(k => { k.PartitionId }).toSet
+    qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
     // var threads: Int = if (qc.maxPartitions > qc.instancePartitions.size) qc.maxPartitions else qc.instancePartitions.size
     var threads: Int = maxParts
@@ -160,10 +126,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     kvs.clear
 
     LOG.info("Creating KV Map")
-    for (i <- 0 until keys.size) {
-      val key = keys(i)
-      kvs(key.PartitionId) = ((key, vals(i)))
-    }
+
+    partInfo.foreach(trip => {
+      kvs(trip._1.PartitionId) = trip
+    })
 
     LOG.info("KV Map =>")
     kvs.foreach(kv => {
@@ -192,12 +158,13 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
             uniqueKey.TopicName = qc.Name
 
+            var tempTransId: Long = 0
+
             try {
               breakable {
                 for (message <- stream) {
                   // LOG.info("Partition:%d Message:%s".format(message.partition, new String(message.message)))
-                  if (qc.instancePartitions(message.partition)) 
-                  {
+                  if (qc.instancePartitions(message.partition)) {
                     if (message.offset > currentOffset) {
                       currentOffset = message.offset
                       var readTmNs = System.nanoTime
@@ -225,13 +192,15 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           executeCurMsg = false
                           currentOffset = kv._2.Offset
                         }
+                        tempTransId = kv._3
                       }
                       if (executeCurMsg) {
                         try {
                           // Creating new string to convert from Byte Array to string
                           val msg = new String(message.message)
                           uniqueVal.Offset = currentOffset
-                          execThread.execute(msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          execThread.execute(tempTransId, msg, qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"
@@ -330,5 +299,36 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   override def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
     GetAllPartitionsUniqueKeys
   }
+
+  override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
+    val key = new KafkaPartitionUniqueRecordKey
+    try {
+      LOG.info("Deserializing Key:" + k)
+      key.Deserialize(k)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        throw e
+      }
+    }
+    key
+  }
+
+  override def DeserializeValue(v: String): PartitionUniqueRecordValue = {
+    val vl = new KafkaPartitionUniqueRecordValue
+    if (v != null) {
+      try {
+        LOG.info("Deserializing Value:" + v)
+        vl.Deserialize(v)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+    }
+    vl
+  }
+
 }
 

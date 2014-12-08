@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter }
+import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 
@@ -27,6 +27,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   fc.Typ = inputConfig.Typ
   fc.Name = inputConfig.Name
+  fc.format = inputConfig.format
   fc.className = inputConfig.className
   fc.jarName = inputConfig.jarName
   fc.dependencyJars = inputConfig.dependencyJars
@@ -63,7 +64,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     var totalSent: Long = 0
   }
 
-  private def ProcessFile(sFileName: String, msg: String, st: Stats, ignorelines: Int, AddTS2MsgFlag: Boolean, isGz: Boolean): Unit = {
+  private def ProcessFile(sFileName: String, format: String, msg: String, st: Stats, ignorelines: Int, AddTS2MsgFlag: Boolean, isGz: Boolean): Unit = {
     var is: InputStream = null
 
     LOG.info("FileConsumer Processing File:" + sFileName)
@@ -80,6 +81,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         return
     }
 
+    var tempTransId: Long = 0 // Get and Set it
     val uniqueVal = new FilePartitionUniqueRecordValue
     uniqueVal.FileFullPath = sFileName
 
@@ -118,7 +120,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                      tempTransId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                     }
@@ -171,7 +174,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
+            tempTransId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
           }
@@ -215,8 +219,9 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     executor = null
   }
 
-  override def StartProcessing(maxParts: Int, partitionUniqueRecordKeys: Array[String], partitionUniqueRecordValues: Array[String]): Unit = lock.synchronized {
-    if (partitionUniqueRecordKeys == null || partitionUniqueRecordKeys.size == 0)
+  // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)]): Unit = lock.synchronized {
+    if (partitionInfo == null || partitionInfo.size == 0)
       return
 
     // BUGBUG:: Not really handling partitionUniqueRecordKeys & partitionUniqueRecordValues
@@ -237,6 +242,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
         val s = System.nanoTime
 
+        var tempTransId: Long = 0 // Get and Set it and pass to processfile & update properly
         var tm: Long = 0
         val st: Stats = new Stats
         val compString = if (fc.CompressionString == null) null else fc.CompressionString.trim
@@ -244,7 +250,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         val isGz = (compString != null && compString.compareToIgnoreCase("gz") == 0)
         fc.Files.foreach(fl => {
           if (isTxt || isGz) {
-            tm = tm + elapsedTm(ProcessFile(fl, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
+            tm = tm + elapsedTm(ProcessFile(fl, fc.format, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
           } else {
             throw new Exception("Not yet handled other than text & GZ files")
           }
@@ -278,5 +284,34 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     null
   }
 
+  override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
+    val key = new FilePartitionUniqueRecordKey
+    try {
+      LOG.info("Deserializing Key:" + k)
+      key.Deserialize(k)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        throw e
+      }
+    }
+    key
+  }
+
+  override def DeserializeValue(v: String): PartitionUniqueRecordValue = {
+    val vl = new FilePartitionUniqueRecordValue
+    if (v != null) {
+      try {
+        LOG.info("Deserializing Value:" + v)
+        vl.Deserialize(v)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+    }
+    vl
+  }
 }
 

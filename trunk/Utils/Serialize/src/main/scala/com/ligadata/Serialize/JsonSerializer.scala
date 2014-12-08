@@ -722,6 +722,17 @@ object JsonSerializer {
 		      ("DependantJars"   -> o.dependencyJarNames.toList))
 	  pretty(render(json))
 	}
+	case o:JarDef => {
+	  val json = (("ObjectType"      -> "JarDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
 	case _ => {
             throw new UnsupportedObjectException("zkSerializeObjectToJson doesn't support the  objects of type objectType of " + mdObj.getClass().getName() + " yet.")
 	}
@@ -789,9 +800,8 @@ object JsonSerializer {
 	    jsonStr
 	  }
 	  case c:MappedMsgTypeDef => {
-	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    jsonStr = replaceLast(jsonStr,"}\n}","") + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr
@@ -825,9 +835,8 @@ object JsonSerializer {
 	    jsonStr
 	  }
 	  case c:MappedMsgTypeDef => {
-	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    jsonStr = replaceLast(jsonStr,"}\n}","") + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectToJson(o.containerType.asInstanceOf[MappedMsgTypeDef])
+	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
 	    memberDefJson = memberDefJson + "}\n}"
 	    jsonStr += memberDefJson
 	    jsonStr

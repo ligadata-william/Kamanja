@@ -26,7 +26,7 @@ import FcnTypeInfoType._
 
 /**
  * 	FcnTypeInfo is the swiss army knife of type info for functions.  An instance can describe several flavors
- *  of functions in the system (see FcnTypeInfoType enumeraition above).
+ *  of functions in the system (see FcnTypeInfoType enumeration above).
  *  
  *  @param typeInfoType - The flavor of function represented by the FcnTypeInfo.
  *  @param fcnDef - The metadata information of this function.  In the case of an Iterable, this is the FcnDef that
@@ -120,12 +120,48 @@ class FcnTypeInfo(var typeInfoType : InfoType
 	def fcnTypeInfoType : InfoType = typeInfoType
 	def WinningKey(key : String) : Unit = { winningKey = key }
 	def WinningKey : String = winningKey
+	
+	override def toString : String = {
+		val typeInfoTypeStr : String = s"typeInfoType = ${typeInfoType.toString}"
+		val fcnDefStr : String = if (fcnDef != null) s"fcnDef = ${fcnDef.toString}" else "NOT SET"
+		val argTypesStr : String =  if (argTypes != null) s"argTypes = ${argTypes.map( itm => itm._1).mkString(",")}" else "NOT SET"
+		//var argTypesFull : Array[Array[(String,Boolean,BaseTypeDef)]]
+		val winningKeyStr : String = if (winningKey != null) s"winningKey = $winningKey" else "NOT SET"
+		val mbrFcnStr : String = if (mbrFcn != null) s"mbrFcn = ${mbrFcn.FullName}" else "NOT SET"
+		val mbrArgTypesStr : String = if (mbrArgTypes != null) s"mbrArgTypes = ${mbrArgTypes.map( itm => itm._1).mkString(",")}" else "NOT SET"
+		//val 		, var elemFcnArgsFull : Array[Array[(String,Boolean,BaseTypeDef)]] = null
+		val elemFcnArgRangeStr : String = if (elemFcnArgRange != null) s"elemFcnArgRange = $elemFcnArgRange" else "NOT SET"
+		val containerTypeDefStr = if (containerTypeDef != null) s"containerTypeDef = ${containerTypeDef.FullName}" else "NOT SET"
+		val collectionElementTypesStr : String = if (collectionElementTypes != null) s"collectionElementTypes = ${collectionElementTypes.map( itm => itm.FullName).mkString(",")}" else "NOT SET"
+		val winningMbrKeyStr : String = if (winningMbrKey != null) s"winningMbrKey = $winningMbrKey" else "NOT SET"
+		val returnTypesStr : String = if (returnTypes != null) s"returnTypes = ${returnTypes.mkString(",")}" else "NOT SET"
+
+		val buffer : StringBuilder = new StringBuilder
+		
+		buffer.append(s"FcnTypeInfo {\n")
+		buffer.append(s"\t$typeInfoTypeStr\n")
+		buffer.append(s"\t$fcnDefStr\n")
+		buffer.append(s"\t$argTypesStr\n")
+		buffer.append(s"\t$winningKeyStr\n")
+		buffer.append(s"\t$mbrFcnStr\n")
+		buffer.append(s"\t$mbrArgTypesStr\n")
+		buffer.append(s"\t$elemFcnArgRangeStr\n")
+		buffer.append(s"\t$containerTypeDefStr\n")
+		buffer.append(s"\t$collectionElementTypesStr\n")
+		buffer.append(s"\t$winningMbrKeyStr\n")
+		buffer.append(s"\t$returnTypesStr\n")
+		buffer.append(s"}\n")
+		
+		val strrep : String = buffer.toString
+		strrep
+	}
   
 }
 
 
 class TypeCollector(fcnTypeInfo : FcnTypeInfo) {
 
+	/** NOTE: Currently determineReturnType is used by cast function that IS NOT used in output.  Therefore, fix when and if needed. */
 	def determineReturnType(fcnNode : xApply) : String = {
 		val typestring : String = if (fcnTypeInfo != null && fcnTypeInfo.fcnTypeInfoType != SIMPLE_FCN) {
 			val scalaFcnName : String = PmmlTypes.scalaNameForIterableFcnName(fcnNode.function)
@@ -134,7 +170,7 @@ class TypeCollector(fcnTypeInfo : FcnTypeInfo) {
 				if (isMapFcn) {  
 				  
 					/** 
-					 *  FIXME: This is clearly inadequate... groupBy et al need to be handled
+					 *  FIXME: This is clearly inadequate... groupBy et al may need to be handled
 					 *  
 					 *  This code doesn't account for a map with no mbr function.  Fix this . 
 					 *  

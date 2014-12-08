@@ -64,12 +64,27 @@ class IterableFcnPrinter(val fcnName : String
 	 */
 	def print(fcnBuffer : StringBuilder) : Unit = {
   
+		/** push the function type info state on stack for use by xConstant printer when handling 'ident' types */
+		if (node.typeInfo != null && node.typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN) {
+			ctx.fcnTypeInfoStack.push(node.typeInfo)
+		} else {
+			if (node.typeInfo == null) {
+				PmmlError.logError(ctx, "trying to print an iterable function without the typeinfo available... things are going badly and will get worse")
+			}
+			if (node.typeInfo != null && node.typeInfo.fcnTypeInfoType == FcnTypeInfoType.SIMPLE_FCN) {
+				PmmlError.logError(ctx, "trying to print an iterable function with simple function typeinfo ... logic issue.")
+			}
+		}
 	  
 		val iterablePart : String = iterablePrint
 		val mbrFcnPart : String = mbrFunctionPrint
 		val castPrint : String = castResult
 		
-		//fcnBuffer.append(s"$iterablePart${'{'} $mbrFcnPart ${'}'}$castPrint")
+		if (node.typeInfo != null && node.typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN && ctx.fcnTypeInfoStack.nonEmpty) {
+			ctx.fcnTypeInfoStack.pop
+		} 
+
+		/** fcnBuffer.append(s"$iterablePart${'{'} $mbrFcnPart ${'}'}$castPrint") <<< no CAST needed thus far */
 		fcnBuffer.append(s"$iterablePart${'{'} $mbrFcnPart ${'}'})")
 		
 		val fcnUse : String = fcnBuffer.toString
@@ -89,6 +104,7 @@ class IterableFcnPrinter(val fcnName : String
 		}
 		val iterArgBuffer : StringBuilder = new StringBuilder
 		val iterChild : PmmlExecNode = node.Children.head
+		
 		generator.generateCode1(Some(iterChild), iterArgBuffer, generator, CodeFragment.FUNCCALL)
 		iterArgBuffer.append(s".$scalaFcnName( ${ctx.applyElementName} => ")
 		

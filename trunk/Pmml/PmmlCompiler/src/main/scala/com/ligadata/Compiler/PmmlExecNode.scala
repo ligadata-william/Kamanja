@@ -48,12 +48,99 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  	dataType match {
 	  		case "string" | "date" | "time" | "dateTime" => s"${'"'}$strRep${'"'}"
 	  		case "ident"  => {
-	  			if (strRep == ctx.applyElementName) {
+	  			val constStrExpr : String = if (strRep == ctx.applyElementName) {
 	  			   s"${ctx.applyElementName}"  /** When the value is _each, the item is being passed as a whole ... common with collection args ... */
 	  			} else {
-	  			  val strRep1 = strRep.toLowerCase
-	  			   s"${ctx.applyElementName}.$strRep1"  /** don't change '_each.' without adjusting IterableFcnPrinter.iterablePrint */
+	  				val strRep1 = strRep.toLowerCase
+					/** get _each's type from the containerStack to decide whether a mapped or fixed style of field expression is needed */
+					val fcnTypeInfo : FcnTypeInfo = if (ctx.fcnTypeInfoStack.nonEmpty) ctx.fcnTypeInfoStack.top else null
+					val reasonable : Boolean = (fcnTypeInfo != null && fcnTypeInfo.containerTypeDef != null) // sanity 
+					if (! reasonable) {
+						if (fcnTypeInfo != null) {
+							val fullnm : String = if (fcnTypeInfo.fcnDef.FullName != null) fcnTypeInfo.fcnDef.FullName else "Unknown function"
+							  
+							PmmlError.logError(ctx, s"iterable function $fullnm does not have a containerType for its Iterable (arg1)")
+						} else {
+							PmmlError.logError(ctx, "fcnTypeInfo is null for a function with 'ident' names (iterable function)")
+						}
+						"BadIdent"
+					} else {
+						if (fcnTypeInfo.containerTypeDef != null && fcnTypeInfo.containerTypeDef.IsFixed) {
+							s"${ctx.applyElementName}.$strRep1"  
+						} else {
+							/** Only add field cast for the MappedMsgTypDef fields at this point since the 'get' fcn returns an Any */
+							/** NOTE: the fcnTypeInfo WILL have items in it as the 'ident' type only refers to a (first) sibling container */
+							
+							val mappedContainer : MappedMsgTypeDef = if (fcnTypeInfo.containerTypeDef.isInstanceOf[MappedMsgTypeDef]) 
+									fcnTypeInfo.containerTypeDef.asInstanceOf[MappedMsgTypeDef] else null
+							if (mappedContainer != null) {
+								val attrType : BaseAttributeDef = mappedContainer.attributeFor(strRep1)
+								val attrTypeStr : String = if (attrType != null) attrType.typeString else null
+								if (attrTypeStr != null) {
+									s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'}).asInstanceOf[$attrTypeStr]"
+								} else {
+									PmmlError.logError(ctx, s"Field $strRep1 is NOT a field name in the container with type ${mappedContainer.typeString}")
+									s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})" /** this will cause scala compile error (or worse) */
+								}
+							} else {
+								val elementTypes : Array[BaseTypeDef] = fcnTypeInfo.collectionElementTypes
+													
+								/** NOTE: Only Iterable types with single element type are currently supported. */
+								if (elementTypes.size == 1) {
+									val baseElemType : BaseTypeDef = elementTypes.last
+									val mappedContainerElemType : MappedMsgTypeDef = if (baseElemType.isInstanceOf[MappedMsgTypeDef]) 
+										baseElemType.asInstanceOf[MappedMsgTypeDef] else null
+									if (mappedContainerElemType != null) {
+										val attrType : BaseAttributeDef = mappedContainerElemType.attributeFor(strRep1)
+										val attrTypeStr : String = if (attrType != null) attrType.typeString else null
+										if (attrTypeStr != null) {
+											s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'}).asInstanceOf[$attrTypeStr]"
+										} else {
+											PmmlError.logError(ctx, s"Field $strRep1 is NOT a field name in the container with type ${mappedContainer.typeString}")
+											s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})" /** this will cause scala compile error */
+										}
+									} else { /** one more time... see if the element is also an array (i.e., array of array of some (mapped or fixed) struct */
+										if (baseElemType.isInstanceOf[StructTypeDef]) {
+											s"${ctx.applyElementName}.$strRep1"
+										} else {
+											val nestedElems : Array[BaseTypeDef] = if (baseElemType.isInstanceOf[ContainerTypeDef]) {
+													baseElemType.asInstanceOf[ContainerTypeDef].ElementTypes
+												} else {
+													null
+												}
+											if (nestedElems != null && nestedElems.size == 1) {
+												val nestedBaseElemType : BaseTypeDef = nestedElems.last
+												val nestedMappedContainerElemType : MappedMsgTypeDef = if (nestedBaseElemType.isInstanceOf[MappedMsgTypeDef]) 
+													nestedBaseElemType.asInstanceOf[MappedMsgTypeDef] else null
+												if (nestedMappedContainerElemType != null) {
+													val attrType : BaseAttributeDef = nestedMappedContainerElemType.attributeFor(strRep1)
+													val attrTypeStr : String = if (attrType != null) attrType.typeString else null
+													if (attrTypeStr != null) {
+														s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'}).asInstanceOf[$attrTypeStr]"
+													} else {
+														PmmlError.logError(ctx, s"Field $strRep1 is NOT a field name in the container with type ${mappedContainer.typeString}")
+														s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})" /** this will cause scala compile error */
+													}
+												} else {
+													s"${ctx.applyElementName}.$strRep1"
+												}										
+											} else {	
+												if (nestedElems != null) {
+													PmmlError.logWarning(ctx, s"Type ${baseElemType.typeString} has ${nestedElems.size} elements... we are only supporting collections with single 'mapped' type elements at the moment")
+												}
+												s"${ctx.applyElementName}.$strRep1"
+											}
+										}
+									}
+								} else {
+									PmmlError.logWarning(ctx, s"Type ${fcnTypeInfo.containerTypeDef.typeString} has ${elementTypes.size} elements... we are only supporting collections with single 'mapped' type elements at the moment")
+									s"${ctx.applyElementName}.get(${'"'}$strRep1${'"'})"
+								}				  
+							}
+						}
+					}
 	  			}
+	  			constStrExpr
 	  		}
 	  		case "typename"  => { 
 	  		  /** 
@@ -310,6 +397,7 @@ class xDerivedField(val name : String
 			case Traversal.PREORDER => {
 				kind match {
 					case CodeFragment.DERIVEDCLASS => {
+						ctx.fcnTypeInfoStack.clear /** if there is cruft, kill it now as we prep for dive into derived field and its function hierarchy*/
 						NodePrinterHelpers.derivedFieldFcnHelper(this, ctx, generator, kind, order)
 					}
 					case CodeFragment.FUNCCALL => {
@@ -501,6 +589,10 @@ class xParameterField(val name : String
 
 class xApply(val function : String, val mapMissingTo : String, val invalidValueTreatment : String = "returnInvalid") extends PmmlExecNode("Apply") {
   
+	var typeInfo : FcnTypeInfo = null
+	def SetTypeInfo(typInfo : FcnTypeInfo) = { typeInfo = typInfo }
+	def GetTypeInfo : FcnTypeInfo = { typeInfo }
+	
 	var ifActionElements : ArrayBuffer[PmmlExecNode] = ArrayBuffer[PmmlExecNode]()
 	def IfActionElement(idx : Int) : PmmlExecNode = ifActionElements.apply(idx)
 	def IfActionElements : ArrayBuffer[PmmlExecNode] = ifActionElements
@@ -518,7 +610,21 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
-				NodePrinterHelpers.applyHelper(this, ctx, generator, generate, order)
+
+				/** for iterables ... push the function type info state on stack for use by xConstant printer when handling 'ident' types */
+				if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN) {
+					ctx.fcnTypeInfoStack.push(typeInfo)
+				}
+				
+				val fcnStr : String = NodePrinterHelpers.applyHelper(this, ctx, generator, generate, order)
+
+				if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN && ctx.fcnTypeInfoStack.nonEmpty) {
+					val fcnTypeInfo : FcnTypeInfo = ctx.fcnTypeInfoStack.top
+					logger.trace(s"finished printing apply function $function... popping FcnTypeInfo : \n${fcnTypeInfo.toString}")
+					ctx.fcnTypeInfoStack.pop
+				} 
+				
+				fcnStr
 			}
 		}
 		fcn
@@ -1826,18 +1932,22 @@ object PmmlExecNode extends LogTrait {
 						/** Handle arbitrarily nested fields e.g., container.sub.subsub.field */
 						if (fieldNodes.size > 1) { 
 							val containerField : String= fieldNodes(1)
-							val containerFieldType : ContainerTypeDef = container.asInstanceOf[ContainerTypeDef]
+							val fieldsContainerType : ContainerTypeDef = container.asInstanceOf[ContainerTypeDef]
 							
-							val containerFieldRep : String = compoundFieldPrint(fieldNodes.tail, explodedFieldTypes.tail)
+							/** lastContainer is non null when explodedFieldTypes.last is a container type.  It is stacked for use for determining field dereference 
+							 *  expression print... either a fixed print ( container.fld ) or "mapped" print ( container.get("fld") )
+							 */
+							val containerFieldRep : String = compoundFieldPrint(fieldsContainerType, fieldNodes.tail, explodedFieldTypes.tail)
 
 							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]$containerFieldRep")
 						} else {
 							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]")
 						}
+						
 						varRefBuffer.toString
 		
 					} else {
-					  field
+						field
 					}
 				} else {
 					/** 
@@ -1874,30 +1984,44 @@ object PmmlExecNode extends LogTrait {
 
 	/**
 		Print the remaining field nodes in the supplied array, coercing them to their corresponding type.  The outer
-		field node (a variable in one of the pmml dictionaries) is handled by the caller.		
+		field node (a variable in one of the pmml dictionaries) is handled by the caller.	For the container types,
+		generate the appropriate mapped (.apply(field)) or fixed (.field) access expression	
 						
-		@param fieldNodes an array of the names found in a container qualified field referebce (e.g., the 
+		@param fieldsContainerType the container type that contains this field, used to decide field dereference
+			syntax (mapped vs. fixed)
+		@param fieldNodes an array of the names found in a container qualified field reference (e.g., the 
 			container.sub.subsub.fld of a field reference like msg.container.sub.subsub.fld)
 		@param the type information corresponding to the fieldNodes.
 		@return a string rep for the compound field
 							
 	 */	
 						
-	def compoundFieldPrint(fieldNodes : Array[String]
+	def compoundFieldPrint(fieldsContainerType : ContainerTypeDef
+						, fieldNodes : Array[String]
 						, explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)]) : String = {
 		val varRefBuffer : StringBuilder = new StringBuilder
-		val lastNode : String = fieldNodes.last
+		 
 		fieldNodes.zip(explodedFieldTypes).foreach ( tuple => {
 			val (field, typeInfo) : (String, (String,Boolean,BaseTypeDef)) = tuple
 			val (typeStr, isContainerWFields, baseType) : (String,Boolean,BaseTypeDef) = typeInfo
-			if (field == lastNode) {
-				/** don't bother to print the type of the leaf field */
-				varRefBuffer.append(s".$field")
+			
+			val isMappedContainer : Boolean = if (baseType != null) baseType.isInstanceOf[MappedMsgTypeDef] else false
+			if (isMappedContainer) {
+				varRefBuffer.append(s".get(${'"'}$field${'"'}).asInstanceOf[$typeStr]")			  
 			} else {
-				//varRefBuffer.append(s".$field.asInstanceOf[$typeStr]")
-				varRefBuffer.append(s".$field")
+				if (! fieldsContainerType.IsFixed) {
+					varRefBuffer.append(s".get(${'"'}$field${'"'}).asInstanceOf[$typeStr]")
+				} else {
+					varRefBuffer.append(s".$field")
+				}
 			}
 		})
+		
+		val container : ContainerTypeDef = if (explodedFieldTypes.last._3 != null && explodedFieldTypes.last._3.isInstanceOf[ContainerTypeDef]) {
+			explodedFieldTypes.last._3.asInstanceOf[ContainerTypeDef]
+		} else {
+			null
+		}
 			
 		varRefBuffer.toString
 	}

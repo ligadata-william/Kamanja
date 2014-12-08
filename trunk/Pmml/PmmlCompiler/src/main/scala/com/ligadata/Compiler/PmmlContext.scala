@@ -99,6 +99,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	  
 	/** While processing elements this stack tracks where we are in the transformation dictionary generation */
 	val elementStack : Stack[PmmlExecNode] = Stack[PmmlExecNode]()
+	/** FcnTypeInfo stack ... used to decide whether field expressions should be fixed ( e.g., ctr.field) or mapped (e.g., ctr("field")) 
+	 *  especially used for iterable functions. */
+	val fcnTypeInfoStack : Stack[FcnTypeInfo] = Stack[FcnTypeInfo]()
 	
 	/** FIXME: This needs to be pulled from either the metadata manager or possibly specified
 	 *  in some way in the PMML model itself.  At the moment this is hard coded to get something

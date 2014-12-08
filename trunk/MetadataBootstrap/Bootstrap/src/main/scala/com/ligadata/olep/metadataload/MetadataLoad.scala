@@ -1534,7 +1534,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	{
 	  	def Put  : Boolean = { %1%.setObject(%2%, %3%(%4%).toString, %5%); true }
 	} """
-		
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					,"Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1548,14 +1548,14 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+*/
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1569,14 +1569,14 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+*/
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1590,14 +1590,14 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+*/
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1611,14 +1611,14 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+*/
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1632,7 +1632,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+*/
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")

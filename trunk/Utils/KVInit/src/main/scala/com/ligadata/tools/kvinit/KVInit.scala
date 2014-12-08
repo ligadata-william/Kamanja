@@ -222,7 +222,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   }
 
   if (isOk) {
-    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0)
+    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0 || metadataStoreType.compareToIgnoreCase("hbase") == 0)
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
     else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
@@ -399,6 +399,10 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           connectinfo += ("hostlist" -> dataLocation)
           connectinfo += ("schema" -> storeName)
           connectinfo += ("ConsistencyLevelRead" -> "ONE")
+        }
+        case "hbase" => {
+          connectinfo += ("hostlist" -> dataLocation)
+          connectinfo += ("schema" -> storeName)
         }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
