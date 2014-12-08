@@ -117,7 +117,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(tempTransId: Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
+  def execute(tempTransId: Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
     // LOG.info("LE => " + msgData)
     try {
       // BUGBUG:: for now handling only CSV input data.
@@ -187,9 +187,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             if (isValidPartitionKey && finalTopMsgOrContainer != null) {
               envContext.saveModelsResult(tempTransId, partitionKeyData, allMdlsResults)
             }
-            output.foreach(o => {
-              o.send(resStr, cntr.toString)
-            })
+            if (ignoreOutput == false) {
+              output.foreach(o => {
+                o.send(resStr, cntr.toString)
+              })
+            }
           }
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs

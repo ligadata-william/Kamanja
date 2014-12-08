@@ -120,7 +120,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false)
                       tempTransId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -174,7 +174,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
+            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false)
             tempTransId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -219,8 +219,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     executor = null
   }
 
-  // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)]): Unit = lock.synchronized {
+  // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter)
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)]): Unit = lock.synchronized {
     if (partitionInfo == null || partitionInfo.size == 0)
       return
 

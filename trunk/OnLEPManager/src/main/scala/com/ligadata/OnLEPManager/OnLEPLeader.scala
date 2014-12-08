@@ -249,13 +249,13 @@ object OnLEPLeader {
           val vals = uKV.map(v => ia.DeserializeValue(v))
           LOG.info("Deserializing Keys & Values done")
 
-          val trip = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long)](keys.size)
+          val quads = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)](keys.size)
 
           for (i <- 0 until keys.size) {
             val key = keys(i)
-            trip += ((key, vals(i), 0))
+            quads += ((key, vals(i), 0, vals(i)))
           }
-          ia.StartProcessing(maxParts, trip.toArray)
+          ia.StartProcessing(maxParts, quads.toArray)
         }
       } catch {
         case e: Exception => {
