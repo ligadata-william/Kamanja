@@ -622,11 +622,7 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 					val fcnTypeInfo : FcnTypeInfo = ctx.fcnTypeInfoStack.top
 					logger.trace(s"finished printing apply function $function... popping FcnTypeInfo : \n${fcnTypeInfo.toString}")
 					ctx.fcnTypeInfoStack.pop
-				} else {
-					if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN && ctx.fcnTypeInfoStack.isEmpty) {
-						PmmlError.logError(ctx, "no iterable typeinfo stack elements... one must have been prematurely popped.")
-					}
-				}
+				} 
 				
 				fcnStr
 			}

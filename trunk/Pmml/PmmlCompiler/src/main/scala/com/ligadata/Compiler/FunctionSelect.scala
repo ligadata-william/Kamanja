@@ -1016,7 +1016,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  			val hasTuple : Boolean = (mbrType.contains("("))
 	  			val hasNestedColl : Boolean = (mbrType.contains("["))
 	  			if (hasTuple || hasNestedColl) {
-	  				logger.warn(s"For function ${node.function}, nested collections and/or collections with tuple members are not supported by function lookup.")
+	  				logger.trace(s"For function ${node.function}, nested collections and/or collections with tuple members detected.")
 	  				newArg
 	  			} else {	  			
 		  			if (mbrType != null && mbrType.size > 0) {	
@@ -1110,7 +1110,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
     // Loading all jars
     for (j <- jars) {
-      logger.info("Processing Jar " + j.trim)
+      logger.trace("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
