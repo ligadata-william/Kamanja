@@ -800,11 +800,13 @@ object MetadataAPIImpl extends MetadataAPI{
 
       if (obj.DependencyJarNames != null) {
 	obj.DependencyJarNames.foreach(j => { 
-	  keyList = keyList :+ j
-	  jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + j
-	  value = GetJarAsArrayOfBytes(jarName)
-	  logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + j)
-	  valueList = valueList :+ value
+	  if ( j.endsWith(".jar") ){
+	    keyList = keyList :+ j
+	    jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + j
+	    value = GetJarAsArrayOfBytes(jarName)
+	    logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + j)
+	    valueList = valueList :+ value
+	  }
 	})
       }
       SaveObjectList(keyList,valueList,jarStore)
@@ -875,7 +877,9 @@ object MetadataAPIImpl extends MetadataAPI{
       allJars = allJars :+ obj.JarName
       if (obj.DependencyJarNames != null) {
 	obj.DependencyJarNames.foreach(j => { 
-	  allJars = allJars :+ j
+	  if ( j.endsWith(".jar") ){
+	    allJars = allJars :+ j
+	  }
 	})
       }
       allJars
