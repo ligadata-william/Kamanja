@@ -10,7 +10,7 @@ import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem
-import scala.util.parsing.json.JSON
+// import scala.util.parsing.json.JSON
 import scala.collection.mutable.ArrayBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -43,7 +43,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       } else if (msgFormat.equalsIgnoreCase("json")) {
         try {
           val inputData = new JsonData(msgData)
-          inputData.root_json = JSON.parseFull(inputData.dataInput)
+          val json = parse(inputData.dataInput)
+          inputData.root_json = Option(json.values.asInstanceOf[Map[String, Any]])
           inputData.cur_json = inputData.root_json
           msg.populate(inputData)
         } catch {
@@ -75,7 +76,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     }
   }
 
-  private def RunAllModels(tempTransId:Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
+  private def RunAllModels(tempTransId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
     var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
 
     if (finalTopMsgOrContainer != null) {
@@ -116,7 +117,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(tempTransId:Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
+  def execute(tempTransId: Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
     // LOG.info("LE => " + msgData)
     try {
       // BUGBUG:: for now handling only CSV input data.

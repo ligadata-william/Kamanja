@@ -290,16 +290,17 @@ class OnLEPManager {
 
     conf.Typ = adapterConfig(0)
     conf.Name = adapterConfig(1)
-    conf.className = adapterConfig(2)
-    conf.jarName = adapterConfig(3)
-    conf.dependencyJars = if (adapterConfig(4).size > 0) adapterConfig(4).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
+    conf.format = adapterConfig(2)
+    conf.className = adapterConfig(3)
+    conf.jarName = adapterConfig(4)
+    conf.dependencyJars = if (adapterConfig(5).size > 0) adapterConfig(5).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
 
-    if (adapterConfig.size > 5) {
-      val remVals = adapterConfig.size - 5
+    if (adapterConfig.size > 6) {
+      val remVals = adapterConfig.size - 6
       conf.adapterSpecificTokens = new Array(remVals)
 
       for (i <- 0 until remVals)
-        conf.adapterSpecificTokens(i) = adapterConfig(i + 5)
+        conf.adapterSpecificTokens(i) = adapterConfig(i + 6)
     }
 
     conf
