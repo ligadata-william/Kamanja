@@ -276,7 +276,7 @@ class OnLEPManager {
     null
   }
 
-  private def GetAdapterConfigByCfgName(loadConfigs: Properties, adapCfgName: String): AdapterConfiguration = {
+  private def GetAdapterConfigByCfgName(loadConfigs: Properties, adapCfgName: String, hasFormat: Boolean): AdapterConfiguration = {
     // For any adapter we need Type as first one
     val adapterConfig = loadConfigs.getProperty(adapCfgName.toLowerCase, "").replace("\"", "").trim.split("~", -1).map(str => str.trim)
 
@@ -288,19 +288,28 @@ class OnLEPManager {
     //BUGBUG:: Not yet validating required fields 
     val conf = new AdapterConfiguration
 
-    conf.Typ = adapterConfig(0)
-    conf.Name = adapterConfig(1)
-    conf.format = adapterConfig(2)
-    conf.className = adapterConfig(3)
-    conf.jarName = adapterConfig(4)
-    conf.dependencyJars = if (adapterConfig(5).size > 0) adapterConfig(5).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
+    var idx = 0
+    conf.Typ = adapterConfig(idx)
+    idx += 1
+    conf.Name = adapterConfig(idx)
+    idx += 1
+    if (hasFormat) {
+      conf.format = adapterConfig(idx)
+      idx += 1
+    }
+    conf.className = adapterConfig(idx)
+    idx += 1
+    conf.jarName = adapterConfig(idx)
+    idx += 1
+    conf.dependencyJars = if (adapterConfig(idx).size > 0) adapterConfig(idx).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
+    idx += 1
 
-    if (adapterConfig.size > 6) {
-      val remVals = adapterConfig.size - 6
+    if (adapterConfig.size > idx) {
+      val remVals = adapterConfig.size - idx
       conf.adapterSpecificTokens = new Array(remVals)
 
       for (i <- 0 until remVals)
-        conf.adapterSpecificTokens(i) = adapterConfig(i + 6)
+        conf.adapterSpecificTokens(i) = adapterConfig(i + idx)
     }
 
     conf
@@ -320,7 +329,7 @@ class OnLEPManager {
       }
     } else {
       adapCfgNames.foreach(ac => {
-        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac)
+        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, true)
         if (adapterCfg == null) return false
 
         try {
@@ -355,7 +364,7 @@ class OnLEPManager {
         return false
       }
       adapCfgNames.foreach(ac => {
-        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac)
+        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, false)
         if (adapterCfg == null) return false
 
         try {

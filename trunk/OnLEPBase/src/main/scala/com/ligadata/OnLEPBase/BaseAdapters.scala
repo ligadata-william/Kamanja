@@ -4,7 +4,7 @@ package com.ligadata.OnLEPBase
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
   var Typ: String = _ // KafkaQueue/MQ/File
-  var format: String = _ // CSV/JSON/XML
+  var format: String = _ // CSV/JSON/XML for input adapter. For output/status it is just default
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
