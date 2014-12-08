@@ -3,14 +3,20 @@ package com.ligadata.OnLEPManager
 
 import com.ligadata.OnLEPBase.{ BaseMsg, InputData, DelimitedData, JsonData, XmlData, EnvContext }
 import com.ligadata.Utils.Utils
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+import scala.xml.XML
+import scala.xml.Elem
 
 // Bolt to filter data coming from Kafka spout. This takes N input fields and M output fields. Output fields are subset of Input fields.
 // We also have KEY. So that we can start sending the user into separate bolts from here.
 class TransformMessageData {
   // var cntr: Int = 0
 
-  def parseCsvInputData(inputData: DelimitedData): (String, String) = {
-    val str_arr = inputData.dataInput.split(inputData.dataDelim, -1)
+  def parseCsvInputData(inputData: String): (String, String) = {
+    val dataDelim = ","
+    val str_arr = inputData.split(dataDelim, -1)
     if (str_arr.size == 0)
       throw new Exception("Not found any fields to get Message Type")
     val msgType = str_arr(0).trim
@@ -22,7 +28,7 @@ class TransformMessageData {
     if (msgInfo.tranformMsgFlds == null) {
       val newArray = new Array[String](str_arr.size - 1)
       Array.copy(str_arr, 1, newArray, 0, str_arr.size - 1)
-      val outputData = newArray.mkString(inputData.dataDelim)
+      val outputData = newArray.mkString(dataDelim)
       return (msgType, outputData)
     }
     val outputData = msgInfo.tranformMsgFlds.outputFlds.map(fld => {
@@ -32,37 +38,53 @@ class TransformMessageData {
       } else {
         str_arr(fld + 1) // Message type is one extra field in message than Message Definition (inputFields)
       }
-    }).mkString(inputData.dataDelim)
+    }).mkString(dataDelim)
 
     (msgType, outputData)
   }
 
-  def parseJsonInputData(inputData: JsonData): (String, String) = {
-    throw new Exception("Not yet handled JSON input data")
-    null
+  def parseJsonInputData(inputData: String): (String, String) = {
+    val json = parse(inputData)
+    if (json == null || json.values == null)
+      throw new Exception("Invalid JSON data : " + inputData)
+    val parsed_json = json.values.asInstanceOf[Map[String, Any]]
+    val msgTypeAny = parsed_json.getOrElse("messagetype", null)
+    if (msgTypeAny == null)
+      throw new Exception("MessageType not found in JSON data : " + inputData)
+    val msgType = msgTypeAny.toString.trim
+    val msgInfo = OnLEPMetadata.getMessgeInfo(msgType)
+    if (msgInfo == null)
+      throw new Exception("Not found Message Type \"" + msgType + "\"")
+    (msgType, inputData)
   }
 
-  def parseXmlInputData(inputData: XmlData): (String, String) = {
-    throw new Exception("Not yet handled XML input data")
-    null
+  def parseXmlInputData(inputData: String): (String, String) = {
+    val xml = XML.loadString(inputData)
+    if (xml == null)
+      throw new Exception("Invalid XML data : " + inputData)
+    val msgTypeAny = (xml \\ "messagetype")
+    if (msgTypeAny == null)
+      throw new Exception("MessageType not found in XML data : " + inputData)
+    val msgType = msgTypeAny.text.toString.trim
+    val msgInfo = OnLEPMetadata.getMessgeInfo(msgType)
+    if (msgInfo == null)
+      throw new Exception("Not found Message Type \"" + msgType + "\"")
+    (msgType, inputData)
   }
 
-  def parseInputData(inputData: InputData): (String, String) = {
-    if (inputData.isInstanceOf[DelimitedData])
-      return parseCsvInputData(inputData.asInstanceOf[DelimitedData])
-    else if (inputData.isInstanceOf[JsonData])
-      return parseJsonInputData(inputData.asInstanceOf[JsonData])
-    else if (inputData.isInstanceOf[XmlData])
-      return parseXmlInputData(inputData.asInstanceOf[XmlData])
+  def parseInputData(inputData: String, msgFormat: String): (String, String) = {
+    if (msgFormat.equalsIgnoreCase("csv"))
+      return parseCsvInputData(inputData)
+    else if (msgFormat.equalsIgnoreCase("csv"))
+      return parseJsonInputData(inputData)
+    else if (msgFormat.equalsIgnoreCase("csv"))
+      return parseXmlInputData(inputData)
     else throw new Exception("Invalid input data type")
   }
 
-  def execute(data: String): Array[(String, String, String)] = {
-    val output = parseInputData(new DelimitedData(data, ","))
-    // cntr += 1
-    // if (cntr % 1000 == 0)
-    //   SimpleStats.addCntr("F-%10d".format(hashCode()), 1000)
-    Array(("csv", output._1, output._2))
+  def execute(data: String, format: String): Array[(String, String, String)] = {
+    val output = parseInputData(data, format)
+    Array((format, output._1, output._2))
   }
 }
 

@@ -27,6 +27,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   fc.Typ = inputConfig.Typ
   fc.Name = inputConfig.Name
+  fc.format = inputConfig.format
   fc.className = inputConfig.className
   fc.jarName = inputConfig.jarName
   fc.dependencyJars = inputConfig.dependencyJars
@@ -63,7 +64,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     var totalSent: Long = 0
   }
 
-  private def ProcessFile(sFileName: String, msg: String, st: Stats, ignorelines: Int, AddTS2MsgFlag: Boolean, isGz: Boolean): Unit = {
+  private def ProcessFile(sFileName: String, format: String, msg: String, st: Stats, ignorelines: Int, AddTS2MsgFlag: Boolean, isGz: Boolean): Unit = {
     var is: InputStream = null
 
     LOG.info("FileConsumer Processing File:" + sFileName)
@@ -119,7 +120,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(tempTransId, sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
                       tempTransId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -173,7 +174,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(tempTransId, sendmsg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs)
             tempTransId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -248,7 +249,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         val isGz = (compString != null && compString.compareToIgnoreCase("gz") == 0)
         fc.Files.foreach(fl => {
           if (isTxt || isGz) {
-            tm = tm + elapsedTm(ProcessFile(fl, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
+            tm = tm + elapsedTm(ProcessFile(fl, fc.format, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
           } else {
             throw new Exception("Not yet handled other than text & GZ files")
           }

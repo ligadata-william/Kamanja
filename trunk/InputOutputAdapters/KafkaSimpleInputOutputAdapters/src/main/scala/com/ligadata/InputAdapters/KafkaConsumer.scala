@@ -39,6 +39,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
+  qc.format = inputConfig.format
   qc.className = inputConfig.className
   qc.jarName = inputConfig.jarName
   qc.dependencyJars = inputConfig.dependencyJars
@@ -233,7 +234,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           // Creating new string to convert from Byte Array to string
                           val msg = new String(message.message)
                           uniqueVal.Offset = currentOffset
-                          execThread.execute(tempTransId, msg, uniqueKey, uniqueVal, readTmNs, readTmMs)
+                          execThread.execute(tempTransId, msg, qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs)
                           tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1

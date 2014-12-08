@@ -11,13 +11,13 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(tempTransId:Long, data: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long): Unit = {
 
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       try {
-        val xformedmsgs = xform.execute(data)
+        val xformedmsgs = xform.execute(data, format)
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
