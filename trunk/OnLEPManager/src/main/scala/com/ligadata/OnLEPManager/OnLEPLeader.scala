@@ -144,8 +144,9 @@ object OnLEPLeader {
         adapterMaxPartitions(name) = ukCnt
         if (ukCnt > 0) {
           allPartitionUniqueRecordKeys ++= uk.map(k => {
-            LOG.info("Unique Key in %s => %s".format(name, k))
-            (name, k)
+            val kstr = k.Serialize
+            LOG.info("Unique Key in %s => %s".format(name, kstr))
+            (name, kstr)
           })
         }
       })
@@ -370,27 +371,27 @@ object OnLEPLeader {
   }
 
   // Using canRedistribute as startup mechanism here, because until we do bootstap ignore all the messages from this 
-  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = lock.synchronized {
-    // LOG.info("ActionOnAdaptersDistribution1 => receivedJsonStr: " + receivedJsonStr)
+  private def ActionOnAdaptersDistImpl(receivedJsonStr: String): Unit = lock.synchronized {
+    // LOG.info("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || canRedistribute == false) {
       // nothing to do
-      LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
+      LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
       return
     }
 
     if (IsLeaderNodeAndUpdatePartitionsFlagSet) {
-      LOG.info("Already got Re-distribution request. Ignoring any actions from ActionOnAdaptersDistribution") // Atleast this happens on main node
+      LOG.info("Already got Re-distribution request. Ignoring any actions from ActionOnAdaptersDistImpl") // Atleast this happens on main node
       return
     }
 
-    LOG.info("ActionOnAdaptersDistribution => receivedJsonStr: " + receivedJsonStr)
+    LOG.info("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
 
     try {
       // Perform the action here (STOP or DISTRIBUTE for now)
       val json = parse(receivedJsonStr)
       if (json == null || json.values == null) { // Not doing any action if not found valid json
-        LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
+        LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
         return
       }
       val values = json.values.asInstanceOf[Map[String, Any]]
@@ -402,6 +403,15 @@ object OnLEPLeader {
           inputAdapters.foreach(ia => {
             ia.StopProcessing
           })
+
+          // Sleep for a sec
+          try {
+            Thread.sleep(1000)
+          } catch {
+            case e: Exception => {
+              // Not doing anything
+            }
+          }
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
@@ -423,7 +433,7 @@ object OnLEPLeader {
                 case m: Map[_, _] => {
                   try {
                     val data = m.asInstanceOf[Map[String, Any]]
-                    // LOG.info("ActionOnAdaptersDistribution => action => distribute. Map")
+                    // LOG.info("ActionOnAdaptersDistImpl => action => distribute. Map")
                     StartUniqueKeysForNode(data.getOrElse(nodeId, null), receivedJsonStr, adapMaxPartsMap)
                   } catch {
                     case e: Exception => {
@@ -439,7 +449,7 @@ object OnLEPLeader {
                       case m1: Map[_, _] => {
                         try {
                           val data1 = m1.asInstanceOf[Map[String, Any]]
-                          // LOG.info("ActionOnAdaptersDistribution => action => distribute. List, Map. Map => " + data1.mkString(","))
+                          // LOG.info("ActionOnAdaptersDistImpl => action => distribute. List, Map. Map => " + data1.mkString(","))
                           StartUniqueKeysForNode(data1.getOrElse(nodeId, null), receivedJsonStr, adapMaxPartsMap)
                         } catch {
                           case e: Exception => {
@@ -504,7 +514,11 @@ object OnLEPLeader {
       }
     }
 
-    LOG.info("ActionOnAdaptersDistribution1 => Exit. receivedJsonStr: " + receivedJsonStr)
+    LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+  }
+
+  private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
+    ActionOnAdaptersDistImpl(receivedJsonStr)
   }
 
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {

@@ -263,7 +263,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     dataAndStat
   }
 
-  private def GetAllPartitionsUniqueKeys: Array[String] = lock.synchronized {
+  private def GetAllPartitionsUniqueKeys: Array[PartitionUniqueRecordKey] = lock.synchronized {
     val zkClient = new ZkClient(qc.hosts.mkString(","), 30000, 30000, ZKStringSerializer)
 
     val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.Name))._1
@@ -289,18 +289,17 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     if (values3 == null || values3.size == 0)
       return null
 
-    // val values4 = values3.map(p => (p._1.toInt, p._2.map(_.toInt)))
     values3.map(p => (p._1.toInt)).map(pid => {
       val uniqueKey = new KafkaPartitionUniqueRecordKey
       uniqueKey.TopicName = qc.Name
       uniqueKey.PartitionId = pid
       uniqueKey
-    }).map(k => { k.Serialize }).toArray
+    }).toArray
   }
 
   // *********** These are temporary methods -- End *********** ///
 
-  override def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
+  override def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey] = lock.synchronized {
     GetAllPartitionsUniqueKeys
   }
 

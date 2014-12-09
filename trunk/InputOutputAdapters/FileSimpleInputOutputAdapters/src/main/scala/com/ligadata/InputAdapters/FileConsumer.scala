@@ -277,9 +277,9 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   }
 
-  override def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
+  override def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey] = lock.synchronized {
     if (uniqueKey != null) {
-      return Array(uniqueKey.Serialize)
+      return Array(uniqueKey)
     }
     null
   }
