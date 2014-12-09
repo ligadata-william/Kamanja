@@ -24,6 +24,11 @@ trait LogTrait {
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
+  class TxnCtxtKey {
+    var containerName: String = _
+    var key: String = _
+  }
+
   class MsgContainerInfo {
     var data: scala.collection.mutable.Map[String, MessageContainerBase] = scala.collection.mutable.Map[String, MessageContainerBase]()
     var dataStore: DataStore = null
@@ -33,9 +38,41 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var objFullName: String = ""
   }
 
+  class TransactionContext(var txnId: Long) {
+    /* private[this] */ val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
+
+    def getAllObjects(containerName: String): Array[MessageContainerBase] = {
+      null
+    }
+
+    def getObject(containerName: String, key: String): MessageContainerBase = {
+      val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+      if (container != null) {
+        val v = container.data.getOrElse(key.toLowerCase(), null)
+        if (v != null) return v
+      }
+      null
+    }
+
+    def setObject(containerName: String, key: String, value: MessageContainerBase): Unit = {}
+
+    def contains(containerName: String, key: String): Boolean = false
+    def containsAny(containerName: String, keys: Array[String]): Boolean = false
+    def containsAll(containerName: String, keys: Array[String]): Boolean = false
+
+    // Adapters Keys & values
+    def setAdapterUniqueKeyValue(key: String, value: String): Unit = {}
+    def getAdapterUniqueKeyValue(key: String): String = null
+
+    // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
+    def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = {}
+    def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = null
+  }
+
   private[this] val _lock = new Object()
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
+  private[this] val _txnContexts = scala.collection.mutable.Map[Long, TransactionContext]()
 
   private[this] var _serInfoBufBytes = 32
 
@@ -314,7 +351,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     v
   }
 
-  override def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = _lock.synchronized {
+  private def localGetObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = _lock.synchronized {
+    val txnCtxt = _txnContexts.getOrElse(tempTransId, null)
+    if (txnCtxt != null) {
+      val v = txnCtxt.getObject(containerName, key)
+      if (v != null) return v
+    }
+
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     if (container != null) {
       val v = container.data.getOrElse(key.toLowerCase(), null)
@@ -334,7 +377,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     } else null
   }
 
+  override def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = {
+    localGetObject(tempTransId, containerName, key)
+  }
+
+  def localSetObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
+    var txnCtxt = _txnContexts.getOrElse(tempTransId, null)
+    if (txnCtxt == null) {
+      txnCtxt = new TransactionContext(tempTransId)
+      _txnContexts(tempTransId) = txnCtxt
+    }
+    txnCtxt.setObject(containerName, key, value)
+  }
+
   override def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
+    // localSetObject(tempTransId, containerName, key, value)
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
     if (container != null) {
       val k = key.toLowerCase
@@ -356,32 +413,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     // bugbug: throw exception
-  }
-
-  override def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit = _lock.synchronized {
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
-    if (container != null) {
-      val key: String = elementkey.toString.toLowerCase
-      container.data(key) = value
-      logger.info(s"Replacing container '$containerName' entry for key '$key' ... value = \n${value.toString}")
-      if (_kryoSer == null) {
-        _kryoSer = SerializerManager.GetSerializer("kryo")
-        if (_kryoSer != null && classLoader != null) {
-          _kryoSer.SetClassLoader(classLoader)
-        }
-      }
-      try {
-        val v = _kryoSer.SerializeObjectToByteArray(value)
-        writeThru(key, v, container.dataStore, "kryo")
-      } catch {
-        case e: Exception => {
-          logger.error("Failed to serialize/write data.")
-          e.printStackTrace
-        }
-      }
-    }
-    // bugbug: throw exception
-
   }
 
   private def writeThru(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {

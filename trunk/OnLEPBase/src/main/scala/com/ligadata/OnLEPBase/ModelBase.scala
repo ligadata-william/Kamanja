@@ -95,7 +95,6 @@ trait EnvContext {
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
   def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
-  def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit
 
   def contains(tempTransId: Long, containerName: String, key: String): Boolean
   def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
