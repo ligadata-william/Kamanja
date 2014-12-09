@@ -3,19 +3,24 @@ package com.ligadata.InputAdapters
 
 import com.ligadata.AdaptersConfiguration.{KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordKey, KafkaQueueAdapterConfiguration}
 import com.ligadata.OnLEPBase._
-import kafka.api.{FetchRequestBuilder,TopicMetadataRequest}
+import kafka.api._
+import kafka.common.TopicAndPartition
+import kafka.javaapi
 import kafka.utils.ZKStringSerializer
 import org.I0Itec.zkclient.ZkClient
 import org.I0Itec.zkclient.exception.ZkNoNodeException
 import org.apache.zookeeper.data.Stat
 import scala.actors.threadpool.{TimeUnit, ExecutorService, Executors}
 import scala.util.control.Breaks._
-import scala.collection.mutable._
 import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
 import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.log4j.Logger
+import scala.collection.mutable.Map
+
+import scala.collection.mutable.ArrayBuffer
 
 
 object KafkaConsumer_V2 extends InputAdapterObj {
@@ -36,6 +41,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
   val input = this
   private val lock = new Object()
   private val LOG = Logger.getLogger(getClass);
+
   // For Kafka Queue we expect the format "Type~Name~Host/Brokers~Group/Client~MaxPartitions~InstancePartitions~ClassName~JarName~DependencyJars"
   if (inputConfig.adapterSpecificTokens.size != 4) {
     val err = "We should find only Type, Name, ClassName, JarName, DependencyJarsm Host/Brokers, Group/Client, MaxPartitions & Set of Handled Partitions for Kafka Queue Adapter Config:" + inputConfig.Name
@@ -43,7 +49,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
     throw new Exception(err)
   }
 
-  private val brokerConfiguration: Map[String,SimpleConsumer] = Map()
+  private val brokerConfiguration: scala.collection.mutable.Map[String,SimpleConsumer] = Map()
   private var numberOfErrors: Int = _
 
   //Set up the QC to store the adapter configuration
@@ -53,6 +59,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
   qc.className = inputConfig.className
+  qc.format = inputConfig.format
   qc.jarName = inputConfig.jarName
   qc.dependencyJars = inputConfig.dependencyJars
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => convertIp(str))
@@ -67,6 +74,8 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
                                                        KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
                                                        KafkaConsumer_V2.FETCHSIZE,
                                                        KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+
+    LOG.info("KAFKA ADAPTER - adding broker " + brokerId +" to this adapter to service topic " + qc.Name)
   })
 
   // We only read 1 partition at a time here, so  we need a thread for a heartbeat and a thread for a fetch.
@@ -78,6 +87,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
   private var hbTopicPartitionNumber = -1
   private var monitoredTopics: Map[String,Int] = Map()
   private val hbExecutor = Executors.newFixedThreadPool(qc.hosts.size)
+  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, KafkaPartitionUniqueRecordValue)]()
 
   /**
    *  This will stop all the running reading threads and close all the underlying connections to Kafka.
@@ -105,25 +115,33 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
    * @param partitionIds Array[String] - an Array of partition ids
    * @param partitionOffsets Array[String] - a coresponding array of start offsets.
    */
-  def StartProcessing(maxParts: Int, partitionIds: Array[String], partitionOffsets: Array[String]): Unit = lock.synchronized {
+  def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)]): Unit = lock.synchronized {
 
-    LOG.info("Starting to read Kafka queues for topic: "+qc.Name)
+    LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: "+qc.Name)
 
-    // Check for some error stuff.
-    if (partitionIds.size != partitionOffsets.size || partitionIds.size == 0 || partitionOffsets.size == 0) {
-      LOG.error("ERROR: invalid parameters given to start processing kafka adapter for topic " + qc.Name)
-      LOG.error("ERROR: partitionIds size = " + partitionIds.size + ", and partitionOffsets size = " + partitionOffsets.size)
+    if (partitionIds == null || partitionIds.size == 0) {
+      LOG.error("Cannot process the kafka queue request, invalid parameters - number")
+      return
+    }
+
+    val partitionInfo = partitionIds.map(quad => { (quad._1.asInstanceOf[KafkaPartitionUniqueRecordKey],
+                                                    quad._2.asInstanceOf[KafkaPartitionUniqueRecordValue],
+                                                    quad._3,
+                                                    quad._4.asInstanceOf[KafkaPartitionUniqueRecordValue]) })
+
+
+    qc.instancePartitions = partitionInfo.map(partQuad => {partQuad._1.PartitionId }).toSet
+
+    if (qc.instancePartitions == null) {
+      LOG.error("Cannot process the kafka queue request, invalid parameters - partition instance list")
       return
     }
 
     // Create a Map of target partition to Offset
-    val allPartitions = Map[Int,Long]()
-    for(i <- 0 until partitionIds.size) {
-      allPartitions(partitionIds(i).toInt) = partitionOffsets(i).toLong
-    }
-
-    // create a list of of partitions to be used during this processing.
-    qc.instancePartitions = partitionIds.map(k => {k.toInt}).toSet
+   // val allPartitions = Map[Int,Long]()
+   // for(i <- 0 until partitionIds.size) {
+   //   allPartitions(partitionIds(i).toInt) = partitionOffsets(i).toLong
+   // }
 
     // Figure out the size of the thread pool to use and create that pool
     var threads = maxParts
@@ -133,15 +151,30 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       else
         threads = qc.instancePartitions.size
     }
+
     readExecutor = Executors.newFixedThreadPool(threads)
 
+    // Create a Map of all the partiotion Ids.
+    kvs.clear
+    partitionInfo.foreach(quad => {
+      kvs(quad._1.PartitionId) = quad
+    })
+
+    LOG.info("KAFKA-ADAPTER: Starting " +kvs.size+" threads to process partitions")
+
     // Schedule a task to perform a read from a give partition.
-    allPartitions.foreach(partition =>{
+    kvs.foreach(kvsElement =>{
       readExecutor.execute(new Runnable() {
         override def run() {
-          // Set up a fetch call to this broker
-          val partitionId = partition._1
-          var readOffset = partition._2
+          val partitionId = kvsElement._1
+          val partition = kvsElement._2
+
+          // if the offset is -1, then the server wants to start from the begining, else, it means that the server
+          // knows what its doing and we start from that offset.
+          var readOffset: Long = -1
+          var transactionId = partition._3
+          val uniqueRecordValue = partition._4.Offset
+
           val clientName: String = "Client_" + qc.Name + "_" + partitionId;
           var sleepDuration = KafkaConsumer_V2.SLEEP_DURATION
           var messagesProcessed: Long = 0
@@ -156,13 +189,29 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           // Figure out which of the hosts is the leader for the given partition
           val leadBroker = getKafkaConfigId(findLeader(qc.hosts, partitionId))
 
-          LOG.info("Initializing new reader thread for partition {"+partitionId+"} on server - " + leadBroker)
+          // if the offset is -1, then the server wants to start from the begining, else, it means that the server
+          // knows what its doing and we start from that offset.
+          if (partition._2.Offset == -1) {
+            readOffset = getFirstOffset(leadBroker, partitionId)
+          } else {
+            readOffset = partition._2.Offset
+          }
+
+          LOG.info("KAFKA-ADAPTER: Initializing new reader thread for partition {"+partitionId+"} starting at offset " + readOffset +" on server - " + leadBroker)
+
+          // If we are forced to retry in case of a failure, get the new Leader.
+          //val consumer = brokerConfiguration(leadBroker)
+          val brokerId = convertIp(leadBroker)
+          val brokerName =leadBroker.split(":")
+          val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+            KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+            KafkaConsumer_V2.FETCHSIZE,
+            KafkaConsumer_V2.METADATA_REQUEST_TYPE)
 
           // Keep processing until you fail enough times.
           while (readerRunning) {
 
-            // If we are forced to retry in case of a failure, get the new Leader.
-            val consumer = brokerConfiguration(leadBroker)
+
             val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.Name, partitionId, readOffset, KafkaConsumer_V2.FETCHSIZE).build();
 
             // Call the broker and get a response.
@@ -172,12 +221,12 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
 
             // Check for errors
             if (fetchResp.hasError) {
-              LOG.error("Error occured reading from " + leadBroker + " " + ", error code is " +
+              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " +
                          fetchResp.errorCode(qc.Name, partitionId))
               numberOfErrors = numberOfErrors + 1
 
               if (numberOfErrors > KafkaConsumer_V2.MAX_FAILURES) {
-                LOG.error("Too many failures reading from kafka adapters.")
+                LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
                 if (consumer != null) {
                   consumer.close
                 }
@@ -193,20 +242,20 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
               messagesProcessed = messagesProcessed + 1
               bufferPayload.get(message)
 
-              if (true) {
-                LOG.info("Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
-              } else {
-                //  Create a new EngineMessage and call the engine.
-                if (execThread == null) {
-                  execThread = mkExecCtxt.CreateExecContext(input, partitionId, output, envCtxt)
-                }
 
-                uniqueVal.Offset = msgBuffer.offset
-                execThread.execute(new String(message, "UTF-8"), uniqueKey, uniqueVal, readTmNs, readTmMs)
+              LOG.info("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
 
-                val key = Category + "/" + qc.Name + "/evtCnt"
-                cntrAdapter.addCntr(key, 1) // for now adding each row
+              //  Create a new EngineMessage and call the engine.
+              if (execThread == null) {
+                execThread = mkExecCtxt.CreateExecContext(input, partitionId, output, envCtxt)
               }
+
+              uniqueVal.Offset = msgBuffer.offset
+              execThread.execute(transactionId, new String(message, "UTF-8"),qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, uniqueVal.Offset < uniqueRecordValue)
+
+              val key = Category + "/" + qc.Name + "/evtCnt"
+              cntrAdapter.addCntr(key, 1) // for now adding each row
+              transactionId = transactionId + 1
 
             })
 
@@ -238,12 +287,13 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
    * getServerInfo - returns information about hosts and their coresponding partitions.
    * @return Map[String,List[Int]] - return data
    */
-  def getAdapterMetadata(): Map[String,List[Int]] =  lock.synchronized {
-    var returnInfo:  Map[String,List[Int]]  = Map[String,List[Int]]()
-
+  def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey] =  lock.synchronized {
     // iterate through all the simple consumers - collect the metadata about this topic on each specified host
     val topics: Array[String] = Array(qc.Name)
     val metaDataReq = new TopicMetadataRequest(topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
+    var partitionNames: List[PartitionUniqueRecordKey] = List()
+
+    LOG.info("KAFKA ADAPTER - Querying kafka for Topic " + qc.Name + " partitions")
 
     brokerConfiguration.foreach {
       case (key,consumer) => {
@@ -251,28 +301,52 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           val metaDataResp: kafka.api.TopicMetadataResponse = consumer.send(metaDataReq)
           val metaData = metaDataResp.topicsMetadata
           metaData.foreach(topicMeta => {
-            var partitionNames: List[Int] = List()
             topicMeta.partitionsMetadata.foreach(partitionMeta => {
-              partitionNames = partitionMeta.partitionId :: partitionNames
+              val uniqueKey = new KafkaPartitionUniqueRecordKey
+              uniqueKey.PartitionId = partitionMeta.partitionId
+              uniqueKey.TopicName = qc.Name
+              partitionNames = uniqueKey :: partitionNames
             })
-            returnInfo(key) = partitionNames
-            //returnInfo =  returnInfo.++(Map(key -> partitionNames))
           })
         } catch {
-          case e: Exception => {LOG.error("Communication problem with broker " + key)}
+          case e: Exception => {LOG.error("KAFKA-ADAPTER: Communication problem with broker " + key)}
         }
       }
     }
-    return returnInfo
+    return partitionNames.toArray
   }
 
-  /**
-   * Need to clarify with pokouri as to what the use case for this method is.
-   * @return - Array[String]
-   */
-  def GetAllPartitionUniqueRecordKey: Array[String] = lock.synchronized {
-    GetAllPartitionsUniqueKeys
+
+  override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
+    val key = new KafkaPartitionUniqueRecordKey
+    try {
+      LOG.info("Deserializing Key:" + k)
+      key.Deserialize(k)
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        throw e
+      }
+    }
+    key
   }
+
+  override def DeserializeValue(v: String): PartitionUniqueRecordValue = {
+    val vl = new KafkaPartitionUniqueRecordValue
+    if (v != null) {
+      try {
+        LOG.info("Deserializing Value:" + v)
+        vl.Deserialize(v)
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          throw e
+        }
+      }
+    }
+    vl
+  }
+
 
   /**
    *  Find a leader of for this topic for a given partition.
@@ -280,9 +354,12 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
   private def findLeader(brokers: Array[String], inPartition: Int): kafka.api.PartitionMetadata = lock.synchronized{
     var leaderMetadata: kafka.api.PartitionMetadata = null
 
+    LOG.info("KAFKA-ADAPTER: Looking for Kafka Topic Leader for partition " + inPartition)
+
     try {
       breakable {
         brokers.foreach(broker => {
+          LOG.info("KAFKA ADAPTER - Is this the one " + broker)
           // Create a connection to this broker to obtain the metadata for this broker.
           val brokerName = broker.split(":")
           val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
@@ -311,7 +388,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
               })
             })
           } catch {
-            case e: Exception => {LOG.info("Communicatin problem with broker " + broker + " trace "+e.printStackTrace())}
+            case e: Exception => {LOG.info("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace "+e.printStackTrace())}
           } finally {
             if (llConsumer != null) llConsumer.close()
           }
@@ -319,9 +396,38 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       }
 
     } catch {
-      case e: Exception => {LOG.info("FindLeader ERROR for partition "+ inPartition)}
+      case e: Exception => {LOG.info("KAFKA ADAPTER - Fatal Error for FindLeader for partition "+ inPartition)}
     }
     return leaderMetadata;
+  }
+
+  /**
+   *
+   */
+   def getFirstOffset (leadBroker: String, partitionId: Int): Long = {
+    val timeFrame: Long = kafka.api.OffsetRequest.EarliestTime;
+    val brokerId = convertIp(leadBroker)
+    val brokerName =leadBroker.split(":")
+    val llConsumer: kafka.javaapi.consumer.SimpleConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                        KafkaConsumer_V2.FETCHSIZE, KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+
+    var jtap: kafka.common.TopicAndPartition = kafka.common.TopicAndPartition(qc.Name.toString, partitionId)
+    var requestInfo: java.util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo] = new java.util.HashMap[TopicAndPartition, PartitionOffsetRequestInfo]()
+    requestInfo.put(jtap, new PartitionOffsetRequestInfo(timeFrame, 1))
+
+    var offsetRequest: kafka.javaapi.OffsetRequest = new kafka.javaapi.OffsetRequest(requestInfo, kafka.api.OffsetRequest.CurrentVersion, "test")
+
+    var response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
+
+    if (response.hasError) {
+      println("Shit")
+      return -1;
+    }
+    else {
+      var offsets: Array[Long] = response.offsets(qc.Name.toString, partitionId)
+      LOG.info("KAFKA ADAPTER - Reading of partition {"+partitionId+"} will commence from offset :" + offsets(0))
+      return offsets(0)
+    }
   }
 
   /**
@@ -346,68 +452,6 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       }
     }
     return null
-  }
-
-  /**
-   *
-   */
-  private def GetAllPartitionsUniqueKeys: Array[String] = {
-    val zkClient = new ZkClient(qc.hosts.mkString(","), 30000, 30000, ZKStringSerializer)
-    val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.Name))._1
-    zkClient.close
-
-    if (jsonPartitionMapOpt == None) {
-      LOG.error("Not found any JSON Partitions for Queue: " + qc.Name)
-      return null
-    }
-
-    LOG.info("JSON Partitions:%s".format(jsonPartitionMapOpt.get))
-
-    val json = {
-      parse(jsonPartitionMapOpt.get)
-    }
-
-    if (json == null || json.values == null) // Not doing anything
-      return null
-
-    val values1 = json.values.asInstanceOf[Map[String, Any]]
-    val values2 = values1.getOrElse("partitions", null)
-    if (values2 == null)
-      return null
-    val values3 = values2.asInstanceOf[Map[String, Seq[String]]]
-    if (values3 == null || values3.size == 0)
-      return null
-
-    // val values4 = values3.map(p => (p._1.toInt, p._2.map(_.toInt)))
-    values3.map(p => (p._1.toInt)).map(pid => {
-      val uniqueKey = new KafkaPartitionUniqueRecordKey
-      uniqueKey.TopicName = qc.Name
-      uniqueKey.PartitionId = pid
-      uniqueKey
-    }).map(k => { k.Serialize }).toArray
-  }
-
-  /**
-   *
-   */
-  private def readDataMaybeNull(client: ZkClient, path: String): (Option[String], Stat) = {
-    val stat: Stat = new Stat()
-    val dataAndStat = try {
-      (Some(client.readData(path, stat)), stat)
-    } catch {
-      case e: ZkNoNodeException =>
-        (None, stat)
-      case e2: Exception => throw e2
-    }
-    dataAndStat
-  }
-
-  /**
-   *
-   */
-  private def getTopicPath(topic: String): String = {
-    val BrokerTopicsPath = "/brokers/topics"
-    BrokerTopicsPath + "/" + topic
   }
 
   /**
