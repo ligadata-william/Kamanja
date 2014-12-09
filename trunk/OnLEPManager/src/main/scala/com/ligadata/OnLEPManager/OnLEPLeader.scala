@@ -226,7 +226,7 @@ object OnLEPLeader {
   }
 
   private def GetUniqueKeyValue(uk: String): String = {
-    envCtxt.getAdapterUniqueKeyValue(uk)
+    envCtxt.getAdapterUniqueKeyValue(0, uk)
   }
 
   private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String, adapMaxPartsMap: Map[String, Int]): Boolean = {

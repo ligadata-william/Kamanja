@@ -102,7 +102,7 @@ trait EnvContext {
 
   // Adapters Keys & values
   def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String): Unit
-  def getAdapterUniqueKeyValue(key: String): String // No need of under TransactionId.
+  def getAdapterUniqueKeyValue(tempTransId: Long, key: String): String
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
