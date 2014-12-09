@@ -850,14 +850,15 @@ object MetadataAPIImpl extends MetadataAPI{
 	val ba =  mObj.Value.toArray[Byte]
 	val fs = f.length()
 	if(fs != ba.length ){
-	  logger.error("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
+	  logger.info("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
 		       jar + "," + ba.length + ") of the object(" + obj.FullNameWithVer + ")")
+	  true
 	}
 	else{
-	  logger.error("A jar file already exists, and it's size (" + fs + ")  matches with the size of the existing Jar (" +
+	  logger.info("A jar file already exists, and it's size (" + fs + ")  matches with the size of the existing Jar (" +
 		       jar + "," + ba.length + ") of the object(" + obj.FullNameWithVer + "), no need to download.")
+	  false
 	}
-	false
       }
       else{
 	logger.trace("The jar " + jarName + " is not available, download from database. ")
@@ -3868,6 +3869,7 @@ object MetadataAPIImpl extends MetadataAPI{
       var concept_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       var type_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       var compiler_work_dir = root_dir + "/tmp"
+      var model_exec_log = "false"
       
       val eProps2 = prop.propertyNames();
       while (eProps2.hasMoreElements()) { 
@@ -3974,6 +3976,10 @@ object MetadataAPIImpl extends MetadataAPI{
 	  compiler_work_dir = value
 	  logger.trace("COMPILER_WORK_DIR => " + compiler_work_dir)
 	}
+	else if ( key.equalsIgnoreCase("MODEL_EXEC_LOG") ){
+	  model_exec_log = value
+	  logger.trace("MODEL_EXEC_LOG => " + model_exec_log)
+	}
       }
 
       metadataAPIConfig.setProperty("ROOT_DIR",root_dir)
@@ -4003,6 +4009,7 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("MESSAGE_FILES_DIR",message_files_dir)
       metadataAPIConfig.setProperty("CONTAINER_FILES_DIR",container_files_dir)
       metadataAPIConfig.setProperty("COMPILER_WORK_DIR",compiler_work_dir)
+      metadataAPIConfig.setProperty("MODEL_EXEC_LOG",model_exec_log)
 
       propertiesAlreadyLoaded = true;
       
