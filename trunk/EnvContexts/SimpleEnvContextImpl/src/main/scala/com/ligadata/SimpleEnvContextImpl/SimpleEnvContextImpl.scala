@@ -39,34 +39,60 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   class TransactionContext(var txnId: Long) {
-    /* private[this] */ val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
+    private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
+    private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, String]()
+    private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ModelResult]]()
 
-    def getAllObjects(containerName: String): Array[MessageContainerBase] = {
-      null
+    private def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
+      var fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+      if (fnd == null && addIfMissing) {
+        fnd = new MsgContainerInfo
+        _messagesOrContainers(containerName) = fnd
+      }
+      fnd
+    }
+
+    def getAllObjects(containerName: String): scala.collection.mutable.Map[String, MessageContainerBase] = {
+      val fnd = getMsgContainer(containerName.toLowerCase, false)
+      if (fnd != null)
+        return fnd.data
+      scala.collection.mutable.Map[String, MessageContainerBase]()
     }
 
     def getObject(containerName: String, key: String): MessageContainerBase = {
-      val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+      val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null) {
-        val v = container.data.getOrElse(key.toLowerCase(), null)
+        val v = container.data.getOrElse(key.toLowerCase, null)
         if (v != null) return v
       }
       null
     }
 
-    def setObject(containerName: String, key: String, value: MessageContainerBase): Unit = {}
-
-    def contains(containerName: String, key: String): Boolean = false
-    def containsAny(containerName: String, keys: Array[String]): Boolean = false
-    def containsAll(containerName: String, keys: Array[String]): Boolean = false
+    def setObject(containerName: String, key: String, value: MessageContainerBase): Unit = {
+      val container = getMsgContainer(containerName.toLowerCase, true)
+      if (container != null) {
+        val k = key.toLowerCase
+        container.data(k) = value
+      }
+    }
 
     // Adapters Keys & values
-    def setAdapterUniqueKeyValue(key: String, value: String): Unit = {}
-    def getAdapterUniqueKeyValue(key: String): String = null
+    def setAdapterUniqueKeyValue(key: String, value: String): Unit = {
+      _adapterUniqKeyValData(key) = value
+    }
+
+    def getAdapterUniqueKeyValue(key: String): String = {
+      _adapterUniqKeyValData.getOrElse(key, null)
+    }
 
     // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-    def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = {}
-    def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = null
+    def saveModelsResult(key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+      _modelsResult(key) = value
+    }
+
+    def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = {
+      _modelsResult.getOrElse(key, null)
+    }
   }
 
   private[this] val _lock = new Object()
@@ -358,9 +384,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (v != null) return v
     }
 
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
-      val v = container.data.getOrElse(key.toLowerCase(), null)
+      val v = container.data.getOrElse(key.toLowerCase, null)
       if (v != null) return v
       var objs: Array[MessageContainerBase] = new Array[MessageContainerBase](1)
       val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, container.containerType) }
@@ -392,7 +418,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   override def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
     // localSetObject(tempTransId, containerName, key, value)
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val k = key.toLowerCase
       container.data(k) = value
@@ -431,9 +457,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    *   Does the supplied key exist in a container with the supplied name?
    */
   override def contains(tempTransId: Long, containerName: String, key: String): Boolean = {
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     val isPresent = if (container != null) {
-      val lkey: String = key.toString.toLowerCase()
+      val lkey: String = key.toString.toLowerCase
       container.data.contains(lkey)
     } else {
       false
@@ -445,9 +471,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    *   Does at least one of the supplied keys exist in a container with the supplied name?
    */
   override def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     val isPresent = if (container != null) {
-      val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase())).size
+      val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase)).size
       (matches > 0)
     } else {
       false
@@ -459,9 +485,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    *   Do all of the supplied keys exist in a container with the supplied name?
    */
   override def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
-    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase(), null)
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     val isPresent = if (container != null) {
-      val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase())).size
+      val matches: Int = keys.filter(key => container.data.contains(key.toLowerCase)).size
       (matches == keys.size)
     } else {
       false
