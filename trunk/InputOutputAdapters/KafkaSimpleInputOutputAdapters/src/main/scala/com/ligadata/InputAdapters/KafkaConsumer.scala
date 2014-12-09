@@ -77,6 +77,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   override def StopProcessing: Unit = lock.synchronized {
     LOG.info("===============> Called StopProcessing")
+    //BUGBUG:: Make sure we finish processing the current running messages.
     if (consumerConnector != null)
       consumerConnector.shutdown
     if (executor != null) {

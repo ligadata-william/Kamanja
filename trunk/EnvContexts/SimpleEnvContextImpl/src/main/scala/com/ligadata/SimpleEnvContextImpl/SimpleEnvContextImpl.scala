@@ -37,9 +37,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
 
-  /** Add this one too for caching the arrays that are returned from the loaded map's values */
-  private[this] var _filterArrays: scala.collection.mutable.Map[String, Array[MessageContainerBase]] = scala.collection.mutable.Map[String, Array[MessageContainerBase]]()
-
   private[this] var _serInfoBufBytes = 32
 
   private[this] var _kryoSer: Serializer = null
@@ -63,7 +60,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         mrc._2.dataStore.Shutdown
     })
     _messagesOrContainers.clear
-    _filterArrays.clear
   }
 
   // Adding new messages or Containers
@@ -249,38 +245,22 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  //BUGBUG:: For now we are expecting Container for this function call. May be we need to handle anything.
-  override def getObjects(tempTransId: Long, containerName: String, key: String): Array[MessageContainerBase] = _lock.synchronized {
-    // bugbug: implement partial match
-    //Array(getObject(containerName, key))
-
-    /**
-     * Check the "FilterArrays" map for the array with the name "key.toLowerCase" to be returned.  If not present,
-     * access the _messagesOrContainers map with the key. Project the keys of the map tuples to an array.
-     * Add it to the FilterArrays map and return the array as the function result.
-     */
-    val lKey: String = key.toLowerCase()
-    val filterSetValues: Array[MessageContainerBase] = if (_filterArrays.contains(lKey)) {
-      _filterArrays.apply(lKey)
-    } else {
-      val fnd = _messagesOrContainers.getOrElse(lKey, null)
-      val setVals: Array[MessageContainerBase] = if (fnd != null) {
-        if (fnd.loadedAll) {
-          val map: scala.collection.mutable.Map[String, MessageContainerBase] = fnd.data
-          val filterVals: Array[MessageContainerBase] = map.values.toArray
-          _filterArrays(lKey) = filterVals
-          /** cache it for subsequent calls */
-          filterVals
-        } else {
-          throw new Exception("Object %s is not loaded all at once. So, we can not get all objects here".format(fnd.tableName))
-          Array[MessageContainerBase]()
-        }
+  override def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase] = _lock.synchronized {
+    val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+    val setVals: Array[MessageContainerBase] = if (fnd != null) {
+      if (fnd.loadedAll) {
+        val map: scala.collection.mutable.Map[String, MessageContainerBase] = fnd.data
+        val filterVals: Array[MessageContainerBase] = map.values.toArray
+        /** cache it for subsequent calls */
+        filterVals
       } else {
+        throw new Exception("Object %s is not loaded all at once. So, we can not get all objects here".format(fnd.tableName))
         Array[MessageContainerBase]()
       }
-      setVals
+    } else {
+      Array[MessageContainerBase]()
     }
-    filterSetValues
+    setVals
   }
 
   private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
@@ -567,5 +547,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return scala.collection.mutable.Map[String, ModelResult]()
   }
 
+  // Save Current State of the machine
+  override def PersistCurrentState: Unit = {
+    // BUGBUG:: Persist all state on this node.
+  }
+
+  // Save Remaining State of the machine
+  override def PersistRemainingStateEntriesOnLeader: Unit = {
+    // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
+  }
 }
 

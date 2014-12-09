@@ -92,7 +92,7 @@ trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit
-  def getObjects(tempTransId: Long, containerName: String, key: String): Array[MessageContainerBase]
+  def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
   def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
   def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit
@@ -108,6 +108,10 @@ trait EnvContext {
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
   def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult]
+
+  // Save State Entries on local node & on Leader
+  def PersistCurrentState : Unit
+  def PersistRemainingStateEntriesOnLeader : Unit
 }
 
 trait ModelBase {

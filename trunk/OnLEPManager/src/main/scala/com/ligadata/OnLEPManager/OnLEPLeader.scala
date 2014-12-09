@@ -74,6 +74,7 @@ object OnLEPLeader {
             if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
               nodesStatus += extractedNode
               if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
+                envCtxt.PersistRemainingStateEntriesOnLeader
                 nodesStatus.clear
                 expectedNodesAction = "distributed"
 
@@ -412,6 +413,8 @@ object OnLEPLeader {
               // Not doing anything
             }
           }
+
+          envCtxt.PersistCurrentState
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
