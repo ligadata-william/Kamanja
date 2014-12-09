@@ -414,7 +414,7 @@ object OnLEPLeader {
             }
           }
 
-          envCtxt.PersistCurrentState
+          envCtxt.PersistLocalNodeStateEntries
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId

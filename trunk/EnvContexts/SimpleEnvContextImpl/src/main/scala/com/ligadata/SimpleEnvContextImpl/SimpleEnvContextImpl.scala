@@ -548,7 +548,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Save Current State of the machine
-  override def PersistCurrentState: Unit = {
+  override def PersistLocalNodeStateEntries: Unit = {
     // BUGBUG:: Persist all state on this node.
   }
 
@@ -556,5 +556,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def PersistRemainingStateEntriesOnLeader: Unit = {
     // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
   }
+
+  // Final Commit for the given transaction
+  override def commitData(tempTransId: Long): Unit = {
+    // BUGBUG:: Commit Data and Removed Transaction information from status
+  }
+
+  // Saving Status
+  override def saveStatus(tempTransId: Long, status: String): Unit = {
+    // BUGBUG:: Save status on local nodes (in memory distributed)
+  }
+
 }
 

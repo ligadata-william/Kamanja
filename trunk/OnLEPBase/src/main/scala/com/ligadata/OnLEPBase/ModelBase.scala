@@ -109,9 +109,15 @@ trait EnvContext {
   def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
   def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult]
 
+  // Final Commit for the given transaction
+  def commitData(tempTransId: Long): Unit
+
+  // Saving Status
+  def saveStatus(tempTransId: Long, status: String): Unit
+
   // Save State Entries on local node & on Leader
-  def PersistCurrentState : Unit
-  def PersistRemainingStateEntriesOnLeader : Unit
+  def PersistLocalNodeStateEntries: Unit
+  def PersistRemainingStateEntriesOnLeader: Unit
 }
 
 trait ModelBase {
