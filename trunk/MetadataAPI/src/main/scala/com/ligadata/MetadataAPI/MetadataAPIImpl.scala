@@ -85,6 +85,7 @@ case class ParameterMap(RootDir:String
 	, MESSAGE_FILES_DIR : Option[String]
 	, CONTAINER_FILES_DIR : Option[String]
 	, COMPILER_WORK_DIR : Option[String]
+	, MODEL_EXEC_FLAG : Option[String]
 );
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
@@ -134,10 +135,18 @@ object MetadataAPIImpl extends MetadataAPI{
 
   private var tableStoreMap : Map[String,DataStore] = Map()
 
-  def CloseZKSession: Unit = {
+  def CloseZKSession: Unit = lock.synchronized{
     if( zkc != null ){
-      zkc.close()
-      zkc = null
+      logger.trace("Closing zookeeper session ..")
+      try{
+	zkc.close()
+	logger.trace("Closed zookeeper session ..")
+	zkc = null
+      }catch {
+	case e: Exception => {
+	  logger.error("Unexpected Error while closing zookeeper session: " + e.getMessage())
+	}
+      }
     }
   }
 
@@ -799,17 +808,45 @@ object MetadataAPIImpl extends MetadataAPI{
       valueList = valueList :+ value
 
       if (obj.DependencyJarNames != null) {
-	obj.DependencyJarNames.foreach(j => { 
+	obj.DependencyJarNames.foreach(j => {
+	  // do not upload if it already exist, minor optimization
+	  var loadObject = false
 	  if ( j.endsWith(".jar") ){
-	    keyList = keyList :+ j
 	    jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + j
 	    value = GetJarAsArrayOfBytes(jarName)
-	    logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + j)
-	    valueList = valueList :+ value
+	    var mObj:IStorage = null
+	    try{
+	      mObj = GetObject(j,jarStore)
+	    }catch{
+	      case e:ObjectNotFoundException => {
+		loadObject = true
+	      }
+	    }
+	    
+	    if( loadObject == false ){
+	      val ba =  mObj.Value.toArray[Byte]
+	      val fs = ba.length
+	      if(fs != value.length ){
+		logger.info("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
+			    jarName + "," + value.length + ") of the object(" + obj.FullNameWithVer + ")")
+		loadObject = true
+	      }
+	    }
+
+	    if( loadObject ){
+	      keyList = keyList :+ j
+	      logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + j)
+	      valueList = valueList :+ value
+	    }
+	    else{
+	      logger.trace("The jarfile " + j + " already exists in DB.")
+	    }
 	  }
 	})
       }
-      SaveObjectList(keyList,valueList,jarStore)
+      if( keyList.length > 0 ){
+	SaveObjectList(keyList,valueList,jarStore)
+      }
     }catch{
       case e:Exception => {
 	throw new InternalErrorException("Failed to Update the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
@@ -838,7 +875,7 @@ object MetadataAPIImpl extends MetadataAPI{
   def IsDownloadNeeded(jar: String, obj: BaseElemDef): Boolean = {
     try{
       if( jar == null ){
-	logger.error("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
+	logger.trace("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
 	false
       }
       val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
@@ -896,7 +933,7 @@ object MetadataAPIImpl extends MetadataAPI{
     try{
       //val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       if( obj.jarName == null ){
-	logger.error("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
+	logger.trace("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
 	return
       }
       var allJars = GetDependantJars(obj)
@@ -4193,6 +4230,15 @@ object MetadataAPIImpl extends MetadataAPI{
         
       logger.trace("COMPILER_WORK_DIR => " + COMPILER_WORK_DIR)
 
+      var MODEL_EXEC_FLAG = ""
+      val MODEL_EXEC_FLAG1 = configMap.APIConfigParameters.MODEL_EXEC_FLAG
+      if (MODEL_EXEC_FLAG1 == None ){
+    	  MODEL_EXEC_FLAG = "false"
+      }
+      else
+    	  MODEL_EXEC_FLAG = MODEL_EXEC_FLAG1.get
+        
+      logger.trace("MODEL_EXEC_FLAG => " + MODEL_EXEC_FLAG)
 
       metadataAPIConfig.setProperty("ROOT_DIR",rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT",gitRootDir)
@@ -4215,6 +4261,7 @@ object MetadataAPIImpl extends MetadataAPI{
       metadataAPIConfig.setProperty("MESSAGE_FILES_DIR",MESSAGE_FILES_DIR)
       metadataAPIConfig.setProperty("CONTAINER_FILES_DIR",CONTAINER_FILES_DIR)
       metadataAPIConfig.setProperty("COMPILER_WORK_DIR",COMPILER_WORK_DIR)
+      metadataAPIConfig.setProperty("MODEL_EXEC_LOG",MODEL_EXEC_FLAG)
       
       propertiesAlreadyLoaded = true;
 
