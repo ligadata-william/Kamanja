@@ -51,6 +51,8 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
   qc.groupName = inputConfig.adapterSpecificTokens(1)
   qc.instancePartitions = Array[Int]().toSet
 
+  LOG.info("KAFKA ADAPTER: allocating kafka adapter for "+qc.hosts.size+" broker hosts")
+
   private var numberOfErrors: Int = _
   private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService =  _
