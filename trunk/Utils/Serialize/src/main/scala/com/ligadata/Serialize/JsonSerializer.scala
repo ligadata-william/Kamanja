@@ -143,6 +143,10 @@ object JsonSerializer {
 	  typeDef = MdMgr.GetMdMgr.MakeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
 				 typ.TypeName,typ.Version.toInt)
 	}
+	case "ImmutableSetTypeDef" => {
+	  typeDef = MdMgr.GetMdMgr.MakeImmutableSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
+				 typ.TypeName,typ.Version.toInt)
+	}
 	case "TreeSetTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeTreeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
 				     typ.TypeName,typ.Version.toInt)
@@ -711,6 +715,17 @@ object JsonSerializer {
 		      ("DependantJars"   -> o.dependencyJarNames.toList))
 	  pretty(render(json))
 	}
+	case o:ImmutableSetTypeDef => {
+	  val json = (("ObjectType"      -> "ImmutableSetTypeDef") ~
+		      ("Operation"       -> operation) ~
+		      ("NameSpace"       -> o.nameSpace) ~
+		      ("Name"            -> o.name) ~
+		      ("Version"         -> o.ver) ~
+		      ("PhysicalName"    -> o.physicalName) ~
+		      ("JarName"         -> o.jarName) ~
+		      ("DependantJars"   -> o.dependencyJarNames.toList))
+	  pretty(render(json))
+	}
 	case o:TreeSetTypeDef => {
 	  val json = (("ObjectType"      -> "TreeSetTypeDef") ~
 		      ("Operation"       -> operation) ~
@@ -905,6 +920,25 @@ object JsonSerializer {
       }
       case o:SetTypeDef => {
 	val json =  (("MetadataType" -> "SetTypeDef") ~
+		     ("NameSpace" -> o.nameSpace) ~
+		     ("Name" -> o.name) ~
+		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
+		     ("TypeNameSpace" -> o.nameSpace ) ~
+		     ("TypeName" -> o.name ) ~
+		     ("PhysicalName" -> o.physicalName ) ~
+		     ("Version" -> o.ver) ~
+		     ("JarName" -> o.jarName) ~
+		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("Implementation" -> o.implementationName) ~
+		     ("Fixed" -> o.IsFixed) ~
+		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
+		     ("KeyTypeName" -> ObjType.asString(o.keyDef.tType))~
+		     ("TransactionId" -> o.tranId))
+
+	pretty(render(json))
+      }
+      case o:ImmutableSetTypeDef => {
+	val json =  (("MetadataType" -> "ImmutableSetTypeDef") ~
 		     ("NameSpace" -> o.nameSpace) ~
 		     ("Name" -> o.name) ~
 		     ("TypeTypeName" -> ObjTypeType.asString(o.tTypeType) ) ~
