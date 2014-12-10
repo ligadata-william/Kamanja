@@ -883,7 +883,7 @@ object NodePrinterHelpers extends LogTrait {
 		} else {
 			clsBuffer.append(s"   extends ModelBase {\n") 
 		}
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context()\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(tempTransId)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")

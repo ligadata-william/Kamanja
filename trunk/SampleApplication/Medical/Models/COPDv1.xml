@@ -40,7 +40,6 @@ AsthmaPMML.xml
 		<DerivedField name="SputumMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">system.SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -61,7 +60,6 @@ AsthmaPMML.xml
 		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<FieldRef field="gCtx"/>
-			    <Constant dataType="string">FilterArrays</Constant>
 			    <Constant dataType="string">system.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -82,7 +80,6 @@ AsthmaPMML.xml
 		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">FilterArrays</Constant>
 				    <Constant dataType="string">system.EnvCodes</Constant>
 				</Apply>
 		</DerivedField>
@@ -103,7 +100,6 @@ AsthmaPMML.xml
 		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">FilterArrays</Constant>
 				    <Constant dataType="string">system.CoughCodes</Constant>
 				</Apply>
 		</DerivedField>
@@ -124,7 +120,6 @@ AsthmaPMML.xml
 		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 				<Apply function="GetArray">
 					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">FilterArrays</Constant>
 				    <Constant dataType="string">system.DyspnoeaCodes</Constant>
 				</Apply>
 		</DerivedField>
