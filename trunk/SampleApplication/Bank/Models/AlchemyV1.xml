@@ -172,7 +172,7 @@
 		<DerivedField name="AlertHistoryUpdate" dataType="boolean" optype="categorical">
 			<Apply function="Put">
 			    <FieldRef field="gCtx"/>
-			    <Constant dataType="string">AlertHistory</Constant>
+			    <Constant dataType="string">System.AlertHistory</Constant>
 			    <FieldRef field="msg.ent_acc_num"/>
 				<FieldRef field="ClientAlertsToday"/>
 			</Apply>

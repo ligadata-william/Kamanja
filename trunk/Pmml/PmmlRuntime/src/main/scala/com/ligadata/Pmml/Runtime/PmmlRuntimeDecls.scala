@@ -13,7 +13,7 @@ trait LogTrait {
 }
 
 /** class Context(mgr : MdMgr) { <== we may want 'mgr' this at runtime ...*/
-class Context extends LogTrait {
+class Context(val xId : Long) extends LogTrait {
 	
 	override def equals(another : Any) : Boolean = {
 		(this == another)
