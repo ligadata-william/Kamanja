@@ -34,6 +34,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var dataStore: DataStore = null
     var containerType: BaseTypeDef = null
     var loadedAll: Boolean = false
+    var reload: Boolean = false
     var tableName: String = ""
     var objFullName: String = ""
   }
@@ -103,6 +104,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     def getModelsResult(key: String): scala.collection.mutable.Map[String, ModelResult] = {
       _modelsResult.getOrElse(key, null)
+    }
+
+    def setReloadFlag(containerName: String): Unit = {
+      val container = getMsgContainer(containerName.toLowerCase, false)
+      if (container != null)
+        container.reload = true
     }
 
     def getAllMessagesAndContainers = _messagesOrContainers.toMap
@@ -614,6 +621,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               loadMap(containerType, keys, newMsgOrContainer)
             }
             newMsgOrContainer.loadedAll = true
+            newMsgOrContainer.reload = false
           }
 
         }
@@ -724,8 +732,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt == null)
       return
-    // Persist current transaction objects
 
+    // Persist current transaction objects
     val messagesOrContainers = txnCtxt.getAllMessagesAndContainers
     val adapterUniqKeyValData = txnCtxt.getAllAdapterUniqKeyValData
     val modelsResult = txnCtxt.getAllModelsResult
@@ -740,6 +748,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     messagesOrContainers.foreach(v => {
       val mc = _messagesOrContainers.getOrElse(v._1, null)
       if (mc != null) {
+        if (v._2.reload)
+          mc.reload = true
         v._2.data.foreach(kv => {
           mc.data(kv._1) = kv._2
           try {
@@ -783,6 +793,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
     })
+  }
+
+  // Set Reload Flag
+  override def setReloadFlag(tempTransId: Long, containerName: String): Unit = _lock.synchronized {
+    // BUGBUG:: Set Reload Flag
+    val txnCtxt = getTransactionContext(tempTransId, true)
+    if (txnCtxt == null)
+      return
+    txnCtxt.setReloadFlag(containerName)
   }
 
   // Save Current State of the machine

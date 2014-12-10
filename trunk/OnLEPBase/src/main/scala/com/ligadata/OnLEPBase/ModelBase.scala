@@ -120,6 +120,9 @@ trait EnvContext {
 
   // Clear Intermediate results before Restart processing
   def clearIntermediateResults: Unit
+
+  // Set Reload Flag
+  def setReloadFlag(tempTransId: Long, containerName: String): Unit
 }
 
 trait ModelBase {
