@@ -127,7 +127,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       kvs(quad._1.PartitionId) = quad
     })
 
-    LOG.info("KAFKA-ADAPTER: Starting " +kvs.size+" threads to process partitions")
+    LOG.debug("KAFKA-ADAPTER: Starting " +kvs.size+" threads to process partitions")
 
     // Schedule a task to perform a read from a give partition.
     kvs.foreach(kvsElement =>{
@@ -156,11 +156,9 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           // Figure out which of the hosts is the leader for the given partition
           val leadBroker: String = getKafkaConfigId(findLeader(qc.hosts, partitionId))
 
-          // if the offset is -1, then the server wants to start from the begining, else, it means that the server
-          // knows what its doing and we start from that offset.
-          if (partition._2.Offset == -1) {
-            readOffset = getFirstOffset(leadBroker, partitionId)
-          } else {
+          // Start processing from either a beginning or a number specified by the OnLEPMananger
+          readOffset = getFirstOffset(leadBroker, partitionId)
+          if(partition._2.Offset > readOffset) {
             readOffset = partition._2.Offset
           }
 
@@ -213,7 +211,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
               messagesProcessed = messagesProcessed + 1
               bufferPayload.get(message)
 
-              LOG.info("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
+              LOG.debug("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
 
               //  Create a new EngineMessage and call the engine.
               if (execThread == null) {
@@ -270,7 +268,6 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
-      LOG.info("KAFKA-ADAPTER - Getting partitions for broker "+broker)
       val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
                                         KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
                                         KafkaConsumer_V2.FETCHSIZE,
@@ -278,14 +275,11 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       try {
         val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
         val metaData = metaDataResp.topicsMetadata
-        LOG.info("KAFKA-ADAPTER - got "+metaData.size+" Topic metadata for  "+broker)
         metaData.foreach(topicMeta => {
-          LOG.info("*KAFKA-ADAPTER - this topic has "+ topicMeta.partitionsMetadata.size +" partitions")
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.TopicName = qc.Name
-            LOG.info("creating a unique Key for "+uniqueKey.PartitionId + ","+uniqueKey.TopicName)
             partitionNames = uniqueKey :: partitionNames
           })
         })
@@ -294,10 +288,6 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
-    })
-    LOG.info("RETURNING ...");
-    partitionNames.foreach(pn => {
-      LOG.info("creating a unique Key = "+pn.TopicName + "..." + pn.PartitionId + " !")
     })
     return partitionNames.toArray
   }
@@ -495,7 +485,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
 
         try {
           while (hbRunning) {
-            LOG.info("Heartbeat checking status of " + hbConsumers.size + " broker(s)")
+            LOG.debug("Heartbeat checking status of " + hbConsumers.size + " broker(s)")
             hbConsumers.foreach {
               case (key,consumer) => {
                 val req = new TopicMetadataRequest  (topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
