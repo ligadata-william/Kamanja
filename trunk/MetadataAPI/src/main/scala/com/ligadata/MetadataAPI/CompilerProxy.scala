@@ -160,7 +160,13 @@ class CompilerProxy{
   def compilePmml(pmmlStr: String) : (String,ModelDef) = {
     try{
       /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
-      val injectLoggingStmts : Boolean = false 
+      var injectLoggingStmts : Boolean = false 
+
+      val model_exec_log = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_EXEC_LOG")
+      if(model_exec_log.equalsIgnoreCase("true")){
+	injectLoggingStmts = true
+      }
+
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
 				       Array(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")))
       val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir)

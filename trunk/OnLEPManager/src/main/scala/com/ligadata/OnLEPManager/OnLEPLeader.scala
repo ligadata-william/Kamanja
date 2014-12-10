@@ -74,6 +74,7 @@ object OnLEPLeader {
             if (expectedNodesAction.compareToIgnoreCase(action) == 0) {
               nodesStatus += extractedNode
               if (nodesStatus.size == curParticipents.size && expectedNodesAction == "stopped" && (nodesStatus -- curParticipents).isEmpty) {
+                envCtxt.PersistRemainingStateEntriesOnLeader
                 nodesStatus.clear
                 expectedNodesAction = "distributed"
 
@@ -225,7 +226,7 @@ object OnLEPLeader {
   }
 
   private def GetUniqueKeyValue(uk: String): String = {
-    envCtxt.getAdapterUniqueKeyValue(uk)
+    envCtxt.getAdapterUniqueKeyValue(0, uk)
   }
 
   private def StartNodeKeysMap(nodeKeysMap: Map[String, Any], receivedJsonStr: String, adapMaxPartsMap: Map[String, Int]): Boolean = {
@@ -412,6 +413,8 @@ object OnLEPLeader {
               // Not doing anything
             }
           }
+
+          envCtxt.PersistLocalNodeStateEntries
 
           // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
           val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId

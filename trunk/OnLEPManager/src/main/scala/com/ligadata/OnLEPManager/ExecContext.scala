@@ -31,6 +31,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } finally {
         // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
         envCtxt.setAdapterUniqueKeyValue(tempTransId, uk, uv)
+        envCtxt.commitData(tempTransId)
       }
     } catch {
       case e: Exception => {
