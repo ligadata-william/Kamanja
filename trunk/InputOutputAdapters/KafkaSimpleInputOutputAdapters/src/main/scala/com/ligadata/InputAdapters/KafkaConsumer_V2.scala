@@ -264,12 +264,13 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
 
     val topics: Array[String] = Array(qc.Name)
     val metaDataReq = new TopicMetadataRequest(topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
-    var partitionNames: List[PartitionUniqueRecordKey] = List()
+    var partitionNames: List[KafkaPartitionUniqueRecordKey] = List()
 
-    LOG.info("KAFKA ADAPTER - Querying kafka for Topic " + qc.Name + " partitions")
+    LOG.info("KAFKA-ADAPTER - Querying kafka for Topic " + qc.Name + " partitions")
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
+      LOG.info("KAFKA-ADAPTER - Getting partitions for broker "+broker)
       val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
                                         KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
                                         KafkaConsumer_V2.FETCHSIZE,
@@ -277,19 +278,26 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       try {
         val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
         val metaData = metaDataResp.topicsMetadata
+        LOG.info("KAFKA-ADAPTER - got "+metaData.size+" Topic metadata for  "+broker)
         metaData.foreach(topicMeta => {
+          LOG.info("*KAFKA-ADAPTER - this topic has "+ topicMeta.partitionsMetadata.size +" partitions")
           topicMeta.partitionsMetadata.foreach(partitionMeta => {
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             uniqueKey.PartitionId = partitionMeta.partitionId
             uniqueKey.TopicName = qc.Name
+            LOG.info("creating a unique Key for "+uniqueKey.PartitionId + ","+uniqueKey.TopicName)
             partitionNames = uniqueKey :: partitionNames
           })
         })
       } catch {
-        case e: java.lang.InterruptedException => LOG.info("KAFKA-ADAPTER: Communication problem with broker " + broker)
+        case e: java.lang.InterruptedException => LOG.error("KAFKA-ADAPTER: Communication problem with broker " + broker +" while getting a list of partitions")
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
+    })
+    LOG.info("RETURNING ...");
+    partitionNames.foreach(pn => {
+      LOG.info("creating a unique Key = "+pn.TopicName + "..." + pn.PartitionId + " !")
     })
     return partitionNames.toArray
   }
