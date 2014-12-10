@@ -206,14 +206,14 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
             }
 
             // Successfuly read from the Kafka Adapter - Process messages
-            fetchResp.messageSet(qc.groupName, partitionId).foreach(msgBuffer => {
+            fetchResp.messageSet(qc.Name, partitionId).foreach(msgBuffer => {
               val bufferPayload = msgBuffer.message.payload
               val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
               readOffset = msgBuffer.nextOffset
               messagesProcessed = messagesProcessed + 1
               bufferPayload.get(message)
 
-              LOG.debug("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
+              LOG.info("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
 
               //  Create a new EngineMessage and call the engine.
               if (execThread == null) {
