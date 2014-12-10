@@ -409,10 +409,9 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
       val response: kafka.javaapi.OffsetResponse = llConsumer.getOffsetsBefore(offsetRequest)
 
       // Return the value, or handle the error
-      if (!response.hasError) {
+      if (response.hasError) {
         LOG.error("KAFKA ADAPTER: error occured trying to find out the valid range for partition {"+partitionId+"}")
-      }
-      else {
+      } else {
         val offsets: Array[Long] = response.offsets(qc.Name.toString, partitionId)
         offset = offsets(0)
       }
