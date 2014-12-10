@@ -73,3 +73,8 @@ lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, OnLEPBas
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient)
 
+lazy val JsonDataGen = project.in(file("Utils/JsonDataGen"))
+
+
+
+
