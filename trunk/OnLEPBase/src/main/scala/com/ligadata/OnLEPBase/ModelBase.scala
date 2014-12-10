@@ -95,7 +95,6 @@ trait EnvContext {
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
   def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
-  def setObject(tempTransId: Long, containerName: String, elementkey: Any, value: MessageContainerBase): Unit
 
   def contains(tempTransId: Long, containerName: String, key: String): Boolean
   def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
@@ -103,15 +102,27 @@ trait EnvContext {
 
   // Adapters Keys & values
   def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String): Unit
-  def getAdapterUniqueKeyValue(key: String): String // No need of under TransactionId.
+  def getAdapterUniqueKeyValue(tempTransId: Long, key: String): String
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
   def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult]
 
+  // Final Commit for the given transaction
+  def commitData(tempTransId: Long): Unit
+
+  // Saving Status
+  def saveStatus(tempTransId: Long, status: String): Unit
+
   // Save State Entries on local node & on Leader
-  def PersistCurrentState : Unit
-  def PersistRemainingStateEntriesOnLeader : Unit
+  def PersistLocalNodeStateEntries: Unit
+  def PersistRemainingStateEntriesOnLeader: Unit
+
+  // Clear Intermediate results before Restart processing
+  def clearIntermediateResults: Unit
+
+  // Set Reload Flag
+  def setReloadFlag(tempTransId: Long, containerName: String): Unit
 }
 
 trait ModelBase {
