@@ -39,15 +39,15 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   /** Exists checking implemented in the EnvContext */
 
   def Contains(xId: Long, gCtx: EnvContext, containerName: String, key: String): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.contains(0, containerName, key) else false
+    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, key) else false
     itExists
   }
   def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(0, containerName, keys) else false
+    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, keys) else false
     itExists
   }
   def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(0, containerName, keys) else false
+    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, keys) else false
     allExist
   }
 
