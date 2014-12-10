@@ -115,7 +115,7 @@ class OnLEPMetadata {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to instantiate message object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
         }
       }
     } else {
@@ -218,7 +218,7 @@ class OnLEPMetadata {
           LOG.info("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate model object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        case e: Exception => LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
       }
     } else {
       LOG.error("Failed to instantiate model object :" + clsName)
@@ -430,11 +430,13 @@ object OnLEPMetadata {
   }
 
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
-
+    /*
     if (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
       MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, OnLEPConfiguration.metadataLocation, OnLEPConfiguration.metadataSchemaName, "")
     else if ((OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
       MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, "", OnLEPConfiguration.metadataSchemaName, OnLEPConfiguration.metadataLocation)
+*/
+    MetadataAPIImpl.InitMdMgrFromBootStrap(OnLEPConfiguration.configFile)
 
     loadedJars = tmpLoadedJars
     loader = tmpLoader
