@@ -74,7 +74,6 @@ class GenerateJsonData {
         if (line.toString() != null && line.toString().trim() != "" && line.length() > 1) {
           var dataString = line.toString;
           var dataResult = dataString.split(",", -1);
-          val messagetype = dataResult(0).toLowerCase().trim
           genData(line, formatMap, outfile)
         }
       }
@@ -96,19 +95,20 @@ class GenerateJsonData {
       dataString = line.toString;
       var dataResult = dataString.split(",", -1);
       var fldData = formatMap.getOrElse(dataResult(0), null);
-   
-      if ((fldData != null) && fldData.isInstanceOf[Array[String]] && dataResult.size == fldData.size) {
-        var index = 0
-        fldData.foreach { fld =>
-          if (index > 0)
-            jsonMap += (fld -> dataResult(index))
-          index = index + 1
-        }
-        finalMap += (dataResult(0) -> jsonMap)
-        writeFile(outputfile, finalMap)
-      }else
-          println("No MATCH --" + dataResult(0) + " data size " + dataResult.size + " :format size " +  fldData.size + " count" + count)
-     
+
+      if ((fldData != null) && fldData.isInstanceOf[Array[String]]) {
+        if (dataResult.size == fldData.size) {
+          var index = 0
+          fldData.foreach { fld =>
+            if (index > 0)
+              jsonMap += (fld -> dataResult(index))
+            index = index + 1
+          }
+          finalMap += (dataResult(0) -> jsonMap)
+          writeFile(outputfile, finalMap)
+        } else
+          println("No MATCH --" + dataResult(0) + " data size " + dataResult.size + " :format size " + fldData.size)
+      }
       count = count + 1
     } catch {
       case e: Exception => {
