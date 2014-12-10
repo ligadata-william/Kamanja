@@ -117,6 +117,9 @@ trait EnvContext {
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
   def PersistRemainingStateEntriesOnLeader: Unit
+
+  // Clear Intermediate results before Restart processing
+  def clearIntermediateResults: Unit
 }
 
 trait ModelBase {
