@@ -20,7 +20,8 @@
 		"FUNCTION_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
 		"CONCEPT_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
 		"MESSAGE_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages",
-		"CONTAINER_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers"
+		"CONTAINER_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers",
+		"MODEL_EXEC_LOG"		: "false"
 
 	}
 }
