@@ -1,7 +1,7 @@
 
 package com.ligadata.InputAdapters
 
-import com.ligadata.AdaptersConfiguration.{KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordKey, KafkaQueueAdapterConfiguration}
+import com.ligadata.AdaptersConfiguration.{KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaQueueAdapterConfiguration}
 import com.ligadata.OnLEPBase._
 import kafka.api._
 import kafka.common.TopicAndPartition
@@ -12,9 +12,7 @@ import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
 
-
-
-object KafkaConsumer_V2 extends InputAdapterObj {
+object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2
   val QUEUE_FETCH_REQUEST_TYPE = 1
   val METADATA_REQUEST_TYPE = "metadataLookup"
@@ -25,10 +23,10 @@ object KafkaConsumer_V2 extends InputAdapterObj {
   var CURRENT_BROKER: String = _
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
-  def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer_V2(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
+  def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaSimpleConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
 }
 
-class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
+class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
   val input = this
   private val lock = new Object()
   private val LOG = Logger.getLogger(getClass);
@@ -142,7 +140,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           var transactionId = partition._3
           val uniqueRecordValue = partition._4.Offset
 
-          var sleepDuration = KafkaConsumer_V2.SLEEP_DURATION
+          var sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
           var messagesProcessed: Long = 0
           var execThread: ExecContext = null
           val uniqueKey = new KafkaPartitionUniqueRecordKey
@@ -157,7 +155,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           val leadBroker: String = getKafkaConfigId(findLeader(qc.hosts, partitionId))
 
           // Start processing from either a beginning or a number specified by the OnLEPMananger
-          readOffset = getFirstOffset(leadBroker, partitionId)
+          readOffset = getKeyValueForPartition(leadBroker, partitionId, kafka.api.OffsetRequest.EarliestTime)
           if(partition._2.Offset > readOffset) {
             readOffset = partition._2.Offset
           }
@@ -175,13 +173,13 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           val brokerId = convertIp(leadBroker)
           val brokerName =brokerId.split(":")
           val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                            KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                            KafkaConsumer_V2.FETCHSIZE,
-                                            KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                            KafkaSimpleConsumer.FETCHSIZE,
+                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
           // Keep processing until you fail enough times.
           while (readerRunning) {
-            val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.Name, partitionId, readOffset, KafkaConsumer_V2.FETCHSIZE).build();
+            val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.Name, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
 
             // Call the broker and get a response.
             val readTmNs = System.nanoTime
@@ -194,7 +192,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
                          fetchResp.errorCode(qc.Name, partitionId))
               numberOfErrors = numberOfErrors + 1
 
-              if (numberOfErrors > KafkaConsumer_V2.MAX_FAILURES) {
+              if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
                 LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
                 if (consumer != null) {
                   consumer.close
@@ -213,7 +211,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
 
               LOG.debug("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
 
-              //  Create a new EngineMessage and call the engine.
+              // Create a new EngineMessage and call the engine.
               if (execThread == null) {
                 execThread = mkExecCtxt.CreateExecContext(input, partitionId, output, envCtxt)
               }
@@ -231,10 +229,10 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
             // initial frequency once something is present in the queue.
             if (messagesProcessed > 0) {
               messagesProcessed = 0
-              sleepDuration = KafkaConsumer_V2.SLEEP_DURATION
+              sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
             } else {
-              if ((sleepDuration * 2) > KafkaConsumer_V2.MAXSLEEP) {
-                sleepDuration = KafkaConsumer_V2.MAXSLEEP
+              if ((sleepDuration * 2) > KafkaSimpleConsumer.MAXSLEEP) {
+                sleepDuration = KafkaSimpleConsumer.MAXSLEEP
               } else {
                 sleepDuration = sleepDuration * 2
               }
@@ -261,17 +259,17 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
     // iterate through all the simple consumers - collect the metadata about this topic on each specified host
 
     val topics: Array[String] = Array(qc.Name)
-    val metaDataReq = new TopicMetadataRequest(topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
+    val metaDataReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
     var partitionNames: List[KafkaPartitionUniqueRecordKey] = List()
 
-    LOG.info("KAFKA-ADAPTER - Querying kafka for Topic " + qc.Name + " partitions")
+    LOG.info("KAFKA-ADAPTER - Querying kafka for Topic " + qc.Name + " metadata(partitions)")
 
     qc.hosts.foreach(broker => {
       val brokerName = broker.split(":")
       val partConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                        KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                        KafkaConsumer_V2.FETCHSIZE,
-                                        KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+                                        KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                        KafkaSimpleConsumer.FETCHSIZE,
+                                        KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
       try {
         val metaDataResp: kafka.api.TopicMetadataResponse = partConsumer.send(metaDataReq)
         val metaData = metaDataResp.topicsMetadata
@@ -284,7 +282,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
           })
         })
       } catch {
-        case e: java.lang.InterruptedException => LOG.error("KAFKA-ADAPTER: Communication problem with broker " + broker +" while getting a list of partitions")
+        case e: java.lang.InterruptedException => LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker +" while getting a list of partitions")
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
@@ -292,6 +290,23 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
     return partitionNames.toArray
   }
 
+  /**
+   * Return an array of PartitionUniqueKey/PartitionUniqueRecordValues whre key is the partion and value is the offset
+   * within the kafka queue where it begins.
+   * @return
+   */
+  def getAllPartitionBeginValuess: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+    return getKeyValues(kafka.api.OffsetRequest.EarliestTime)
+  }
+
+  /**
+   * Return an array of PartitionUniqueKey/PartitionUniqueRecordValues whre key is the partion and value is the offset
+   * within the kafka queue where it eds.
+   * @return
+   */
+  def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+    return getKeyValues(kafka.api.OffsetRequest.LatestTime)
+  }
 
   override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
     val key = new KafkaPartitionUniqueRecordKey
@@ -335,10 +350,10 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
         brokers.foreach(broker => {
           // Create a connection to this broker to obtain the metadata for this broker.
           val brokerName = broker.split(":")
-          val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                              KafkaConsumer_V2.FETCHSIZE, KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+          val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                              KafkaSimpleConsumer.FETCHSIZE, KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
           val topics: Array[String] = Array(qc.Name)
-          val llReq = new TopicMetadataRequest(topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
+          val llReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
 
           // get the metadata on the llConsumer
           try {
@@ -374,20 +389,39 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
     return leaderMetadata;
   }
 
+
+  /*
+* getKeyValues - get the values from the OffsetMetadata call and combine them into an array
+ */
+  private def getKeyValues (time:Long): Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    var infoList = List[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+    qc.instancePartitions.foreach(partitionId => {
+      val offset = getKeyValueForPartition(getKafkaConfigId(findLeader(qc.hosts, partitionId)), partitionId, time)
+      val rKey = new KafkaPartitionUniqueRecordKey
+      val rValue = new KafkaPartitionUniqueRecordValue
+      rKey.PartitionId = partitionId
+      rKey.TopicName = qc.Name
+      rValue.Offset = offset
+      infoList = (rKey,rValue)::infoList
+    })
+    return infoList.toArray
+  }
+
   /**
    * get the valid offset range in a given partition.
    */
-  private def getFirstOffset (leadBroker: String, partitionId: Int): Long = {
-    val timeFrame: Long = kafka.api.OffsetRequest.EarliestTime;
+  def getKeyValueForPartition(leadBroker: String, partitionId: Int, timeFrame: Long): Long = {
+    //val timeFrame: Long = kafka.api.OffsetRequest.LatestTime
+   // val timeFrame = -1
     var offset: Long = -1
     val brokerId = convertIp(leadBroker)
     var llConsumer: kafka.javaapi.consumer.SimpleConsumer = null
     val brokerName =leadBroker.split(":")
     try {
       llConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                                             KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                                             KafkaConsumer_V2.FETCHSIZE,
-                                                             KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+                                                             KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                             KafkaSimpleConsumer.FETCHSIZE,
+                                                             KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
       // Set up the request object
       val jtap: kafka.common.TopicAndPartition = kafka.common.TopicAndPartition(qc.Name.toString, partitionId)
@@ -425,7 +459,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
         // Either new metadata leader is not available or the the new broker has not been updated in kafka
         if (leaderMetaData == null || leaderMetaData.leader == null ||
             (leaderMetaData.leader.get.host.equalsIgnoreCase(oldBroker) && i == 0)) {
-          Thread.sleep(KafkaConsumer_V2.SLEEP_DURATION)
+          Thread.sleep(KafkaSimpleConsumer.SLEEP_DURATION)
         }
         else {
           return leaderMetaData
@@ -475,9 +509,9 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
         qc.hosts.foreach(host => {
           val brokerName = host.split(":")
           hbConsumers(host) = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-                                                KafkaConsumer_V2.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-                                                KafkaConsumer_V2.FETCHSIZE,
-                                                KafkaConsumer_V2.METADATA_REQUEST_TYPE)
+                                                KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                KafkaSimpleConsumer.FETCHSIZE,
+                                                KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
         })
 
         val topics = Array[String](qc.Name)
@@ -488,7 +522,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
             LOG.debug("Heartbeat checking status of " + hbConsumers.size + " broker(s)")
             hbConsumers.foreach {
               case (key,consumer) => {
-                val req = new TopicMetadataRequest  (topics, KafkaConsumer_V2.METADATA_REQUEST_CORR_ID)
+                val req = new TopicMetadataRequest  (topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
                 val resp: kafka.api.TopicMetadataResponse = consumer.send(req)
                 resp.topicsMetadata.foreach(metaTopic => {
                   if (metaTopic.partitionsMetadata.size != hbTopicPartitionNumber) {
@@ -503,7 +537,7 @@ class KafkaConsumer_V2(val inputConfig: AdapterConfiguration, val output: Array[
               }
             }
             try {
-              Thread.sleep(KafkaConsumer_V2.MONITOR_FREQUENCY)
+              Thread.sleep(KafkaSimpleConsumer.MONITOR_FREQUENCY)
             } catch {
               case e: java.lang.InterruptedException => LOG.info("Shutting down the Monitor heartbeat")
                 hbRunning = false
