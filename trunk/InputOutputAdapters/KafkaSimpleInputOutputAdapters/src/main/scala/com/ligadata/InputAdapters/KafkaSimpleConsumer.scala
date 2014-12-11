@@ -206,22 +206,33 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               val bufferPayload = msgBuffer.message.payload
               val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
               readOffset = msgBuffer.nextOffset
-              messagesProcessed = messagesProcessed + 1
-              bufferPayload.get(message)
+              breakable {
+                messagesProcessed = messagesProcessed + 1
 
-              LOG.debug("KAFKA-ADAPTER: Broker: "+leadBroker+"_"+partitionId+ " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
+                // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
+                // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
+                // range errors on the read, we simple ignore the message by with the offset specified by the engine.
+                if (msgBuffer.offset == partition._2.Offset) {
+                  LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8")+" - previously processed ")
+                  break
+                }
 
-              // Create a new EngineMessage and call the engine.
-              if (execThread == null) {
-                execThread = mkExecCtxt.CreateExecContext(input, partitionId, output, envCtxt)
+                // OK, present this message to the Engine.
+                bufferPayload.get(message)
+                LOG.debug("KAFKA-ADAPTER: Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " Message: " + new String(message, "UTF-8"))
+
+                // Create a new EngineMessage and call the engine.
+                if (execThread == null) {
+                  execThread = mkExecCtxt.CreateExecContext(input, partitionId, output, envCtxt)
+                }
+
+                uniqueVal.Offset = msgBuffer.offset
+                execThread.execute(transactionId, new String(message, "UTF-8"), qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, uniqueVal.Offset < uniqueRecordValue)
+
+                val key = Category + "/" + qc.Name + "/evtCnt"
+                cntrAdapter.addCntr(key, 1) // for now adding each row
+                transactionId = transactionId + 1
               }
-
-              uniqueVal.Offset = msgBuffer.offset
-              execThread.execute(transactionId, new String(message, "UTF-8"),qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, uniqueVal.Offset < uniqueRecordValue)
-
-              val key = Category + "/" + qc.Name + "/evtCnt"
-              cntrAdapter.addCntr(key, 1) // for now adding each row
-              transactionId = transactionId + 1
 
             })
 
