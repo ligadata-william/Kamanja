@@ -19,11 +19,21 @@ trait MetadataAPIService extends HttpService {
 
   val metadataAPIRoute =
     pathPrefix("api") {
-      (get & path("GetModel" / Segment / Segment / Segment / Segment)) { (nameSpace, name, formatType, version) =>
-        requestContext =>
-          val getModelService = actorRefFactory.actorOf(Props(new GetModelService(requestContext)))
-          getModelService ! GetModelService.Process(nameSpace, name, formatType, version)
-      } ~
+      (get & path("GetAllModelDefs" / Segment)) { (formatType) =>
+          requestContext =>
+            val allModelDefsService = actorRefFactory.actorOf(Props(new GetAllModelDefsService(requestContext)))
+            allModelDefsService ! GetAllModelDefsService.Process(formatType)
+        } ~
+        (get & path("GetModelDef" / Segment / Segment)) { (objectName, formatType) =>
+          requestContext =>
+            val modelDefService = actorRefFactory.actorOf(Props(new GetModelDefService(requestContext)))
+            modelDefService ! GetModelDefService.ProcessAll(objectName, formatType)
+        } ~
+        (get & path("GetModelDef" / Segment / Segment / Segment)) { (objectName, version, formatType) =>
+          requestContext =>
+            val modelDefService = actorRefFactory.actorOf(Props(new GetModelDefService(requestContext)))
+            modelDefService ! GetModelDefService.Process(objectName, version, formatType)
+        } ~
         (put & path("AddModel")) {
           entity(as[String]) { pmmlStr =>
             requestContext =>
@@ -31,10 +41,10 @@ trait MetadataAPIService extends HttpService {
               addModelService ! AddModelService.Process(pmmlStr)
           }
         } ~
-        (put & path("RemoveModel" / Segment / Segment / Segment)) { (nameSpace, name, version) =>
+        (delete & path("RemoveModel" / Segment / Segment)) { (modelName, version) =>
           requestContext =>
             val removeModelService = actorRefFactory.actorOf(Props(new RemoveModelService(requestContext)))
-            removeModelService ! RemoveModelService.Process(nameSpace, name, version)
+            removeModelService ! RemoveModelService.Process(modelName, version)
         } ~
         (put & path("UpdateModel")) {
           entity(as[String]) { pmmlStr =>
@@ -42,16 +52,6 @@ trait MetadataAPIService extends HttpService {
               val updateModelService = actorRefFactory.actorOf(Props(new UpdateModelService(requestContext)))
               updateModelService ! UpdateModelService.Process(pmmlStr)
           }
-        } ~
-        (get & path("GetModelDef" / Segment / Segment / Segment / Segment)) { (nameSpace, objectName, formatType, version) =>
-          requestContext =>
-            val modelDefService = actorRefFactory.actorOf(Props(new GetModelService(requestContext)))
-            modelDefService ! GetModelService.Process(nameSpace, objectName, formatType, version)
-        } ~
-        (get & path("GetAllModelDefs" / Segment)) { (formatType) =>
-          requestContext =>
-            val allModelDefsService = actorRefFactory.actorOf(Props(new GetAllModelDefsService(requestContext)))
-            allModelDefsService ! GetAllModelDefsService.Process(formatType)
         } ~
         (get & path("GetAllMessageDefs" / Segment)) { (formatType) =>
           requestContext =>
