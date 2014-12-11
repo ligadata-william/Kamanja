@@ -213,7 +213,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
                 // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
                 // range errors on the read, we simple ignore the message by with the offset specified by the engine.
                 if (msgBuffer.offset == partition._2.Offset) {
-                  LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8")+" - previously processed ")
+                  LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8")+" - previously processed! ")
                   break
                 }
 
