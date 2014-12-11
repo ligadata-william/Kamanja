@@ -47,7 +47,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   qc.dependencyJars = inputConfig.dependencyJars
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => convertIp(str))
   qc.groupName = inputConfig.adapterSpecificTokens(1)
-  qc.instancePartitions = Array[Int]().toSet
+  qc.instancePartitions = Array[Int]().toSet  // Some methods on this class require this to be set... maybe need to create at instanciation time
 
   LOG.info("KAFKA ADAPTER: allocating kafka adapter for "+qc.hosts.size+" broker hosts")
 
