@@ -36,6 +36,11 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 	  	
+	  	/** debug helper */
+	  	val ofInterest : Boolean = (ctx.elementStack.filter( elem => elem.isInstanceOf[xDerivedField] && elem.asInstanceOf[xDerivedField].name == "AlertHistoryUpdate").size > 0)
+	  	if (ofInterest) {
+	  		val stop : Int = 0
+	  	}
 	  	
 	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 	  	var winningKey : String = simpleKey
@@ -46,7 +51,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 	  		breakable {
 	  		  	simpleKeysToTry.foreach( key => {
-	  		  		logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+	  		  		logger.info(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
 	  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 	  		  		if (macroDef != null) {
 	  		  			logger.trace(s"selectMacro ...found macroDef with $key")
@@ -343,7 +348,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 */
 	def generateDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)], fcnArgValues : ArrayBuffer[(String,String,Boolean)], classUpdateClassName : String, parameterIndices : Array[Int]) : String = {
 		val buffer : StringBuilder = new StringBuilder
-		buffer.append(s"new $classUpdateClassName(")
+		buffer.append(s"new $classUpdateClassName(ctx, ")
 		var cnt : Int = 0
 		val paramCnt : Int = parameterIndices.size
 		if (argTypes.size == 5) {
@@ -352,11 +357,13 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		parameterIndices.foreach( idx => {
 			val (typStr, isCntnr, elemdef) : (String,Boolean,BaseTypeDef) = argTypes(idx)
 			val (argName, exprStr, isContainer) : (String,String,Boolean) = fcnArgValues(idx)
-			val childNode = if (! isContainer) node.Children.apply(cnt) else null
-			if (isContainer) {
+			//val childNode = if (! isContainer) node.Children.apply(cnt) else null
+			val childNode = if (! elemdef.isInstanceOf[ContainerTypeDef]) node.Children.apply(cnt) else null
+			if (elemdef.isInstanceOf[ContainerTypeDef]) {
 				val appropriateTypeArgs = argTypes(cnt)
 				val (typeStr, isCtnr, elem) : (String,Boolean,BaseTypeDef) = appropriateTypeArgs
-				buffer.append(s"ctx.valueFor(${'"'}$argName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$typeStr]")
+				val whichType : String = typStr
+				buffer.append(s"ctx.valueFor(${'"'}$argName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
 			} else {
 				if (childNode != null && childNode.isInstanceOf[xFieldRef] && !(elemdef.isInstanceOf[ContainerTypeDef])) {
 					val argNameQuoted : String = if (argName.contains(s"${'"'}")) argName else s"${'"'}$argName${'"'}"
@@ -369,6 +376,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 			if (cnt < paramCnt) {
 				buffer.append(", ")
 			}
+			val doesExprSoFar : String = buffer.toString
+			val letsLook : Boolean = true
 		})
 		/** 
 		 *  By convention, the name of the function in the class that executes is the name of the function that appears 

@@ -1009,22 +1009,32 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "MessageContainerBase")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "MessageContainerBase")), null)
-		//mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
+
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseContainer")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseContainer")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseContainer")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseContainer")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseContainer")), null)
+
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseMsg")), null)
+
+		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Any")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
 
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "QueueOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ListOfAny")), null)
@@ -1489,13 +1499,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	  		
 		 */
 		val incrementByMacroStringFixed : String =  """
-	class %1%_%2%_incrementBy(var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%.%2% += %3%; true }
 	} """
 		
 		val incrementByMacroStringMapped : String =  """
-	class %1%_%2%_incrementBy(var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%(%2%) = %1%(%2%) + %3%; true }
 	} """
@@ -1523,123 +1533,202 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 
 		/** **************************************************************************************************************/
 					
-		val putGlobalContainerMacroStringFixed : String =  """
-	class %1%_%2%_%3%_%4%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+		val putGlobalContainerFixedMacroTemplate : String =  """
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(%2%, %3%.%4%.toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.%4%.toString, %5%); true }
 	} """
 		
-		val putGlobalContainerMacroStringMapped : String =   """
-	class %1%_%2%_%3%_%4%_Put(var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+		val putGlobalContainerMappedMacroTemplate : String =  """
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(%2%, %3%(%4%).toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get(%4%).asInstanceOf[%4_type%].toString, %5%); true }
 	} """
-/*
+		
+		/**	EnvContext write access methods:
+		 * 	  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
+		 *	  def setObject(tempTransId: Long, containerName: String, key: Any, value: MessageContainerBase): Unit
+		 */
 		mgr.AddMacro(MdMgr.sysNS
-					,"Put"
+					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "String")
+						, ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "String")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "String")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Long")
+					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Long")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Long")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Int")
+					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Int")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Int")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Double")
+					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Double")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Double")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Float")
+					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
 		  				
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Float")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-*/
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Float")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-/*
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Any")
+					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
 		  				
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "BaseContainer"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Any")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-*/
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "Any")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
 					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-/*
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-*/
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-/*
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-*/
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-/*
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseMsg"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "BaseContainer"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-*/
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext"), ("containerName", MdMgr.sysNS, "String"), ("elemContainer", MdMgr.sysNS, "MessageContainerBase"), ("elementkey", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerMacroStringFixed,putGlobalContainerMacroStringMapped))	  
-		  				
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
 
 		/** **************************************************************************************************************/
 
@@ -1710,8 +1799,10 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
 					
+		/** 
+			DowncastArrayMbr Macro used to cast arrays of MessageContainerBase to arrays of some specified type
+		 */			
 		val DowncastArrayMbrTemplate : String =   """%1%.map(itm => itm.asInstanceOf[%2%])"""
-
 					
 		mgr.AddMacro(MdMgr.sysNS
 					, "DownCastArrayMembers"
@@ -1719,8 +1810,128 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("arrayExpr", MdMgr.sysNS, "ArrayOfAny"), ("mbrType", MdMgr.sysNS, "Any"))
 					, fcnMacrofeatures
 					, (DowncastArrayMbrTemplate,DowncastArrayMbrTemplate))	  
-		  
-		  
+					
+					
+		/** 
+		    Catalog EnvContext read access macros.  Inject the transaction id as the first arg   
+
+			def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
+			def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
+			
+			def contains(tempTransId: Long, containerName: String, key: String): Boolean
+			def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
+			def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
+		*/
+
+		val getAllObjectsMacroTemplate : String =   """GetArray(ctx.xId, %1%, %2%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetArray"
+					, (MdMgr.sysNS, "ArrayOfMessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (getAllObjectsMacroTemplate,getAllObjectsMacroTemplate)
+					,-1)	  
+
+		val getObjectMacroTemplate : String =   """Get(ctx.xId, %1%, %2%, %3%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Float"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Double"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+		val containsMacroTemplate : String =   """Contains(ctx.xId, %1%, %2%, %3%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Contains"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (containsMacroTemplate,containsMacroTemplate)
+					,-1)	  
+
+		val containsAnyMacroTemplate : String =   """ContainsAny(ctx.xId, %1%, %2%, %3%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "ContainsAny"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (containsAnyMacroTemplate,containsAnyMacroTemplate)
+					,-1)	  
+
+		val containsAllMacroTemplate : String =   """ContainsAll(ctx.xId, %1%, %2%, %3%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "ContainsAll"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (containsAllMacroTemplate,containsAllMacroTemplate)
+					,-1)	  
+
 	}
 
 }

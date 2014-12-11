@@ -62,6 +62,11 @@ class MdMgr {
   private var macroDefs = scala.collection.mutable.Map[String, MacroDef]()
   private var macroDefSets = new HashMap[String, Set[MacroDef]] with MultiMap[String, MacroDef]
 
+  // Config objects
+  private var clusters = new HashMap[String, ClusterInfo]
+  private var nodes = new HashMap[String, NodeInfo]
+  private var queues = new HashMap[String, QueueInfo]
+
   def SetLoggerLevel(level: Level){
     logger.setLevel(level);
   }
@@ -76,6 +81,9 @@ class MdMgr {
     compilerFuncDefs.clear
     macroDefs.clear
     macroDefSets.clear
+    clusters.clear
+    nodes.clear
+    queues.clear
   }
 
 
@@ -109,6 +117,15 @@ class MdMgr {
       case "MacroDefSets" => {
 	macroDefSets.clear
       }
+      case "Clusters" => {
+	clusters.clear
+      }
+      case "Nodes" => {
+	nodes.clear
+      }
+      case "Queues" => {
+	queues.clear
+      }
       case _ => {
 	logger.error("Unknown object type " + objectType + " in truncate function")
       }
@@ -126,6 +143,9 @@ class MdMgr {
     compilerFuncDefs.foreach(obj  => {logger.trace("CompilerFunction Key = " + obj._1)})
     macroDefs.foreach(obj  => {logger.trace("Macro Key = " + obj._1)})
     macroDefSets.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+    clusters.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+    nodes.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+    queues.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
   }
 
   private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Int): Option[T] = {
@@ -2595,6 +2615,7 @@ class MdMgr {
 	  SetBaseElem(jd,nameSpace,name,version.toInt,name,depJars)
 	  jd
 	}
+
   	// External Functions -- End 
 
 }

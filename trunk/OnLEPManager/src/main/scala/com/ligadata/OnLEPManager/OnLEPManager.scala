@@ -70,6 +70,7 @@ class ConnHandler(var socket: Socket, var mgr: OnLEPManager) extends Runnable {
 }
 
 object OnLEPConfiguration {
+  var configFile: String = _
   var allConfigs: Properties = _
   var metadataStoreType: String = _
   var metadataSchemaName: String = _
@@ -655,7 +656,8 @@ class OnLEPManager {
       return
     }
 
-    val (loadConfigs, failStr) = Utils.loadConfiguration(cfgfile.toString, true)
+    OnLEPConfiguration.configFile = cfgfile.toString
+    val (loadConfigs, failStr) = Utils.loadConfiguration(OnLEPConfiguration.configFile, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
       Shutdown(1)

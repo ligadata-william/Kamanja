@@ -890,13 +890,12 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
-		dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-		logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+	logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
-		logger.fatal("Invalid Directory " + dirName)
-		return
+	return
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
@@ -962,24 +961,30 @@ object TestMetadataAPI{
   }
 
   def IsValidDir(dirName:String) : Boolean = {
-    val fl = new java.io.File(dirName).listFiles
-    if( fl != null) true else false
+    val iFile = new File(dirName)
+    if ( ! iFile.exists ){
+      logger.error("The File Path (" + dirName + ") is not found: ")
+      false
+    }
+    else if ( ! iFile.isDirectory ){
+      logger.error("The File Path (" + dirName + ") is not a directory: ")
+      false
+    }
+    else
+      true
   }
 
 
   def AddMessage{
     try{
-
-	  var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
-	  if ( dirName == null  ){
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
+      if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
 	logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
-	  }
-
-      if ( ! IsValidDir(dirName) ){
-	logger.fatal("Invalid Directory " + dirName)
-	return
       }
+
+      if( ! IsValidDir(dirName) )
+	return
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
@@ -1052,6 +1057,10 @@ object TestMetadataAPI{
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
 	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
+
+      if( ! IsValidDir(dirName) )
+	return
+
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if ( pmmlFiles.length == 0 ){
 	logger.fatal("No model files in the directory " + dirName)
@@ -1100,6 +1109,10 @@ object TestMetadataAPI{
 	dirName = "/tmp/OnLEPInstall"
 	logger.info("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
+
+      if( ! IsValidDir(dirName) )
+	return
+
       val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
       if ( jarFiles.length == 0 ){
 	logger.fatal("No jar files in the directory " + dirName)
@@ -1147,6 +1160,10 @@ object TestMetadataAPI{
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
 	logger.info("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
+
+      if( ! IsValidDir(dirName) )
+	return
+
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
 	logger.fatal("No function files in the directory " + dirName)
@@ -1209,6 +1226,10 @@ object TestMetadataAPI{
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
 	logger.info("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
+
+      if( ! IsValidDir(dirName) )
+	return
+
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
 	logger.fatal("No concept files in the directory " + dirName)
@@ -1270,6 +1291,10 @@ object TestMetadataAPI{
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
 	logger.info("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
+
+      if( ! IsValidDir(dirName) )
+	return
+
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( typeFiles.length == 0 ){
 	logger.fatal("No type files in the directory " + dirName)

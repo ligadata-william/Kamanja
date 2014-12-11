@@ -650,3 +650,68 @@ class ModelDef extends BaseElemDef {
 class JarDef extends BaseElemDef{
   def typeString: String = PhysicalName
 }
+
+
+class NodeInfo {
+  var nodeId: String = _
+  var nodePort: Int = _
+  var nodeIpAddr: String = "localhost"
+  var jarPath: String = "/tmp/OnLEPInstall"
+  var clusterId: String = _
+
+  def NodeId: String = nodeId
+  def NodePort: Int = nodePort
+  def NodeIpAddr: String = nodeIpAddr
+  def JarPath: String = jarPath
+  def Key: String = nodeId
+  def ClusterId(id:String) : Unit = clusterId = id
+  def ClusterId: String = clusterId
+}
+
+class ClusterInfo {
+  var clusterId: String = _
+  var clusterName: String = _
+  var envContext: String = _
+
+  def ClusterId: String = clusterId
+  def ClusterName: String = clusterName
+  def Key: String = ClusterId
+}
+
+object QueueType extends Enumeration {
+  type Type = Value
+  val qFile, qKafka = Value
+
+  def asString(typ : Type) : String = {
+     val str = typ.toString match {
+	case "qFile"  => "FILE"
+	case "qKafka" => "KAFKA"
+	case _ => "Unknown"
+      }
+      str
+  }
+
+}
+
+import QueueType._
+
+
+class QueueInfo {
+  var queueName: String = _
+  var adapterType: QueueType.Type = qFile
+  var adapterName: String = _
+  var adapterClass: String = _
+  var adapterJars: Array[String] = new Array[String](0)
+  var adapterFile: String = _
+  var adapterFileFormat: ObjFormatType.FormatType = fCSV
+  var zooKeeperConnectString: String = _
+
+  def QueueName: String = queueName
+  def AdapterType: QueueType.Type = adapterType
+  def AdapterName: String = adapterName
+  def AdapterClass: String = adapterClass
+  def AdapterJars: Array[String] = adapterJars
+  def AdapterFile: String = adapterFile
+  def AdapterFileFormat : ObjFormatType.FormatType = adapterFileFormat
+  def ZooKeeperConnectString : String = zooKeeperConnectString
+}

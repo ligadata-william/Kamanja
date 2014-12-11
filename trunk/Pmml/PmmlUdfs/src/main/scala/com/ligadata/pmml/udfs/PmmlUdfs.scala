@@ -38,16 +38,16 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
 
   /** Exists checking implemented in the EnvContext */
 
-  def Contains(gCtx: EnvContext, containerName: String, key: String): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.contains(0, containerName, key) else false
+  def Contains(xId: Long, gCtx: EnvContext, containerName: String, key: String): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, key) else false
     itExists
   }
-  def ContainsAny(gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(0, containerName, keys) else false
+  def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, keys) else false
     itExists
   }
-  def ContainsAll(gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(0, containerName, keys) else false
+  def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
+    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, keys) else false
     allExist
   }
 
@@ -127,49 +127,32 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    * FIXME:  Perhaps we should support the various flavor of keys?
    */
 
-  def Get(gCtx: EnvContext, containerId: String, key: String): MessageContainerBase = {
-    gCtx.getObject(0, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: String): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.toString)
   }
 
-  def Get(gCtx: EnvContext, containerId: String, key: Int): MessageContainerBase = {
-    gCtx.getObject(0, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Int): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.toString)
   }
 
-  def Get(gCtx: EnvContext, containerId: String, key: Long): MessageContainerBase = {
-    gCtx.getObject(0, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Long): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.toString)
   }
 
-  def Get(gCtx: EnvContext, containerId: String, key: Double): MessageContainerBase = {
-    gCtx.getObject(0, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Double): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.toString)
   }
 
-  def Get(gCtx: EnvContext, containerId: String, key: Float): MessageContainerBase = {
-    gCtx.getObject(0, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Float): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.toString)
   }
 
   /**
    * EnvContext GetArray functions
-   * FIXME:  Perhaps we should support the various flavor of keys?
    */
 
-  def GetArray(gCtx: EnvContext, containerId: String, key: String): Array[MessageContainerBase] = {
-    gCtx.getAllObjects(0, containerId)
-  }
-
-  def GetArray(gCtx: EnvContext, containerId: String, key: Int): Array[MessageContainerBase] = {
-    gCtx.getAllObjects(0, containerId)
-  }
-
-  def GetArray(gCtx: EnvContext, containerId: String, key: Long): Array[MessageContainerBase] = {
-    gCtx.getAllObjects(0, containerId)
-  }
-
-  def GetArray(gCtx: EnvContext, containerId: String, key: Double): Array[MessageContainerBase] = {
-    gCtx.getAllObjects(0, containerId)
-  }
-
-  def GetArray(gCtx: EnvContext, containerId: String, key: Float): Array[MessageContainerBase] = {
-    gCtx.getAllObjects(0, containerId)
+  def GetArray(xId: Long, gCtx: EnvContext, containerId: String): Array[MessageContainerBase] = {
+    gCtx.getAllObjects(xId, containerId)
   }
 
   /**
@@ -177,28 +160,28 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    * FIXME:  Perhaps we should support the various flavor of keys?
    */
 
-  def Put(gCtx: EnvContext, containerId: String, key: String, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(0, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: String, value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.toString, value)
     true
   }
 
-  def Put(gCtx: EnvContext, containerId: String, key: Int, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(0, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Int, value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.toString, value)
     true
   }
 
-  def Put(gCtx: EnvContext, containerId: String, key: Long, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(0, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Long, value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.toString, value)
     true
   }
 
-  def Put(gCtx: EnvContext, containerId: String, key: Double, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(0, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Double, value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.toString, value)
     true
   }
 
-  def Put(gCtx: EnvContext, containerId: String, key: Float, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(0, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Float, value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.toString, value)
     true
   }
 
