@@ -33,21 +33,42 @@ object TestMessageDefImpl extends LogTrait {
 
     //  val (classStr: String, msgDef: ContainerDef) = msg.processMsgDef(ccptjson.toString(), "JSON", MdMgr.GetMdMgr)
 
-    //   val json: String = Source.fromFile("/tmp/inputMsg/HL7_MsgDef_2.json").getLines.mkString
+    val json: String = Source.fromFile("/tmp/Mapped/Messages/hl7.json").getLines.mkString
 
-    //   val (classStr: String, msgDef: ContainerDef) = msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
+    val (classStr: String, msgDef: ContainerDef) = msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
+     MdMgr.GetMdMgr.AddContainer(msgDef)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 100)
 
-    //    val inpjson: String = Source.fromFile("/tmp/inputMsg/InpatientClaim_MsgDef_2.json").getLines.mkString
+    val inpjson: String = Source.fromFile("/tmp/Mapped/Messages/inpatientclaim.json").getLines.mkString
+    val (classStrIn: String, msgDefIn: ContainerDef) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
+    MdMgr.GetMdMgr.AddContainer(msgDefIn)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "inpatientclaim", 1, 100)
 
-    //   val (classStrIn: String, msgDefIn: ContainerDef) = msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
+    val idjson: String = Source.fromFile("/tmp/Mapped/Messages/outpatientclaim.json").getLines.mkString
+    val (classStrOut1: String, msgDefOut1: ContainerDef) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
+    MdMgr.GetMdMgr.AddContainer(msgDefOut1)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 100)
 
-    val outpjson: String = Source.fromFile("/tmp/inputMsg/OutpatientClaim_MsgDef_2.json").getLines.mkString
+    val benjson: String = Source.fromFile("/tmp/Mapped/Messages/beneficiary.json").getLines.mkString
+    val (classStrBen: String, msgDefBen: ContainerDef) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
+
+
+    //mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, baseTypesVer)
+    //	mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
+
+    val outpjsonI: String = Source.fromFile("/tmp/Mapped/Containers/IdCodeDim.json").getLines.mkString
+
+    val (classStrOutI: String, msgDefOutI: ContainerDef) = msg.processMsgDef(outpjsonI.toString(), "JSON", MdMgr.GetMdMgr)
+   MdMgr.GetMdMgr.AddContainer(msgDefOutI)
+    MdMgr.GetMdMgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 100)
+
+    val outpjson: String = Source.fromFile("/tmp/Mapped/Containers/hcpcsCodes.json").getLines.mkString
 
     val (classStrOut: String, msgDefOut: ContainerDef) = msg.processMsgDef(outpjson.toString(), "JSON", MdMgr.GetMdMgr)
 
-    //  val benjson: String = Source.fromFile("/tmp/inputMsg/Beneficiary_MsgDef_1.json").getLines.mkString
+    //    val outpjsonh: String = Source.fromFile("/tmp/testing/hcpcsCodes.json").getLines.mkString
 
-    //  val (classStrBen: String, msgDefBen: ContainerDef) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
+    // val (classStrOuth: String, msgDefOuth: ContainerDef) = msg.processMsgDef(outpjsonh.toString(), "JSON", MdMgr.GetMdMgr)
 
     //MdMgr.GetMdMgr.AddContainer(msgDef)
 
