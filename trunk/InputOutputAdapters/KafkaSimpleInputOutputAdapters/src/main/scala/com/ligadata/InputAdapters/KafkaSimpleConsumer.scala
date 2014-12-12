@@ -306,7 +306,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    * within the kafka queue where it begins.
    * @return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
    */
-  def getAllPartitionBeginValuess: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+  def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
     return getKeyValues(kafka.api.OffsetRequest.EarliestTime)
   }
 
