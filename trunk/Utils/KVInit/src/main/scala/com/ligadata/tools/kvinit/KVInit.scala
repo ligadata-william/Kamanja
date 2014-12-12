@@ -460,7 +460,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     if (!isOk) return null
 
     val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation)
-    kvstore.TruncateStore
+    // kvstore.TruncateStore
 
     locateKeyPos
     /** locate key idx */
