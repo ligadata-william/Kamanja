@@ -368,7 +368,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Containers
       }
     }
 
@@ -377,7 +377,7 @@ object OnLEPMetadata {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false) // Messages
+        envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Messages
       }
     }
 

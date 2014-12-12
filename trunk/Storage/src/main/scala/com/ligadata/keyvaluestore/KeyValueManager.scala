@@ -17,6 +17,7 @@ object KeyValueManager
 			// Simple file base implementations
 			case "treemap" =>  return new keyvaluestore.mapdb.KeyValueTreeMap(parameter)
 			case "hashmap" =>  return new keyvaluestore.mapdb.KeyValueHashMap(parameter)
+			case "redis" =>  return new keyvaluestore.redis.KeyValueRedis(parameter)
 			
 			// Default, Cassandra is nothing matched
 			case _ => return new keyvaluestore.cassandra.KeyValueCassandra(parameter)

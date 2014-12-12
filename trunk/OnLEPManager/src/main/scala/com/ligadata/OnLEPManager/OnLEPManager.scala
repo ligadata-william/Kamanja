@@ -78,6 +78,9 @@ object OnLEPConfiguration {
   var dataStoreType: String = _
   var dataSchemaName: String = _
   var dataLocation: String = _
+  var statusInfoStoreType: String = _
+  var statusInfoSchemaName: String = _
+  var statusInfoLocation: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var zkConnectString: String = _
@@ -432,8 +435,8 @@ class OnLEPManager {
           envCtxt.SetClassLoader(metadataLoader.loader)
           val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true) // Containers
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false) // Messages
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Containers
+          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -555,6 +558,24 @@ class OnLEPManager {
       OnLEPConfiguration.dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
       if (OnLEPConfiguration.dataLocation.size == 0) {
         LOG.error("Not found valid DataLocation.")
+        return false
+      }
+
+      OnLEPConfiguration.statusInfoStoreType = loadConfigs.getProperty("StatusInfoStoreType".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.statusInfoStoreType.size == 0) {
+        LOG.error("Not found valid Status Information StoreType.")
+        return false
+      }
+
+      OnLEPConfiguration.statusInfoSchemaName = loadConfigs.getProperty("StatusInfoSchemaName".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.statusInfoSchemaName.size == 0) {
+        LOG.error("Not found valid Status Information SchemaName.")
+        return false
+      }
+
+      OnLEPConfiguration.statusInfoLocation = loadConfigs.getProperty("StatusInfoLocation".toLowerCase, "").replace("\"", "").trim
+      if (OnLEPConfiguration.statusInfoLocation.size == 0) {
+        LOG.error("Not found valid Status Information Location.")
         return false
       }
 

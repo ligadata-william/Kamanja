@@ -333,6 +333,54 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
+
+
+  /** Add container given containerText
+   * 
+   * @param containerText text of the container (as JSON/XML string as defined by next parameter formatType)
+   * @param formatType format of containerText ( JSON or XML)
+   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example
+   * 
+   * {{{
+   * var apiResult = MetadataAPIImpl.AddContainer(msgStr,"JSON"))
+   * var result = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + result._2)
+   * }}}
+   */
+  def AddContainer(containerText:String, formatType:String): String 
+
+  /** Update container given containerText
+   * 
+   * @param containerText text of the container (as JSON/XML string as defined by next parameter formatType)
+   * @param formatType format of containerText (as JSON/XML string)
+   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   */
+  def UpdateContainer(containerText:String, format:String): String
+
+  /** Remove container with ContainerName and Vesion Number
+   * 
+   * @param containerName Name of the given container
+   * @param version   Version of the given container
+   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   */
+  def RemoveContainer(containerName:String, version:Int): String
+
+  /** Add model given pmmlText in XML
+   * 
+   * @param pmmlText text of the model (as XML string)
+   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   */
+
   def AddModel(pmmlText:String): String
 
   /** Update model given pmmlText
@@ -408,12 +456,63 @@ trait MetadataAPI {
    */
   def GetMessageDef( objectName:String,version:String, formatType: String) : String
 
+
+  /** Retrieve a specific MessageDef from Metadata Store
+   *
+   * @param objectNameSpace NameSpace of the MessageDef
+   * @param objectName Name of the MessageDef
+   * @param version  Version of the MessageDef
+   * @param formatType format of the return value, either JSON or XML
+   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the MessageDef either as a JSON or XML string depending on the parameter formatType
+   */
+  def GetMessageDef(objectNameSpace:String,objectName:String,version:String, formatType: String) : String
+
+  /** Retrieve All available ContainerDefs from Metadata Store
+   *
+   * @param formatType format of the return value, either JSON or XML
+   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the ContainerDef(s) either as a JSON or XML string depending on the parameter formatType
+   */
+  def GetAllContainerDefs(formatType: String) : String
+
+  /** Retrieve specific ContainerDef(s) from Metadata Store
+   *
+   * @param objectName Name of the ContainerDef
+   * @param formatType format of the return value, either JSON or XML
+   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the ContainerDef(s) either as a JSON or XML string depending on the parameter formatType
+   */
+  def GetContainerDef(objectName:String,formatType: String) : String
+
+  /** Retrieve a specific ContainerDef from Metadata Store
+   *
+   * @param objectName Name of the ContainerDef
+   * @param version  Version of the ContainerDef
+   * @param formatType format of the return value, either JSON or XML
+   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the ContainerDef either as a JSON or XML string depending on the parameter formatType
+   */
+  def GetContainerDef( objectName:String,version:String, formatType: String) : String
+
+  /** Retrieve a specific ContainerDef from Metadata Store
+   *
+   * @param objectNameSpace NameSpace of the ContainerDef
+   * @param objectName Name of the ContainerDef
+   * @param version  Version of the ContainerDef
+   * @param formatType format of the return value, either JSON or XML
+   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the ContainerDef either as a JSON or XML string depending on the parameter formatType
+   */
+  def GetContainerDef(objectNameSpace:String,objectName:String,version:String, formatType: String) : String
+
   /** Retrieve All available FunctionDefs from Metadata Store
    *
    * @param formatType format of the return value, either JSON or XML
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType
    */
+
   def GetAllFunctionDefs(formatType: String) : String
 
   /** Retrieve specific FunctionDef(s) from Metadata Store
