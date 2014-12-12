@@ -26,11 +26,11 @@ resolvers += "spring-milestones" at "http://repo.springsource.org/libs-milestone
 
 resolvers += "mvnrepository" at "http://mvnrepository.com/artifact"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor_2.11" % "2.3.3"
+libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3.3"
 
-libraryDependencies += "com.typesafe.akka" % "akka-remote_2.11" % "2.3.3"
+libraryDependencies += "com.typesafe.akka" % "akka-remote_2.10" % "2.3.3"
 
-libraryDependencies += "net.debasishg" % "redisclient_2.11" % "2.13"
+libraryDependencies += "net.debasishg" % "redisclient_2.10" % "2.13"
 
 libraryDependencies += "log4j" % "log4j" % "1.2.17"
 

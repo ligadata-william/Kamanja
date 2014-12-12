@@ -3,17 +3,14 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
-
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-
 import scala.util.{ Success, Failure }
-
 import com.ligadata.MetadataAPI._
 
 object UpdateModelService {
-	case class Process(objectName:String)
+	case class Process(pmmlStr:String)
 }
 
 class UpdateModelService(requestContext: RequestContext) extends Actor {

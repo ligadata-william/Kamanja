@@ -184,7 +184,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                       ("Value" -> res.ValueString(r.result))))))
             val resStr = compact(render(json))
 
-            envContext.saveStatus(tempTransId, "Start")
+            envContext.saveStatus(tempTransId, "Start", true)
             if (isValidPartitionKey && finalTopMsgOrContainer != null) {
               envContext.saveModelsResult(tempTransId, partitionKeyData, allMdlsResults)
             }
@@ -193,7 +193,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                 o.send(resStr, cntr.toString)
               })
             }
-            envContext.saveStatus(tempTransId, "OutAdap")
+            envContext.saveStatus(tempTransId, "OutAdap", false)
           }
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
@@ -202,8 +202,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null)) {
             envContext.setObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
           }
-          envContext.setAdapterUniqueKeyValue(tempTransId, uk, uv)
-          envContext.saveStatus(tempTransId, "SetData")
+          envContext.saveStatus(tempTransId, "SetData", false)
         }
       } else {
         LOG.error("Recieved null message object for input:" + msgData)

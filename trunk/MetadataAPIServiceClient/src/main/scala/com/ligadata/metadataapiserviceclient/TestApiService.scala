@@ -73,29 +73,29 @@ object GetModel {
     val httpClient = new HttpClient
     
     val dirName = "/Users/kunal/Desktop/RTD/trunk/MetadataAPI/src/test/SampleTestFiles"
-   /*
+  
       // *********************** Model functions ************************
     //GetAllModelDefs
     logger.trace(GetResponse("http://127.0.0.1:8081/api/GetAllModelDefs/JSON",None))
     
     //GetModelDef
-    logger.trace(GetResponse("http://127.0.0.1:8081/api/GetModelDef",None))
+    logger.trace(GetResponse("http://127.0.0.1:8081/api/GetModelDef/copdriskassessment/JSON",None))
     
-    // GetModel
-    logger.trace(GetResponse("http://127.0.0.1:8081/api/GetModel/system/copdriskassessment_000100/100",None))
+    // GetModelDef
+    logger.trace(GetResponse("http://127.0.0.1:8081/api/GetModelDef/system/copdriskassessment/JSON",None))
   
     // AddModel
-    val pmmlFilePath = dirName + "/Models/COPD.xml"
+    val pmmlFilePath = dirName + "/Models/COPDv1.xml"
     val pmmlStr = Source.fromFile(pmmlFilePath).mkString    
     logger.trace(GetResponse("http://127.0.0.1:8081/api/AddModel",Some(pmmlStr)))
-    
+  
     //RemoveModel
-    logger.trace(GetResponse("http://127.0.0.1:8081/api/RemoveModel",Some("DELETE")))
+    logger.trace(GetResponse("http://127.0.0.1:8081/api/RemoveModel/copdriskassessment/100",Some("DELETE")))
     
     //UpdateModel
-    logger.trace(GetResponse("http://127.0.0.1:8081/api/UpdateModel",None))
-    */
-    
+    val pmmlUpdateFilePath = dirName + "/Models/COPDv1.xml"
+    val pmmlUpdateStr = Source.fromFile(pmmlUpdateFilePath).mkString
+    logger.trace(GetResponse("http://127.0.0.1:8081/api/UpdateModel",Some(pmmlUpdateStr)))
     
    // ******************** Message functions **************************
     //GetAllMessageDefs

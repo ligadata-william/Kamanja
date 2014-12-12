@@ -3,6 +3,7 @@ package com.ligadata.Serialize
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata.MdMgr._
+import scala.collection.mutable.{ArrayBuffer}
 
 import org.apache.log4j._
 
@@ -78,7 +79,7 @@ object JsonSerializer {
 
       logger.trace("Parsed the json : " + funcListJson)
       val funcList = json.extract[FunctionList]
-      val funcDefList = new Array[FunctionDef](funcList.Functions.length)
+      var funcDefList : ArrayBuffer[FunctionDef] = ArrayBuffer[FunctionDef]()
 
       funcList.Functions.map( fn => {
 	try{
@@ -89,7 +90,7 @@ object JsonSerializer {
 					   fn.Version.toInt,
 					   fn.JarName,
 					   fn.DependantJars.toArray)
-	  funcDefList :+ func
+	  funcDefList += func
 	} catch {
 	  case e:AlreadyExistsException => {
 	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
@@ -98,7 +99,7 @@ object JsonSerializer {
 	  }
 	}
       })
-      funcDefList
+      funcDefList.toArray
     } catch {
       case e:MappingException =>{
 	e.printStackTrace()
@@ -214,12 +215,12 @@ object JsonSerializer {
       val typeList = json.extract[TypeDefList]
 
       logger.trace("Type count  => " + typeList.Types.length)
-      val typeDefList = new Array[BaseTypeDef](typeList.Types.length)
+      var typeDefList : ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
 
       typeList.Types.map(typ => {
 	try{
 	  val typeDefObj:BaseTypeDef = processTypeDef(typ)
-	  typeDefList :+ typeDefObj
+	  typeDefList += typeDefObj
 	}catch {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
@@ -233,7 +234,7 @@ object JsonSerializer {
 	  }
 	}
       })
-      typeDefList
+      typeDefList.toArray
     } catch {
       case e:MappingException =>{
 	e.printStackTrace()
@@ -1134,8 +1135,8 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
-	//jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
-	jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"TupleDefinitions\": "
+	val idxLastCloseParen : Int = jsonStr.lastIndexOf("\n}")
+	jsonStr = jsonStr.slice(0,idxLastCloseParen).toString + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = SerializeObjectListToJson(o.tupleDefs)
 	tupleDefJson = tupleDefJson + "}"
 	jsonStr += tupleDefJson

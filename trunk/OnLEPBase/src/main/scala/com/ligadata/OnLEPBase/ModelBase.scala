@@ -91,7 +91,7 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
 trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
-  def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean): Unit
+  def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
   def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
@@ -101,8 +101,12 @@ trait EnvContext {
   def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String): Unit
-  def getAdapterUniqueKeyValue(tempTransId: Long, key: String): String
+  def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
+  def getAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int)
+  def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
+  def getIntermediateStatusInfo(keys:Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
+  def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from Final table. No Transaction required here.
+  def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
   def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
@@ -110,9 +114,6 @@ trait EnvContext {
 
   // Final Commit for the given transaction
   def commitData(tempTransId: Long): Unit
-
-  // Saving Status
-  def saveStatus(tempTransId: Long, status: String): Unit
 
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit

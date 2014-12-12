@@ -1288,7 +1288,7 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: AlreadyExistsException => {
-        logger.trace("Failed to add the type, json => " + typeText + "\nError => " + e.getMessage())
+        logger.warn("Failed to add the type, json => " + typeText + "\nError => " + e.getMessage())
         var apiResult = new ApiResult(-1, "Failed to add a Type:", e.toString)
         apiResult.toString()
       }
@@ -1337,10 +1337,12 @@ object MetadataAPIImpl extends MetadataAPI {
             SaveObject(typ, MdMgr.GetMdMgr)
             logger.trace("Type object name => " + typ.FullNameWithVer)
           })
-          var apiResult = new ApiResult(0, "Types Are Added", typesText)
+          /** Only report the ones actually saved... if there were others, they are in the log as "fail to add" due most likely to already being defined */
+          val typesSavedAsJson : String = JsonSerializer.SerializeObjectListToJson(typeList)
+          var apiResult = new ApiResult(0, s"${typeList.size} Types Added", typesSavedAsJson)
           apiResult.toString()
         } else {
-          var apiResult = new ApiResult(0, "No Type objects are available", "Couldn't find any Type Objects")
+          var apiResult = new ApiResult(0, "All supplied types are already available", "No types to add")
           apiResult.toString()
         }
       }
@@ -2013,6 +2015,11 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+
+  def UpdateContainer(messageText: String, format: String): String = {
+    UpdateMessage(messageText,format)
+  }
+
   // Remove container with Container Name and Version Number
   def RemoveContainer(nameSpace: String, name: String, version: Int): String = {
     try {
@@ -2238,6 +2245,12 @@ object MetadataAPIImpl extends MetadataAPI {
   // Remove message with Message Name and Version Number
   def RemoveMessage(messageName: String, version: Int): String = {
     RemoveMessage(sysNS, messageName, version)
+  }
+
+
+  // Remove container with Container Name and Version Number
+  def RemoveContainer(containerName: String, version: Int): String = {
+    RemoveContainer(sysNS, containerName, version)
   }
 
   // Remove model with Model Name and Version Number
@@ -2506,6 +2519,29 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to fetch all the messages:", e.toString)
+        apiResult.toString()
+      }
+    }
+  }
+
+  // All available containers(format JSON or XML) as a String
+  def GetAllContainerDefs(formatType: String): String = {
+    try {
+      val msgDefs = MdMgr.GetMdMgr.Containers(true, true)
+      msgDefs match {
+        case None =>
+          None
+          logger.trace("No Containers found ")
+          var apiResult = new ApiResult(-1, "Failed to Fetch containers", "No Containers Available")
+          apiResult.toString()
+        case Some(ms) =>
+          val msa = ms.toArray
+          var apiResult = new ApiResult(0, "Successfully Fetched all containers", JsonSerializer.SerializeObjectListToJson("Containers", msa))
+          apiResult.toString()
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to fetch all the containers:", e.toString)
         apiResult.toString()
       }
     }
@@ -3455,8 +3491,24 @@ object MetadataAPIImpl extends MetadataAPI {
     GetMessageDef(nameSpace, objectName, formatType, version)
   }
 
-  // All available messages(format JSON or XML) as a String
-  def GetAllFunctionDefs(formatType: String): String = {
+  // Specific containers (format JSON or XML) as a String using containerName(without version) as the key
+  def GetContainerDef(objectName: String, formatType: String): String = {
+    val nameSpace = MdMgr.sysNS
+    GetContainerDefFromCache(nameSpace, objectName, formatType, "-1")
+  }
+  // Specific container (format JSON or XML) as a String using containerName(with version) as the key
+  def GetContainerDef(nameSpace: String, objectName: String, formatType: String, version: String): String = {
+    GetContainerDefFromCache(nameSpace, objectName, formatType, version)
+  }
+
+  // Specific container (format JSON or XML) as a String using containerName(with version) as the key
+  def GetContainerDef(objectName: String, version: String, formatType: String): String = {
+    val nameSpace = MdMgr.sysNS
+    GetContainerDef(nameSpace, objectName, formatType, version)
+  }
+
+  // Answer count and dump of all available functions(format JSON or XML) as a String
+  def GetAllFunctionDefs(formatType: String): (Int,String) = {
     try {
       val funcDefs = MdMgr.GetMdMgr.Functions(true, true)
       funcDefs match {
@@ -3465,16 +3517,16 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("No Functions found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch functions",
             "No Functions Available")
-          apiResult.toString()
+          (0,apiResult.toString())
         case Some(fs) =>
-          val fsa = fs.toArray
-          var apiResult = new ApiResult(0, "Successfully Fetched all functions", JsonSerializer.SerializeObjectListToJson("Functions", fsa))
-          apiResult.toString()
+          val fsa : Array[FunctionDef]= fs.toArray
+          var apiResult = new ApiResult(0, s"Successfully Fetched ${fsa.size} functions", JsonSerializer.SerializeObjectListToJson("Functions", fsa))
+          (fsa.size, apiResult.toString())
       }
     } catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to fetch all the functions:", e.toString)
-        apiResult.toString()
+        (0, apiResult.toString())
       }
     }
   }
