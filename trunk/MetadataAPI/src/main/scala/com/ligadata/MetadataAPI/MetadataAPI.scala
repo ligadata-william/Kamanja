@@ -506,14 +506,15 @@ trait MetadataAPI {
    */
   def GetContainerDef(objectNameSpace:String,objectName:String,version:String, formatType: String) : String
 
-  /** Retrieve All available FunctionDefs from Metadata Store
+  /** Retrieve All available FunctionDefs from Metadata Store. Answer the count and a string representation
+   *  of them.
    *
    * @param formatType format of the return value, either JSON or XML
-   * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
-   * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType
+   * @return the function count and the result as a JSON String of object ApiResult where ApiResult.resultData contains
+   * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType as a Tuple2[Int,String]
    */
 
-  def GetAllFunctionDefs(formatType: String) : String
+  def GetAllFunctionDefs(formatType: String) : (Int,String)
 
   /** Retrieve specific FunctionDef(s) from Metadata Store
    *

@@ -210,70 +210,6 @@
 },
 {
   "NameSpace" : "pmml",
-  "Name" : "mapvalues",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MapValues",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "arrayofany",
-  "Arguments" : [ {
-    "ArgName" : "receiver",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
-  "Name" : "mapvalues",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MapValues",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "arrayofany",
-  "Arguments" : [ {
-    "ArgName" : "receiver",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
-  "Name" : "mapkeys",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MapKeys",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "arrayofany",
-  "Arguments" : [ {
-    "ArgName" : "receiver",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
-  "Name" : "mapkeys",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MapKeys",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "arrayofany",
-  "Arguments" : [ {
-    "ArgName" : "receiver",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
   "Name" : "mapkeys",
   "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MapKeys",
   "ReturnTypeNameSpace" : "system",
@@ -3782,46 +3718,6 @@
     "ArgName" : "exprs",
     "ArgTypeNameSpace" : "system",
     "ArgTypeName" : "arraybufferofint"
-  }, {
-    "ArgName" : "groupByKey",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "arraybufferofany"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
-  "Name" : "multiset",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MultiSet",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "hashmapofintarraybufferofint",
-  "Arguments" : [ {
-    "ArgName" : "exprs",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "arraybufferofint"
-  }, {
-    "ArgName" : "groupByKey",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "arraybufferofint"
-  } ],
-  "Version" : 100,
-  "JarName" : "pmmludfs_2.10-1.0.jar",
-  "DependantJars" : [ "json4s-native_2.10-3.2.9.jar", "pmmlruntime_2.10-1.0.jar", "scala-compiler-2.10.0.jar", "basetypes_2.10-0.1.0.jar", "json4s-core_2.10-3.2.9.jar", "onlepbase_2.10-1.0.jar", "json4s-jackson_2.10-3.2.9.jar", "jackson-annotations-2.3.0.jar", "scala-library-2.10.4.jar", "paranamer-2.6.jar", "jackson-databind-2.3.1.jar", "joda-time-2.3.jar", "joda-convert-1.6.jar", "jackson-core-2.3.1.jar", "scalap-2.10.0.jar", "metadata_2.10-1.0.jar", "json4s-ast_2.10-3.2.9.jar", "scala-reflect-2.10.0.jar", "log4j-1.2.17.jar" ],
-  "TransactionId" : 0
-},
-{
-  "NameSpace" : "pmml",
-  "Name" : "multiset",
-  "PhysicalName" : "com.ligadata.pmml.udfs.Udfs.MultiSet",
-  "ReturnTypeNameSpace" : "system",
-  "ReturnTypeName" : "hashmapofanyarraybufferofany",
-  "Arguments" : [ {
-    "ArgName" : "exprs",
-    "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "arraybufferofany"
   }, {
     "ArgName" : "groupByKey",
     "ArgTypeNameSpace" : "system",

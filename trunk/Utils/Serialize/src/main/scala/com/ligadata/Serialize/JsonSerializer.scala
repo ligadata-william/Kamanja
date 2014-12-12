@@ -79,7 +79,7 @@ object JsonSerializer {
 
       logger.trace("Parsed the json : " + funcListJson)
       val funcList = json.extract[FunctionList]
-      val funcDefList = new Array[FunctionDef](funcList.Functions.length)
+      var funcDefList : ArrayBuffer[FunctionDef] = ArrayBuffer[FunctionDef]()
 
       funcList.Functions.map( fn => {
 	try{
@@ -90,7 +90,7 @@ object JsonSerializer {
 					   fn.Version.toInt,
 					   fn.JarName,
 					   fn.DependantJars.toArray)
-	  funcDefList :+ func
+	  funcDefList += func
 	} catch {
 	  case e:AlreadyExistsException => {
 	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
@@ -99,7 +99,7 @@ object JsonSerializer {
 	  }
 	}
       })
-      funcDefList
+      funcDefList.toArray
     } catch {
       case e:MappingException =>{
 	e.printStackTrace()
@@ -1139,7 +1139,6 @@ object JsonSerializer {
 	jsonStr = jsonStr.slice(0,idxLastCloseParen).toString + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = SerializeObjectListToJson(o.tupleDefs)
 	tupleDefJson = tupleDefJson + "}"
-	println(s"\n\njsonStr after =\n$jsonStr\n\n")
 	jsonStr += tupleDefJson
 	jsonStr
       }

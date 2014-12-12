@@ -1288,7 +1288,7 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: AlreadyExistsException => {
-        logger.trace("Failed to add the type, json => " + typeText + "\nError => " + e.getMessage())
+        logger.warn("Failed to add the type, json => " + typeText + "\nError => " + e.getMessage())
         var apiResult = new ApiResult(-1, "Failed to add a Type:", e.toString)
         apiResult.toString()
       }
@@ -1337,7 +1337,9 @@ object MetadataAPIImpl extends MetadataAPI {
             SaveObject(typ, MdMgr.GetMdMgr)
             logger.trace("Type object name => " + typ.FullNameWithVer)
           })
-          var apiResult = new ApiResult(0, "Types Are Added", typesText)
+          /** Only report the ones actually saved... if there were others, they are in the log as "fail to add" due most likely to already being defined */
+          val typesSavedAsJson : String = JsonSerializer.SerializeObjectListToJson(typeList)
+          var apiResult = new ApiResult(0, s"${typeList.size} Types Added", typesSavedAsJson)
           apiResult.toString()
         } else {
           var apiResult = new ApiResult(0, "All supplied types are already available", "No types to add")
@@ -3505,8 +3507,8 @@ object MetadataAPIImpl extends MetadataAPI {
     GetContainerDef(nameSpace, objectName, formatType, version)
   }
 
-  // All available messages(format JSON or XML) as a String
-  def GetAllFunctionDefs(formatType: String): String = {
+  // Answer count and dump of all available functions(format JSON or XML) as a String
+  def GetAllFunctionDefs(formatType: String): (Int,String) = {
     try {
       val funcDefs = MdMgr.GetMdMgr.Functions(true, true)
       funcDefs match {
@@ -3515,16 +3517,16 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("No Functions found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch functions",
             "No Functions Available")
-          apiResult.toString()
+          (0,apiResult.toString())
         case Some(fs) =>
-          val fsa = fs.toArray
-          var apiResult = new ApiResult(0, "Successfully Fetched all functions", JsonSerializer.SerializeObjectListToJson("Functions", fsa))
-          apiResult.toString()
+          val fsa : Array[FunctionDef]= fs.toArray
+          var apiResult = new ApiResult(0, s"Successfully Fetched ${fsa.size} functions", JsonSerializer.SerializeObjectListToJson("Functions", fsa))
+          (fsa.size, apiResult.toString())
       }
     } catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to fetch all the functions:", e.toString)
-        apiResult.toString()
+        (0, apiResult.toString())
       }
     }
   }
