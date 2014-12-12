@@ -2199,7 +2199,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    * Aggregation functions supported by Pmml
    */
 
-  /** "Multiset" builds sets of item values for each group by key */
+  /** "Multiset" builds sets of item values for each group by key 
   def MultiSet[A: ClassTag, B: ClassTag](exprs: ArrayBuffer[A], groupByKey: ArrayBuffer[B])(implicit cmp: Ordering[B]): HashMap[B, ArrayBuffer[A]] = {
     var map = HashMap[B, ArrayBuffer[A]]()
     var grpleft: List[A] = exprs.toList
@@ -2215,7 +2215,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     map
   }
 
-  /** "multiset" (similar to Ligadata 'each') */
+   "multiset" (similar to Ligadata 'each')
   def MultiSet(exprs: ArrayBuffer[Int], groupByKey: ArrayBuffer[Int]): HashMap[Int, ArrayBuffer[Int]] = {
     var map = HashMap[Int, ArrayBuffer[Int]]()
     var grpleft: List[Int] = exprs.toList
@@ -2229,7 +2229,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
       grpleft = grp(false)
     })
     map
-  }
+  } */
 
   def Sum[B: ClassTag](exprs: ArrayBuffer[Int], groupByKey: ArrayBuffer[B])(implicit cmp: Ordering[B]): HashMap[B, Int] = {
     var map = HashMap[B, Int]()
@@ -3616,17 +3616,17 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     receiver.zip(other)
   }
 
-  /** MapKeys = collect.keys */
+  /** MapKeys = collect.keys*/
 
   def MapKeys[T: ClassTag, U: ClassTag](receiver: MutableMap[T, U]): Array[T] = {
     receiver.keys.toArray
   }
 
-  def MapKeys(receiver: MutableMap[Any, Any]): Array[Any] = {
-    receiver.keys.toArray
-  }
-
   def MapKeys[T: ClassTag, U: ClassTag](receiver: Map[T, U]): Array[T] = {
+    receiver.keys.toArray
+  } 
+
+  def MapKeys(receiver: MutableMap[Any, Any]): Array[Any] = {
     receiver.keys.toArray
   }
 
@@ -3634,17 +3634,17 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     receiver.keys.toArray
   }
 
-  /** MapValues = collect.values */
+  /** MapValues = collect.values*/
 
   def MapValues[T: ClassTag, U: ClassTag](receiver: MutableMap[T, U]): Array[U] = {
     receiver.values.toArray
   }
 
-  def MapValues(receiver: MutableMap[Any, Any]): Array[Any] = {
-    receiver.values.toArray
-  }
-
   def MapValues[T: ClassTag, U: ClassTag](receiver: Map[T, U]): Array[U] = {
+    receiver.values.toArray
+  }  
+
+  def MapValues(receiver: MutableMap[Any, Any]): Array[Any] = {
     receiver.values.toArray
   }
 

@@ -16,9 +16,9 @@
 		"ZnodePath" : "/ligadata/metadata",
 		"ZooKeeperConnectString" : "localhost:2181",
 		"MODEL_FILES_DIR"   		: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Models",
-		"TYPE_FILES_DIR"      		: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
-		"FUNCTION_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
-		"CONCEPT_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical",
+		"TYPE_FILES_DIR"      		: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Types",
+		"FUNCTION_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Functions",
+		"CONCEPT_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/Concepts",
 		"MESSAGE_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages",
 		"CONTAINER_FILES_DIR"      	: "/home/rich/github/Med/RTD/trunk/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers",
 		"MODEL_EXEC_LOG"		: "false"

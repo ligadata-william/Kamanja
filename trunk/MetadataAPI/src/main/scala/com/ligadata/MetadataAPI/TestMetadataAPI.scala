@@ -1208,9 +1208,10 @@ object TestMetadataAPI{
 
   def DumpAllFunctionsAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllFunctionDefs("JSON")
+      val (fcnCount, apiResult) : (Int, String) = MetadataAPIImpl.GetAllFunctionDefs("JSON")
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+      println(s"$fcnCount Functions are available => \n$resultData")
+      println(s"Functions available = $fcnCount")
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1326,7 +1327,7 @@ object TestMetadataAPI{
       //MdMgr.GetMdMgr.truncate("TypeDef")
       val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+      println(s"Status Code = $statusCode \nResult as Json String => \n$resultData")
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Type Already in the metadata....")
