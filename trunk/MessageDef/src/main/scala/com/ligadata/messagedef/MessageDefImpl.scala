@@ -778,7 +778,6 @@ class MessageDefImpl {
       if (message.Fixed.toLowerCase().equals("false")) {
         if (keysStr != null && keysStr.toString.trim != "")
           keysVarStr = getKeysStr(keysStr.toString)
-          println(msgAndCntnrsStr)
         MsgsAndCntrsVarStr = getMsgAndCntnrs(msgAndCntnrsStr.toString)
         //typeImplStr = getTypeImplStr(typeImpl.toString)
         scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr)
