@@ -314,16 +314,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   /**
    * Return an array of PartitionUniqueKey/PartitionUniqueRecordValues whre key is the partion and value is the offset
    * within the kafka queue where it begins.
-   * @return
+   * @return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
    */
-  def getAllPartitionBeginValuess: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+  def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
     return getKeyValues(kafka.api.OffsetRequest.EarliestTime)
   }
 
   /**
    * Return an array of PartitionUniqueKey/PartitionUniqueRecordValues whre key is the partion and value is the offset
    * within the kafka queue where it eds.
-   * @return
+   * @return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
    */
   def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
     return getKeyValues(kafka.api.OffsetRequest.LatestTime)
@@ -415,7 +415,18 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
  */
   private def getKeyValues(time: Long): Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
     var infoList = List[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
-    qc.instancePartitions.foreach(partitionId => {
+    var partitionList: Set[Int] = null
+    // This method may get called prior to the partition list being set at Start Processing time.. so need to call the
+    // leader to find out the list of partition that Kafka knows about.
+    if (qc.instancePartitions.size == 0) {
+      val kafkaKnownParitions = GetAllPartitionUniqueRecordKey
+      partitionList = kafkaKnownParitions.map(uKey => {uKey.asInstanceOf[KafkaPartitionUniqueRecordKey].PartitionId }).toSet
+    } else {
+      partitionList = qc.instancePartitions
+    }
+
+    // Now that we know for sure we have a partition list.. process them
+    partitionList.foreach(partitionId => {
       val offset = getKeyValueForPartition(getKafkaConfigId(findLeader(qc.hosts, partitionId)), partitionId, time)
       val rKey = new KafkaPartitionUniqueRecordKey
       val rValue = new KafkaPartitionUniqueRecordValue
@@ -428,13 +439,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   }
 
   /**
-   * get the valid offset range in a given partition.
+   * getKeyValueForPartition - get the valid offset range in a given partition.
    */
   def getKeyValueForPartition(leadBroker: String, partitionId: Int, timeFrame: Long): Long = {
-    //val timeFrame: Long = kafka.api.OffsetRequest.LatestTime
-    // val timeFrame = -1
     var offset: Long = -1
-    val brokerId = convertIp(leadBroker)
     var llConsumer: kafka.javaapi.consumer.SimpleConsumer = null
     val brokerName = leadBroker.split(":")
     try {
