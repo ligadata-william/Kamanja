@@ -571,6 +571,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (_adapterUniqKvDataStore != null)
       _adapterUniqKvDataStore.Shutdown
     _adapterUniqKvDataStore = null
+    if (_modelsResultDataStore != null)
+      _modelsResultDataStore.Shutdown
+    _modelsResultDataStore = null
     _adapterUniqKeyValData.clear
     _messagesOrContainers.foreach(mrc => {
       if (mrc._2.dataStore != null)
@@ -585,6 +588,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (_adapterUniqKvDataStore == null) {
       logger.info("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
       _adapterUniqKvDataStore = GetDataStoreHandle(storeType, schemaName, "AdapterUniqKvData", dataLocation)
+    }
+    if (_modelsResultDataStore == null) {
+      _modelsResultDataStore = GetDataStoreHandle(storeType, schemaName, "ModelResults", dataLocation)
     }
 
     containerNames.foreach(c1 => {

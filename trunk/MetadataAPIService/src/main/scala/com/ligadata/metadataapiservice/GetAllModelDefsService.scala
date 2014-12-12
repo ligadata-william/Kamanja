@@ -29,7 +29,6 @@ class GetAllModelDefsService(requestContext: RequestContext) extends Actor {
 	
 	def process(formatType:String) = {
 		log.info("Requesting GetAllModelDefs {}",formatType)
-		
 		val apiResult = MetadataAPIImpl.GetAllModelDefs(formatType)
 		
 		requestContext.complete(apiResult)

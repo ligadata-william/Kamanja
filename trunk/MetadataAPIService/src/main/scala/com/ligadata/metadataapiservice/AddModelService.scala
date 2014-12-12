@@ -13,7 +13,7 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
 object AddModelService {
-	case class Process(objectName:String)
+	case class Process(pmmlStr:String)
 }
 
 class AddModelService(requestContext: RequestContext) extends Actor {
