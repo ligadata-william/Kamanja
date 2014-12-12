@@ -27,11 +27,24 @@ class KeyValueRedis(parameter: PropertyMap) extends DataStore {
 
   var InMemory = parameter.getOrElse("inmemory", "false")
   val withTransactions = parameter.getOrElse("withtransaction", "false").toBoolean
-  val host = parameter.getOrElse("host", "localhost")
-  val port = parameter.getOrElse("port", "6379").toInt
+  val hostnames = parameter.getOrElse("hostlist", "localhost:6379");
+  val hosts = hostnames.split(",").map(hst => hst.trim).filter(hst => hst.size > 0)
+  if (hosts.size == 0) {
+    throw new Exception("Not found any valid hosts in hostlist")
+  }
 
-  // val nodes = Array(ClusterNode("node1", host, port), ClusterNode("node2", host, port + 1), ClusterNode("node3", host, port + 2))
-  val nodes = Array(ClusterNode("node1", host, port))
+  val nodes = new Array[ClusterNode](hosts.size)
+
+  for (i <- 0 until hosts.size) {
+    val nodeInfo = hosts(i).split(":")
+    if (nodeInfo.size == 2) {
+      nodes(i) = ClusterNode("node" + i + "_" + hashCode, nodeInfo(0), nodeInfo(1).toInt)
+    } else if (nodeInfo.size == 1) {
+      nodes(i) = ClusterNode("node" + i + "_" + hashCode, nodeInfo(0), 6379)
+    } else {
+      throw new Exception("Expecting hostname/ip and port number as host information in hostslist in the format of hostname:port. But found " + hosts(i) + ". Format hostname:port[,hostname:port...]")
+    }
+  }
 
   val cluster = new RedisCluster(new WrappedArray.ofRef(nodes): _*) {
     val keyTag = Some(RegexKeyTag)
