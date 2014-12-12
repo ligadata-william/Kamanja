@@ -37,7 +37,7 @@ trait InputAdapter {
   def Category = "Input"
   def Shutdown: Unit
   def StopProcessing: Unit
-  def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)]): Unit // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue). // key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter)
+  def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit // each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue). // key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) & processing Transformed messages (processing & total)
   def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey]
   def DeserializeKey(k: String): PartitionUniqueRecordKey
   def DeserializeValue(v: String): PartitionUniqueRecordValue
@@ -64,7 +64,7 @@ trait ExecContext {
   val output: Array[OutputAdapter]
   val envCtxt: EnvContext
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean): Unit
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit
 }
 
 trait MakeExecContext {

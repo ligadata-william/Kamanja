@@ -35,7 +35,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, KafkaPartitionUniqueRecordValue)]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
 
   qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
@@ -59,6 +59,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   props.put("zookeeper.connect", qc.hosts.mkString(","))
   props.put("group.id", qc.groupName)
   props.put("rebalance.backoff.ms", rebalance_backoff_ms.toString)
+  props.put("rebalance.max.retries", 1.toString)
   props.put("zookeeper.session.timeout.ms", zookeeper_session_timeout_ms.toString)
   props.put("zookeeper.connection.timeout.ms", zookeeper_connection_timeout_ms.toString)
   props.put("zookeeper.sync.time.ms", zookeeper_sync_time_ms.toString)
@@ -92,7 +93,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
@@ -107,7 +108,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    val partInfo = partitionInfo.map(quad => { (quad._1.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._2.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._3, quad._4.asInstanceOf[KafkaPartitionUniqueRecordValue]) })
+    val partInfo = partitionInfo.map(quad => { (quad._1.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._2.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._3, (quad._4._1.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._4._2, quad._4._3)) })
 
     qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
@@ -154,6 +155,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             var execThread: ExecContext = null
             var cntr: Long = 0
             var currentOffset: Long = -1
+            var processingXformMsg = 0
+            var totalXformMsg = 0
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             val uniqueVal = new KafkaPartitionUniqueRecordValue
 
@@ -196,7 +199,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             currentOffset = kv._2.Offset
                           }
                           tempTransId = kv._3
-                          ignoreOff = kv._4.Offset
+                          ignoreOff = kv._4._1.Offset
+                          processingXformMsg = kv._4._2
+                          totalXformMsg = kv._4._3
                         }
                       }
                       if (executeCurMsg) {
@@ -204,7 +209,11 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           // Creating new string to convert from Byte Array to string
                           val msg = new String(message.message)
                           uniqueVal.Offset = currentOffset
-                          execThread.execute(tempTransId, msg, qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset < ignoreOff)
+                          if (message.offset >= ignoreOff) {
+                            processingXformMsg = 0
+                            totalXformMsg = 0
+                          }
+                          execThread.execute(tempTransId, msg, qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset < ignoreOff, processingXformMsg, totalXformMsg)
                           tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
