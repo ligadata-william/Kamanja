@@ -3,6 +3,7 @@ package com.ligadata.Serialize
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata.MdMgr._
+import scala.collection.mutable.{ArrayBuffer}
 
 import org.apache.log4j._
 
@@ -214,12 +215,12 @@ object JsonSerializer {
       val typeList = json.extract[TypeDefList]
 
       logger.trace("Type count  => " + typeList.Types.length)
-      val typeDefList = new Array[BaseTypeDef](typeList.Types.length)
+      var typeDefList : ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
 
       typeList.Types.map(typ => {
 	try{
 	  val typeDefObj:BaseTypeDef = processTypeDef(typ)
-	  typeDefList :+ typeDefObj
+	  typeDefList += typeDefObj
 	}catch {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
@@ -233,7 +234,7 @@ object JsonSerializer {
 	  }
 	}
       })
-      typeDefList
+      typeDefList.toArray
     } catch {
       case e:MappingException =>{
 	e.printStackTrace()
@@ -1134,10 +1135,11 @@ object JsonSerializer {
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
-	//jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"TupleDefinitions\": "
-	jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"TupleDefinitions\": "
+	val idxLastCloseParen : Int = jsonStr.lastIndexOf("\n}")
+	jsonStr = jsonStr.slice(0,idxLastCloseParen).toString + ",\n  \"TupleDefinitions\": "
 	var tupleDefJson = SerializeObjectListToJson(o.tupleDefs)
 	tupleDefJson = tupleDefJson + "}"
+	println(s"\n\njsonStr after =\n$jsonStr\n\n")
 	jsonStr += tupleDefJson
 	jsonStr
       }

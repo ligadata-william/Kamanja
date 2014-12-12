@@ -42,8 +42,8 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		initTypesFor_com_ligadata_pmml_udfs_Udfs
 
 		logger.trace("MetadataLoad...loading Pmml udfs")
-		init_com_ligadata_pmml_udfs_Udfs
-		init_com_ligadata_pmml_udfs_Udfs1
+		//init_com_ligadata_pmml_udfs_Udfs
+		//init_com_ligadata_pmml_udfs_Udfs1
 		
 		logger.trace("MetadataLoad...loading Iterable functions")
 		InitFcns

@@ -1340,7 +1340,7 @@ object MetadataAPIImpl extends MetadataAPI {
           var apiResult = new ApiResult(0, "Types Are Added", typesText)
           apiResult.toString()
         } else {
-          var apiResult = new ApiResult(0, "No Type objects are available", "Couldn't find any Type Objects")
+          var apiResult = new ApiResult(0, "All supplied types are already available", "No types to add")
           apiResult.toString()
         }
       }
