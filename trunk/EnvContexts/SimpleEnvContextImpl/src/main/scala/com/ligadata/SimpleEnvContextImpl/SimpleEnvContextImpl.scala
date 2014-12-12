@@ -23,6 +23,7 @@ trait LogTrait {
 }
 
 case class AdapterUniqueValueDes(Val: String, xidx: Int, xtot: Int) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
+case class ObjKey(Obj: String, Key: String)
 
 /**
  *  The SimpleEnvContextImpl supports kv stores that are based upon MapDb hash tables.
@@ -173,30 +174,27 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    *  @param dstore : the mapdb handle
    *  @param map : the map to be updated with key/MessageContainerBase pairs.
    */
-  /*
-  private def loadMap(containerType: BaseTypeDef, keys: ArrayBuffer[String], msgCntrInfo: MsgContainerInfo): Unit = {
-
+  private def loadMap(keys: Array[String], msgOrCont: MsgContainerInfo): Unit = {
     var objs: Array[MessageContainerBase] = new Array[MessageContainerBase](1)
     keys.foreach(key => {
       try {
-        val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, containerType) }
-        _allDataDataStore.get(makeKey(msgCntrInfo.objFullName, key), buildOne)
-        msgCntrInfo.data(key.toLowerCase) = objs(0)
+        val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
+        _allDataDataStore.get(makeKey(msgOrCont.objFullName, key), buildOne)
+        msgOrCont.data(key.toLowerCase) = objs(0)
       } catch {
         case e: ClassNotFoundException => {
-          logger.error(s"unable to create a container named ${containerType.typeString}... is it defined in the metadata?")
+          logger.error(s"unable to create a container named ${msgOrCont.containerType.typeString}... is it defined in the metadata?")
           e.printStackTrace()
           throw e
         }
         case ooh: Throwable => {
-          logger.error(s"unknown error encountered while processing ${containerType.typeString}.. stack trace = ${ooh.printStackTrace}")
+          logger.error(s"unknown error encountered while processing ${msgOrCont.containerType.typeString}.. stack trace = ${ooh.printStackTrace}")
           throw ooh
         }
       }
     })
-    logger.trace("Loaded %d objects for %s".format(msgCntrInfo.data.size, containerType.FullName))
+    logger.trace("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
   }
-*/
 
   private def getSerializeInfo(tupleBytes: Value): String = {
     if (tupleBytes.size < _serInfoBufBytes) return ""
@@ -613,8 +611,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def collectKey(key: Key, keys: ArrayBuffer[String]): Unit = {
-    keys += (new String(key.toArray))
+  private def collectKey(key: Key, keys: ArrayBuffer[(String, String)]): Unit = {
+    implicit val jsonFormats: Formats = DefaultFormats
+    val parsed_key = parse(new String(key.toArray)).extract[ObjKey]
+    keys += ((parsed_key.Obj, parsed_key.Key))
   }
 
   override def SetClassLoader(cl: java.lang.ClassLoader): Unit = {
@@ -632,6 +632,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _messagesOrContainers.clear
   }
 
+  private def getTableKeys(all_keys: ArrayBuffer[(String, String)], objName: String): Array[String] = {
+    all_keys.filter(k => k._1.compareTo(objName) == 0).map(k => k._2).toArray
+  }
+
   // Adding new messages or Containers
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit = _lock.synchronized {
     logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
@@ -642,6 +646,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (_runningTxnsDataStore == null) {
       _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation)
     }
+
+    val all_keys = ArrayBuffer[(String, String)]() // All keys for all tables for now
+    var keysAlreadyLoaded = false
 
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
@@ -665,18 +672,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           /** create a map to cache the entries to be resurrected from the mapdb */
           _messagesOrContainers(objFullName) = newMsgOrContainer
-          /*
           if (loadAllData) {
-            val keys: ArrayBuffer[String] = ArrayBuffer[String]()
-            val keyCollector = (key: Key) => { collectKey(key, keys) }
-            newMsgOrContainer.dataStore.getAllKeys(keyCollector)
+            if (keysAlreadyLoaded == false) {
+              val keyCollector = (key: Key) => { collectKey(key, all_keys) }
+              _allDataDataStore.getAllKeys(keyCollector)
+              keysAlreadyLoaded = true
+            }
+            val keys = getTableKeys(all_keys, objFullName)
             if (keys.size > 0) {
-              loadMap(containerType, keys, newMsgOrContainer)
+              loadMap(keys, newMsgOrContainer)
             }
             newMsgOrContainer.loadedAll = true
             newMsgOrContainer.reload = false
           }
-*/
         }
       } else {
         logger.error("Message/Container %s not found".format(c))
@@ -916,15 +924,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Get all Status information from intermediate table
   override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = _lock.synchronized {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
-    val keys: ArrayBuffer[String] = ArrayBuffer[String]()
+    val keys = ArrayBuffer[(String, String)]()
     val keyCollector = (key: Key) => { collectKey(key, keys) }
     _runningTxnsDataStore.getAllKeys(keyCollector)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
       try {
         val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
-        _runningTxnsDataStore.get(makeKey("UK", key), buildAdapOne)
-        results += ((key, objs(0)))
+        _runningTxnsDataStore.get(makeKey("UK", key._2), buildAdapOne)
+        results += ((key._2, objs(0)))
       } catch {
         case e: Exception => {
           logger.info(s"Unable to load Status Info")
