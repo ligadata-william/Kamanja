@@ -103,7 +103,7 @@ class GenerateJsonData {
               jsonMap += (fld -> dataResult(index))
             index = index + 1
           }
-          finalMap += (dataResult(0) -> jsonMap)
+          finalMap += (dataResult(0).toLowerCase -> jsonMap)
           writeFile(outputfile, finalMap)
         } else {
           println("Error: " + dataResult(0) + " data size: " + dataResult.size + ", format size: " + fldData.size)
