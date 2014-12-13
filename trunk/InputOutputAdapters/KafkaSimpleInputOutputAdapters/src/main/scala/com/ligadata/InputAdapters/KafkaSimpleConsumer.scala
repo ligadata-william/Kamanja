@@ -415,15 +415,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
  */
   private def getKeyValues(time: Long): Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
     var infoList = List[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
-    var partitionList: Set[Int] = null
-    // This method may get called prior to the partition list being set at Start Processing time.. so need to call the
-    // leader to find out the list of partition that Kafka knows about.
-    if (qc.instancePartitions.size == 0) {
-      val kafkaKnownParitions = GetAllPartitionUniqueRecordKey
-      partitionList = kafkaKnownParitions.map(uKey => {uKey.asInstanceOf[KafkaPartitionUniqueRecordKey].PartitionId }).toSet
-    } else {
-      partitionList = qc.instancePartitions
-    }
+    // Always get the complete list of partitions for this.
+    val kafkaKnownParitions = GetAllPartitionUniqueRecordKey
+    val partitionList = kafkaKnownParitions.map(uKey => {uKey.asInstanceOf[KafkaPartitionUniqueRecordKey].PartitionId }).toSet
 
     // Now that we know for sure we have a partition list.. process them
     partitionList.foreach(partitionId => {
