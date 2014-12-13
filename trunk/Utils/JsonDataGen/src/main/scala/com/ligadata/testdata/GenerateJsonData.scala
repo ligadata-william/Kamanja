@@ -93,7 +93,10 @@ class GenerateJsonData {
       var fldData = formatMap.getOrElse(dataResult(0).toLowerCase, null);
 
       if ((fldData != null) && fldData.isInstanceOf[Array[String]]) {
-        if (dataResult.size == fldData.size) {
+        if (dataResult.size > fldData.size) {
+          println("Warn: " + dataResult(0) + " data size: " + dataResult.size + ", format size: " + fldData.size)
+        }
+        if (dataResult.size >= fldData.size) {
           var index = 0
           fldData.foreach { fld =>
             if (index > 0)
@@ -102,8 +105,9 @@ class GenerateJsonData {
           }
           finalMap += (dataResult(0) -> jsonMap)
           writeFile(outputfile, finalMap)
-        } else
-          println("No MATCH --" + dataResult(0) + " data size " + dataResult.size + " :format size " + fldData.size)
+        } else {
+          println("Error: " + dataResult(0) + " data size: " + dataResult.size + ", format size: " + fldData.size)
+        }
       }
       count = count + 1
     } catch {

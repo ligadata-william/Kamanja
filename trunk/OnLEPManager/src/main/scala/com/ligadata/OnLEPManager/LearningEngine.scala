@@ -44,8 +44,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
           val inputData = new JsonData(msgData)
           val json = parse(inputData.dataInput)
-          inputData.root_json = Option(json.values.asInstanceOf[Map[String, Any]])
-          inputData.cur_json = inputData.root_json
+          val parsed_json = json.values.asInstanceOf[scala.collection.immutable.Map[String, Any]]
+          if (parsed_json.size != 1)
+            throw new Exception("Expecting only one message in JSON data : " + msgData)
+          inputData.root_json = Option(parsed_json)
+          inputData.cur_json = Option(parsed_json.head._2)
           msg.populate(inputData)
         } catch {
           case e: Exception => {
