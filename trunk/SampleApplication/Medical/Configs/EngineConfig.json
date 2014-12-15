@@ -1,0 +1,101 @@
+{
+  "Clusters" : [
+  {
+    "ClusterId" :  "ligadata1"
+  }],
+  "ClusterCfgs" : [
+  {
+    "ClusterId" : "ligadata1",
+    "CfgName"   : "EnvironmentContext",
+    "CfgValue"  : "{ \"className\": \"com.ligadata.SimpleEnvContextImpl.SimpleEnvContextImpl$\", \"jarName\": \"simpleenvcontextimpl_2.10-1.0.jar\",  \"jarPaths\" : [\"/tmp/OnLEPInstall1\", \"/tmp/OnLEPInstall2\"],  \"dependencyJars\" : [  \"jopt-simple-3.2.jar\",  \"kafka_2.10-0.8.1.1.jar\",  \"log4j-1.2.15.jar\", \"metrics-core-2.2.0.jar\", \"slf4j-api-1.7.2.jar\", \"snappy-java-1.0.5.jar\", \"zkclient-0.3.jar\",   \"zookeeper-3.3.4.jar\", \"onlepbase_2.10-1.0.jar\"  ] }"
+   }],
+   "Nodes" : [
+   {
+	"NodeId" : "1",
+	"NodePort" : 6543,
+	"NodeIpAddr" : "localhost",
+	"JarPaths" : ["/tmp/OnLEPInstall1", "/tmp/OnLEPInstall2"],
+	"ClusterId" : "ligadata1"
+   },
+   {
+	"NodeId" : "2",
+	"NodePort" : 6544,
+	"NodeIpAddr" : "localhost",
+	"JarPaths" : ["/tmp/OnLEPInstall1", "/tmp/OnLEPInstall2"],
+	"ClusterId" : "ligadata1"
+   },
+   {
+	"NodeId" : "3",
+	"NodePort" : 6544,
+	"NodeIpAddr" : "localhost",
+	"JarPaths" : ["/tmp/OnLEPInstall1", "/tmp/OnLEPInstall2"],
+	"ClusterId" : "ligadata1"
+   }],
+   "Adapters" : [
+   {
+	"Name" : "TestIn_1",	
+	"TypeString" : "Input",
+	"DataFormat": "CSV",
+	"ClassName": "com.ligadata.InputAdapters.KafkaConsumer$",
+	"JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
+	"DependencyJars": [
+	    "jopt-simple-3.2.jar",
+	    "kafka_2.10-0.8.1.1.jar",
+	    "log4j-1.2.15.jar",
+            "metrics-core-2.2.0.jar",
+            "slf4j-api-1.7.2.jar",
+            "snappy-java-1.0.5.jar",
+            "zkclient-0.3.jar",
+            "zookeeper-3.3.4.jar",
+	    "onlepbase_2.10-1.0.jar"
+        ],
+	"FileName" : "/tmp/OnLEPInstall/logs/input1.txt.gz",
+	"AdapterSpecificCfg": {
+	    "HostList": "localhost:2181",
+	    "TopicName": "testin_1"
+        }
+   },
+   {
+	"Name" : "TestOut_1",	
+	"TypeString" : "Output",
+	"DataFormat": "CSV",
+	"ClassName": "com.ligadata.OutputAdapters.KafkaConsumer$",
+	"JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
+	"DependencyJars": [
+	    "jopt-simple-3.2.jar",
+	    "kafka_2.10-0.8.1.1.jar",
+	    "log4j-1.2.15.jar",
+            "metrics-core-2.2.0.jar",
+            "slf4j-api-1.7.2.jar",
+            "snappy-java-1.0.5.jar",
+            "zkclient-0.3.jar",
+            "zookeeper-3.3.4.jar",
+	    "onlepbase_2.10-1.0.jar"
+        ],
+	"FileName" : "/tmp/OnLEPInstall/logs/output1.txt.gz",
+	"AdapterSpecificCfg": {
+	    "HostList": "localhost:2181",
+	    "TopicName": "testout_1"
+        }
+    },
+    {
+	"Name" : "TestStatus_1",	
+	"TypeString" : "Status",
+	"DataFormat": "CSV",
+	"ClassName": "com.ligadata.OutputAdapters.KafkaConsumer$",
+	"JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
+	"DependencyJars": [
+	    "jopt-simple-3.2.jar",
+	    "kafka_2.10-0.8.1.1.jar",
+	    "log4j-1.2.15.jar",
+            "metrics-core-2.2.0.jar",
+            "slf4j-api-1.7.2.jar",
+            "snappy-java-1.0.5.jar",
+            "zkclient-0.3.jar",
+            "zookeeper-3.3.4.jar",
+	    "onlepbase_2.10-1.0.jar"
+        ],
+	"FileName" : "/tmp/OnLEPInstall/logs/status1.txt.gz"
+    }
+  ]
+}
