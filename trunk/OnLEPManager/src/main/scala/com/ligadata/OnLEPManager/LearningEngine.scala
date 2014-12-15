@@ -179,8 +179,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                   ("ModelVersion" -> res.mdlVersion) ~
                   ("uniqKey" -> res.uniqKey) ~
                   ("uniqVal" -> res.uniqVal) ~
-                  ("xformedMsgCntr" -> res.xformedMsgCntr) ~
-                  ("totalXformedMsgs" -> res.totalXformedMsgs) ~
+                  ("xformCntr" -> res.xformedMsgCntr) ~
+                  ("xformTotl" -> res.totalXformedMsgs) ~
+                  ("TxnId" -> tempTransId) ~
                   ("output" -> res.results.toList.map(r =>
                     ("Name" -> r.name) ~
                       ("Type" -> r.usage.toString) ~

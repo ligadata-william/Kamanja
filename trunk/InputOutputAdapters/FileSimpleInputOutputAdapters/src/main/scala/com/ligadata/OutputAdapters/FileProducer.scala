@@ -21,15 +21,14 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
 
   //BUGBUG:: Not Checking whether inputConfig is really FileAdapterConfiguration or not. 
 
-  fc.Typ = inputConfig.Typ
   fc.Name = inputConfig.Name
   fc.className = inputConfig.className
   fc.jarName = inputConfig.jarName
   fc.dependencyJars = inputConfig.dependencyJars
 
-  // For File we expect the format "Type~AdapterName~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList~PrefixMessage~IgnoreLines~AddTimeStampToMsgFlag"
+  // For File we expect the format "Type~AdapterName~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList"
   if (inputConfig.adapterSpecificTokens.size != 5) {
-    val err = "We should find only Type, AdapterName, ClassName, JarName, DependencyJars, CompressionString, FilesList, PrefixMessage, IgnoreLines & AddTimeStampToMsgFlag for File Adapter Config:" + inputConfig.Name
+    val err = "We should find only [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, CompressionString and FilesList for File Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
@@ -38,11 +37,6 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
     fc.CompressionString = inputConfig.adapterSpecificTokens(0)
 
   fc.Files = inputConfig.adapterSpecificTokens(1).split(",").map(str => str.trim).filter(str => str.size > 0)
-  if (inputConfig.adapterSpecificTokens(2).size > 0)
-    fc.MessagePrefix = inputConfig.adapterSpecificTokens(2)
-  if (inputConfig.adapterSpecificTokens(3).size > 0)
-    fc.IgnoreLines = inputConfig.adapterSpecificTokens(3).toInt
-  fc.AddTS2MsgFlag = (inputConfig.adapterSpecificTokens(4).compareToIgnoreCase("1") == 0)
 
   //BUGBUG:: Not validating the values in FileAdapterConfiguration 
 

@@ -990,5 +990,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def PersistRemainingStateEntriesOnLeader: Unit = _lock.synchronized {
     // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
   }
+
+  override def PersistValidateAdapterInformation(validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]): Unit = {
+    // BUGBUG:: Persist stuff
+  }
+
+  override def GetValidateAdapterInformation: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    // BUGBUG:: Get the stuff
+    Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+  }
 }
 
