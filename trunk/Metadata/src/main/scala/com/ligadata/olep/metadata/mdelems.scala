@@ -653,65 +653,79 @@ class JarDef extends BaseElemDef{
 
 
 class NodeInfo {
+  /**
+   * This object captures the information related to a node within a cluster
+   */
   var nodeId: String = _
   var nodePort: Int = _
-  var nodeIpAddr: String = "localhost"
-  var jarPath: String = "/tmp/OnLEPInstall"
+  var nodeIpAddr: String = _
+  var jarPaths: Array[String] = new Array[String](0)
   var clusterId: String = _
+  var power:Int = _
+  var roles:Int = _
+  var description: String = _
 
   def NodeId: String = nodeId
   def NodePort: Int = nodePort
   def NodeIpAddr: String = nodeIpAddr
-  def JarPath: String = jarPath
+  def JarPaths: Array[String] = jarPaths
   def Key: String = nodeId
-  def ClusterId(id:String) : Unit = clusterId = id
   def ClusterId: String = clusterId
+  def Power: Int = power
+  def Roles: Int = roles
+  def Description: String = description
 }
 
 class ClusterInfo {
+  /**
+   * This object captures the information related to a cluster
+   */
   var clusterId: String = _
-  var clusterName: String = _
-  var envContext: String = _
+  var description: String = _
+  var privileges: String = _
 
   def ClusterId: String = clusterId
-  def ClusterName: String = clusterName
-  def Key: String = ClusterId
+  def Description: String = description
+  def Privileges: String = privileges
 }
 
-object QueueType extends Enumeration {
-  type Type = Value
-  val qFile, qKafka = Value
+class ClusterCfgInfo {
+  /**
+   * This object captures the information related to a clusterConfiguration
+   */
+  var clusterId: String = _
+  var cfgName: String = _
+  var cfgValue : String = _
+  var modifiedTime: Date = _
+  var createdTime: Date = _
 
-  def asString(typ : Type) : String = {
-     val str = typ.toString match {
-	case "qFile"  => "FILE"
-	case "qKafka" => "KAFKA"
-	case _ => "Unknown"
-      }
-      str
-  }
-
+  def ClusterId: String = clusterId
+  def CfgName: String = cfgName
+  def CfgValue: String = cfgValue
+  def ModifiedTime: Date = modifiedTime
+  def CreatedTime: Date = createdTime
 }
 
-import QueueType._
 
+class AdapterInfo {
+  /**
+   * This object captures the information related to a adapters used by Engine
+   */
+  var name: String = _
+  var typeString: String = _
+  var dataFormat: String = _
+  var className: String = _
+  var jarName: String = _
+  var dependencyJars: Array[String] = new Array[String](0)
+  var fileName: String = _
+  var adapterSpecificCfg: String = _
 
-class QueueInfo {
-  var queueName: String = _
-  var adapterType: QueueType.Type = qFile
-  var adapterName: String = _
-  var adapterClass: String = _
-  var adapterJars: Array[String] = new Array[String](0)
-  var adapterFile: String = _
-  var adapterFileFormat: ObjFormatType.FormatType = fCSV
-  var zooKeeperConnectString: String = _
-
-  def QueueName: String = queueName
-  def AdapterType: QueueType.Type = adapterType
-  def AdapterName: String = adapterName
-  def AdapterClass: String = adapterClass
-  def AdapterJars: Array[String] = adapterJars
-  def AdapterFile: String = adapterFile
-  def AdapterFileFormat : ObjFormatType.FormatType = adapterFileFormat
-  def ZooKeeperConnectString : String = zooKeeperConnectString
+  def Name: String = name
+  def TypeString: String = typeString
+  def DataFormat: String = dataFormat
+  def ClassName: String = className
+  def JarName: String = jarName
+  def DependencyJars: Array[String] = dependencyJars
+  def FileName: String = fileName
+  def AdapterSpecificCfg: String = adapterSpecificCfg
 }

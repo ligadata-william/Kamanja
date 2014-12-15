@@ -20,6 +20,7 @@ import ObjType._
 
 case class AlreadyExistsException(e: String) extends Throwable(e)
 case class ObjectNolongerExistsException(e: String) extends Throwable(e)
+case class InvalidArgumentException(e: String) extends Throwable(e)
 
 /**
  * class MdMgr
@@ -63,9 +64,10 @@ class MdMgr {
   private var macroDefSets = new HashMap[String, Set[MacroDef]] with MultiMap[String, MacroDef]
 
   // Config objects
+  private var clusterCfgs = new HashMap[String, ClusterCfgInfo]
   private var clusters = new HashMap[String, ClusterInfo]
   private var nodes = new HashMap[String, NodeInfo]
-  private var queues = new HashMap[String, QueueInfo]
+  private var adapters = new HashMap[String, AdapterInfo]
 
   def SetLoggerLevel(level: Level){
     logger.setLevel(level);
@@ -82,8 +84,9 @@ class MdMgr {
     macroDefs.clear
     macroDefSets.clear
     clusters.clear
+    clusterCfgs.clear
     nodes.clear
-    queues.clear
+    adapters.clear
   }
 
 
@@ -119,12 +122,13 @@ class MdMgr {
       }
       case "Clusters" => {
 	clusters.clear
+	clusterCfgs.clear
       }
       case "Nodes" => {
 	nodes.clear
       }
-      case "Queues" => {
-	queues.clear
+      case "Adapters" => {
+	adapters.clear
       }
       case _ => {
 	logger.error("Unknown object type " + objectType + " in truncate function")
@@ -144,8 +148,9 @@ class MdMgr {
     macroDefs.foreach(obj  => {logger.trace("Macro Key = " + obj._1)})
     macroDefSets.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
     clusters.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+    clusterCfgs.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
     nodes.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
-    queues.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+    adapters.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
   }
 
   private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Int): Option[T] = {
@@ -2615,6 +2620,142 @@ class MdMgr {
 	  SetBaseElem(jd,nameSpace,name,version.toInt,name,depJars)
 	  jd
 	}
+
+	def MakeNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
+		     jarPaths:List[String],clusterId:String,power:Int,
+		     roles:Int,description:String): NodeInfo = {
+	  val ni = new NodeInfo
+	  ni.nodeId = nodeId
+	  ni.nodePort = nodePort
+	  ni.nodeIpAddr = nodeIpAddr
+	  if( jarPaths != null ){
+	    ni.jarPaths = jarPaths.toArray
+	  }
+	  ni.clusterId = clusterId
+	  ni.power = power
+	  ni.roles = roles
+	  ni.description = description
+	  ni
+	}
+  
+	def AddNode(ni:NodeInfo) : Unit = {
+	  if( ni.clusterId == null ){
+	    throw new InvalidArgumentException("Failed to Add the node, ClusterId Can not be null")
+	  }
+	  nodes(ni.nodeId.toLowerCase) = ni
+	}
+
+	def RemoveNode(nodeId:String) : Unit = {
+	  val ni = nodes.getOrElse(nodeId,null)
+	  if( ni != null ){
+	    nodes -= nodeId
+	  }
+	}
+
+	def MakeCluster(clusterId:String,description:String, privilges: String): ClusterInfo = {
+	  val ci = new ClusterInfo
+	  ci.clusterId = clusterId
+	  ci.description = description
+	  ci.privileges = privilges
+	  ci
+	}
+	
+	def AddCluster(ci:ClusterInfo) : Unit = {
+	  clusters(ci.clusterId.toLowerCase) = ci
+	}
+
+	def RemoveCluster(clusterId:String) : Unit = {
+	  val ni = clusters.getOrElse(clusterId,null)
+	  if( ni != null ){
+	    clusters -= clusterId
+	  }
+	}
+
+	def MakeClusterCfg(clusterId:String,cfgName:String,cfgValue:String, modifiedTime: Date,createdTime:Date): ClusterCfgInfo = {
+	  val ci = new ClusterCfgInfo
+	  ci.clusterId    = clusterId
+	  ci.cfgName      = cfgName
+	  ci.cfgValue     = cfgValue
+	  ci.modifiedTime = modifiedTime
+	  ci.createdTime = createdTime
+	  ci
+	}
+	
+	def AddClusterCfg(ci:ClusterCfgInfo) : Unit = {
+	  clusterCfgs(ci.clusterId.toLowerCase) = ci
+	}
+
+	def RemoveClusterCfg(clusterCfgId:String) : Unit = {
+	  val ni = clusterCfgs.getOrElse(clusterCfgId,null)
+	  if( ni != null ){
+	    clusterCfgs -= clusterCfgId
+	  }
+	}
+
+        def MakeAdapter(name:String,typeString:String,dataFormat: String,className: String, 
+			 jarName: String, dependencyJars: List[String], fileName:String,
+			adapterSpecificCfg: String): AdapterInfo = {
+	  val ai = new AdapterInfo
+	  ai.name = name
+	  ai.typeString = typeString
+	  ai.dataFormat = dataFormat
+	  ai.className = className
+	  ai.jarName = jarName
+	  if(dependencyJars != null){
+	    ai.dependencyJars = dependencyJars.toArray
+	  }
+	  ai.fileName = fileName
+	  ai.adapterSpecificCfg = adapterSpecificCfg
+	  ai
+	}
+
+        def AddAdapter(ai:AdapterInfo) : Unit = {
+	  adapters(ai.name.toLowerCase) = ai
+	}
+	  
+	def RemoveAdapter(name:String) : Unit = {
+	  val ni = adapters.getOrElse(name,null)
+	  if( ni != null ){
+	    adapters -= name
+	  }
+	}
+
+	def Nodes : Array[NodeInfo] = {
+	  if ( nodes.size > 0 ){
+	    nodes.values.toArray
+	  }
+	  else{
+	    new Array[NodeInfo](0)
+	  }
+	}
+
+	def Clusters : Array[ClusterInfo] = {
+	  if ( clusters.size > 0 ){
+	    clusters.values.toArray
+	  }
+	  else{
+	    new Array[ClusterInfo](0)
+	  }
+	}
+
+	def ClusterCfgs : Array[ClusterCfgInfo] = {
+	  if ( clusterCfgs.size > 0 ){
+	    clusterCfgs.values.toArray
+	  }
+	  else{
+	    new Array[ClusterCfgInfo](0)
+	  }
+	}
+
+	def Adapters : Array[AdapterInfo] = {
+	  if ( adapters.size > 0 ){
+	    adapters.values.toArray
+	  }
+	  else{
+	    new Array[AdapterInfo](0)
+	  }
+	}
+	  
 
   	// External Functions -- End 
 
