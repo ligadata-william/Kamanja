@@ -717,7 +717,6 @@ class AdapterInfo {
   var className: String = _
   var jarName: String = _
   var dependencyJars: Array[String] = new Array[String](0)
-  var fileName: String = _
   var adapterSpecificCfg: String = _
 
   def Name: String = name
@@ -726,6 +725,5 @@ class AdapterInfo {
   def ClassName: String = className
   def JarName: String = jarName
   def DependencyJars: Array[String] = dependencyJars
-  def FileName: String = fileName
   def AdapterSpecificCfg: String = adapterSpecificCfg
 }

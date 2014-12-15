@@ -2693,7 +2693,7 @@ class MdMgr {
 	}
 
         def MakeAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-			 jarName: String, dependencyJars: List[String], fileName:String,
+			 jarName: String, dependencyJars: List[String], 
 			adapterSpecificCfg: String): AdapterInfo = {
 	  val ai = new AdapterInfo
 	  ai.name = name
@@ -2704,7 +2704,6 @@ class MdMgr {
 	  if(dependencyJars != null){
 	    ai.dependencyJars = dependencyJars.toArray
 	  }
-	  ai.fileName = fileName
 	  ai.adapterSpecificCfg = adapterSpecificCfg
 	  ai
 	}
