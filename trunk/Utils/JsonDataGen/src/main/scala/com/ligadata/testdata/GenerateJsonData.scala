@@ -63,17 +63,15 @@ class GenerateJsonData {
       //if ((inputfile == null) || outputfile == null || formatfile == null) throw new Exception(" Error")
 
       for (formatline <- scala.io.Source.fromFile(new File(formatfile), "utf-8").getLines()) {
-        if (formatline.toString() != null && formatline.toString().trim() != "" && formatline.length() > 1) {
-          var formatResult = formatline.split(",", -1)
-          formatMap += formatResult(0).toString() -> formatResult
+        if (formatline != null && formatline.trim.size != 0 && formatline.size > 1) {
+          var formatResult = formatline.toLowerCase.split(",", -1)
+          formatMap += (formatResult(0).toString() -> formatResult)
         }
       }
 
       for (line <- scala.io.Source.fromFile(new File(inputfile), "utf-8").getLines()) {
 
-        if (line.toString() != null && line.toString().trim() != "" && line.length() > 1) {
-          var dataString = line.toString;
-          var dataResult = dataString.split(",", -1);
+        if (line != null && line.trim.size != 0 && line.size > 1) {
           genData(line, formatMap, outfile)
         }
       }
@@ -87,27 +85,29 @@ class GenerateJsonData {
 
   def genData(line: String, formatMap: Map[String, Array[String]], outputfile: PrintWriter) = {
     try {
-      var dataString: String = null
       var jsonMap: Map[String, String] = Map()
       var finalMap: Map[String, Map[String, String]] = Map()
       var count = 1
 
-      dataString = line.toString;
-      var dataResult = dataString.split(",", -1);
-      var fldData = formatMap.getOrElse(dataResult(0), null);
+      var dataResult = line.split(",", -1);
+      var fldData = formatMap.getOrElse(dataResult(0).toLowerCase, null);
 
       if ((fldData != null) && fldData.isInstanceOf[Array[String]]) {
-        if (dataResult.size == fldData.size) {
+        if (dataResult.size > fldData.size) {
+          println("Warn: " + dataResult(0) + " data size: " + dataResult.size + ", format size: " + fldData.size)
+        }
+        if (dataResult.size >= fldData.size) {
           var index = 0
           fldData.foreach { fld =>
             if (index > 0)
               jsonMap += (fld -> dataResult(index))
             index = index + 1
           }
-          finalMap += (dataResult(0) -> jsonMap)
+          finalMap += (dataResult(0).toLowerCase -> jsonMap)
           writeFile(outputfile, finalMap)
-        } else
-          println("No MATCH --" + dataResult(0) + " data size " + dataResult.size + " :format size " + fldData.size)
+        } else {
+          println("Error: " + dataResult(0) + " data size: " + dataResult.size + ", format size: " + fldData.size)
+        }
       }
       count = count + 1
     } catch {

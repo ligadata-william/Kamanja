@@ -27,6 +27,9 @@ import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
 import com.ligadata.Serialize._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -118,7 +121,7 @@ Sample uses:
       val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldname)
       if (kvmaker.isOk) {
         if (dump != null && dump.toLowerCase().startsWith("y")) {
-          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, kvmaker.kvTableName, kvmaker.dataLocation)
+          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation)
           kvmaker.dump(dstore)
           dstore.Shutdown()
         } else {
@@ -150,7 +153,7 @@ class KvInitLoaderInfo {
   val loadedJars: TreeSet[String] = new TreeSet[String];
 
   // Get a mirror for reflection
-  val mirror: reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+  val mirror = ru.runtimeMirror(loader)
 }
 
 object KvInitConfiguration {
@@ -232,7 +235,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   var kvTableName: String = _
   var messageObj: BaseMsgObj = _
   var containerObj: BaseContainerObj = _
-  var kryoSer: Serializer = null
+  var objFullName: String = _
+  var kryoSer: com.ligadata.Serialize.Serializer = null
 
   if (isOk) {
     kvNameCorrType = mdMgr.ActiveType(kvname.toLowerCase)
@@ -240,7 +244,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       logger.error("Not found valid type for " + kvname.toLowerCase)
       isOk = false
     } else {
-      kvTableName = kvNameCorrType.FullName.toLowerCase.replace('.', '_')
+      objFullName = kvNameCorrType.FullName.toLowerCase
+      kvTableName = objFullName.replace('.', '_')
     }
   }
 
@@ -454,8 +459,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   def buildContainerOrMessage: DataStore = {
     if (!isOk) return null
 
-    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, kvTableName, dataLocation)
-    kvstore.TruncateStore
+    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation)
+    // kvstore.TruncateStore
 
     locateKeyPos
     /** locate key idx */
@@ -485,7 +490,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           messageOrContainer.populate(inputData)
           try {
             val v = kryoSer.SerializeObjectToByteArray(messageOrContainer)
-            SaveObject(key, v, kvstore, "kryo")
+            SaveObject(objFullName, key, v, kvstore, "kryo")
             processedRows += 1
           } catch {
             case e: Exception => {
@@ -529,17 +534,22 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       val data: Array[String] = tuples.split(",", -1).map(_.trim)
       val key: String = data(keyPos)
 
-      datastore.get(makeKey(key), printOne)
+      datastore.get(makeKey(objFullName, key), printOne)
     })
   }
 
-  private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
+  private def makeKey(objectname: String, key: String): com.ligadata.keyvaluestore.Key = {
     var k = new com.ligadata.keyvaluestore.Key
-    k ++= key.toLowerCase.getBytes("UTF8")
+    val json =
+      ("Obj" -> objectname) ~
+        ("Key" -> key.toLowerCase)
+    val compjson = compact(render(json))
+    k ++= compjson.getBytes("UTF8")
 
     k
   }
-
+  
+  
   private def makeValue(value: String, serializerInfo: String): com.ligadata.keyvaluestore.Value = {
     var v = new com.ligadata.keyvaluestore.Value
     v ++= serializerInfo.getBytes("UTF8")
@@ -584,9 +594,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     v
   }
 
-  private def SaveObject(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
+  private def SaveObject(objName: String, key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
     object i extends IStorage {
-      var k = makeKey(key)
+      var k = makeKey(objName, key)
       var v = makeValue(value, serializerInfo)
 
       def Key = k

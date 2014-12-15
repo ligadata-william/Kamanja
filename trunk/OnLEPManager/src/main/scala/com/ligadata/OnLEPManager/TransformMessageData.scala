@@ -48,7 +48,9 @@ class TransformMessageData {
     if (json == null || json.values == null)
       throw new Exception("Invalid JSON data : " + inputData)
     val parsed_json = json.values.asInstanceOf[Map[String, Any]]
-    val msgTypeAny = parsed_json.getOrElse("messagetype", null)
+    if (parsed_json.size != 1)
+      throw new Exception("Expecting only one message in JSON data : " + inputData)
+    val msgTypeAny = parsed_json.head._1
     if (msgTypeAny == null)
       throw new Exception("MessageType not found in JSON data : " + inputData)
     val msgType = msgTypeAny.toString.trim
