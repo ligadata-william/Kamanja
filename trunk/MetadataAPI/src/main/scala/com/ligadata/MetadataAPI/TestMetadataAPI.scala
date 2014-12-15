@@ -1102,6 +1102,110 @@ object TestMetadataAPI{
   }
 
 
+  def UploadEngineConfig {
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
+      if ( dirName == null  ){
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
+	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if( ! IsValidDir(dirName) )
+	return
+
+      val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if ( cfgFiles.length == 0 ){
+	logger.fatal("No config files in the directory " + dirName)
+	return
+      }
+
+      var cfgFilePath = ""
+      println("Pick a Config file(cfg) from below choices")
+
+      var seq = 0
+      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == cfgFiles.length + 1){
+	return
+      }
+      if( choice < 1 || choice > cfgFiles.length + 1 ){
+	  logger.fatal("Invalid Choice : " + choice)
+	  return
+      }
+
+      cfgFilePath = cfgFiles(choice-1).toString
+      val cfgStr = Source.fromFile(cfgFilePath).mkString
+      // Save the model
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr))
+    }catch {
+      case e: AlreadyExistsException => {
+	  logger.error("Object Already in the metadata....")
+      }
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
+  def RemoveEngineConfig {
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
+      if ( dirName == null  ){
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
+	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if( ! IsValidDir(dirName) )
+	return
+
+      val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if ( cfgFiles.length == 0 ){
+	logger.fatal("No config files in the directory " + dirName)
+	return
+      }
+
+      var cfgFilePath = ""
+      println("Pick a Config file(cfg) from below choices")
+
+      var seq = 0
+      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == cfgFiles.length + 1){
+	return
+      }
+      if( choice < 1 || choice > cfgFiles.length + 1 ){
+	  logger.fatal("Invalid Choice : " + choice)
+	  return
+      }
+
+      cfgFilePath = cfgFiles(choice-1).toString
+      val cfgStr = Source.fromFile(cfgFilePath).mkString
+      // Save the model
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr))
+    }catch {
+      case e: AlreadyExistsException => {
+	  logger.error("Object Already in the metadata....")
+      }
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+
   def UploadJarFile {
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
@@ -1218,6 +1322,8 @@ object TestMetadataAPI{
       }
     }
   }
+
+
 
 
   def LoadConceptsFromAFile {
@@ -1379,6 +1485,66 @@ object TestMetadataAPI{
       val apiResult = MetadataAPIImpl.GetAllTypesByObjType("JSON",selectedType)
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => " + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllNodesAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllNodes("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllClusterCfgsAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllClustersAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllClusters("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllAdaptersAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+    } catch{
+      case e: Exception => {
+	e.printStackTrace()
+      }
+    }
+  }
+
+  def DumpAllCfgObjectsAsJson{
+    try{
+      val apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1598,6 +1764,13 @@ object TestMetadataAPI{
       val dumpAllTypesByObjTypeAsJson = ()=> { DumpAllTypesByObjTypeAsJson }
       val loadTypesFromAFile = ()         => { LoadTypesFromAFile }
       val uploadJarFile = ()              => { UploadJarFile }
+      val uploadEngineConfig = ()         => { UploadEngineConfig }
+      val dumpAllNodes = ()               => { DumpAllNodesAsJson }
+      val dumpAllClusters = ()            => { DumpAllClustersAsJson }
+      val dumpAllClusterCfgs = ()         => { DumpAllClusterCfgsAsJson }
+      val dumpAllAdapters = ()            => { DumpAllAdaptersAsJson }
+      val dumpAllCfgObjects = ()          => { DumpAllCfgObjectsAsJson }
+      val removeEngineConfig = ()         => { RemoveEngineConfig }
 
       val topLevelMenu = List(("Add Model",addModel),
 			      ("Get Model",getModel),
@@ -1630,7 +1803,14 @@ object TestMetadataAPI{
 			      ("Dump All Functions",dumpAllFunctionsAsJson),
 			      ("Dump All Concepts",dumpAllConceptsAsJson),
 			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson),
-			      ("Upload Any Jar",uploadJarFile))
+			      ("Upload Any Jar",uploadJarFile),
+			      ("Upload Engine Config",uploadEngineConfig),
+			      ("Dump Node Objects",dumpAllNodes),
+			      ("Dump Cluster Objects",dumpAllClusters),
+			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),
+			      ("Dump Adapter Node Objects",dumpAllAdapters),
+			      ("Dump All Config Objects",dumpAllCfgObjects),
+			      ("Remove Engine Config",removeEngineConfig))
 
       var done = false
       while ( done == false ){
