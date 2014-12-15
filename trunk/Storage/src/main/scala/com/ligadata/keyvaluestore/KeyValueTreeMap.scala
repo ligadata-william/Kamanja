@@ -22,6 +22,7 @@ class KeyValueTreeMapTx(owner : DataStore) extends Transaction
 	def del(source: IStorage) = { owner.del(source) }
 	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
 	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
+	def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
 class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
@@ -78,6 +79,15 @@ class KeyValueTreeMap(parameter: PropertyMap) extends DataStore
 	{
 	  sourceArray.foreach( source => {
 	    map.put(source.Key.toArray[Byte], source.Value.toArray[Byte])
+	  })
+	  if (withTransactions)
+            db.commit() //persist changes into disk
+	}
+
+	def delBatch(keyArray: Array[Key]) =
+	{
+	  keyArray.foreach( k => {
+	    map.remove(k.toArray[Byte])
 	  })
 	  if (withTransactions)
             db.commit() //persist changes into disk

@@ -41,6 +41,7 @@ class KeyValueHBaseTx(owner : DataStore) extends Transaction
 	def del(source: IStorage) = { owner.del(source) }
 	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
 	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
+	def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
 class KeyValueHBase(parameter: PropertyMap) extends DataStore
@@ -117,6 +118,13 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	  })
 	}
 
+	def delBatch(keyArray: Array[Key]) = {
+	  keyArray.foreach( k => {
+	    val p = new Delete(k.toArray[Byte])
+	    val result = tableHBase.delete(p)
+	  })
+	}
+
 	def get(key: Key, handler : (Value) => Unit) =
 	{
 	  try{
@@ -180,9 +188,14 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 
 	override def Shutdown() =
 	{
-		tableHBase.close()
-
-		connection.close()
+	  if(tableHBase != null ){
+	    tableHBase.close()
+	    tableHBase = null
+	  }
+	  if( connection != null ){
+	    connection.close()
+	    connection = null
+	  }
 	}
 
 	def TruncateStore() =
