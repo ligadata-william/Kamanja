@@ -45,7 +45,7 @@ case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
 case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],ClusterId: String, Power: Option[Int], Roles: Option[Int], Description: Option[String])
 case class JClusterInfo(ClusterId:String,Description:Option[String],Privileges:Option[String])
 case class JClusterCfgInfo(ClusterId:String,CfgName:String,CfgValue: String,ModifiedTime:Option[Date],CreatedTime:Option[Date])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],FileName: Option[String], AdapterSpecificCfg: Option[String])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
 
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], ClusterCfgs: Option[List[JClusterCfgInfo]], Nodes: Option[List[JNodeInfo]], Adapters: Option[List[JAdapterInfo]])
 
@@ -831,7 +831,6 @@ object JsonSerializer {
 		    ("ClassName"      -> o.className) ~
 		    ("JarName"        -> o.jarName) ~
 		    ("DependencyJars" -> o.dependencyJars.toList) ~
-		    ("FileName"       -> o.fileName) ~
 		    ("AdapterSpecificCfg"  -> o.adapterSpecificCfg))
 	pretty(render(json))
       }
