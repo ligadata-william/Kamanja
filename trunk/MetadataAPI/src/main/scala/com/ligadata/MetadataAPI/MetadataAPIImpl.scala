@@ -65,7 +65,7 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir: String, GitRootDir: String, Database: String, DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String]);
+case class ParameterMap(RootDir: String, GitRootDir: String, Database: String, DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String])
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
@@ -3941,12 +3941,12 @@ object MetadataAPIImpl extends MetadataAPI {
 
 
   def AddAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-		 jarName: String, dependencyJars: List[String], fileName: String,
+		 jarName: String, dependencyJars: List[String], 
 		 adapterSpecificCfg: String): String = {
     try{
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name,typeString,dataFormat,className,jarName,
-					  dependencyJars,fileName,adapterSpecificCfg)
+					  dependencyJars,adapterSpecificCfg)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
@@ -3963,9 +3963,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-		    jarName: String, dependencyJars: List[String], fileName:String,
+		    jarName: String, dependencyJars: List[String], 
 		    adapterSpecificCfg: String): String = {
-    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,fileName,adapterSpecificCfg)
+    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg)
   }
 
   def RemoveAdapter(name:String) : String = {
@@ -4199,16 +4199,12 @@ object MetadataAPIImpl extends MetadataAPI {
 	  if(a.DependencyJars != None ){
 	    depJars = a.DependencyJars.get
 	  }
-	  var fName:String = null
-	  if(a.FileName != None ){
-	    fName = a.FileName.get
-	  }
 	  var ascfg:String = null
 	  if(a.AdapterSpecificCfg != None ){
 	    ascfg = a.AdapterSpecificCfg.get
 	  }
 	  // save in memory
-	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,fName,ascfg)
+	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,ascfg)
 	  MdMgr.GetMdMgr.AddAdapter(ai)
 	  val key = "AdapterInfo." + ai.name
 	  val value = serializer.SerializeObjectToByteArray(ai)
@@ -4750,6 +4746,9 @@ object MetadataAPIImpl extends MetadataAPI {
 
       logger.trace("MODEL_EXEC_FLAG => " + MODEL_EXEC_FLAG)
 
+      val CONFIG_FILES_DIR = gitRootDir + "/RTD/trunk/SampleApplication/Medical/Configs"
+      logger.trace("CONFIG_FILES_DIR => " + CONFIG_FILES_DIR)
+
       metadataAPIConfig.setProperty("ROOT_DIR", rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT", gitRootDir)
       metadataAPIConfig.setProperty("DATABASE", database)
@@ -4772,6 +4771,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("CONTAINER_FILES_DIR", CONTAINER_FILES_DIR)
       metadataAPIConfig.setProperty("COMPILER_WORK_DIR", COMPILER_WORK_DIR)
       metadataAPIConfig.setProperty("MODEL_EXEC_LOG", MODEL_EXEC_FLAG)
+      metadataAPIConfig.setProperty("CONFIG_FILES_DIR", CONFIG_FILES_DIR)
 
       propertiesAlreadyLoaded = true;
 
