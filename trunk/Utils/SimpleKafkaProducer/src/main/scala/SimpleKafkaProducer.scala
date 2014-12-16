@@ -410,8 +410,6 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('topicpartitions -> value), tail)
       case "--json" :: value :: tail =>
         nextOption(map ++ Map('json -> value), tail)
-      case "--partitionkeyidxs" :: value :: tail =>
-        nextOption(map ++ Map('partitionkeyidxs -> value), tail)
       case "--brokerlist" :: value :: tail =>
         nextOption(map ++ Map('brokerlist -> value), tail)
       case option :: tail => {
