@@ -280,7 +280,6 @@ class MessageDefImpl {
      
      """
     }
-
     getMessageFunc
   }
   private def assignJsonForArray(fname: String, typeImpl: String) = {
