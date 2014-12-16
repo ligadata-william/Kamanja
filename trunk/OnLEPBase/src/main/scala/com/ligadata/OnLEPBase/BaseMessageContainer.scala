@@ -29,8 +29,8 @@ trait MessageContainerObjBase {
   def NameSpace: String // Message or Container NameSpace
   def Name: String // Message or Container Name
   def Version: String // Message or Container Version
-  def PartitionKeyData: Array[String] // Partition key data
-  def PrimaryKeyData: Array[String] // Primary key data
+  def PartitionKeyData(inputdata:InputData): Array[String] // Partition key data
+  def PrimaryKeyData(inputdata:InputData): Array[String] // Primary key data
 }
 
 trait BaseContainer extends MessageContainerBase {
