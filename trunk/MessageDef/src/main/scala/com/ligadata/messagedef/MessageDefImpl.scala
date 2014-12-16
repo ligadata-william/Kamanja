@@ -257,7 +257,7 @@ class MessageDefImpl {
     if (getMsg != null && getMsg.trim() != "") {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = {
 	    if (childPath == null || childPath.size == 0 || primaryKey == null || primaryKey.size == 0) { // Invalid case
     		return null
 	    }
@@ -274,7 +274,7 @@ class MessageDefImpl {
     } else {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = { }
      
      """
     }
