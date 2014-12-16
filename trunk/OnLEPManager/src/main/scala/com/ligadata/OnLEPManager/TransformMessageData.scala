@@ -77,9 +77,9 @@ class TransformMessageData {
   def parseInputData(inputData: String, msgFormat: String): (String, String) = {
     if (msgFormat.equalsIgnoreCase("csv"))
       return parseCsvInputData(inputData)
-    else if (msgFormat.equalsIgnoreCase("csv"))
+    else if (msgFormat.equalsIgnoreCase("json"))
       return parseJsonInputData(inputData)
-    else if (msgFormat.equalsIgnoreCase("csv"))
+    else if (msgFormat.equalsIgnoreCase("xml"))
       return parseXmlInputData(inputData)
     else throw new Exception("Invalid input data type")
   }

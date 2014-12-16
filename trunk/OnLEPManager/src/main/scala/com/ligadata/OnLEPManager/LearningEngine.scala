@@ -5,7 +5,7 @@ import com.ligadata.OnLEPBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvCo
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
-import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter }
+import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -24,16 +24,16 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   val rand = new Random(hashCode)
 
-  private def createMsg(msgType: String, msgFormat: String, msgData: String): BaseMsg = {
+  private def msgInputDataAndMsgInfo(msgType: String, msgFormat: String, msgData: String): (MsgContainerObjAndTransformInfo, InputData) = {
     val msgInfo = OnLEPMetadata.getMessgeInfo(msgType)
+    var retInpData: InputData = null
     if (msgInfo != null) {
-      val msg: BaseMsg = msgInfo.msgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
       if (msgFormat.equalsIgnoreCase("csv")) {
         try {
           val inputData = new DelimitedData(msgData, ",")
           inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
           inputData.curPos = 0
-          msg.populate(inputData)
+          retInpData = inputData
         } catch {
           case e: Exception => {
             LOG.error("Failed to populate CSV data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
@@ -49,7 +49,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             throw new Exception("Expecting only one message in JSON data : " + msgData)
           inputData.root_json = Option(parsed_json)
           inputData.cur_json = Option(parsed_json.head._2)
-          msg.populate(inputData)
+          retInpData = inputData
         } catch {
           case e: Exception => {
             LOG.error("Failed to populate JSON data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
@@ -61,7 +61,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           val inputData = new XmlData(msgData)
           inputData.root_xml = XML.loadString(inputData.dataInput)
           inputData.cur_xml = inputData.root_xml
-          msg.populate(inputData)
+          retInpData = inputData
         } catch {
           case e: Exception => {
             LOG.error("Failed to populate XML data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
@@ -70,13 +70,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         }
       } else {
         throw new Exception("Invalid input data type:" + msgFormat)
-        return null
       }
-      msg
     } else {
       throw new Exception("Not found Message Type:" + msgType)
-      null
     }
+    (msgInfo, retInpData)
   }
 
   private def RunAllModels(tempTransId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
@@ -123,13 +121,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
   def execute(tempTransId: Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
     // LOG.info("LE => " + msgData)
     try {
-      // BUGBUG:: for now handling only CSV input data.
-      val msg = createMsg(msgType, msgFormat, msgData)
-      if (msg != null) {
-        // BUGBUG::Get Previous History (through Key) of the top level message/container 
-        // Get top level Msg for the current msg
+      val (msgInfo, inputdata) = msgInputDataAndMsgInfo(msgType, msgFormat, msgData)
+      if (msgInfo != null && inputdata != null) {
+        val partKeyData = msgInfo.msgobj.PartitionKeyData(inputdata)
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
-        val partKeyData = msg.PartitionKeyData
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
         val partitionKeyData = if (isValidPartitionKey) {
           val key = ("PartKey" -> partKeyData.toList)
@@ -143,8 +138,18 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           handleMsg = topObj != null
         }
         if (handleMsg) {
+          var msg: BaseMsg = null
+          if (topObj != null && topMsgTypeAndHasParent._2) {
+            msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.msgobj.PrimaryKeyData(inputdata))
+          }
+          var createdNewMsg = false
+          if (msg == null) {
+            createdNewMsg = true
+            msg = msgInfo.msgobj.CreateNewMessage
+          }
+          msg.populate(inputdata)
           val finalTopMsgOrContainer: MessageContainerBase = if (topObj != null) topObj else msg
-          if (topMsgTypeAndHasParent._2)
+          if (topMsgTypeAndHasParent._2 && createdNewMsg)
             finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
           var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
           if (isValidPartitionKey && finalTopMsgOrContainer != null) {
@@ -179,8 +184,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                   ("ModelVersion" -> res.mdlVersion) ~
                   ("uniqKey" -> res.uniqKey) ~
                   ("uniqVal" -> res.uniqVal) ~
-                  ("xformedMsgCntr" -> res.xformedMsgCntr) ~
-                  ("totalXformedMsgs" -> res.totalXformedMsgs) ~
+                  ("xformCntr" -> res.xformedMsgCntr) ~
+                  ("xformTotl" -> res.totalXformedMsgs) ~
+                  ("TxnId" -> tempTransId) ~
                   ("output" -> res.results.toList.map(r =>
                     ("Name" -> r.name) ~
                       ("Type" -> r.usage.toString) ~

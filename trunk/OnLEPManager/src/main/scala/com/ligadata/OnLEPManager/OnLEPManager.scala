@@ -131,6 +131,7 @@ class OnLEPManager {
   private val inputAdapters = new ArrayBuffer[InputAdapter]
   private val outputAdapters = new ArrayBuffer[OutputAdapter]
   private val statusAdapters = new ArrayBuffer[OutputAdapter]
+  private val validateInputAdapters = new ArrayBuffer[InputAdapter]
 
   private type OptionMap = Map[Symbol, Any]
 
@@ -177,7 +178,7 @@ class OnLEPManager {
     true
   }
 
-  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): InputAdapter = {
+  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo, mkExecCtxt: MakeExecContext): InputAdapter = {
     if (statusAdapterCfg == null) return null
     var allJars: collection.immutable.Set[String] = null
 
@@ -214,7 +215,7 @@ class OnLEPManager {
         val objinst = obj.instance
         if (objinst.isInstanceOf[InputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[InputAdapterObj]
-          val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, MakeExecContextImpl, SimpleStats)
+          val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, mkExecCtxt, SimpleStats)
           LOG.info("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
@@ -280,7 +281,7 @@ class OnLEPManager {
     null
   }
 
-  private def GetAdapterConfigByCfgName(loadConfigs: Properties, adapCfgName: String, hasFormat: Boolean): AdapterConfiguration = {
+  private def GetAdapterConfigByCfgName(loadConfigs: Properties, adapCfgName: String, hasFormatOrInputAdapterName: Boolean): AdapterConfiguration = {
     // For any adapter we need Type as first one
     val adapterConfig = loadConfigs.getProperty(adapCfgName.toLowerCase, "").replace("\"", "").trim.split("~", -1).map(str => str.trim)
 
@@ -293,12 +294,10 @@ class OnLEPManager {
     val conf = new AdapterConfiguration
 
     var idx = 0
-    conf.Typ = adapterConfig(idx)
-    idx += 1
     conf.Name = adapterConfig(idx)
     idx += 1
-    if (hasFormat) {
-      conf.format = adapterConfig(idx)
+    if (hasFormatOrInputAdapterName) {
+      conf.formatOrInputAdapterName = adapterConfig(idx)
       idx += 1
     }
     conf.className = adapterConfig(idx)
@@ -319,6 +318,29 @@ class OnLEPManager {
     conf
   }
 
+  private def PrepInputAdapsForCfg(loadConfigs: Properties, adapCfgNames: Array[String], mustHave: Boolean, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo, mkExecCtxt: MakeExecContext): Boolean = {
+    // ConfigurationName
+    if (adapCfgNames.size == 0) {
+      return true
+    }
+
+    adapCfgNames.foreach(ac => {
+      val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, true)
+      if (adapterCfg == null) return false
+
+      try {
+        val adapter = CreateInputAdapterFromConfig(adapterCfg, outputAdapters, envCtxt, loaderInfo, mkExecCtxt)
+        if (adapter == null) return false
+        inputAdapters += adapter
+      } catch {
+        case e: Exception =>
+          LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
+          return false
+      }
+    })
+    return true
+  }
+
   private def LoadInputAdapsForCfg(loadConfigs: Properties, cfgNames: String, mustHave: Boolean, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): Boolean = {
     // ConfigurationName
     val adapCfgNames = loadConfigs.getProperty(cfgNames.toLowerCase, "").replace("\"", "").trim.split("~").map(str => str.trim).filter(str => str.size > 0)
@@ -331,26 +353,29 @@ class OnLEPManager {
         LOG.warn("Not found valid %s ConfigurationNames".format(cfgNames))
         return true
       }
-    } else {
-      adapCfgNames.foreach(ac => {
-        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, true)
-        if (adapterCfg == null) return false
-
-        try {
-          val adapter = CreateInputAdapterFromConfig(adapterCfg, outputAdapters, envCtxt, loaderInfo)
-          if (adapter == null) return false
-          inputAdapters += adapter
-        } catch {
-          case e: Exception =>
-            LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
-            return false
-        }
-      })
-      return true
     }
+    return PrepInputAdapsForCfg(loadConfigs, adapCfgNames, mustHave, inputAdapters, outputAdapters, envCtxt, loaderInfo, MakeExecContextImpl)
   }
 
-  private def LoadOutputAdapsForCfg(loadConfigs: Properties, cfgNames: String, mustHave: Boolean, outputAdapters: ArrayBuffer[OutputAdapter], loaderInfo: OnLEPLoaderInfo): Boolean = {
+  private def LoadValidateInputAdapsFromCfg(loadConfigs: Properties, valInputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): Boolean = {
+    // ConfigurationName
+
+    val validateInputAdapters = ArrayBuffer[String]()
+
+    outputAdapters.foreach(oa => {
+      val validateInputAdapName = if (oa.inputConfig.formatOrInputAdapterName != null) oa.inputConfig.formatOrInputAdapterName.trim else ""
+      if (validateInputAdapName.size > 0) {
+        validateInputAdapters += validateInputAdapName
+      } else {
+        LOG.warn("Not found validate input adapter for " + oa.inputConfig.Name)
+      }
+    })
+    if (validateInputAdapters.size == 0)
+      return true
+    return PrepInputAdapsForCfg(loadConfigs, validateInputAdapters.toArray, false, valInputAdapters, outputAdapters, envCtxt, loaderInfo, MakeValidateExecCtxtImpl)
+  }
+
+  private def LoadOutputAdapsForCfg(loadConfigs: Properties, cfgNames: String, mustHave: Boolean, outputAdapters: ArrayBuffer[OutputAdapter], loaderInfo: OnLEPLoaderInfo, hasInputAdapterName: Boolean): Boolean = {
     // ConfigurationName
     val adapCfgNames = loadConfigs.getProperty(cfgNames.toLowerCase, "").replace("\"", "").trim.split("~").map(str => str.trim).filter(str => str.size > 0)
 
@@ -368,7 +393,7 @@ class OnLEPManager {
         return false
       }
       adapCfgNames.foreach(ac => {
-        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, false)
+        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, hasInputAdapterName)
         if (adapterCfg == null) return false
 
         try {
@@ -461,13 +486,13 @@ class OnLEPManager {
     // Get status adapter
     LOG.info("Getting Status Adapter")
 
-    if (LoadOutputAdapsForCfg(loadConfigs, "StatusAdapterCfgNames", false, statusAdapters, metadataLoader) == false)
+    if (LoadOutputAdapsForCfg(loadConfigs, "StatusAdapterCfgNames", false, statusAdapters, metadataLoader, false) == false)
       return false
 
     // Get output adapter
     LOG.info("Getting Output Adapters")
 
-    if (LoadOutputAdapsForCfg(loadConfigs, "OutputAdapterCfgNames", false, outputAdapters, metadataLoader) == false)
+    if (LoadOutputAdapsForCfg(loadConfigs, "OutputAdapterCfgNames", false, outputAdapters, metadataLoader, true) == false)
       return false
 
     // Get input adapter
@@ -476,6 +501,12 @@ class OnLEPManager {
     if (LoadInputAdapsForCfg(loadConfigs, "InputAdapterCfgNames", false, inputAdapters, outputAdapters.toArray, envCtxt, metadataLoader) == false)
       return false
 
+    // Get input adapter
+    LOG.info("Getting Validate Input Adapters")
+
+    if (LoadValidateInputAdapsFromCfg(loadConfigs, validateInputAdapters, outputAdapters.toArray, envCtxt, metadataLoader) == false)
+      return false
+      
     val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
     LOG.info("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
 
@@ -486,6 +517,12 @@ class OnLEPManager {
     LOG.info("Shutdown Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
 
+    validateInputAdapters.foreach(ia => {
+      ia.Shutdown
+    })
+    
+    validateInputAdapters.clear
+    
     inputAdapters.foreach(ia => {
       ia.Shutdown
     })
@@ -624,7 +661,7 @@ class OnLEPManager {
 
       if (retval) {
         OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
-        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, envCtxt, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, envCtxt, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
       }
 
       /*

@@ -104,7 +104,7 @@ trait EnvContext {
   def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
   def getAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int)
   def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
-  def getIntermediateStatusInfo(keys:Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
+  def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
   def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from Final table. No Transaction required here.
   def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
 
@@ -124,6 +124,9 @@ trait EnvContext {
 
   // Set Reload Flag
   def setReloadFlag(tempTransId: Long, containerName: String): Unit
+
+  def PersistValidateAdapterInformation(validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]): Unit
+  def GetValidateAdapterInformation: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
 }
 
 trait ModelBase {
