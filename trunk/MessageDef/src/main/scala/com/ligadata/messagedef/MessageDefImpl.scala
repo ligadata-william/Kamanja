@@ -274,7 +274,7 @@ class MessageDefImpl {
     } else {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = { }
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg
      
      """
     }
