@@ -69,13 +69,13 @@ class MessageDefImpl {
     val pratitionKeys = partitionkeyStrObj(msg, partitionPos)
     val primaryKeys = primarykeyStrObj(msg, primaryPos)
 
-    if (pratitionKeys != null && pratitionKeys.trim() != "") {
+    /*if (pratitionKeys != null && pratitionKeys.trim() != "") {
       partitionKeyDef = getPartitionKeyDef
     }
     if (primaryKeys != null && primaryKeys.trim() != "") {
       primaryKeyDef = getPrimaryKeyDef
     }
-
+*/
     if (msg.msgtype.equals("Message")) {
       if (msg.TDataExists) {
         tdataexists = gettdataexists + msg.TDataExists.toString
@@ -86,12 +86,14 @@ class MessageDefImpl {
       }
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
+      //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
+      //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     }
     cobj
@@ -110,9 +112,9 @@ class MessageDefImpl {
     val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
 
     if (partitionKeys != null && partitionKeys.trim() != "")
-      "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString
+      "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString + getPartitionKeyDef
     else
-      ""
+      "\n   override def PartitionKeyData: Array[String] = Array[String]()"
   }
 
   private def primarykeyStrObj(message: Message, primaryPos: Array[Int]): String = {
@@ -127,9 +129,9 @@ class MessageDefImpl {
     primaryString = primaryString + ")"
 
     if (prmryKeys != null && prmryKeys.trim() != "")
-      "\n	val primaryKeys : Array[String] = " + prmryKeys + "\n    val prmryKeyPos = " + primaryString
+      "\n	val primaryKeys : Array[String] = " + prmryKeys + "\n    val prmryKeyPos = " + primaryString + getPrimaryKeyDef
     else
-      ""
+      "\n    override def PrimaryKeyData: Array[String] = Array[String]()"
   }
 
   private def getName(msg: Message) = {
@@ -255,7 +257,7 @@ class MessageDefImpl {
     if (getMsg != null && getMsg.trim() != "") {
 
       getMessageFunc = """
-    def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg = {
 	    if (childPath == null || childPath.size == 0 || primaryKey == null || primaryKey.size == 0) { // Invalid case
     		return null
 	    }
@@ -268,6 +270,12 @@ class MessageDefImpl {
 	 	return null
 	}
 	 
+     """
+    } else {
+
+      getMessageFunc = """
+    override def GetMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+     
      """
     }
 
@@ -1130,28 +1138,29 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var getParitionData = new StringBuilder(8 * 1024)
 
     getParitionData = getParitionData.append("""
-	  def PartitionKeyData(inputdata:InputData): Array[String] = {
-	    if (partKeyPos.size == 0 || partitionKeys.size == 0)
-	    	return Array[String]()
-	    if (inputdata.isInstanceOf[DelimitedData]) {
-	    	val csvData = inputdata.asInstanceOf[DelimitedData]
-	    		if (csvData.tokens == null) {
-	            	return partKeyPos.map(pos => "")
-	            }
-	         return partKeyPos.map(pos => csvData.tokens(pos))
-	     } else if (inputdata.isInstanceOf[JsonData]) {
-	        val jsonData = inputdata.asInstanceOf[JsonData]
-	        val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-	        if (map == null) {
-	    		return partKeyPos.map(pos => "")
-	        }
-	        return partitionKeys.map(key => map.getOrElse(key, "").toString)
-	    } else if (inputdata.isInstanceOf[XmlData]) {
-	    		val xmlData = inputdata.asInstanceOf[XmlData]
-	                    // Fix this
-	    } else throw new Exception("Invalid input data")
-	    return Array[String]()
-	  }
+        
+    override def PartitionKeyData(inputdata:InputData): Array[String] = {
+    	if (partKeyPos.size == 0 || partitionKeys.size == 0)
+    		return Array[String]()
+    	if (inputdata.isInstanceOf[DelimitedData]) {
+    		val csvData = inputdata.asInstanceOf[DelimitedData]
+    			if (csvData.tokens == null) {
+            		return partKeyPos.map(pos => "")
+            	}
+    		return partKeyPos.map(pos => csvData.tokens(pos))
+    	} else if (inputdata.isInstanceOf[JsonData]) {
+    		val jsonData = inputdata.asInstanceOf[JsonData]
+    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (map == null) {
+    			return partKeyPos.map(pos => "")
+    		}
+    		return partitionKeys.map(key => map.getOrElse(key, "").toString)
+    	} else if (inputdata.isInstanceOf[XmlData]) {
+    		val xmlData = inputdata.asInstanceOf[XmlData]
+                    // Fix this
+    	} else throw new Exception("Invalid input data")
+    	return Array[String]()
+    }
     """)
 
     getParitionData.toString
@@ -1162,28 +1171,29 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var getPrimaryKeyData = new StringBuilder(8 * 1024)
 
     getPrimaryKeyData = getPrimaryKeyData.append("""
-	  def getPrimaryKeyData(inputdata:InputData): Array[String] = {
-	    if (prmryKeyPos.size == 0 || primaryKeys.size == 0)
-	    	return Array[String]()
-	    if (inputdata.isInstanceOf[DelimitedData]) {
-	    	val csvData = inputdata.asInstanceOf[DelimitedData]
-	    		if (csvData.tokens == null) {
-	            	return prmryKeyPos.map(pos => "")
-	            }
-	         return prmryKeyPos.map(pos => csvData.tokens(pos))
-	     } else if (inputdata.isInstanceOf[JsonData]) {
-	        val jsonData = inputdata.asInstanceOf[JsonData]
-	        val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-	        if (map == null) {
-	    		return prmryKeyPos.map(pos => "")
-	        }
-	        return primaryKeys.map(key => map.getOrElse(key, "").toString)
-	    } else if (inputdata.isInstanceOf[XmlData]) {
-	    		val xmlData = inputdata.asInstanceOf[XmlData]
-	                    // Fix this
-	    } else throw new Exception("Invalid input data")
-	    return Array[String]()
-	  }
+	  
+    override def PrimaryKeyData(inputdata:InputData): Array[String] = {
+    	if (prmryKeyPos.size == 0 || primaryKeys.size == 0)
+    		return Array[String]()
+    	if (inputdata.isInstanceOf[DelimitedData]) {
+    		val csvData = inputdata.asInstanceOf[DelimitedData]
+    		if (csvData.tokens == null) {
+            	return prmryKeyPos.map(pos => "")
+            }
+    		return prmryKeyPos.map(pos => csvData.tokens(pos))
+    	} else if (inputdata.isInstanceOf[JsonData]) {
+    		val jsonData = inputdata.asInstanceOf[JsonData]
+    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (map == null) {
+    			return prmryKeyPos.map(pos => "")
+    		}
+    		return primaryKeys.map(key => map.getOrElse(key, "").toString)
+    	} else if (inputdata.isInstanceOf[XmlData]) {
+    		val xmlData = inputdata.asInstanceOf[XmlData]
+                    // Fix this
+    	} else throw new Exception("Invalid input data")
+    	return Array[String]()
+    }
     """)
 
     getPrimaryKeyData.toString
