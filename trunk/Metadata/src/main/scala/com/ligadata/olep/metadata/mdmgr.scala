@@ -2622,8 +2622,14 @@ class MdMgr {
 	}
 
 	def MakeNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-		     jarPaths:List[String],clusterId:String,power:Int,
-		     roles:Int,description:String): NodeInfo = {
+		     jarPaths:List[String],
+		     scala_home:String, 
+		     java_home:String,
+		     classpath: String,
+		     clusterId:String,
+		     power:Int,
+		     roles:Int,
+		     description:String): NodeInfo = {
 	  val ni = new NodeInfo
 	  ni.nodeId = nodeId
 	  ni.nodePort = nodePort
@@ -2631,6 +2637,9 @@ class MdMgr {
 	  if( jarPaths != null ){
 	    ni.jarPaths = jarPaths.toArray
 	  }
+	  ni.scala_home = scala_home
+	  ni.java_home = java_home
+	  ni.classpath = classpath
 	  ni.clusterId = clusterId
 	  ni.power = power
 	  ni.roles = roles
@@ -2671,11 +2680,11 @@ class MdMgr {
 	  }
 	}
 
-	def MakeClusterCfg(clusterId:String,cfgName:String,cfgValue:String, modifiedTime: Date,createdTime:Date): ClusterCfgInfo = {
+	def MakeClusterCfg(clusterId:String,cfgMap:scala.collection.mutable.HashMap[String,String],
+			   modifiedTime: Date,createdTime:Date): ClusterCfgInfo = {
 	  val ci = new ClusterCfgInfo
 	  ci.clusterId    = clusterId
-	  ci.cfgName      = cfgName
-	  ci.cfgValue     = cfgValue
+	  ci.cfgMap      = cfgMap
 	  ci.modifiedTime = modifiedTime
 	  ci.createdTime = createdTime
 	  ci
@@ -2719,42 +2728,21 @@ class MdMgr {
 	  }
 	}
 
-	def Nodes : Array[NodeInfo] = {
-	  if ( nodes.size > 0 ){
-	    nodes.values.toArray
-	  }
-	  else{
-	    new Array[NodeInfo](0)
-	  }
+	def Nodes : scala.collection.immutable.HashMap[String,NodeInfo] = {
+	  scala.collection.immutable.HashMap[String,NodeInfo]() ++ nodes
 	}
 
-	def Clusters : Array[ClusterInfo] = {
-	  if ( clusters.size > 0 ){
-	    clusters.values.toArray
-	  }
-	  else{
-	    new Array[ClusterInfo](0)
-	  }
+	def Adapters : scala.collection.immutable.HashMap[String,AdapterInfo] = {
+	  scala.collection.immutable.HashMap[String,AdapterInfo]() ++ adapters
 	}
 
-	def ClusterCfgs : Array[ClusterCfgInfo] = {
-	  if ( clusterCfgs.size > 0 ){
-	    clusterCfgs.values.toArray
-	  }
-	  else{
-	    new Array[ClusterCfgInfo](0)
-	  }
+	def Clusters : scala.collection.immutable.HashMap[String,ClusterInfo] = {
+	  scala.collection.immutable.HashMap[String,ClusterInfo]() ++ clusters
 	}
 
-	def Adapters : Array[AdapterInfo] = {
-	  if ( adapters.size > 0 ){
-	    adapters.values.toArray
-	  }
-	  else{
-	    new Array[AdapterInfo](0)
-	  }
+	def ClusterCfgs : scala.collection.immutable.HashMap[String,ClusterCfgInfo] = {
+	  scala.collection.immutable.HashMap[String,ClusterCfgInfo]() ++ clusterCfgs
 	}
-	  
 
   	// External Functions -- End 
 

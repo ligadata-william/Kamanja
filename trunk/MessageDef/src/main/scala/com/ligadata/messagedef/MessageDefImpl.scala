@@ -114,7 +114,7 @@ class MessageDefImpl {
     if (partitionKeys != null && partitionKeys.trim() != "")
       "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString + getPartitionKeyDef
     else
-      "\n   override def PartitionKeyData: Array[String] = Array[String]()"
+      "\n   override def PartitionKeyData(inputdata:InputData): Array[String] = Array[String]()"
   }
 
   private def primarykeyStrObj(message: Message, primaryPos: Array[Int]): String = {
@@ -131,7 +131,7 @@ class MessageDefImpl {
     if (prmryKeys != null && prmryKeys.trim() != "")
       "\n	val primaryKeys : Array[String] = " + prmryKeys + "\n    val prmryKeyPos = " + primaryString + getPrimaryKeyDef
     else
-      "\n    override def PrimaryKeyData: Array[String] = Array[String]()"
+      "\n    override def PrimaryKeyData(inputdata:InputData): Array[String] = Array[String]()"
   }
 
   private def getName(msg: Message) = {
@@ -257,7 +257,7 @@ class MessageDefImpl {
     if (getMsg != null && getMsg.trim() != "") {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = {
 	    if (childPath == null || childPath.size == 0 || primaryKey == null || primaryKey.size == 0) { // Invalid case
     		return null
 	    }
@@ -274,7 +274,7 @@ class MessageDefImpl {
     } else {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = { }
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg
      
      """
     }
