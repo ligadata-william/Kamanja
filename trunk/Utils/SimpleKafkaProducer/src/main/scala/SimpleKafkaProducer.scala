@@ -488,7 +488,7 @@ object SimpleKafkaProducer {
     }
 
     var validJsonMap = scala.collection.mutable.Map[String,List[String]]()
-    var partitionkeyidxs: Array[Any] = null
+    var partitionkeyidxs: Array[Int] = null
     if (fileFormat.equalsIgnoreCase("json")) {
      // partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
       val msgTypeKeys = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").filter(part => part.size > 0)
@@ -500,9 +500,6 @@ object SimpleKafkaProducer {
           keyList = List(key) ::: keyList
         })
         validJsonMap(keyStructure(0)) = keyList
-      })
-      validJsonMap.foreach(xxx => {
-          println("asdfasdf")
       })
     } else {
       partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
@@ -564,7 +561,7 @@ object SimpleKafkaProducer {
               val st: Stats = new Stats
               flNames.foreach(fl => {
                 if (gz.trim.compareToIgnoreCase("true") == 0) {
-                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs.asInstanceOf[Array[Int]], st, ignorelines, topicpartitions))
+                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, topicpartitions))
                 } else {
                   tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, validJsonMap.asInstanceOf[scala.collection.mutable.Map[String,List[Any]]], st, fileFormat,topicpartitions))
                 }
