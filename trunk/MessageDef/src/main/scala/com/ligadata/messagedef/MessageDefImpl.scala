@@ -913,9 +913,8 @@ class MessageDefImpl {
       if (partitionKeyStr != null && partitionKeyStr.toString.trim() != "")
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
 */
-      val partitionKeys = if (message.PartitionKey != null) ("Array(" + message.PartitionKey.map(p => p.toLowerCase).mkString(", ") + ")") else ""
-      val prmryKeys = if (message.PrimaryKeys != null) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase).mkString(", ") + ")") else ""
-
+      val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
+      val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
       scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr(prmryKeys) + newline + getsetMethods(message.Fixed))
 
       if (getMsg != null && getMsg.toString.trim() != "" && getMsg.size > 5)
