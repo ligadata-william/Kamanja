@@ -81,6 +81,9 @@
     ],
     "PartitionKey": [
       "Desynpuf_Id"
+    ],
+    "PrimaryKey": [
+      "Desynpuf_Id"
     ]
   }
 }
