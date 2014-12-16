@@ -42,12 +42,15 @@ case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
 case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
 
-case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],ClusterId: String, Power: Option[Int], Roles: Option[Int], Description: Option[String])
-case class JClusterInfo(ClusterId:String,Description:Option[String],Privileges:Option[String])
-case class JClusterCfgInfo(ClusterId:String,CfgName:String,CfgValue: String,ModifiedTime:Option[Date],CreatedTime:Option[Date])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
 
-case class EngineConfig(Clusters: Option[List[JClusterInfo]], ClusterCfgs: Option[List[JClusterCfgInfo]], Nodes: Option[List[JNodeInfo]], Adapters: Option[List[JAdapterInfo]])
+case class JDataStore(StoreType: String,SchemaName:String,Location:String)
+case class JStatusInfo(StoreType: String,SchemaName:String,Location:String)
+case class JZooKeeperInfo(ZooKeeperNodeBasePath:String,ZooKeeperConnectString:String,ZooKeeperSessionTimeoutMs: String,ZooKeeperConnectionTimeoutMs:String)
+case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String)
+case class JClusterCfg(DataStore: JDataStore,StatusInfo: JStatusInfo, ZooKeeperInfo: JZooKeeperInfo, EnvironmentContext: String)
+case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
+case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 
 case class UnsupportedObjectException(e: String) extends Exception(e)
 case class Json4sSerializationException(e: String) extends Exception(e)
@@ -812,8 +815,7 @@ object JsonSerializer {
       }
       case o:ClusterCfgInfo => {
 	val json = (("ClusterId"     -> o.clusterId) ~
-		    ("CfgName"       -> o.cfgName) ~
-		    ("CfgValue"      -> o.cfgValue))
+		    ("CfgMap"        -> o.cfgMap))
 	pretty(render(json))
       }
       case o:NodeInfo => {
@@ -821,6 +823,9 @@ object JsonSerializer {
 		    ("NodePort"       -> o.nodePort) ~
 		    ("NodeIpAddr"       -> o.nodeIpAddr) ~
 		    ("JarPaths"     -> o.jarPaths.toList) ~
+		    ("Scala_home"     -> o.scala_home) ~
+		    ("Java_home"     -> o.java_home) ~
+		    ("Classpath"     -> o.classpath) ~
 		    ("ClusterId"     -> o.clusterId))
 	pretty(render(json))
       }
