@@ -24,7 +24,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   qc.dependencyJars = inputConfig.dependencyJars
 
   if (inputConfig.adapterSpecificTokens.size < 2) {
-    val err = "We should find only Type, [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, Host/Brokers and topic name for Kafka Queue Adapter Config:" + inputConfig.Name
+    val err = "We should find only Name, [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, Host/Brokers and topic name for Kafka Queue Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }

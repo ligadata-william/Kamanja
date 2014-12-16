@@ -33,7 +33,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   // For File we expect the format "Format~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList~PrefixMessage~IgnoreLines"
   if (inputConfig.adapterSpecificTokens.size != 4) {
-    val err = "We should find only Format, ClassName, JarName, DependencyJars, CompressionString, FilesList & IgnoreLines for File Adapter Config:" + inputConfig.Name
+    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, CompressionString, FilesList & IgnoreLines for File Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }

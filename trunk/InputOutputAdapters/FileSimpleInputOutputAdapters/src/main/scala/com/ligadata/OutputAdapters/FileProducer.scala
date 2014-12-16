@@ -27,8 +27,8 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
   fc.dependencyJars = inputConfig.dependencyJars
 
   // For File we expect the format "Type~AdapterName~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList"
-  if (inputConfig.adapterSpecificTokens.size != 5) {
-    val err = "We should find only [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, CompressionString and FilesList for File Adapter Config:" + inputConfig.Name
+  if (inputConfig.adapterSpecificTokens.size < 2) {
+    val err = "We should find only Name, [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, CompressionString and FilesList for File Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
