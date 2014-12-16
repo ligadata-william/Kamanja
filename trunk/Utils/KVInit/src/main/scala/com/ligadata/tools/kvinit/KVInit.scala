@@ -118,6 +118,7 @@ Sample uses:
         return
       }
 
+      KvInitConfiguration.configFile = cfgfile.toString
       val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldname)
       if (kvmaker.isOk) {
         if (dump != null && dump.toLowerCase().startsWith("y")) {
@@ -157,6 +158,7 @@ class KvInitLoaderInfo {
 }
 
 object KvInitConfiguration {
+  var configFile: String = _
   var jarPaths: collection.immutable.Set[String] = _
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
@@ -225,10 +227,13 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   }
 
   if (isOk) {
+    /*
     if (metadataStoreType.compareToIgnoreCase("cassandra") == 0 || metadataStoreType.compareToIgnoreCase("hbase") == 0)
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
     else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
+*/
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
   }
 
   var kvNameCorrType: BaseTypeDef = _
@@ -548,8 +553,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     k
   }
-  
-  
+
   private def makeValue(value: String, serializerInfo: String): com.ligadata.keyvaluestore.Value = {
     var v = new com.ligadata.keyvaluestore.Value
     v ++= serializerInfo.getBytes("UTF8")
