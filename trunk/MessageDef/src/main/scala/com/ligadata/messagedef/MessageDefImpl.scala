@@ -107,7 +107,7 @@ class MessageDefImpl {
     var partitionString = partitionStr.substring(0, partitionStr.length - 1)
     partitionString = partitionString + ")"
 
-    val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString(", ") + "\")") else ""
+    val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
 
     if (partitionKeys != null && partitionKeys.trim() != "")
       "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString
@@ -116,7 +116,7 @@ class MessageDefImpl {
   }
 
   private def primarykeyStrObj(message: Message, primaryPos: Array[Int]): String = {
-    val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString(", ") + "\")") else ""
+    val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
     primaryStr.append("Array(")
