@@ -131,7 +131,7 @@ object SimpleKafkaProducer {
    * @param ignorelines
    * @param topicpartitions
    */
-  def ProcessGZipFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats, ignorelines: Int, topicpartitions: Int): Unit = {
+  def ProcessGZipFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats, ignorelines: Int, topicpartitions: Int, format: String): Unit = {
     val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
     var len = 0
     var readlen = 0
@@ -404,12 +404,12 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('threads -> value), tail)
       case "--partitionkeyidxs" :: value :: tail =>
         nextOption(map ++ Map('partitionkeyidxs -> value), tail)
+      case "--format" :: value :: tail =>
+        nextOption(map ++ Map('format -> value), tail)
       case "--ignorelines" :: value :: tail =>
         nextOption(map ++ Map('ignorelines -> value), tail)
       case "--topicpartitions" :: value :: tail =>
         nextOption(map ++ Map('topicpartitions -> value), tail)
-      case "--json" :: value :: tail =>
-        nextOption(map ++ Map('json -> value), tail)
       case "--brokerlist" :: value :: tail =>
         nextOption(map ++ Map('brokerlist -> value), tail)
       case option :: tail => {
@@ -452,11 +452,6 @@ object SimpleKafkaProducer {
       println("Need queue(s)")
       sys.exit(1)
     }
-    val isJson = options.getOrElse('json, "false").toString
-    var fileFormat = "plain"
-    if (isJson.equalsIgnoreCase("true")) {
-      fileFormat = "json"
-    }
 
     val topics = tmptopics.toList.sorted.toArray // Sort topics by names    
 
@@ -487,10 +482,11 @@ object SimpleKafkaProducer {
       sys.exit(1)
     }
 
+    val format = options.getOrElse('format,"").toString
+
     var validJsonMap = scala.collection.mutable.Map[String,List[String]]()
     var partitionkeyidxs: Array[Int] = null
-    if (fileFormat.equalsIgnoreCase("json")) {
-     // partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
+    if (format.equalsIgnoreCase("json")) {
       val msgTypeKeys = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").filter(part => part.size > 0)
 
       msgTypeKeys.foreach(msgType => {
@@ -545,10 +541,6 @@ object SimpleKafkaProducer {
         }
       }
 
-      val scheduledThreadPool = java.util.concurrent.Executors.newScheduledThreadPool(1);
-
-      // scheduledThreadPool.scheduleWithFixedDelay(statusPrint, 0, 10, java.util.concurrent.TimeUnit.SECONDS);
-
       idx = 0
       FilesForThreads.foreach(fls => {
         if (fls.size > 0) {
@@ -561,9 +553,9 @@ object SimpleKafkaProducer {
               val st: Stats = new Stats
               flNames.foreach(fl => {
                 if (gz.trim.compareToIgnoreCase("true") == 0) {
-                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, topicpartitions))
+                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, topicpartitions, format))
                 } else {
-                  tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, validJsonMap.asInstanceOf[scala.collection.mutable.Map[String,List[Any]]], st, fileFormat,topicpartitions))
+                  tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, validJsonMap.asInstanceOf[scala.collection.mutable.Map[String,List[Any]]], st, format, topicpartitions))
                 }
                 println("%02d. File:%s ElapsedTime:%.02fms".format(threadNo, fl, tm / 1000000.0))
               })
