@@ -660,6 +660,9 @@ class NodeInfo {
   var nodePort: Int = _
   var nodeIpAddr: String = _
   var jarPaths: Array[String] = new Array[String](0)
+  var scala_home: String = _
+  var java_home: String = _
+  var classpath: String = _
   var clusterId: String = _
   var power:Int = _
   var roles:Int = _
@@ -669,7 +672,9 @@ class NodeInfo {
   def NodePort: Int = nodePort
   def NodeIpAddr: String = nodeIpAddr
   def JarPaths: Array[String] = jarPaths
-  def Key: String = nodeId
+  def Scala_home: String = scala_home
+  def Java_home: String = java_home
+  def Classpath: String = classpath
   def ClusterId: String = clusterId
   def Power: Int = power
   def Roles: Int = roles
@@ -694,14 +699,12 @@ class ClusterCfgInfo {
    * This object captures the information related to a clusterConfiguration
    */
   var clusterId: String = _
-  var cfgName: String = _
-  var cfgValue : String = _
+  var cfgMap:scala.collection.mutable.HashMap[String,String] = _
   var modifiedTime: Date = _
   var createdTime: Date = _
 
   def ClusterId: String = clusterId
-  def CfgName: String = cfgName
-  def CfgValue: String = cfgValue
+  def CfgMap:scala.collection.mutable.HashMap[String,String] = cfgMap
   def ModifiedTime: Date = modifiedTime
   def CreatedTime: Date = createdTime
 }
