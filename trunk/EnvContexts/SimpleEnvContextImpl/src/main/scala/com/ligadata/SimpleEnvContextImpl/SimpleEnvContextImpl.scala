@@ -942,7 +942,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key._2, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"Unable to load Status Info")
+          logger.info(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -961,7 +961,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"Unable to load Status Info")
+          logger.info(s"getIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -980,7 +980,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"Unable to load Status Info")
+          logger.info(s"getAllFinalStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1004,6 +1004,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var cntr = 0
 
     validateUniqVals.foreach(kv => {
+      logger.info(s"PersistValidateAdapterInformation:%d -- %s -> %s".format(cntr, kv._1, kv._2))
       object obj extends IStorage {
         val key = makeKey("CP", kv._1)
         val value = kv._2
@@ -1045,10 +1046,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       try {
         val buildAdapOne = (tupleBytes: Value) => { buildValidateAdapInfo(tupleBytes, objs) }
         _checkPointAdapInfoDataStore.get(makeKey(key._1, key._2), buildAdapOne)
+        logger.info(s"GetValidateAdapterInformation -- %s -> %s".format(key._2, objs(0).toString))
         results += ((key._2, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"Unable to load Status Info")
+          logger.info(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
