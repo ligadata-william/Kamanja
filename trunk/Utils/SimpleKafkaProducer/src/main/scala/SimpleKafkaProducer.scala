@@ -236,25 +236,35 @@ object SimpleKafkaProducer {
    */
   def ProcessTextFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: scala.collection.mutable.Map[String,List[Any]], st: Stats, format: String, topicpartitions: Int): Unit = {
 
-    if (format.equalsIgnoreCase("json")) {
-      processJsonFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[String]]],st,topicpartitions)
-    } else {
-      throw new Exception("Only following formats are supported: JSON.")
+    val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
+
+    try {
+      if (format.equalsIgnoreCase("json")) {
+        processJsonFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[String]]],st,topicpartitions,bis)
+      } else if (format.equalsIgnoreCase("csv")) {
+        processCSVFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[Int]]],st,topicpartitions,bis)
+      }else {
+        throw new Exception("Only following formats are supported: JSON.")
+      }
+    } catch {
+      case e: Exception => {println("Error reading from a file " + e.printStackTrace())}
+    } finally {
+      if (bis != null) bis.close
     }
   }
 
   /**
    * processJsonFile - dealing with Json File... parse individual Json documents from it and insert them individually
    */
-  private def processJsonFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int): Unit ={
+  private def processJsonFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int, bis: InputStream): Unit ={
     // Handle Json
     // Gotta have the entire file here, for now try to stream json
-    val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
-    val contentArray = Source.fromFile(sFileName).iter.toArray
+   // val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
     var readlen = 0
-    var len = 0
+    val len = 0
     val maxlen = 1024 * 1024
     val buffer = new Array[Byte](maxlen)
+    var tm = System.nanoTime
 
     var op = 0
     var cp = 0
@@ -282,13 +292,33 @@ object SimpleKafkaProducer {
             cp = curr
 
             val jsonDoc = buffer.slice(op,cp+1).map(byte => byte.toChar).mkString
-            println(jsonDoc)
             processJsonDoc(jsonDoc, producer: Producer[AnyRef, AnyRef], topics, threadId, msg, sleeptm, partitionkeyidxs, st, topicpartitions)
           }
         }
         curr = curr + 1
       }
+      if (sleeptm > 0)
+        Thread.sleep(sleeptm)
+
+
+      // let the user know intermediate status updates
+      val curTm = System.nanoTime
+      if ((curTm - tm) > 10 * 1000000000L) {
+        tm = curTm
+        println("Tid:%2d, Time:%10dms, Lines:%8d, Read:%15d, Sent:%15d".format(threadId, curTm / 1000000, st.totalLines, st.totalRead, st.totalSent))
+      }
+
     } while (readlen > 0)
+
+    val curTm = System.nanoTime
+    println("Tid:%2d, Time:%10dms, Lines:%8d, Read:%15d, Sent:%15d, Last, file:%s".format(threadId, curTm / 1000000, st.totalLines, st.totalRead, st.totalSent, sFileName))
+  }
+
+  /*
+* processCSVFile - dealing with CSV File
+ */
+  private def processCSVFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[Int]], st: Stats, topicpartitions: Int, bis: InputStream): Unit = {
+    throw new Exception ("CSV Format is not yet supported on the plain text format.  It is only available in a .GZ format")
   }
 
   /* processJsonDoc - add an individual json doc to whatever queue is specified here.  */
@@ -353,6 +383,9 @@ object SimpleKafkaProducer {
 
   type OptionMap = Map[Symbol, Any]
 
+  /*
+  * nextOption - parsing input options
+   */
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
     list match {
@@ -377,8 +410,6 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('topicpartitions -> value), tail)
       case "--json" :: value :: tail =>
         nextOption(map ++ Map('json -> value), tail)
-      case "--partitionkeyidxs" :: value :: tail =>
-        nextOption(map ++ Map('partitionkeyidxs -> value), tail)
       case "--brokerlist" :: value :: tail =>
         nextOption(map ++ Map('brokerlist -> value), tail)
       case option :: tail => {
