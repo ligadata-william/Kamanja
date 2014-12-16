@@ -84,7 +84,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    * @param maxParts Int - Number of Partitions
    * @param partitionIds Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)] - an Array of partition ids
    */
-  def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit = lock.synchronized {
+  def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
 
     LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: " + qc.topic)
 
@@ -205,6 +205,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               }
             }
 
+            val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1 
             // Successfuly read from the Kafka Adapter - Process messages
             fetchResp.messageSet(qc.topic, partitionId).foreach(msgBuffer => {
               val bufferPayload = msgBuffer.message.payload
@@ -216,7 +217,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
                 // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
                 // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
                 // range errors on the read, we simple ignore the message by with the offset specified by the engine.
-                if (msgBuffer.offset == partition._2.Offset) {
+                if (msgBuffer.offset <= ignoreTillOffset) {
                   LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8") + " - previously processed! ")
                   break
                 }

@@ -54,7 +54,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   qc.instancePartitions = Set[Int]()
 
   val groupName = "T" + hashCode.toString
-  
+
   //BUGBUG:: Not validating the values in QueueAdapterConfiguration 
   props.put("zookeeper.connect", qc.hosts.mkString(","))
   props.put("group.id", groupName)
@@ -93,7 +93,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
@@ -195,9 +195,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                         execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
                         val kv = kvs.getOrElse(curPartitionId, null)
                         if (kv != null) {
-                          if (kv._2.Offset != -1 && message.offset <= kv._2.Offset) {
-                            executeCurMsg = false
-                            currentOffset = kv._2.Offset
+                          if (kv._2.Offset != -1) {
+                            if (message.offset < kv._2.Offset) {
+                              executeCurMsg = false
+                              currentOffset = if (ignoreFirstMsg) kv._2.Offset else (kv._2.Offset - 1) // Later just checking whether it is > or not
+                            } else if (message.offset == kv._2.Offset) {
+                              if (ignoreFirstMsg)
+                                executeCurMsg = false
+                              currentOffset = kv._2.Offset
+                            }
+
                           }
                           tempTransId = kv._3
                           ignoreOff = kv._4._1.Offset
@@ -354,6 +361,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   override def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
     return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
   }
-  
+
 }
 

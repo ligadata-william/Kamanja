@@ -154,6 +154,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _classLoader: java.lang.ClassLoader = null
   private[this] var _allDataDataStore: DataStore = null
   private[this] var _runningTxnsDataStore: DataStore = null
+  private[this] var _checkPointAdapInfoDataStore: DataStore = null
 
   private[this] def getTransactionContext(tempTransId: Long, addIfMissing: Boolean): TransactionContext = _lock.synchronized {
     var txnCtxt = _txnContexts.getOrElse(tempTransId, null)
@@ -629,6 +630,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (_runningTxnsDataStore != null)
       _runningTxnsDataStore.Shutdown
     _runningTxnsDataStore = null
+    if (_checkPointAdapInfoDataStore != null)
+      _checkPointAdapInfoDataStore.Shutdown
+    _checkPointAdapInfoDataStore = null
     _messagesOrContainers.clear
   }
 
@@ -645,6 +649,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
     if (_runningTxnsDataStore == null) {
       _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation)
+    }
+    if (_checkPointAdapInfoDataStore == null) {
+      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation)
     }
 
     val all_keys = ArrayBuffer[(String, String)]() // All keys for all tables for now
@@ -991,13 +998,62 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
   }
 
-  override def PersistValidateAdapterInformation(validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]): Unit = {
-    // BUGBUG:: Persist stuff
+  override def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit = {
+    // Persists unique key & value here for this transactionId
+    val storeObjects = new Array[IStorage](validateUniqVals.size)
+    var cntr = 0
+
+    validateUniqVals.foreach(kv => {
+      object obj extends IStorage {
+        val key = makeKey("CP", kv._1)
+        val value = kv._2
+        val v = makeValue(value.getBytes("UTF8"), "CSV")
+
+        def Key = key
+        def Value = v
+        def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+      }
+      storeObjects(cntr) = obj
+      cntr += 1
+    })
+
+    val txn = _checkPointAdapInfoDataStore.beginTx()
+    _checkPointAdapInfoDataStore.putBatch(storeObjects)
+    _checkPointAdapInfoDataStore.commitTx(txn)
   }
 
-  override def GetValidateAdapterInformation: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
-    // BUGBUG:: Get the stuff
-    Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+  private def buildValidateAdapInfo(tupleBytes: Value, objs: Array[String]) {
+    // Get first _serInfoBufBytes bytes
+    if (tupleBytes.size < _serInfoBufBytes) {
+      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
+      logger.error(errMsg)
+      throw new Exception(errMsg)
+    }
+
+    val valInfo = getValueInfo(tupleBytes)
+    objs(0) = new String(valInfo)
+  }
+
+  override def GetValidateAdapterInformation: Array[(String, String)] = {
+    val results = ArrayBuffer[(String, String)]()
+
+    val keys = ArrayBuffer[(String, String)]()
+    val keyCollector = (key: Key) => { collectKey(key, keys) }
+    _checkPointAdapInfoDataStore.getAllKeys(keyCollector)
+    var objs: Array[String] = new Array[String](1)
+    keys.foreach(key => {
+      try {
+        val buildAdapOne = (tupleBytes: Value) => { buildValidateAdapInfo(tupleBytes, objs) }
+        _checkPointAdapInfoDataStore.get(makeKey(key._1, key._2), buildAdapOne)
+        results += ((key._2, objs(0)))
+      } catch {
+        case e: Exception => {
+          logger.info(s"Unable to load Status Info")
+        }
+      }
+    })
+    logger.trace("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
+    results.toArray
   }
 }
 
