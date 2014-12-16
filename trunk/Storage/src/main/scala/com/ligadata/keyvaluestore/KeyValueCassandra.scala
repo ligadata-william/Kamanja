@@ -38,6 +38,7 @@ class KeyValueCassandraTx(owner: DataStore) extends Transaction {
   def del(source: IStorage) = { owner.del(source) }
   def getAllKeys(handler: (Key) => Unit) = { owner.getAllKeys(handler) }
   def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
+  def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
 class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
@@ -127,6 +128,16 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
         var key = ByteBuffer.wrap(source.Key.toArray[Byte]);
         var value = ByteBuffer.wrap(source.Value.toArray[Byte]);
         batch.add(updateStmt.bind(value, key));
+      })
+      session.execute(batch);
+    }
+
+  def delBatch(keyArray: Array[Key]) =
+    {
+      val batch = new BatchStatement
+      keyArray.foreach(k => {
+        var key = ByteBuffer.wrap(k.toArray[Byte]);
+        batch.add(deleteStmt.bind(key));
       })
       session.execute(batch);
     }

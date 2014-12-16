@@ -1,16 +1,21 @@
 
+import org.json4s.jackson.JsonMethods._
+
 import scala.actors.threadpool.{ Executors, TimeUnit }
 import scala.collection.mutable.ArrayBuffer
-
+import scala.io.Source
 import java.util.Properties
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
 import java.io.{ InputStream, ByteArrayInputStream }
 import java.util.zip.GZIPInputStream
-import java.nio.file.{ Paths, Files }
+import java.nio.file.{Files, Paths }
 import kafka.utils.VerifiableProperties
 import com.ligadata.Utils.KeyHasher
+import scala.util.control.Breaks._
 import java.util.Calendar
+
+import scala.util.parsing.json.JSON
 
 object ProducerSimpleStats {
 
@@ -30,15 +35,25 @@ object ProducerSimpleStats {
   }
 }
 
-class ExtractKey {
+class  ExtractKey {
   def get(inputData: String, partitionkeyidxs: Array[Int], defaultKey: String, keyPartDelim: String): String = {
-    if (partitionkeyidxs.size == 0) {
+    if (partitionkeyidxs.size != 0) {
       return defaultKey
     }
     val str_arr = inputData.split(",", -1)
     if (str_arr.size == 0)
       throw new Exception("Not found any values in message")
     return partitionkeyidxs.map(idx => str_arr(idx)).mkString(keyPartDelim)
+  }
+
+  // This is used to create a hashvalue for a Json message. this assumes that partitionkeyindx actually has the values
+  // to be used for the key generation.
+  def get(inputData: String, partitionkeyidxs: Array[String], defaultKey: String, keyPartDelim: String): String = {
+    if (partitionkeyidxs.size == 0) {
+      return defaultKey
+    }
+  
+    return partitionkeyidxs.mkString(keyPartDelim)
   }
 }
 
@@ -65,6 +80,9 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
   }
 }
 
+/**
+ *  Object used to insert messages from a specified source (files for now) to a specified Kafka queues
+ */
 object SimpleKafkaProducer {
 
   class Stats {
@@ -100,6 +118,19 @@ object SimpleKafkaProducer {
     }
   }
 
+  /**
+   * ProcessGZipFile  - read messages from a GZ file and insert them into the specified Kafka queue
+   * @param producer
+   * @param topics
+   * @param threadId
+   * @param sFileName
+   * @param msg
+   * @param sleeptm
+   * @param partitionkeyidxs
+   * @param st
+   * @param ignorelines
+   * @param topicpartitions
+   */
   def ProcessGZipFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats, ignorelines: Int, topicpartitions: Int): Unit = {
     val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
     var len = 0
@@ -125,7 +156,7 @@ object SimpleKafkaProducer {
             if ((locallinecntr % 20) == 0)
               curTime = System.currentTimeMillis
             locallinecntr += 1
-            var strlen = idx - startidx
+            val strlen = idx - startidx
             if (sleeptm > 0)
               Thread.sleep(sleeptm)
             if (ignoredlines < ignorelines) {
@@ -152,10 +183,6 @@ object SimpleKafkaProducer {
               isrn = true
             }
             st.totalLines += 1;
-
-            if (st.totalLines % 100 == 0) {
-              // ProducerSimpleStats.setKey(threadId, "Tid:%2d, Lines:%8d, Read:%15d, Sent:%15d".format(threadId, st.totalLines, st.totalRead, st.totalSent))
-            }
 
             val curTm = System.nanoTime
             if ((curTm - tm) > 10 * 1000000000L) {
@@ -194,22 +221,131 @@ object SimpleKafkaProducer {
     gzis.close();
   }
 
-  def ProcessTextFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats): Unit = {
-    throw new Exception("Not yet handled processing text files")
-    /*
-    var totalLines: Int = 0
+  /**
+   * ProcessTextFile - read messages out of the file and publish them into the Kafka queues
+   * @param producer: Producer[AnyRef, AnyRef]
+   * @param topics: topics: Array[String]
+   * @param threadId: Int
+   * @param sFileName: String
+   * @param msg: String
+   * @param sleeptm: Int
+   * @param partitionkeyidxs scala.collection.mutable.Map[String,List[Any]] - depends on the format... For JSON, this should have a List[String] as a second parm
+   * @param st
+   * @param format: String - Format of the data, supported: ("json")
+   * @param topicpartitions
+   */
+  def ProcessTextFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: scala.collection.mutable.Map[String,List[Any]], st: Stats, format: String, topicpartitions: Int): Unit = {
 
-    for (ln <- scala.io.Source.fromFile(sFileName).getLines) {
-      if (sleeptm > 0)
-        Thread.sleep(sleeptm)
-      val sendmsg = if (msg.size == 0) ln else (msg + "," + ln)
-      send(producer, topics((st.totalLines % topics.size).toInt), sendmsg, st.totalLines.toString) // totalLines.toString
-      st.totalLines += 1;
+    if (format.equalsIgnoreCase("json")) {
+      processJsonFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[String]]],st,topicpartitions)
+    } else {
+      throw new Exception("Only following formats are supported: JSON.")
     }
-*/
   }
 
-  def elapsed[A](f: => A): Long = {
+  /**
+   * processJsonFile - dealing with Json File... parse individual Json documents from it and insert them individually
+   */
+  private def processJsonFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int): Unit ={
+    // Handle Json
+    // Gotta have the entire file here, for now try to stream json
+    val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
+    val contentArray = Source.fromFile(sFileName).iter.toArray
+    var readlen = 0
+    var len = 0
+    val maxlen = 1024 * 1024
+    val buffer = new Array[Byte](maxlen)
+
+    var op = 0
+    var cp = 0
+    var balance  = 0
+    var curr = 0
+
+    // Loop through the file looking for Json documents and process them
+    do {
+      readlen = bis.read(buffer, len, maxlen - 1 - len)
+     // while (curr < contentArray.size) {
+      val nextChunkEnd = curr + readlen
+      while (curr < nextChunkEnd) {
+        if (buffer(curr).toChar == '{') {
+          //first Open paren
+          if (balance == 0) {
+            op = curr
+          }
+          balance = balance + 1
+        }
+
+        if (buffer(curr).toChar == '}') {
+          balance = balance - 1
+          // Closes the paren - reset we got the supposedly valid jason document
+          if (balance == 0) {
+            cp = curr
+
+            val jsonDoc = buffer.slice(op,cp+1).map(byte => byte.toChar).mkString
+            println(jsonDoc)
+            processJsonDoc(jsonDoc, producer: Producer[AnyRef, AnyRef], topics, threadId, msg, sleeptm, partitionkeyidxs, st, topicpartitions)
+          }
+        }
+        curr = curr + 1
+      }
+    } while (readlen > 0)
+  }
+
+  /* processJsonDoc - add an individual json doc to whatever queue is specified here.  */
+  private def processJsonDoc(doc: String, producer: Producer[AnyRef, AnyRef],
+                             topics: Array[String], threadId: Int, msg: String, sleeptm: Int,
+                             partitionkeyidxs: scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int): Unit = {
+
+    val extractKey: ExtractKey = new ExtractKey
+    var jsonPartitionKeyidxs: List[String] = List[String]()
+    val defPartKey = st.totalLines.toString
+
+    // Get the json object from
+    val jsonMsg = parse(doc).values.asInstanceOf[Map[String, Any]]
+    val msgTypeIter = partitionkeyidxs.keysIterator
+
+    // There better be only 1 element here, since all messages here must be of the {"Type":{message body}} format.
+    // if this changes in the future, we obviously have to revisit this.
+    if (!msgTypeIter.hasNext) {
+      println ("Empty Document - missing message type for the follwoing docuemnt:")
+      println (doc)
+      return
+    }
+    val msgType = msgTypeIter.next
+    val msgBody = jsonMsg.getOrElse(msgType,null).asInstanceOf[Map[String,Any]]
+
+    if (msgBody == null) {
+      println ("Empty Body for a message- missing message type for the follwoing docuemnt:")
+      println (doc)
+      return
+    }
+
+    // Read the values of Keys as specified on the input paramters, and combine them into t a List[String]
+    val keyList = partitionkeyidxs.getOrElse(msgType,null)
+    if (keyList != null ) {
+      keyList.foreach(key => {
+        val value: String = msgBody.getOrElse(key,null).asInstanceOf[String]
+        if (value != null){
+          jsonPartitionKeyidxs = List[String](value) ::: jsonPartitionKeyidxs}
+      })
+    }
+
+    // Get the right key partitioning information and insert into the Kafka
+    val key = extractKey.get(doc, jsonPartitionKeyidxs.toArray, defPartKey, ".")
+    val hashCode = keyHasher.hashKey(key.getBytes()).abs
+    val totalParts = (hashCode % (topicpartitions * topics.size)).toInt.abs
+    val topicIdx = (totalParts / topicpartitions)
+    val partIdx = (totalParts % topicpartitions)
+    val sendmsg = if (msg.size == 0) doc else (msg + "," + doc)
+    send(producer, topics(topicIdx), sendmsg, partIdx.toString)
+    st.totalRead += doc.size
+    st.totalSent += sendmsg.size
+  }
+
+  /*
+  * elapsed
+   */
+  private def elapsed[A](f: => A): Long = {
     val s = System.nanoTime
     f
     (System.nanoTime - s)
@@ -217,7 +353,7 @@ object SimpleKafkaProducer {
 
   type OptionMap = Map[Symbol, Any]
 
-  def nextOption(map: OptionMap, list: List[String]): OptionMap = {
+  private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
     list match {
       case Nil => map
@@ -239,6 +375,10 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('ignorelines -> value), tail)
       case "--topicpartitions" :: value :: tail =>
         nextOption(map ++ Map('topicpartitions -> value), tail)
+      case "--json" :: value :: tail =>
+        nextOption(map ++ Map('json -> value), tail)
+      case "--partitionkeyidxs" :: value :: tail =>
+        nextOption(map ++ Map('partitionkeyidxs -> value), tail)
       case "--brokerlist" :: value :: tail =>
         nextOption(map ++ Map('brokerlist -> value), tail)
       case option :: tail => {
@@ -248,11 +388,16 @@ object SimpleKafkaProducer {
     }
   }
 
-  def statsPrintFn: Unit = {
+  private def statsPrintFn: Unit = {
     val CurTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
     println("Stats @" + CurTime + "\n\t" + ProducerSimpleStats.getDispString("\n\t") + "\n")
   }
 
+
+  /**
+   * Entry point for this tool
+   * @param args - Array[Strings]
+   */
   def main(args: Array[String]): Unit = {
 
     val options = nextOption(Map(), args.toList)
@@ -275,6 +420,11 @@ object SimpleKafkaProducer {
     if (tmptopics.size == 0) {
       println("Need queue(s)")
       sys.exit(1)
+    }
+    val isJson = options.getOrElse('json, "false").toString
+    var fileFormat = "plain"
+    if (isJson.equalsIgnoreCase("true")) {
+      fileFormat = "json"
     }
 
     val topics = tmptopics.toList.sorted.toArray // Sort topics by names    
@@ -306,7 +456,26 @@ object SimpleKafkaProducer {
       sys.exit(1)
     }
 
-    val partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
+    var validJsonMap = scala.collection.mutable.Map[String,List[String]]()
+    var partitionkeyidxs: Array[Any] = null
+    if (fileFormat.equalsIgnoreCase("json")) {
+     // partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
+      val msgTypeKeys = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").filter(part => part.size > 0)
+
+      msgTypeKeys.foreach(msgType => {
+        val keyStructure = msgType.split(":")
+        var keyList: List[String] = List()
+        keyStructure(1).split("~").foreach(key => {
+          keyList = List(key) ::: keyList
+        })
+        validJsonMap(keyStructure(0)) = keyList
+      })
+      validJsonMap.foreach(xxx => {
+          println("asdfasdf")
+      })
+    } else {
+      partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
+    }
 
     val props = new Properties()
     props.put("compression.codec", codec.toString)
@@ -364,9 +533,9 @@ object SimpleKafkaProducer {
               val st: Stats = new Stats
               flNames.foreach(fl => {
                 if (gz.trim.compareToIgnoreCase("true") == 0) {
-                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, topicpartitions))
+                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs.asInstanceOf[Array[Int]], st, ignorelines, topicpartitions))
                 } else {
-                  tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st))
+                  tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, validJsonMap.asInstanceOf[scala.collection.mutable.Map[String,List[Any]]], st, fileFormat,topicpartitions))
                 }
                 println("%02d. File:%s ElapsedTime:%.02fms".format(threadNo, fl, tm / 1000000.0))
               })

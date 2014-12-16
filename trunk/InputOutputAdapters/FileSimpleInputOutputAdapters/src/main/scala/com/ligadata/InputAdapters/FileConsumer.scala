@@ -25,29 +25,26 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   //BUGBUG:: Not Checking whether inputConfig is really FileAdapterConfiguration or not. 
 
-  fc.Typ = inputConfig.Typ
   fc.Name = inputConfig.Name
-  fc.format = inputConfig.format
+  fc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
   fc.className = inputConfig.className
   fc.jarName = inputConfig.jarName
   fc.dependencyJars = inputConfig.dependencyJars
 
-  // For File we expect the format "Type~AdapterName~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList~PrefixMessage~IgnoreLines~AddTimeStampToMsgFlag"
-  if (inputConfig.adapterSpecificTokens.size != 5) {
-    val err = "We should find only Type, AdapterName, ClassName, JarName, DependencyJars, CompressionString, FilesList, PrefixMessage, IgnoreLines & AddTimeStampToMsgFlag for File Adapter Config:" + inputConfig.Name
+  // For File we expect the format "Format~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList~PrefixMessage~IgnoreLines"
+  if (inputConfig.adapterSpecificTokens.size != 4) {
+    val err = "We should find only Format, ClassName, JarName, DependencyJars, CompressionString, FilesList & IgnoreLines for File Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
 
   if (inputConfig.adapterSpecificTokens(0).size > 0)
     fc.CompressionString = inputConfig.adapterSpecificTokens(0)
-
   fc.Files = inputConfig.adapterSpecificTokens(1).split(",").map(str => str.trim).filter(str => str.size > 0)
   if (inputConfig.adapterSpecificTokens(2).size > 0)
     fc.MessagePrefix = inputConfig.adapterSpecificTokens(2)
   if (inputConfig.adapterSpecificTokens(3).size > 0)
     fc.IgnoreLines = inputConfig.adapterSpecificTokens(3).toInt
-  fc.AddTS2MsgFlag = (inputConfig.adapterSpecificTokens(4).compareToIgnoreCase("1") == 0)
 
   var executor: ExecutorService = _
 
@@ -250,7 +247,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         val isGz = (compString != null && compString.compareToIgnoreCase("gz") == 0)
         fc.Files.foreach(fl => {
           if (isTxt || isGz) {
-            tm = tm + elapsedTm(ProcessFile(fl, fc.format, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
+            tm = tm + elapsedTm(ProcessFile(fl, fc.formatOrInputAdapterName, fc.MessagePrefix, st, fc.IgnoreLines, fc.AddTS2MsgFlag, isGz))
           } else {
             throw new Exception("Not yet handled other than text & GZ files")
           }
@@ -312,6 +309,16 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
       }
     }
     vl
+  }
+
+  // Not yet implemented
+  override def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+  }
+
+  // Not yet implemented
+  override def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
   }
 }
 

@@ -45,6 +45,7 @@ trait DataStoreOperations
 	def del(source: IStorage)
 	def getAllKeys( handler : (Key) => Unit)
 	def putBatch(sourceArray: Array[IStorage])
+	def delBatch(keyArray: Array[Key])
 }
 
 trait DataStore extends DataStoreOperations

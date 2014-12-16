@@ -18,21 +18,21 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = new KafkaQueueAdapterConfiguration
 
-  qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
   qc.className = inputConfig.className
   qc.jarName = inputConfig.jarName
   qc.dependencyJars = inputConfig.dependencyJars
 
-  // For Kafka Queue we expect the format "Type~Name~Host/Brokers~Group/Client~MaxPartitions~InstancePartitions~ClassName~JarName~DependencyJars"
   if (inputConfig.adapterSpecificTokens.size < 2) {
-    val err = "We should find only Type, Name, ClassName, JarName, DependencyJarsm Host/Brokers, Group/Client for Kafka Queue Adapter Config:" + inputConfig.Name
+    val err = "We should find only Type, [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, Host/Brokers and topic name for Kafka Queue Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
 
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
-  qc.groupName = inputConfig.adapterSpecificTokens(1)
+  qc.topic = inputConfig.adapterSpecificTokens(1).trim
+
+  val clientId = qc.Name + "_" + hashCode.toString
 
   val compress: Boolean = false
   val synchronously: Boolean = true // This parameter specifies whether the messages are sent asynchronously in a background thread. Valid values are (1) async for asynchronous send and (2) sync for synchronous send. By setting the producer to async we allow batching together of requests (which is great for throughput) but open the possibility of a failure of the client machine dropping unsent data.
@@ -59,7 +59,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   // props.put("buffer.size", bufferMemory.toString)
   // props.put("socket.send.buffer", bufferMemory.toString)
   // props.put("socket.receive.buffer", bufferMemory.toString)
-  props.put("client.id", qc.groupName)
+  props.put("client.id", clientId)
 
   val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props)) // Not closing this producer at this moment
 

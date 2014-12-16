@@ -37,27 +37,27 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   private[this] val lock = new Object()
   private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
 
-  qc.Typ = inputConfig.Typ
   qc.Name = inputConfig.Name
-  qc.format = inputConfig.format
+  qc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
   qc.className = inputConfig.className
   qc.jarName = inputConfig.jarName
   qc.dependencyJars = inputConfig.dependencyJars
 
-  // For Kafka Queue we expect the format "Type~Name~Host/Brokers~Group/Client~MaxPartitions~InstancePartitions~ClassName~JarName~DependencyJars"
-  if (inputConfig.adapterSpecificTokens.size == 0) {
-    val err = "We should find only Type, Name, ClassName, JarName, DependencyJars, Host/Brokers for Kafka Queue Adapter Config:" + inputConfig.Name
+  if (inputConfig.adapterSpecificTokens.size < 0) {
+    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, Host/Brokers and topicname for Kafka Queue Adapter Config:" + inputConfig.Name
     LOG.error(err)
     throw new Exception(err)
   }
 
   qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
-  qc.groupName = "T" + hashCode.toString
+  qc.topic = inputConfig.adapterSpecificTokens(1).trim
   qc.instancePartitions = Set[Int]()
 
+  val groupName = "T" + hashCode.toString
+  
   //BUGBUG:: Not validating the values in QueueAdapterConfiguration 
   props.put("zookeeper.connect", qc.hosts.mkString(","))
-  props.put("group.id", qc.groupName)
+  props.put("group.id", groupName)
   props.put("rebalance.backoff.ms", rebalance_backoff_ms.toString)
   props.put("rebalance.max.retries", 1.toString)
   props.put("zookeeper.session.timeout.ms", zookeeper_session_timeout_ms.toString)
@@ -100,7 +100,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     try {
       // Cleaning GroupId so that we can start from begining
-      ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), qc.groupName)
+      ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), groupName)
     } catch {
       case e: Exception => {
       }
@@ -120,7 +120,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       threads = 1
 
     // create the consumer streams
-    val topicMessageStreams = consumerConnector.createMessageStreams(Predef.Map(qc.Name -> threads))
+    val topicMessageStreams = consumerConnector.createMessageStreams(Predef.Map(qc.topic -> threads))
     LOG.info("All Message Streams")
 
     executor = Executors.newFixedThreadPool(threads)
@@ -139,10 +139,10 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     })
 
     try {
-      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, maxParts, qc.instancePartitions.mkString(",")))
+      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
       // get the streams for the topic
-      val testTopicStreams = topicMessageStreams.get(qc.Name).get
-      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.Name, maxParts, qc.instancePartitions.mkString(",")))
+      val testTopicStreams = topicMessageStreams.get(qc.topic).get
+      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
 
       for (stream <- testTopicStreams) {
         // LOG.info("Streams Creating => ")
@@ -160,7 +160,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             val uniqueVal = new KafkaPartitionUniqueRecordValue
 
-            uniqueKey.TopicName = qc.Name
+            uniqueKey.Name = qc.Name
+            uniqueKey.TopicName = qc.topic
 
             var tempTransId: Long = 0
             var ignoreOff: Long = -1
@@ -184,7 +185,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           if (p == curPartitionId)
                             isValid = true
                         })
-                        LOG.info("Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, curPartitionId, isValid.toString))
+                        LOG.info("Name:%s, Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, qc.topic, curPartitionId, isValid.toString))
                         if (isValid == false) {
                           LOG.info("Returning from stream of Partitionid : " + curPartitionId)
                           return ;
@@ -213,7 +214,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             processingXformMsg = 0
                             totalXformMsg = 0
                           }
-                          execThread.execute(tempTransId, msg, qc.format, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset < ignoreOff, processingXformMsg, totalXformMsg)
+                          execThread.execute(tempTransId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset < ignoreOff, processingXformMsg, totalXformMsg)
                           tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
@@ -276,12 +277,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   private def GetAllPartitionsUniqueKeys: Array[PartitionUniqueRecordKey] = lock.synchronized {
     val zkClient = new ZkClient(qc.hosts.mkString(","), 30000, 30000, ZKStringSerializer)
 
-    val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.Name))._1
+    val jsonPartitionMapOpt = readDataMaybeNull(zkClient, getTopicPath(qc.topic))._1
 
     zkClient.close
 
     if (jsonPartitionMapOpt == None) {
-      LOG.error("Not found any JSON Partitions for Queue: " + qc.Name)
+      LOG.error("Not found any JSON Partitions for Queue: " + qc.topic)
       return null
     }
 
@@ -301,7 +302,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     values3.map(p => (p._1.toInt)).map(pid => {
       val uniqueKey = new KafkaPartitionUniqueRecordKey
-      uniqueKey.TopicName = qc.Name
+      uniqueKey.Name = qc.Name
+      uniqueKey.TopicName = qc.topic
       uniqueKey.PartitionId = pid
       uniqueKey
     }).toArray
@@ -343,5 +345,15 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     vl
   }
 
+  // Not yet implemented
+  override def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+  }
+
+  // Not yet implemented
+  override def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+    return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
+  }
+  
 }
 

@@ -18,6 +18,7 @@ class KeyValueRedisTx(owner: DataStore) extends Transaction {
   def del(source: IStorage) = { owner.del(source) }
   def getAllKeys(handler: (Key) => Unit) = { owner.getAllKeys(handler) }
   def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
+  def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
 class KeyValueRedis(parameter: PropertyMap) extends DataStore {
@@ -61,6 +62,12 @@ class KeyValueRedis(parameter: PropertyMap) extends DataStore {
   def putBatch(sourceArray: Array[IStorage]) = {
     sourceArray.foreach(source => {
       cluster.set(source.Key.toArray[Byte], source.Value.toArray[Byte])
+    })
+  }
+
+  def delBatch(keyArray: Array[Key]) = {
+    keyArray.foreach( k => {
+      cluster.del(k.toArray[Byte])
     })
   }
 

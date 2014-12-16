@@ -11,6 +11,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+import java.util.Date
+
 case class JsonException(message: String) extends Exception(message)
 
 case class TypeDef(MetadataType:String, NameSpace: String, Name: String, TypeTypeName:String, TypeNameSpace: String, TypeName:String, PhysicalName:String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions :Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]] )
@@ -40,6 +42,13 @@ case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
 case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
 
+case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],ClusterId: String, Power: Option[Int], Roles: Option[Int], Description: Option[String])
+case class JClusterInfo(ClusterId:String,Description:Option[String],Privileges:Option[String])
+case class JClusterCfgInfo(ClusterId:String,CfgName:String,CfgValue: String,ModifiedTime:Option[Date],CreatedTime:Option[Date])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
+
+case class EngineConfig(Clusters: Option[List[JClusterInfo]], ClusterCfgs: Option[List[JClusterCfgInfo]], Nodes: Option[List[JNodeInfo]], Adapters: Option[List[JAdapterInfo]])
+
 case class UnsupportedObjectException(e: String) extends Exception(e)
 case class Json4sSerializationException(e: String) extends Exception(e)
 case class Json4sParsingException(e: String) extends Exception(e)
@@ -58,6 +67,7 @@ case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
 case class ObjectNotFoundException(e: String) extends Exception(e)
 case class CreateStoreFailedException(e: String) extends Exception(e)
 case class ZkTransactionParsingException(e: String) extends Exception(e)
+case class EngineConfigParsingException(e: String) extends Exception(e)
 
 // The implementation class
 object JsonSerializer {
@@ -565,6 +575,28 @@ object JsonSerializer {
     }
   }
 
+  @throws(classOf[Json4sParsingException])
+  @throws(classOf[EngineConfigParsingException])
+  def parseEngineConfig(configJson:String) : EngineConfig = {
+    try{
+      implicit val jsonFormats: Formats = DefaultFormats
+      val json = parse(configJson)
+      logger.trace("Parsed the json : " + configJson)
+
+      val cfg = json.extract[EngineConfig]
+      cfg
+    } catch {
+      case e:MappingException =>{
+	e.printStackTrace()
+	throw Json4sParsingException(e.getMessage())
+      }
+      case e:Exception => {
+	e.printStackTrace()
+	throw new EngineConfigParsingException(e.getMessage())
+      }
+    }
+  }
+
 
   def zkSerializeObjectToJson(o: ZooKeeperTransaction): String = {
     try{
@@ -769,6 +801,46 @@ object JsonSerializer {
         inStr;
     }
   }
+
+  @throws(classOf[UnsupportedObjectException])
+  def SerializeCfgObjectToJson(cfgObj: Object): String = {
+    logger.trace("Generating Json for an object of type " + cfgObj.getClass().getName())
+    cfgObj match{
+      case o:ClusterInfo => {
+	val json = (("ClusterId"     -> o.clusterId))
+	pretty(render(json))
+      }
+      case o:ClusterCfgInfo => {
+	val json = (("ClusterId"     -> o.clusterId) ~
+		    ("CfgName"       -> o.cfgName) ~
+		    ("CfgValue"      -> o.cfgValue))
+	pretty(render(json))
+      }
+      case o:NodeInfo => {
+	val json = (("NodeId"  -> o.nodeId) ~
+		    ("NodePort"       -> o.nodePort) ~
+		    ("NodeIpAddr"       -> o.nodeIpAddr) ~
+		    ("JarPaths"     -> o.jarPaths.toList) ~
+		    ("ClusterId"     -> o.clusterId))
+	pretty(render(json))
+      }
+      case o:AdapterInfo => {
+	val json = (("Name"           -> o.name) ~
+		    ("TypeString"     -> o.typeString) ~
+		    ("DataFormat"     -> o.dataFormat) ~
+		    ("ClassName"      -> o.className) ~
+		    ("JarName"        -> o.jarName) ~
+		    ("DependencyJars" -> o.dependencyJars.toList) ~
+		    ("AdapterSpecificCfg"  -> o.adapterSpecificCfg))
+	pretty(render(json))
+      }
+      case _ => {
+        throw new UnsupportedObjectException("SerializeCfgObjectToJson doesn't support the " +
+					     "objectType of " + cfgObj.getClass().getName() + " yet")
+      }
+    }
+  }
+
 
   @throws(classOf[UnsupportedObjectException])
   def SerializeObjectToJson(mdObj: BaseElemDef): String = {
@@ -1211,8 +1283,21 @@ object JsonSerializer {
     json 
   }
 
+  def SerializeCfgObjectListToJson[T <: Object](objList: Array[T]) : String = {
+    var json = "[ \n" 
+    objList.toList.map(obj =>  {var objJson = SerializeCfgObjectToJson(obj); json += objJson; json += ",\n"})
+    json = json.stripSuffix(",\n")
+    json += " ]\n"
+    json 
+  }
+
   def SerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T]) : String = {
     var json = "{\n" + "\"" + objType + "\" :" + SerializeObjectListToJson(objList) + "\n}" 
+    json 
+  }
+
+  def SerializeCfgObjectListToJson[T <: Object](objType:String, objList: Array[T]) : String = {
+    var json = "{\n" + "\"" + objType + "\" :" + SerializeCfgObjectListToJson(objList) + "\n}" 
     json 
   }
 

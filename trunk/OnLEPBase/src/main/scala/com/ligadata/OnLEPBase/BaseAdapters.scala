@@ -3,8 +3,7 @@ package com.ligadata.OnLEPBase
 
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
-  var Typ: String = _ // KafkaQueue/MQ/File
-  var format: String = _ // CSV/JSON/XML for input adapter. For output/status it is just default
+  var formatOrInputAdapterName: String = _ // CSV/JSON/XML for input adapter. For output it is just corresponding input adapter name. For Status it is default
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
@@ -31,7 +30,7 @@ trait InputAdapter {
   val envCtxt: EnvContext // Environment Context
 
   def UniqueName: String = { // Making String from key
-    return "{\"Name\" : \"%s\", \"Typ\" : \"%s\"}".format(inputConfig.Name, inputConfig.Typ)
+    return "{\"Name\" : \"%s\"}".format(inputConfig.Name)
   }
 
   def Category = "Input"
@@ -41,6 +40,8 @@ trait InputAdapter {
   def GetAllPartitionUniqueRecordKey: Array[PartitionUniqueRecordKey]
   def DeserializeKey(k: String): PartitionUniqueRecordKey
   def DeserializeValue(v: String): PartitionUniqueRecordValue
+  def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
+  def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
 }
 
 // Output Adapter Object to create Adapter
