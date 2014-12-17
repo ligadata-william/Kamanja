@@ -3,7 +3,6 @@ import org.json4s.jackson.JsonMethods._
 
 import scala.actors.threadpool.{ Executors, TimeUnit }
 import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
 import java.util.Properties
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage, Partitioner }
@@ -12,10 +11,6 @@ import java.util.zip.GZIPInputStream
 import java.nio.file.{Files, Paths }
 import kafka.utils.VerifiableProperties
 import com.ligadata.Utils.KeyHasher
-import scala.util.control.Breaks._
-import java.util.Calendar
-
-import scala.util.parsing.json.JSON
 
 object ProducerSimpleStats {
 
@@ -37,7 +32,7 @@ object ProducerSimpleStats {
 
 class  ExtractKey {
   def get(inputData: String, partitionkeyidxs: Array[Int], defaultKey: String, keyPartDelim: String): String = {
-    if (partitionkeyidxs.size != 0) {
+    if (partitionkeyidxs.size == 0) {
       return defaultKey
     }
     val str_arr = inputData.split(",", -1)
