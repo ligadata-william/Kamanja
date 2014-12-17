@@ -231,7 +231,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             })
 
             try {
-              // Sleep here, Note, the input constant may be zero (if it is zeor, balls to the wall!) better be a very busy system.
+              // Sleep here, Note, the input constant may be zero (if it is zero, balls to the wall!) better be a very busy system.
               if (qc.noDataSleepTimeInMs > 0) {
                 Thread.sleep(qc.noDataSleepTimeInMs)
               }
