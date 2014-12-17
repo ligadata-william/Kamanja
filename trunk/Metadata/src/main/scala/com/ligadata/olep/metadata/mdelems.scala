@@ -716,8 +716,9 @@ class AdapterInfo {
    */
   var name: String = _
   var typeString: String = _
-  var dataFormat: String = _
+  var dataFormat: String = _ // valid only for Input or Validate types. Output and Status does not have this
   var className: String = _
+  var inputAdapterToVerify: String = _ // Valid only for Output Adapter.
   var jarName: String = _
   var dependencyJars: Array[String] = new Array[String](0)
   var adapterSpecificCfg: String = _
@@ -729,4 +730,5 @@ class AdapterInfo {
   def JarName: String = jarName
   def DependencyJars: Array[String] = dependencyJars
   def AdapterSpecificCfg: String = adapterSpecificCfg
+  def InputAdapterToVerify: String  = inputAdapterToVerify
 }

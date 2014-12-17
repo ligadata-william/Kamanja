@@ -31,22 +31,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   private val lock = new Object()
   private val LOG = Logger.getLogger(getClass);
 
-  if (inputConfig.adapterSpecificTokens.size == 0) {
-    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, Host/Brokers and topicname for Kafka Queue Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  private val qc = new KafkaQueueAdapterConfiguration
-  // get the config values from the input
-  qc.Name = inputConfig.Name
-  qc.className = inputConfig.className
-  qc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
-  qc.jarName = inputConfig.jarName
-  qc.dependencyJars = inputConfig.dependencyJars
-  qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => convertIp(str))
-  qc.topic = inputConfig.adapterSpecificTokens(1).trim
-  qc.instancePartitions = Array[Int]().toSet // Some methods on this class require this to be set... maybe need to create at instanciation time
+  private val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
 
   LOG.info("KAFKA ADAPTER: allocating kafka adapter for " + qc.hosts.size + " broker hosts")
 

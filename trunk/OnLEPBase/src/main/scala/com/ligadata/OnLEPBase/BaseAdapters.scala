@@ -7,7 +7,7 @@ class AdapterConfiguration {
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
-  var adapterSpecificTokens: Array[String] = _ // Rest of the tokens are only adapter specific 
+  var adapterSpecificCfg: String = _ // adapter specific (mostly json) string 
 }
 
 trait CountersAdapter {

@@ -14,6 +14,44 @@ class FileAdapterConfiguration extends AdapterConfiguration {
   var AddTS2MsgFlag: Boolean = false // Add TS after the Prefix Msg
 }
 
+object FileAdapterConfiguration {
+  def GetAdapterConfig(inputConfig: AdapterConfiguration): FileAdapterConfiguration = {
+    if (inputConfig.adapterSpecificCfg == null || inputConfig.adapterSpecificCfg.size == 0) {
+      val err = "Not found File Adapter Config:" + inputConfig.Name
+      throw new Exception(err)
+    }
+
+    val fc = new FileAdapterConfiguration
+    fc.Name = inputConfig.Name
+    fc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
+    fc.className = inputConfig.className
+    fc.jarName = inputConfig.jarName
+    fc.dependencyJars = inputConfig.dependencyJars
+
+    val adapCfg = parse(inputConfig.adapterSpecificCfg)
+    if (adapCfg == null || adapCfg.values == null) {
+      val err = "Not found File Adapter Config:" + inputConfig.Name
+      throw new Exception(err)
+    }
+    val values = adapCfg.values.asInstanceOf[Map[String, String]]
+
+    values.foreach(kv => {
+      if (kv._1.compareToIgnoreCase("CompressionString") == 0) {
+        fc.CompressionString = kv._2.trim
+      } else if (kv._1.compareToIgnoreCase("MessagePrefix") == 0) {
+        fc.MessagePrefix = kv._2.trim
+      } else if (kv._1.compareToIgnoreCase("IgnoreLines") == 0) {
+        fc.IgnoreLines = kv._2.trim.toInt
+      } else if (kv._1.compareToIgnoreCase("AddTS2MsgFlag") == 0) {
+      } else if (kv._1.compareToIgnoreCase("Files") == 0) {
+        fc.Files = kv._2.split(",").map(str => str.trim).filter(str => str.size > 0)
+      }
+    })
+
+    fc
+  }
+}
+
 case class FileKeyData(Version: Int, Type: String, Name: Option[String]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
 
 class FilePartitionUniqueRecordKey extends PartitionUniqueRecordKey {

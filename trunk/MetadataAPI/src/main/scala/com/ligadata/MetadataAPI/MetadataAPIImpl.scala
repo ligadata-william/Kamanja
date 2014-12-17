@@ -3951,11 +3951,11 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddAdapter(name:String,typeString:String,dataFormat: String,className: String, 
 		 jarName: String, dependencyJars: List[String], 
-		 adapterSpecificCfg: String): String = {
+		 adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
     try{
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name,typeString,dataFormat,className,jarName,
-					  dependencyJars,adapterSpecificCfg)
+					  dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
@@ -3973,8 +3973,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateAdapter(name:String,typeString:String,dataFormat: String,className: String, 
 		    jarName: String, dependencyJars: List[String], 
-		    adapterSpecificCfg: String): String = {
-    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg)
+		    adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
+    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
   }
 
   def RemoveAdapter(name:String) : String = {
@@ -4200,8 +4200,12 @@ object MetadataAPIImpl extends MetadataAPI {
 	  if(a.AdapterSpecificCfg != None ){
 	    ascfg = a.AdapterSpecificCfg.get
 	  }
+	  var inputAdapterToVerify: String = null
+	  if(a.InputAdapterToVerify != None ){
+	    inputAdapterToVerify = a.InputAdapterToVerify.get
+	  }
 	  // save in memory
-	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,ascfg)
+	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
 	  MdMgr.GetMdMgr.AddAdapter(ai)
 	  val key = "AdapterInfo." + ai.name
 	  val value = serializer.SerializeObjectToByteArray(ai)

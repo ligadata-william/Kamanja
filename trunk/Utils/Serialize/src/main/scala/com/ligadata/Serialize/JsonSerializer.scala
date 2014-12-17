@@ -49,7 +49,7 @@ case class JZooKeeperInfo(ZooKeeperNodeBasePath:String,ZooKeeperConnectString:St
 case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String)
 case class JClusterCfg(DataStore: JDataStore,StatusInfo: JStatusInfo, ZooKeeperInfo: JZooKeeperInfo, EnvironmentContext: String)
 case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String],InputAdapterToVerify: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 
 case class UnsupportedObjectException(e: String) extends Exception(e)

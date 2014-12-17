@@ -181,15 +181,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
   val kvInitLoader = new KvInitLoaderInfo
 
-  KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-  if (KvInitConfiguration.jarPaths.size == 0) {
-    KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-    if (KvInitConfiguration.jarPaths.size == 0) {
-      logger.error("Not found valid JarPaths.")
-      isOk = false
-    }
-  }
-
   val metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
   if (metadataStoreType.size == 0) {
     logger.error("Not found valid MetadataStoreType.")
@@ -208,6 +199,25 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
+  if (isOk) {
+    /*
+    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0 || metadataStoreType.compareToIgnoreCase("hbase") == 0)
+      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
+    else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
+      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
+*/
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
+  }
+
+  KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+  if (KvInitConfiguration.jarPaths.size == 0) {
+    KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
+    if (KvInitConfiguration.jarPaths.size == 0) {
+      logger.error("Not found valid JarPaths.")
+      isOk = false
+    }
+  }
+
   val dataStoreType = loadConfigs.getProperty("DataStoreType".toLowerCase, "").replace("\"", "").trim
   if (dataStoreType.size == 0) {
     logger.error("Not found valid DataStoreType.")
@@ -224,16 +234,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   if (dataLocation.size == 0) {
     logger.error("Not found valid DataLocation.")
     isOk = false
-  }
-
-  if (isOk) {
-    /*
-    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0 || metadataStoreType.compareToIgnoreCase("hbase") == 0)
-      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
-    else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
-      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
-*/
-    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
   }
 
   var kvNameCorrType: BaseTypeDef = _

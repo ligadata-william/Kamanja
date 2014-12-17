@@ -17,34 +17,11 @@ object FileConsumer extends InputAdapterObj {
 class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
   private[this] val LOG = Logger.getLogger(getClass);
 
-  private[this] val fc = new FileAdapterConfiguration
+  private[this] val fc = FileAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] var uniqueKey: FilePartitionUniqueRecordKey = new FilePartitionUniqueRecordKey
   private[this] val lock = new Object()
 
   uniqueKey.Name = "File"
-
-  //BUGBUG:: Not Checking whether inputConfig is really FileAdapterConfiguration or not. 
-
-  fc.Name = inputConfig.Name
-  fc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
-  fc.className = inputConfig.className
-  fc.jarName = inputConfig.jarName
-  fc.dependencyJars = inputConfig.dependencyJars
-
-  // For File we expect the format "Format~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList~PrefixMessage~IgnoreLines"
-  if (inputConfig.adapterSpecificTokens.size != 4) {
-    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, CompressionString, FilesList & IgnoreLines for File Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  if (inputConfig.adapterSpecificTokens(0).size > 0)
-    fc.CompressionString = inputConfig.adapterSpecificTokens(0)
-  fc.Files = inputConfig.adapterSpecificTokens(1).split(",").map(str => str.trim).filter(str => str.size > 0)
-  if (inputConfig.adapterSpecificTokens(2).size > 0)
-    fc.MessagePrefix = inputConfig.adapterSpecificTokens(2)
-  if (inputConfig.adapterSpecificTokens(3).size > 0)
-    fc.IgnoreLines = inputConfig.adapterSpecificTokens(3).toInt
 
   var executor: ExecutorService = _
 

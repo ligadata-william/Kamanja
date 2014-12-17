@@ -83,6 +83,8 @@ object OnLEPConfiguration {
   var statusInfoLocation: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
+  var clusterId: String = _
+  var nodePort: Int = _
   var zkConnectString: String = _
   var zkNodeBasePath: String = _
   var zkSessionTimeoutMs: Int = _
@@ -178,341 +180,6 @@ class OnLEPManager {
     true
   }
 
-  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo, mkExecCtxt: MakeExecContext): InputAdapter = {
-    if (statusAdapterCfg == null) return null
-    var allJars: collection.immutable.Set[String] = null
-
-    if (statusAdapterCfg.dependencyJars != null && statusAdapterCfg.jarName != null) {
-      allJars = statusAdapterCfg.dependencyJars + statusAdapterCfg.jarName
-    } else if (statusAdapterCfg.dependencyJars != null) {
-      allJars = statusAdapterCfg.dependencyJars
-    } else if (statusAdapterCfg.jarName != null) {
-      allJars = collection.immutable.Set(statusAdapterCfg.jarName)
-    }
-
-    if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-    }
-
-    // Convert class name into a class
-    val clz = Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
-
-    var isInputAdapter = false
-    var curClz = clz
-
-    while (clz != null && isInputAdapter == false) {
-      isInputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.InputAdapterObj")
-      if (isInputAdapter == false)
-        curClz = curClz.getSuperclass()
-    }
-
-    if (isInputAdapter) {
-      try {
-        val module = loaderInfo.mirror.staticModule(statusAdapterCfg.className)
-        val obj = loaderInfo.mirror.reflectModule(module)
-
-        val objinst = obj.instance
-        if (objinst.isInstanceOf[InputAdapterObj]) {
-          val adapterObj = objinst.asInstanceOf[InputAdapterObj]
-          val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, mkExecCtxt, SimpleStats)
-          LOG.info("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
-          return adapter
-        } else {
-          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
-        }
-      } catch {
-        case e: Exception => LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
-      }
-    } else {
-      LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
-    }
-    null
-  }
-
-  private def CreateOutputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, loaderInfo: OnLEPLoaderInfo): OutputAdapter = {
-    if (statusAdapterCfg == null) return null
-    var allJars: collection.immutable.Set[String] = null
-    if (statusAdapterCfg.dependencyJars != null && statusAdapterCfg.jarName != null) {
-      allJars = statusAdapterCfg.dependencyJars + statusAdapterCfg.jarName
-    } else if (statusAdapterCfg.dependencyJars != null) {
-      allJars = statusAdapterCfg.dependencyJars
-    } else if (statusAdapterCfg.jarName != null) {
-      allJars = collection.immutable.Set(statusAdapterCfg.jarName)
-    }
-
-    if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-    }
-
-    // Convert class name into a class
-    val clz = Class.forName(statusAdapterCfg.className, true, loaderInfo.loader)
-
-    var isOutputAdapter = false
-    var curClz = clz
-
-    while (clz != null && isOutputAdapter == false) {
-      isOutputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.OutputAdapterObj")
-      if (isOutputAdapter == false)
-        curClz = curClz.getSuperclass()
-    }
-
-    if (isOutputAdapter) {
-      try {
-        val module = loaderInfo.mirror.staticModule(statusAdapterCfg.className)
-        val obj = loaderInfo.mirror.reflectModule(module)
-
-        val objinst = obj.instance
-        if (objinst.isInstanceOf[OutputAdapterObj]) {
-          val adapterObj = objinst.asInstanceOf[OutputAdapterObj]
-          val adapter = adapterObj.CreateOutputAdapter(statusAdapterCfg, SimpleStats)
-          LOG.info("Created Output Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
-          return adapter
-        } else {
-          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
-        }
-      } catch {
-        case e: Exception => LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
-      }
-    } else {
-      LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
-    }
-    null
-  }
-
-  private def GetAdapterConfigByCfgName(loadConfigs: Properties, adapCfgName: String, hasFormatOrInputAdapterName: Boolean): AdapterConfiguration = {
-    // For any adapter we need Type as first one
-    val adapterConfig = loadConfigs.getProperty(adapCfgName.toLowerCase, "").replace("\"", "").trim.split("~", -1).map(str => str.trim)
-
-    if (adapterConfig.size == 0) {
-      LOG.error("Not found Type for Adapter Config:" + adapCfgName)
-      return null
-    }
-
-    //BUGBUG:: Not yet validating required fields 
-    val conf = new AdapterConfiguration
-
-    var idx = 0
-    conf.Name = adapterConfig(idx)
-    idx += 1
-    if (hasFormatOrInputAdapterName) {
-      conf.formatOrInputAdapterName = adapterConfig(idx)
-      idx += 1
-    }
-    conf.className = adapterConfig(idx)
-    idx += 1
-    conf.jarName = adapterConfig(idx)
-    idx += 1
-    conf.dependencyJars = if (adapterConfig(idx).size > 0) adapterConfig(idx).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
-    idx += 1
-
-    if (adapterConfig.size > idx) {
-      val remVals = adapterConfig.size - idx
-      conf.adapterSpecificTokens = new Array(remVals)
-
-      for (i <- 0 until remVals)
-        conf.adapterSpecificTokens(i) = adapterConfig(i + idx)
-    }
-
-    conf
-  }
-
-  private def PrepInputAdapsForCfg(loadConfigs: Properties, adapCfgNames: Array[String], mustHave: Boolean, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo, mkExecCtxt: MakeExecContext): Boolean = {
-    // ConfigurationName
-    if (adapCfgNames.size == 0) {
-      return true
-    }
-
-    adapCfgNames.foreach(ac => {
-      val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, true)
-      if (adapterCfg == null) return false
-
-      try {
-        val adapter = CreateInputAdapterFromConfig(adapterCfg, outputAdapters, envCtxt, loaderInfo, mkExecCtxt)
-        if (adapter == null) return false
-        inputAdapters += adapter
-      } catch {
-        case e: Exception =>
-          LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
-          return false
-      }
-    })
-    return true
-  }
-
-  private def LoadInputAdapsForCfg(loadConfigs: Properties, cfgNames: String, mustHave: Boolean, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): Boolean = {
-    // ConfigurationName
-    val adapCfgNames = loadConfigs.getProperty(cfgNames.toLowerCase, "").replace("\"", "").trim.split("~").map(str => str.trim).filter(str => str.size > 0)
-
-    if (adapCfgNames.size == 0) {
-      if (mustHave) {
-        LOG.error("Not found valid %s ConfigurationNames".format(cfgNames))
-        return false
-      } else {
-        LOG.warn("Not found valid %s ConfigurationNames".format(cfgNames))
-        return true
-      }
-    }
-    return PrepInputAdapsForCfg(loadConfigs, adapCfgNames, mustHave, inputAdapters, outputAdapters, envCtxt, loaderInfo, MakeExecContextImpl)
-  }
-
-  private def LoadValidateInputAdapsFromCfg(loadConfigs: Properties, valInputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: OnLEPLoaderInfo): Boolean = {
-    // ConfigurationName
-
-    val validateInputAdapters = ArrayBuffer[String]()
-
-    outputAdapters.foreach(oa => {
-      val validateInputAdapName = if (oa.inputConfig.formatOrInputAdapterName != null) oa.inputConfig.formatOrInputAdapterName.trim else ""
-      if (validateInputAdapName.size > 0) {
-        validateInputAdapters += validateInputAdapName
-      } else {
-        LOG.warn("Not found validate input adapter for " + oa.inputConfig.Name)
-      }
-    })
-    if (validateInputAdapters.size == 0)
-      return true
-    return PrepInputAdapsForCfg(loadConfigs, validateInputAdapters.toArray, false, valInputAdapters, outputAdapters, envCtxt, loaderInfo, MakeValidateExecCtxtImpl)
-  }
-
-  private def LoadOutputAdapsForCfg(loadConfigs: Properties, cfgNames: String, mustHave: Boolean, outputAdapters: ArrayBuffer[OutputAdapter], loaderInfo: OnLEPLoaderInfo, hasInputAdapterName: Boolean): Boolean = {
-    // ConfigurationName
-    val adapCfgNames = loadConfigs.getProperty(cfgNames.toLowerCase, "").replace("\"", "").trim.split("~").map(str => str.trim).filter(str => str.size > 0)
-
-    if (adapCfgNames.size == 0) {
-      if (mustHave) {
-        LOG.error("Not found valid %s ConfigurationNames".format(cfgNames))
-        return false
-      } else {
-        LOG.warn("Not found valid %s ConfigurationNames".format(cfgNames))
-        return true
-      }
-    } else {
-      if (adapCfgNames.size > 1) {
-        LOG.error(" Got %d ouput adapters, but we are expecting only one output adapter.(%s).".format(adapCfgNames.size, adapCfgNames.mkString(",")))
-        return false
-      }
-      adapCfgNames.foreach(ac => {
-        val adapterCfg = GetAdapterConfigByCfgName(loadConfigs, ac, hasInputAdapterName)
-        if (adapterCfg == null) return false
-
-        try {
-          val adapter = CreateOutputAdapterFromConfig(adapterCfg, loaderInfo)
-          if (adapter == null) return false
-          outputAdapters += adapter
-        } catch {
-          case e: Exception =>
-            LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
-            return false
-        }
-      })
-      return true
-    }
-  }
-
-  private def LoadEnvCtxt(loadConfigs: Properties, loaderInfo: OnLEPLoaderInfo): EnvContext = {
-    val envCxtConfig = loadConfigs.getProperty("EnvironmentContext".toLowerCase, "").replace("\"", "").trim.split("~", -1).map(str => str.trim)
-
-    if (envCxtConfig.size != 3) {
-      LOG.error("EnvironmentContext configuration need ClassName~JarName~DependencyJars")
-      return null
-    }
-
-    //BUGBUG:: Not yet validating required fields 
-    val className = envCxtConfig(0)
-    val jarName = envCxtConfig(1)
-    val dependencyJars = if (envCxtConfig(2).size > 0) envCxtConfig(2).split(",").map(str => str.trim).filter(str => str.size > 0).toSet else null
-    var allJars: collection.immutable.Set[String] = null
-
-    if (dependencyJars != null && jarName != null) {
-      allJars = dependencyJars + jarName
-    } else if (dependencyJars != null) {
-      allJars = dependencyJars
-    } else if (jarName != null) {
-      allJars = collection.immutable.Set(jarName)
-    }
-
-    if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
-        throw new Exception("Failed to add Jars")
-    }
-
-    // Convert class name into a class
-    val clz = Class.forName(className, true, loaderInfo.loader)
-
-    var isEntCtxt = false
-    var curClz = clz
-
-    while (clz != null && isEntCtxt == false) {
-      isEntCtxt = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.EnvContext")
-      if (isEntCtxt == false)
-        curClz = curClz.getSuperclass()
-    }
-
-    if (isEntCtxt) {
-      try {
-        val module = loaderInfo.mirror.staticModule(className)
-        val obj = loaderInfo.mirror.reflectModule(module)
-
-        val objinst = obj.instance
-        if (objinst.isInstanceOf[EnvContext]) {
-          val envCtxt = objinst.asInstanceOf[EnvContext]
-          envCtxt.SetClassLoader(metadataLoader.loader)
-          val containerNames = OnLEPMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Containers
-          envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Messages
-          LOG.info("Created EnvironmentContext for Class:" + className)
-          return envCtxt
-        } else {
-          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
-        }
-      } catch {
-        case e: Exception => {
-          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
-          e.printStackTrace
-        }
-      }
-    } else {
-      LOG.error("Failed to instantiate Environment Context object for Class:" + className)
-    }
-    null
-  }
-
-  private def LoadAdapters(loadConfigs: Properties, envCtxt: EnvContext): Boolean = {
-    LOG.info("Loading Adapters started @ " + Utils.GetCurDtTmStr)
-    val s0 = System.nanoTime
-
-    // Get status adapter
-    LOG.info("Getting Status Adapter")
-
-    if (LoadOutputAdapsForCfg(loadConfigs, "StatusAdapterCfgNames", false, statusAdapters, metadataLoader, false) == false)
-      return false
-
-    // Get output adapter
-    LOG.info("Getting Output Adapters")
-
-    if (LoadOutputAdapsForCfg(loadConfigs, "OutputAdapterCfgNames", false, outputAdapters, metadataLoader, true) == false)
-      return false
-
-    // Get input adapter
-    LOG.info("Getting Input Adapters")
-
-    if (LoadInputAdapsForCfg(loadConfigs, "InputAdapterCfgNames", false, inputAdapters, outputAdapters.toArray, envCtxt, metadataLoader) == false)
-      return false
-
-    // Get input adapter
-    LOG.info("Getting Validate Input Adapters")
-
-    if (LoadValidateInputAdapsFromCfg(loadConfigs, validateInputAdapters, outputAdapters.toArray, envCtxt, metadataLoader) == false)
-      return false
-      
-    val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
-    LOG.info("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
-
-    true
-  }
-
   private def ShutdownAdapters: Boolean = {
     LOG.info("Shutdown Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
@@ -520,9 +187,9 @@ class OnLEPManager {
     validateInputAdapters.foreach(ia => {
       ia.Shutdown
     })
-    
+
     validateInputAdapters.clear
-    
+
     inputAdapters.foreach(ia => {
       ia.Shutdown
     })
@@ -553,15 +220,6 @@ class OnLEPManager {
     val loadConfigs = OnLEPConfiguration.allConfigs
 
     try {
-      OnLEPConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-      if (OnLEPConfiguration.jarPaths.size == 0) {
-        OnLEPConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-        if (OnLEPConfiguration.jarPaths.size == 0) {
-          LOG.error("Not found valid JarPaths.")
-          return false
-        }
-      }
-
       OnLEPConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
       if (OnLEPConfiguration.metadataStoreType.size == 0) {
         LOG.error("Not found valid MetadataStoreType.")
@@ -580,62 +238,16 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPConfiguration.dataStoreType = loadConfigs.getProperty("DataStoreType".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.dataStoreType.size == 0) {
-        LOG.error("Not found valid DataStoreType.")
-        return false
-      }
-
-      OnLEPConfiguration.dataSchemaName = loadConfigs.getProperty("DataSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.dataSchemaName.size == 0) {
-        LOG.error("Not found valid DataSchemaName.")
-        return false
-      }
-
-      OnLEPConfiguration.dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.dataLocation.size == 0) {
-        LOG.error("Not found valid DataLocation.")
-        return false
-      }
-
-      OnLEPConfiguration.statusInfoStoreType = loadConfigs.getProperty("StatusInfoStoreType".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.statusInfoStoreType.size == 0) {
-        LOG.error("Not found valid Status Information StoreType.")
-        return false
-      }
-
-      OnLEPConfiguration.statusInfoSchemaName = loadConfigs.getProperty("StatusInfoSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.statusInfoSchemaName.size == 0) {
-        LOG.error("Not found valid Status Information SchemaName.")
-        return false
-      }
-
-      OnLEPConfiguration.statusInfoLocation = loadConfigs.getProperty("StatusInfoLocation".toLowerCase, "").replace("\"", "").trim
-      if (OnLEPConfiguration.statusInfoLocation.size == 0) {
-        LOG.error("Not found valid Status Information Location.")
-        return false
-      }
-
       OnLEPConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
       if (OnLEPConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
       }
 
-      OnLEPConfiguration.zkConnectString = loadConfigs.getProperty("ZooKeeperConnectString".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.zkNodeBasePath = loadConfigs.getProperty("ZooKeeperNodeBasePath".toLowerCase, "").replace("\"", "").trim
-      OnLEPConfiguration.zkSessionTimeoutMs = loadConfigs.getProperty("ZooKeeperSessionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
-      OnLEPConfiguration.zkConnectionTimeoutMs = loadConfigs.getProperty("ZooKeeperConnectionTimeoutMs".toLowerCase, "0").replace("\"", "").trim.toInt
+      OnLEPMetadata.InitBootstrap
 
-      // Taking minimum values in case if needed
-      OnLEPConfiguration.zkSessionTimeoutMs = if (OnLEPConfiguration.zkSessionTimeoutMs <= 0) 250 else OnLEPConfiguration.zkSessionTimeoutMs
-      OnLEPConfiguration.zkConnectionTimeoutMs = if (OnLEPConfiguration.zkConnectionTimeoutMs <= 0) 30000 else OnLEPConfiguration.zkConnectionTimeoutMs
-
-      val nodePort: Int = loadConfigs.getProperty("nodePort".toLowerCase, "0").replace("\"", "").trim.toInt
-      if (nodePort <= 0) {
-        LOG.error("Not found valid nodePort. It should be greater than 0")
+      if (OnLEPMdCfg.InitConfigInfo == false)
         return false
-      }
 
       var engineLeaderZkNodePath = ""
       var engineDistributionZkNodePath = ""
@@ -650,24 +262,22 @@ class OnLEPManager {
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
       }
 
-      val envCtxt = LoadEnvCtxt(loadConfigs, metadataLoader)
-      if (envCtxt == null)
+      OnLEPMetadata.envCtxt = OnLEPMdCfg.LoadEnvCtxt(metadataLoader)
+      if (OnLEPMetadata.envCtxt == null)
         return false
 
-      OnLEPMetadata.envCtxt = envCtxt
-
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
-      retval = LoadAdapters(loadConfigs, envCtxt)
+      retval = OnLEPMdCfg.LoadAdapters(metadataLoader, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
 
       if (retval) {
         OnLEPMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, OnLEPConfiguration.zkConnectString, metadataUpdatesZkNodePath, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
-        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, envCtxt, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
+        OnLEPLeader.Init(OnLEPConfiguration.nodeId.toString, OnLEPConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, OnLEPMetadata.envCtxt, OnLEPConfiguration.zkSessionTimeoutMs, OnLEPConfiguration.zkConnectionTimeoutMs)
       }
 
       /*
       if (retval) {
         try {
-          serviceObj = new OnLEPServer(this, nodePort)
+          serviceObj = new OnLEPServer(this, OnLEPConfiguration.nodePort)
           (new Thread(serviceObj)).start()
         } catch {
           case e: Exception => {
@@ -744,6 +354,13 @@ class OnLEPManager {
       Shutdown(1)
       return
     }
+
+    /*
+    if (initialize == false) {
+      Shutdown(1)
+      return
+    }
+*/
 
     if (initialize == false) {
       Shutdown(1)
