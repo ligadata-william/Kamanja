@@ -239,8 +239,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               case e: java.lang.InterruptedException =>
                 LOG.info("KAFKA ADAPTER: Shutting down the Consumer Reader thread")
                 readerRunning = false
-            } finally {
-              readerRunning = false
             }
           }
           if (consumer != null) { consumer.close }
