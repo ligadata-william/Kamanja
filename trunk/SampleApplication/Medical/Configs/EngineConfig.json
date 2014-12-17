@@ -11,11 +11,10 @@
       "Nodes": [
         {
           "NodeId": "1",
-          "NodePort": 6543,
+          "NodePort": 6541,
           "NodeIpAddr": "localhost",
           "JarPaths": [
-            "/tmp/OnLEPInstall1",
-            "/tmp/OnLEPInstall2"
+            "/tmp/OnLEPInstall"
           ],
           "Scala_home": "/home/xxxxxx/scala-2.10.4",
           "Java_home": "/home/xxxxxx/jdk1.8.0_05",
@@ -23,11 +22,10 @@
         },
         {
           "NodeId": "2",
-          "NodePort": 6544,
+          "NodePort": 6542,
           "NodeIpAddr": "localhost",
           "JarPaths": [
-            "/tmp/OnLEPInstall1",
-            "/tmp/OnLEPInstall2"
+            "/tmp/OnLEPInstall"
           ],
           "Scala_home": "/home/xxxxxx/scala-2.10.4",
           "Java_home": "/home/xxxxxx/jdk1.8.0_05",
@@ -38,8 +36,7 @@
           "NodePort": 6544,
           "NodeIpAddr": "localhost",
           "JarPaths": [
-            "/tmp/OnLEPInstall1",
-            "/tmp/OnLEPInstall2"
+            "/tmp/OnLEPInstall"
           ],
           "Scala_home": "/home/xxxxxx/scala-2.10.4",
           "Java_home": "/home/xxxxxx/jdk1.8.0_05",
