@@ -106,8 +106,8 @@ object OnLEPMdCfg {
       return false
     }
 
-    OnLEPConfiguration.zkConnectString = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
-    OnLEPConfiguration.zkNodeBasePath = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
+    OnLEPConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
+    OnLEPConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     OnLEPConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
     OnLEPConfiguration.zkConnectionTimeoutMs = if (zKInfo.ZooKeeperConnectionTimeoutMs == None || zKInfo.ZooKeeperConnectionTimeoutMs == null) 0 else zKInfo.ZooKeeperConnectionTimeoutMs.get.toString.toInt
 
