@@ -53,7 +53,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
   override def send(message: Array[Byte], partKey: Array[Byte]): Unit = {
     try {
-      producer.send(new KeyedMessage(qc.Name, partKey, message))
+      producer.send(new KeyedMessage(qc.topic, partKey, message))
       val key = Category + "/" + qc.Name + "/evtCnt"
       cntrAdapter.addCntr(key, 1) // for now adding each row
     } catch {
