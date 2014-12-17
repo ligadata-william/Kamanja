@@ -16,21 +16,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   private[this] val LOG = Logger.getLogger(getClass);
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
-  private[this] val qc = new KafkaQueueAdapterConfiguration
-
-  qc.Name = inputConfig.Name
-  qc.className = inputConfig.className
-  qc.jarName = inputConfig.jarName
-  qc.dependencyJars = inputConfig.dependencyJars
-
-  if (inputConfig.adapterSpecificTokens.size < 2) {
-    val err = "We should find only Type, [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, Host/Brokers and topic name for Kafka Queue Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
-  qc.topic = inputConfig.adapterSpecificTokens(1).trim
+  private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
 
   val clientId = qc.Name + "_" + hashCode.toString
 

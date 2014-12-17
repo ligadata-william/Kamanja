@@ -31,6 +31,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
+
 trait LogTrait {
   val loggerName = this.getClass.getName()
   val logger = Logger.getLogger(loggerName)
@@ -158,6 +160,7 @@ class KvInitLoaderInfo {
 }
 
 object KvInitConfiguration {
+  var nodeId: Int = _
   var configFile: String = _
   var jarPaths: collection.immutable.Set[String] = _
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
@@ -181,15 +184,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
   val kvInitLoader = new KvInitLoaderInfo
 
-  KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPaths".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-  if (KvInitConfiguration.jarPaths.size == 0) {
-    KvInitConfiguration.jarPaths = loadConfigs.getProperty("JarPath".toLowerCase, "").replace("\"", "").trim.split(",").map(str => str.trim).filter(str => str.size > 0).toSet
-    if (KvInitConfiguration.jarPaths.size == 0) {
-      logger.error("Not found valid JarPaths.")
-      isOk = false
-    }
-  }
-
   val metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
   if (metadataStoreType.size == 0) {
     logger.error("Not found valid MetadataStoreType.")
@@ -208,23 +202,13 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
-  val dataStoreType = loadConfigs.getProperty("DataStoreType".toLowerCase, "").replace("\"", "").trim
-  if (dataStoreType.size == 0) {
-    logger.error("Not found valid DataStoreType.")
+  KvInitConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
+  if (KvInitConfiguration.nodeId <= 0) {
+    logger.error("Not found valid nodeId. It should be greater than 0")
     isOk = false
   }
 
-  val dataSchemaName = loadConfigs.getProperty("DataSchemaName".toLowerCase, "").replace("\"", "").trim
-  if (dataSchemaName.size == 0) {
-    logger.error("Not found valid DataSchemaName.")
-    isOk = false
-  }
-
-  val dataLocation = loadConfigs.getProperty("DataLocation".toLowerCase, "").replace("\"", "").trim
-  if (dataLocation.size == 0) {
-    logger.error("Not found valid DataLocation.")
-    isOk = false
-  }
+  var nodeInfo: NodeInfo = _
 
   if (isOk) {
     /*
@@ -234,6 +218,65 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
 */
     MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
+
+    nodeInfo = mdMgr.Nodes.getOrElse(KvInitConfiguration.nodeId.toString, null)
+    if (nodeInfo == null) {
+      logger.error("Node %d not found in metadata".format(KvInitConfiguration.nodeId))
+      isOk = false
+    }
+  }
+
+  if (isOk) {
+    KvInitConfiguration.jarPaths = if (nodeInfo.JarPaths == null) Array[String]().toSet else nodeInfo.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
+    if (KvInitConfiguration.jarPaths.size == 0) {
+      logger.error("Not found valid JarPaths.")
+      isOk = false
+    }
+  }
+
+  val cluster = if (isOk) mdMgr.ClusterCfgs.getOrElse(nodeInfo.ClusterId, null) else null
+  if (isOk && cluster == null) {
+    logger.error("Cluster not found for Node %d  & ClusterId : %s".format(KvInitConfiguration.nodeId, nodeInfo.ClusterId))
+    isOk = false
+  }
+
+  val dataStore = if (isOk) cluster.cfgMap.getOrElse("DataStore", null) else null
+  if (isOk && dataStore == null) {
+    logger.error("DataStore not found for Node %d  & ClusterId : %s".format(KvInitConfiguration.nodeId, nodeInfo.ClusterId))
+    isOk = false
+  }
+
+  var dataStoreType: String = null
+  var dataSchemaName: String = null
+  var dataLocation: String = null
+
+  if (isOk) {
+    implicit val jsonFormats: Formats = DefaultFormats
+    val dataStoreInfo = parse(dataStore).extract[DataStoreInfo]
+
+    if (isOk) {
+      dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
+      if (dataStoreType.size == 0) {
+        logger.error("Not found valid DataStoreType.")
+        isOk = false
+      }
+    }
+
+    if (isOk) {
+      dataSchemaName = dataStoreInfo.SchemaName.replace("\"", "").trim
+      if (dataSchemaName.size == 0) {
+        logger.error("Not found valid DataSchemaName.")
+        isOk = false
+      }
+    }
+
+    if (isOk) {
+      dataLocation = dataStoreInfo.Location.replace("\"", "").trim
+      if (dataLocation.size == 0) {
+        logger.error("Not found valid DataLocation.")
+        isOk = false
+      }
+    }
   }
 
   var kvNameCorrType: BaseTypeDef = _

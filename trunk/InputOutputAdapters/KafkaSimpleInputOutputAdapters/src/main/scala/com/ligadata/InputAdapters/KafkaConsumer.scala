@@ -33,28 +33,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   private[this] val auto_commit_time = 365 * 24 * 60 * 60 * 1000
 
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
-  private[this] val qc = new KafkaQueueAdapterConfiguration
+  private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
   private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
 
-  qc.Name = inputConfig.Name
-  qc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
-  qc.className = inputConfig.className
-  qc.jarName = inputConfig.jarName
-  qc.dependencyJars = inputConfig.dependencyJars
-
-  if (inputConfig.adapterSpecificTokens.size < 0) {
-    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, Host/Brokers and topicname for Kafka Queue Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0)
-  qc.topic = inputConfig.adapterSpecificTokens(1).trim
-  qc.instancePartitions = Set[Int]()
-
   val groupName = "T" + hashCode.toString
-  
+
   //BUGBUG:: Not validating the values in QueueAdapterConfiguration 
   props.put("zookeeper.connect", qc.hosts.mkString(","))
   props.put("group.id", groupName)
@@ -93,7 +77,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit = lock.synchronized {
+  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
     LOG.info("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
@@ -195,9 +179,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                         execThread = mkExecCtxt.CreateExecContext(input, curPartitionId, output, envCtxt)
                         val kv = kvs.getOrElse(curPartitionId, null)
                         if (kv != null) {
-                          if (kv._2.Offset != -1 && message.offset <= kv._2.Offset) {
-                            executeCurMsg = false
-                            currentOffset = kv._2.Offset
+                          if (kv._2.Offset != -1) {
+                            if (message.offset < kv._2.Offset) {
+                              executeCurMsg = false
+                              currentOffset = if (ignoreFirstMsg) kv._2.Offset else (kv._2.Offset - 1) // Later just checking whether it is > or not
+                            } else if (message.offset == kv._2.Offset) {
+                              if (ignoreFirstMsg)
+                                executeCurMsg = false
+                              currentOffset = kv._2.Offset
+                            }
+
                           }
                           tempTransId = kv._3
                           ignoreOff = kv._4._1.Offset
@@ -354,6 +345,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   override def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
     return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
   }
-  
+
 }
 

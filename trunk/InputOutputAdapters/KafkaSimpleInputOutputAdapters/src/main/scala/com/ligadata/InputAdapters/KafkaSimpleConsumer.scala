@@ -31,22 +31,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   private val lock = new Object()
   private val LOG = Logger.getLogger(getClass);
 
-  if (inputConfig.adapterSpecificTokens.size == 0) {
-    val err = "We should find only Name, Format, ClassName, JarName, DependencyJars, Host/Brokers and topicname for Kafka Queue Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  private val qc = new KafkaQueueAdapterConfiguration
-  // get the config values from the input
-  qc.Name = inputConfig.Name
-  qc.className = inputConfig.className
-  qc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
-  qc.jarName = inputConfig.jarName
-  qc.dependencyJars = inputConfig.dependencyJars
-  qc.hosts = inputConfig.adapterSpecificTokens(0).split(",").map(str => str.trim).filter(str => str.size > 0).map(str => convertIp(str))
-  qc.topic = inputConfig.adapterSpecificTokens(1).trim
-  qc.instancePartitions = Array[Int]().toSet // Some methods on this class require this to be set... maybe need to create at instanciation time
+  private val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
 
   LOG.info("KAFKA ADAPTER: allocating kafka adapter for " + qc.hosts.size + " broker hosts")
 
@@ -84,7 +69,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    * @param maxParts Int - Number of Partitions
    * @param partitionIds Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue)] - an Array of partition ids
    */
-  def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))]): Unit = lock.synchronized {
+  def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
 
     LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: " + qc.topic)
 
@@ -205,6 +190,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               }
             }
 
+            val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1 
             // Successfuly read from the Kafka Adapter - Process messages
             fetchResp.messageSet(qc.topic, partitionId).foreach(msgBuffer => {
               val bufferPayload = msgBuffer.message.payload
@@ -216,7 +202,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
                 // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
                 // is increasing by one, and I cannot simple set the offset to offset++ since that can cause our of
                 // range errors on the read, we simple ignore the message by with the offset specified by the engine.
-                if (msgBuffer.offset == partition._2.Offset) {
+                if (msgBuffer.offset <= ignoreTillOffset) {
                   LOG.debug("KAFKA-ADAPTER: skipping a message at  Broker: " + leadBroker + "_" + partitionId + " OFFSET " + msgBuffer.offset + " " + new String(message, "UTF-8") + " - previously processed! ")
                   break
                 }

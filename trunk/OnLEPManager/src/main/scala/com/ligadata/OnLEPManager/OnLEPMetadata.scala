@@ -429,6 +429,10 @@ object OnLEPMetadata {
     }
   }
 
+  def InitBootstrap: Unit = {
+    MetadataAPIImpl.InitMdMgrFromBootStrap(OnLEPConfiguration.configFile)
+  }
+  
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
     /*
     if (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
@@ -436,7 +440,7 @@ object OnLEPMetadata {
     else if ((OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
       MetadataAPIImpl.InitMdMgr(mdMgr, OnLEPConfiguration.metadataStoreType, "", OnLEPConfiguration.metadataSchemaName, OnLEPConfiguration.metadataLocation)
 */
-    MetadataAPIImpl.InitMdMgrFromBootStrap(OnLEPConfiguration.configFile)
+    // MetadataAPIImpl.InitMdMgrFromBootStrap(OnLEPConfiguration.configFile)
 
     loadedJars = tmpLoadedJars
     loader = tmpLoader

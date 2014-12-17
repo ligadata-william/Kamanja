@@ -23,6 +23,8 @@ import com.ligadata.keyvaluestore.cassandra._
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{ JSONObject, JSONArray }
 import scala.collection.immutable.Map
+import scala.collection.immutable.HashMap
+import scala.collection.mutable.HashMap
 
 import com.ligadata.messagedef._
 
@@ -3147,6 +3149,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllObjectsIntoCache {
     try {
+      LoadAllConfigObjectsIntoCache
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
@@ -3185,7 +3188,6 @@ object MetadataAPIImpl extends MetadataAPI {
       if (objectsChanged.length > 0) {
         NotifyEngine(objectsChanged, operations)
       }
-      LoadAllConfigObjectsIntoCache
       startup = false
     } catch {
       case e: Exception => {
@@ -3898,11 +3900,14 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-	      jarPaths:List[String],clusterId:String,power:Int,
+	      jarPaths:List[String],scala_home:String,
+	      java_home:String, classpath: String,
+	      clusterId:String,power:Int,
 	      roles:Int,description:String): String = {
     try{
       // save in memory
-      val ni = MdMgr.GetMdMgr.MakeNode(nodeId,nodePort,nodeIpAddr,jarPaths,clusterId,power,roles,description)
+      val ni = MdMgr.GetMdMgr.MakeNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
+				       java_home,classpath,clusterId,power,roles,description)
       MdMgr.GetMdMgr.AddNode(ni)
       // save in database
       val key = "NodeInfo." + nodeId
@@ -3919,9 +3924,13 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-	      jarPaths:List[String],clusterId:String,power:Int,
-	      roles:Int,description:String): String = {
-    AddNode(nodeId,nodePort,nodeIpAddr,jarPaths,clusterId,power,roles,description)
+		 jarPaths:List[String],scala_home:String,
+		 java_home:String, classpath: String,
+		 clusterId:String,power:Int,
+		 roles:Int,description:String): String = {
+    AddNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
+	    java_home,classpath,
+	    clusterId,power,roles,description)
   }
 
   def RemoveNode(nodeId:String) : String = {
@@ -3942,11 +3951,11 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddAdapter(name:String,typeString:String,dataFormat: String,className: String, 
 		 jarName: String, dependencyJars: List[String], 
-		 adapterSpecificCfg: String): String = {
+		 adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
     try{
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name,typeString,dataFormat,className,jarName,
-					  dependencyJars,adapterSpecificCfg)
+					  dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
@@ -3964,8 +3973,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateAdapter(name:String,typeString:String,dataFormat: String,className: String, 
 		    jarName: String, dependencyJars: List[String], 
-		    adapterSpecificCfg: String): String = {
-    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg)
+		    adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
+    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
   }
 
   def RemoveAdapter(name:String) : String = {
@@ -4023,10 +4032,11 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
 
-  def AddClusterCfg(clusterCfgId:String,cfgName:String,cfgValue:String,modifiedTime:Date,createdTime:Date) : String = {
+  def AddClusterCfg(clusterCfgId:String,cfgMap:scala.collection.mutable.HashMap[String,String],
+		    modifiedTime:Date,createdTime:Date) : String = {
     try{
       // save in memory
-      val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId,cfgName,cfgValue, modifiedTime,createdTime)
+      val ci = MdMgr.GetMdMgr.MakeClusterCfg(clusterCfgId,cfgMap, modifiedTime,createdTime)
       MdMgr.GetMdMgr.AddClusterCfg(ci)
       // save in database
       val key = "ClusterCfgInfo." + clusterCfgId
@@ -4043,8 +4053,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
 
-  def UpdateClusterCfg(clusterCfgId:String,cfgName:String,cfgValue:String,modifiedTime:Date,createdTime:Date): String = {
-    AddClusterCfg(clusterCfgId,cfgName,cfgValue,modifiedTime,createdTime)
+  def UpdateClusterCfg(clusterCfgId:String,cfgMap:scala.collection.mutable.HashMap[String,String],
+		       modifiedTime:Date,createdTime:Date): String = {
+    AddClusterCfg(clusterCfgId,cfgMap,modifiedTime,createdTime)
   }
 
   def RemoveClusterCfg(clusterCfgId:String) : String = {
@@ -4074,26 +4085,17 @@ object MetadataAPIImpl extends MetadataAPI {
 	val ciList = clusters.get
 	ciList.foreach(c1 => {
 	  MdMgr.GetMdMgr.RemoveCluster(c1.ClusterId.toLowerCase)
-	  val key = "ClusterInfo." + c1.ClusterId
+	  var key = "ClusterInfo." + c1.ClusterId
 	  keyList   = keyList :+ key.toLowerCase
-	})
-      }
-      val ccfgList = cfg.ClusterCfgs
-      if ( ccfgList != None ){
-	val ciList = ccfgList.get
-	ciList.foreach(c1 => {
 	  MdMgr.GetMdMgr.RemoveClusterCfg(c1.ClusterId.toLowerCase)
-	  val key = "ClusterCfgInfo." + c1.ClusterId
+	  key = "ClusterCfgInfo." + c1.ClusterId
 	  keyList   = keyList :+ key.toLowerCase
-	})
-      }
-      val niList = cfg.Nodes
-      if ( niList != None ){
-	val nodes = niList.get
-	nodes.foreach(n => {
-	  MdMgr.GetMdMgr.RemoveNode(n.NodeId.toLowerCase)
-	  val key = "NodeInfo." + n.NodeId
-	  keyList   = keyList :+ key.toLowerCase
+	  val nodes = c1.Nodes
+	  nodes.foreach(n => {
+	    MdMgr.GetMdMgr.RemoveNode(n.NodeId.toLowerCase)
+	    key = "NodeInfo." + n.NodeId
+	    keyList   = keyList :+ key.toLowerCase
+	  })
 	})
       }
       val aiList = cfg.Adapters
@@ -4124,97 +4126,86 @@ object MetadataAPIImpl extends MetadataAPI {
       val cfg = JsonSerializer.parseEngineConfig(cfgStr)
       // process clusterInfo object if it exists
       val clusters = cfg.Clusters
-      if ( clusters != None ){
+
+      if ( clusters == None ){
+        var apiResult = new ApiResult(-1, "Failed to upload config: ","No clusters were found, possible parsing issue")
+        apiResult.toString()
+      }
+      else{
 	val ciList = clusters.get
+	logger.trace("Found " + ciList.length + " cluster objects ")
 	ciList.foreach(c1 => {
-	  var desc:String = null
-	  if(c1.Description != None ){
-	    desc = c1.Description.get
-	  }
-	  var privs:String = null
-	  if(c1.Privileges != None ){
-	    privs = c1.Privileges.get
-	  }
+	  logger.trace("Processing the cluster => " + c1.ClusterId)
 	  // save in memory
-	  val ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,desc,privs)
+	  var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
 	  MdMgr.GetMdMgr.AddCluster(ci)
-	  val key = "ClusterInfo." + ci.clusterId
-	  val value = serializer.SerializeObjectToByteArray(ci)
+	  var key = "ClusterInfo." + ci.clusterId
+	  var value = serializer.SerializeObjectToByteArray(ci)
 	  keyList   = keyList :+ key.toLowerCase
 	  valueList = valueList :+ value
-	})
-      }
-      val ccfgList = cfg.ClusterCfgs
-      if ( ccfgList != None ){
-	val ciList = ccfgList.get
-	ciList.foreach(c1 => {
-	  var modifiedTime:Date = null
-	  if(c1.ModifiedTime != None ){
-	    modifiedTime = c1.ModifiedTime.get
-	  }
-	  var createdTime:Date = null
-	  if(c1.CreatedTime != None ){
-	    createdTime = c1.CreatedTime.get
-	  }
+
+	  // gather config name-value pairs
+	  val cfgMap = new scala.collection.mutable.HashMap[String,String] 
+	  cfgMap("DataStore") = c1.Config.DataStore
+	  cfgMap("StatusInfo") = c1.Config.StatusInfo
+	  cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
+	  cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
+
 	  // save in memory
-	  val ci = MdMgr.GetMdMgr.MakeClusterCfg(c1.ClusterId,c1.CfgName,c1.CfgValue,
-					       modifiedTime,createdTime)
-	  MdMgr.GetMdMgr.AddClusterCfg(ci)
-	  val key = "ClusterCfgInfo." + ci.clusterId
-	  val value = serializer.SerializeObjectToByteArray(ci)
+	  val cic = MdMgr.GetMdMgr.MakeClusterCfg(c1.ClusterId,cfgMap,null,null)
+	  MdMgr.GetMdMgr.AddClusterCfg(cic)
+	  key = "ClusterCfgInfo." + cic.clusterId
+	  value = serializer.SerializeObjectToByteArray(cic)
 	  keyList   = keyList :+ key.toLowerCase
 	  valueList = valueList :+ value
+
+	  val nodes = c1.Nodes
+	  nodes.foreach(n => {
+	    val ni = MdMgr.GetMdMgr.MakeNode(n.NodeId,n.NodePort,n.NodeIpAddr,n.JarPaths,
+					     n.Scala_home,n.Java_home,n.Classpath,c1.ClusterId,0,0,null)
+	    MdMgr.GetMdMgr.AddNode(ni)
+	    val key = "NodeInfo." + ni.nodeId
+	    val value = serializer.SerializeObjectToByteArray(ni)
+	    keyList   = keyList :+ key.toLowerCase
+	    valueList = valueList :+ value
+	  })
 	})
+	val aiList = cfg.Adapters
+	if ( aiList != None ){
+	  val adapters = aiList.get
+	  adapters.foreach(a => {
+	    var depJars:List[String] = null
+	    if(a.DependencyJars != None ){
+	      depJars = a.DependencyJars.get
+	    }
+	    var ascfg:String = null
+	    if(a.AdapterSpecificCfg != None ){
+	      ascfg = a.AdapterSpecificCfg.get
+	    }
+	    var inputAdapterToVerify: String = null
+	    if(a.InputAdapterToVerify != None ){
+	      inputAdapterToVerify = a.InputAdapterToVerify.get
+	    }
+	    var dataFormat: String = null
+	    if(a.DataFormat != None ){
+	      dataFormat = a.DataFormat.get
+	    }
+	    // save in memory
+	    val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,dataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
+	    MdMgr.GetMdMgr.AddAdapter(ai)
+	    val key = "AdapterInfo." + ai.name
+	    val value = serializer.SerializeObjectToByteArray(ai)
+	    keyList   = keyList :+ key.toLowerCase
+	    valueList = valueList :+ value
+	  })
+	}
+	else{
+	  logger.trace("Found no adapater objects in the config file")
+	}
+	SaveObjectList(keyList,valueList,configStore)
+	var apiResult = new ApiResult(0, "Uploaded Config successfully", cfgStr)
+	apiResult.toString()
       }
-      val niList = cfg.Nodes
-      if ( niList != None ){
-	val nodes = niList.get
-	nodes.foreach(n => {
-	  var power:Int = 0
-	  if(n.Power != None ){
-	    power = n.Power.get
-	  }
-	  var roles:Int = 0
-	  if(n.Roles != None ){
-	    roles = n.Roles.get
-	  }
-	  var desc:String = null
-	  if(n.Description != None ){
-	    desc = n.Description.get
-	  }
-	  // save in memory
-	  val ni = MdMgr.GetMdMgr.MakeNode(n.NodeId,n.NodePort,n.NodeIpAddr,n.JarPaths,n.ClusterId,power,roles,desc)
-	  MdMgr.GetMdMgr.AddNode(ni)
-	  val key = "NodeInfo." + ni.nodeId
-	  val value = serializer.SerializeObjectToByteArray(ni)
-	  keyList   = keyList :+ key.toLowerCase
-	  valueList = valueList :+ value
-	})
-      }
-      val aiList = cfg.Adapters
-      if ( aiList != None ){
-	val adapters = aiList.get
-	adapters.foreach(a => {
-	  var depJars:List[String] = null
-	  if(a.DependencyJars != None ){
-	    depJars = a.DependencyJars.get
-	  }
-	  var ascfg:String = null
-	  if(a.AdapterSpecificCfg != None ){
-	    ascfg = a.AdapterSpecificCfg.get
-	  }
-	  // save in memory
-	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,ascfg)
-	  MdMgr.GetMdMgr.AddAdapter(ai)
-	  val key = "AdapterInfo." + ai.name
-	  val value = serializer.SerializeObjectToByteArray(ai)
-	  keyList   = keyList :+ key.toLowerCase
-	  valueList = valueList :+ value
-	})
-      }
-      SaveObjectList(keyList,valueList,configStore)
-      var apiResult = new ApiResult(0, "Uploaded Config successfully", cfgStr)
-      apiResult.toString()
     }catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to upload config: " + e.getMessage(),cfgStr)
@@ -4226,7 +4217,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // All available nodes(format JSON) as a String
   def GetAllNodes(formatType: String): String = {
     try {
-      val nodes = MdMgr.GetMdMgr.Nodes
+      val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
       if ( nodes.length == 0 ){
           logger.trace("No Nodes found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch node objects", "No Node Objects Available")
@@ -4249,7 +4240,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // All available adapters(format JSON) as a String
   def GetAllAdapters(formatType: String): String = {
     try {
-      val adapters = MdMgr.GetMdMgr.Adapters
+      val adapters = MdMgr.GetMdMgr.Adapters.values.toArray
       if ( adapters.length == 0 ){
           logger.trace("No Adapters found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch adapter objects", "No Adapter Objects Available")
@@ -4271,7 +4262,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // All available clusters(format JSON) as a String
   def GetAllClusters(formatType: String): String = {
     try {
-      val clusters = MdMgr.GetMdMgr.Clusters
+      val clusters = MdMgr.GetMdMgr.Clusters.values.toArray
       if ( clusters.length == 0 ){
           logger.trace("No Clusters found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch cluster objects", "No Cluster Objects Available")
@@ -4293,7 +4284,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // All available clusterCfgs(format JSON) as a String
   def GetAllClusterCfgs(formatType: String): String = {
     try {
-      val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs
+      val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
       if ( clusterCfgs.length == 0 ){
           logger.trace("No ClusterCfgs found ")
           var apiResult = new ApiResult(-1, "Failed to Fetch clusterCfg objects", "No ClusterCfg Objects Available")
@@ -4319,7 +4310,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var jsonStr:String = ""
     var jsonStr1:String = ""
     try {
-      val clusters = MdMgr.GetMdMgr.Clusters
+      val clusters = MdMgr.GetMdMgr.Clusters.values.toArray
       if ( clusters.length != 0 ){
 	cfgObjList = cfgObjList :+ clusters
 	jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Clusters", clusters)
@@ -4327,7 +4318,7 @@ object MetadataAPIImpl extends MetadataAPI {
 	jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
         jsonStr = jsonStr + jsonStr1
       }
-      val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs
+      val clusterCfgs = MdMgr.GetMdMgr.ClusterCfgs.values.toArray
       if ( clusterCfgs.length != 0 ){
         cfgObjList = cfgObjList :+ clusterCfgs
 	jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("ClusterCfgs", clusterCfgs)
@@ -4335,7 +4326,7 @@ object MetadataAPIImpl extends MetadataAPI {
 	jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
         jsonStr = jsonStr + jsonStr1
       }
-      val nodes = MdMgr.GetMdMgr.Nodes
+      val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
       if ( nodes.length != 0 ){
         cfgObjList = cfgObjList :+ nodes
 	jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Nodes", nodes)
@@ -4343,7 +4334,7 @@ object MetadataAPIImpl extends MetadataAPI {
 	jsonStr1 = JsonSerializer.replaceLast(jsonStr1,"}",",")
         jsonStr = jsonStr + jsonStr1
       }
-      val adapters = MdMgr.GetMdMgr.Adapters
+      val adapters = MdMgr.GetMdMgr.Adapters.values.toArray
       if ( adapters.length != 0 ){
 	cfgObjList = cfgObjList :+ adapters
 	jsonStr1 = JsonSerializer.SerializeCfgObjectListToJson("Adapters", adapters)

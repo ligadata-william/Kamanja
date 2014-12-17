@@ -17,26 +17,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
 
   private[this] val LOG = Logger.getLogger(getClass);
 
-  private[this] val fc = new FileAdapterConfiguration
-
-  //BUGBUG:: Not Checking whether inputConfig is really FileAdapterConfiguration or not. 
-
-  fc.Name = inputConfig.Name
-  fc.className = inputConfig.className
-  fc.jarName = inputConfig.jarName
-  fc.dependencyJars = inputConfig.dependencyJars
-
-  // For File we expect the format "Type~AdapterName~ClassName~JarName~DependencyJars~CompressionString(GZ/BZ2)~FilesList"
-  if (inputConfig.adapterSpecificTokens.size != 5) {
-    val err = "We should find only [CorrespondingInputAdapterName,] ClassName, JarName, DependencyJars, CompressionString and FilesList for File Adapter Config:" + inputConfig.Name
-    LOG.error(err)
-    throw new Exception(err)
-  }
-
-  if (inputConfig.adapterSpecificTokens(0).size > 0)
-    fc.CompressionString = inputConfig.adapterSpecificTokens(0)
-
-  fc.Files = inputConfig.adapterSpecificTokens(1).split(",").map(str => str.trim).filter(str => str.size > 0)
+  private[this] val fc = FileAdapterConfiguration.GetAdapterConfig(inputConfig)
 
   //BUGBUG:: Not validating the values in FileAdapterConfiguration 
 

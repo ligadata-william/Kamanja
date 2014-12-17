@@ -12,6 +12,41 @@ class KafkaQueueAdapterConfiguration extends AdapterConfiguration {
   var instancePartitions: Set[Int] = _ // Valid only for Input Queues. These are the partitions we handle for this Queue. For now we are treating Partitions as Ints. (Kafka handle it as ints)
 }
 
+object KafkaQueueAdapterConfiguration {
+  def GetAdapterConfig(inputConfig: AdapterConfiguration): KafkaQueueAdapterConfiguration = {
+    if (inputConfig.adapterSpecificCfg == null || inputConfig.adapterSpecificCfg.size == 0) {
+      val err = "Not found Host/Brokers and topicname for Kafka Adapter Config:" + inputConfig.Name
+      throw new Exception(err)
+    }
+
+    val qc = new KafkaQueueAdapterConfiguration
+    qc.Name = inputConfig.Name
+    qc.formatOrInputAdapterName = inputConfig.formatOrInputAdapterName
+    qc.className = inputConfig.className
+    qc.jarName = inputConfig.jarName
+    qc.dependencyJars = inputConfig.dependencyJars
+
+    val adapCfg = parse(inputConfig.adapterSpecificCfg)
+    if (adapCfg == null || adapCfg.values == null) {
+      val err = "Not found Host/Brokers and topicname for Kafka Adapter Config:" + inputConfig.Name
+      throw new Exception(err)
+    }
+    val values = adapCfg.values.asInstanceOf[Map[String, String]]
+
+    values.foreach(kv => {
+      if (kv._1.compareToIgnoreCase("HostList") == 0) {
+        qc.hosts = kv._2.split(",").map(str => str.trim).filter(str => str.size > 0)
+      } else if (kv._1.compareToIgnoreCase("TopicName") == 0) {
+        qc.topic = kv._2.trim
+      }
+    })
+
+    qc.instancePartitions = Set[Int]()
+
+    qc
+  }
+}
+
 case class KafkaKeyData(Version: Int, Type: String, Name: String, TopicName: Option[String], PartitionId: Option[Int]) // Using most of the values as optional values. Just thinking about future changes. Don't know the performance issues.
 
 class KafkaPartitionUniqueRecordKey extends PartitionUniqueRecordKey {

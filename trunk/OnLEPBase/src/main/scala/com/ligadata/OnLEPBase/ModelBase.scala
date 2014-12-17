@@ -125,8 +125,8 @@ trait EnvContext {
   // Set Reload Flag
   def setReloadFlag(tempTransId: Long, containerName: String): Unit
 
-  def PersistValidateAdapterInformation(validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]): Unit
-  def GetValidateAdapterInformation: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
+  def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
+  def GetValidateAdapterInformation: Array[(String, String)]
 }
 
 trait ModelBase {

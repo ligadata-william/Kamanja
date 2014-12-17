@@ -200,11 +200,30 @@ object OnLEPLeader {
       }
 
       val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
+      val map = scala.collection.mutable.Map[String, String]()
+
+      savedValidatedAdaptInfo.foreach(kv => {
+        map(kv._1) = kv._2
+      })
 
       CollectKeyValsFromValidation.clear
       validateInputAdapters.foreach(via => {
-        // BUGBUG:: Collect all Valid information from the given point onwards
-        // via.StartProcessing(maxParts, partitionInfo)
+        // Get all Begin values for Unique Keys
+        val begVals = via.getAllPartitionBeginValues
+        val finalVals = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](begVals.size)
+
+        // Replace the newly found ones
+        val nParts = begVals.size
+        for (i <- 0 until nParts) {
+          val foundVal = map.getOrElse(begVals(i)._1.Serialize, null)
+          if (foundVal != null) {
+            val desVal = via.DeserializeValue(foundVal)
+            finalVals += ((begVals(i)._1, desVal, 0, (desVal, 0, 0)))
+          } else {
+            finalVals += ((begVals(i)._1, begVals(i)._2, 0, (begVals(i)._2, 0, 0)))
+          }
+        }
+        via.StartProcessing(finalVals.size, finalVals.toArray, false)
       })
 
       foundKeysInValidation = CollectKeyValsFromValidation.get
@@ -339,7 +358,7 @@ object OnLEPLeader {
             val key = keys(i)
             quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
           }
-          ia.StartProcessing(maxParts, quads.toArray)
+          ia.StartProcessing(maxParts, quads.toArray, true)
         }
       } catch {
         case e: Exception => {
@@ -616,7 +635,7 @@ object OnLEPLeader {
                     if (getValidateAdapCntr >= 60) { // for every 60 secs
                       // Persists the previous ones if we have any
                       if (validateUniqVals != null && validateUniqVals.size > 0) {
-                        envCtxt.PersistValidateAdapterInformation(validateUniqVals)
+                        envCtxt.PersistValidateAdapterInformation(validateUniqVals.map(kv => (kv._1.Serialize, kv._2.Serialize)))
                       }
                       // Get the latest ones
                       validateUniqVals = GetEndPartitionsValuesForValidateAdapters

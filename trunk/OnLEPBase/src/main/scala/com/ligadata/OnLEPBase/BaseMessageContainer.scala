@@ -11,6 +11,7 @@ trait MessageContainerBase {
   def get(key: String): Any
   def getOrElse(key: String, default: Any): Any
   def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit
+  def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg
   def Version: String // Message or Container Version
   def PartitionKeyData: Array[String] // Partition key data
   def PrimaryKeyData: Array[String] // Primary key data
@@ -28,6 +29,8 @@ trait MessageContainerObjBase {
   def NameSpace: String // Message or Container NameSpace
   def Name: String // Message or Container Name
   def Version: String // Message or Container Version
+  def PartitionKeyData(inputdata:InputData): Array[String] // Partition key data
+  def PrimaryKeyData(inputdata:InputData): Array[String] // Primary key data
 }
 
 trait BaseContainer extends MessageContainerBase {

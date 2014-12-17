@@ -15,9 +15,6 @@ import org.apache.log4j._
 import ObjTypeType._
 import ObjType._
 
-
-
-
 case class AlreadyExistsException(e: String) extends Throwable(e)
 case class ObjectNolongerExistsException(e: String) extends Throwable(e)
 case class InvalidArgumentException(e: String) extends Throwable(e)
@@ -69,11 +66,11 @@ class MdMgr {
   private var nodes = new HashMap[String, NodeInfo]
   private var adapters = new HashMap[String, AdapterInfo]
 
-  def SetLoggerLevel(level: Level){
+  def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
   }
 
-  def truncate{
+  def truncate {
     typeDefs.clear
     funcDefs.clear
     msgDefs.clear
@@ -89,68 +86,66 @@ class MdMgr {
     adapters.clear
   }
 
-
-  def truncate(objectType:String){
-    objectType match{
+  def truncate(objectType: String) {
+    objectType match {
       case "TypeDef" => {
-	typeDefs.clear
+        typeDefs.clear
       }
       case "FunctionDef" => {
-	funcDefs.clear
-	compilerFuncDefs.clear
+        funcDefs.clear
+        compilerFuncDefs.clear
       }
       case "MessageDef" => {
-	msgDefs.clear
+        msgDefs.clear
       }
       case "ContainerDef" => {
-	containerDefs.clear
+        containerDefs.clear
       }
       case "ConceptDef" => {
-	attrbDefs.clear
+        attrbDefs.clear
       }
       case "ModelDef" => {
-	modelDefs.clear
+        modelDefs.clear
       }
       case "CompilerFuncDef" => {
-	compilerFuncDefs.clear
+        compilerFuncDefs.clear
       }
       case "MacroDef" => {
-	macroDefs.clear
+        macroDefs.clear
       }
       case "MacroDefSets" => {
-	macroDefSets.clear
+        macroDefSets.clear
       }
       case "Clusters" => {
-	clusters.clear
-	clusterCfgs.clear
+        clusters.clear
+        clusterCfgs.clear
       }
       case "Nodes" => {
-	nodes.clear
+        nodes.clear
       }
       case "Adapters" => {
-	adapters.clear
+        adapters.clear
       }
       case _ => {
-	logger.error("Unknown object type " + objectType + " in truncate function")
+        logger.error("Unknown object type " + objectType + " in truncate function")
       }
     }
   }
 
-
-  def dump{
-    typeDefs.foreach(obj  => {logger.trace("Type Key = " + obj._1)})
-    funcDefs.foreach(obj  => {logger.trace("Function Key = " + obj._1)})
-    msgDefs.foreach(obj   => {logger.trace("Message Key = " + obj._1)})
-    containerDefs.foreach(obj  => {logger.trace("Container Key = " + obj._1)})
-    attrbDefs.foreach(obj  => {logger.trace("Attribute Key = " + obj._1)})
-    modelDefs.foreach(obj  => {logger.trace("Model Key = " + obj._1)})
-    compilerFuncDefs.foreach(obj  => {logger.trace("CompilerFunction Key = " + obj._1)})
-    macroDefs.foreach(obj  => {logger.trace("Macro Key = " + obj._1)})
-    macroDefSets.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
-    clusters.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
-    clusterCfgs.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
-    nodes.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
-    adapters.foreach(obj  => {logger.trace("MacroSet Key = " + obj._1)})
+  def dump {
+    typeDefs.foreach(obj => { logger.trace("Type Key = " + obj._1) })
+    funcDefs.foreach(obj => { logger.trace("Function Key = " + obj._1) })
+    msgDefs.foreach(obj => { logger.trace("Message Key = " + obj._1) })
+    containerDefs.foreach(obj => { logger.trace("Container Key = " + obj._1) })
+    attrbDefs.foreach(obj => { logger.trace("Attribute Key = " + obj._1) })
+    modelDefs.foreach(obj => { logger.trace("Model Key = " + obj._1) })
+    compilerFuncDefs.foreach(obj => { logger.trace("CompilerFunction Key = " + obj._1) })
+    macroDefs.foreach(obj => { logger.trace("Macro Key = " + obj._1) })
+    macroDefSets.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    clusters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    clusterCfgs.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    nodes.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    adapters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
   }
 
   private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Int): Option[T] = {
@@ -212,9 +207,9 @@ class MdMgr {
     if (latestVersion == false) {
       elems match {
         case None => None
-        case Some(es) => { 
-	  if (onlyActive) Some(es.filter(e => e.IsActive).toSet) else Some(es.toSet)
-	}
+        case Some(es) => {
+          if (onlyActive) Some(es.filter(e => e.IsActive).toSet) else Some(es.toSet)
+        }
       }
     } else {
       val latestElems =
@@ -257,9 +252,9 @@ class MdMgr {
    *  @param nameSpace - the scalar type namespace
    *  @param name - the scalar type name.
    *  @param ver - version info
-
-   *  @param jarNm - 
-   *  @param depJars - 
+   *
+   *  @param jarNm -
+   *  @param depJars -
    */
 
   private def SetBaseElem(be: BaseElemDef, nameSpace: String, name: String, ver: Int, jarNm: String, depJars: Array[String]): Unit = {
@@ -295,7 +290,7 @@ class MdMgr {
     }
 
     var ad = new AttributeDef
-    val typname : String = typeName.toLowerCase()
+    val typname: String = typeName.toLowerCase()
     ad.inherited = null
     ad.aType = GetElem(Type(typeNameNs, typname, -1, false), s"Type $typeNameNs.$typeName does not exist")
     if (ad.aType == null) { throw new NoSuchElementException(s"Type $typeNameNs.$typeName does not exist") }
@@ -322,24 +317,23 @@ class MdMgr {
     ad
   }
 
-  private def AddRelationKeys(entity: EntityType, primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])]):Unit = {
+  private def AddRelationKeys(entity: EntityType, primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])]): Unit = {
     val pKeys = {
-      if (primaryKeys == null) 
-        null 
-      else 
+      if (primaryKeys == null)
+        null
+      else
         primaryKeys.map(v => {
           val pk = new PrimaryKey
-          pk.constraintName = if (v._1 != null) v._1 else null 
+          pk.constraintName = if (v._1 != null) v._1 else null
           pk.key = v._2.toArray
           pk
-        }
-      ).toArray
+        }).toArray
     }
 
     val fKeys = {
-      if (foreignKeys == null) 
-        null 
-      else 
+      if (foreignKeys == null)
+        null
+      else
         foreignKeys.map(v => {
           val fk = new ForeignKey
           fk.constraintName = if (v._1 != null) v._1 else null
@@ -347,15 +341,13 @@ class MdMgr {
           fk.forignContainerName = v._3
           fk.forignKey = v._4.toArray
           fk
-        }
-      ).toArray
+        }).toArray
     }
-    
+
     if (pKeys != null && fKeys != null)
       entity.keys = pKeys ++ pKeys
   }
-  
-  
+
   /**
    *  MakeContainerTypeMap participates in the construction of mapped based messages, providing the base type container.
    *
@@ -363,9 +355,9 @@ class MdMgr {
    *  @param name - the container name.
    *  @param args - a List of triples (attribute namespace, attribute name, attribute type namespace, attribute type name, isGlobal)
    *  @param ver - version info
-
-   *  @param jarNm - 
-   *  @param depJars - 
+   *
+   *  @param jarNm -
+   *  @param depJars -
    *  @return an MappedMsgTypeDef
    *
    */
@@ -392,7 +384,7 @@ class MdMgr {
     st.PhysicalName(physicalName)
 
     AddRelationKeys(st, primaryKeys, foreignKeys)
-    
+
     st.partitionKey = partitionKey
 
     st
@@ -405,9 +397,9 @@ class MdMgr {
    *  @param name - the name of the structure type.
    *  @param args - a List of triples (attribute namespace, attribute name, attribute type namespace, attribute type name, isGlobal)
    *  @param ver - version info
-
-   *  @param jarNm - 
-   *  @param depJars - 
+   *
+   *  @param jarNm -
+   *  @param depJars -
    *  @return the constructed StructTypeDef
    */
 
@@ -434,7 +426,7 @@ class MdMgr {
     sd.PhysicalName(physicalName)
 
     AddRelationKeys(sd, primaryKeys, foreignKeys)
-   
+
     sd.partitionKey = partitionKey
 
     sd
@@ -476,24 +468,24 @@ class MdMgr {
 
   /** Answer the Active AND Current BaseTypeDef with the supplied namespace and name  */
   def ActiveType(nameSpace: String, name: String): BaseTypeDef = {
-	  val optContainer : Option[BaseTypeDef] = Type(MdMgr.MkFullName(nameSpace, name), -1, true)
-	  val container : BaseTypeDef = optContainer match {
-	    case Some(optContainer) => optContainer
-	    case _ => null
-	  }
-	  container
+    val optContainer: Option[BaseTypeDef] = Type(MdMgr.MkFullName(nameSpace, name), -1, true)
+    val container: BaseTypeDef = optContainer match {
+      case Some(optContainer) => optContainer
+      case _ => null
+    }
+    container
   }
 
   /** Answer the BaseTypeDef with the supplied key  */
   def Type(key: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
-	  val typ : Option[BaseTypeDef] = GetReqValue(Types(key.toLowerCase(), true, false), -1)
-	  val activeType : BaseTypeDef = typ match {
-	    case Some(typ) => typ
-	    case _ => null
-	  }
-	  activeType
+    val typ: Option[BaseTypeDef] = GetReqValue(Types(key.toLowerCase(), true, false), -1)
+    val activeType: BaseTypeDef = typ match {
+      case Some(typ) => typ
+      case _ => null
+    }
+    activeType
   }
 
   /** Get All Versions of Messages */
@@ -507,12 +499,12 @@ class MdMgr {
   def Message(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
   /** Answer the ACTIVE and CURRENT MessageDef with the supplied namespace and name  */
   def ActiveMessage(nameSpace: String, name: String): MessageDef = {
-	  val optMsg : Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), -1, true)
-	  val msg : MessageDef = optMsg match {
-	    case Some(optMsg) => optMsg
-	    case _ => null
-	  }
-	  msg
+    val optMsg: Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), -1, true)
+    val msg: MessageDef = optMsg match {
+      case Some(optMsg) => optMsg
+      case _ => null
+    }
+    msg
   }
 
   /** Answer the MessageDef with the supplied key. */
@@ -530,12 +522,12 @@ class MdMgr {
 
   /** Answer the Active AND Current ContainerDef with the supplied namespace and name  */
   def ActiveContainer(nameSpace: String, name: String): ContainerDef = {
-	  val optContainer : Option[ContainerDef] = Container(MdMgr.MkFullName(nameSpace, name), -1, true)
-	  val container : ContainerDef = optContainer match {
-	    case Some(optContainer) => optContainer
-	    case _ => null
-	  }
-	  container
+    val optContainer: Option[ContainerDef] = Container(MdMgr.MkFullName(nameSpace, name), -1, true)
+    val container: ContainerDef = optContainer match {
+      case Some(optContainer) => optContainer
+      case _ => null
+    }
+    container
   }
 
   /** Answer the ContainerDef with the supplied key.  Use one of the helper functions described here to form a proper search key.  */
@@ -574,15 +566,15 @@ class MdMgr {
 
     latestFns
   }
-  
+
   /** Answer the ACTIVE and CURRENT function definitions for the supplied namespace.name */
   def FunctionsAvailable(nameSpace: String, name: String): scala.collection.immutable.Set[FunctionDef] = {
-	  val optFcns : Option[scala.collection.immutable.Set[FunctionDef]]  = Functions(nameSpace.toLowerCase(), name.toLowerCase(), true, true)
-	  val fcns : scala.collection.immutable.Set[FunctionDef] = optFcns match {
-	    case Some(optFcns) => optFcns
-	    case _ => null
-	  }
-	  fcns
+    val optFcns: Option[scala.collection.immutable.Set[FunctionDef]] = Functions(nameSpace.toLowerCase(), name.toLowerCase(), true, true)
+    val fcns: scala.collection.immutable.Set[FunctionDef] = optFcns match {
+      case Some(optFcns) => optFcns
+      case _ => null
+    }
+    fcns
   }
 
   /* full key name and full arguments names */
@@ -594,10 +586,10 @@ class MdMgr {
         case Some(fs) => {
           // val signature = key.trim.toLowerCase + "(" + args.foldLeft("")((sig, elem) => sig + "," + elem.trim.toLowerCase) + ")"
           val signature = key.trim.toLowerCase + "(" + args.map(elem => elem.trim.toLowerCase).mkString(",") + ")"
-	  //logger.trace("signature => " + signature)
-	  //logger.trace("fs => " + fs.size)
+          //logger.trace("signature => " + signature)
+          //logger.trace("fs => " + fs.size)
           val matches = fs.filter(f => (onlyActive == false || (onlyActive && f.IsActive)) && (signature == f.typeString))
-	  //logger.trace("matches => " + matches.toSet.size)
+          //logger.trace("matches => " + matches.toSet.size)
           if (matches.size > 0) Some(matches.toSet) else None
         }
       }
@@ -612,40 +604,40 @@ class MdMgr {
   def Function(nameSpace: String, name: String, args: List[(String, String)], ver: Int, onlyActive: Boolean): Option[FunctionDef] = Function(MdMgr.MkFullName(nameSpace, name), args.map(a => MdMgr.MkFullName(a._1, a._2)), ver, onlyActive)
 
   /**
-   *  Principally used by the Pmml Compiler, answer the FunctionDef with the supplied type signature.  
+   *  Principally used by the Pmml Compiler, answer the FunctionDef with the supplied type signature.
    *  Type signatures are in the following form:
-   *  
+   *
    *  		namespace.functionName(arg.typeString,arg.typeString,...)
-   *    
+   *
    *  NOTE: Typestrings are the native scala type representation, not the Ligadata namespace.typename.  For example,
-   *  
+   *
    *  		Udfs.ContainerMap(Array[SomeMessageType],String,Int,Int,Boolean)
-   *    
+   *
    *  @param key : a typestring key
    *  @return a FunctionDef matching the type signature key or null if there is no match
-   */   
-  def FunctionByTypeSig(key : String): FunctionDef = { compilerFuncDefs.get(key.toLowerCase()).getOrElse(null) }
-  
+   */
+  def FunctionByTypeSig(key: String): FunctionDef = { compilerFuncDefs.get(key.toLowerCase()).getOrElse(null) }
+
   /**
-   *  Principally used by the Pmml Compiler, answer the macro that matches the supplied type signature.  A 
-   *  MacroDef is returned.  The MacroDef is similar in most respects to the FunctionDef (in fact a 
-   *  MacroDef isA FunctionDef).  The difference is how they are used by the Pmml compiler.  
-   *  @see <documentation reference> for more details regarding function macros.  
+   *  Principally used by the Pmml Compiler, answer the macro that matches the supplied type signature.  A
+   *  MacroDef is returned.  The MacroDef is similar in most respects to the FunctionDef (in fact a
+   *  MacroDef isA FunctionDef).  The difference is how they are used by the Pmml compiler.
+   *  @see <documentation reference> for more details regarding function macros.
    *  @see FunctionByTypeSig for details regarding key format.
-   *    
+   *
    *  @param key : a typestring key
    *  @return a MacroDef matching the type signature key or null if there is no match
-   */ 
-  def MacroByTypeSig(key : String): MacroDef = { macroDefs.get(key.toLowerCase()).getOrElse(null) }
-  /** 
+   */
+  def MacroByTypeSig(key: String): MacroDef = { macroDefs.get(key.toLowerCase()).getOrElse(null) }
+  /**
    *  Answer the function macros that match the supplied full name.  See MdMgr.MkFullName for key format.
    *  This method is principally for the author and the authoring tools to investigate what is available for
    *  use during construction or rule sets and other models.
-   *    
+   *
    *  @param key : a typestring key
    *  @return a FunctionDef or null if there is no match
-   */ 
-  def MacrosAvailable(key : String): Set[MacroDef] = { macroDefSets.get(key.toLowerCase()).getOrElse(Set[MacroDef]()) }
+   */
+  def MacrosAvailable(key: String): Set[MacroDef] = { macroDefSets.get(key.toLowerCase()).getOrElse(Set[MacroDef]()) }
 
   /** Get All Versions of Attributes */
   def Attributes(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseAttributeDef]] = { GetImmutableSet(Some(attrbDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
@@ -659,12 +651,12 @@ class MdMgr {
   def Attribute(key: String, ver: Int, onlyActive: Boolean): Option[BaseAttributeDef] = GetReqValue(Attributes(key, onlyActive, false), ver)
   /** Answer the Active AND Current ContainerDef with the supplied namespace and name  */
   def ActiveAttribute(nameSpace: String, name: String): BaseAttributeDef = {
-	  val optAttr : Option[BaseAttributeDef] = Attribute(MdMgr.MkFullName(nameSpace, name), -1, true)
-	  val attr : BaseAttributeDef = optAttr match {
-	    case Some(optAttr) => optAttr
-	    case _ => null
-	  }
-	  attr
+    val optAttr: Option[BaseAttributeDef] = Attribute(MdMgr.MkFullName(nameSpace, name), -1, true)
+    val attr: BaseAttributeDef = optAttr match {
+      case Some(optAttr) => optAttr
+      case _ => null
+    }
+    attr
   }
 
   /** Get All Versions of Models */
@@ -680,261 +672,254 @@ class MdMgr {
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyModel(nameSpace: String, name: String, ver: Int, operation: String): ModelDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val model = modelDefs.getOrElse(key,null)
-      if(model == null ){
-	logger.trace("The model " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
-      }
-      else{
-	var versionMatch: ModelDef = null
-	modelDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The model " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The model " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The model " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val model = modelDefs.getOrElse(key, null)
+    if (model == null) {
+      logger.trace("The model " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
+    } else {
+      var versionMatch: ModelDef = null
+      modelDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The model " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The model " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The model " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyMessage(nameSpace: String, name: String, ver: Int, operation: String): MessageDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val message = msgDefs.getOrElse(key,null)
-      if(message == null ){
-	logger.trace("The message " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
-      }
-      else{
-	var versionMatch: MessageDef = null
-	msgDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The message " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The message " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The message " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val message = msgDefs.getOrElse(key, null)
+    if (message == null) {
+      logger.trace("The message " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
+    } else {
+      var versionMatch: MessageDef = null
+      msgDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The message " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The message " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The message " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyContainer(nameSpace: String, name: String, ver: Int, operation: String): ContainerDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val container = containerDefs.getOrElse(key,null)
-      if(container == null ){
-	logger.trace("The container " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
-      }
-      else{
-	var versionMatch: ContainerDef = null
-	containerDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The container " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The container " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The container " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val container = containerDefs.getOrElse(key, null)
+    if (container == null) {
+      logger.trace("The container " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
+    } else {
+      var versionMatch: ContainerDef = null
+      containerDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The container " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The container " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The container " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyFunction(nameSpace: String, name: String, ver: Int, operation: String): FunctionDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val function = funcDefs.getOrElse(key,null)
-      if(function == null ){
-	logger.trace("The function " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
-      }
-      else{
-	var versionMatch: FunctionDef = null
-	funcDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The function " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The function " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The function " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val function = funcDefs.getOrElse(key, null)
+    if (function == null) {
+      logger.trace("The function " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
+    } else {
+      var versionMatch: FunctionDef = null
+      funcDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The function " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The function " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The function " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyAttribute(nameSpace: String, name: String, ver: Int, operation: String): BaseAttributeDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val attribute = attrbDefs.getOrElse(key,null)
-      if(attribute == null ){
-	logger.trace("The attribute " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The attribute $key may have been removed already")
-      }
-      else{
-	var versionMatch: BaseAttributeDef = null
-	attrbDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The attribute " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The attribute " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The attribute " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val attribute = attrbDefs.getOrElse(key, null)
+    if (attribute == null) {
+      logger.trace("The attribute " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The attribute $key may have been removed already")
+    } else {
+      var versionMatch: BaseAttributeDef = null
+      attrbDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The attribute " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The attribute " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The attribute " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyType(nameSpace: String, name: String, ver: Int, operation: String): BaseTypeDef = {
-      val key = MdMgr.MkFullName(nameSpace, name)
-      val typ = typeDefs.getOrElse(key,null)
-      if(typ == null ){
-	logger.trace("The type " + key + " doesn't exist ")
-	throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
-      }
-      else{
-	var versionMatch: BaseTypeDef = null
-	typeDefs(key).foreach(m =>
-	    if(m.ver == ver ){
-	      versionMatch = m
-	      operation match{
-		case "Remove" => {
-		  m.Deleted
-		  m.Deactive
-		  logger.info("The type " + key + " is removed ")
-		}
-		case "Activate" => {
-		  m.Active
-		  logger.info("The type " + key + " is activated ")
-		}
-		case "Deactivate" => {
-		  m.Deactive
-		  logger.info("The type " + key + " is deactivated ")
-		}
-	      }
-	    })
-	versionMatch
-      }
+    val key = MdMgr.MkFullName(nameSpace, name)
+    val typ = typeDefs.getOrElse(key, null)
+    if (typ == null) {
+      logger.trace("The type " + key + " doesn't exist ")
+      throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
+    } else {
+      var versionMatch: BaseTypeDef = null
+      typeDefs(key).foreach(m =>
+        if (m.ver == ver) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.info("The type " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.info("The type " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.info("The type " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+    }
   }
 
-
   def RemoveMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyMessage(nameSpace,name,ver,"Remove")
+    ModifyMessage(nameSpace, name, ver, "Remove")
   }
 
   def DeactivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyMessage(nameSpace,name,ver,"Deactivate")
+    ModifyMessage(nameSpace, name, ver, "Deactivate")
   }
 
   def ActivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyMessage(nameSpace,name,ver,"Activate")
+    ModifyMessage(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveContainer(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Remove")
+  def RemoveContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+    ModifyContainer(nameSpace, name, ver, "Remove")
   }
 
   def DeactivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Deactivate")
+    ModifyContainer(nameSpace, name, ver, "Deactivate")
   }
 
   def ActivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Activate")
+    ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveFunction(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
-      ModifyFunction(nameSpace,name,ver,"Remove")
+  def RemoveFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+    ModifyFunction(nameSpace, name, ver, "Remove")
   }
 
   def DeactivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyFunction(nameSpace,name,ver,"Deactivate")
+    ModifyFunction(nameSpace, name, ver, "Deactivate")
   }
 
   def ActivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Activate")
+    ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveAttribute(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
-      ModifyAttribute(nameSpace,name,ver,"Remove")
+  def RemoveAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+    ModifyAttribute(nameSpace, name, ver, "Remove")
   }
 
   def DeactivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyAttribute(nameSpace,name,ver,"Deactivate")
+    ModifyAttribute(nameSpace, name, ver, "Deactivate")
   }
 
   def ActivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Activate")
+    ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveType(nameSpace: String, name: String, ver: Int) : BaseElemDef = {
-      ModifyType(nameSpace,name,ver,"Remove")
+  def RemoveType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+    ModifyType(nameSpace, name, ver, "Remove")
   }
 
   def DeactivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyType(nameSpace,name,ver,"Deactivate")
+    ModifyType(nameSpace, name, ver, "Deactivate")
   }
 
   def ActivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
-      ModifyContainer(nameSpace,name,ver,"Activate")
+    ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
   // Make Functions. These will just make and send back the object
@@ -948,14 +933,7 @@ class MdMgr {
 
   @throws(classOf[IllegalArgumentException])
   @throws(classOf[AlreadyExistsException])
-  def MakeScalar(nameSpace: String
-		      , name: String
-		      , tp: Type
-		      , physicalName: String
-		      , ver: Int = 1
-		      , jarNm: String = null
-		      , depJars: Array[String] = null
-			  , implementationName: String = "SomeImplementation"): ScalarTypeDef = {
+  def MakeScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = "SomeImplementation"): ScalarTypeDef = {
     if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Scalar $nameSpace.$name already exists.")
     }
@@ -1081,33 +1059,33 @@ class MdMgr {
     st
   }
 
-  /** 
-   *  MakeQueue catalogs an Queue based type in the metadata manager's global typedefs map 
-   *  
-   *  @param nameSpace - the list's type namespace 
+  /**
+   *  MakeQueue catalogs an Queue based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the list's type namespace
    *  @param name - the queue name.
    *  @param tpNameSp - the name space of the queue item type
    *  @param tpName - the name for the element's type
    *  @param ver - version info
-   */  
-   
+   */
+
   @throws(classOf[NoSuchElementException])
-  def MakeQueue(nameSpace: String, name:String, tpNameSp: String, tpName: String, ver: Int) = {
-	    if (Type(nameSpace, name, -1, false) != None) {
-	      throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
-	    }
-	    val valDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The queue's item type $tpNameSp.$tpName does not exist")
-	    if (valDef == null) { throw new NoSuchElementException(s"The queue's item type $tpNameSp.$tpName does not exist") }
-	    val depJarSet = scala.collection.mutable.Set[String]()
-	    if (valDef.JarName != null) depJarSet += valDef.JarName
-	    if (valDef.DependencyJarNames != null) depJarSet ++= valDef.DependencyJarNames
-	    val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
-	    val st = new QueueTypeDef
-	    SetBaseElem(st, nameSpace, name, ver, null, depJars)
-	    st.valDef = valDef
-	    st
+  def MakeQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int) = {
+    if (Type(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
+    }
+    val valDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The queue's item type $tpNameSp.$tpName does not exist")
+    if (valDef == null) { throw new NoSuchElementException(s"The queue's item type $tpNameSp.$tpName does not exist") }
+    val depJarSet = scala.collection.mutable.Set[String]()
+    if (valDef.JarName != null) depJarSet += valDef.JarName
+    if (valDef.DependencyJarNames != null) depJarSet ++= valDef.DependencyJarNames
+    val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
+    val st = new QueueTypeDef
+    SetBaseElem(st, nameSpace, name, ver, null, depJars)
+    st.valDef = valDef
+    st
   }
-  
+
   /**
    *  MakeSet catalogs an Set based type in the metadata manager's global typedefs map
    *
@@ -1195,33 +1173,33 @@ class MdMgr {
     st
   }
 
-  	/** 
-  	 *  MakeSortedSet catalogs an SortedSet based type in the metadata manager's global typedefs map 
-	 *  
-	 *  @param nameSpace - the set's type namespace 
-	 *  @param name - the set name.
-	 *  @param tpNameSp - the namespace of the set's key element type
-	 *  @param tpName - the name for the element's type
-	 *  @param ver - the type's version
-	 */   
-	// We should not have physicalName. This container type has type inside, which has PhysicalName
-	@throws(classOf[AlreadyExistsException])
-	@throws(classOf[NoSuchElementException])
-	def MakeSortedSet(nameSpace: String, name:String, tpNameSp: String, tpName: String, ver: Int) : SortedSetTypeDef = {
-		if (Type(nameSpace, name, -1, false) != None) {
-		  throw new AlreadyExistsException(s"Type $nameSpace.$name already exists... unable to add SortedSet with this name.")
-		}
-		val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The tree set's key type $tpNameSp.$tpName does not exist")
-		if (keyDef == null) { throw new NoSuchElementException(s"The tree set's key type $tpNameSp.$tpName does not exist") }
-		val depJarSet = scala.collection.mutable.Set[String]()
-		if (keyDef.JarName != null) depJarSet += keyDef.JarName
-		if (keyDef.DependencyJarNames != null) depJarSet ++= keyDef.DependencyJarNames
-		val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
-		val st = new SortedSetTypeDef
-		SetBaseElem(st, nameSpace, name, ver, null, depJars)
-		st.keyDef = keyDef
-		st
+  /**
+   *  MakeSortedSet catalogs an SortedSet based type in the metadata manager's global typedefs map
+   *
+   *  @param nameSpace - the set's type namespace
+   *  @param name - the set name.
+   *  @param tpNameSp - the namespace of the set's key element type
+   *  @param tpName - the name for the element's type
+   *  @param ver - the type's version
+   */
+  // We should not have physicalName. This container type has type inside, which has PhysicalName
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def MakeSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): SortedSetTypeDef = {
+    if (Type(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"Type $nameSpace.$name already exists... unable to add SortedSet with this name.")
     }
+    val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The tree set's key type $tpNameSp.$tpName does not exist")
+    if (keyDef == null) { throw new NoSuchElementException(s"The tree set's key type $tpNameSp.$tpName does not exist") }
+    val depJarSet = scala.collection.mutable.Set[String]()
+    if (keyDef.JarName != null) depJarSet += keyDef.JarName
+    if (keyDef.DependencyJarNames != null) depJarSet ++= keyDef.DependencyJarNames
+    val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
+    val st = new SortedSetTypeDef
+    SetBaseElem(st, nameSpace, name, ver, null, depJars)
+    st.keyDef = keyDef
+    st
+  }
 
   /**
    *  MakeMap catalogs a scala.collection.mutable.Map based type in the metadata manager's global typedefs map
@@ -1375,7 +1353,7 @@ class MdMgr {
     tt
   }
 
- /**
+  /**
    *  Construct a FunctionDef from the supplied arguments.
    *
    *  @param nameSpace - the namespace in which this structure type
@@ -1384,47 +1362,39 @@ class MdMgr {
    *  @param retTypeNsName - a tuple (return type namespace and name)
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details
-
-
+   *
+   *
    *  @param ver - the version of the function
    *  @param jarNm - where this function is housed
-   *  @param depJars - the list of jars that this function depends upon 
-   *   
+   *  @param depJars - the list of jars that this function depends upon
+   *
    *  @return a FunctionDef
    *
    * 	FIXME: The version, the jarNm, and dependency jars... are these really appropriate for object creation?
    *  		Can these be supplied at catalog time (i.e., the Add... function)?  Do we really want the list of all
-   *    	these jars on every function cataloged in the metadata manager?  
-   *     
-   *     	I believe with prudent construction of the classpath, the only jar that need to be supplied is the 
-   *      	jar containing the function.  Furthermore, it is really the full object path (e.g., 
+   *    	these jars on every function cataloged in the metadata manager?
+   *
+   *     	I believe with prudent construction of the classpath, the only jar that need to be supplied is the
+   *      	jar containing the function.  Furthermore, it is really the full object path (e.g.,
    *        com.ligadata.pmml.udfs.Udfs that has many, many, many functions) where this jar association is needed.
    *        Any component then would get the package path of the function to look up the jar for 100s or functions
    *        at one crack.  Detailing this repetitive information on all FunctionDef instances seems TOO MUCH to me.
-   *        
-   *        Similarly, the version information associated with the function should be expressed at the 
+   *
+   *        Similarly, the version information associated with the function should be expressed at the
    *        package level.  Functions as I see it are released a package at a time.  All the functions defined
    *        in that package should have the same version information.
    */
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFunc(nameSpace: String
-		      , name: String
-		      , physicalName: String
-		      , retTypeNsName: (String, String)
-		      , args: List[(String, String, String)]
-		      , fmfeatures : Set[FcnMacroAttr.Feature]
-			  , ver: Int = 1
-			  , jarNm: String = null
-			  , depJars: Array[String] = null): FunctionDef = {
-    
+  def MakeFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): FunctionDef = {
+
     if (Function(nameSpace, name, args.map(a => (a._2, a._3)), -1, false) != None) {
       throw new AlreadyExistsException(s"Function $nameSpace.$name already exists.")
     }
     val fn: FunctionDef = new FunctionDef
     if (fmfeatures != null && fmfeatures.size > 0) {
-    	fn.features ++= fmfeatures
+      fn.features ++= fmfeatures
     }
     val (retTypeNs, retType) = retTypeNsName
     fn.retType = GetElem(Type(retTypeNs, retType, -1, false), s"Return type $retTypeNs.$retType does not exist")
@@ -1457,24 +1427,17 @@ class MdMgr {
    *  @param retTypeNsName - a tuple (return type namespace and name) shared by all of the function names
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details
-
+   *
    *  @param ver - the version of the function
    *  @param jarNm - where this function is housed
-   *  @param depJars - the list of jars that this function depends upon 
-   *   
+   *  @param depJars - the list of jars that this function depends upon
+   *
    *  @return a List[FunctionDef]
    */
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFuncs(nameSpace: String
-		  		, names: List[(String, String)]
-  				, retTypeNsName: (String, String)
-  				, args: List[(String, String, String)]
-  				, fmfeatures : Set[FcnMacroAttr.Feature]
-  				, ver: Int
-  				, jarNm: String
-  				, depJars: Array[String]): List[FunctionDef] = {
+  def MakeFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int, jarNm: String, depJars: Array[String]): List[FunctionDef] = {
     val funcs = names.map(name => {
       val (logicalNm, physicalName) = name
       MakeFunc(nameSpace, logicalNm, physicalName, retTypeNsName, args, fmfeatures, ver, jarNm, depJars)
@@ -1482,67 +1445,59 @@ class MdMgr {
     funcs
   }
 
-  
-  
   /**
-   * MakeMacro adds a MacroDef to two maps in the metadata manager supplied.  A MacroDef is very similar 
-   * in many respect to a function definition and is looked up in the same way as a function by the 
-   * pmml compiler. In fact it is a subclass of FunctionDef.  The macros are used by the pmml compiler 
+   * MakeMacro adds a MacroDef to two maps in the metadata manager supplied.  A MacroDef is very similar
+   * in many respect to a function definition and is looked up in the same way as a function by the
+   * pmml compiler. In fact it is a subclass of FunctionDef.  The macros are used by the pmml compiler
    * to manage several kinds of code generation issues.
-   * 
+   *
    * NOTE: There is a huge effort underway in the Scala community to provide a general macro capability
    * that will vastly expand the power of the Scala programming language, offering powerful meta programming
    * capabilities.  Unfortunately, these language extensions are a work in progress with things being added
    * (and jerked out) from release to release of the language.  At some point, I believe we will be able
-   * to adapt their macro generation approach for our purposes.  Until that time arrives, the macros 
-   * we are supporting here are quite limited (by comparison) but also will nevertheless be useful for 
+   * to adapt their macro generation approach for our purposes.  Until that time arrives, the macros
+   * we are supporting here are quite limited (by comparison) but also will nevertheless be useful for
    * extending the pmml code generation process.
-   * 
+   *
    *  @param nameSpace - the namespace of this macro
-   *  @param name - the macro name 
-   *  @param retTypeNsName - a tuple (return type namespace and name) 
+   *  @param name - the macro name
+   *  @param retTypeNsName - a tuple (return type namespace and name)
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param macrofeatures - a set of hints that describe the sort of macro being cataloged.  See mdelems.scala for details
    *  @param macroTemplateStr - a tuple that has templates for both the fixed message case and the mapped message case.  When
    *  		no containers are in use in the macro, the same template will be used.  See the other MakeMacro function for
    *    	clarification of what was said here.
    *  @return a MacroDef
- 
+   *
    */
   @throws(classOf[NoSuchElementException])
-  def MakeMacro(nameSpace: String
-			  	, name:String
-			  	, retTypeNsName: (String,String)
-			  	, args: List[(String, String, String)]
-			  	, macrofeatures : Set[FcnMacroAttr.Feature]
-		  		, macroTemplateStr : (String, String)
-		  		, ver: Int = 1) : MacroDef = {
+  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: (String, String), ver: Int = 1): MacroDef = {
 
-    val aMacro : MacroDef = new MacroDef
+    val aMacro: MacroDef = new MacroDef
     SetBaseElem(aMacro, nameSpace, name, ver, null, null)
 
     if (macrofeatures != null && macrofeatures.size > 0) {
-    	aMacro.features ++= macrofeatures
+      aMacro.features ++= macrofeatures
     }
     aMacro.macroTemplate = macroTemplateStr
-    
+
     val (retTypeNs, retType) = retTypeNsName
     aMacro.retType = GetElem(Type(retTypeNs, retType, -1, false), s"Return type $retTypeNs.$retType does not exist")
     if (aMacro.retType == null) { throw new NoSuchElementException(s"Return type $retTypeNs.$retType does not exist") }
-    
+
     aMacro.args = args.map(elem => {
-    	MakeArgDef(elem._1, elem._2, elem._3)
+      MakeArgDef(elem._1, elem._2, elem._3)
     }).toArray
-    
+
     aMacro
   }
-  
-  /** 
+
+  /**
    *  This version of MakeMacro accepts just one template string.  It is useful for those cases where the macro
    *  does not contain a container that might be fixed or mapped.  The same template is used regardless.
    *  @param nameSpace - the namespace of this macro
-   *  @param name - the macro name 
-   *  @param retTypeNsName - a tuple (return type namespace and name) 
+   *  @param name - the macro name
+   *  @param retTypeNsName - a tuple (return type namespace and name)
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param macrofeatures - a set of hints that describe the sort of macro being cataloged.  See mdelems.scala for details
    *  @param macroTemplateStr - a tuple that has templates for both the fixed message case and the mapped message case.  When
@@ -1551,17 +1506,11 @@ class MdMgr {
    *  @return a MacroDef
    */
   @throws(classOf[NoSuchElementException])
-  def MakeMacro(nameSpace: String
-			  	, name:String
-			  	, retTypeNsName: (String,String)
-			  	, args: List[(String, String, String)]
-			  	, macrofeatures : Set[FcnMacroAttr.Feature]
-		  		, macroTemplateStr : String
-		  		, ver: Int) : MacroDef = {
-	  MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, (macroTemplateStr, macroTemplateStr), ver)
+  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Int): MacroDef = {
+    MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, (macroTemplateStr, macroTemplateStr), ver)
   }
 
-   /**
+  /**
    *  Construct and catalog a "fixed structure" message container with the supplied named attributes. They may be of arbitrary
    *  types.
    *
@@ -1573,45 +1522,26 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedMsg(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean, String)]
-				  , ver: Int = 1
-				  , jarNm: String = null
-				  , depJars: Array[String] = null
-				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null
-				  , partitionKey: Array[String] = null): MessageDef = {
+  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): MessageDef = {
 
-	if (Message(nameSpace, name, -1, false) != None) {
-	  throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
-	}
-	var msg: MessageDef = new MessageDef
-	msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
-	
-	var dJars: Array[String] = depJars
-	if (msg.containerType.isInstanceOf[ContainerTypeDef]) // This should match
-	  dJars = msg.containerType.asInstanceOf[ContainerTypeDef].DependencyJarNames // Taking all dependencies for Container type. That has everything is enough for this
-	
-	SetBaseElem(msg, nameSpace, name, ver, jarNm, dJars)
-	msg.PhysicalName(physicalName)
-	msg
+    if (Message(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+    }
+    var msg: MessageDef = new MessageDef
+    msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
+
+    var dJars: Array[String] = depJars
+    if (msg.containerType.isInstanceOf[ContainerTypeDef]) // This should match
+      dJars = msg.containerType.asInstanceOf[ContainerTypeDef].DependencyJarNames // Taking all dependencies for Container type. That has everything is enough for this
+
+    SetBaseElem(msg, nameSpace, name, ver, jarNm, dJars)
+    msg.PhysicalName(physicalName)
+    msg
   }
 
-  
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedContainer(nameSpace: String
-				      , name: String
-				      , physicalName: String
-				      , args: List[(String, String, String, String, Boolean, String)]
-					  , ver: Int = 1
-					  , jarNm: String = null
-					  , depJars: Array[String] = null
-					  , primaryKeys: List[(String, List[String])] = null
-					  , foreignKeys: List[(String, List[String], String, List[String])] = null
-					  , partitionKey: Array[String] = null): ContainerDef = {
+  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
 
     if (Container(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Container $nameSpace.$name already exists.")
@@ -1620,9 +1550,9 @@ class MdMgr {
     container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
     var dJars: Array[String] = depJars
-    if (container.containerType.isInstanceOf[ContainerTypeDef]) {// This should match
-	    // Taking all dependencies for Container type. That has everything is enough for this
-	    dJars = container.containerType.asInstanceOf[ContainerTypeDef].DependencyJarNames 
+    if (container.containerType.isInstanceOf[ContainerTypeDef]) { // This should match
+      // Taking all dependencies for Container type. That has everything is enough for this
+      dJars = container.containerType.asInstanceOf[ContainerTypeDef].DependencyJarNames
     }
     SetBaseElem(container, nameSpace, name, ver, jarNm, dJars)
 
@@ -1630,7 +1560,6 @@ class MdMgr {
     container
   }
 
-  
   /**
    *  Construct and catalog a "map based" message container with an arbitrary number of named attributes with <b>HETEROGENEOUS</b> types.
    *
@@ -1642,16 +1571,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean, String)]
-				  , ver: Int
-				  , jarNm: String
-				  , depJars: Array[String]
-				  , primaryKeys: List[(String, List[String])]
-				  , foreignKeys: List[(String, List[String], String, List[String])]
-				  , partitionKey: Array[String]): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MessageDef = {
 
     if (Message(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
@@ -1671,16 +1591,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedContainer(nameSpace: String
-					      , name: String
-					      , physicalName: String
-					      , args: List[(String, String, String, String, Boolean, String)]
-						  , ver: Int
-						  , jarNm: String
-						  , depJars: Array[String]
-						  , primaryKeys: List[(String, List[String])]
-						  , foreignKeys: List[(String, List[String], String, List[String])]
-						  , partitionKey: Array[String]): ContainerDef = {
+  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): ContainerDef = {
     if (Container(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Container$nameSpace.$name already exists.")
     }
@@ -1707,17 +1618,7 @@ class MdMgr {
    */
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , argTypNmSpName: (String, String)
-			      , argNames: List[String]
-				  , ver: Int
-				  , jarNm: String
-				  , depJars: Array[String]
-				  , primaryKeys: List[(String, List[String])]
-				  , foreignKeys: List[(String, List[String], String, List[String])]
-				  , partitionKey: Array[String]): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MessageDef = {
     if (Message(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
     }
@@ -1757,15 +1658,7 @@ class MdMgr {
    *
    */
 
-  def MakeModelDef(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , modelType: String
-			      , inputVars: List[(String, String, String, String, Boolean, String)]
-				  , outputVars: List[(String, String, String)]
-				  , ver: Int = 1
-				  , jarNm: String = null
-				  , depJars: Array[String] = null): ModelDef = {
+  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): ModelDef = {
 
     val modelToBeReplaced: Boolean = (Model(nameSpace, name, -1, false) != None)
     if (modelToBeReplaced) {
@@ -1813,14 +1706,7 @@ class MdMgr {
    */
 
   @throws(classOf[AlreadyExistsException])
-  def AddScalar(nameSpace: String
-		      , name: String
-		      , tp: Type
-		      , physicalName: String
-		      , ver: Int = 1
-		      , jarNm: String = null
-		      , depJars: Array[String] = null
-    		  , implementationName: String = null): Unit = {
+  def AddScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = null): Unit = {
     AddScalar(MakeScalar(nameSpace, name, tp, physicalName, ver, jarNm, depJars, implementationName))
   }
 
@@ -1846,12 +1732,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddArray(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , numDims: Int
-		      , ver: Int): Unit = {
+  def AddArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): Unit = {
     AddArray(MakeArray(nameSpace, name, tpNameSp, tpName, numDims, ver))
   }
 
@@ -1877,12 +1758,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddArrayBuffer(nameSpace: String
-			      , name: String
-			      , tpNameSp: String
-			      , tpName: String
-			      , numDims: Int
-			      , ver: Int): Unit = {
+  def AddArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): Unit = {
     AddArrayBuffer(MakeArrayBuffer(nameSpace, name, tpNameSp, tpName, numDims, ver))
   }
 
@@ -1907,11 +1783,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddList(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddList(MakeList(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -1923,7 +1795,6 @@ class MdMgr {
     typeDefs.addBinding(lst.FullName, lst)
   }
 
-  
   /**
    *  AddQueue catalogs an Queue based type in the metadata manager's global typedefs map
    *
@@ -1937,11 +1808,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddQueue(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddQueue(MakeQueue(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -1966,11 +1833,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddSet(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddSet(MakeSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -1995,11 +1858,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddImmutableSet(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddImmutableSet(MakeImmutableSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2024,11 +1883,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddTreeSet(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddTreeSet(MakeTreeSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2053,11 +1908,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddSortedSet(nameSpace: String
-		      , name: String
-		      , tpNameSp: String
-		      , tpName: String
-		      , ver: Int): Unit = {
+  def AddSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
     AddSortedSet(MakeSortedSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2068,7 +1919,6 @@ class MdMgr {
     }
     typeDefs.addBinding(set.FullName, set)
   }
-
 
   /**
    *  AddMap catalogs a scala.collection.mutable.Map based type in the metadata manager's global typedefs map
@@ -2083,11 +1933,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMap(nameSpace: String
-		      , name: String
-		      , key: (String, String)
-		      , value: (String, String)
-		      , ver: Int): Unit = {
+  def AddMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
     AddMap(MakeMap(nameSpace, name, key, value, ver))
   }
 
@@ -2112,11 +1958,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddImmutableMap(nameSpace: String
-		      , name: String
-		      , key: (String, String)
-		      , value: (String, String)
-		      , ver: Int): Unit = {
+  def AddImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
     AddImmutableMap(MakeImmutableMap(nameSpace, name, key, value, ver))
   }
 
@@ -2141,11 +1983,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddHashMap(nameSpace: String
-		      , name: String
-		      , key: (String, String)
-		      , value: (String, String)
-		      , ver: Int): Unit = {
+  def AddHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
     AddHashMap(MakeHashMap(nameSpace, name, key, value, ver))
   }
 
@@ -2171,10 +2009,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddTupleType(nameSpace: String
-			      , name: String
-			      , tuples: Array[(String, String)]
-	    		  , ver: Int): Unit = {
+  def AddTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Int): Unit = {
     AddTupleType(MakeTupleType(nameSpace, name, tuples, ver))
   }
 
@@ -2191,33 +2026,25 @@ class MdMgr {
    *
    *  @param nameSpace - the namespace in which this structure type
    *  @param name - the function name that all are to be cataloged in the nameSpace argument.
-   *  @param physicalName - FIXME: find out what this is and document it .... is this full class name?????????????????? 
+   *  @param physicalName - FIXME: find out what this is and document it .... is this full class name??????????????????
    *  @param retTypeNsName - a tuple (return type namespace and name)
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details.
-
+   *
    *  @param ver - the version of the function
    *  @param jarNm - where this function is housed
-   *  @param depJars - the list of jars that this function depends upon 
+   *  @param depJars - the list of jars that this function depends upon
    *
    */
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFunc(nameSpace: String
-		      , name: String
-		      , physicalName: String
-		      , retTypeNsName: (String, String)
-		      , args: List[(String, String, String)]
-			  , fmfeatures : Set[FcnMacroAttr.Feature]
-			  , ver: Int = 1
-			  , jarNm: String = null
-			  , depJars: Array[String] = Array[String]()): Unit = {
-      AddFunc(MakeFunc(nameSpace, name, physicalName, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
+  def AddFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
+    AddFunc(MakeFunc(nameSpace, name, physicalName, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
   }
 
   /**
-   *  Catalog the supplied FunctionDef in this MdMgr instance.  Should it already exist, the catalog 
+   *  Catalog the supplied FunctionDef in this MdMgr instance.  Should it already exist, the catalog
    *  operation is rejected with an AlreadyExistsException.
    *
    *  @param fn the FunctionDef
@@ -2228,25 +2055,25 @@ class MdMgr {
   def AddFunc(fn: FunctionDef): Unit = {
     val args = fn.args.map(a => a.aType.FullName).toList
     if (Function(fn.FullName, args, -1, false) != None) {
-    	val argsStr = args.mkString(",")
-		throw new AlreadyExistsException(s"Function ${fn.FullName} with arguments \'${argsStr}\' already exists.")
+      val argsStr = args.mkString(",")
+      throw new AlreadyExistsException(s"Function ${fn.FullName} with arguments \'${argsStr}\' already exists.")
     }
-    val fcnSig : String = fn.typeString
+    val fcnSig: String = fn.typeString
     if (FunctionByTypeSig(fcnSig) != null) {
-    	throw new AlreadyExistsException(s"Function ${fn.FullName} with signature \'${fcnSig}\' already exists.")
+      throw new AlreadyExistsException(s"Function ${fn.FullName} with signature \'${fcnSig}\' already exists.")
     }
-	if (MacroByTypeSig(fcnSig) != null) {
-		throw new AlreadyExistsException(s"Macro ${fn.FullName} with signature \'${fcnSig}\' will be hidden should this function be cataloged.")
-	}
+    if (MacroByTypeSig(fcnSig) != null) {
+      throw new AlreadyExistsException(s"Macro ${fn.FullName} with signature \'${fcnSig}\' will be hidden should this function be cataloged.")
+    }
 
     funcDefs.addBinding(fn.FullName, fn)
-    compilerFuncDefs(fcnSig.toLowerCase()) = fn /** add it to the pmml compiler's typesignature based map as well */ 
+    compilerFuncDefs(fcnSig.toLowerCase()) = fn
+    /** add it to the pmml compiler's typesignature based map as well */
 
   }
 
-
   /**
-   *  Catalog the supplied AttributeDef in this MdMgr instance.  Should it already exist, the catalog 
+   *  Catalog the supplied AttributeDef in this MdMgr instance.  Should it already exist, the catalog
    *  operation is rejected with an AlreadyExistsException.
    *
    *  @param attr the AttributeDef
@@ -2258,18 +2085,11 @@ class MdMgr {
     attrbDefs.addBinding(attr.FullName, attr)
   }
 
-
   @throws(classOf[AlreadyExistsException])
-  def MakeConcept(nameSpace: String
-		   , name: String
-		   , typeNameNs: String
-		   , typeName: String
-		   , ver: Int = 1
-		   , isGlobal: Boolean): BaseAttributeDef = {
+  def MakeConcept(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Int = 1, isGlobal: Boolean): BaseAttributeDef = {
     val attr = MakeAttribDef(nameSpace, name, typeNameNs, typeName, ver, isGlobal, null) // BUGBUG:: Considering no CollectionType for Concecept
     attr
   }
-
 
   /**
    *  Construct a list of FunctionDef from the supplied arguments.  All function names share the same namespace, return type and arguments.
@@ -2279,24 +2099,17 @@ class MdMgr {
    *  @param retTypeNsName - a tuple (return type namespace and name) shared by all of the function names
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details
-
+   *
    *  @param ver - the version of the function
    *  @param jarNm - where this function is housed
-   *  @param depJars - the list of jars that this function depends upon 
+   *  @param depJars - the list of jars that this function depends upon
    *  @return a List[FunctionDef]
    */
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFuncs(nameSpace: String
-		      , names: List[(String, String)]
-			  , retTypeNsName: (String, String)
-			  , args: List[(String, String, String)]
-			  , fmfeatures : Set[FcnMacroAttr.Feature]
-			  , ver: Int
-			  , jarNm: String
-			  , depJars: Array[String]): Unit = {
-	  AddFuncs(MakeFuncs(nameSpace, names, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
+  def AddFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int, jarNm: String, depJars: Array[String]): Unit = {
+    AddFuncs(MakeFuncs(nameSpace, names, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
   }
 
   /**
@@ -2307,26 +2120,27 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddFuncs(fns: List[FunctionDef]): Unit = {
-      fns.foreach(fn => {
-    	  val args = fn.args.map(a => a.aType.FullName).toList
-		  if (Function(fn.FullName, args, -1, false) != None) {
-			  val argsStr = args.mkString(",")
-			  throw new AlreadyExistsException(s"Function ${fn.FullName} with arguments \'${argsStr}\' already exists.")
-		  }
-		  val fcnSig : String = fn.typeString
-		  if (FunctionByTypeSig(fcnSig) != null) {
-		      throw new AlreadyExistsException(s"Function ${fn.FullName} with signature \'${fcnSig}\' already exists.")
-		  }
-		  if (MacroByTypeSig(fcnSig) != null) {
-		      throw new AlreadyExistsException(s"Macro ${fn.FullName} with signature \'${fcnSig}\' will be hidden should this function be cataloged.")
-		  }
+    fns.foreach(fn => {
+      val args = fn.args.map(a => a.aType.FullName).toList
+      if (Function(fn.FullName, args, -1, false) != None) {
+        val argsStr = args.mkString(",")
+        throw new AlreadyExistsException(s"Function ${fn.FullName} with arguments \'${argsStr}\' already exists.")
+      }
+      val fcnSig: String = fn.typeString
+      if (FunctionByTypeSig(fcnSig) != null) {
+        throw new AlreadyExistsException(s"Function ${fn.FullName} with signature \'${fcnSig}\' already exists.")
+      }
+      if (MacroByTypeSig(fcnSig) != null) {
+        throw new AlreadyExistsException(s"Macro ${fn.FullName} with signature \'${fcnSig}\' will be hidden should this function be cataloged.")
+      }
 
-      })
-      fns.foreach(fn => {
-    	  funcDefs.addBinding(fn.FullName, fn)
-		  val key = fn.typeString
-		  compilerFuncDefs(key.toLowerCase()) = fn /** add it to the pmml compiler's typesignature based map as well */ 
-      })
+    })
+    fns.foreach(fn => {
+      funcDefs.addBinding(fn.FullName, fn)
+      val key = fn.typeString
+      compilerFuncDefs(key.toLowerCase()) = fn
+      /** add it to the pmml compiler's typesignature based map as well */
+    })
   }
 
   /**
@@ -2338,25 +2152,19 @@ class MdMgr {
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details
-   *  @param macroTemplateStrs - a Tuple2.  when the function has CLASSUPDATE feature, the first macro in the pair 
+   *  @param macroTemplateStrs - a Tuple2.  when the function has CLASSUPDATE feature, the first macro in the pair
    *  		has the "builds" template has a template that supports "fixed" container field update.  The second string
    *    	in the tuple contains the "mapped" container template for same function.  When the CLASSUPDATE feature is
-   *     	not specified, the same macro template can be specified for both tuple._1 and ._2.  A convenience 
+   *     	not specified, the same macro template can be specified for both tuple._1 and ._2.  A convenience
    *      	method is available that handles this for you.
-
-
+   *
+   *
    *  @param ver - the version of the function
    *
    */
 
-  def AddMacro(nameSpace: String
-			  	, name:String
-			  	, retTypeNsName: (String,String)
-			  	, args: List[(String, String, String)]
-			  	, macrofeatures : Set[FcnMacroAttr.Feature]
-		  		, macroTemplateStrs : (String, String)
-		  		, ver: Int = 1) : Unit = {
-      AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStrs, ver))
+  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStrs: (String, String), ver: Int = 1): Unit = {
+    AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStrs, ver))
   }
 
   /**
@@ -2369,25 +2177,19 @@ class MdMgr {
    *  @param args - a List of triples (argument name, argument type namespace and type name), one for each argument
    *  @param fmfeatures - a set of hints that describe the sort of function being cataloged.  See mdelems.scala for details
    *  @param macroTemplateStrs - a Tuple2.  when the function does not support CLASSUPDATE feature, supply just
-   *  	one template to this method. 
-
-
+   *  	one template to this method.
+   *
+   *
    *  @param ver - the version of the function
    *
    */
 
-  def AddMacro(nameSpace: String
-			  	, name:String
-			  	, retTypeNsName: (String,String)
-			  	, args: List[(String, String, String)]
-			  	, macrofeatures : Set[FcnMacroAttr.Feature]
-		  		, macroTemplateStr : String
-		  		, ver: Int) : Unit = {
-      AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStr, ver))
+  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Int): Unit = {
+    AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStr, ver))
   }
 
   /**
-   *  Catalog the supplied MacroDef to this MdMgr instance.  Should one exist with the identical 
+   *  Catalog the supplied MacroDef to this MdMgr instance.  Should one exist with the identical
    *  type string, the catalog operation is rejected with an AlreadyExistsException.
    *
    *  @param mac - the MacroDef to be cataloged FunctionByTypeSig(key : String): FunctionDef = { compilerFuncDefs.get(key).getOrElse(null) }
@@ -2396,7 +2198,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddMacro(mac: MacroDef): Unit = {
-    val macroSignature : String = mac.typeString
+    val macroSignature: String = mac.typeString
     if (MacroByTypeSig(macroSignature) != null) {
       throw new AlreadyExistsException(s"Macro ${mac.FullName} with signature \'${macroSignature}\' already exists.")
     }
@@ -2405,10 +2207,9 @@ class MdMgr {
     }
 
     macroDefSets.addBinding(mac.FullName, mac)
-    macroDefs(macroSignature.toLowerCase()) = mac 
+    macroDefs(macroSignature.toLowerCase()) = mac
   }
- 
-  
+
   /**
    *  Construct and catalog a "fixed structure" message with the supplied named attributes. They may be of arbitrary
    *  types.
@@ -2421,17 +2222,8 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFixedMsg(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean, String)]
-				  , ver: Int = 1
-				  , jarNm: String = null
-				  , depJars: Array[String] = Array[String]()
-				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null
-				  , partitionKey: Array[String] = null): Unit = {
-	  AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+  def AddFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+    AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
   /**
@@ -2445,17 +2237,8 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMappedMsg(nameSpace: String
-			      , name: String
-			      , physicalName: String
-			      , args: List[(String, String, String, String, Boolean, String)]
-				  , ver: Int = 1
-				  , jarNm: String = null
-				  , depJars: Array[String] = Array[String]()
-				  , primaryKeys: List[(String, List[String])] = null
-				  , foreignKeys: List[(String, List[String], String, List[String])] = null
-				  , partitionKey: Array[String] = null): Unit = {
-	  AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
   /**
@@ -2466,38 +2249,28 @@ class MdMgr {
    *  @param argTypes - a List of triples (attribute name, attribute type namespace, attribute type name)
    *  @return the constructed message as a modicum of convenience
    */
-  	@throws(classOf[AlreadyExistsException])
-  	@throws(classOf[NoSuchElementException])
-  	def AddMappedMsg(nameSpace: String
-		  			, name: String
-		  			, physicalName: String
-		  			, argTypNmSpName: (String, String)
-		  			, argNames: List[String]
-				 	, ver: Int 
-				 	, jarNm: String
-		  			, depJars: Array[String]
-		  			, primaryKeys: List[(String, List[String])]
-		  			, foreignKeys: List[(String, List[String], String, List[String])]
-		  			, partitionKey: Array[String]): Unit = {
-	  	AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
-  	}
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): Unit = {
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+  }
 
-  	@throws(classOf[AlreadyExistsException])
-	@throws(classOf[NoSuchElementException])
-	def AddMsg(msg: MessageDef): Unit = {
-		if (Type(msg.FullName, -1, false) != None) {
-		  throw new AlreadyExistsException(s"Message type ${msg.FullName} already exists.")
-		}
-		if (Message(msg.FullName, -1, false) != None) {
-		  throw new AlreadyExistsException(s"Message ${msg.FullName} already exists.")
-		}
-		if( msg.containerType == null ){
-		  throw new NoSuchElementException(s"The containerType of the Message ${msg.FullName} can not be null.")
-		}
-		val typ = msg.containerType.asInstanceOf[ContainerTypeDef]
-		typeDefs.addBinding(typ.FullName, typ)
-		msgDefs.addBinding(msg.FullName, msg)
-  	}
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddMsg(msg: MessageDef): Unit = {
+    if (Type(msg.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Message type ${msg.FullName} already exists.")
+    }
+    if (Message(msg.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Message ${msg.FullName} already exists.")
+    }
+    if (msg.containerType == null) {
+      throw new NoSuchElementException(s"The containerType of the Message ${msg.FullName} can not be null.")
+    }
+    val typ = msg.containerType.asInstanceOf[ContainerTypeDef]
+    typeDefs.addBinding(typ.FullName, typ)
+    msgDefs.addBinding(msg.FullName, msg)
+  }
 
   /**
    *  Construct and catalog a "fixed structure" container with the supplied named attributes. They may be of arbitrary
@@ -2509,20 +2282,11 @@ class MdMgr {
    *  @param args - a List of attributes information (attribute namespace, attribute name, attribute type namespace, attribute type name, isGlobal)
    */
 
-  	@throws(classOf[AlreadyExistsException])
-  	@throws(classOf[NoSuchElementException])
-  	def AddFixedContainer(nameSpace: String
-				  	    , name: String
-				  	    , physicalName: String
-				  	    , args: List[(String, String, String, String, Boolean, String)]
-					  	, ver: Int = 1
-					  	, jarNm: String = null
-					  	, depJars: Array[String] = Array[String]()
-					  	, primaryKeys: List[(String, List[String])] = null
-					  	, foreignKeys: List[(String, List[String], String, List[String])] = null
-					  	, partitionKey: Array[String] = null): Unit = {
-	  	AddContainer(MakeFixedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
-  	}
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+    AddContainer(MakeFixedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+  }
 
   /**
    *  Construct and catalog a "map based" container with an arbitrary number of named attributes with HETEROGENEOUS types.
@@ -2533,230 +2297,198 @@ class MdMgr {
    *  @return the constructed message as a modicum of convenience
    */
 
-	@throws(classOf[AlreadyExistsException])
-	@throws(classOf[NoSuchElementException])
-	def AddMappedContainer(nameSpace: String
-						, name: String
-						, physicalName: String
-						, args: List[(String, String, String, String, Boolean, String)]
-					  	, ver: Int = 1
-					  	, jarNm: String = null
-						, depJars: Array[String] = Array[String]()
-						, primaryKeys: List[(String, List[String])] = null
-						, foreignKeys: List[(String, List[String], String, List[String])] = null
-						, partitionKey: Array[String] = null): Unit = {
-	    AddContainer(MakeMappedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
-	}
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+    AddContainer(MakeMappedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+  }
 
-	@throws(classOf[AlreadyExistsException])
-	@throws(classOf[NoSuchElementException])
-	def AddContainer(container: ContainerDef): Unit = {
-	    if (Type(container.FullName, -1, false) != None) {
-	      throw new AlreadyExistsException(s"Container type ${container.FullName} already exists.")
-	    }
-	    if (Container(container.FullName, -1, false) != None) {
-	      throw new AlreadyExistsException(s"Container ${container.FullName} already exists.")
-	    }
-	    if( container.containerType == null ){
-	      throw new NoSuchElementException(s"The containerType of container ${container.FullName} can not be null.")
-	    }
-	    val typ = container.containerType.asInstanceOf[ContainerTypeDef]
-	    typeDefs.addBinding(typ.FullName, typ)
-	    containerDefs.addBinding(container.FullName, container)
-	}
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddContainer(container: ContainerDef): Unit = {
+    if (Type(container.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Container type ${container.FullName} already exists.")
+    }
+    if (Container(container.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Container ${container.FullName} already exists.")
+    }
+    if (container.containerType == null) {
+      throw new NoSuchElementException(s"The containerType of container ${container.FullName} can not be null.")
+    }
+    val typ = container.containerType.asInstanceOf[ContainerTypeDef]
+    typeDefs.addBinding(typ.FullName, typ)
+    containerDefs.addBinding(container.FullName, container)
+  }
 
+  @throws(classOf[AlreadyExistsException])
+  @throws(classOf[NoSuchElementException])
+  def AddContainerType(containerType: ContainerTypeDef): Unit = {
+    if (Type(containerType.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Container type ${containerType.FullName} already exists.")
+    }
+    typeDefs.addBinding(containerType.FullName, containerType)
+  }
 
-	@throws(classOf[AlreadyExistsException])
-	@throws(classOf[NoSuchElementException])
-	def AddContainerType(containerType: ContainerTypeDef): Unit = {
-	    if (Type(containerType.FullName, -1, false) != None) {
-	      throw new AlreadyExistsException(s"Container type ${containerType.FullName} already exists.")
-	    }
-	    typeDefs.addBinding(containerType.FullName, containerType)
-	}
+  /**
+   *  Construct and catalog a model definition.  The model definition represents the essential metadata regarding
+   *  a PMML generated model, including the identifying information, the model type, and the inputs and output
+   *  variables used/generated by the model.  The input and output information is used by the online learning engine
+   *  manager to generate the necessary order execution between the scheduled model working set.
+   *
+   *  @param nameSpace - the namespace in which this model should be cataloged
+   *  @param name - the name of the model.
+   *  @param className - the fully qualified className for the compiled model.
+   *  @param inputVars - a List of quintuples (model var namespace (could be msg or concept or modelname), variable name, type namespace, and type name)
+   *  @param outputVars - a List of pairs (output variable name, output variable type).  Note that the output variable inherits
+   *  			its model's namespace.
+   *  @return the ModelDef instance as a measure of convenience
+   *
+   */
+  def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
+    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
+  }
 
+  def AddModelDef(mdl: ModelDef): Unit = {
+    if (Model(mdl.FullName, -1, false) != None) {
+      throw new AlreadyExistsException(s"Model ${mdl.FullName} already exists.")
+    }
+    modelDefs.addBinding(mdl.FullName, mdl)
+  }
 
+  def MakeJarDef(nameSpace: String,
+    name: String,
+    version: String): JarDef = {
+    val jd = new JarDef
+    var depJars = new Array[String](0)
+    SetBaseElem(jd, nameSpace, name, version.toInt, name, depJars)
+    jd
+  }
 
-  	/**
-  	 *  Construct and catalog a model definition.  The model definition represents the essential metadata regarding
-  	 *  a PMML generated model, including the identifying information, the model type, and the inputs and output
-  	 *  variables used/generated by the model.  The input and output information is used by the online learning engine
-  	 *  manager to generate the necessary order execution between the scheduled model working set.
-  	 *
-  	 *  @param nameSpace - the namespace in which this model should be cataloged
-  	 *  @param name - the name of the model.
-  	 *  @param className - the fully qualified className for the compiled model.
-  	 *  @param inputVars - a List of quintuples (model var namespace (could be msg or concept or modelname), variable name, type namespace, and type name)
-  	 *  @param outputVars - a List of pairs (output variable name, output variable type).  Note that the output variable inherits
-  	 *  			its model's namespace.
-  	 *  @return the ModelDef instance as a measure of convenience
-  	 *
-  	 */
-  	def AddModelDef(nameSpace: String
-  					, name: String
-  					, physicalName: String
-  					, modelType: String
-  					, inputVars: List[(String, String, String, String, Boolean, String)]
-					, outputVars: List[(String, String, String)]
-					, ver: Int = 1
-					, jarNm: String = null
-					, depJars: Array[String] = Array[String]()): Unit = {
-	  	AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
-  	}
+  def MakeNode(nodeId: String, nodePort: Int, nodeIpAddr: String,
+    jarPaths: List[String],
+    scala_home: String,
+    java_home: String,
+    classpath: String,
+    clusterId: String,
+    power: Int,
+    roles: Int,
+    description: String): NodeInfo = {
+    val ni = new NodeInfo
+    ni.nodeId = nodeId
+    ni.nodePort = nodePort
+    ni.nodeIpAddr = nodeIpAddr
+    if (jarPaths != null) {
+      ni.jarPaths = jarPaths.toArray
+    }
+    ni.scala_home = scala_home
+    ni.java_home = java_home
+    ni.classpath = classpath
+    ni.clusterId = clusterId
+    ni.power = power
+    ni.roles = roles
+    ni.description = description
+    ni
+  }
 
-  	def AddModelDef(mdl: ModelDef): Unit = {
-	  	if (Model(mdl.FullName, -1, false) != None) {
-	  		throw new AlreadyExistsException(s"Model ${mdl.FullName} already exists.")
-	  	}
-	  	modelDefs.addBinding(mdl.FullName, mdl)
-  	}
+  def AddNode(ni: NodeInfo): Unit = {
+    if (ni.clusterId == null) {
+      throw new InvalidArgumentException("Failed to Add the node, ClusterId Can not be null")
+    }
+    nodes(ni.nodeId.toLowerCase) = ni
+  }
 
-    
-	def MakeJarDef(nameSpace: String,
-		       name:      String,
-		       version:   String) : JarDef = {
-	  val jd = new JarDef
-	  var depJars = new Array[String](0)
-	  SetBaseElem(jd,nameSpace,name,version.toInt,name,depJars)
-	  jd
-	}
+  def RemoveNode(nodeId: String): Unit = {
+    val ni = nodes.getOrElse(nodeId, null)
+    if (ni != null) {
+      nodes -= nodeId
+    }
+  }
 
-	def MakeNode(nodeId:String,nodePort:Int,nodeIpAddr:String,
-		     jarPaths:List[String],clusterId:String,power:Int,
-		     roles:Int,description:String): NodeInfo = {
-	  val ni = new NodeInfo
-	  ni.nodeId = nodeId
-	  ni.nodePort = nodePort
-	  ni.nodeIpAddr = nodeIpAddr
-	  if( jarPaths != null ){
-	    ni.jarPaths = jarPaths.toArray
-	  }
-	  ni.clusterId = clusterId
-	  ni.power = power
-	  ni.roles = roles
-	  ni.description = description
-	  ni
-	}
-  
-	def AddNode(ni:NodeInfo) : Unit = {
-	  if( ni.clusterId == null ){
-	    throw new InvalidArgumentException("Failed to Add the node, ClusterId Can not be null")
-	  }
-	  nodes(ni.nodeId.toLowerCase) = ni
-	}
+  def MakeCluster(clusterId: String, description: String, privilges: String): ClusterInfo = {
+    val ci = new ClusterInfo
+    ci.clusterId = clusterId
+    ci.description = description
+    ci.privileges = privilges
+    ci
+  }
 
-	def RemoveNode(nodeId:String) : Unit = {
-	  val ni = nodes.getOrElse(nodeId,null)
-	  if( ni != null ){
-	    nodes -= nodeId
-	  }
-	}
+  def AddCluster(ci: ClusterInfo): Unit = {
+    clusters(ci.clusterId.toLowerCase) = ci
+  }
 
-	def MakeCluster(clusterId:String,description:String, privilges: String): ClusterInfo = {
-	  val ci = new ClusterInfo
-	  ci.clusterId = clusterId
-	  ci.description = description
-	  ci.privileges = privilges
-	  ci
-	}
-	
-	def AddCluster(ci:ClusterInfo) : Unit = {
-	  clusters(ci.clusterId.toLowerCase) = ci
-	}
+  def RemoveCluster(clusterId: String): Unit = {
+    val ni = clusters.getOrElse(clusterId, null)
+    if (ni != null) {
+      clusters -= clusterId
+    }
+  }
 
-	def RemoveCluster(clusterId:String) : Unit = {
-	  val ni = clusters.getOrElse(clusterId,null)
-	  if( ni != null ){
-	    clusters -= clusterId
-	  }
-	}
+  def MakeClusterCfg(clusterId: String, cfgMap: scala.collection.mutable.HashMap[String, String],
+    modifiedTime: Date, createdTime: Date): ClusterCfgInfo = {
+    val ci = new ClusterCfgInfo
+    ci.clusterId = clusterId
+    ci.cfgMap = cfgMap
+    ci.modifiedTime = modifiedTime
+    ci.createdTime = createdTime
+    ci
+  }
 
-	def MakeClusterCfg(clusterId:String,cfgName:String,cfgValue:String, modifiedTime: Date,createdTime:Date): ClusterCfgInfo = {
-	  val ci = new ClusterCfgInfo
-	  ci.clusterId    = clusterId
-	  ci.cfgName      = cfgName
-	  ci.cfgValue     = cfgValue
-	  ci.modifiedTime = modifiedTime
-	  ci.createdTime = createdTime
-	  ci
-	}
-	
-	def AddClusterCfg(ci:ClusterCfgInfo) : Unit = {
-	  clusterCfgs(ci.clusterId.toLowerCase) = ci
-	}
+  def AddClusterCfg(ci: ClusterCfgInfo): Unit = {
+    clusterCfgs(ci.clusterId.toLowerCase) = ci
+  }
 
-	def RemoveClusterCfg(clusterCfgId:String) : Unit = {
-	  val ni = clusterCfgs.getOrElse(clusterCfgId,null)
-	  if( ni != null ){
-	    clusterCfgs -= clusterCfgId
-	  }
-	}
+  def RemoveClusterCfg(clusterCfgId: String): Unit = {
+    val ni = clusterCfgs.getOrElse(clusterCfgId, null)
+    if (ni != null) {
+      clusterCfgs -= clusterCfgId
+    }
+  }
 
-        def MakeAdapter(name:String,typeString:String,dataFormat: String,className: String, 
-			 jarName: String, dependencyJars: List[String], 
-			adapterSpecificCfg: String): AdapterInfo = {
-	  val ai = new AdapterInfo
-	  ai.name = name
-	  ai.typeString = typeString
-	  ai.dataFormat = dataFormat
-	  ai.className = className
-	  ai.jarName = jarName
-	  if(dependencyJars != null){
-	    ai.dependencyJars = dependencyJars.toArray
-	  }
-	  ai.adapterSpecificCfg = adapterSpecificCfg
-	  ai
-	}
+  def MakeAdapter(name: String, typeString: String, dataFormat: String, className: String,
+    jarName: String, dependencyJars: List[String],
+    adapterSpecificCfg: String, inputAdapterToVerify: String): AdapterInfo = {
+    val ai = new AdapterInfo
+    ai.name = name
+    ai.typeString = typeString
+    ai.dataFormat = dataFormat
+    ai.className = className
+    ai.jarName = jarName
+    if (dependencyJars != null) {
+      ai.dependencyJars = dependencyJars.toArray
+    }
+    ai.adapterSpecificCfg = adapterSpecificCfg
+    ai.inputAdapterToVerify = inputAdapterToVerify
+    ai
+  }
 
-        def AddAdapter(ai:AdapterInfo) : Unit = {
-	  adapters(ai.name.toLowerCase) = ai
-	}
-	  
-	def RemoveAdapter(name:String) : Unit = {
-	  val ni = adapters.getOrElse(name,null)
-	  if( ni != null ){
-	    adapters -= name
-	  }
-	}
+  def AddAdapter(ai: AdapterInfo): Unit = {
+    adapters(ai.name.toLowerCase) = ai
+  }
 
-	def Nodes : Array[NodeInfo] = {
-	  if ( nodes.size > 0 ){
-	    nodes.values.toArray
-	  }
-	  else{
-	    new Array[NodeInfo](0)
-	  }
-	}
+  def RemoveAdapter(name: String): Unit = {
+    val ni = adapters.getOrElse(name, null)
+    if (ni != null) {
+      adapters -= name
+    }
+  }
 
-	def Clusters : Array[ClusterInfo] = {
-	  if ( clusters.size > 0 ){
-	    clusters.values.toArray
-	  }
-	  else{
-	    new Array[ClusterInfo](0)
-	  }
-	}
+  def Nodes: scala.collection.immutable.Map[String, NodeInfo] = {
+    nodes.toMap
+  }
 
-	def ClusterCfgs : Array[ClusterCfgInfo] = {
-	  if ( clusterCfgs.size > 0 ){
-	    clusterCfgs.values.toArray
-	  }
-	  else{
-	    new Array[ClusterCfgInfo](0)
-	  }
-	}
+  def Adapters: scala.collection.immutable.Map[String, AdapterInfo] = {
+    adapters.toMap
+  }
 
-	def Adapters : Array[AdapterInfo] = {
-	  if ( adapters.size > 0 ){
-	    adapters.values.toArray
-	  }
-	  else{
-	    new Array[AdapterInfo](0)
-	  }
-	}
-	  
+  def Clusters: scala.collection.immutable.Map[String, ClusterInfo] = {
+    clusters.toMap
+  }
 
-  	// External Functions -- End 
+  def ClusterCfgs: scala.collection.immutable.Map[String, ClusterCfgInfo] = {
+    clusterCfgs.toMap
+  }
+
+  // External Functions -- End 
 
 }
 
