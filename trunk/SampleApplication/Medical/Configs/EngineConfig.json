@@ -101,7 +101,7 @@
         "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
-      "AdapterSpecificCfg": "{\"HostList\": \"localhost:2181\",\"TopicName\": \"testout_1\" }"
+      "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"testout_1\" }"
     },
     {
       "Name": "TestStatus_1",
@@ -119,7 +119,7 @@
         "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
-      "AdapterSpecificCfg": "{\"HostList\": \"localhost:2181\",\"TopicName\": \"teststatus_1\" }"
+      "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"teststatus_1\" }"
     }
   ]
 }
