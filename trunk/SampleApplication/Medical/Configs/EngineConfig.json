@@ -88,7 +88,7 @@
       "Name": "TestOut_1",
       "TypeString": "Output",
       "InputAdapterToVerify": "TestOut_In_1",
-      "ClassName": "com.ligadata.OutputAdapters.KafkaConsumer$",
+      "ClassName": "com.ligadata.OutputAdapters.KafkaProducer$",
       "JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
       "DependencyJars": [
         "jopt-simple-3.2.jar",
@@ -106,7 +106,7 @@
     {
       "Name": "TestStatus_1",
       "TypeString": "Status",
-      "ClassName": "com.ligadata.OutputAdapters.KafkaConsumer$",
+      "ClassName": "com.ligadata.OutputAdapters.KafkaProducer$",
       "JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
       "DependencyJars": [
         "jopt-simple-3.2.jar",
