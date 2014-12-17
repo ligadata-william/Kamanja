@@ -3149,6 +3149,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllObjectsIntoCache {
     try {
+      LoadAllConfigObjectsIntoCache
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
@@ -3187,7 +3188,6 @@ object MetadataAPIImpl extends MetadataAPI {
       if (objectsChanged.length > 0) {
         NotifyEngine(objectsChanged, operations)
       }
-      LoadAllConfigObjectsIntoCache
       startup = false
     } catch {
       case e: Exception => {
@@ -4126,7 +4126,12 @@ object MetadataAPIImpl extends MetadataAPI {
       val cfg = JsonSerializer.parseEngineConfig(cfgStr)
       // process clusterInfo object if it exists
       val clusters = cfg.Clusters
-      if ( clusters != None ){
+
+      if ( clusters == None ){
+        var apiResult = new ApiResult(-1, "Failed to upload config: ","No clusters were found, possible parsing issue")
+        apiResult.toString()
+      }
+      else{
 	val ciList = clusters.get
 	logger.trace("Found " + ciList.length + " cluster objects ")
 	ciList.foreach(c1 => {
@@ -4141,30 +4146,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
 	  // gather config name-value pairs
 	  val cfgMap = new scala.collection.mutable.HashMap[String,String] 
-	  //var ds = c1.Config.DataStore
-	  //var json = (("StoreType" -> ds.StoreType)~
-	  //		("SchemaName" -> ds.SchemaName)~
-          //			("Location" -> ds.Location))
-	  //var jsonPretty = pretty(render(json))
-	  //cfgMap("DataStore") = jsonPretty
 	  cfgMap("DataStore") = c1.Config.DataStore
-
-	  //val si = c1.Config.StatusInfo
-	  //json = (("StoreType" -> si.StoreType)~
-	  //	  ("SchemaName" -> si.SchemaName)~
-          //		  ("Location" -> si.Location))
-	  //jsonPretty = pretty(render(json))
-	  //cfgMap("StatusInfo") = jsonPretty
 	  cfgMap("StatusInfo") = c1.Config.StatusInfo
-	  
-	  //val zki = c1.Config.ZooKeeperInfo
-	  //json = (("ZooKeeperNodeBasePath" -> zki.ZooKeeperNodeBasePath)~
-	  //	  ("ZooKeeperConnectString" -> zki.ZooKeeperConnectString)~
-	  //	  ("ZooKeeperSessionTimeoutMs" -> zki.ZooKeeperSessionTimeoutMs)~
-	  //	  ("ZooKeeperConnectionTimeoutMs" -> zki.ZooKeeperConnectionTimeoutMs))
-	  //jsonPretty = pretty(render(json))
-	  //cfgMap("ZooKeeperInfo") = jsonPretty
-
 	  cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
 	  cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
 
@@ -4187,45 +4170,42 @@ object MetadataAPIImpl extends MetadataAPI {
 	    valueList = valueList :+ value
 	  })
 	})
+	val aiList = cfg.Adapters
+	if ( aiList != None ){
+	  val adapters = aiList.get
+	  adapters.foreach(a => {
+	    var depJars:List[String] = null
+	    if(a.DependencyJars != None ){
+	      depJars = a.DependencyJars.get
+	    }
+	    var ascfg:String = null
+	    if(a.AdapterSpecificCfg != None ){
+	      ascfg = a.AdapterSpecificCfg.get
+	    }
+	    var inputAdapterToVerify: String = null
+	    if(a.InputAdapterToVerify != None ){
+	      inputAdapterToVerify = a.InputAdapterToVerify.get
+	    }
+	    var dataFormat: String = null
+	    if(a.DataFormat != None ){
+	      dataFormat = a.DataFormat.get
+	    }
+	    // save in memory
+	    val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,dataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
+	    MdMgr.GetMdMgr.AddAdapter(ai)
+	    val key = "AdapterInfo." + ai.name
+	    val value = serializer.SerializeObjectToByteArray(ai)
+	    keyList   = keyList :+ key.toLowerCase
+	    valueList = valueList :+ value
+	  })
+	}
+	else{
+	  logger.trace("Found no adapater objects in the config file")
+	}
+	SaveObjectList(keyList,valueList,configStore)
+	var apiResult = new ApiResult(0, "Uploaded Config successfully", cfgStr)
+	apiResult.toString()
       }
-      else{
-	logger.trace("Found no cluster objects in the config file")
-      }
-      val aiList = cfg.Adapters
-      if ( aiList != None ){
-	val adapters = aiList.get
-	adapters.foreach(a => {
-	  var depJars:List[String] = null
-	  if(a.DependencyJars != None ){
-	    depJars = a.DependencyJars.get
-	  }
-	  var ascfg:String = null
-	  if(a.AdapterSpecificCfg != None ){
-	    ascfg = a.AdapterSpecificCfg.get
-	  }
-	  var inputAdapterToVerify: String = null
-	  if(a.InputAdapterToVerify != None ){
-	    inputAdapterToVerify = a.InputAdapterToVerify.get
-	  }
-	  var dataFormat: String = null
-	  if(a.DataFormat != None ){
-	    dataFormat = a.DataFormat.get
-	  }
-	  // save in memory
-	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,dataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
-	  MdMgr.GetMdMgr.AddAdapter(ai)
-	  val key = "AdapterInfo." + ai.name
-	  val value = serializer.SerializeObjectToByteArray(ai)
-	  keyList   = keyList :+ key.toLowerCase
-	  valueList = valueList :+ value
-	})
-      }
-      else{
-	logger.trace("Found no adapater objects in the config file")
-      }
-      SaveObjectList(keyList,valueList,configStore)
-      var apiResult = new ApiResult(0, "Uploaded Config successfully", cfgStr)
-      apiResult.toString()
     }catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to upload config: " + e.getMessage(),cfgStr)
