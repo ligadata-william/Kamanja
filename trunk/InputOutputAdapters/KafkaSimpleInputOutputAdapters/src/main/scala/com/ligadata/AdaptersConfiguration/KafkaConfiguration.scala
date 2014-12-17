@@ -36,7 +36,7 @@ object KafkaQueueAdapterConfiguration {
     values.foreach(kv => {
       if (kv._1.compareToIgnoreCase("HostList") == 0) {
         qc.hosts = kv._2.split(",").map(str => str.trim).filter(str => str.size > 0)
-      } else if (kv._1.compareToIgnoreCase("HostList") == 0) {
+      } else if (kv._1.compareToIgnoreCase("TopicName") == 0) {
         qc.topic = kv._2.trim
       }
     })
