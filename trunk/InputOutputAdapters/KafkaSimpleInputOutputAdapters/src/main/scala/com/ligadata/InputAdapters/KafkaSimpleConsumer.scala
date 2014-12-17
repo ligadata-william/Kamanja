@@ -19,7 +19,6 @@ object KafkaSimpleConsumer extends InputAdapterObj {
   val MAX_FAILURES = 2
   val MONITOR_FREQUENCY = 10000 // Monitor Topic queues every 20 seconds
   val SLEEP_DURATION = 1000 // Allow 1 sec between unsucessful fetched
-  val MAXSLEEP = 8001
   var CURRENT_BROKER: String = _
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
@@ -231,20 +230,11 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
 
             })
 
-            // Progressively slow down the reading of the Kafka queues while there is nothing in the queues.  Reset to the
-            // initial frequency once something is present in the queue.
-            if (messagesProcessed > 0) {
-              messagesProcessed = 0
-              sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
-            } else {
-              if ((sleepDuration * 2) > KafkaSimpleConsumer.MAXSLEEP) {
-                sleepDuration = KafkaSimpleConsumer.MAXSLEEP
-              } else {
-                sleepDuration = sleepDuration * 2
-              }
-            }
             try {
-              Thread.sleep(sleepDuration)
+              // Sleep here, Note, the input constant may be zero (if it is zero, balls to the wall!) better be a very busy system.
+              if (qc.noDataSleepTimeInMs > 0) {
+                Thread.sleep(qc.noDataSleepTimeInMs)
+              }
             } catch {
               case e: java.lang.InterruptedException =>
                 LOG.info("KAFKA ADAPTER: Shutting down the Consumer Reader thread")
@@ -587,20 +577,15 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    *
    */
   private def terminateHBTasks(): Unit = {
+    var attempts = 0
     if (hbExecutor == null) return
-
     hbExecutor.shutdown
-    try {
-      // Wait a while for existing tasks to terminate
-      if (!hbExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+    while (hbExecutor.isTerminated == false ) {
+      if (attempts >= 100) {
         hbExecutor.shutdownNow
-        if (!hbExecutor.awaitTermination(10, TimeUnit.SECONDS))
-          LOG.info("heartbeat pool did not terminate")
       }
-    } catch {
-      case e: InterruptedException =>
-        LOG.error("FATAL + " + e.printStackTrace())
-        Thread.currentThread().interrupt();
+      attempts = attempts + 1
+      Thread.sleep(100) // sleep 100ms and then check
     }
   }
 
@@ -608,21 +593,15 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    *
    */
   private def terminateReaderTasks(): Unit = {
-
+    var attempts = 0
     if (readExecutor == null) return
-
     readExecutor.shutdown
-    try {
-      // Wait a while for existing tasks to terminate
-      if (!readExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+    while (readExecutor.isTerminated == false ) {
+      if (attempts >= 100) {
         readExecutor.shutdownNow
-        if (!readExecutor.awaitTermination(10, TimeUnit.SECONDS))
-          LOG.info("readpool did not terminate")
       }
-    } catch {
-      case e: InterruptedException =>
-        LOG.error("FATAL + " + e.printStackTrace())
-        Thread.currentThread().interrupt();
+      attempts = attempts + 1
+      Thread.sleep(100) // sleep 100ms and then check
     }
   }
 
