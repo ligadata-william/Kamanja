@@ -47,9 +47,9 @@ case class JDataStore(StoreType: String,SchemaName:String,Location:String)
 case class JStatusInfo(StoreType: String,SchemaName:String,Location:String)
 case class JZooKeeperInfo(ZooKeeperNodeBasePath:String,ZooKeeperConnectString:String,ZooKeeperSessionTimeoutMs: String,ZooKeeperConnectionTimeoutMs:String)
 case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String)
-case class JClusterCfg(DataStore: JDataStore,StatusInfo: JStatusInfo, ZooKeeperInfo: JZooKeeperInfo, EnvironmentContext: String)
+case class JClusterCfg(DataStore: String,StatusInfo: String, ZooKeeperInfo: String, EnvironmentContext: String)
 case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:String,ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String],InputAdapterToVerify: Option[String])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 
 case class UnsupportedObjectException(e: String) extends Exception(e)
@@ -833,6 +833,7 @@ object JsonSerializer {
 	val json = (("Name"           -> o.name) ~
 		    ("TypeString"     -> o.typeString) ~
 		    ("DataFormat"     -> o.dataFormat) ~
+		    ("InputAdapterToVerify"     -> o.inputAdapterToVerify) ~
 		    ("ClassName"      -> o.className) ~
 		    ("JarName"        -> o.jarName) ~
 		    ("DependencyJars" -> o.dependencyJars.toList) ~
