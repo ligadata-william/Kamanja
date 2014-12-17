@@ -4141,28 +4141,31 @@ object MetadataAPIImpl extends MetadataAPI {
 
 	  // gather config name-value pairs
 	  val cfgMap = new scala.collection.mutable.HashMap[String,String] 
-	  var ds = c1.Config.DataStore
-	  var json = (("StoreType" -> ds.StoreType)~
-			("SchemaName" -> ds.SchemaName)~
-			("Location" -> ds.Location))
-	  var jsonPretty = pretty(render(json))
-	  cfgMap("DataStore") = jsonPretty
+	  //var ds = c1.Config.DataStore
+	  //var json = (("StoreType" -> ds.StoreType)~
+	  //		("SchemaName" -> ds.SchemaName)~
+          //			("Location" -> ds.Location))
+	  //var jsonPretty = pretty(render(json))
+	  //cfgMap("DataStore") = jsonPretty
+	  cfgMap("DataStore") = c1.Config.DataStore
 
-	  val si = c1.Config.StatusInfo
-	  json = (("StoreType" -> si.StoreType)~
-		  ("SchemaName" -> si.SchemaName)~
-		  ("Location" -> si.Location))
-	  jsonPretty = pretty(render(json))
-	  cfgMap("StatusInfo") = jsonPretty
+	  //val si = c1.Config.StatusInfo
+	  //json = (("StoreType" -> si.StoreType)~
+	  //	  ("SchemaName" -> si.SchemaName)~
+          //		  ("Location" -> si.Location))
+	  //jsonPretty = pretty(render(json))
+	  //cfgMap("StatusInfo") = jsonPretty
+	  cfgMap("StatusInfo") = c1.Config.StatusInfo
+	  
+	  //val zki = c1.Config.ZooKeeperInfo
+	  //json = (("ZooKeeperNodeBasePath" -> zki.ZooKeeperNodeBasePath)~
+	  //	  ("ZooKeeperConnectString" -> zki.ZooKeeperConnectString)~
+	  //	  ("ZooKeeperSessionTimeoutMs" -> zki.ZooKeeperSessionTimeoutMs)~
+	  //	  ("ZooKeeperConnectionTimeoutMs" -> zki.ZooKeeperConnectionTimeoutMs))
+	  //jsonPretty = pretty(render(json))
+	  //cfgMap("ZooKeeperInfo") = jsonPretty
 
-	  val zki = c1.Config.ZooKeeperInfo
-	  json = (("ZooKeeperNodeBasePath" -> zki.ZooKeeperNodeBasePath)~
-		  ("ZooKeeperConnectString" -> zki.ZooKeeperConnectString)~
-		  ("ZooKeeperSessionTimeoutMs" -> zki.ZooKeeperSessionTimeoutMs)~
-		  ("ZooKeeperConnectionTimeoutMs" -> zki.ZooKeeperConnectionTimeoutMs))
-	  jsonPretty = pretty(render(json))
-	  cfgMap("ZooKeeperInfo") = jsonPretty
-
+	  cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
 	  cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
 
 	  // save in memory
@@ -4204,14 +4207,21 @@ object MetadataAPIImpl extends MetadataAPI {
 	  if(a.InputAdapterToVerify != None ){
 	    inputAdapterToVerify = a.InputAdapterToVerify.get
 	  }
+	  var dataFormat: String = null
+	  if(a.DataFormat != None ){
+	    dataFormat = a.DataFormat.get
+	  }
 	  // save in memory
-	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,a.DataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
+	  val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,dataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
 	  MdMgr.GetMdMgr.AddAdapter(ai)
 	  val key = "AdapterInfo." + ai.name
 	  val value = serializer.SerializeObjectToByteArray(ai)
 	  keyList   = keyList :+ key.toLowerCase
 	  valueList = valueList :+ value
 	})
+      }
+      else{
+	logger.trace("Found no adapater objects in the config file")
       }
       SaveObjectList(keyList,valueList,configStore)
       var apiResult = new ApiResult(0, "Uploaded Config successfully", cfgStr)
