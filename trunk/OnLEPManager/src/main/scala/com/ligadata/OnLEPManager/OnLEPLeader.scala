@@ -415,7 +415,7 @@ object OnLEPLeader {
             quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
           }
 
-          LOG.info(ia.UniqueName + "%s ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
+          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
           ia.StartProcessing(maxParts, quads.toArray, true)
         }
       } catch {
