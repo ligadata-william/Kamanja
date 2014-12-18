@@ -16,7 +16,6 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
   def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
-
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
@@ -57,12 +56,15 @@ object CollectKeyValsFromValidation {
   // Key to (Value, xCntr, xTotl & TxnId)
   private[this] val keyVals = scala.collection.mutable.Map[String, (String, Int, Int, Long)]()
   private[this] val lock = new Object()
+  private[this] var lastUpdateTime = System.nanoTime
 
   def addKeyVals(uKStr: String, uVStr: String, xCntr: Int, xTotl: Int, txnId: Long): Unit = lock.synchronized {
-    val existVal = keyVals.getOrElse(uKStr, null)
+    val klc = uKStr.toLowerCase
+    val existVal = keyVals.getOrElse(klc, null)
     if (existVal == null || txnId > existVal._4) {
-      keyVals(uKStr) = (uVStr, xCntr, xTotl, txnId)
+      keyVals(klc) = (uVStr, xCntr, xTotl, txnId)
     }
+    lastUpdateTime = System.nanoTime
   }
 
   def get: scala.collection.immutable.Map[String, (String, Int, Int, Long)] = lock.synchronized {
@@ -71,6 +73,11 @@ object CollectKeyValsFromValidation {
 
   def clear: Unit = lock.synchronized {
     keyVals.clear
+    lastUpdateTime = System.nanoTime
+  }
+
+  def getLastUpdateTime: Long = lock.synchronized {
+    lastUpdateTime
   }
 }
 

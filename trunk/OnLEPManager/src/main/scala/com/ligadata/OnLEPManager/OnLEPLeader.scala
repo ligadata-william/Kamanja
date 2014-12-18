@@ -180,30 +180,13 @@ object OnLEPLeader {
         }
       })
 
-      // Update New partitions for all nodes and Set the text
-      val totalParticipents: Int = cs.participants.size
-      if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
-        LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
-        var cntr: Int = 0
-        val txnIdCntrPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
-        allPartitionUniqueRecordKeys.foreach(k => {
-          val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
-          if (af == null) {
-            val af1 = new ArrayBuffer[(String, Long)]
-            af1 += ((k._2, cntr * txnIdCntrPerPartition))
-            tmpDistMap(cntr % totalParticipents)._2(k._1) = af1
-          } else {
-            af += ((k._2, cntr * txnIdCntrPerPartition))
-          }
-          cntr += 1
-        })
-      }
-
       val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
       val map = scala.collection.mutable.Map[String, String]()
 
+      LOG.info("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
+
       savedValidatedAdaptInfo.foreach(kv => {
-        map(kv._1) = kv._2
+        map(kv._1.toLowerCase) = kv._2
       })
 
       CollectKeyValsFromValidation.clear
@@ -215,7 +198,8 @@ object OnLEPLeader {
         // Replace the newly found ones
         val nParts = begVals.size
         for (i <- 0 until nParts) {
-          val foundVal = map.getOrElse(begVals(i)._1.Serialize, null)
+          val key = begVals(i)._1.Serialize.toLowerCase
+          val foundVal = map.getOrElse(key, null)
           if (foundVal != null) {
             val desVal = via.DeserializeValue(foundVal)
             finalVals += ((begVals(i)._1, desVal, 0, (desVal, 0, 0)))
@@ -226,7 +210,59 @@ object OnLEPLeader {
         via.StartProcessing(finalVals.size, finalVals.toArray, false)
       })
 
+      var stillWait = true
+      while (stillWait) {
+        try {
+          Thread.sleep(1000) // sleep 1000 ms and then check
+        } catch {
+          case e: Exception => {
+          }
+        }
+        if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
+          stillWait = true
+        else
+          stillWait = false
+      }
+
+      // Stopping the Adapters
+      validateInputAdapters.foreach(via => {
+        via.StopProcessing
+      })
+
+      // Expecting keys are lower case here
       foundKeysInValidation = CollectKeyValsFromValidation.get
+      LOG.info("foundKeysInValidation: " + foundKeysInValidation.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
+
+      var maxUsedTxnIdInValidationRes: Long = 0
+
+      foundKeysInValidation.foreach(k => {
+        if (maxUsedTxnIdInValidationRes < k._2._4)
+          maxUsedTxnIdInValidationRes = k._2._4
+      })
+
+      // Update New partitions for all nodes and Set the text
+      val totalParticipents: Int = cs.participants.size
+      if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
+        LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
+        var cntr: Int = 0
+        val txnIdCntrPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
+        var nextTxnIdCntrIdx: Long = (maxUsedTxnIdInValidationRes / txnIdCntrPerPartition) + 1
+        allPartitionUniqueRecordKeys.foreach(k => {
+          val fnd = foundKeysInValidation.getOrElse(k._2.toLowerCase, null)
+          val startTxnId = if (fnd != null) (fnd._4 + 10) else (nextTxnIdCntrIdx * txnIdCntrPerPartition)
+          if (fnd != null)
+            nextTxnIdCntrIdx += 1
+          val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
+          if (af == null) {
+            val af1 = new ArrayBuffer[(String, Long)]
+            af1 += ((k._2, startTxnId))
+            tmpDistMap(cntr % totalParticipents)._2(k._1) = af1
+          } else {
+            af += ((k._2, startTxnId))
+          }
+          cntr += 1
+        })
+      }
 
       tmpDistMap.foreach(tup => {
         distributionMap(tup._1) = tup._2
