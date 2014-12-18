@@ -9,6 +9,7 @@ import org.json4s.native.JsonMethods._
 class KafkaQueueAdapterConfiguration extends AdapterConfiguration {
   var hosts: Array[String] = _ // each host is HOST:PORT
   var topic: String = _ // topic name
+  var noDataSleepTimeInMs: Int = 300 // No Data Sleep Time in milli secs. Default is 300 ms
   var instancePartitions: Set[Int] = _ // Valid only for Input Queues. These are the partitions we handle for this Queue. For now we are treating Partitions as Ints. (Kafka handle it as ints)
 }
 
@@ -38,6 +39,10 @@ object KafkaQueueAdapterConfiguration {
         qc.hosts = kv._2.split(",").map(str => str.trim).filter(str => str.size > 0)
       } else if (kv._1.compareToIgnoreCase("TopicName") == 0) {
         qc.topic = kv._2.trim
+      } else if (kv._1.compareToIgnoreCase("NoDataSleepTimeInMs") == 0) {
+        qc.noDataSleepTimeInMs = kv._2.trim.toInt
+        if (qc.noDataSleepTimeInMs < 0)
+          qc.noDataSleepTimeInMs = 0
       }
     })
 

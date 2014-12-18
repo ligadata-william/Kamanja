@@ -121,6 +121,7 @@ class MessageDefImpl {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
+    log.trace("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -732,6 +733,7 @@ class MessageDefImpl {
     var addMessage: String = ""
 
     var partitionPos = Array[Int]()
+    var primaryPos = Array[Int]()
 
     //  scalaclass = scalaclass.append(getIsFixed(message) + newline + getMessageName(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
     try {
@@ -822,9 +824,14 @@ class MessageDefImpl {
               if (paritionkeys != null && paritionkeys.size > 0) {
                 if (paritionkeys.contains(f.Name)) {
                   partitionPos = partitionPos :+ count
-
                 }
               }
+              if (primaryKeys != null && primaryKeys.size > 0) {
+                if (primaryKeys.contains(f.Name)) {
+                  primaryPos = primaryPos :+ count
+                }
+              }
+
             }
             count = count + 1
 
@@ -933,7 +940,7 @@ class MessageDefImpl {
       }
     }
 
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage, getmessage, partitionPos, partitionPos)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage, getmessage, partitionPos, primaryPos)
 
   }
 

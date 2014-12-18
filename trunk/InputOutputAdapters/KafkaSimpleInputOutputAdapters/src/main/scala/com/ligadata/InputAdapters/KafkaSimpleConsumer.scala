@@ -19,7 +19,6 @@ object KafkaSimpleConsumer extends InputAdapterObj {
   val MAX_FAILURES = 2
   val MONITOR_FREQUENCY = 10000 // Monitor Topic queues every 20 seconds
   val SLEEP_DURATION = 1000 // Allow 1 sec between unsucessful fetched
-  val MAXSLEEP = 8001
   var CURRENT_BROKER: String = _
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
@@ -29,7 +28,9 @@ object KafkaSimpleConsumer extends InputAdapterObj {
 class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
   val input = this
   private val lock = new Object()
-  private val LOG = Logger.getLogger(getClass);
+  private val LOG = Logger.getLogger(getClass)
+  private var isQuiesced = false
+  private var startTime: Long = 0
 
   private val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
 
@@ -71,6 +72,11 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    */
   def StartProcessing(maxParts: Int, partitionIds: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
 
+    // Check to see if this already started
+    if (startTime > 0) {
+      LOG.error("KAFKA-ADAPTER: already started, or in the process of shutting down")
+    }
+    startTime = System.nanoTime
     LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: " + qc.topic)
 
     if (partitionIds == null || partitionIds.size == 0) {
@@ -111,6 +117,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       kvs(quad._1.PartitionId) = quad
     })
 
+    // Enable the adapter to process
+    isQuiesced = false
     LOG.debug("KAFKA-ADAPTER: Starting " + kvs.size + " threads to process partitions")
 
     // Schedule a task to perform a read from a give partition.
@@ -133,7 +141,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           var execThread: ExecContext = null
           val uniqueKey = new KafkaPartitionUniqueRecordKey
           val uniqueVal = new KafkaPartitionUniqueRecordValue
-          var readerRunning = true
 
           clientName = "Client" + qc.Name + "/" + partitionId
           uniqueKey.Name = qc.Name
@@ -162,12 +169,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           val brokerId = convertIp(leadBroker)
           val brokerName = brokerId.split(":")
           val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
-            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-            KafkaSimpleConsumer.FETCHSIZE,
-            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+                                            KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                            KafkaSimpleConsumer.FETCHSIZE,
+                                            KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
           // Keep processing until you fail enough times.
-          while (readerRunning) {
+          while (!isQuiesced) {
             val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
 
             // Call the broker and get a response.
@@ -190,7 +197,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               }
             }
 
-            val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1 
+            val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1
             // Successfuly read from the Kafka Adapter - Process messages
             fetchResp.messageSet(qc.topic, partitionId).foreach(msgBuffer => {
               val bufferPayload = msgBuffer.message.payload
@@ -231,24 +238,14 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
 
             })
 
-            // Progressively slow down the reading of the Kafka queues while there is nothing in the queues.  Reset to the
-            // initial frequency once something is present in the queue.
-            if (messagesProcessed > 0) {
-              messagesProcessed = 0
-              sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
-            } else {
-              if ((sleepDuration * 2) > KafkaSimpleConsumer.MAXSLEEP) {
-                sleepDuration = KafkaSimpleConsumer.MAXSLEEP
-              } else {
-                sleepDuration = sleepDuration * 2
-              }
-            }
             try {
-              Thread.sleep(sleepDuration)
+              // Sleep here, Note, the input constant may be zero (if it is zero, balls to the wall!) better be a very busy system.
+              if (qc.noDataSleepTimeInMs > 0) {
+                Thread.sleep(qc.noDataSleepTimeInMs)
+              }
             } catch {
               case e: java.lang.InterruptedException =>
-                LOG.info("KAFKA ADAPTER: Shutting down the Consumer Reader thread")
-                readerRunning = false
+                LOG.info("KAFKA ADAPTER: Forcing down the Consumer Reader thread")
             }
           }
           if (consumer != null) { consumer.close }
@@ -584,46 +581,42 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   }
 
   /**
-   *
+   * terminateHBTasks - Just what it says
    */
   private def terminateHBTasks(): Unit = {
     if (hbExecutor == null) return
-
-    hbExecutor.shutdown
-    try {
-      // Wait a while for existing tasks to terminate
-      if (!hbExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-        hbExecutor.shutdownNow
-        if (!hbExecutor.awaitTermination(10, TimeUnit.SECONDS))
-          LOG.info("heartbeat pool did not terminate")
-      }
-    } catch {
-      case e: InterruptedException =>
-        LOG.error("FATAL + " + e.printStackTrace())
-        Thread.currentThread().interrupt();
+    hbExecutor.shutdownNow
+    while (hbExecutor.isTerminated == false ) {
+      Thread.sleep(100) // sleep 100ms and then check
     }
   }
 
   /**
-   *
+   *  terminateReaderTasks - well, just what it says
    */
   private def terminateReaderTasks(): Unit = {
-
     if (readExecutor == null) return
 
-    readExecutor.shutdown
-    try {
-      // Wait a while for existing tasks to terminate
-      if (!readExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-        readExecutor.shutdownNow
-        if (!readExecutor.awaitTermination(10, TimeUnit.SECONDS))
-          LOG.info("readpool did not terminate")
-      }
-    } catch {
-      case e: InterruptedException =>
-        LOG.error("FATAL + " + e.printStackTrace())
-        Thread.currentThread().interrupt();
+    // Tell all thread to stop processing on the next interval, and shutdown the Excecutor.
+    quiesce
+
+    // Give the threads to gracefully stop their reading cycles, and then execute them with extreme prejudice.
+    Thread.sleep(qc.noDataSleepTimeInMs + 1)
+    readExecutor.shutdownNow
+    while (readExecutor.isTerminated == false ) {
+      Thread.sleep(100)
     }
+
+    LOG.info("KAFKA_ADAPTER - Shutdown Complete")
+    readExecutor = null
+    startTime = 0
+  }
+
+  /* no need for any synchronization here... it can only go one way.. worst case scenario, a reader thread gets to try to
+  *  read the kafka queue one extra time (100ms lost)
+   */
+  private def quiesce: Unit = {
+    isQuiesced = true
   }
 
 }

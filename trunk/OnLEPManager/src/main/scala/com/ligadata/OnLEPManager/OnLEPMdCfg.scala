@@ -208,13 +208,13 @@ object OnLEPMdCfg {
 
     allAdapters.foreach(a => {
       if (a._2.TypeString.compareToIgnoreCase("Input") == 0) {
-        inputAdaps(a._1) = a._2
+        inputAdaps(a._1.toLowerCase) = a._2
       } else if (a._2.TypeString.compareToIgnoreCase("Validate") == 0) {
-        validateAdaps(a._1) = a._2
+        validateAdaps(a._1.toLowerCase) = a._2
       } else if (a._2.TypeString.compareToIgnoreCase("Output") == 0) {
-        outputAdaps(a._1) = a._2
+        outputAdaps(a._1.toLowerCase) = a._2
       } else if (a._2.TypeString.compareToIgnoreCase("Status") == 0) {
-        statusAdaps(a._1) = a._2
+        statusAdaps(a._1.toLowerCase) = a._2
       } else {
         LOG.error("Found unhandled adapter type %s for adapter %s".format(a._2.TypeString, a._2.Name))
         return false
@@ -314,7 +314,7 @@ object OnLEPMdCfg {
 
       val adap = ac._2
 
-      conf.Name = adap.Name
+      conf.Name = adap.Name.toLowerCase
       if (hasInputAdapterName)
         conf.formatOrInputAdapterName = adap.InputAdapterToVerify
       conf.className = adap.ClassName
@@ -399,7 +399,7 @@ object OnLEPMdCfg {
 
       val adap = ac._2
 
-      conf.Name = adap.Name
+      conf.Name = adap.Name.toLowerCase
       conf.formatOrInputAdapterName = adap.DataFormat
       conf.className = adap.ClassName
       conf.jarName = adap.JarName
@@ -427,11 +427,14 @@ object OnLEPMdCfg {
     val validateInputAdapters = scala.collection.mutable.Map[String, AdapterInfo]()
 
     outputAdapters.foreach(oa => {
-      val validateInputAdapName = if (oa.inputConfig.formatOrInputAdapterName != null) oa.inputConfig.formatOrInputAdapterName.trim else ""
+      val validateInputAdapName = (if (oa.inputConfig.formatOrInputAdapterName != null) oa.inputConfig.formatOrInputAdapterName.trim else "").toLowerCase
       if (validateInputAdapName.size > 0) {
         val valAdap = validate_adaps.getOrElse(validateInputAdapName, null)
-        if (valAdap != null)
+        if (valAdap != null) {
           validateInputAdapters(validateInputAdapName) = valAdap
+        } else {
+          LOG.warn("Not found validate input adapter %s for %s".format(validateInputAdapName, oa.inputConfig.Name))
+        }
       } else {
         LOG.warn("Not found validate input adapter for " + oa.inputConfig.Name)
       }
