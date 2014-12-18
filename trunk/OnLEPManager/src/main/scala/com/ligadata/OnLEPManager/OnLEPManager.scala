@@ -145,6 +145,8 @@ class OnLEPManager {
   }
 
   private def Shutdown(exitCode: Int): Unit = {
+    if (OnLEPMetadata.envCtxt != null)
+      OnLEPMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
     OnLEPLeader.Shutdown
     OnLEPMetadata.Shutdown
     ShutdownAdapters

@@ -649,12 +649,14 @@ object OnLEPLeader {
           override def run() = {
             var updatePartsCntr = 0
             var getValidateAdapCntr = 0
+            var wait4ValidateCheck = 0
             var validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = null
             while (distributionExecutor.isShutdown == false) {
               Thread.sleep(1000) // Waiting for 1sec
               if (distributionExecutor.isShutdown == false) {
                 if (GetUpdatePartitionsFlagAndReset) {
                   UpdatePartitionsIfNeededOnLeader
+                  wait4ValidateCheck = 180 // When ever rebalancing it should be 180 secs
                   updatePartsCntr = 0
                   getValidateAdapCntr = 0
                 } else if (IsLeaderNode) {
@@ -667,19 +669,27 @@ object OnLEPLeader {
                       updatePartsCntr += 1
                     }
 
-                    // Get Partitions keys and values for every M secs
-                    if (getValidateAdapCntr >= 60) { // for every 60 secs
-                      // Persists the previous ones if we have any
-                      if (validateUniqVals != null && validateUniqVals.size > 0) {
-                        envCtxt.PersistValidateAdapterInformation(validateUniqVals.map(kv => (kv._1.Serialize, kv._2.Serialize)))
+                    if (wait4ValidateCheck > 0) {
+                      // Get Partitions keys and values for every M secs
+                      if (getValidateAdapCntr >= wait4ValidateCheck) { // for every waitForValidateCheck secs
+                        // Persists the previous ones if we have any
+                        if (validateUniqVals != null && validateUniqVals.size > 0) {
+                          envCtxt.PersistValidateAdapterInformation(validateUniqVals.map(kv => (kv._1.Serialize, kv._2.Serialize)))
+                        }
+                        // Get the latest ones
+                        validateUniqVals = GetEndPartitionsValuesForValidateAdapters
+                        getValidateAdapCntr = 0
+                        wait4ValidateCheck = 60 // Next time onwards it is 60 secs
+                      } else {
+                        getValidateAdapCntr += 1
                       }
-                      // Get the latest ones
-                      validateUniqVals = GetEndPartitionsValuesForValidateAdapters
-                      getValidateAdapCntr = 0
                     } else {
-                      getValidateAdapCntr += 1
+                      getValidateAdapCntr = 0
                     }
                   }
+                } else {
+                  wait4ValidateCheck = 0 // Not leader node, don't check for it until we set it in redistribute
+                  getValidateAdapCntr = 0
                 }
               }
             }
