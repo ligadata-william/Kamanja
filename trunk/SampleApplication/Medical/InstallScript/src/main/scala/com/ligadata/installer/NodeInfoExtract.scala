@@ -9,10 +9,11 @@ import com.ligadata.olep.metadata._
 class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String) {
 
 	MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
-	
-	var metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MetadataStoreType")
-	var metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MetadataSchemaName")
-	var metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MetadataLocation")
+
+	/** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
+	var metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+	var metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
+	var metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
 	
 	val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString)
 	//println(result)
