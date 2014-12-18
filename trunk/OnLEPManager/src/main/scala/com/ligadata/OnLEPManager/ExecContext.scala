@@ -7,6 +7,7 @@ import org.apache.log4j.Logger
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import scala.collection.mutable.ArrayBuffer
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
@@ -79,8 +80,43 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
 
+  private def getAllModelResults(data: Any): Array[Map[String, Any]] = {
+    val results = new ArrayBuffer[Map[String, Any]]()
+    try {
+      data match {
+        case m: Map[_, _] => {
+          try {
+            results += m.asInstanceOf[Map[String, Any]]
+          } catch {
+            case e: Exception => {
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
+            }
+          }
+        }
+        case l: List[Any] => {
+          try {
+            val data = l.asInstanceOf[List[Any]]
+            data.foreach(d => {
+              results ++= getAllModelResults(d)
+            })
+          } catch {
+            case e: Exception => {
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
+            }
+          }
+        }
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage))
+      }
+    }
+
+    results.toArray
+  }
+
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
     try {
       try {
         val json = parse(data)
@@ -98,25 +134,25 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
           LOG.error("Expecting only ModelsResult as key in JSON data : " + data)
           return
         }
-        val allVals = parsed_json.head._2.asInstanceOf[Map[String, Any]]
-        if (allVals == null) {
-          LOG.error("Not found any values from ModelsResult. JSON string : " + data)
-          return
-        }
-        val uK = allVals.getOrElse("uniqKey", null)
-        val uV = allVals.getOrElse("uniqVal", null)
 
-        if (uK == null || uV == null) {
-          LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + data)
-          return
-        }
+        val results = getAllModelResults(parsed_json.head._2)
 
-        val uKStr = uK.toString
-        val uVStr = uV.toString
-        val xCntr = allVals.getOrElse("xformCntr", "1").toString.toInt
-        val xTotl = allVals.getOrElse("xformTotl", "1").toString.toInt
-        val txnId = allVals.getOrElse("TxnId", "0").toString.toLong
-        val existVal = CollectKeyValsFromValidation.addKeyVals(uKStr, uVStr, xCntr, xTotl, txnId)
+        results.foreach(allVals => {
+          val uK = allVals.getOrElse("uniqKey", null)
+          val uV = allVals.getOrElse("uniqVal", null)
+
+          if (uK == null || uV == null) {
+            LOG.error("Not found uniqKey & uniqVal in ModelsResult. JSON string : " + data)
+            return
+          }
+
+          val uKStr = uK.toString
+          val uVStr = uV.toString
+          val xCntr = allVals.getOrElse("xformCntr", "1").toString.toInt
+          val xTotl = allVals.getOrElse("xformTotl", "1").toString.toInt
+          val txnId = allVals.getOrElse("TxnId", "0").toString.toLong
+          val existVal = CollectKeyValsFromValidation.addKeyVals(uKStr, uVStr, xCntr, xTotl, txnId)
+        })
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
