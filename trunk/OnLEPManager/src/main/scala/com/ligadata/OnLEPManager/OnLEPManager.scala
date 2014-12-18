@@ -251,9 +251,16 @@ class OnLEPManager {
         return false
       }
 
-      OnLEPConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "").replace("\"", "").trim.toInt
-      if (OnLEPConfiguration.waitProcessingTime > 0)
-        OnLEPConfiguration.waitProcessingSteps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0).map(_.toInt).toSet
+      try {
+        OnLEPConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "").replace("\"", "0").trim.toInt
+        if (OnLEPConfiguration.waitProcessingTime > 0) {
+          val setps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0)
+          if (setps.size > 0)
+            OnLEPConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
+        }
+      } catch {
+        case e: Exception => LOG.info("Failed to load Wait Processing Info.")
+      }
 
       OnLEPMetadata.InitBootstrap
 
