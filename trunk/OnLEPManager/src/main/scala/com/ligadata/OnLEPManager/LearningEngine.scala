@@ -139,8 +139,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         }
         if (handleMsg) {
           var msg: BaseMsg = null
+          var commitSameToplvlMsg = false
           if (topObj != null && topMsgTypeAndHasParent._2) {
             msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.msgobj.PrimaryKeyData(inputdata))
+          } else if (topObj != null && topMsgTypeAndHasParent._2 == false) { // This is top level node. Just modify it
+            commitSameToplvlMsg = true
+            msg = topObj.asInstanceOf[BaseMsg]
           }
           var createdNewMsg = false
           if (msg == null) {
@@ -208,7 +212,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
-          if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null)) {
+          if (isValidPartitionKey && (commitSameToplvlMsg || topMsgTypeAndHasParent._2 || topObj == null)) {
             envContext.setObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
           }
           envContext.saveStatus(tempTransId, "SetData", false)
