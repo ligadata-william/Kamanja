@@ -139,8 +139,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         }
         if (handleMsg) {
           var msg: BaseMsg = null
+          var commitSameToplvlMsg = false
           if (topObj != null && topMsgTypeAndHasParent._2) {
             msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.msgobj.PrimaryKeyData(inputdata))
+          } else if (topObj != null && topMsgTypeAndHasParent._2 == false) { // This is top level node. Just modify it
+            commitSameToplvlMsg = true
+            msg = topObj.asInstanceOf[BaseMsg]
           }
           var createdNewMsg = false
           if (msg == null) {
@@ -197,10 +201,31 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             if (isValidPartitionKey && finalTopMsgOrContainer != null) {
               envContext.saveModelsResult(tempTransId, partitionKeyData, allMdlsResults)
             }
+            if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(1)) {
+              try {
+                LOG.info("====================================> Started Waiting in Step 1")
+                Thread.sleep(OnLEPConfiguration.waitProcessingTime)
+                LOG.info("====================================> Done Waiting in Step 1")
+              } catch {
+                case e: Exception => {}
+              }
+            }
             if (ignoreOutput == false) {
+              if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(2)) {
+                LOG.info("====================================> Sending to Output Adapter")
+              }
               output.foreach(o => {
                 o.send(resStr, cntr.toString)
               })
+            }
+            if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(2)) {
+              try {
+                LOG.info("====================================> Started Waiting in Step 2")
+                Thread.sleep(OnLEPConfiguration.waitProcessingTime)
+                LOG.info("====================================> Done Waiting in Step 2")
+              } catch {
+                case e: Exception => {}
+              }
             }
             envContext.saveStatus(tempTransId, "OutAdap", false)
           }
@@ -208,10 +233,19 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           //BUGBUG:: Save the whole message here
-          if (isValidPartitionKey && (topMsgTypeAndHasParent._2 || topObj == null)) {
+          if (isValidPartitionKey && (commitSameToplvlMsg || topMsgTypeAndHasParent._2 || topObj == null)) {
             envContext.setObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
           }
           envContext.saveStatus(tempTransId, "SetData", false)
+          if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(3)) {
+            try {
+              LOG.info("====================================> Started Waiting in Step 3")
+              Thread.sleep(OnLEPConfiguration.waitProcessingTime)
+              LOG.info("====================================> Done Waiting in Step 3")
+            } catch {
+              case e: Exception => {}
+            }
+          }
         }
       } else {
         LOG.error("Recieved null message object for input:" + msgData)

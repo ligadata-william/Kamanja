@@ -1003,8 +1003,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val storeObjects = new Array[IStorage](validateUniqVals.size)
     var cntr = 0
 
+    logger.info(s"PersistValidateAdapterInformation => " + validateUniqVals.mkString(","))
+
     validateUniqVals.foreach(kv => {
-      logger.info(s"PersistValidateAdapterInformation:%d -- %s -> %s".format(cntr, kv._1, kv._2))
       object obj extends IStorage {
         val key = makeKey("CP", kv._1)
         val value = kv._2

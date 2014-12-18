@@ -151,93 +151,139 @@ object OnLEPLeader {
     expectedNodesAction = ""
     curParticipents = if (cs.participants != null) cs.participants.toSet else Set[String]()
 
-    var tmpDistMap = ArrayBuffer[(String, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]])]()
+    try {
+      breakable {
+        var tmpDistMap = ArrayBuffer[(String, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]])]()
 
-    if (cs.participants != null) {
-      // Create ArrayBuffer for each node participating at this moment
-      cs.participants.foreach(p => {
-        tmpDistMap += ((p, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]]()))
-      })
+        if (cs.participants != null) {
 
-      val allPartitionUniqueRecordKeys = ArrayBuffer[(String, String)]()
-
-      // Get all PartitionUniqueRecordKey for all Input Adapters
-      inputAdapters.foreach(ia => {
-        val uk = ia.GetAllPartitionUniqueRecordKey
-        val name = ia.UniqueName
-        val ukCnt = if (uk != null) uk.size else 0
-        adapterMaxPartitions(name) = ukCnt
-        if (ukCnt > 0) {
-          val serUK = uk.map(k => {
-            val kstr = k.Serialize
-            LOG.info("Unique Key in %s => %s".format(name, kstr))
-            (name, kstr)
+          // Create ArrayBuffer for each node participating at this moment
+          cs.participants.foreach(p => {
+            tmpDistMap += ((p, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]]()))
           })
-          allPartitionUniqueRecordKeys ++= serUK
-          AddPartitionsToValidate(name, serUK.map(k => k._2).toSet)
-        } else {
-          AddPartitionsToValidate(name, Set[String]())
-        }
-      })
 
-      // Update New partitions for all nodes and Set the text
-      val totalParticipents: Int = cs.participants.size
-      if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
-        LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
-        var cntr: Int = 0
-        val txnIdCntrPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
-        allPartitionUniqueRecordKeys.foreach(k => {
-          val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
-          if (af == null) {
-            val af1 = new ArrayBuffer[(String, Long)]
-            af1 += ((k._2, cntr * txnIdCntrPerPartition))
-            tmpDistMap(cntr % totalParticipents)._2(k._1) = af1
-          } else {
-            af += ((k._2, cntr * txnIdCntrPerPartition))
+          val allPartitionUniqueRecordKeys = ArrayBuffer[(String, String)]()
+
+          // Get all PartitionUniqueRecordKey for all Input Adapters
+          inputAdapters.foreach(ia => {
+            val uk = ia.GetAllPartitionUniqueRecordKey
+            val name = ia.UniqueName
+            val ukCnt = if (uk != null) uk.size else 0
+            adapterMaxPartitions(name) = ukCnt
+            if (ukCnt > 0) {
+              val serUK = uk.map(k => {
+                val kstr = k.Serialize
+                LOG.info("Unique Key in %s => %s".format(name, kstr))
+                (name, kstr)
+              })
+              allPartitionUniqueRecordKeys ++= serUK
+              AddPartitionsToValidate(name, serUK.map(k => k._2).toSet)
+            } else {
+              AddPartitionsToValidate(name, Set[String]())
+            }
+          })
+
+          val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
+          val map = scala.collection.mutable.Map[String, String]()
+
+          LOG.info("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
+
+          savedValidatedAdaptInfo.foreach(kv => {
+            map(kv._1.toLowerCase) = kv._2
+          })
+
+          CollectKeyValsFromValidation.clear
+          validateInputAdapters.foreach(via => {
+            // Get all Begin values for Unique Keys
+            val begVals = via.getAllPartitionBeginValues
+            val finalVals = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](begVals.size)
+
+            // Replace the newly found ones
+            val nParts = begVals.size
+            for (i <- 0 until nParts) {
+              val key = begVals(i)._1.Serialize.toLowerCase
+              val foundVal = map.getOrElse(key, null)
+              if (foundVal != null) {
+                val desVal = via.DeserializeValue(foundVal)
+                finalVals += ((begVals(i)._1, desVal, 0, (desVal, 0, 0)))
+              } else {
+                finalVals += ((begVals(i)._1, begVals(i)._2, 0, (begVals(i)._2, 0, 0)))
+              }
+            }
+            via.StartProcessing(finalVals.size, finalVals.toArray, false)
+          })
+
+          var stillWait = true
+          while (stillWait) {
+            try {
+              Thread.sleep(1000) // sleep 1000 ms and then check
+            } catch {
+              case e: Exception => {
+              }
+            }
+            if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
+              stillWait = true
+            else
+              stillWait = false
           }
-          cntr += 1
-        })
+
+          if (distributionExecutor.isShutdown)
+            break
+
+          // Stopping the Adapters
+          validateInputAdapters.foreach(via => {
+            via.StopProcessing
+          })
+
+          // Expecting keys are lower case here
+          foundKeysInValidation = CollectKeyValsFromValidation.get
+          LOG.info("foundKeysInValidation: " + foundKeysInValidation.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
+
+          var maxUsedTxnIdInValidationRes: Long = 0
+
+          foundKeysInValidation.foreach(k => {
+            if (maxUsedTxnIdInValidationRes < k._2._4)
+              maxUsedTxnIdInValidationRes = k._2._4
+          })
+
+          // Update New partitions for all nodes and Set the text
+          val totalParticipents: Int = cs.participants.size
+          if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
+            LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
+            var cntr: Int = 0
+            val txnIdCntrPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
+            var nextTxnIdCntrIdx: Long = (maxUsedTxnIdInValidationRes / txnIdCntrPerPartition) + 1
+            allPartitionUniqueRecordKeys.foreach(k => {
+              val fnd = foundKeysInValidation.getOrElse(k._2.toLowerCase, null)
+              val startTxnId = if (fnd != null) (fnd._4 + 10) else (nextTxnIdCntrIdx * txnIdCntrPerPartition)
+              if (fnd != null)
+                nextTxnIdCntrIdx += 1
+              val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
+              if (af == null) {
+                val af1 = new ArrayBuffer[(String, Long)]
+                af1 += ((k._2, startTxnId))
+                tmpDistMap(cntr % totalParticipents)._2(k._1) = af1
+              } else {
+                af += ((k._2, startTxnId))
+              }
+              cntr += 1
+            })
+          }
+
+          tmpDistMap.foreach(tup => {
+            distributionMap(tup._1) = tup._2
+          })
+        }
+
+        expectedNodesAction = "stopped"
+        // Set STOP Action on engineDistributionZkNodePath
+        val act = ("action" -> "stop")
+        val sendJson = compact(render(act))
+        zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
       }
-
-      val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
-      val map = scala.collection.mutable.Map[String, String]()
-
-      savedValidatedAdaptInfo.foreach(kv => {
-        map(kv._1) = kv._2
-      })
-
-      CollectKeyValsFromValidation.clear
-      validateInputAdapters.foreach(via => {
-        // Get all Begin values for Unique Keys
-        val begVals = via.getAllPartitionBeginValues
-        val finalVals = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](begVals.size)
-
-        // Replace the newly found ones
-        val nParts = begVals.size
-        for (i <- 0 until nParts) {
-          val foundVal = map.getOrElse(begVals(i)._1.Serialize, null)
-          if (foundVal != null) {
-            val desVal = via.DeserializeValue(foundVal)
-            finalVals += ((begVals(i)._1, desVal, 0, (desVal, 0, 0)))
-          } else {
-            finalVals += ((begVals(i)._1, begVals(i)._2, 0, (begVals(i)._2, 0, 0)))
-          }
-        }
-        via.StartProcessing(finalVals.size, finalVals.toArray, false)
-      })
-
-      foundKeysInValidation = CollectKeyValsFromValidation.get
-
-      tmpDistMap.foreach(tup => {
-        distributionMap(tup._1) = tup._2
-      })
+    } catch {
+      case e: Exception => {}
     }
-
-    expectedNodesAction = "stopped"
-    // Set STOP Action on engineDistributionZkNodePath
-    val act = ("action" -> "stop")
-    val sendJson = compact(render(act))
-    zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
   }
 
   private def AddPartitionsToValidate(adapName: String, partitions: Set[String]): Unit = lock1.synchronized {
@@ -298,7 +344,7 @@ object OnLEPLeader {
     envCtxt.getAdapterUniqueKeyValue(0, uk)
   }
 
-  private def StartNodeKeysMap(nodeKeysMap: scala.collection.immutable.Map[String, Array[(String, Long)]], receivedJsonStr: String, adapMaxPartsMap: Map[String, Int], foundKeysInValidation: Option[List[FoundKeysInValidation]]): Boolean = {
+  private def StartNodeKeysMap(nodeKeysMap: scala.collection.immutable.Map[String, Array[(String, Long)]], receivedJsonStr: String, adapMaxPartsMap: Map[String, Int], foundKeysInVald: Map[String, (String, Int, Int, Long)]): Boolean = {
     if (nodeKeysMap == null || nodeKeysMap.size == 0) {
       return true
     }
@@ -311,7 +357,7 @@ object OnLEPLeader {
           val tmpProcessingKVs = envCtxt.getIntermediateStatusInfo(uAK.map(uk => uk._1).toArray) // Get all Status information from intermediate table.
           val processingKVs = scala.collection.mutable.Map[String, (String, Int, Int)]()
           tmpProcessingKVs.foreach(kv => {
-            processingKVs(kv._1) = kv._2
+            processingKVs(kv._1.toLowerCase) = kv._2
           })
           val maxParts = adapMaxPartsMap.getOrElse(name, 0)
           LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
@@ -325,7 +371,8 @@ object OnLEPLeader {
           var indx = 0
           LOG.info("Deserializing Processing Values")
           val processingvals = uAK.map(uk => {
-            val ptmpV = processingKVs.getOrElse(uk._1, null)
+            val keyVal = uk._1.toLowerCase
+            val ptmpV = processingKVs.getOrElse(keyVal, null)
             var pV: PartitionUniqueRecordValue = null
             var processingMsg = 0
             var totalMsgs = 0
@@ -334,18 +381,27 @@ object OnLEPLeader {
               if (doneVal._1.compareTo(ptmpV._1) == 0) {
                 // Already written what ever we were processing. Just take this in the ignored list
                 pV = vals(indx)
+                // LOG.info("====================================> Key:%s found in process(ed) keys, Value is :%s. ProcessedVal: %s".format(uk._1, pV.Serialize, vals(indx).Serialize))
               } else {
-                // foundKeysInValidation: Option[List[FoundKeysInValidation]]
                 // Processing some other record than what we persisted.
-                // BUGBUG::Yet to handle blow one
-                // Now check for the key in Output Adapter where we write.
-                // If the key is not there in the above adapter, just take same vals object (pV = vals(indx)), otherwise deserialize the current one and ignore till that point. For now we are treating ignore send output unitl we fix reading from OuputAdapter
-                processingMsg = 0 // Need to update it
-                totalMsgs = 0 // Need to update it
-                pV = ia.DeserializeValue(ptmpV._1)
+                val sentOutAdap = foundKeysInVald.getOrElse(keyVal, null)
+                if (sentOutAdap != null) {
+                  // Found in Sent into Output Adapter
+                  processingMsg = sentOutAdap._2
+                  totalMsgs = sentOutAdap._3
+                  pV = ia.DeserializeValue(sentOutAdap._1)
+                  // LOG.info("====================================> Key:%s found in process(ing) keys, found in Sent to Output Adap, Value is :%s (%d, %d). ProcessedVal: %s".format(uk._1, sentOutAdap._1, sentOutAdap._2, sentOutAdap._3, vals(indx).Serialize))
+                } else {
+                  // If the key is not there in the above adapter, just take same vals object (pV = vals(indx)), otherwise deserialize the current one and ignore till that point. For now we are treating ignore send output unitl we fix reading from OuputAdapter
+                  processingMsg = 0 // Need to update it
+                  totalMsgs = 0 // Need to update it
+                  pV = ia.DeserializeValue(ptmpV._1)
+                  // LOG.info("====================================> Key:%s found in process(ing) keys, not found in Sent to Output Adap, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
+                }
               }
             } else { // May not be processed at all before. just take the vals(indx) 
               pV = vals(indx)
+              // LOG.info("====================================> Key:%s found in processing keys, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
             }
             indx += 1
             (pV, processingMsg, totalMsgs)
@@ -358,6 +414,8 @@ object OnLEPLeader {
             val key = keys(i)
             quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
           }
+
+          LOG.info(ia.UniqueName + "%s ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
           ia.StartProcessing(maxParts, quads.toArray, true)
         }
       } catch {
@@ -427,28 +485,37 @@ object OnLEPLeader {
 
       actionOnAdaptersMap.action match {
         case "stop" => {
-          // STOP all Input Adapters on local node
-          inputAdapters.foreach(ia => {
-            ia.StopProcessing
-          })
-
-          // Sleep for a sec
           try {
-            Thread.sleep(1000)
-          } catch {
-            case e: Exception => {
-              // Not doing anything
+            breakable {
+              // STOP all Input Adapters on local node
+              inputAdapters.foreach(ia => {
+                ia.StopProcessing
+              })
+
+              // Sleep for a sec
+              try {
+                Thread.sleep(1000)
+              } catch {
+                case e: Exception => {
+                  // Not doing anything
+                }
+              }
+
+              if (distributionExecutor.isShutdown)
+                break
+
+              envCtxt.PersistLocalNodeStateEntries
+              envCtxt.clearIntermediateResults
+
+              // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
+              val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
+              val act = ("action" -> "stopped")
+              val sendJson = compact(render(act))
+              zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
             }
+          } catch {
+            case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
           }
-
-          envCtxt.PersistLocalNodeStateEntries
-          envCtxt.clearIntermediateResults
-
-          // Set STOPPED action in adaptersStatusPath + "/" + nodeId path
-          val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-          val act = ("action" -> "stopped")
-          val sendJson = compact(render(act))
-          zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
         }
         case "distribute" => {
           envCtxt.clearIntermediateResults // We may not need it here. But anyway safe side
@@ -459,7 +526,16 @@ object OnLEPLeader {
             if (actionOnAdaptersMap.distributionmap != None && actionOnAdaptersMap.distributionmap != null) {
               val adapMaxPartsMap = GetAdaptersMaxPartitioinsMap(actionOnAdaptersMap.adaptermaxpartitions)
               val nodeDistMap = GetDistMapForNodeId(actionOnAdaptersMap.distributionmap, nodeId)
-              StartNodeKeysMap(nodeDistMap, receivedJsonStr, adapMaxPartsMap, actionOnAdaptersMap.foundKeysInValidation)
+
+              var foundKeysInVald = scala.collection.mutable.Map[String, (String, Int, Int, Long)]()
+
+              if (actionOnAdaptersMap.foundKeysInValidation != None && actionOnAdaptersMap.foundKeysInValidation != null) {
+                actionOnAdaptersMap.foundKeysInValidation.get.foreach(ks => {
+                  foundKeysInVald(ks.K.toLowerCase) = (ks.V1, ks.V2, ks.V3, ks.V4)
+                })
+
+              }
+              StartNodeKeysMap(nodeDistMap, receivedJsonStr, adapMaxPartsMap, foundKeysInVald.toMap)
             }
 
           } catch {
@@ -613,12 +689,14 @@ object OnLEPLeader {
           override def run() = {
             var updatePartsCntr = 0
             var getValidateAdapCntr = 0
+            var wait4ValidateCheck = 0
             var validateUniqVals: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = null
             while (distributionExecutor.isShutdown == false) {
               Thread.sleep(1000) // Waiting for 1sec
               if (distributionExecutor.isShutdown == false) {
                 if (GetUpdatePartitionsFlagAndReset) {
                   UpdatePartitionsIfNeededOnLeader
+                  wait4ValidateCheck = 180 // When ever rebalancing it should be 180 secs
                   updatePartsCntr = 0
                   getValidateAdapCntr = 0
                 } else if (IsLeaderNode) {
@@ -631,19 +709,27 @@ object OnLEPLeader {
                       updatePartsCntr += 1
                     }
 
-                    // Get Partitions keys and values for every M secs
-                    if (getValidateAdapCntr >= 60) { // for every 60 secs
-                      // Persists the previous ones if we have any
-                      if (validateUniqVals != null && validateUniqVals.size > 0) {
-                        envCtxt.PersistValidateAdapterInformation(validateUniqVals.map(kv => (kv._1.Serialize, kv._2.Serialize)))
+                    if (wait4ValidateCheck > 0) {
+                      // Get Partitions keys and values for every M secs
+                      if (getValidateAdapCntr >= wait4ValidateCheck) { // for every waitForValidateCheck secs
+                        // Persists the previous ones if we have any
+                        if (validateUniqVals != null && validateUniqVals.size > 0) {
+                          envCtxt.PersistValidateAdapterInformation(validateUniqVals.map(kv => (kv._1.Serialize, kv._2.Serialize)))
+                        }
+                        // Get the latest ones
+                        validateUniqVals = GetEndPartitionsValuesForValidateAdapters
+                        getValidateAdapCntr = 0
+                        wait4ValidateCheck = 60 // Next time onwards it is 60 secs
+                      } else {
+                        getValidateAdapCntr += 1
                       }
-                      // Get the latest ones
-                      validateUniqVals = GetEndPartitionsValuesForValidateAdapters
-                      getValidateAdapCntr = 0
                     } else {
-                      getValidateAdapCntr += 1
+                      getValidateAdapCntr = 0
                     }
                   }
+                } else {
+                  wait4ValidateCheck = 0 // Not leader node, don't check for it until we set it in redistribute
+                  getValidateAdapCntr = 0
                 }
               }
             }

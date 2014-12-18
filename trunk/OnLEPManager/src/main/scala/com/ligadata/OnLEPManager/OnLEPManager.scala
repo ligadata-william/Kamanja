@@ -90,6 +90,11 @@ object OnLEPConfiguration {
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
+  // Debugging info configs -- Begin
+  var waitProcessingSteps = collection.immutable.Set[Int]()
+  var waitProcessingTime = 0
+  // Debugging info configs -- End
+
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
     jarPaths.foreach(jPath => {
@@ -145,6 +150,8 @@ class OnLEPManager {
   }
 
   private def Shutdown(exitCode: Int): Unit = {
+    if (OnLEPMetadata.envCtxt != null)
+      OnLEPMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
     OnLEPLeader.Shutdown
     OnLEPMetadata.Shutdown
     ShutdownAdapters
@@ -242,6 +249,17 @@ class OnLEPManager {
       if (OnLEPConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
+      }
+
+      try {
+        OnLEPConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "").replace("\"", "0").trim.toInt
+        if (OnLEPConfiguration.waitProcessingTime > 0) {
+          val setps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0)
+          if (setps.size > 0)
+            OnLEPConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
+        }
+      } catch {
+        case e: Exception => LOG.info("Failed to load Wait Processing Info.")
       }
 
       OnLEPMetadata.InitBootstrap
