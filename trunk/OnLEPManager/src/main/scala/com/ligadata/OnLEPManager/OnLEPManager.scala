@@ -90,6 +90,11 @@ object OnLEPConfiguration {
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
+  // Debugging info configs -- Begin
+  var waitProcessingSteps = collection.immutable.Set[Int]()
+  var waitProcessingTime = 0
+  // Debugging info configs -- End
+
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
     jarPaths.foreach(jPath => {
@@ -245,6 +250,10 @@ class OnLEPManager {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
       }
+
+      OnLEPConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "").replace("\"", "").trim.toInt
+      if (OnLEPConfiguration.waitProcessingTime > 0)
+        OnLEPConfiguration.waitProcessingSteps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0).map(_.toInt).toSet
 
       OnLEPMetadata.InitBootstrap
 
