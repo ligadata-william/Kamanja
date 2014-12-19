@@ -352,7 +352,11 @@
       }
     ],
     "PartitionKey": [
-      "Desynpuf_Id"
-    ]
-  }
+            "Desynpuf_Id"
+        ],
+        "PrimaryKey": [
+            "Desynpuf_Id",
+            "Clm_Id"
+        ]
+    }
 }
