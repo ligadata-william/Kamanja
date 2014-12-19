@@ -364,7 +364,7 @@ object SimpleKafkaProducer {
     val topicIdx = (totalParts / topicpartitions)
     val partIdx = (totalParts % topicpartitions)
     val sendmsg = if (msg.size == 0) doc else (msg + "," + doc)
-    send(producer, topics(topicIdx), sendmsg, partIdx.toString)
+    send(producer, topics(topicIdx), sendmsg, key)
     st.totalRead += doc.size
     st.totalSent += sendmsg.size
   }
