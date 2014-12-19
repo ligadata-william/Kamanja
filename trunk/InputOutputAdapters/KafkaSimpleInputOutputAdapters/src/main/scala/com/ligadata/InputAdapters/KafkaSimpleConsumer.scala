@@ -132,7 +132,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           // knows what its doing and we start from that offset.
           var readOffset: Long = -1
           var transactionId = partition._3
-          val uniqueRecordValue = partition._4._1.Offset
+          val uniqueRecordValue = if (ignoreFirstMsg) partition._4._1.Offset else partition._4._1.Offset - 1
           var processingXformMsg = partition._4._2
           var totalXformMsg = partition._4._3
 
@@ -224,7 +224,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
                 }
 
                 uniqueVal.Offset = msgBuffer.offset
-                val dontSendOutputToOutputAdap = uniqueVal.Offset < uniqueRecordValue
+                val dontSendOutputToOutputAdap = uniqueVal.Offset <= uniqueRecordValue
                 if (dontSendOutputToOutputAdap == false) {
                   processingXformMsg = 0
                   totalXformMsg = 0

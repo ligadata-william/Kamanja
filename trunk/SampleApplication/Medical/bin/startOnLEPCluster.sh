@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# clusterInstallOnLEP.sh
+# startOnLEPCluster.sh
 #
-#	run this script from the trunk directory that contains the release source:
+#	NOTE: This script must currently be run from a trunk directory that contains the InstallScript project:
 
-#	example: clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
+#	example: startOnLEPCluster.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
 #
 
 name1=$1
@@ -28,18 +28,9 @@ fi
 
 
 
-# 1 build the installation in the staging directory
-workDir="/tmp" 
-workDirSansSlash="tmp" #tar will trunc the leading slash when building its archive
-dirName="OnLEPClusterInstall" 
-stagingDir="$workDir/$dirName"
-mkdir -p "$stagingDir"
-echo "...build the OnLEP installation directory in $stagingDir"
-installOnLEP_Medical.sh "$stagingDir" `pwd`
-
-
-# 2) determine which machines and installation directories are to get the build from the metadata and OnLEP config
-# A number of files are produced, all in the working dir.
+# 1) determine which machines and installation directories are to get the build from the metadata and OnLEP config
+# A number of files are produced, all in the working dir. For cluster start only the quartet file is used
+workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
@@ -47,49 +38,10 @@ echo "...extract node information for the cluster to be installed from the Metad
 echo "...Command = nodeInfoExtract.sh $name1 \"$val1\" $name2 \"$val2\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
 nodeInfoExtract.sh "$name1" "$val1" "$name2" "$val2" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" 
 
-# 3) compress staging dir and tar it
-dtPrefix="OnLEP`date +"%Y%b%d"`"
-tarName="$dtPrefix.$dirName.bz2"
-echo "...compress and tar the installation directory $stagingDir to $tarName"
-tar cjf "$workDir/$tarName" "$stagingDir"
 
-# 4) Push the tarballs to each machine defined in the supplied configuration
-echo "...copy the tarball to the machines in this cluster"
-exec 12<&0 # save current stdin
-exec < "$workDir/$ipFile"
-while read LINE; do
-    machine=$LINE
-    echo "...copying $tarName to $machine"
-    ssh $machine "mkdir -p $workDir"
-    scp "$workDir/$tarName" "$machine:$workDir/$tarName"
-done
-exec 0<&12 12<&-
-
-echo
-
-# 5) untar/decompress tarballs there and move them into place
-echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$workDirSansSlash/$dirName... then move to corresponding target path"
-exec 12<&0 # save current stdin
-exec < "$workDir/$ipPathPairFile"
-while read LINE; do
-    machine=$LINE
-    read LINE
-    targetPath=$LINE
-	ssh -T $machine  <<-EOF
-	        cd $workDir
-	        rm -Rf $workDirSansSlash
-	        tar xjf $tarName
-	        rm -Rf $targetPath
-	        mkdir -p $targetPath
-	        cp -R $workDirSansSlash/$dirName/* $targetPath/
-EOF
-done
-exec 0<&12 12<&-
-
-echo
-
-# 6) Push the node$nodeId.cfg file to each cluster node's working directory.
-echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$workDirSansSlash/$dirName) for this cluster "
+#echo "/tmp/node2.cfg" | sed 's/.*\/\(.*\)/\1/g'
+# Start the cluster nodes using the information extracted from the metadata and supplied config.
+echo "...start the OnLEP cluster "
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -101,8 +53,13 @@ while read LINE; do
     read LINE
     targetPath=$LINE
     echo "quartet = $machine, $id, $cfgFile, $targetPath"
-    echo "...copying $cfgFile for nodeId $id to $machine:$targetPath"
+    echo "...On machine $machine, starting OnLEPManager with configuration $cfgFile for nodeId $id to $machine:$targetPath"
     scp "$cfgFile" "$machine:$targetPath/"
+	ssh -T $machine  <<-EOF
+	        cd $targetPath
+	        nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g'`
+	        java -jar ./OnLEPManager-1.0 --config "./$cfgFile" &
+EOF
 done
 exec 0<&12 12<&-
 
