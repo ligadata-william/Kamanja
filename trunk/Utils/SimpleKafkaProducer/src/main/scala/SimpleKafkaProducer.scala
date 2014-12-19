@@ -61,8 +61,9 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
         val hashCode = SimpleKafkaProducer.keyHasher.hashKey(key.asInstanceOf[Array[Byte]]).abs
         val bucket = (hashCode % a_numPartitions).toInt
         // println("Key : %s, hashCode: %d, Partitions: %d, Bucket : %d".format(new String(key.asInstanceOf[Array[Byte]]), hashCode, a_numPartitions, bucket))
-        return (hashCode % a_numPartitions).toInt
+        return bucket 
       } else {
+        // println("Keynot cound, so , Bucket : 0")
         // println("Bucket : is always 0")
         return 0
       }
@@ -70,6 +71,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
       case e: Exception =>
         {
         }
+        // println("Exception found, so , Bucket : 0")
         return 0
     }
   }
@@ -166,7 +168,7 @@ object SimpleKafkaProducer {
                 val topicIdx = (totalParts / topicpartitions)
                 val partIdx = (totalParts % topicpartitions)
                 val sendmsg = if (msg.size == 0) ln else (msg + "," + ln)
-                send(producer, topics(topicIdx), sendmsg, partIdx.toString)
+                send(producer, topics(topicIdx), sendmsg, key)
                 st.totalRead += ln.size
                 st.totalSent += sendmsg.size
               }
@@ -362,7 +364,7 @@ object SimpleKafkaProducer {
     val topicIdx = (totalParts / topicpartitions)
     val partIdx = (totalParts % topicpartitions)
     val sendmsg = if (msg.size == 0) doc else (msg + "," + doc)
-    send(producer, topics(topicIdx), sendmsg, partIdx.toString)
+    send(producer, topics(topicIdx), sendmsg, key)
     st.totalRead += doc.size
     st.totalSent += sendmsg.size
   }

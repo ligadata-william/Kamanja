@@ -62,8 +62,8 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= {
-  val sprayVersion = "1.2-RC4"
-  val akkaVersion = "2.2.3"
+  val sprayVersion = "1.3.1"
+  val akkaVersion = "2.3.2"
   Seq(
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
@@ -72,8 +72,6 @@ libraryDependencies ++= {
   "io.spray" %%  "spray-json" % "1.2.5",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
-  "ch.qos.logback" % "logback-classic" % "1.0.12",
-  "org.scalatest" %% "scalatest" % "2.0.M7" % "test"
+  "ch.qos.logback" % "logback-classic" % "1.0.12"
   )
 }
