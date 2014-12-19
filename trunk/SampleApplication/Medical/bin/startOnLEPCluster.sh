@@ -30,14 +30,14 @@ fi
 
 currDirPath=`pwd`
 currDir=`echo $currDirPath | sed 's/.*\/\(.*\)/\1/g'`
-if [ "$currDir" != "trunk" ]; then
-    echo "Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
-    echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
-    echo "currDir = $currDir"
-    echo "usage:"
-    echo "  $0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
-    exit 1
-fi
+#if [ "$currDir" != "trunk" ]; then
+#    echo "Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
+#    echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
+#    echo "currDir = $currDir"
+#    echo "usage:"
+#    echo "  $0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+#    exit 1
+#fi
 
 # 1) determine which machines and installation directories are to get the build from the metadata and OnLEP config
 # A number of files are produced, all in the working dir. For cluster start only the quartet file is used
