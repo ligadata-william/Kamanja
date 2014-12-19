@@ -36,11 +36,7 @@ object APIInit {
     configFile = cfgFile
   }
 
-  def Init : Unit = {
-    try{
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
-      databaseOpen = true
-
+  def InitLeaderLatch: Unit = {
       // start Leader detection component
       val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
       val zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("API_LEADER_SELECTION_ZK_NODE")  + "/metadataleader"
@@ -49,6 +45,17 @@ object APIInit {
       val conTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_CONNECTION_TIMEOUT_MS").toInt
 
       MetadataAPIServiceLeader.Init(nodeId,zkConnStr,zkNode,sesTimeOut,conTimeOut)
+  }
+
+  def Init : Unit = {
+    try{
+      // Open db connection
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      databaseOpen = true
+
+      // start Leader detection component
+      logger.trace("Initialize Leader Latch")
+      InitLeaderLatch
     } catch {
       case e: Exception => {
 	e.printStackTrace()
