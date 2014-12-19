@@ -75,6 +75,6 @@ lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLa
 
 lazy val JsonDataGen = project.in(file("Utils/JsonDataGen"))
 
-lazy val InstallScript  = project.in(file("SampleApplication/Medical/InstallScript")) dependsOn(MetadataAPI)
+lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI)
 
 

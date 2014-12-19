@@ -2,9 +2,18 @@
 
 # clusterInstallOnLEP.sh
 #
-#	run this script from the trunk directory that contains the release source:
+#	Run this script from the trunk directory that contains the release source:
 
-#	example: clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
+#	Examples: 
+#       clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
+#       clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#
+#   In the first example, a cluster configuration is presumably presented in the NodeConfigPath file (i.e, the cluster decl
+#   is new).  In the second example, the cluster config info is retrieved from the metadata store.
+#
+#   If a cluster config is not present there when no NodeConfigPath argument is presented, an exception is thrown.  In fact
+#   if the cluster map returned by the metadata api is empty, one is thrown in any case.  The other reason is that the 
+#   engine cluster config is messed up in the NodeConfigPath file supplied.
 #
 
 name1=$1
@@ -12,18 +21,31 @@ val1=$2
 name2=$3
 val2=$4
 
-if [ "$#" -lt 4 ]; then
-	echo "Insufficient arguments"
-	echo "usage:"
-	echo "	$0 --MetadataAPIConfig  <metadataAPICfgPath> --NodeConfigPath <onlepCfgPath> "
-	exit 1
+if [[ "$#" -eq 2 || "$#" -eq 4 ]]; then
+    echo 
+else 
+    echo "Incorrect number of arguments"
+    echo "usage:"
+    echo "  $0 --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+    exit 1
 fi
 
 if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--NodeConfigPath" ]]; then
 	echo "Bad arguments"
 	echo "usage:"
-	echo "	$0  --MetadataAPIConfig  <metadataAPICfgPath> --NodeConfigPath <onlepCfgPath> "
+	echo "	$0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
 	exit 1
+fi
+
+currDirPath=`pwd`
+currDir=`echo $currDirPath | sed 's/.*\/\(.*\)/\1/g'`
+if [ "$currDir" != "trunk" ]; then
+    echo "Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
+    echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
+    echo "currDir = $currDir"
+    echo "usage:"
+    echo "  $0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+    exit 1
 fi
 
 
@@ -43,9 +65,17 @@ installOnLEP_Medical.sh "$stagingDir" `pwd`
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
+
+trunkDir=`pwd`
+nodeInfoExtractDir="$trunkDir/Utils/NodeInfoExtract/target/scala-2.10"
 echo "...extract node information for the cluster to be installed from the Metadata and OnLEP config supplied"
-echo "...Command = nodeInfoExtract.sh $name1 \"$val1\" $name2 \"$val2\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
-nodeInfoExtract.sh "$name1" "$val1" "$name2" "$val2" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" 
+if  [ "$#" -eq 4 ]; then
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 $name1 \"$val1\" $name2 \"$val2\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
+    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 "$name1" "$val1" "$name2" "$val2" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"
+else # -eq 2 
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 $name1 \"$val1\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
+        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 "$name1" "$val1" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"
+fi
 
 # 3) compress staging dir and tar it
 dtPrefix="OnLEP`date +"%Y%b%d"`"

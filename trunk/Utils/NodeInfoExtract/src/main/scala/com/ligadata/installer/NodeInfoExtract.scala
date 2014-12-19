@@ -8,23 +8,40 @@ import com.ligadata.olep.metadata._
 
 class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String) {
 
-	MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
-
+	//MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
+	MetadataAPIImpl.InitMdMgr(metadataAPIConfig)
+	
 	/** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
 	var metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
 	var metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
 	var metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
 	
-	val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString)
+	
 	//println(result)
 	
 	def MetadataStoreType : String = metadataStoreType
 	def MetadataSchemaName : String = metadataSchemaName
 	def MetadataLocation : String = metadataLocation
 	
+	/** 
+	 *  Optionally called when an EngineConfig file with cluster decl in it is supplied as an argument, this
+	 *  command updates the metadata referred to by the metadataapiconfig properties file. 
+	 */
+	def initializeEngineConfig : Unit = {
+		if (nodeConfigPath != null) {
+			val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString)
+			//println(result)
+		} else {
+			throw new RuntimeException("initializeEngineConfig erroneously called... logic error ")
+		}
+	}
+	
 	def extract : (Array[String], Array[(String,String,String)],Array[(String,String)]) = {
 		val nodeInfos : Map[String,NodeInfo] = MdMgr.GetMdMgr.Nodes
-		
+		val ok : Boolean = (nodeInfos != null && nodeInfos.size > 0)
+		if (! ok) {
+			throw new RuntimeException("There are no known nodes in the Metadata... consider using --NodeConfigPath option or choose different MetadataAPI config. ")
+		}
 		/** 
 		 	Since nodes can exist on the same machine, and use the same directory for all node implementations,
 		 	some work must be done to create a concise set of node/install directory pairs... 
@@ -102,9 +119,8 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
         val workDir = if (options.contains('workDir)) options.apply('workDir) else null
         val ipIdCfgTargPathQuartetFileName = if (options.contains('ipIdCfgTargPathQuartetFileName)) options.apply('ipIdCfgTargPathQuartetFileName) else null
         
-
         val reasonableArguments : Boolean = (metadataAPIConfig != null && metadataAPIConfig.size > 0 
-            							&& nodeConfigPath != null && nodeConfigPath.size > 0 
+            							//&& nodeConfigPath != null && nodeConfigPath.size > 0 /** it doesn't have to be present , but if there is used */
             							&& ipFileName != null && ipFileName.size > 0 
             							&& ipPathPairFileName != null && ipPathPairFileName.size > 0 
             							&& workDir != null && workDir.size > 0 
@@ -113,10 +129,13 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
         if (! reasonableArguments) {
             println("Your arguments are not satisfactory...Usage:")
             println(usage)
-            sys.exit(1)
+            throw new RuntimeException("Your arguments are not satisfactory")
         }
                     
    		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath)
+   		if (nodeConfigPath != null) {
+   			extractor.initializeEngineConfig
+   		}
    		val (ips, ipIdTargPaths, ipPathPairs) : (Array[String], Array[(String,String,String)], Array[(String,String)]) = extractor.extract 
 		
 	    writeFileIps(s"$workDir/$ipFileName", ips)
