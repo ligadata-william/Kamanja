@@ -82,8 +82,9 @@ class APIService {
       }
 
       APIInit.SetConfigFile(configFile.toString)
+      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
+      logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
-      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)      
       // Identify the host and port the service is listening on
       val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_HOST")
       val servicePort = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_PORT").toInt
@@ -91,8 +92,8 @@ class APIService {
       // create and start our service actor
       val callbackActor = actor(new Act {
 	become {
-	  case b @ Bound(connection) => log.info(b.toString)
-	  case cf @ CommandFailed(command) => log.error(cf.toString)
+	  case b @ Bound(connection) => logger.info(b.toString)
+	  case cf @ CommandFailed(command) => logger.error(cf.toString)
 	  case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
 	}
       })
