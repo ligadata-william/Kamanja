@@ -256,7 +256,7 @@ object OnLEPLeader {
             allPartitionUniqueRecordKeys.foreach(k => {
               val fnd = foundKeysInValidation.getOrElse(k._2.toLowerCase, null)
               val startTxnId = if (fnd != null) (fnd._4 + 10) else (nextTxnIdCntrIdx * txnIdCntrPerPartition)
-              if (fnd != null)
+              if (fnd == null)
                 nextTxnIdCntrIdx += 1
               val af = tmpDistMap(cntr % totalParticipents)._2.getOrElse(k._1, null)
               if (af == null) {
