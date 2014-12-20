@@ -16,8 +16,6 @@ OnLEP simplifies the complexity of PMML development, and provides layering of al
 
 ###Use Cases
 
-Financial
 OnLEP is helping one financial partner reduce overnight global system transaction analysis from over 10 minutes to under 5, resulting in millions saved each period. 
 
-Medical
 Medical applications are using OnLEP to create a system that analyzes physician notes, test results and patient input to identify certain combinations of information that may alert health care practitioners to new or changed conditions.
