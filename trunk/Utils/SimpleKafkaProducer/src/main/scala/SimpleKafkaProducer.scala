@@ -87,7 +87,7 @@ object SimpleKafkaProducer {
     var totalRead: Long = 0;
     var totalSent: Long = 0
   }
-
+  val CSV_KEY_FOR_PARTITION_INDEX = "csvkey"
   val keyHasher = KeyHasher.byName("fnv1a-32")
   val clientId: String = "Client1"
 
@@ -115,34 +115,66 @@ object SimpleKafkaProducer {
     }
   }
 
+
   /**
-   * ProcessGZipFile  - read messages from a GZ file and insert them into the specified Kafka queue
-   * @param producer
-   * @param topics
-   * @param threadId
-   * @param sFileName
-   * @param msg
-   * @param sleeptm
-   * @param partitionkeyidxs
-   * @param st
-   * @param ignorelines
-   * @param topicpartitions
+   * ProcessFile - Process a file specified by the below parameters
+   * @param producer - Producer[AnyRef, AnyRef]
+   * @param topics - Array[String]
+   * @param threadId - Int
+   * @param sFileName - String
+   * @param msg -String
+   * @param sleeptm - Int
+   * @param partitionkeyidxs Any
+   * @param st - Stats
+   * @param ignorelines - Int
+   * @param format - String
+   * @param isGzip Boolean
+   * @param topicpartitions Int
+   * @param isVerbose Boolean
    */
-  def ProcessGZipFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats, ignorelines: Int, topicpartitions: Int, format: String): Unit = {
-    val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
+  def ProcessFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Any, st: Stats, ignorelines: Int, format: String, isGzip: Boolean, topicpartitions: Int, isVerbose: Boolean): Unit = {
+
+    var bis: InputStream = null
+
+    // If from the Gzip, wrap around a GZIPInput Stream, else... use the ByteArrayInputStream
+    if(isGzip) {
+      bis = new GZIPInputStream(new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName))))
+    } else {
+      bis = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
+    }
+
+    try {
+      if (format.equalsIgnoreCase("json")) {
+        processJsonFile(producer, topics, threadId, sFileName, msg, sleeptm, partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[String]]], st, topicpartitions, bis, isVerbose)
+      } else if (format.equalsIgnoreCase("csv")) {
+        processCSVFile(producer, topics, threadId, sFileName, msg, sleeptm, partitionkeyidxs.asInstanceOf[Array[Int]], st, ignorelines, topicpartitions, bis, isVerbose)
+      }else {
+        throw new Exception("Only following formats are supported: CSV,JSON")
+      }
+    } catch {
+      case e: Exception => {println("Error reading from a file " + e.printStackTrace())}
+    } finally {
+      if (bis != null) bis.close
+    }
+  }
+
+
+  /*
+* processCSVFile - dealing with CSV File
+ */
+  private def processCSVFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: Array[Int], st: Stats, ignorelines: Int, topicpartitions: Int, bis: InputStream, isVerbose: Boolean): Unit = {
     var len = 0
     var readlen = 0
     var totalLen: Int = 0
     var locallinecntr: Int = 0
     val maxlen = 1024 * 1024
     val buffer = new Array[Byte](maxlen)
-    val gzis = new GZIPInputStream(bis)
     var tm = System.nanoTime
     val extractKey: ExtractKey = new ExtractKey
     var ignoredlines = 0
     var curTime = System.currentTimeMillis
     do {
-      readlen = gzis.read(buffer, len, maxlen - 1 - len)
+      readlen = bis.read(buffer, len, maxlen - 1 - len)
       if (readlen > 0) {
         totalLen += readlen
         len += readlen
@@ -168,6 +200,7 @@ object SimpleKafkaProducer {
                 val topicIdx = (totalParts / topicpartitions)
                 val partIdx = (totalParts % topicpartitions)
                 val sendmsg = if (msg.size == 0) ln else (msg + "," + ln)
+                printline(key+"."+hashCode+"."+totalParts+":  "+sendmsg,isVerbose)
                 send(producer, topics(topicIdx), sendmsg, key)
                 st.totalRead += ln.size
                 st.totalSent += sendmsg.size
@@ -206,6 +239,7 @@ object SimpleKafkaProducer {
       val defPartKey = st.totalLines.toString
       val key = extractKey.get(ln, partitionkeyidxs, defPartKey, ".")
       val sendmsg = if (msg.size == 0) ln else (msg + "," + ln)
+      printline(key+":  "+sendmsg,isVerbose)
       send(producer, topics((st.totalLines % topics.size).toInt), sendmsg, key)
       st.totalRead += ln.size
       st.totalSent += sendmsg.size
@@ -214,49 +248,14 @@ object SimpleKafkaProducer {
 
     val curTm = System.nanoTime
     println("Tid:%2d, Time:%10dms, Lines:%8d, Read:%15d, Sent:%15d, Last, file:%s".format(threadId, curTm / 1000000, st.totalLines, st.totalRead, st.totalSent, sFileName))
-    // ProducerSimpleStats.setKey(threadId, "Tid:%2d, Lines:%8d, Read:%15d, Sent:%15d".format(threadId, st.totalLines, st.totalRead, st.totalSent))
-    gzis.close();
   }
 
   /**
-   * ProcessTextFile - read messages out of the file and publish them into the Kafka queues
-   * @param producer: Producer[AnyRef, AnyRef]
-   * @param topics: topics: Array[String]
-   * @param threadId: Int
-   * @param sFileName: String
-   * @param msg: String
-   * @param sleeptm: Int
-   * @param partitionkeyidxs scala.collection.mutable.Map[String,List[Any]] - depends on the format... For JSON, this should have a List[String] as a second parm
-   * @param st
-   * @param format: String - Format of the data, supported: ("json")
-   * @param topicpartitions
+   * processJsonFile - dealing with Json File full of individual json documents... parse individual Json documents from it and insert them individually
+   *                   the JSON format will be enforced by the json parser. The outer most curly parents are used to determine where the document
+   *                   begin and end.
    */
-  def ProcessTextFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs: scala.collection.mutable.Map[String,List[Any]], st: Stats, format: String, topicpartitions: Int): Unit = {
-
-    val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
-
-    try {
-      if (format.equalsIgnoreCase("json")) {
-        processJsonFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[String]]],st,topicpartitions,bis)
-      } else if (format.equalsIgnoreCase("csv")) {
-        processCSVFile(producer,topics,threadId,sFileName,msg,sleeptm,partitionkeyidxs.asInstanceOf[scala.collection.mutable.Map[String,List[Int]]],st,topicpartitions,bis)
-      }else {
-        throw new Exception("Only following formats are supported: JSON.")
-      }
-    } catch {
-      case e: Exception => {println("Error reading from a file " + e.printStackTrace())}
-    } finally {
-      if (bis != null) bis.close
-    }
-  }
-
-  /**
-   * processJsonFile - dealing with Json File... parse individual Json documents from it and insert them individually
-   */
-  private def processJsonFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int, bis: InputStream): Unit ={
-    // Handle Json
-    // Gotta have the entire file here, for now try to stream json
-   // val bis: InputStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(sFileName)))
+  private def processJsonFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int, bis: InputStream, isVerbose: Boolean): Unit ={
     var readlen = 0
     val len = 0
     val maxlen = 1024 * 1024
@@ -289,7 +288,7 @@ object SimpleKafkaProducer {
             cp = curr
 
             val jsonDoc = buffer.slice(op,cp+1).map(byte => byte.toChar).mkString
-            processJsonDoc(jsonDoc, producer: Producer[AnyRef, AnyRef], topics, threadId, msg, sleeptm, partitionkeyidxs, st, topicpartitions)
+            processJsonDoc(jsonDoc, producer: Producer[AnyRef, AnyRef], topics, threadId, msg, sleeptm, partitionkeyidxs, st, topicpartitions,isVerbose)
           }
         }
         curr = curr + 1
@@ -312,16 +311,12 @@ object SimpleKafkaProducer {
   }
 
   /*
-* processCSVFile - dealing with CSV File
- */
-  private def processCSVFile(producer: Producer[AnyRef, AnyRef], topics: Array[String], threadId: Int, sFileName: String, msg: String, sleeptm: Int, partitionkeyidxs:scala.collection.mutable.Map[String,List[Int]], st: Stats, topicpartitions: Int, bis: InputStream): Unit = {
-    throw new Exception ("CSV Format is not yet supported on the plain text format.  It is only available in a .GZ format")
-  }
-
-  /* processJsonDoc - add an individual json doc to whatever queue is specified here.  */
+  * processJsonDoc - add an individual json doc to whatever queue is specified here.
+  */
   private def processJsonDoc(doc: String, producer: Producer[AnyRef, AnyRef],
                              topics: Array[String], threadId: Int, msg: String, sleeptm: Int,
-                             partitionkeyidxs: scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int): Unit = {
+                             partitionkeyidxs: scala.collection.mutable.Map[String,List[String]], st: Stats, topicpartitions: Int,
+                             isVerbose:Boolean): Unit = {
 
     val extractKey: ExtractKey = new ExtractKey
     var jsonPartitionKeyidxs: List[String] = List[String]()
@@ -338,8 +333,13 @@ object SimpleKafkaProducer {
       println (doc)
       return
     }
-    val msgType = msgTypeIter.next
-    val msgBody = jsonMsg.getOrElse(msgType,null).asInstanceOf[Map[String,Any]]
+    var msgType: String = null
+    var msgBody: Map[String, Any] = null
+
+    while (msgBody == null && msgTypeIter.hasNext) {
+      msgType = msgTypeIter.next
+      msgBody = jsonMsg.getOrElse(msgType, null).asInstanceOf[Map[String, Any]]
+    }
 
     if (msgBody == null) {
       println ("Empty Body for a message- missing message type for the follwoing docuemnt:")
@@ -364,6 +364,7 @@ object SimpleKafkaProducer {
     val topicIdx = (totalParts / topicpartitions)
     val partIdx = (totalParts % topicpartitions)
     val sendmsg = if (msg.size == 0) doc else (msg + "," + doc)
+    printline(key+"."+hashCode+"."+totalParts+":  "+sendmsg,isVerbose)
     send(producer, topics(topicIdx), sendmsg, key)
     st.totalRead += doc.size
     st.totalSent += sendmsg.size
@@ -409,6 +410,8 @@ object SimpleKafkaProducer {
         nextOption(map ++ Map('topicpartitions -> value), tail)
       case "--brokerlist" :: value :: tail =>
         nextOption(map ++ Map('brokerlist -> value), tail)
+      case "--verbose" :: value :: tail =>
+        nextOption(map ++ Map('verbose -> value), tail)
       case option :: tail => {
         println("Unknown option " + option)
         sys.exit(1)
@@ -416,11 +419,21 @@ object SimpleKafkaProducer {
     }
   }
 
+  /*
+  * Print stats
+   */
   private def statsPrintFn: Unit = {
     val CurTime = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis))
     println("Stats @" + CurTime + "\n\t" + ProducerSimpleStats.getDispString("\n\t") + "\n")
   }
 
+  /*
+  * Just a local debug method
+   */
+  private def printline(inString: String, isVerbose: Boolean): Unit = {
+    if (!isVerbose) return
+    println(inString)
+  }
 
   /**
    * Entry point for this tool
@@ -481,8 +494,11 @@ object SimpleKafkaProducer {
 
     val format = options.getOrElse('format,"").toString
 
-    var validJsonMap = scala.collection.mutable.Map[String,List[String]]()
-    var partitionkeyidxs: Array[Int] = null
+    val validJsonMap = scala.collection.mutable.Map[String,List[String]]()
+   // var partitionkeyidxsTemp: Array[Int] = null
+    var partitionkeyidxs: Any = null
+
+    // If this is a JSON path, then the partitionkeyidx is in the format Array["Type:key1~key2~...."]
     if (format.equalsIgnoreCase("json")) {
       val msgTypeKeys = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").filter(part => part.size > 0)
 
@@ -494,9 +510,14 @@ object SimpleKafkaProducer {
         })
         validJsonMap(keyStructure(0)) = keyList
       })
+      partitionkeyidxs = validJsonMap
     } else {
+      // This is the CSV path, partitionkeyidx is in the Array[Int] format
+      // If this is old path... keep as before for now....
       partitionkeyidxs = options.getOrElse('partitionkeyidxs, "").toString.replace("\"", "").trim.split(",").map(part => part.trim).filter(part => part.size > 0).map(part => part.toInt)
     }
+
+    val isVerbose = options.getOrElse('verbose, "false").toString
 
     val props = new Properties()
     props.put("compression.codec", codec.toString)
@@ -544,16 +565,16 @@ object SimpleKafkaProducer {
           executor.execute(new Runnable() {
             val threadNo = idx
             val flNames = fls.toArray
+            var isGzip: Boolean = false
             override def run() {
               val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props))
               var tm: Long = 0
               val st: Stats = new Stats
               flNames.foreach(fl => {
                 if (gz.trim.compareToIgnoreCase("true") == 0) {
-                  tm = tm + elapsed(ProcessGZipFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, topicpartitions, format))
-                } else {
-                  tm = tm + elapsed(ProcessTextFile(producer, topics, threadNo, fl, msg, sleeptm, validJsonMap.asInstanceOf[scala.collection.mutable.Map[String,List[Any]]], st, format, topicpartitions))
+                  isGzip = true
                 }
+                tm = tm + elapsed(ProcessFile(producer, topics, threadNo, fl, msg, sleeptm, partitionkeyidxs, st, ignorelines, format, isGzip, topicpartitions, isVerbose.equalsIgnoreCase("true")))
                 println("%02d. File:%s ElapsedTime:%.02fms".format(threadNo, fl, tm / 1000000.0))
               })
               producer.close
