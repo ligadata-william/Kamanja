@@ -23,6 +23,44 @@ object KafkaSimpleConsumer extends InputAdapterObj {
   val FETCHSIZE = 64 * 1024
   val ZOOKEEPER_CONNECTION_TIMEOUT_MS = 3000
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaSimpleConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
+
+  /**
+   *  convert the ip:port string into the structure that we can use.
+   */
+  private def convertIp(inString: String): (String, Boolean, String, Int) =  {
+    val brokerName = inString.split(":")
+    var isLocalHost: Boolean = false
+
+    if (brokerName(0).equalsIgnoreCase("localhost")) {
+      brokerName(0) = getLocalHostIP
+      isLocalHost = true
+    }
+    val brokerId = brokerName(0) + ":" + brokerName(1)
+    return (brokerId,isLocalHost,brokerName(0),brokerName(1).toInt)
+  }
+
+  /*
+  * Get the ip of the local host
+   */
+  private def getLocalHostIP(): String = {
+    return InetAddress.getLocalHost().getHostAddress()
+  }
+
+  /*
+  * Used to see if the LOCALHOST at the time of this specific method invocation is different that it was prior.  LOCALHOST
+  * IP address can actually change, and the each Read Thread Consumer is tied to a physical IP address and needs to be
+  * refreshed.
+   */
+  private def didIpChange(current: String, past: String ): Boolean = {
+    val brokerName = current.split(":")
+    if (brokerName(0).equalsIgnoreCase("localhost")) {
+      brokerName(0) =  getLocalHostIP()
+      if (!past.equalsIgnoreCase(brokerName(0))) {
+        return true
+      }
+    }
+    return false
+  }
 }
 
 class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
@@ -37,7 +75,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   LOG.info("KAFKA ADAPTER: allocating kafka adapter for " + qc.hosts.size + " broker hosts")
 
   private var numberOfErrors: Int = _
-  private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService = _
   private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
   private var clientName: String = _
@@ -125,6 +162,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
     kvs.foreach(kvsElement => {
       readExecutor.execute(new Runnable() {
         override def run() {
+          var replicaBrokers: Set[String] = Set()
+          var isLocalHost = false
+          var localHostResolvedAddress = ""
           val partitionId = kvsElement._1
           val partition = kvsElement._2
 
@@ -148,7 +188,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           uniqueKey.PartitionId = partitionId
 
           // Figure out which of the hosts is the leader for the given partition
-          val leadBroker: String = getKafkaConfigId(findLeader(qc.hosts, partitionId))
+          val leadBrokerMeta = findLeader(qc.hosts, partitionId)
+          replicaBrokers = leadBrokerMeta._2
+          isLocalHost = leadBrokerMeta._3
+          var leadBroker: String = getKafkaConfigId(leadBrokerMeta._1)
+          val brokerId = KafkaSimpleConsumer.convertIp(leadBroker)
+          localHostResolvedAddress = brokerId._3
 
           // Start processing from either a beginning or a number specified by the OnLEPMananger
           readOffset = getKeyValueForPartition(leadBroker, partitionId, kafka.api.OffsetRequest.EarliestTime)
@@ -164,11 +209,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
 
           LOG.info("KAFKA-ADAPTER: Initializing new reader thread for partition {" + partitionId + "} starting at offset " + readOffset + " on server - " + leadBroker)
 
-          // If we are forced to retry in case of a failure, get the new Leader.
-          //val consumer = brokerConfiguration(leadBroker)
-          val brokerId = convertIp(leadBroker)
-          val brokerName = brokerId.split(":")
-          val consumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt,
+          // Create a new consumer object for this read thread.
+          var consumer = new SimpleConsumer(brokerId._3, brokerId._4,
                                             KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
                                             KafkaSimpleConsumer.FETCHSIZE,
                                             KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
@@ -180,25 +222,54 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             // Call the broker and get a response.
             val readTmNs = System.nanoTime
             val readTmMs = System.currentTimeMillis
+
+            // Call the Kafka server...
             val fetchResp = consumer.fetch(fetchReq)
 
-            // Check for errors
+            // Check for errors -
+            //  if too many occured.. bail.  otherwise, check to see if LocalHost changed under us and try reading again.
+            //  if that was not the issue, then we'll fall into a path to find a new leader and try reading again.
+            //  eventually, we'll run out of replic server and bail from this READER loop.
             if (fetchResp.hasError) {
-              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " +
-                fetchResp.errorCode(qc.topic, partitionId))
-              numberOfErrors = numberOfErrors + 1
+              LOG.error("KAFKA-ADAPTER: Error occured reading from " + leadBroker + " " + ", error code is " + fetchResp.errorCode(qc.topic, partitionId))
 
-              if (numberOfErrors > KafkaSimpleConsumer.MAX_FAILURES) {
-                LOG.error("KAFKA-ADAPTER: Too many failures reading from kafka adapters.")
-                if (consumer != null) {
-                  consumer.close
+              // for now we dont have scenarios when we expect an error on the FETCH call that do not require rebuilding of the consumer object...
+              if (consumer != null) consumer.close
+
+              // A weird scenario here.  A LOCALHOST/Or another alias ip udress can technically change from under us...  This not really an
+              // error that Kafka can tell us via a bad Reason Code, so we check here that its not the case.
+              // NOTE: we dont worry about a port number change here, since that would need to be done explicitely.
+              if (isLocalHost && KafkaSimpleConsumer.didIpChange(leadBroker, localHostResolvedAddress)) {
+                val newip = KafkaSimpleConsumer.getLocalHostIP
+                val curBrokerInfo = leadBroker.split(":")
+                localHostResolvedAddress = newip
+                consumer = new SimpleConsumer(newip, curBrokerInfo(1).toInt,
+                                              KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                              KafkaSimpleConsumer.FETCHSIZE,
+                                              KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+              } else {
+                val newLeaderMeta = findNewLeader(leadBroker, partitionId, replicaBrokers)
+                replicaBrokers = newLeaderMeta._2
+                isLocalHost = newLeaderMeta._3
+                leadBroker = getKafkaConfigId(newLeaderMeta._1)
+
+                // if we reach the end of the road here, return.
+                if (leadBroker.equalsIgnoreCase("")) {
+                  return
                 }
-                return
+                val brokerId = KafkaSimpleConsumer.convertIp(leadBroker)
+                localHostResolvedAddress = brokerId._3
+                consumer = new SimpleConsumer(brokerId._3, brokerId._4,
+                                              KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                              KafkaSimpleConsumer.FETCHSIZE,
+                                              KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
               }
             }
 
             val ignoreTillOffset = if (ignoreFirstMsg) partition._2.Offset else partition._2.Offset - 1
-            // Successfuly read from the Kafka Adapter - Process messages
+
+            // Successfuly read from the Kafka Adapter - Process messages.  If an error occured, then this loop will not get
+            // executed and we will try to read again.
             fetchResp.messageSet(qc.topic, partitionId).foreach(msgBuffer => {
               val bufferPayload = msgBuffer.message.payload
               val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
@@ -346,58 +417,70 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   /**
    *  Find a leader of for this topic for a given partition.
    */
-  private def findLeader(brokers: Array[String], inPartition: Int): kafka.api.PartitionMetadata = lock.synchronized {
+  private def findLeader(brokers: Array[String], inPartition: Int): (kafka.api.PartitionMetadata, Set[String], Boolean) = lock.synchronized {
     var leaderMetadata: kafka.api.PartitionMetadata = null
+    var isLocalHost: Boolean = false
+    var replicaBrokers: Set[String] = Set()
 
     LOG.info("KAFKA-ADAPTER: Looking for Kafka Topic Leader for partition " + inPartition)
-    try {
-      breakable {
-        brokers.foreach(broker => {
-          // Create a connection to this broker to obtain the metadata for this broker.
-          val brokerName = broker.split(":")
-          val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-            KafkaSimpleConsumer.FETCHSIZE, KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
-          val topics: Array[String] = Array(qc.topic)
-          val llReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
+    breakable {
+      try {
+          brokers.foreach(broker => {
+            // Create a connection to this broker to obtain the metadata for this broker.
+            //val brokerName = broker.split(":")
+            isLocalHost = false
+            val brokerStructure = KafkaSimpleConsumer.convertIp(broker)
+            if (brokerStructure._2) {
+              isLocalHost = true
+            }
+            val llConsumer = new SimpleConsumer(brokerStructure._3, brokerStructure._4,
+                                                KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                KafkaSimpleConsumer.FETCHSIZE,
+                                                KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+            val topics: Array[String] = Array(qc.topic)
+            val llReq = new TopicMetadataRequest(topics, KafkaSimpleConsumer.METADATA_REQUEST_CORR_ID)
 
-          // get the metadata on the llConsumer
-          try {
-            val llResp: kafka.api.TopicMetadataResponse = llConsumer.send(llReq)
-            val metaData = llResp.topicsMetadata
+            // get the metadata on the llConsumer
+            try {
+              val llResp: kafka.api.TopicMetadataResponse = llConsumer.send(llReq)
+              val metaData = llResp.topicsMetadata
 
-            // look at each piece of metadata, and analyze its partitions
-            metaData.foreach(metaDatum => {
-              val partitionMetadata = metaDatum.partitionsMetadata
-              partitionMetadata.foreach(partitionMetadatum => {
-                // If we found the partitionmetadatum for the desired partition then this must be the leader.
-                if (partitionMetadatum.partitionId == inPartition) {
-                  // Create a list of replicas to be used in case of a fetch failure here.
-                  replicaBrokers.empty
-                  partitionMetadatum.replicas.foreach(replica => {
-                    replicaBrokers = replicaBrokers + (replica.host)
-                  })
-                  leaderMetadata = partitionMetadatum
-                }
+              // look at each piece of metadata, and analyze its partitions
+              metaData.foreach(metaDatum => {
+                val partitionMetadata = metaDatum.partitionsMetadata
+                partitionMetadata.foreach(partitionMetadatum => {
+                  // If we found the partitionmetadatum for the desired partition then this must be the leader.
+                  if (partitionMetadatum.partitionId == inPartition) {
+                    // Create a list of replicas to be used in case of a fetch failure here.
+                    partitionMetadatum.replicas.foreach(replica => {
+                      replicaBrokers = replicaBrokers + (replica.host)
+                    })
+                    leaderMetadata = partitionMetadatum
+                    break
+                  }
+                })
               })
-            })
-          } catch {
-            case e: Exception => { LOG.info("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + e.printStackTrace()) }
-          } finally {
-            if (llConsumer != null) llConsumer.close()
-          }
-        })
+            } catch {
+              case e: Exception => {
+                LOG.info("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + e.printStackTrace())
+              }
+            } finally {
+              if (llConsumer != null) llConsumer.close()
+            }
+          })
+      } catch {
+        case e: Exception => {
+          LOG.error("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition)
+        }
       }
-
-    } catch {
-      case e: Exception => { LOG.info("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition) }
     }
-    return leaderMetadata;
+    return (leaderMetadata,replicaBrokers,isLocalHost);
   }
 
   /*
 * getKeyValues - get the values from the OffsetMetadata call and combine them into an array
  */
-  private def getKeyValues(time: Long): Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
+  private def getKeyValues(timeFrame: Long): Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = {
     var infoList = List[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]()
     // Always get the complete list of partitions for this.
     val kafkaKnownParitions = GetAllPartitionUniqueRecordKey
@@ -405,7 +488,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
 
     // Now that we know for sure we have a partition list.. process them
     partitionList.foreach(partitionId => {
-      val offset = getKeyValueForPartition(getKafkaConfigId(findLeader(qc.hosts, partitionId)), partitionId, time)
+      val offset = getKeyValueForPartition(getKafkaConfigId(findLeader(qc.hosts, partitionId)._1), partitionId, timeFrame)
       val rKey = new KafkaPartitionUniqueRecordKey
       val rValue = new KafkaPartitionUniqueRecordValue
       rKey.PartitionId = partitionId
@@ -457,15 +540,15 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   /**
    *  Previous request failed, need to find a new leader
    */
-  private def findNewLeader(oldBroker: String, partitionId: Int): kafka.api.PartitionMetadata = {
+  private def findNewLeader(oldBroker: String, partitionId: Int, replicaBrokers: Set[String]): (kafka.api.PartitionMetadata, Set[String], Boolean)= {
     // There are moving parts in Kafka under the failure condtions, we may not have an immediately availabe new
     // leader, so lets try 3 times to get the new leader before bailing
     for (i <- 0 until 3) {
       try {
         val leaderMetaData = findLeader(replicaBrokers.toArray[String], partitionId)
         // Either new metadata leader is not available or the the new broker has not been updated in kafka
-        if (leaderMetaData == null || leaderMetaData.leader == null ||
-          (leaderMetaData.leader.get.host.equalsIgnoreCase(oldBroker) && i == 0)) {
+        if (leaderMetaData == null || leaderMetaData._1.leader == null ||
+          (leaderMetaData._1.leader.get.host.equalsIgnoreCase(oldBroker) && i == 0)) {
           Thread.sleep(KafkaSimpleConsumer.SLEEP_DURATION)
         } else {
           return leaderMetaData
@@ -562,22 +645,13 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
   }
 
   /**
-   *  Convert the "localhost:XXXX" into an actual IP address.
-   */
-  private def convertIp(inString: String): String = {
-    val brokerName = inString.split(":")
-    if (brokerName(0).equalsIgnoreCase("localhost")) {
-      brokerName(0) = InetAddress.getLocalHost().getHostAddress()
-    }
-    val brokerId = brokerName(0) + ":" + brokerName(1)
-    brokerId
-  }
-
-  /**
    * combine the ip address and port number into a Kafka Configuratio ID
    */
   private def getKafkaConfigId(metadata: kafka.api.PartitionMetadata): String = {
-    return metadata.leader.get.host + ":" + metadata.leader.get.port;
+    if(metadata != null)
+      return metadata.leader.get.host + ":" + metadata.leader.get.port;
+    else
+      return "";
   }
 
   /**
