@@ -372,6 +372,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    * @return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
    */
   override def getAllPartitionBeginValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+    LOG.info("KAFKA-ADAPTER: Calling to find out BEGIN OFFSETs")
     return getKeyValues(kafka.api.OffsetRequest.EarliestTime)
   }
 
@@ -381,6 +382,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
    * @return Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)]
    */
   override def getAllPartitionEndValues: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue)] = lock.synchronized {
+    LOG.info("KAFKA-ADAPTER: Calling to find out END OFFSETs")
     return getKeyValues(kafka.api.OffsetRequest.LatestTime)
   }
 
@@ -422,7 +424,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
     var isLocalHost: Boolean = false
     var replicaBrokers: Set[String] = Set()
 
-    LOG.info("KAFKA-ADAPTER: Looking for Kafka Topic Leader for partition " + inPartition)
+    LOG.info("KAFKA-ADAPTER: Looking for Kafka Topic Leader for topic " + qc.topic+ " for partition " + inPartition)
     breakable {
       try {
           brokers.foreach(broker => {
@@ -443,7 +445,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             // get the metadata on the llConsumer
             try {
               val llResp: kafka.api.TopicMetadataResponse = llConsumer.send(llReq)
+
               val metaData = llResp.topicsMetadata
+
+              if (metaData.size == 0) {
+                LOG.error("KAFKA-METADATA: No metadata back from TOPIC MeataDataRequest.")
+              }
 
               // look at each piece of metadata, and analyze its partitions
               metaData.foreach(metaDatum => {
@@ -508,10 +515,12 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
     var llConsumer: kafka.javaapi.consumer.SimpleConsumer = null
     val brokerName = leadBroker.split(":")
     try {
+
+      LOG.info("KAFKA-ADAPTER: Querying Kafka for the offset of partition "+ partitionId + " on " + leadBroker)
       llConsumer = new kafka.javaapi.consumer.SimpleConsumer(brokerName(0), brokerName(1).toInt,
-        KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
-        KafkaSimpleConsumer.FETCHSIZE,
-        KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
+                                                             KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
+                                                             KafkaSimpleConsumer.FETCHSIZE,
+                                                             KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
 
       // Set up the request object
       val jtap: kafka.common.TopicAndPartition = kafka.common.TopicAndPartition(qc.topic.toString, partitionId)
