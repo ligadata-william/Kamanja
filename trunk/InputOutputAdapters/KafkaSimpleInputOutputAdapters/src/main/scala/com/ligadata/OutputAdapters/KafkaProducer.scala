@@ -49,10 +49,15 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
 
   val producer = new Producer[AnyRef, AnyRef](new ProducerConfig(props)) // Not closing this producer at this moment
 
+  LOG.info("KAFKA-PRODUCER: Created producer for topic: " + qc.topic)
+  qc.hosts.foreach(host => {LOG.info("KAFKA-PRODUCER: " + host)})
+
   override def send(message: String, partKey: String): Unit = send(message.getBytes("UTF8"), partKey.getBytes("UTF8"))
 
   override def send(message: Array[Byte], partKey: Array[Byte]): Unit = {
     try {
+
+      LOG.info("KAFKA-PRODUCER: Sending message " + new String(message))
       producer.send(new KeyedMessage(qc.topic, partKey, message))
       val key = Category + "/" + qc.Name + "/evtCnt"
       cntrAdapter.addCntr(key, 1) // for now adding each row
