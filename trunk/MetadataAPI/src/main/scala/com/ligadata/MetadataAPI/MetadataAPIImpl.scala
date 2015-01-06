@@ -4496,12 +4496,12 @@ object MetadataAPIImpl extends MetadataAPI {
         } else if (key.equalsIgnoreCase("ZK_CONNECTION_TIMEOUT_MS")) {
           zk_connection_timeout_ms = value
           logger.trace("ZK_CONNECTION_TIMEOUT_MS => " + zk_connection_timeout_ms)
-        } else if (key.equalsIgnoreCase("CONFIG_FILES_DIR")) {
+        } else if (key.equalsIgnoreCase("MODEL_FILES_DIR")) {
           model_files_dir = value
-          logger.trace("CONFIG_FILES_DIR => " + config_files_dir)
+          logger.trace("MODEL_FILES_DIR => " + model_files_dir)
         } else if (key.equalsIgnoreCase("CONFIG_FILES_DIR")) {
           config_files_dir = value
-          logger.trace("MODEL_FILES_DIR => " + model_files_dir)
+          logger.trace("CONFIG_FILES_DIR => " + config_files_dir)
         } else if (key.equalsIgnoreCase("MESSAGE_FILES_DIR")) {
           message_files_dir = value
           logger.trace("MESSAGE_FILES_DIR => " + message_files_dir)
