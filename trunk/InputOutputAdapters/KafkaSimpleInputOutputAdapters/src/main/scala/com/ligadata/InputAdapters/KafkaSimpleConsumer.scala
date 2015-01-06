@@ -75,14 +75,16 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
     // Check to see if this already started
     if (startTime > 0) {
       LOG.error("KAFKA-ADAPTER: already started, or in the process of shutting down")
+      return
     }
-    startTime = System.nanoTime
-    LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: " + qc.topic)
 
     if (partitionIds == null || partitionIds.size == 0) {
       LOG.error("KAFKA-ADAPTER: Cannot process the kafka queue request, invalid parameters - number")
       return
     }
+
+    startTime = System.nanoTime
+    LOG.info("KAFKA-ADAPTER: Starting to read Kafka queues for topic: " + qc.topic)
 
     // Get the data about the request and set the instancePartition list.
     val partitionInfo = partitionIds.map(quad => {
@@ -354,7 +356,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       breakable {
         brokers.foreach(broker => {
           // Create a connection to this broker to obtain the metadata for this broker.
-          val brokerName = broker.split(":")
+          val brokerName = convertIp(broker).split(":")
           val llConsumer = new SimpleConsumer(brokerName(0), brokerName(1).toInt, KafkaSimpleConsumer.ZOOKEEPER_CONNECTION_TIMEOUT_MS,
             KafkaSimpleConsumer.FETCHSIZE, KafkaSimpleConsumer.METADATA_REQUEST_TYPE)
           val topics: Array[String] = Array(qc.topic)
