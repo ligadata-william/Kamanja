@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <title>Powered by ligaDATA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400, 100, 300, 500, 700, 900" rel="stylesheet"
+          type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,400italic" rel="stylesheet"
+          type="text/css">
+
+    <!--bootstrap-->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <!-- glyphicons -->
+    <!--<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css" rel="stylesheet">-->
+    <!-- Optional theme -->
+    <!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">-->
+
+    <!--<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.1/readable/bootstrap.min.css">-->
+
+    <!--bootstrap-flat-->
+    <link href="_css/bootstrap-flat/css/bootstrap-flat.min.css" rel="stylesheet"/>
+    <link href="_css/bootstrap-flat/css/bootstrap-flat-extras.min.css" rel="stylesheet"/>
+
+    <!--font-awesome-->
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- CSS code from Bootply.com editor -->
+
+    <style type="text/css">
+        .modal-footer {
+            border-top: 0px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+    </style>
+
+    <!--main-->
+    <link rel="stylesheet" href="_css/styles.css">
+
+    <link rel="shortcut icon" href="_images/favicon.ico">
+
+</head>
+
+<!-- HTML code from Bootply.com editor -->
+
+<body>
+
+<div class="loader">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<!--login modal-->
+<div id="loginModal" class="modal show" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>-->
+                <!--<h1 class="text-center">Login</h1>-->
+
+                <div class="">
+                    <img alt="barclays" src="./_images/barclays.gif"/>
+                </div>
+
+            </div>
+            <div class="modal-body">
+                <form class="form col-md-12 center-block">
+                    <div class="form-group">
+                        <input id="email" type="text" class="form-control input-lg" value="nick@barclays.com"
+                               placeholder="Username" autofocus required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <input id="password" type="password" class="form-control input-lg" value=""
+                               placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-info btn-lg btn-block  btn-striped" type="submit" value="Submit"
+                                onclick=" ">Sign In
+                        </button>
+                        <!--<span class="pull-right"><a href="#">Register</a></span><span><a href="#">Need help?</a></span>-->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="alert alert-dismissable alert-danger" style="display: none">
+                            <!--<button type="button" class="close" data-dismiss="alert">×</button>-->
+                            <strong>Login failed!</strong> <span>The email or password you entered is incorrect.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--jquery-->
+<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+
+<!--bootstrap-->
+<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<!--spin-->
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/spin.js/2.0.0/spin.min.js"></script>
+<script type="text/javascript"
+        src="//cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.66.0-2013.10.09/jquery.blockUI.min.js"></script>
+
+<script type='text/javascript'>
+
+    $(document).ready(function () {
+
+        localStorage.clear();
+    });
+
+    $(function () {
+
+        $('.btn-block').bind('click', function (event) {
+
+            $('.alert-danger').hide();
+
+            _showLoading();
+
+            if (document.getElementById('email').validity.valid && document.getElementById('password').validity.valid) {
+
+                event.preventDefault();
+
+                var userName = $('#email').val();
+                var password = $('#password').val();
+
+                if (userName == "nick@barclays.com" && password == "ligaDATA123") {
+
+                    $(window.location).attr('href', './landing.html');
+                } else {
+
+                    onError();
+                }
+
+            } else {
+
+                _hideLoading();
+//                onError();
+            }
+        });
+
+    });
+
+    function onError() {
+
+        $('.alert-danger').show();
+
+        _hideLoading();
+    }
+
+    function onSuccess() {
+
+        _hideLoading();
+    }
+
+    var target = document.getElementById('loginModal');
+    var spinner;
+
+    function _showLoading() {
+
+        $('#loginModal').block({
+            message: null,
+            showOverlay: true,
+            overlayCSS: {
+                //backgroundColor: '#7A848E',
+                opacity: 0
+                //cursor: 'default'
+            }
+        });
+
+        $('.loader').show();
+        // color: '#dae838'
+
+        var opts = {
+            lines: 25, // The number of lines to draw
+            length: 0, // The length of each line
+            width: 9, // The line thickness
+            radius: 47, // The radius of the inner circle
+            corners: 1, // Corner roundness (0..1)
+            rotate: 24, // The rotation offset
+            direction: 1, // 1: clockwise, -1: counterclockwise
+            color: '#F7901E', // #rgb or #rrggbb or array of colors
+            speed: 1.3, // Rounds per second
+            trail: 100, // Afterglow percentage
+            shadow: false, // Whether to render a shadow
+            hwaccel: true, // Whether to use hardware acceleration
+            className: 'spinner', // The CSS class to assign to the spinner
+            zIndex: 2e9, // The z-index (defaults to 2000000000)
+            top: '50%', // Top position relative to parent
+            left: '50%' // Left position relative to parent
+        };
+
+        //spinner = new Spinner(opts).spin(target);
+    }
+
+    function _hideLoading() {
+
+        $('#loginModal').unblock();
+
+        $('.loader').hide();
+        //spinner.stop();
+    }
+</script>
+
+</body>
+
+</html>

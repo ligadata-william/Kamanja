@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<config>
+	
+	<zk_connection>192.168.200.140:2182</zk_connection>
+	<alerts_queue_topic>test</alerts_queue_topic>
+	<status_queue_topic>status</status_queue_topic>
+	<alerts_queue_threads_number>1</alerts_queue_threads_number>
+	<status_queue_threads_number>1</status_queue_threads_number>
+	<queue_consumer_group_id>ligadata</queue_consumer_group_id>
+	<alerts_agg_task_period_millies>200</alerts_agg_task_period_millies>
+	
+</config>
