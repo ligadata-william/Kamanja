@@ -625,8 +625,15 @@ object NodePrinterHelpers extends LogTrait {
 		val descriptionTxt : Option[String] = ctx.pmmlTerms.apply("Description")
 		val modelName : Option[String] = ctx.pmmlTerms.apply("ModelName")
 		
+		val nmspc : String = "System" /** only System namespace possible at the moment */
+		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "0000"
+		}
+		  
 		val clientName : String = ctx.ClientName
-		val modelPkg = s"com.$clientName.pmml"
+		val modelPkg = s"com.$clientName.${nmspc}_${classname}_$versionNo.pmml"
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 		commentBuffer.append(s"package $modelPkg\n\n")
 
@@ -769,17 +776,17 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		val verNoStr : String = "_" + versionNo.toString
 		
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		val nmspc : String = "System" /** only System namespace possible at the moment */
 		if (ctx.injectLogging) {
-			objBuffer.append(s"object $nmspc$classname$verNoStr extends ModelBaseObj with LogTrait {\n") 
+			objBuffer.append(s"object ${nmspc}_$classname$verNoStr extends ModelBaseObj with LogTrait {\n") 
 		} else {
-			objBuffer.append(s"object $nmspc$classname$verNoStr extends ModelBaseObj {\n") 
+			objBuffer.append(s"object ${nmspc}_$classname$verNoStr extends ModelBaseObj {\n") 
 		}
 		
 		/** generate static variables */
 		val somePkg : Option[String] = ctx.pmmlTerms.apply("ModelPackageName")
 		val modelName = somePkg match {
-		  case Some(somePkg) => s"${'"'}$somePkg.$nmspc$classname$verNoStr${'"'}"
+		  case Some(somePkg) => s"${'"'}$nmspc.$classname${'"'}"
 		  case _ => "None"
 		}
 
@@ -826,7 +833,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		objBuffer.append(s"    def CreateNewModel(tempTransId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
 		objBuffer.append(s"    {\n") 
-		objBuffer.append(s"           new $nmspc$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
+		objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
 		objBuffer.append(s"    }\n") 	
 		objBuffer.append(s"\n")
 
