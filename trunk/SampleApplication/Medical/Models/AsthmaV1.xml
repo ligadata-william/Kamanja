@@ -105,19 +105,23 @@ AsthmaPMML.xml
 
 		<!-- union of Inpatient where either claims with Icd9_Dgns_Cds and/or 
 			Admtng_Icd9_Dgns_Cd contain asthma codes .. A Set -->
-		<DerivedField name="AllInPatientDiagnoses" dataType="SetOfInpatientClaim" optype="categorical">
-			<Apply function="Union">
-	       		<FieldRef field="InClaimIcd9DgnsFilter"/>
-	       		<FieldRef field="InClaimAdmitDgnsFilter"/>
+		<DerivedField name="AllInPatientDiagnoses" dataType="ArrayOfInpatientClaim" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="Union">
+		       		<FieldRef field="InClaimIcd9DgnsFilter"/>
+		       		<FieldRef field="InClaimAdmitDgnsFilter"/>
+				</Apply>
 			</Apply>
 		</DerivedField>
 	
 		<!-- union of outpatient where either claims with Icd9_Dgns_Cds and/or 
 			Admtng_Icd9_Dgns_Cd contain asthma codes -->
-		<DerivedField name="AllOutPatientDiagnoses" dataType="SetOfOutpatientClaim" optype="categorical">
-			<Apply function="Union">
-	       		<FieldRef field="OutClaimIcd9DgnsFilter"/>
-	       		<FieldRef field="OutClaimAdmitDgnsFilter"/>
+		<DerivedField name="AllOutPatientDiagnoses" dataType="ArrayOfOutpatientClaim" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="Union">
+		       		<FieldRef field="OutClaimIcd9DgnsFilter"/>
+		       		<FieldRef field="OutClaimAdmitDgnsFilter"/>
+				</Apply>
 			</Apply>
 		</DerivedField>
 	
