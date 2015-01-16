@@ -1798,7 +1798,10 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   def Sum(exprs: Array[Double]): Double = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Float]): Float = {
