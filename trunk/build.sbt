@@ -77,4 +77,6 @@ lazy val JsonDataGen = project.in(file("Utils/JsonDataGen"))
 
 lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI)
 
+lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters)
+
 

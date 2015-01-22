@@ -11,6 +11,8 @@ import scala.collection.mutable.ArrayBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
+import java.io.{ File }
+
 case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
 case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
 case class EnvCtxtJsonStr(classname: String, jarname: String, dependencyjars: Option[List[String]])
@@ -116,6 +118,86 @@ object OnLEPMdCfg {
     OnLEPConfiguration.zkConnectionTimeoutMs = if (OnLEPConfiguration.zkConnectionTimeoutMs <= 0) 30000 else OnLEPConfiguration.zkConnectionTimeoutMs
 
     return true
+  }
+
+  // Each jar should be fully qualified path (physical path)
+  def CheckForNonExistanceJars(allJarsToBeValidated: Set[String]): Set[String] = {
+    val nonExistsJars = scala.collection.mutable.Set[String]();
+    allJarsToBeValidated.foreach(j => {
+      val fl = new File(j)
+      if (fl.exists == false || fl.canRead == false || fl.isFile == false) {
+        nonExistsJars += j
+      }
+      // else Valid file
+    })
+    nonExistsJars.toSet
+  }
+
+  def ValidateAllRequiredJars: Boolean = {
+    val allJarsToBeValidated = scala.collection.mutable.Set[String]();
+
+    // EnvContext Jars
+    val cluster = mdMgr.ClusterCfgs.getOrElse(OnLEPConfiguration.clusterId, null)
+    if (cluster == null) {
+      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(OnLEPConfiguration.nodeId, OnLEPConfiguration.clusterId))
+      return false
+    }
+
+    val envCtxtStr = cluster.cfgMap.getOrElse("EnvironmentContext", null)
+    if (envCtxtStr == null) {
+      LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(OnLEPConfiguration.nodeId, OnLEPConfiguration.clusterId))
+      return false
+    }
+
+    implicit val jsonFormats: Formats = DefaultFormats
+    val evnCtxtJson = parse(envCtxtStr).extract[EnvCtxtJsonStr]
+
+    val jarName = evnCtxtJson.jarname.replace("\"", "").trim
+    val dependencyJars = if (evnCtxtJson.dependencyjars == None || evnCtxtJson.dependencyjars == null) null else evnCtxtJson.dependencyjars.get.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
+    var allJars: collection.immutable.Set[String] = null
+
+    if (dependencyJars != null && jarName != null) {
+      allJars = dependencyJars + jarName
+    } else if (dependencyJars != null) {
+      allJars = dependencyJars
+    } else if (jarName != null) {
+      allJars = collection.immutable.Set(jarName)
+    }
+
+    if (allJars != null) {
+      allJarsToBeValidated ++= allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j))
+    }
+
+    // All Adapters
+    val allAdapters = mdMgr.Adapters
+
+    allAdapters.foreach(a => {
+      if ((a._2.TypeString.compareToIgnoreCase("Input") == 0) ||
+        (a._2.TypeString.compareToIgnoreCase("Validate") == 0) ||
+        (a._2.TypeString.compareToIgnoreCase("Output") == 0) ||
+        (a._2.TypeString.compareToIgnoreCase("Status") == 0)) {
+        val jar = a._2.JarName
+        val depJars = if (a._2.DependencyJars != null) a._2.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
+
+        if (jar != null && jar.size > 0) {
+          allJarsToBeValidated += OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, jar)
+        }
+        if (depJars != null && depJars.size > 0) {
+          allJarsToBeValidated ++= depJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j))
+        }
+      } else {
+        LOG.error("Found unhandled adapter type %s for adapter %s".format(a._2.TypeString, a._2.Name))
+        return false
+      }
+    })
+
+    val nonExistsJars = CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    if (nonExistsJars.size > 0) {
+      LOG.error("Not found jars in EnvContext and/or Adapters Jars List : {" + nonExistsJars.mkString(", ") + "}")
+      return false
+    }
+
+    true
   }
 
   def LoadEnvCtxt(loaderInfo: OnLEPLoaderInfo): EnvContext = {
