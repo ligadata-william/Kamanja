@@ -855,10 +855,31 @@ object MetadataAPIImpl extends MetadataAPI {
         var value = GetJarAsArrayOfBytes(jarName)
         logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
         SaveObject(key, value, jarStore)
+        var apiResult = new ApiResult(-1, "Uploaded Jar successfully:", jarName)
+        apiResult.toString()
+
       }
     } catch {
       case e: Exception => {
-        throw new InternalErrorException("Failed to Upload a Jar " + jarName + ":" + e.getMessage())
+        var apiResult = new ApiResult(-1, "Failed to Upload the Jar:" + e.getMessage(), jarName)
+        apiResult.toString()
+      }
+    }
+  }
+
+
+  def UploadJarToDB(jarName:String,byteArray: Array[Byte]) {
+    try {
+        var key = jarName
+        var value = byteArray
+        logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
+        SaveObject(key, value, jarStore)
+        var apiResult = new ApiResult(-1, "Uploaded Jar successfully:", jarName)
+        apiResult.toString()
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to Upload the Jar:" + e.getMessage(), jarName)
+        apiResult.toString()
       }
     }
   }
@@ -1554,6 +1575,29 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def RemoveConcept(nameSpace:String, name:String, version:Int): String = {
+    try {
+      val c = MdMgr.GetMdMgr.Attribute(nameSpace,name,version, true)
+      c match {
+        case None =>
+          None
+          logger.trace("No concepts found ")
+          var apiResult = new ApiResult(-1, "Failed to Remove concepts", "No Concepts Available")
+          apiResult.toString()
+        case Some(cs) =>
+          val concept = cs.asInstanceOf[AttributeDef]
+          DeleteObject(concept)
+          var apiResult = new ApiResult(0, "Successfully Removed concepts", JsonSerializer.SerializeObjectToJson(concept))
+          apiResult.toString()
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to Remove the concept:", e.toString)
+        apiResult.toString()
+      }
+    }
+  }
+
   def AddFunction(functionDef: FunctionDef): String = {
     try {
       val key = functionDef.FullNameWithVer
@@ -1959,6 +2003,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def AddMessage(messageText: String): String = {
+    AddMessage(messageText,"JSON")
+  }
+
   def AddContainer(containerText: String, format: String): String = {
     try {
       var compProxy = new CompilerProxy
@@ -2000,6 +2048,11 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+
+  def AddContainer(containerText: String): String = {
+    AddContainer(containerText,"JSON")
+  }
+
 
   def UpdateMessage(messageText: String, format: String): String = {
     try {
@@ -2056,6 +2109,14 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateContainer(messageText: String, format: String): String = {
     UpdateMessage(messageText,format)
+  }
+
+  def UpdateContainer(messageText: String): String = {
+    UpdateMessage(messageText,"JSON")
+  }
+
+  def UpdateMessage(messageText: String): String = {
+    UpdateMessage(messageText,"JSON")
   }
 
   // Remove container with Container Name and Version Number
@@ -2611,10 +2672,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetAllMessagesFromCache: Array[String] = {
+  def GetAllMessagesFromCache(active: Boolean): Array[String] = {
     var messageList: Array[String] = new Array[String](0)
     try {
-      val msgDefs = MdMgr.GetMdMgr.Messages(true, true)
+      val msgDefs = MdMgr.GetMdMgr.Messages(active, true)
       msgDefs match {
         case None =>
           None
@@ -2637,10 +2698,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetAllContainersFromCache: Array[String] = {
+  def GetAllContainersFromCache(active: Boolean): Array[String] = {
     var containerList: Array[String] = new Array[String](0)
     try {
-      val contDefs = MdMgr.GetMdMgr.Containers(true, true)
+      val contDefs = MdMgr.GetMdMgr.Containers(active, true)
       contDefs match {
         case None =>
           None
@@ -2659,6 +2720,86 @@ object MetadataAPIImpl extends MetadataAPI {
       case e: Exception => {
         e.printStackTrace()
         throw new UnexpectedMetadataAPIException("Failed to fetch all the containers:" + e.toString)
+      }
+    }
+  }
+
+
+  def GetAllFunctionsFromCache(active: Boolean): Array[String] = {
+    var functionList: Array[String] = new Array[String](0)
+    try {
+      val contDefs = MdMgr.GetMdMgr.Functions(active, true)
+      contDefs match {
+        case None =>
+          None
+          logger.trace("No Functions found ")
+          functionList
+        case Some(ms) =>
+          val msa = ms.toArray
+          val contCount = msa.length
+          functionList = new Array[String](contCount)
+          for (i <- 0 to contCount - 1) {
+            functionList(i) = msa(i).FullNameWithVer
+          }
+          functionList
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the functions:" + e.toString)
+      }
+    }
+  }
+
+
+  def GetAllConceptsFromCache(active: Boolean): Array[String] = {
+    var conceptList: Array[String] = new Array[String](0)
+    try {
+      val contDefs = MdMgr.GetMdMgr.Attributes(active, true)
+      contDefs match {
+        case None =>
+          None
+          logger.trace("No Concepts found ")
+          conceptList
+        case Some(ms) =>
+          val msa = ms.toArray
+          val contCount = msa.length
+          conceptList = new Array[String](contCount)
+          for (i <- 0 to contCount - 1) {
+            conceptList(i) = msa(i).FullNameWithVer
+          }
+          conceptList
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the concepts:" + e.toString)
+      }
+    }
+  }
+
+  def GetAllTypesFromCache(active: Boolean): Array[String] = {
+    var typeList: Array[String] = new Array[String](0)
+    try {
+      val contDefs = MdMgr.GetMdMgr.Types(active, true)
+      contDefs match {
+        case None =>
+          None
+          logger.trace("No Types found ")
+          typeList
+        case Some(ms) =>
+          val msa = ms.toArray
+          val contCount = msa.length
+          typeList = new Array[String](contCount)
+          for (i <- 0 to contCount - 1) {
+            typeList(i) = msa(i).FullNameWithVer
+          }
+          typeList
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the types:" + e.toString)
       }
     }
   }
@@ -2713,6 +2854,11 @@ object MetadataAPIImpl extends MetadataAPI {
         apiResult.toString()
       }
     }
+  }
+
+  // Specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
+  def GetModelDef(nameSpace: String, objectName: String, formatType:String, version: String): String = {
+    GetModelDefFromCache(nameSpace,objectName,formatType,version)
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
@@ -3021,7 +3167,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
-  def GetModelDef(nameSpace: String, objectName: String, formatType: String, version: String): String = {
+  def GetModelDefFromDB(nameSpace: String, objectName: String, formatType: String, version: String): String = {
     try {
       var key = "ModelDef" + "." + nameSpace + '.' + objectName + "." + version
       var obj = GetObject(key.toLowerCase, modelStore)
@@ -3636,6 +3782,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version:String): String = {
+    GetFunctionDef(nameSpace,objectName,formatType)
+  }
+
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
   def GetFunctionDef(objectName: String, formatType: String): String = {
     val nameSpace = MdMgr.sysNS
@@ -3667,9 +3817,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // A single concept as a string using name and version as the key
-  def GetConcept(objectName: String, version: String, formatType: String): String = {
+  def GetConcept(nameSpace:String, objectName: String, version: String, formatType: String): String = {
     try {
-      val concept = MdMgr.GetMdMgr.Attribute(MdMgr.sysNS, objectName, version.toInt, false)
+      val concept = MdMgr.GetMdMgr.Attribute(nameSpace, objectName, version.toInt, false)
       concept match {
         case None =>
           None
@@ -3687,6 +3837,16 @@ object MetadataAPIImpl extends MetadataAPI {
         apiResult.toString()
       }
     }
+  }
+
+  // A single concept as a string using name and version as the key
+  def GetConcept(objectName: String, version: String, formatType: String): String = {
+    GetConcept(MdMgr.sysNS,objectName,version,formatType)
+  }
+
+  // A single concept as a string using name and version as the key
+  def GetConceptDef(nameSpace:String, objectName: String, formatType: String,version: String): String = {
+    GetConcept(nameSpace,objectName,version,formatType)
   }
 
   // A list of concept(s) as a string using name 
@@ -3855,6 +4015,29 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetType(objectName: String, formatType: String): String = {
     try {
       val typeDefs = MdMgr.GetMdMgr.Types(MdMgr.sysNS, objectName, false, false)
+      typeDefs match {
+        case None =>
+          None
+          logger.trace("No typeDefs found ")
+          var apiResult = new ApiResult(-1, "Failed to Fetch typeDefs", "No Types Available")
+          apiResult.toString()
+        case Some(ts) =>
+          val tsa = ts.toArray
+          logger.trace("Found " + tsa.length + " types ")
+          var apiResult = new ApiResult(0, "Successfully Fetched all typeDefs", JsonSerializer.SerializeObjectListToJson("Types", tsa))
+          apiResult.toString()
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to fetch all the typeDefs:", e.getMessage())
+        apiResult.toString()
+      }
+    }
+  }
+
+  def GetTypeDef(nameSpace: String, objectName: String, formatType: String,version: String): String = {
+    try {
+      val typeDefs = MdMgr.GetMdMgr.Types(nameSpace, objectName,false,false)
       typeDefs match {
         case None =>
           None

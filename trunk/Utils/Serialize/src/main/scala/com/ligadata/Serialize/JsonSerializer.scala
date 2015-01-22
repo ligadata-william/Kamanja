@@ -37,7 +37,7 @@ case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: S
 case class ModelDefinition(Model: ModelInfo)
 
 case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZooKeeperConnectString: String)
-case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
+case class MetadataApiConfig(ApiConfigParameters: ParameterMap)
 
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
 case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
@@ -51,6 +51,10 @@ case class JClusterCfg(DataStore: String,StatusInfo: String, ZooKeeperInfo: Stri
 case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
 case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
+
+case class MetadataApiArg(ObjectType:String,NameSpace:String,Name:String,Version:String,FormatType:String)
+case class MetadataApiArgList(ArgList : List[MetadataApiArg])
+
 
 case class UnsupportedObjectException(e: String) extends Exception(e)
 case class Json4sSerializationException(e: String) extends Exception(e)
@@ -66,11 +70,12 @@ case class MessageDefParsingException(e: String) extends Exception(e)
 case class ContainerDefParsingException(e: String) extends Exception(e)
 case class ModelDefParsingException(e: String) extends Exception(e)
 case class ApiResultParsingException(e: String) extends Exception(e)
-case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
+case class UnexpectedMetadataApiException(e: String) extends Exception(e)
 case class ObjectNotFoundException(e: String) extends Exception(e)
 case class CreateStoreFailedException(e: String) extends Exception(e)
 case class ZkTransactionParsingException(e: String) extends Exception(e)
 case class EngineConfigParsingException(e: String) extends Exception(e)
+case class ApiArgListParsingException(e: String) extends Exception(e)
 
 // The implementation class
 object JsonSerializer {
@@ -596,6 +601,28 @@ object JsonSerializer {
       case e:Exception => {
 	e.printStackTrace()
 	throw new EngineConfigParsingException(e.getMessage())
+      }
+    }
+  }
+
+  @throws(classOf[Json4sParsingException])
+  @throws(classOf[ApiArgListParsingException])
+  def parseApiArgList(apiArgListJson:String) : MetadataApiArgList = {
+    try{
+      implicit val jsonFormats: Formats = DefaultFormats
+      val json = parse(apiArgListJson)
+      logger.trace("Parsed the json : " + apiArgListJson)
+
+      val cfg = json.extract[MetadataApiArgList]
+      cfg
+    } catch {
+      case e:MappingException =>{
+	e.printStackTrace()
+	throw Json4sParsingException(e.getMessage())
+      }
+      case e:Exception => {
+	e.printStackTrace()
+	throw new ApiArgListParsingException(e.getMessage())
       }
     }
   }
@@ -1321,4 +1348,25 @@ object JsonSerializer {
     json 
   }
 
+
+  def SerializeApiArgListToJson(o: MetadataApiArgList): String = {
+    try{
+      val json = ("ArgList" ->  o.ArgList.map{ n => 
+		    (
+		      ("ObjectType"      -> n.ObjectType) ~
+		      ("NameSpace"       -> n.NameSpace) ~
+		      ("Name"            -> n.Name) ~
+		      ("Version"         -> n.Version) ~
+		      ("FormatType"      -> n.FormatType) 
+		    )
+		  }
+		)
+      pretty(render(json))
+    } catch {
+      case e:Exception =>{
+	e.printStackTrace()
+	throw Json4sSerializationException(e.getMessage())
+      }
+    }
+  }
 }
