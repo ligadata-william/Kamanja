@@ -337,7 +337,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -386,7 +386,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val contKeys = MetadataAPIImpl.GetAllContainersFromCache
+      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
       if( contKeys.length == 0 ){
 	println("Sorry, No containers available in the Metadata")
@@ -455,7 +455,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.GetModelDef(modNameSpace,modName,"JSON",modVersion)
+      val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace,modName,"JSON",modVersion)
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
@@ -556,7 +556,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val contKeys = MetadataAPIImpl.GetAllContainersFromCache
+      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
       if( contKeys.length == 0 ){
 	println("Sorry, No containers available in the Metadata")
@@ -597,7 +597,7 @@ object TestMetadataAPI{
     try{
       logger.setLevel(Level.TRACE);
 
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -835,7 +835,7 @@ object TestMetadataAPI{
   def GetAllMessagesFromCache{
     try{
       logger.setLevel(Level.TRACE);
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages are available in the Metadata")
 	return
@@ -853,7 +853,7 @@ object TestMetadataAPI{
   def GetAllContainersFromCache{
     try{
       logger.setLevel(Level.TRACE);
-      val msgKeys = MetadataAPIImpl.GetAllContainersFromCache
+      val msgKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No containers are available in the Metadata")
 	return
