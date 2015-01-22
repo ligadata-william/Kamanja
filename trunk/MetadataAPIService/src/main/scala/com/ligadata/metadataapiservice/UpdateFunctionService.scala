@@ -9,29 +9,29 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
-object UpdateModelService {
-  case class Process(pmmlStr:String)
+object UpdateFunctionService {
+  case class Process(functionJson:String)
 }
 
-class UpdateModelService(requestContext: RequestContext) extends Actor {
+class UpdateFunctionService(requestContext: RequestContext) extends Actor {
 
-  import UpdateModelService._
+  import UpdateFunctionService._
   
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
   
   def receive = {
-    case Process(pmmlStr) =>
-      process(pmmlStr)
+    case Process(functionJson) =>
+      process(functionJson)
       context.stop(self)
   }
   
-  def process(pmmlStr:String) = {
+  def process(functionJson:String) = {
     
-    log.info("Requesting UpdateModel {}",pmmlStr)
+    log.info("Requesting UpdateFunction {}",functionJson)
     
-    val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
+    val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON")
     
     requestContext.complete(apiResult)
   }
