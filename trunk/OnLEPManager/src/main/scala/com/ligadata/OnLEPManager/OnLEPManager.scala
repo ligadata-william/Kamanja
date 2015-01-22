@@ -180,8 +180,16 @@ class OnLEPManager {
 
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
-      if (jars.length > 0)
-        return ManagerUtils.LoadJars(jars, metadataLoader.loadedJars, metadataLoader.loader)
+      if (jars.length > 0) {
+        val qualJars = jars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j))
+        val nonExistsJars = OnLEPMdCfg.CheckForNonExistanceJars(qualJars.toSet)
+        if (nonExistsJars.size > 0) {
+          LOG.error("Not found jars in given Dynamic Jars List : {" + nonExistsJars.mkString(", ") + "}")
+          return false
+        }
+        return ManagerUtils.LoadJars(qualJars.toArray, metadataLoader.loadedJars, metadataLoader.loader)
+
+      }
     }
 
     true
@@ -279,6 +287,8 @@ class OnLEPManager {
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
       }
+
+      OnLEPMdCfg.ValidateAllRequiredJars
 
       OnLEPMetadata.envCtxt = OnLEPMdCfg.LoadEnvCtxt(metadataLoader)
       if (OnLEPMetadata.envCtxt == null)

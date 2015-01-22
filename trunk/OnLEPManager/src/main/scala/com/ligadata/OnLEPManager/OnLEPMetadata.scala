@@ -34,6 +34,37 @@ class OnLEPMetadata {
   val containerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   val modelObjects = new HashMap[String, MdlInfo]
 
+  def ValidateAllRequiredJars(tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
+    tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Boolean = {
+    val allJarsToBeValidated = scala.collection.mutable.Set[String]();
+
+    if (tmpMsgDefs != None) { // Not found any messages
+      tmpMsgDefs.get.foreach(elem => {
+        allJarsToBeValidated ++= GetAllJarsFromElem(elem)
+      })
+    }
+
+    if (tmpContainerDefs != None) { // Not found any messages
+      tmpContainerDefs.get.foreach(elem => {
+        allJarsToBeValidated ++= GetAllJarsFromElem(elem)
+      })
+    }
+
+    if (tmpModelDefs != None) { // Not found any messages
+      tmpModelDefs.get.foreach(elem => {
+        allJarsToBeValidated ++= GetAllJarsFromElem(elem)
+      })
+    }
+
+    val nonExistsJars = OnLEPMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    if (nonExistsJars.size > 0) {
+      LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
+      return false
+    }
+
+    true
+  }
+
   def LoadMdMgrElems(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror,
     tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
     tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
@@ -225,8 +256,7 @@ class OnLEPMetadata {
     }
   }
 
-  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
-    var retVal: Boolean = true
+  def GetAllJarsFromElem(elem: BaseElem): Set[String] = {
     var allJars: Array[String] = null
 
     val jarname = if (elem.JarName == null) "" else elem.JarName.trim
@@ -238,10 +268,19 @@ class OnLEPMetadata {
     } else if (jarname.size > 0) {
       allJars = Array(jarname)
     } else {
-      return retVal
+      return Set[String]()
     }
 
-    return ManagerUtils.LoadJars(allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)), loadedJars, loader)
+    return allJars.map(j => OnLEPConfiguration.GetValidJarFile(OnLEPConfiguration.jarPaths, j)).toSet
+  }
+
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
+    val allJars = GetAllJarsFromElem(elem)
+    if (allJars.size > 0) {
+      return ManagerUtils.LoadJars(allJars.toArray, loadedJars, loader)
+    } else {
+      return true
+    }
   }
 
   private def GetChildsFromEntity(entity: EntityType, childs: ArrayBuffer[(String, String)]): Unit = {
@@ -432,7 +471,7 @@ object OnLEPMetadata {
   def InitBootstrap: Unit = {
     MetadataAPIImpl.InitMdMgrFromBootStrap(OnLEPConfiguration.configFile)
   }
-  
+
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: OnLEPClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
     /*
     if (OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| OnLEPConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
@@ -505,6 +544,69 @@ object OnLEPMetadata {
     val removedMessages = new ArrayBuffer[(String, String, Int)]
     val removedContainers = new ArrayBuffer[(String, String, Int)]
 
+    //// Check for Jars -- Begin
+    val allJarsToBeValidated = scala.collection.mutable.Set[String]();
+
+    zkTransaction.Notifications.foreach(zkMessage => {
+      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      zkMessage.ObjectType match {
+        case "ModelDef" => {
+          zkMessage.Operation match {
+            case "Add" => {
+              try {
+                val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                if (mdl != None) {
+                  allJarsToBeValidated ++= obj.GetAllJarsFromElem(mdl.get)
+                }
+              } catch {
+                case e: Exception => {}
+              }
+            }
+            case _ => {}
+          }
+        }
+        case "MessageDef" => {
+          zkMessage.Operation match {
+            case "Add" => {
+              try {
+                val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                if (msg != None) {
+                  allJarsToBeValidated ++= obj.GetAllJarsFromElem(msg.get)
+                }
+              } catch {
+                case e: Exception => {}
+              }
+            }
+            case _ => {}
+          }
+        }
+        case "ContainerDef" => {
+          zkMessage.Operation match {
+            case "Add" => {
+              try {
+                val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                if (container != None) {
+                  allJarsToBeValidated ++= obj.GetAllJarsFromElem(container.get)
+                }
+              } catch {
+                case e: Exception => {}
+              }
+            }
+            case _ => {}
+          }
+        }
+        case _ => {}
+      }
+    })
+
+    val nonExistsJars = OnLEPMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    if (nonExistsJars.size > 0) {
+      LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
+      // return
+    }
+    
+    //// Check for Jars -- End
+
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
       zkMessage.ObjectType match {
@@ -534,7 +636,7 @@ object OnLEPMetadata {
               }
             }
             case _ => {
-              logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+              LOG.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
             }
           }
         }
@@ -564,7 +666,7 @@ object OnLEPMetadata {
               }
             }
             case _ => {
-              logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+              LOG.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
             }
           }
         }
@@ -594,12 +696,12 @@ object OnLEPMetadata {
               }
             }
             case _ => {
-              logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
+              LOG.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
             }
           }
         }
         case _ => {
-          logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
+          LOG.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
         }
       }
     })
