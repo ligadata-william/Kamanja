@@ -3,36 +3,39 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
+
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
+
 import scala.util.{ Success, Failure }
+
 import com.ligadata.MetadataAPI._
 
-object UpdateModelService {
-  case class Process(pmmlStr:String)
+object UploadJarService {
+  case class Process(jarName:String,byteArray:Array[Byte])
 }
 
-class UpdateModelService(requestContext: RequestContext) extends Actor {
+class UploadJarService(requestContext: RequestContext) extends Actor {
 
-  import UpdateModelService._
+  import UploadJarService._
   
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
   
   def receive = {
-    case Process(pmmlStr) =>
-      process(pmmlStr)
+    case Process(jarName,byteArray) =>
+      process(jarName,byteArray)
       context.stop(self)
   }
   
-  def process(pmmlStr:String) = {
+  def process(jarName:String,byteArray:Array[Byte]) = {
     
-    log.info("Requesting UpdateModel {}",pmmlStr)
+    log.info("Requesting UploadJar {}",jarName)
     
-    val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
+    val apiResult = MetadataAPIImpl.UploadJarToDB(jarName,byteArray)
     
-    requestContext.complete(apiResult)
+    requestContext.complete(apiResult.toString)
   }
 }
