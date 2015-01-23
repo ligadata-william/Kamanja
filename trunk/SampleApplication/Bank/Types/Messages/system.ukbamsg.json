@@ -17,7 +17,7 @@
                 "Field": {
                     "NameSpace": "System",
                     "Name": "SEG_TYPE",
-                    "Type": "System.Strng"
+                    "Type": "System.String"
                 }
             },
             {
@@ -170,7 +170,7 @@
             {
                 "Field": {
                     "NameSpace": "System",
-                    "Name": "ENTRY_SOURCE",
+                    "Name": "ENTRY_SOURCE_1",
                     "Type": "System.Int"
                 }
             },
