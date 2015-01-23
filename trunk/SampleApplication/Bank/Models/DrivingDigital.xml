@@ -1,0 +1,227 @@
+
+
+<!--
+	Barclay Bank Driving Digital Ruleset.  
+
+	Summary:
+		This model is intended to inform Personal and Premier (no relationship mgr) customers that are either
+			1) registered for funds transfer for funds transfer activities but not using this feature or 
+			2) customers that are not registered
+		that bank transfers can be easily accomplished from their mobile or other computing device.  This will
+		be done by sending them specific messages according to certain criteria found either in their account
+		characteristics or from the account usage information in the past three months.
+			 
+		See DrivingDigitalDesign.doc document for complete details regarding the inputs, outputs, rules, and general 
+		data flows. 
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Barclay Bank (2014)" description="Rules that consider bank machine transactions used to determine whether the Driving Digital overdraft alerts should be issued for Barclay Bank customers ">
+		<Application name="AlchemyAlerts" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="UKBAMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+
+		<DataField name="CustomerMsg" displayName="CustomerMsg" optype="categorical" dataType="string"/>
+		<DataField name="OnlineEvent" displayName="OnlineEvent" optype="categorical" dataType="string"/>
+		<DataField name="CUST_ID" displayName="CUST_ID" optype="continuous" dataType="long"/>
+		<DataField name="SORT_CODE" displayName="SORT_CODE" optype="continuous" dataType="long"/>
+		<DataField name="ACCOUNT_NUMBER" displayName="ACCOUNT_NUMBER" optype="categorical" dataType="long"/>
+		<DataField name="ACCT_SHORT_NM" displayName="ACCT_SHORT_NM" optype="continuous" dataType="string"/>
+		<DataField name="MOBILE_NUMBER" displayName="MOBILE_NUMBER" optype="categorical" dataType="string"/>
+
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!--
+			**********************************************************
+			*  EnvContext Access 
+			**********************************************************
+		-->
+
+		<!--
+			TBD - Obtain the Customer related data and activity History for this 
+			client through the engine's EnvContext singleton object ... made available 
+			to every running model.
+
+		SAMPLE SNIP TO GET CUSTOMER RECORD:
+		<DerivedField name="CustomerInfo" dataType="BMBCustomer" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">System.Customers</Constant>
+			    <FieldRef field="msg.ent_acc_num"/>
+			</Apply>
+		</DerivedField>
+
+
+		-->
+
+
+		<!--
+			**********************************************************
+			*  Generally used derivations 
+			**********************************************************
+		-->
+
+
+		<!-- 
+			Materialize these variables from their containers to derived fields to make
+			them accessible for output emission (common to either offline or online)
+		-->
+		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<!-- <Apply function="Put">  
+					<Constant dataType="string">SORT_CODE</Constant>
+					<FieldRef field="BMB.sort_code"/>
+				</Apply> 
+				<Apply function="Put">  
+					<Constant dataType="string">ACCOUNT_NUMBER</Constant>
+					<FieldRef field="BMB.account_number"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ACCT_SHORT_NM</Constant>
+					<FieldRef field="BMB.acct_short_nm"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">MOBILE_NUMBER</Constant>
+					<FieldRef field="BMB.mobile_number"/>
+				</Apply> -->
+				<Apply function="Put">  
+					<Constant dataType="string">SORT_CODE</Constant>
+					<Constant dataType="string">Some Sort Code</Constant>
+				</Apply> 
+				<Apply function="Put">  
+					<Constant dataType="string">ACCOUNT_NUMBER</Constant>
+					<FieldRef field="msg.ENT_ACC_NUM"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ACCT_SHORT_NM</Constant>
+					<Constant dataType="string">BMB Account Name</Constant>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">MOBILE_NUMBER</Constant>
+					<Constant dataType="string">011-123-456-7890</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	  	<!-- 
+	  		Based upon the event timestamp, compute the timestamp three months ago
+	  		that will be used to do range filter on xfer activity check... 
+	  	-->
+		<DerivedField name="ThreeMonthsAgo" dataType="integer" optype="categorical">
+			<Apply function="AsCompressedDate">
+				<Apply function="MonthsAgo">
+					<FieldRef field="msg.ENT_DTE"/>
+					<Constant dataType="integer">3</Constant>			
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<!--
+			**********************************************************
+			*  Event Source - Online or Branch/Telephone Center Origin?
+			**********************************************************
+		-->
+
+
+		<!--
+			An online event... Materialize common outputs and set the "score" 
+			and customer message with "online" state
+		-->		
+		<DerivedField name="OnlineUpdate" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<FieldRef field="MaterializeOutputs"/> 
+				<Apply function="Put">  
+					<Constant dataType="string">OnlineEvent</Constant>
+					<FieldRef field="ONLINE"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">CustomerMsg</Constant>
+					<FieldRef field="This is an online msg"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			An offline event... Materialize common outputs and set the "score" 
+			and customer message with "online" state
+		-->		
+		<DerivedField name="OfflineUpdate" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<FieldRef field="MaterializeOutputs"/> 
+				<Apply function="Put">  
+					<Constant dataType="string">OnlineEvent</Constant>
+					<FieldRef field="OFFLINE"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">CustomerMsg</Constant>
+					<FieldRef field="This is an offline msg"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Determine whether to send Low Bal result and put new count when true.
+			Note: put will return true if it succeeds
+		-->		
+		<DerivedField name="OnlineOfflineEventDetermination" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal">
+						<FieldRef field="msg.ent_seg_typ"/>
+						<Constant dataType="string">CB</Constant>
+					</Apply>
+					<Apply function="equal">
+						<FieldRef field="msg.ent_seg_typ"/>
+						<Constant dataType="string">CE</Constant>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="OnlineUpdate"/>  <!-- true action -->
+				<Apply function="and"> 		<!-- false action -->
+					<FieldRef field="OfflineUpdate"/> 
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<!--
+		**********************************************************
+		*  Processing starts here in the RuleSet Element which
+		*  executes one rule.
+		**********************************************************
+	-->
+	<RuleSetModel modelName="DrivingDigital" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="OnlineEvent" usageType="predicted"/>
+			<MiningField name="CustomerMsg" usageType="supplementary"/>
+			<MiningField name="CUST_ID" usageType="supplementary"/>
+			<MiningField name="SORT_CODE" usageType="supplementary"/>
+			<MiningField name="ACCOUNT_NUMBER" usageType="supplementary"/>
+			<MiningField name="ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="MOBILE_NUMBER" usageType="supplementary"/>
+			<MiningField name="ENT_DTE" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="OnlineOffline" score="1">
+				<SimplePredicate field="OnlineOfflineEventDetermination" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

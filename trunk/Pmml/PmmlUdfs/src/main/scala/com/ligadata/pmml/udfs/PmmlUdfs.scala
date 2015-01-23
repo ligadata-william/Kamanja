@@ -1774,27 +1774,45 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   //}
 
   def Sum(exprs: ArrayBuffer[Int]): Int = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Long]): Long = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Double]): Double = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Float]): Float = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Int]): Int = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Long]): Long = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Double]): Double = {
@@ -1805,58 +1823,91 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   def Sum(exprs: Array[Float]): Float = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple2[Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple3[Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple4[Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple5[Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple6[Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple7[Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple8[Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple9[Int, Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple10[Int, Int, Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   /** Sum functions for Tuple2 */
   def Sum(tuples: Tuple2[Float, Float]): Float = {
     val exprs: Array[Float] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def SumToFloat(tuples: Tuple2[Any, Any]): Float = {
@@ -2877,21 +2928,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple2[Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple2[Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple2[Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+     val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2900,21 +2954,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple3[Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple3[Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple3[Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2923,21 +2980,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple4[Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple4[Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple4[Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2946,21 +3006,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2969,21 +3032,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
