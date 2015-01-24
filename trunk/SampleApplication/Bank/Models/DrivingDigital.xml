@@ -118,78 +118,276 @@
 	  		that will be used to do range filter on xfer activity check... 
 	  	-->
 		<DerivedField name="ThreeMonthsAgo" dataType="integer" optype="categorical">
-			<Apply function="AsCompressedDate">
-				<Apply function="MonthsAgo">
-					<FieldRef field="msg.ENT_DTE"/>
-					<Constant dataType="integer">3</Constant>			
-				</Apply>
+			<Apply function="MonthsAgo"
+				<FieldRef field="msg.date"/>
+				<Constant dataType="integer">3</Constant>
 			</Apply>
 		</DerivedField>
 
-
 		<!--
 			**********************************************************
-			*  Event Source - Online or Branch/Telephone Center Origin?
+			*  Set xfer message methods
 			**********************************************************
 		-->
 
+		<DerivedField name="ThirdPartyXferDiarisedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">Third party diarised transfer</Constant>
+			</Apply>
+		</DerivedField>
 
-		<!--
-			An online event... Materialize common outputs and set the "score" 
-			and customer message with "online" state
-		-->		
-		<DerivedField name="OnlineUpdate" dataType="boolean" optype="categorical">
-			<Apply function="and">
-				<FieldRef field="MaterializeOutputs"/> 
-				<Apply function="Put">  
-					<Constant dataType="string">OnlineEvent</Constant>
-					<FieldRef field="ONLINE"/>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">CustomerMsg</Constant>
-					<FieldRef field="This is an online msg"/>
-				</Apply>
+		<DerivedField name="ThirdPartyXferImmedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">Third party immediate transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="FirstPartyXferDiarisedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">First party diarised transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="FirstPartyXferImmedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">First party immediate transfer</Constant>
 			</Apply>
 		</DerivedField>
 
 		<!--
-			An offline event... Materialize common outputs and set the "score" 
-			and customer message with "online" state
-		-->		
-		<DerivedField name="OfflineUpdate" dataType="boolean" optype="categorical">
-			<Apply function="and">
-				<FieldRef field="MaterializeOutputs"/> 
-				<Apply function="Put">  
-					<Constant dataType="string">OnlineEvent</Constant>
-					<FieldRef field="OFFLINE"/>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">CustomerMsg</Constant>
-					<FieldRef field="This is an offline msg"/>
-				</Apply>
-			</Apply>
-		</DerivedField>
+			**********************************************************
+			*  Transfer type determination
+			**********************************************************
+		-->
 
 		<!--
-			Determine whether to send Low Bal result and put new count when true.
-			Note: put will return true if it succeeds
+			Is this a third party diarised transfer?
 		-->		
-		<DerivedField name="OnlineOfflineEventDetermination" dataType="boolean" optype="categorical">
+		<DerivedField name="ThirdPartyXferDiarised" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply function="equal">
-						<FieldRef field="msg.ent_seg_typ"/>
-						<Constant dataType="string">CB</Constant>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N43</Constant>
 					</Apply>
-					<Apply function="equal">
-						<FieldRef field="msg.ent_seg_typ"/>
-						<Constant dataType="string">CE</Constant>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">68</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">23</Constant>
+					</Apply>
+					<FieldRef field="greaterOrEqual"/> 
+						<FieldRef field="msg.date"/>
+						<Apply function="MonthsAgo"
+							<FieldRef field="msg.date"/>
+							<Constant dataType="integer">3</Constant>
+						</Apply>
 					</Apply>
 				</Apply>
 
-				<FieldRef field="OnlineUpdate"/>  <!-- true action -->
+				<FieldRef field="ThirdPartyXferDiarisedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a third party immediate transfer?
+		-->		
+		<DerivedField name="ThirdPartyXferImmediate" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N43</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">24</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">69</Constant>
+					</Apply>
+					<FieldRef field="greaterOrEqual"/> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="ThirdPartyXferImmedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a first party diarised transfer?
+		-->		
+		<DerivedField name="FirstPartyXferDiarised" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N44</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">24</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">27</Constant>
+					</Apply>
+					<FieldRef field="greaterOrEqual"/> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="FirstPartyXferDiarisedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a first party immediate transfer?
+		-->		
+		<DerivedField name="FirstPartyXferImmediate" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N30</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">23</Constant>
+					</Apply>
+					<Apply field="equal"/> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">27</Constant>
+					</Apply>
+					<FieldRef field="greaterOrEqual"/> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="FirstPartyXferImmedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Classify the event with the 'if' predicates.  This shows one way to 
+			do short circuit evaluation. Note that the predicate sets the 
+			message.
+		-->		
+		<DerivedField name="ClassifyEvent" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<FieldRef field="FirstPartyXferImmediate"/> 
+
+				<Constant dataType="boolean">true</Constant> <!-- true action -->
+				<FieldRef field="if"/>  					<!-- false action -->
+					<FieldRef field="FirstPartyXferDiarised"/> 
+
+					<Constant dataType="boolean">true</Constant> <!-- true action -->
+					<FieldRef field="if"/>   					<!-- false action -->
+						<FieldRef field="ThirdPartyXferImmediate"/> 
+
+						<Constant dataType="boolean">true</Constant> <!-- true action -->
+						<FieldRef field="if"/>  					<!-- false action -->
+							<FieldRef field="ThirdPartyXferDiarised"/> 
+
+							<Constant dataType="boolean">true</Constant>  <!-- true action -->
+							<Constant dataType="boolean">false</Constant> <!-- false action -->
+
+						</Apply>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Has the "correct entry code?" 
+		-->		
+		<DerivedField name="HasAppropriateEntryCode" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">21</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">27</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">68</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">69</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Has the "correct entry source code?" 
+		-->		
+		<DerivedField name="HasAppropriateSourceCode" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_source_code"/>
+					<Constant dataType="integer">23</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_source_code"/>
+					<Constant dataType="integer">24</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is this a "fast payment"?
+		-->		
+		<DerivedField name="IsAFastPayment" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_source_code"/>
+					<Constant dataType="string">N30</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_source"/>
+					<Constant dataType="string">N43</Constant>
+				</Apply>
+				<FieldRef field="equal"/> 
+					<FieldRef field="msg.entry_source"/>
+					<Constant dataType="string">N44</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+			
+		<!--
+			DirectDigitalMessage needed?
+		-->		
+		<DerivedField name="DirectDigitalMessage" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<FieldRef field="IsAFastPayment"/> 
+					<FieldRef field="HasAppropriateSourceCode"/> 
+					<FieldRef field="HasAppropriateEntryCode"/> 
+				</Apply>
+
+				<FieldRef field="ClassifyEvent"/>  <!-- true action -->
 				<Apply function="and"> 		<!-- false action -->
-					<FieldRef field="OfflineUpdate"/> 
+					<FieldRef field="MaterializeOutputs"/> 
 					<Constant dataType="boolean">false</Constant>
 				</Apply>
 			</Apply>
@@ -219,8 +417,8 @@
 	
 		<RuleSet defaultScore="0">  
 			<RuleSelectionMethod criterion="firstHit"/>
-			<SimpleRule id="OnlineOffline" score="1">
-				<SimplePredicate field="OnlineOfflineEventDetermination" operator="equal" value="true"/>
+			<SimpleRule id="DirectDigitalRule1" score="1">
+				<SimplePredicate field="DirectDigitalMessage" operator="equal" value="true"/>
 			</SimpleRule>
 	    </RuleSet> 
 	</RuleSetModel>

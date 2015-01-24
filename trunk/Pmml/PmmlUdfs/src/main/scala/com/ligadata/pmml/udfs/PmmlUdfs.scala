@@ -2675,6 +2675,114 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   /**
+   *  Answer the number of millisecs a numYrs ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   */
+  def YearsAgo(someDate: Int, numYrs: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusYears(numYrs)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs numMos ago.
+   */
+  def MonthsAgo(numMos: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusMonths(numMos)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numMos ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   */
+  def MonthsAgo(someDate: Int, numMos: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusMonths(numMos)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs numWks ago.
+   */
+  def WeeksAgo(numWks: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusWeeks(numWks)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numWks ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   */
+  def WeeksAgo(someDate: Int, numWks: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusWeeks(numWks)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numDays ago.
+   */
+  def DaysAgo(numDays: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusDays(numDays)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of days to subtract
+   */
+  def DaysAgo(someDate: Int, numDays: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusDays(numDays)
+    someTimeAgo.getMillis()
+  }
+
+  /** Coerce the yyyymmdd ISO8601 type compressed in integer to a DateTime */
+  def toDateTime(yyyymmdd: Int): DateTime = {
+    val yyyy: Int = yyyymmdd / 10000
+    val mm: Int = (yyyymmdd % 1000) / 100
+    val day: Int = yyyymmdd % 100
+    val someDate: DateTime = new DateTime(yyyy, mm, day)
+    someDate
+  }
+
+  /**
+   *  Convert time formatted in integer (compressed decimal)
+   *  to millisecs.
+   *
+   *      Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND
+   *
+   *  @param time, an Int
+   *  @return time, an Int
+   */
+  def CompressedTimeHHMMSSCC2MilliSecs(compressedTime: Int): Long = {
+    val hours = (compressedTime / 1000000) % 100
+    val minutes = (compressedTime / 10000) % 100
+    val seconds = (compressedTime / 100) % 100
+    val millisecs = (compressedTime % 100) * 10
+
+    val millis = (hours * 60 * 60 + minutes * 60 + seconds) * 1000 + millisecs
+
+    millis
+  }
+
+  /**
    *  Convert time formatted in integer (compressed decimal)
    *  to seconds.
    *
