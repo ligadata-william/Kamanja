@@ -18,11 +18,11 @@
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
 	<Header copyright="Barclay Bank (2014)" description="Rules that consider bank machine transactions used to determine whether the Driving Digital overdraft alerts should be issued for Barclay Bank customers ">
-		<Application name="AlchemyAlerts" version="00.01.00"/>
+		<Application name="DrivingDigital" version="00.01.00"/>
 	</Header>
 
 	<DataDictionary numberOfFields="4">
-		<DataField name="msg" displayName="msg" optype="categorical" dataType="UKBAMsg"/>
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="DrDigMsg"/>
 		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
 	    <DataField name="parameters" displayName="parameters" dataType="container">
 	       <Value value="gCtx" property="valid"/>
@@ -30,10 +30,14 @@
 	    </DataField>
 
 		<DataField name="CustomerMsg" displayName="CustomerMsg" optype="categorical" dataType="string"/>
-		<DataField name="OnlineEvent" displayName="OnlineEvent" optype="categorical" dataType="string"/>
-		<DataField name="CUST_ID" displayName="CUST_ID" optype="continuous" dataType="long"/>
-		<DataField name="SORT_CODE" displayName="SORT_CODE" optype="continuous" dataType="long"/>
-		<DataField name="ACCOUNT_NUMBER" displayName="ACCOUNT_NUMBER" optype="categorical" dataType="long"/>
+
+		<DataField name="ENTRY_SEQUENCE_NUM" displayName="ENTRY_SEQUENCE_NUM" optype="categorical" dataType="string"/>
+		<DataField name="ENTRY_SOURCE" displayName="ENTRY_SOURCE" optype="categorical" dataType="string"/>
+		<DataField name="DATE" displayName="DATE" optype="categorical" dataType="string"/>
+		<DataField name="PRECISE_TIME" displayName="PRECISE_TIME" optype="categorical" dataType="string"/>
+
+		<DataField name="ACCOUNT" displayName="ACCOUNT" optype="continuous" dataType="integer"/>
+		<DataField name="BRANCH" displayName="BRANCH" optype="continuous" dataType="integer"/>
 		<DataField name="ACCT_SHORT_NM" displayName="ACCT_SHORT_NM" optype="continuous" dataType="string"/>
 		<DataField name="MOBILE_NUMBER" displayName="MOBILE_NUMBER" optype="categorical" dataType="string"/>
 
@@ -57,10 +61,16 @@
 			<Apply function="Get">
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.Customers</Constant>
-			    <FieldRef field="msg.ent_acc_num"/>
+			    <FieldRef field="accountKey"/>
 			</Apply>
 		</DerivedField>
 
+		<DerivedField name="accountKey" dataType="string" optype="categorical">
+			<Apply function="+"
+				<FieldRef field="msg.branch"/>
+				<FieldRef field="msg.account"/>
+			</Apply>
+		</DerivedField>
 
 		-->
 
@@ -71,36 +81,31 @@
 			**********************************************************
 		-->
 
-
 		<!-- 
 			Materialize these variables from their containers to derived fields to make
 			them accessible for output emission (common to either offline or online)
 		-->
 		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
 			<Apply function="and">
-				<!-- <Apply function="Put">  
-					<Constant dataType="string">SORT_CODE</Constant>
-					<FieldRef field="BMB.sort_code"/>
-				</Apply> 
 				<Apply function="Put">  
-					<Constant dataType="string">ACCOUNT_NUMBER</Constant>
-					<FieldRef field="BMB.account_number"/>
+					<Constant dataType="string">ACCOUNT</Constant>
+					<FieldRef field="msg.account"/>
 				</Apply>
 				<Apply function="Put">  
-					<Constant dataType="string">ACCT_SHORT_NM</Constant>
-					<FieldRef field="BMB.acct_short_nm"/>
+					<Constant dataType="string">ENTRY_SEQUENCE_NUM</Constant>
+					<FieldRef field="msg.entry_sequence_num"/>
 				</Apply>
 				<Apply function="Put">  
-					<Constant dataType="string">MOBILE_NUMBER</Constant>
-					<FieldRef field="BMB.mobile_number"/>
-				</Apply> -->
+					<Constant dataType="string">DATE</Constant>
+					<FieldRef field="msg.date"/>
+				</Apply>
 				<Apply function="Put">  
-					<Constant dataType="string">SORT_CODE</Constant>
-					<Constant dataType="string">Some Sort Code</Constant>
-				</Apply> 
+					<Constant dataType="string">PRECISE_TIME</Constant>
+					<FieldRef field="msg.precise_time"/>
+				</Apply>
 				<Apply function="Put">  
-					<Constant dataType="string">ACCOUNT_NUMBER</Constant>
-					<FieldRef field="msg.ENT_ACC_NUM"/>
+					<Constant dataType="string">BRANCH</Constant>
+					<FieldRef field="msg.branch"/>
 				</Apply>
 				<Apply function="Put">  
 					<Constant dataType="string">ACCT_SHORT_NM</Constant>
@@ -110,6 +115,7 @@
 					<Constant dataType="string">MOBILE_NUMBER</Constant>
 					<Constant dataType="string">011-123-456-7890</Constant>
 				</Apply>
+
 			</Apply>
 		</DerivedField>
 
@@ -118,7 +124,7 @@
 	  		that will be used to do range filter on xfer activity check... 
 	  	-->
 		<DerivedField name="ThreeMonthsAgo" dataType="integer" optype="categorical">
-			<Apply function="MonthsAgo"
+			<Apply function="MonthsAgoAsISO8601">
 				<FieldRef field="msg.date"/>
 				<Constant dataType="integer">3</Constant>
 			</Apply>
@@ -170,21 +176,21 @@
 		<DerivedField name="ThirdPartyXferDiarised" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source"/>
 						<Constant dataType="string">N43</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source_code"/>
 						<Constant dataType="integer">68</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_code"/>
 						<Constant dataType="integer">23</Constant>
 					</Apply>
-					<FieldRef field="greaterOrEqual"/> 
+					<Apply function="greaterOrEqual"> 
 						<FieldRef field="msg.date"/>
-						<Apply function="MonthsAgo"
+						<Apply function="MonthsAgo">
 							<FieldRef field="msg.date"/>
 							<Constant dataType="integer">3</Constant>
 						</Apply>
@@ -202,19 +208,19 @@
 		<DerivedField name="ThirdPartyXferImmediate" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source"/>
 						<Constant dataType="string">N43</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source_code"/>
 						<Constant dataType="integer">24</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_code"/>
 						<Constant dataType="integer">69</Constant>
 					</Apply>
-					<FieldRef field="greaterOrEqual"/> 
+					<Apply function="greaterOrEqual"> 
 						<FieldRef field="msg.date"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
@@ -231,19 +237,19 @@
 		<DerivedField name="FirstPartyXferDiarised" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source"/>
 						<Constant dataType="string">N44</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source_code"/>
 						<Constant dataType="integer">24</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_code"/>
 						<Constant dataType="integer">27</Constant>
 					</Apply>
-					<FieldRef field="greaterOrEqual"/> 
+					<Apply function="greaterOrEqual"> 
 						<FieldRef field="msg.date"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
@@ -260,19 +266,19 @@
 		<DerivedField name="FirstPartyXferImmediate" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<Apply function="and">
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source"/>
 						<Constant dataType="string">N30</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_source_code"/>
 						<Constant dataType="integer">23</Constant>
 					</Apply>
-					<Apply field="equal"/> 
+					<Apply function="equal"> 
 						<FieldRef field="msg.entry_code"/>
 						<Constant dataType="integer">27</Constant>
 					</Apply>
-					<FieldRef field="greaterOrEqual"/> 
+					<Apply function="greaterOrEqual"> 
 						<FieldRef field="msg.date"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
@@ -286,22 +292,22 @@
 		<!--
 			Classify the event with the 'if' predicates.  This shows one way to 
 			do short circuit evaluation. Note that the predicate sets the 
-			message.
+			message.  The 'if' actions either try the next predicate or return 'true'.
 		-->		
 		<DerivedField name="ClassifyEvent" dataType="boolean" optype="categorical">
 			<Apply function="if">
 				<FieldRef field="FirstPartyXferImmediate"/> 
 
 				<Constant dataType="boolean">true</Constant> <!-- true action -->
-				<FieldRef field="if"/>  					<!-- false action -->
+				<Apply function="if">  					<!-- false action -->
 					<FieldRef field="FirstPartyXferDiarised"/> 
 
 					<Constant dataType="boolean">true</Constant> <!-- true action -->
-					<FieldRef field="if"/>   					<!-- false action -->
+					<Apply function="if">   					<!-- false action -->
 						<FieldRef field="ThirdPartyXferImmediate"/> 
 
 						<Constant dataType="boolean">true</Constant> <!-- true action -->
-						<FieldRef field="if"/>  					<!-- false action -->
+						<Apply function="if">  					<!-- false action -->
 							<FieldRef field="ThirdPartyXferDiarised"/> 
 
 							<Constant dataType="boolean">true</Constant>  <!-- true action -->
@@ -318,19 +324,19 @@
 		-->		
 		<DerivedField name="HasAppropriateEntryCode" dataType="boolean" optype="categorical">
 			<Apply function="or">
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_code"/>
 					<Constant dataType="integer">21</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_code"/>
 					<Constant dataType="integer">27</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_code"/>
 					<Constant dataType="integer">68</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_code"/>
 					<Constant dataType="integer">69</Constant>
 				</Apply>
@@ -342,11 +348,11 @@
 		-->		
 		<DerivedField name="HasAppropriateSourceCode" dataType="boolean" optype="categorical">
 			<Apply function="or">
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_source_code"/>
 					<Constant dataType="integer">23</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_source_code"/>
 					<Constant dataType="integer">24</Constant>
 				</Apply>
@@ -358,15 +364,15 @@
 		-->		
 		<DerivedField name="IsAFastPayment" dataType="boolean" optype="categorical">
 			<Apply function="or">
-				<FieldRef field="equal"/> 
-					<FieldRef field="msg.entry_source_code"/>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source"/>
 					<Constant dataType="string">N30</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_source"/>
 					<Constant dataType="string">N43</Constant>
 				</Apply>
-				<FieldRef field="equal"/> 
+				<Apply function="equal"> 
 					<FieldRef field="msg.entry_source"/>
 					<Constant dataType="string">N44</Constant>
 				</Apply>
@@ -404,14 +410,15 @@
 	<RuleSetModel modelName="DrivingDigital" functionName="classification" algorithmName="RuleSet">
 	    <MiningSchema>
 
-			<MiningField name="OnlineEvent" usageType="predicted"/>
-			<MiningField name="CustomerMsg" usageType="supplementary"/>
-			<MiningField name="CUST_ID" usageType="supplementary"/>
-			<MiningField name="SORT_CODE" usageType="supplementary"/>
-			<MiningField name="ACCOUNT_NUMBER" usageType="supplementary"/>
+			<MiningField name="CustomerMsg" usageType="predicted"/>
+
+			<MiningField name="ThreeMonthsAgo" usageType="supplementary"/>
+			<MiningField name="ACCOUNT" usageType="supplementary"/>
+			<MiningField name="BRANCH" usageType="supplementary"/>
+			<MiningField name="ACCOUNT" usageType="supplementary"/>
 			<MiningField name="ACCT_SHORT_NM" usageType="supplementary"/>
 			<MiningField name="MOBILE_NUMBER" usageType="supplementary"/>
-			<MiningField name="ENT_DTE" usageType="supplementary"/>
+			<MiningField name="DATE" usageType="supplementary"/>
 
 	    </MiningSchema>
 	

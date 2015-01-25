@@ -2679,12 +2679,26 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *
    *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
    *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numYrs
    */
   def YearsAgo(someDate: Int, numYrs: Int): Long = {
     val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
     val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
     val someTimeAgo = someDt.minusYears(numYrs)
     someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of years to subtract
+   *  
+   *  @return ISO8601 date for someDate - numYrs
+   */
+  def YearsAgoAsISO8601(someDate: Int, numYrs: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numYrs))
   }
 
   /**
@@ -2701,12 +2715,26 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *
    *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
    *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numMos
    */
   def MonthsAgo(someDate: Int, numMos: Int): Long = {
     val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
     val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
     val someTimeAgo = someDt.minusMonths(numMos)
     someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of months to subtract
+   *  
+   *  @return ISO8601 date for someDate - numMos
+   */
+  def MonthsAgoAsISO8601(someDate: Int, numMos: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numMos))
   }
 
   /**
@@ -2723,6 +2751,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *
    *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
    *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numWks
    */
   def WeeksAgo(someDate: Int, numWks: Int): Long = {
     val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
@@ -2732,6 +2762,18 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   *  
+   *  @return ISO8601 date for someDate - numWks
+   */
+  def WeeksAgoAsISO8601(someDate: Int, numWks: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numWks))
+  }
+
+   /**
    *  Answer the number of millisecs a numDays ago.
    */
   def DaysAgo(numDays: Int): Long = {
@@ -2745,6 +2787,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *
    *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
    *  @param numDays number of days to subtract
+   *  
+   *  @return millisecs for someDate - numDays
    */
   def DaysAgo(someDate: Int, numDays: Int): Long = {
     val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
@@ -2753,7 +2797,23 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     someTimeAgo.getMillis()
   }
 
-  /** Coerce the yyyymmdd ISO8601 type compressed in integer to a DateTime */
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of days to subtract
+   *  
+   *  @return ISO8601 int for someDate - numDays
+   */
+  def DaysAgoAsISO8601(someDate: Int, numDays: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numDays))
+  }
+
+  /** Coerce the yyyymmdd ISO8601 type compressed in integer to a DateTime
+   *  
+   *   @param yyyymmdd  ISO8601 type int compressed into integer
+   *   @return joda DateTime 
+   */
   def toDateTime(yyyymmdd: Int): DateTime = {
     val yyyy: Int = yyyymmdd / 10000
     val mm: Int = (yyyymmdd % 1000) / 100
