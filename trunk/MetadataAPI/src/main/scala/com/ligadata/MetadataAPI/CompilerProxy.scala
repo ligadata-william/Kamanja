@@ -23,6 +23,19 @@ import com.ligadata.Serialize._
 case class MsgCompilationFailedException(e: String) extends Exception(e)
 case class ModelCompilationFailedException(e: String) extends Exception(e)
 
+object JarPathsUtils{
+  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
+}
+
 // CompilerProxy has utility functions to:
 // Call MessageDefinitionCompiler, 
 // Call PmmlCompiler, 
@@ -168,7 +181,7 @@ class CompilerProxy{
       }
 
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
-				       Array(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")))
+				       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
       val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir)
 
       var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
@@ -178,10 +191,10 @@ class CompilerProxy{
       if (classPath.size == 0)
 	classPath = "."
 
-      val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
+      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
 
       if (modDef.DependencyJarNames != null) {
-	val depJars = modDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
+	val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
 	if (classPath != null && classPath.size > 0) {
           classPath = classPath + ":" + depJars 
 	} else {
@@ -228,18 +241,6 @@ class CompilerProxy{
   }
 
 
-  private def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
-
-
   @throws(classOf[MsgCompilationFailedException])
   def compileMessageDef(msgDefStr: String) : (String,ContainerDef) = {
     try{
@@ -258,8 +259,8 @@ class CompilerProxy{
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
 
       if (msgDef.DependencyJarNames != null) {
-        val jarPaths = Set(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")).toSet
-        val depJars = msgDef.DependencyJarNames.map(j => GetValidJarFile(jarPaths, j)).mkString(":")
+        val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+        val depJars = msgDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
         if (classPath != null && classPath.size > 0) {
           classPath = classPath + ":" + depJars 
         } else {
