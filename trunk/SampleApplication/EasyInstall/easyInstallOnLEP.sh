@@ -261,6 +261,8 @@ cp *gz $installPath/input/application1/data
 # copy models, messages, containers, config, scripts, types  messages data prep
 # *******************************
 
+cp $srcPath/OnLEPManager/src/main/resources/log4j.properties $installPath/config
+
 cd $srcPath/SampleApplication/Medical/Configs
 cp * $installPath/input/application1/metadata/config
 
@@ -285,5 +287,7 @@ cp -rf * $installPath/template
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
+cd $installPath/bin
+./SetPaths.sh
 
 echo "installOnLEP complete..."
