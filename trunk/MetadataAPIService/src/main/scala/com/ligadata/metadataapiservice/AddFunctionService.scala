@@ -34,7 +34,7 @@ class AddFunctionService(requestContext: RequestContext) extends Actor {
 	  
 		log.info("Requesting AddFunction {},{}",functionJson,formatType)
 		
-		val apiResult = MetadataAPIImpl.AddFunction(functionJson,formatType)
+		val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
 		
 		requestContext.complete(apiResult)
 	}

@@ -47,7 +47,7 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
 
     objectType match {
       case "Model" => {
-	apiResult = MetadataAPIImpl.GetAllModelsFromCache(true)
+	apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
       }
       case "Message" => {
 	apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
@@ -64,6 +64,14 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
       case "Type" => {
 	apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
       }
+      case "ALL" => {
+	apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
+		    MetadataAPIImpl.GetAllMessagesFromCache(true) ++
+		    MetadataAPIImpl.GetAllContainersFromCache(true) ++
+		    MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
+		    MetadataAPIImpl.GetAllConceptsFromCache(true) ++
+		    MetadataAPIImpl.GetAllTypesFromCache(true)
+      }
       case _ => {
 	apiResult(0) = "The " + objectType + " is not supported yet "
       }
@@ -76,6 +84,7 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
     val objectList = GetAllObjectKeys(objectType)
     val json = (objectList.toList)
     val apiResult = pretty(render(json))
+    logger.trace(APIName + "(results):" + apiResult)
     requestContext.complete(apiResult)
   }
 }

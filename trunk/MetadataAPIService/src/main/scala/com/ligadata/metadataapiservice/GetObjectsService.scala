@@ -108,6 +108,7 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
     else{
       resultStr = APIName + ":No arguments passed to the API, nothing much to do"
     }
+    logger.trace("resultStr => " + resultStr)
     requestContext.complete(resultStr)
   }
 }
