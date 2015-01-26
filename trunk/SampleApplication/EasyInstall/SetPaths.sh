@@ -33,3 +33,5 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 
 chmod 777 $install_dir/bin/*.*
 
+
+
