@@ -2,49 +2,28 @@ CREATE KEYSPACE metadata WITH REPLICATION = { 'class' : 'SimpleStrategy', 'repli
  
 USE metadata;
  
-CREATE TABLE models
+CREATE TABLE metadata_objects
 (
 	  key blob 
 	, value blob
 	, primary key (key)
 );
 
-CREATE TABLE messages
+CREATE TABLE transaction_id
 (
 	  key blob 
 	, value blob
 	, primary key (key)
 );
 
-CREATE TABLE containers
+CREATE TABLE jar_store
 (
 	  key blob 
 	, value blob
 	, primary key (key)
 );
 
-CREATE TABLE concepts
-(
-	  key blob 
-	, value blob
-	, primary key (key)
-);
-
-CREATE TABLE functions
-(
-	  key blob 
-	, value blob
-	, primary key (key)
-);
-
-CREATE TABLE types
-(
-	  key blob 
-	, value blob
-	, primary key (key)
-);
-
-CREATE TABLE others
+CREATE TABLE config_objects
 (
 	  key blob 
 	, value blob
