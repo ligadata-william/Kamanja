@@ -4634,13 +4634,17 @@ object MetadataAPIImpl extends MetadataAPI {
         if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
           database = value
           logger.trace("database => " + database)
-        } else if (key.equalsIgnoreCase("DATABASE_HOST") || key.equalsIgnoreCase("MetadataLocation")) {
+        } else if (key.equalsIgnoreCase("DATABASE_HOST")) {
           database_host = value
           logger.trace("database_host => " + database_host)
+        } else if (key.equalsIgnoreCase("MetadataLocation")) {
+          database_host = value
+          database_location = value
+          logger.trace("database_host => " + database_host + ", database_location(applicable to treemap or hashmap only) => " + database_location)
         } else if (key.equalsIgnoreCase("DATABASE_SCHEMA") || key.equalsIgnoreCase("MetadataSchemaName")) {
           database_schema = value
           logger.trace("database_schema(applicable to cassandra only) => " + database_schema)
-        } else if (key.equalsIgnoreCase("DATABASE_LOCATION") || key.equalsIgnoreCase("MetadataLocation")) {
+        } else if (key.equalsIgnoreCase("DATABASE_LOCATION")) {
           database_location = value
           logger.trace("database_location(applicable to treemap or hashmap only) => " + database_location)
         } else if (key.equalsIgnoreCase("JAR_TARGET_DIR")) {
