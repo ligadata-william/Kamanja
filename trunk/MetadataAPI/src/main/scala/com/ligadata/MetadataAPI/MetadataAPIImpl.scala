@@ -958,6 +958,13 @@ object MetadataAPIImpl extends MetadataAPI {
           }
         })
         
+        val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+        val dir = new File(dirPath)
+        if (!dir.exists()) {
+          // attempt to create the missing directory
+          dir.mkdir();
+        }
+        
         allJars.foreach(jar => {
           // download only if it doesn't already exists
           val b = IsDownloadNeeded(jar, obj)
@@ -965,7 +972,7 @@ object MetadataAPIImpl extends MetadataAPI {
             val key = jar
             val mObj = GetObject(key, jarStore)
             val ba = mObj.Value.toArray[Byte]
-            val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
+            val jarName = dirPath + "/" + jar
             PutArrayOfBytesToJar(ba, jarName)
           }
         })
