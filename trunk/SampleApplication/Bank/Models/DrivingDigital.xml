@@ -1,0 +1,432 @@
+
+
+<!--
+	Barclay Bank Driving Digital Ruleset.  
+
+	Summary:
+		This model is intended to inform Personal and Premier (no relationship mgr) customers that are either
+			1) registered for funds transfer for funds transfer activities but not using this feature or 
+			2) customers that are not registered
+		that bank transfers can be easily accomplished from their mobile or other computing device.  This will
+		be done by sending them specific messages according to certain criteria found either in their account
+		characteristics or from the account usage information in the past three months.
+			 
+		See DrivingDigitalDesign.doc document for complete details regarding the inputs, outputs, rules, and general 
+		data flows. 
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Barclay Bank (2014)" description="Rules that consider bank machine transactions used to determine whether the Driving Digital overdraft alerts should be issued for Barclay Bank customers ">
+		<Application name="DrivingDigital" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="DrDigMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+
+		<DataField name="CustomerMsg" displayName="CustomerMsg" optype="categorical" dataType="string"/>
+
+		<DataField name="ENTRY_SEQUENCE_NUM" displayName="ENTRY_SEQUENCE_NUM" optype="categorical" dataType="string"/>
+		<DataField name="ENTRY_SOURCE" displayName="ENTRY_SOURCE" optype="categorical" dataType="string"/>
+		<DataField name="DATE" displayName="DATE" optype="categorical" dataType="string"/>
+		<DataField name="PRECISE_TIME" displayName="PRECISE_TIME" optype="categorical" dataType="string"/>
+
+		<DataField name="ACCOUNT" displayName="ACCOUNT" optype="continuous" dataType="integer"/>
+		<DataField name="BRANCH" displayName="BRANCH" optype="continuous" dataType="integer"/>
+		<DataField name="ACCT_SHORT_NM" displayName="ACCT_SHORT_NM" optype="continuous" dataType="string"/>
+		<DataField name="MOBILE_NUMBER" displayName="MOBILE_NUMBER" optype="categorical" dataType="string"/>
+
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!--
+			**********************************************************
+			*  EnvContext Access 
+			**********************************************************
+		-->
+
+		<!--
+			TBD - Obtain the Customer related data and activity History for this 
+			client through the engine's EnvContext singleton object ... made available 
+			to every running model.
+
+		SAMPLE SNIP TO GET CUSTOMER RECORD:
+		<DerivedField name="CustomerInfo" dataType="BMBCustomer" optype="categorical">
+			<Apply function="Get">
+				<FieldRef field="gCtx"/>
+			    <Constant dataType="string">System.Customers</Constant>
+			    <FieldRef field="accountKey"/>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="accountKey" dataType="string" optype="categorical">
+			<Apply function="+"
+				<FieldRef field="msg.branch"/>
+				<FieldRef field="msg.account"/>
+			</Apply>
+		</DerivedField>
+
+		-->
+
+
+		<!--
+			**********************************************************
+			*  Generally used derivations 
+			**********************************************************
+		-->
+
+		<!-- 
+			Materialize these variables from their containers to derived fields to make
+			them accessible for output emission (common to either offline or online)
+		-->
+		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="Put">  
+					<Constant dataType="string">ACCOUNT</Constant>
+					<FieldRef field="msg.account"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ENTRY_SEQUENCE_NUM</Constant>
+					<FieldRef field="msg.entry_sequence_num"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">DATE</Constant>
+					<FieldRef field="msg.date"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">PRECISE_TIME</Constant>
+					<FieldRef field="msg.precise_time"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">BRANCH</Constant>
+					<FieldRef field="msg.branch"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">ACCT_SHORT_NM</Constant>
+					<Constant dataType="string">BMB Account Name</Constant>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">MOBILE_NUMBER</Constant>
+					<Constant dataType="string">011-123-456-7890</Constant>
+				</Apply>
+
+			</Apply>
+		</DerivedField>
+
+	  	<!-- 
+	  		Based upon the event timestamp, compute the timestamp three months ago
+	  		that will be used to do range filter on xfer activity check... 
+	  	-->
+		<DerivedField name="ThreeMonthsAgo" dataType="integer" optype="categorical">
+			<Apply function="MonthsAgoAsISO8601">
+				<FieldRef field="msg.date"/>
+				<Constant dataType="integer">3</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			**********************************************************
+			*  Set xfer message methods
+			**********************************************************
+		-->
+
+		<DerivedField name="ThirdPartyXferDiarisedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">Third party diarised transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="ThirdPartyXferImmedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">Third party immediate transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="FirstPartyXferDiarisedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">First party diarised transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<DerivedField name="FirstPartyXferImmedMsg" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">CustomerMsg</Constant>
+				<Constant dataType="string">First party immediate transfer</Constant>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			**********************************************************
+			*  Transfer type determination
+			**********************************************************
+		-->
+
+		<!--
+			Is this a third party diarised transfer?
+		-->		
+		<DerivedField name="ThirdPartyXferDiarised" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N43</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">68</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">23</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual"> 
+						<FieldRef field="msg.date"/>
+						<Apply function="MonthsAgo">
+							<FieldRef field="msg.date"/>
+							<Constant dataType="integer">3</Constant>
+						</Apply>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="ThirdPartyXferDiarisedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a third party immediate transfer?
+		-->		
+		<DerivedField name="ThirdPartyXferImmediate" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N43</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">24</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">69</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual"> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="ThirdPartyXferImmedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a first party diarised transfer?
+		-->		
+		<DerivedField name="FirstPartyXferDiarised" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N44</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">24</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">27</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual"> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="FirstPartyXferDiarisedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Is this a first party immediate transfer?
+		-->		
+		<DerivedField name="FirstPartyXferImmediate" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source"/>
+						<Constant dataType="string">N30</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_source_code"/>
+						<Constant dataType="integer">23</Constant>
+					</Apply>
+					<Apply function="equal"> 
+						<FieldRef field="msg.entry_code"/>
+						<Constant dataType="integer">27</Constant>
+					</Apply>
+					<Apply function="greaterOrEqual"> 
+						<FieldRef field="msg.date"/>
+						<FieldRef field="ThreeMonthsAgo"/>
+					</Apply>
+				</Apply>
+
+				<FieldRef field="FirstPartyXferImmedMsg"/>  <!-- true action -->
+				<Constant dataType="boolean">false</Constant> <!-- false action -->
+			</Apply>
+		</DerivedField> 
+
+		<!--
+			Classify the event with the 'if' predicates.  This shows one way to 
+			do short circuit evaluation. Note that the predicate sets the 
+			message.  The 'if' actions either try the next predicate or return 'true'.
+		-->		
+		<DerivedField name="ClassifyEvent" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<FieldRef field="FirstPartyXferImmediate"/> 
+
+				<Constant dataType="boolean">true</Constant> <!-- true action -->
+				<Apply function="if">  					<!-- false action -->
+					<FieldRef field="FirstPartyXferDiarised"/> 
+
+					<Constant dataType="boolean">true</Constant> <!-- true action -->
+					<Apply function="if">   					<!-- false action -->
+						<FieldRef field="ThirdPartyXferImmediate"/> 
+
+						<Constant dataType="boolean">true</Constant> <!-- true action -->
+						<Apply function="if">  					<!-- false action -->
+							<FieldRef field="ThirdPartyXferDiarised"/> 
+
+							<Constant dataType="boolean">true</Constant>  <!-- true action -->
+							<Constant dataType="boolean">false</Constant> <!-- false action -->
+
+						</Apply>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Has the "correct entry code?" 
+		-->		
+		<DerivedField name="HasAppropriateEntryCode" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">21</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">27</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">68</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_code"/>
+					<Constant dataType="integer">69</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Has the "correct entry source code?" 
+		-->		
+		<DerivedField name="HasAppropriateSourceCode" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source_code"/>
+					<Constant dataType="integer">23</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source_code"/>
+					<Constant dataType="integer">24</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			Is this a "fast payment"?
+		-->		
+		<DerivedField name="IsAFastPayment" dataType="boolean" optype="categorical">
+			<Apply function="or">
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source"/>
+					<Constant dataType="string">N30</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source"/>
+					<Constant dataType="string">N43</Constant>
+				</Apply>
+				<Apply function="equal"> 
+					<FieldRef field="msg.entry_source"/>
+					<Constant dataType="string">N44</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+			
+		<!--
+			DirectDigitalMessage needed?
+		-->		
+		<DerivedField name="DirectDigitalMessage" dataType="boolean" optype="categorical">
+			<Apply function="if">
+				<Apply function="and">
+					<FieldRef field="IsAFastPayment"/> 
+					<FieldRef field="HasAppropriateSourceCode"/> 
+					<FieldRef field="HasAppropriateEntryCode"/> 
+				</Apply>
+
+				<FieldRef field="ClassifyEvent"/>  <!-- true action -->
+				<Apply function="and"> 		<!-- false action -->
+					<FieldRef field="MaterializeOutputs"/> 
+					<Constant dataType="boolean">false</Constant>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<!--
+		**********************************************************
+		*  Processing starts here in the RuleSet Element which
+		*  executes one rule.
+		**********************************************************
+	-->
+	<RuleSetModel modelName="DrivingDigital" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="CustomerMsg" usageType="predicted"/>
+
+			<MiningField name="ThreeMonthsAgo" usageType="supplementary"/>
+			<MiningField name="ACCOUNT" usageType="supplementary"/>
+			<MiningField name="BRANCH" usageType="supplementary"/>
+			<MiningField name="ACCOUNT" usageType="supplementary"/>
+			<MiningField name="ACCT_SHORT_NM" usageType="supplementary"/>
+			<MiningField name="MOBILE_NUMBER" usageType="supplementary"/>
+			<MiningField name="DATE" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="DirectDigitalRule1" score="1">
+				<SimplePredicate field="DirectDigitalMessage" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet> 
+	</RuleSetModel>
+</PMML>

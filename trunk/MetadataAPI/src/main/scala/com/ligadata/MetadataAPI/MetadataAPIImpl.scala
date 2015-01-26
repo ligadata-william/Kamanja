@@ -795,6 +795,8 @@ object MetadataAPIImpl extends MetadataAPI {
       var keyList = new Array[String](0)
       var valueList = new Array[Array[Byte]](0)
 
+      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+      
       keyList = keyList :+ obj.jarName
       var jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
       var value = GetJarAsArrayOfBytes(jarName)
@@ -806,7 +808,7 @@ object MetadataAPIImpl extends MetadataAPI {
           // do not upload if it already exist, minor optimization
           var loadObject = false
           if (j.endsWith(".jar")) {
-            jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + j
+            jarName = JarPathsUtils.GetValidJarFile(jarPaths, j)            
             value = GetJarAsArrayOfBytes(jarName)
             var mObj: IStorage = null
             try {
@@ -890,8 +892,8 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.trace("The object " + obj.FullNameWithVer + " has no jar associated with it. Nothing to download..")
         false
       }
-      val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
-      val jarName = dirPath + "/" + jar
+      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+      val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
       val f = new File(jarName)
       if (f.exists()) {
         val key = jar
@@ -947,6 +949,15 @@ object MetadataAPIImpl extends MetadataAPI {
       var allJars = GetDependantJars(obj)
       logger.trace("Found " + allJars.length + " dependant jars ")
       if (allJars.length > 0) {
+        val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+        jarPaths.foreach(jardir => {
+          val dir = new File(jardir)
+          if (!dir.exists()) {
+            // attempt to create the missing directory
+            dir.mkdir();
+          }
+        })
+        
         allJars.foreach(jar => {
           // download only if it doesn't already exists
           val b = IsDownloadNeeded(jar, obj)
@@ -954,13 +965,7 @@ object MetadataAPIImpl extends MetadataAPI {
             val key = jar
             val mObj = GetObject(key, jarStore)
             val ba = mObj.Value.toArray[Byte]
-            val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
-            val dir = new File(dirPath)
-            if (!dir.exists()) {
-              // attempt to create the missing directory
-              dir.mkdir();
-            }
-            val jarName = dirPath + "/" + jar
+            val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
             PutArrayOfBytesToJar(ba, jarName)
           }
         })
@@ -4603,6 +4608,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var database_schema = "metadata"
       var database_location = "/tmp"
       var jar_target_dir = "/tmp/OnLEPInstall"
+      var jar_paths: String = null
       var scala_home = root_dir + "/scala-2.10.4"
       var java_home = root_dir + "/jdk1.8.0_05"
       var manifest_path = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
@@ -4646,6 +4652,9 @@ object MetadataAPIImpl extends MetadataAPI {
         } else if (key.equalsIgnoreCase("JAR_TARGET_DIR")) {
           jar_target_dir = value
           logger.trace("JAR_TARGET_DIR => " + jar_target_dir)
+        } else if (key.equalsIgnoreCase("JarPaths") || key.equalsIgnoreCase("JAR_PATHS")) {
+          jar_paths = value
+          logger.trace("JarPaths => " + jar_paths)
         } else if (key.equalsIgnoreCase("SCALA_HOME")) {
           scala_home = value
           logger.trace("SCALA_HOME => " + scala_home)
@@ -4722,6 +4731,9 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("DATABASE_LOCATION", database_location)
       metadataAPIConfig.setProperty("GIT_ROOT", git_root)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jar_target_dir)
+      val jp = if (jar_paths != null) jar_paths else jar_target_dir
+      val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
+      metadataAPIConfig.setProperty("JAR_PATHS", j_paths.mkString(","))
       metadataAPIConfig.setProperty("SCALA_HOME", scala_home)
       metadataAPIConfig.setProperty("JAVA_HOME", java_home)
       metadataAPIConfig.setProperty("MANIFEST_PATH", manifest_path)
@@ -4817,6 +4829,13 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       logger.trace("JarTargetDir => " + jarTargetDir)
 
+      var jarPaths = jarTargetDir // configMap.APIConfigParameters.JarPaths
+      if (jarPaths == null) {
+        throw new MissingPropertyException("The property JarPaths must be defined in the config file " + configFile)
+      }
+      logger.trace("JarPaths => " + jarPaths)
+      
+      
       var scalaHome = configMap.APIConfigParameters.ScalaHome
       if (scalaHome == null) {
         throw new MissingPropertyException("The property ScalaHome must be defined in the config file " + configFile)
@@ -4936,6 +4955,9 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
       metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarTargetDir)
+      val jp = if (jarPaths != null) jarPaths else jarTargetDir
+      val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
+      metadataAPIConfig.setProperty("JAR_PATHS", j_paths.mkString(","))
       metadataAPIConfig.setProperty("SCALA_HOME", scalaHome)
       metadataAPIConfig.setProperty("JAVA_HOME", javaHome)
       metadataAPIConfig.setProperty("MANIFEST_PATH", manifestPath)

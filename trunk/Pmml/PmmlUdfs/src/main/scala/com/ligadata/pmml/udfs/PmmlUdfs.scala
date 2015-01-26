@@ -1774,27 +1774,45 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   //}
 
   def Sum(exprs: ArrayBuffer[Int]): Int = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Long]): Long = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Double]): Double = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: ArrayBuffer[Float]): Float = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Int]): Int = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Long]): Long = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(exprs: Array[Double]): Double = {
@@ -1805,58 +1823,91 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   def Sum(exprs: Array[Float]): Float = {
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple2[Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple3[Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple4[Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple5[Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple6[Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple7[Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple8[Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple9[Int, Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def Sum(tuples: Tuple10[Int, Int, Int, Int, Int, Int, Int, Int, Int, Int]): Int = {
     val exprs: Array[Int] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   /** Sum functions for Tuple2 */
   def Sum(tuples: Tuple2[Float, Float]): Float = {
     val exprs: Array[Float] = ToArray(tuples)
-    exprs.reduceLeft(_ + _)
+    if (exprs != null && exprs.size > 0)
+      exprs.reduceLeft(_ + _)
+    else
+      0
   }
 
   def SumToFloat(tuples: Tuple2[Any, Any]): Float = {
@@ -2624,6 +2675,174 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
   }
 
   /**
+   *  Answer the number of millisecs a numYrs ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numYrs
+   */
+  def YearsAgo(someDate: Int, numYrs: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusYears(numYrs)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of years to subtract
+   *  
+   *  @return ISO8601 date for someDate - numYrs
+   */
+  def YearsAgoAsISO8601(someDate: Int, numYrs: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numYrs))
+  }
+
+  /**
+   *  Answer the number of millisecs numMos ago.
+   */
+  def MonthsAgo(numMos: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusMonths(numMos)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numMos ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numMos
+   */
+  def MonthsAgo(someDate: Int, numMos: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusMonths(numMos)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of months to subtract
+   *  
+   *  @return ISO8601 date for someDate - numMos
+   */
+  def MonthsAgoAsISO8601(someDate: Int, numMos: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numMos))
+  }
+
+  /**
+   *  Answer the number of millisecs numWks ago.
+   */
+  def WeeksAgo(numWks: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusWeeks(numWks)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numWks ago from the supplied ISO 8601 compressed int date
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   *  
+   *  @return millisecs for someDate - numWks
+   */
+  def WeeksAgo(someDate: Int, numWks: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusWeeks(numWks)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of weeks to subtract
+   *  
+   *  @return ISO8601 date for someDate - numWks
+   */
+  def WeeksAgoAsISO8601(someDate: Int, numWks: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numWks))
+  }
+
+   /**
+   *  Answer the number of millisecs a numDays ago.
+   */
+  def DaysAgo(numDays: Int): Long = {
+    val rightNow: org.joda.time.DateTime = new org.joda.time.DateTime()
+    val someTimeAgo = rightNow.minusDays(numDays)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer the number of millisecs a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of days to subtract
+   *  
+   *  @return millisecs for someDate - numDays
+   */
+  def DaysAgo(someDate: Int, numDays: Int): Long = {
+    val dateAsMillisecs : Long = toDateTime(someDate).getMillis()
+    val someDt : org.joda.time.DateTime = new org.joda.time.DateTime(dateAsMillisecs)
+    val someTimeAgo = someDt.minusDays(numDays)
+    someTimeAgo.getMillis()
+  }
+
+  /**
+   *  Answer an ISO8601 compressed integer for a numDays ago from the supplied ISO 8601 compressed int date 
+   *
+   *  @param someDate an 8601 date compressed into integer (format OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND)
+   *  @param numDays number of days to subtract
+   *  
+   *  @return ISO8601 int for someDate - numDays
+   */
+  def DaysAgoAsISO8601(someDate: Int, numDays: Int): Int = {
+    AsCompressedDate(DaysAgo(someDate, numDays))
+  }
+
+  /** Coerce the yyyymmdd ISO8601 type compressed in integer to a DateTime
+   *  
+   *   @param yyyymmdd  ISO8601 type int compressed into integer
+   *   @return joda DateTime 
+   */
+  def toDateTime(yyyymmdd: Int): DateTime = {
+    val yyyy: Int = yyyymmdd / 10000
+    val mm: Int = (yyyymmdd % 1000) / 100
+    val day: Int = yyyymmdd % 100
+    val someDate: DateTime = new DateTime(yyyy, mm, day)
+    someDate
+  }
+
+  /**
+   *  Convert time formatted in integer (compressed decimal)
+   *  to millisecs.
+   *
+   *      Format: OHHMMSSCC, WHERE CC REPRESENTS HUNDREDTHS OF A SECOND
+   *
+   *  @param time, an Int
+   *  @return time, an Int
+   */
+  def CompressedTimeHHMMSSCC2MilliSecs(compressedTime: Int): Long = {
+    val hours = (compressedTime / 1000000) % 100
+    val minutes = (compressedTime / 10000) % 100
+    val seconds = (compressedTime / 100) % 100
+    val millisecs = (compressedTime % 100) * 10
+
+    val millis = (hours * 60 * 60 + minutes * 60 + seconds) * 1000 + millisecs
+
+    millis
+  }
+
+  /**
    *  Convert time formatted in integer (compressed decimal)
    *  to seconds.
    *
@@ -2877,21 +3096,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple2[Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple2[Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple2[Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+     val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2900,21 +3122,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple3[Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple3[Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple3[Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2923,21 +3148,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple4[Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple4[Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple4[Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2946,21 +3174,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
@@ -2969,21 +3200,24 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfFloat(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Float] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val fArray: Array[Float] = arr.map(itm => itm.asInstanceOf[Float])
+    val fArray: Array[Float] = arr.map(itm => if (itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Float] else 0)
     fArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfDouble(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Double] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val dArray: Array[Double] = arr.map(itm => itm.asInstanceOf[Double])
+    val dArray: Array[Double] = arr.map(itm => if (itm.isInstanceOf[Double] || itm.isInstanceOf[Float] || itm.isInstanceOf[Int] || itm.isInstanceOf[Long]) itm.asInstanceOf[Double] else 0)
     dArray
   }
 
+  /** if the tuple doesn't contain appropriate numeric values, a 0 is returned at that position */
   def ToArrayOfInt(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Int] = {
     val arr: Array[Any] = tuple.productIterator.toArray
-    val iArray: Array[Int] = arr.map(itm => itm.asInstanceOf[Int])
+    val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
   }
 
