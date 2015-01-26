@@ -67,7 +67,7 @@ case class ContainerDefinition(Container: MessageStruct)
 case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
-case class ParameterMap(RootDir: String, GitRootDir: String, Database: String, DatabaseHost: String, DatabaseSchema: Option[String], DatabaseLocation: Option[String], JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String])
+case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String])
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
@@ -4801,31 +4801,27 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       logger.trace("GitRootDir => " + gitRootDir)
 
-      var database = configMap.APIConfigParameters.Database
+      var database = configMap.APIConfigParameters.MetadataStoreType
       if (database == null) {
         database = "hashmap"
       }
       logger.trace("Database => " + database)
 
-      var databaseHost = configMap.APIConfigParameters.DatabaseHost
+      var databaseLocation = "/tmp"
+      var databaseHost = configMap.APIConfigParameters.MetadataLocation
       if (databaseHost == null) {
         databaseHost = "localhost"
+      } else {
+        databaseLocation = databaseHost
       }
-      logger.trace("DatabaseHost => " + databaseHost)
+      logger.trace("DatabaseHost => " + databaseHost + ", DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
 
       var databaseSchema = "metadata"
-      val databaseSchemaOpt = configMap.APIConfigParameters.DatabaseSchema
+      val databaseSchemaOpt = configMap.APIConfigParameters.MetadataSchemaName
       if (databaseSchemaOpt != None) {
         databaseSchema = databaseSchemaOpt.get
       }
       logger.trace("DatabaseSchema(applicable to cassandra only) => " + databaseSchema)
-
-      var databaseLocation = "/tmp"
-      val databaseLocationOpt = configMap.APIConfigParameters.DatabaseLocation
-      if (databaseLocationOpt != None) {
-        databaseLocation = databaseLocationOpt.get
-      }
-      logger.trace("DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
 
       var jarTargetDir = configMap.APIConfigParameters.JarTargetDir
       if (jarTargetDir == null) {
