@@ -41,7 +41,7 @@ object TestApiService {
 
   var propertiesAlreadyLoaded = false;
 
-  val config = Config(connectTimeout = 10000,readTimeout = 30000)
+  val config = Config(connectTimeout = 120000,readTimeout = 120000)
 
   def loadConfiguration(configFile: String, keysLowerCase: Boolean): (Properties, String) = {
     var configs: Properties = null
@@ -392,7 +392,7 @@ object TestApiService {
   def GetAllMetadataObjects = {
     var objKeys:Array[String] = new Array[String](0)
     try{
-      val objKeysJson = MakeHttpRequest(host_url,"GetAllMetadataObjects","STR","ALL")
+      val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR","ALL")
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(objKeysJson)
       objKeys = json.extract[Array[String]]
@@ -404,14 +404,10 @@ object TestApiService {
     }
   }
 
-  def GetAllConfigObjects = {
-    var objKeys:Array[String] = new Array[String](0)
+  def GetConfigObjects(objectType:String) = {
     try{
-      val objKeysJson = MakeHttpRequest(host_url,"GetAllConfigObjects","STR","ALL")
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(objKeysJson)
-      objKeys = json.extract[Array[String]]
-      objKeys.foreach( k => { println(k)});
+      val objJson = MakeHttpRequest(host_url,"GetConfigObjects","STR",objectType)
+      logger.trace(objJson)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -496,10 +492,14 @@ object TestApiService {
 
   def GetAllObjects(objectType: String){
     try{
-      val apiName = "GetAllObjects"
-      val apiResult = MakeHttpRequest(host_url,apiName,"STR",objectType)
-      println("Result as Json String => \n" + apiResult)
+      val keys = GetAllObjectKeys(objectType)
+      if( keys.length == 0 ){
+	println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	return
+      }
 
+      var seq = 0
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -532,19 +532,23 @@ object TestApiService {
   }
 
   def GetAllNodes{
-    GetAllObjects("Node")
+    GetConfigObjects("Node")
   }
 
   def GetAllClusters{
-    GetAllObjects("Cluster")
+    GetConfigObjects("Cluster")
   }
 
   def GetAllClusterCfgs{
-    GetAllObjects("ClusterCfg")
+    GetConfigObjects("ClusterCfg")
   }
 
   def GetAllAdapters{
-    GetAllObjects("Adapter")
+    GetConfigObjects("Adapter")
+  }
+
+  def GetAllConfigObjects{
+    GetConfigObjects("ALL")
   }
 
   def ActivateObjects(objectType: String){
@@ -801,7 +805,7 @@ object TestApiService {
 	  val contDefFile = contFiles(choice-1).toString
     	  logger.setLevel(Level.TRACE);
 	  val contStr = Source.fromFile(contDefFile).mkString
-    	  val res : String =  MakeHttpRequest(host_url, "AddContainer","JSON",contStr)
+    	  val res : String =  MakeHttpRequest(host_url, "AddContainerDef","JSON",contStr)
     	  results += Tuple3(choice.toString, contDefFile, res)
     	})
       } else {
@@ -865,7 +869,7 @@ object TestApiService {
 	  }
 	  val msgDefFile = msgFiles(choice-1).toString
 	  val msgStr = Source.fromFile(msgDefFile).mkString
-    	  val res : String = MakeHttpRequest(host_url, "AddContainer","JSON",msgStr)
+    	  val res : String = MakeHttpRequest(host_url, "AddContainerDef","JSON",msgStr)
     	  results += Tuple3(choice.toString, msgDefFile, res)
     	})
       } else {
