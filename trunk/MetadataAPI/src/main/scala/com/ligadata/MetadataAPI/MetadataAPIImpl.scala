@@ -1217,7 +1217,13 @@ object MetadataAPIImpl extends MetadataAPI {
       val json = parse(apiResultJson)
       //logger.trace("Parsed the json : " + apiResultJson)
       val apiResultInfo = json.extract[APIResultJsonProxy]
-      (apiResultInfo.APIResults.statusCode, apiResultInfo.APIResults.resultData)
+      if( apiResultInfo.APIResults.statusCode != 0 ){
+	(apiResultInfo.APIResults.statusCode, 
+	 apiResultInfo.APIResults.resultData + ":" + apiResultInfo.APIResults.statusDescription)
+      }
+      else{
+	(apiResultInfo.APIResults.statusCode, apiResultInfo.APIResults.resultData)
+      }
     } catch {
       case e: MappingException => {
         e.printStackTrace()
@@ -2366,7 +2372,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.trace("No active model found => " + key)
-          var apiResult = new ApiResult(-1, "Failed to Fetch the model", key)
+          var apiResult = new ApiResult(-1, "Failed to Fetch the model:(" + key + " may not be active", key)
           apiResult.toString()
         case Some(m) =>
           logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
@@ -2375,12 +2381,12 @@ object MetadataAPIImpl extends MetadataAPI {
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Deactivate"
           NotifyEngine(objectsUpdated, operations)
-          var apiResult = new ApiResult(0, "Model Definition was Deleted", key)
+          var apiResult = new ApiResult(0, "Model (" + key + ") Is Deactivated", key)
           apiResult.toString()
       }
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(-1, "Failed to delete the ModelDef:", e.toString)
+        var apiResult = new ApiResult(-1, "Failed to deactivate the Model :" + name, e.toString)
         apiResult.toString()
       }
     }
@@ -2394,7 +2400,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.trace("No active model found => " + key)
-          var apiResult = new ApiResult(-1, "Failed to Fetch the model", key)
+          var apiResult = new ApiResult(-1, "Failed to Fetch the model:(" + key + " may not be active)", key)
           apiResult.toString()
         case Some(m) =>
           logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
@@ -2403,7 +2409,7 @@ object MetadataAPIImpl extends MetadataAPI {
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Activate"
           NotifyEngine(objectsUpdated, operations)
-          var apiResult = new ApiResult(0, "Model Definition was Deleted", key)
+          var apiResult = new ApiResult(0, "Model is activated:(" + key + ")" ,key)
           apiResult.toString()
       }
     } catch {
@@ -2432,7 +2438,7 @@ object MetadataAPIImpl extends MetadataAPI {
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           var operations = for (op <- objectsUpdated) yield "Remove"
           NotifyEngine(objectsUpdated, operations)
-          var apiResult = new ApiResult(0, "Model Definition was Deleted", key)
+          var apiResult = new ApiResult(0, "Model was Deleted(" + key + ")",key)
           apiResult.toString()
       }
     } catch {
@@ -2846,7 +2852,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.trace("model not found => " + key)
-          var apiResult = new ApiResult(-1, "Failed to Fetch the model", key)
+          var apiResult = new ApiResult(-1, "API operation failed", "Failed to fetch the model:(" + key + "may not be active)")
           apiResult.toString()
         case Some(m) =>
           logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)

@@ -234,8 +234,11 @@ class CompilerProxy{
     } catch{
       case e:Exception =>{
 	logger.trace("Failed to compile the model definition " + e.toString)
-	//e.printStackTrace
-	throw new ModelCompilationFailedException(pmmlStr)
+	throw new ModelCompilationFailedException(e.getMessage())
+      }
+      case e:AlreadyExistsException =>{
+	logger.trace("Failed to compile the model definition " + e.toString)
+	throw new ModelCompilationFailedException(e.getMessage())
       }
     }
   }
@@ -306,7 +309,12 @@ class CompilerProxy{
       case e:Exception =>{
 	logger.trace("Failed to compile the message definition " + e.toString)
 	e.printStackTrace
-	throw new MsgCompilationFailedException(msgDefStr)
+	throw new MsgCompilationFailedException(e.getMessage())
+      }
+      case e:AlreadyExistsException =>{
+	logger.trace("Failed to compile the message definition " + e.toString)
+	e.printStackTrace
+	throw new MsgCompilationFailedException(e.getMessage())
       }
     }
   }

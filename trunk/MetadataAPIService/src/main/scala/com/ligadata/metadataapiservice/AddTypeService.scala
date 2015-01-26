@@ -32,9 +32,9 @@ class AddTypeService(requestContext: RequestContext) extends Actor {
 	
 	def process(typeJson:String, formatType:String) = {
 	  
-		log.info("Requesting AddType {},{}",typeJson,formatType)
+		log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
 		
-		val apiResult = MetadataAPIImpl.AddType(typeJson,formatType)
+		val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType)
 		
 		requestContext.complete(apiResult)
 	}

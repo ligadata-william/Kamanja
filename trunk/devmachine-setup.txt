@@ -91,6 +91,26 @@ chkconfig cassandra on
 
 service cassandra start
 
+installing cassandra 2.1
+
+sudo service cassandra stop
+sudo yum install cassandra 21
+sudo yum install dsc21
+
+cqlsh setup for cassandra2.1
+
+we need to install python library cqlshlib to use cqlsh(uses new driver to access cassandra 2.1.x)
+
+** Download http://fossies.org/linux/misc/apache-cassandra-2.1.2-src.tar.gz
+
+** unpack the contents of apache-cassandra-2.1.2-src.tar.gz
+
+cd .../apache-cassandra-2.1.2-src/pylib
+sudo su -
+(make sure the version of python as root user matches the version of python in your home)
+./setup.py install
+
+
 # cqlsh (or equivalent on windows)
 #
 # Create some basic schema

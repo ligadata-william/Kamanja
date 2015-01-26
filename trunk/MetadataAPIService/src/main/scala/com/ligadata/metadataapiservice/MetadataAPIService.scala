@@ -80,14 +80,14 @@ trait MetadataAPIService extends HttpService {
             removeObjectsService ! RemoveObjectsService.Process(argListJson)
 	  }
       } ~
-      (put & path("ActivateModel")) { 
+      (put & path("ActivateObjects")) { 
           entity(as[String]) { argListJson =>
             requestContext =>
             val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(requestContext)))
             activateObjectsService ! ActivateObjectsService.Process(argListJson)
 	  }
       } ~
-      (put & path("DeactivateModel")) { 
+      (put & path("DeactivateObjects")) { 
           entity(as[String]) { argListJson =>
             requestContext =>
             val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(requestContext)))
@@ -185,6 +185,48 @@ trait MetadataAPIService extends HttpService {
             allObjectsService ! GetAllObjectsService.Process("Concept")
 	  }
       } ~
+      (put & path("AddType")) { 
+        entity(as[String]) { typeJson =>
+          requestContext =>
+          val addTypeDefsService = actorRefFactory.actorOf(Props(new AddTypeService(requestContext)))
+          addTypeDefsService ! AddTypeService.Process(typeJson,"JSON")
+        }
+      } ~
+      (put & path("UpdateType" )) { 
+        entity(as[String]) { typeJson =>
+          requestContext =>
+          val addTypeDefsService = actorRefFactory.actorOf(Props(new AddTypeService(requestContext)))
+          addTypeDefsService ! AddTypeService.Process(typeJson,"JSON")
+        }
+      } ~
+      (put & path("AddConcept")) { 
+        entity(as[String]) { conceptJson =>
+          requestContext =>
+          val addConceptDefsService = actorRefFactory.actorOf(Props(new AddConceptService(requestContext)))
+          addConceptDefsService ! AddConceptService.Process(conceptJson,"JSON")
+        }
+      } ~
+      (put & path("UpdateConcept" )) { 
+        entity(as[String]) { conceptJson =>
+          requestContext =>
+          val addConceptDefsService = actorRefFactory.actorOf(Props(new AddConceptService(requestContext)))
+          addConceptDefsService ! AddConceptService.Process(conceptJson,"JSON")
+        }
+      } ~
+      (put & path("AddFunction")) { 
+        entity(as[String]) { functionJson =>
+          requestContext =>
+          val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(requestContext)))
+          addFunctionDefsService ! AddFunctionService.Process(functionJson,"JSON")
+        }
+      } ~
+      (put & path("UpdateFunction" )) { 
+        entity(as[String]) { functionJson =>
+          requestContext =>
+          val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(requestContext)))
+          addFunctionDefsService ! AddFunctionService.Process(functionJson,"JSON")
+        }
+      } ~
       (put & path("GetAllTypes")) {
           entity(as[String]) { formatType =>
             requestContext =>
@@ -192,53 +234,32 @@ trait MetadataAPIService extends HttpService {
             allObjectsService ! GetAllObjectsService.Process("Type")
 	  }
       } ~
-      (put & path("GetAllCfgObjects")) {
-          entity(as[String]) { formatType =>
+      (put & path("GetAllTypesByObjType")) {
+          entity(as[String]) { objectType =>
             requestContext =>
-            val allObjectsService = actorRefFactory.actorOf(Props(new GetAllObjectsService(requestContext)))
-            allObjectsService ! GetAllObjectsService.Process("AllConfigs")
+            val allTypesService = actorRefFactory.actorOf(Props(new GetAllTypesByObjTypeService(requestContext)))
+            allTypesService ! GetAllTypesByObjTypeService.Process(objectType)
 	  }
       } ~
-      (put & path("GetAllNodes")) {
-          entity(as[String]) { formatType =>
+      (put & path("GetConfigObjects")) {
+          entity(as[String]) { objectType =>
             requestContext =>
-            val allObjectsService = actorRefFactory.actorOf(Props(new GetAllObjectsService(requestContext)))
-            allObjectsService ! GetAllObjectsService.Process("Node")
-	  }
-      } ~
-      (put & path("GetAllAdapters")) {
-          entity(as[String]) { formatType =>
-            requestContext =>
-            val allObjectsService = actorRefFactory.actorOf(Props(new GetAllObjectsService(requestContext)))
-            allObjectsService ! GetAllObjectsService.Process("Adapater")
-	  }
-      } ~
-      (put & path("GetAllClusters")) {
-          entity(as[String]) { formatType =>
-            requestContext =>
-            val allObjectsService = actorRefFactory.actorOf(Props(new GetAllObjectsService(requestContext)))
-            allObjectsService ! GetAllObjectsService.Process("Cluster")
-	  }
-      } ~
-      (put & path("GetAllClusterCfgs")) {
-          entity(as[String]) { formatType =>
-            requestContext =>
-            val allObjectsService = actorRefFactory.actorOf(Props(new GetAllObjectsService(requestContext)))
-            allObjectsService ! GetAllObjectsService.Process("ClusterCfg")
+            val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(requestContext)))
+            allObjectsService ! GetConfigObjectsService.Process(objectType)
 	  }
       } ~
       (put & path("UploadConfig")) {
           entity(as[String]) { configJson =>
             requestContext =>
             val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(requestContext)))
-            uploadConfigService ! UploadEngineConfigService.Process("ClusterCfg")
+            uploadConfigService ! UploadEngineConfigService.Process(configJson)
 	  }
       } ~
       (put & path("RemoveConfig")) {
           entity(as[String]) { configJson =>
             requestContext =>
             val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(requestContext)))
-            removeConfigService ! RemoveEngineConfigService.Process("ClusterCfg")
+            removeConfigService ! RemoveEngineConfigService.Process(configJson)
 	  }
       } ~
       // yet to figure out passing both jarname and bytearray togethor

@@ -16,13 +16,13 @@ import org.json4s.jackson.JsonMethods._
 import scala.util.control._
 import org.apache.log4j._
 
-object GetAllObjectsService {
+object GetConfigObjectsService {
   case class Process(formatType:String)
 }
 
-class GetAllObjectsService(requestContext: RequestContext) extends Actor {
+class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
 
-  import GetAllObjectsService._
+  import GetConfigObjectsService._
   
   implicit val system = context.system
   import system.dispatcher
@@ -32,39 +32,12 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
   val logger = Logger.getLogger(loggerName)
   logger.setLevel(Level.TRACE);
 
-  val APIName = "GetAllObjects"
+  val APIName = "GetConfigObjects"
 
-  def GetAllObjects(objectType:String): String = {
+  def GetConfigObjects(objectType:String): String = {
     var apiResult:String = ""
 
     objectType match {
-      case "Model" => {
-	apiResult = MetadataAPIImpl.GetAllModelDefs("JSON")
-      }
-      case "Message" => {
-	apiResult = MetadataAPIImpl.GetAllMessageDefs("JSON")
-      }
-      case "Container" => {
-	apiResult = MetadataAPIImpl.GetAllContainerDefs("JSON")
-      }
-      case "Function" => {
-	val(fsize,result) = MetadataAPIImpl.GetAllFunctionDefs("JSON")
-	apiResult = result
-      }
-      case "Concept" => {
-	apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
-      }
-      case "Type" => {
-	apiResult = MetadataAPIImpl.GetAllTypes("JSON")
-      }
-      case "ALL" => {
-	apiResult = MetadataAPIImpl.GetAllModelDefs("JSON") +
-		    MetadataAPIImpl.GetAllMessageDefs("JSON") +
-		    MetadataAPIImpl.GetAllContainerDefs("JSON") +
-		    MetadataAPIImpl.GetAllFunctionDefs("JSON") +
-		    MetadataAPIImpl.GetAllConcepts("JSON") +
-		    MetadataAPIImpl.GetAllTypes("JSON")
-      }
       case "Node" => {
 	apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
@@ -77,14 +50,15 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
       case "ClusterCfg" => {
 	apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
       }
-      case "AllConfigs" => {
+      case "ALL" => {
 	apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
       }
       case _ => {
 	apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    apiResult
+    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    resultData
   }
 
   
@@ -95,8 +69,8 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
   }
   
   def process(objectType:String) = {
-    log.info("Requesting GetAllObjects {}",objectType)
-    val apiResult = GetAllObjects(objectType)
+    log.info("Requesting GetConfigObjects {}",objectType)
+    val apiResult = GetConfigObjects(objectType)
     requestContext.complete(apiResult)
   }
 }

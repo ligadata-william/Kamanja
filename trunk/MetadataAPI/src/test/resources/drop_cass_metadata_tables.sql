@@ -1,9 +1,6 @@
-drop table metadata.models;
-drop table metadata.messages;
-drop table metadata.containers;
-drop table metadata.concepts;
-drop table metadata.functions;
-drop table metadata.types;
-drop table metadata.others;
+drop table metadata.metadata_objects;
+drop table metadata.config_objects;
+drop table metadata.jar_store;
+drop table metadata.transaction_id;
 drop keyspace metadata;
 

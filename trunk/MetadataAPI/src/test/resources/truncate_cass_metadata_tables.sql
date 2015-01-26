@@ -1,7 +1,6 @@
-truncate metadata.models;
-truncate metadata.messages;
-truncate metadata.containers;
-truncate metadata.concepts;
-truncate metadata.functions;
-truncate metadata.types;
-truncate metadata.others;
+truncate metadata.metadata_objects;
+truncate metadata.transaction_id;
+truncate metadata.jar_store;
+truncate metadata.config_objects;
+
+
