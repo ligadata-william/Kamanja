@@ -281,7 +281,6 @@ cp -rf * $installPath/template
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
-cd $installPath/bin
-./SetPaths.sh $KafkaRootDir
+$installPath/bin/SetPaths.sh $KafkaRootDir
 
 echo "installOnLEP complete..."

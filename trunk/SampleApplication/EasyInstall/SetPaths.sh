@@ -36,13 +36,12 @@ if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
 	echo "WARN: Not given/found Kafka install directory. Not going to replace {KafkaInstallDir} in CreateQueues.sh"
 else
 	kafkatopics="$1/bin/kafka-topics.sh"
-	if [ ! -f "$kafkatopics" ]
+	if [ ! -f "$kafkatopics" ]; then
 		echo "WARN: Not found bin/kafka-topics.sh in given Kafka install directory $1. Not going to replace {KafkaInstallDir} in CreateQueues.sh"
 	else
 		KafkaRootDir=$1
 		KafkaRootDir_repl=$(echo $KafkaRootDir | sed 's/\//\\\//g')
 		sed "s/{KafkaInstallDir}/$KafkaRootDir_repl/g" $install_dir/template/script/CreateQueues_Template.sh > $install_dir/bin/CreateQueues.sh
-		echo "found Kafka install directory"
 	fi
 fi
 
