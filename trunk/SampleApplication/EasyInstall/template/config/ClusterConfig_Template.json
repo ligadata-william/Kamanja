@@ -58,12 +58,8 @@
       "DependencyJars": [
         "jopt-simple-3.2.jar",
         "kafka_2.10-0.8.1.1.jar",
-        "log4j-1.2.15.jar",
         "metrics-core-2.2.0.jar",
-        "slf4j-api-1.7.2.jar",
-        "snappy-java-1.0.5.jar",
         "zkclient-0.3.jar",
-        "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
       "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"testin_1\" }"
@@ -77,12 +73,8 @@
       "DependencyJars": [
         "jopt-simple-3.2.jar",
         "kafka_2.10-0.8.1.1.jar",
-        "log4j-1.2.15.jar",
         "metrics-core-2.2.0.jar",
-        "slf4j-api-1.7.2.jar",
-        "snappy-java-1.0.5.jar",
         "zkclient-0.3.jar",
-        "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
       "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"testout_1\" }"
@@ -96,12 +88,8 @@
       "DependencyJars": [
         "jopt-simple-3.2.jar",
         "kafka_2.10-0.8.1.1.jar",
-        "log4j-1.2.15.jar",
         "metrics-core-2.2.0.jar",
-        "slf4j-api-1.7.2.jar",
-        "snappy-java-1.0.5.jar",
         "zkclient-0.3.jar",
-        "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
       "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"testout_1\" }"
@@ -114,12 +102,8 @@
       "DependencyJars": [
         "jopt-simple-3.2.jar",
         "kafka_2.10-0.8.1.1.jar",
-        "log4j-1.2.15.jar",
         "metrics-core-2.2.0.jar",
-        "slf4j-api-1.7.2.jar",
-        "snappy-java-1.0.5.jar",
         "zkclient-0.3.jar",
-        "zookeeper-3.3.4.jar",
         "onlepbase_2.10-1.0.jar"
       ],
       "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"teststatus_1\" }"
