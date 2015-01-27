@@ -46,6 +46,7 @@ mkdir -p $installPath/template/config
 mkdir -p $installPath/template/script
 mkdir -p $installPath/input
 mkdir -p $installPath/input/application1
+mkdir -p $installPath/input/application1/bin
 mkdir -p $installPath/input/application1/data
 mkdir -p $installPath/input/application1/metadata
 mkdir -p $installPath/input/application1/metadata/config
@@ -55,6 +56,7 @@ mkdir -p $installPath/input/application1/metadata/message
 mkdir -p $installPath/input/application1/metadata/model
 mkdir -p $installPath/input/application1/metadata/script
 mkdir -p $installPath/input/application1/metadata/type
+mkdir -p $installPath/input/application1/template
 
 bin=$installPath/bin
 systemlib=$installPath/lib/system
@@ -277,6 +279,9 @@ cp *.* $installPath/input/application1/metadata/model
 
 cd $srcPath/SampleApplication/Medical/Types
 cp * $installPath/input/application1/metadata/type
+
+cd $srcPath/SampleApplication/Medical/template
+cp -rf * $installPath/input/application1/template
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
