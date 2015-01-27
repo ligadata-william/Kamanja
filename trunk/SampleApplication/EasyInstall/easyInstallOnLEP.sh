@@ -251,6 +251,9 @@ echo "Prepare test messages and copy them into place..."
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo.csv.gz $installPath/input/application1/data
 
+cd $srcPath/SampleApplication/Medical/SampleData
+cp *.csv $installPath/input/application1/data
+
 # *******************************
 # copy models, messages, containers, config, scripts, types  messages data prep
 # *******************************
