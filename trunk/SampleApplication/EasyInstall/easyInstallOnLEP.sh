@@ -3,6 +3,7 @@
 installPath=$1
 srcPath=$2
 ivyPath=$3
+KafkaRootDir=$4
 
 if [ ! -d "$installPath" ]; then
         echo "No install path supplied.  It should be a directory that can be written to and whose current content is of no value (will be overwritten) "
@@ -248,14 +249,7 @@ cp $ivyPath/cache/com.101tec/zkclient/jars/zkclient-0.3.jar $systemlib
 
 echo "Prepare test messages and copy them into place..."
 cd $srcPath/Utils/KVInit/src/main/resources
-gzip -c beneficiaries.csv > beneficiaries.gz
-gzip -c messages_new_format.csv > messages_new_format.gz
-gzip -c messages_old_format.csv > messages_old_format.gz
-gzip -c messages_new_format_all.csv > messages_new_format_all.csv.gz
-gzip -c messages50_2014_BIOH.csv > messages50_2014_BIOH.csv.gz
-
-cp *gz $installPath/input/application1/data
-
+cp copd_demo.csv.gz $installPath/input/application1/data
 
 # *******************************
 # copy models, messages, containers, config, scripts, types  messages data prep
@@ -276,7 +270,7 @@ cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/application1/metadata/message
 
 cd $srcPath/SampleApplication/Medical/Models
-cp * $installPath/input/application1/metadata/model
+cp *.* $installPath/input/application1/metadata/model
 
 cd $srcPath/SampleApplication/Medical/Types
 cp * $installPath/input/application1/metadata/type
@@ -288,6 +282,6 @@ cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
 cd $installPath/bin
-./SetPaths.sh
+./SetPaths.sh $KafkaRootDir
 
 echo "installOnLEP complete..."
