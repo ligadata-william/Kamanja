@@ -23,6 +23,10 @@ if [ ! -d "$ivyPath" ]; then
         exit 1
 fi
 
+installPath=$(echo $installPath | sed 's/[\/]*$//')
+srcPath=$(echo $srcPath | sed 's/[\/]*$//')
+ivyPath=$(echo $ivyPath | sed 's/[\/]*$//')
+
 # *******************************
 # Clean out prior installation
 # *******************************
