@@ -879,120 +879,125 @@ object JsonSerializer {
   def SerializeObjectToJson(mdObj: BaseElemDef): String = {
     mdObj match{
       case o:FunctionDef => {
-	val json = (("NameSpace"  -> o.nameSpace) ~
-		    ("Name"       -> o.name) ~
-		    ("PhysicalName"       -> o.physicalName) ~
-		    ("ReturnTypeNameSpace"     -> o.retType.nameSpace) ~
-		    ("ReturnTypeName"     -> o.retType.name) ~
-		    ("Arguments"  -> o.args.toList.map{ arg => 
-				  (
-				    ("ArgName"      -> arg.name) ~
-				    ("ArgTypeNameSpace"      -> arg.Type.nameSpace) ~
-				    ("ArgTypeName"      -> arg.Type.name)
-				  )
-				  }) ~
-		    ("Version"    -> o.ver) ~
-		    ("JarName"    -> o.jarName) ~
-		    ("DependantJars" -> o.dependencyJarNames.toList)~
-		    ("TransactionId" -> o.tranId))
-	pretty(render(json))
+	      val json = (("NameSpace"  -> o.nameSpace) ~
+		                ("Name"       -> o.name) ~
+		                ("PhysicalName"       -> o.physicalName) ~
+		                ("ReturnTypeNameSpace"     -> o.retType.nameSpace) ~
+		                ("ReturnTypeName"     -> o.retType.name) ~
+		                ("Arguments"  -> o.args.toList.map{ arg => 
+				              (
+				                ("ArgName"      -> arg.name) ~
+				                ("ArgTypeNameSpace"      -> arg.Type.nameSpace) ~
+				                ("ArgTypeName"      -> arg.Type.name)
+				              )
+				            }) ~
+		                ("Version"    -> o.ver) ~
+		                ("JarName"    -> o.jarName) ~
+		                ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList)~
+		                ("TransactionId" -> o.tranId))
+	      pretty(render(json))
       }
+      
       case o:MessageDef => {
-	// Assume o.containerType is checked for not being null
-	val json = ("Message"  -> 
-		    ("NameSpace" -> o.nameSpace) ~
-		    ("Name"      -> o.name) ~
-		    ("FullName"  -> o.FullName) ~
-		    ("Version"   -> o.ver) ~
-		    ("JarName"      -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("ObjectDefinition" -> o.objectDefinition) ~
-		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
-		    ("TransactionId" -> o.tranId))
-	var jsonStr = pretty(render(json))
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
-	    jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
-	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case c:MappedMsgTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case _ => {
+	      // Assume o.containerType is checked for not being null
+	      val json = ("Message"  -> 
+		                  ("NameSpace" -> o.nameSpace) ~
+		                  ("Name"      -> o.name) ~
+		                  ("FullName"  -> o.FullName) ~
+		                  ("Version"   -> o.ver) ~
+		                  ("JarName"      -> o.jarName) ~
+		                  ("PhysicalName" -> o.typeString) ~
+		                  ("ObjectDefinition" -> o.objectDefinition) ~
+		                  ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
+		                  ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
+		                  ("TransactionId" -> o.tranId)
+                   )
+	      var jsonStr = pretty(render(json))
+	      
+        o.containerType match{
+	        case c:StructTypeDef => {
+	          jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
+	          var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
+	          memberDefJson = memberDefJson + "}\n}"
+	          jsonStr += memberDefJson
+	          jsonStr
+	        }
+	        case c:MappedMsgTypeDef => {
+	          jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	          var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
+	          memberDefJson = memberDefJson + "}\n}"
+	          jsonStr += memberDefJson
+	          jsonStr
+	        }
+	        case _ => {
             throw new UnsupportedObjectException("SerializeObjectToJson doesn't support the " +
 						 "objectType of " + o.containerType.getClass().getName() + " yet")
-	  }
-	}
+	        }
+	      }
       }
+      
       case o:ContainerDef => {
-	val json = ("Container"  -> 
-		    ("NameSpace" -> o.nameSpace) ~
-		    ("Name"      -> o.name) ~
-		    ("FullName"  -> o.FullName) ~
-		    ("Version"   -> o.ver) ~
-		    ("JarName"      -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("ObjectDefinition" -> o.objectDefinition) ~
-		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
-		    ("TransactionId" -> o.tranId))
-	var jsonStr = pretty(render(json))
-	o.containerType match{
-	  case c:StructTypeDef => {
-	    //jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"Attributes\": "
-	    jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
-	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case c:MappedMsgTypeDef => {
-	    jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
-	    var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
-	    memberDefJson = memberDefJson + "}\n}"
-	    jsonStr += memberDefJson
-	    jsonStr
-	  }
-	  case _ => {
+	      val json = ("Container"  -> 
+		                 ("NameSpace" -> o.nameSpace) ~
+		                 ("Name"      -> o.name) ~
+		                 ("FullName"  -> o.FullName) ~
+		                 ("Version"   -> o.ver) ~
+		                 ("JarName"      -> o.jarName) ~
+		                 ("PhysicalName" -> o.typeString) ~
+		                 ("ObjectDefinition" -> o.objectDefinition) ~
+		                 ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
+		                 ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
+		                 ("TransactionId" -> o.tranId)
+                   )
+	      var jsonStr = pretty(render(json))
+        
+	      o.containerType match{
+	        case c:StructTypeDef => {
+	          jsonStr = replaceLast(jsonStr,"}\n}","").trim + ",\n  \"Attributes\": "
+	          var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[StructTypeDef].memberDefs)
+	          memberDefJson = memberDefJson + "}\n}"
+	          jsonStr += memberDefJson
+	          jsonStr
+	        }
+	        case c:MappedMsgTypeDef => {
+	          jsonStr = jsonStr.replaceAll("}","").trim + ",\n  \"MappedMsgTypeDef\": "
+	          var memberDefJson = SerializeObjectListToJson(o.containerType.asInstanceOf[MappedMsgTypeDef].attrMap.values.toArray)
+	          memberDefJson = memberDefJson + "}\n}"
+	          jsonStr += memberDefJson
+	          jsonStr
+	        }
+	        case _ => {
             throw new UnsupportedObjectException(s"SerializeObjectToJson doesn't support the " +
 						 "objectType of $mdObj.name  yet")
-	  }
-	}
+	        }
+	      }
       }
+      
       case o:ModelDef => {
-	val json = ( "Model" -> ("NameSpace" -> o.nameSpace) ~
-		    ("Name" -> o.name) ~
-		    ("Version" -> o.ver) ~
-		    ("ModelType"  -> o.modelType) ~
-		    ("JarName" -> o.jarName) ~
-		    ("PhysicalName" -> o.typeString) ~
-		    ("ObjectDefinition" -> o.objectDefinition) ~
-		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
-		    ("DependencyJars" -> o.dependencyJarNames.toList) ~
-		    ("Deleted"         -> o.deleted) ~
-		    ("Active"          -> o.active) ~
-		    ("TransactionId" -> o.tranId))
-	var jsonStr = pretty(render(json))
-	//jsonStr = jsonStr.replaceAll("}","").trim
-	jsonStr = replaceLast(jsonStr,"}\n}","").trim
-	jsonStr = jsonStr + ",\n\"InputAttributes\": "
-	var memberDefJson = SerializeObjectListToJson(o.inputVars)
-	jsonStr += memberDefJson
+	      val json = ( "Model" ->
+                     ("NameSpace" -> o.nameSpace) ~
+		                 ("Name" -> o.name) ~
+		                 ("Version" -> o.ver) ~
+		                 ("ModelType"  -> o.modelType) ~
+		                 ("JarName" -> o.jarName) ~
+		                 ("PhysicalName" -> o.typeString) ~
+		                 ("ObjectDefinition" -> o.objectDefinition) ~
+		                 ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
+		                 ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
+		                 ("Deleted"         -> o.deleted) ~
+		                 ("Active"          -> o.active) ~
+		                 ("TransactionId" -> o.tranId))
+	      var jsonStr = pretty(render(json))
+	      jsonStr = replaceLast(jsonStr,"}\n}","").trim
+	      jsonStr = jsonStr + ",\n\"InputAttributes\": "
+	      var memberDefJson = SerializeObjectListToJson(o.inputVars)
+	      jsonStr += memberDefJson
 
-	jsonStr = jsonStr + ",\n\"OutputAttributes\": "
-	memberDefJson = SerializeObjectListToJson(o.outputVars)
-	memberDefJson = memberDefJson + "}\n}"
-	jsonStr += memberDefJson
-	jsonStr
+	      jsonStr = jsonStr + ",\n\"OutputAttributes\": "
+	      memberDefJson = SerializeObjectListToJson(o.outputVars)
+	      memberDefJson = memberDefJson + "}\n}"
+	      jsonStr += memberDefJson
+	      jsonStr
       }
 
       case o:AttributeDef => {
@@ -1019,7 +1024,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
@@ -1034,7 +1039,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" ->o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1053,7 +1058,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1072,7 +1077,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1090,7 +1095,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1108,7 +1113,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" ->o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1128,7 +1133,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1148,7 +1153,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("KeyTypeNameSpace" -> o.keyDef.nameSpace ) ~
@@ -1168,7 +1173,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
@@ -1186,7 +1191,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("Fixed" -> o.IsFixed) ~
 		     ("ValueTypeNameSpace" -> o.valDef.nameSpace ) ~
@@ -1204,7 +1209,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("NumberOfDimensions" -> o.arrayDims)~
 		     ("TransactionId" -> o.tranId))
@@ -1220,7 +1225,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
 		     ("NumberOfDimensions" -> o.arrayDims)~
 		     ("TransactionId" -> o.tranId))
@@ -1236,7 +1241,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
@@ -1257,7 +1262,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
@@ -1272,7 +1277,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
@@ -1287,7 +1292,7 @@ object JsonSerializer {
 		     ("PhysicalName" -> o.physicalName ) ~
 		     ("Version" -> o.ver) ~
 		     ("JarName" -> o.jarName) ~
-		     ("DependencyJars" -> getJarList(o.dependencyJarNames)) ~
+		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
 		     ("TransactionId" -> o.tranId))
 	pretty(render(json))
@@ -1297,16 +1302,6 @@ object JsonSerializer {
       }
     }
   }
-
-  def getJarList(jarArray: Array[String]): List[String] = {
-    if (jarArray != null ){
-      jarArray.toList
-    }
-    else{
-      new Array[String](0).toList
-    }
-  }
-
 
   def SerializeObjectListToJson[T <: BaseElemDef](objList: Array[T]) : String = {
     var json = "[ \n" 
