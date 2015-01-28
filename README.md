@@ -6,7 +6,7 @@ Fatafat is an online learning engine platform that provides near real-time proce
 
 ###What Fatafat does
 
-Fatafat is an advanced PMML learning engine.  Through a combination of result scoring and rule set strategy, Fatafat can provide high speed processing of streaming data, using your rule set, and produce actionable threats and/or opportunities.  It does these things:
+Fatafat is an advanced PMML scoring engine.  Through a combination of result scoring and rule set strategy, Fatafat can provide high speed processing of streaming data, using your rule set, and produce actionable threats and/or opportunities.  It does these things:
 
 By using its enhanced and extended PMML modeling capabilities, Fatafat provides a streamlined method for designing and implementing your business questions and rulesets in PMML models.  Incoming messages are consumed by the engine, which uses advanced custom complex data types in various combinations to process messages against multiple models and rule sets to produce insight.   
 	
