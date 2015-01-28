@@ -178,6 +178,7 @@ class BaseElemDef extends BaseElem {
   override def Active: Unit = active = true // Make the element as Active
   override def Deactive: Unit = active = false // Make the element as de-active
   override def Deleted: Unit = deleted = true // Mark the element as deleted
+  def CheckAndGetDependencyJarNames: Array[String] = if (dependencyJarNames != null) dependencyJarNames else Array[String]()
 
   // Override in other places if required
   override def equals(that: Any) = {

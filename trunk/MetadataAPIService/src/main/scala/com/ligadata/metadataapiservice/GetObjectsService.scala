@@ -57,26 +57,25 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
 
     arg.ObjectType match {
       case "Model" => {
-	apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
       }
       case "Message" => {
-	apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
       }
       case "Container" => {
-	apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
       }
       case "Function" => {
-	apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
       }
       case "Concept" => {
-	apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
       }
       case "Type" => {
-	apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
       }
     }
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    resultData
+    apiResult
   }
 
   def process(apiArgListJson: String) = {
