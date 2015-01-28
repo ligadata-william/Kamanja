@@ -262,8 +262,9 @@ cp *.csv $installPath/input/application1/data
 
 cp $srcPath/OnLEPManager/src/main/resources/log4j.properties $installPath/config
 
-cd $srcPath/SampleApplication/Medical/Configs
-cp * $installPath/input/application1/metadata/config
+# Not copying anything from here
+# cd $srcPath/SampleApplication/Medical/Configs
+# cp * $installPath/input/application1/metadata/config
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
 cp * $installPath/input/application1/metadata/container
