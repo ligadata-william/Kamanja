@@ -285,11 +285,12 @@ class MessageDefImpl {
   }
   private def assignJsonForArray(fname: String, typeImpl: String) = {
     """
-		if (map.getOrElse("""" + fname + """", null).isInstanceOf[tList])
+		if (map.contains("""" + fname + """")){
 			arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
 		if (arr != null) {
 			""" + fname + """  = arr.map(v => """ + typeImpl + """(v)).toArray
 		}
+	 }
       """
   }
 
@@ -314,7 +315,7 @@ class MessageDefImpl {
     """   
         val inputData = new JsonData(json.dataInput)
         inputData.root_json = json.root_json
-        inputData.cur_json = Option(map.getOrElse("hl7messages", null))
+        inputData.cur_json = Option(map.getOrElse("""" + mName + """", null))
 	    """ + mName + """.populate(inputData)
 	    """
   }
@@ -1287,7 +1288,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
   			throw e
 		}
 	}
-  	inputdata.curPos
   }
 	  """
   }
@@ -1308,7 +1308,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
   			throw e
 		}
 	}
-  	inputdata.curPos
   }
 	  """
   }
