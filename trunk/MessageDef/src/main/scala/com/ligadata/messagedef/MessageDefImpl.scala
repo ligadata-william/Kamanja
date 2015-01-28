@@ -2169,5 +2169,4 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
 
   }
-
 }
