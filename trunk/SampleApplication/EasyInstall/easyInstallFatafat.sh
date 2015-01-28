@@ -23,6 +23,10 @@ if [ ! -d "$ivyPath" ]; then
         exit 1
 fi
 
+installPath=$(echo $installPath | sed 's/[\/]*$//')
+srcPath=$(echo $srcPath | sed 's/[\/]*$//')
+ivyPath=$(echo $ivyPath | sed 's/[\/]*$//')
+
 # *******************************
 # Clean out prior installation
 # *******************************
@@ -262,8 +266,9 @@ cp *.csv $installPath/input/application1/data
 
 cp $srcPath/OnLEPManager/src/main/resources/log4j.properties $installPath/config
 
-cd $srcPath/SampleApplication/Medical/Configs
-cp * $installPath/input/application1/metadata/config
+# Not copying anything from here
+# cd $srcPath/SampleApplication/Medical/Configs
+# cp * $installPath/input/application1/metadata/config
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
 cp * $installPath/input/application1/metadata/container

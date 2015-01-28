@@ -12,9 +12,15 @@ if [ "$?" != "0" ]; then
 	exit 1
 fi
 
+pwdnm=$(pwd -P)
+
 java_home=$(dirname $(dirname $jar_full_path))
 scala_home=$(dirname $(dirname $scala_full_path))
-install_dir=$(dirname $(dirname $(readlink -f "$0")))
+
+dirnm=$(dirname "$0")
+cd $dirnm
+
+install_dir=$(dirname $(pwd -P))
 
 java_home_repl=$(echo $java_home | sed 's/\//\\\//g')
 scala_home_repl=$(echo $scala_home | sed 's/\//\\\//g')
@@ -44,6 +50,7 @@ else
 		echo "WARN: Not found bin/kafka-topics.sh in given Kafka install directory $1. Not going to create CreateQueues.sh, WatchOutputQueue.sh and WatchStatusQueue.sh"
 	else
 		KafkaRootDir=$1
+		KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 		KafkaRootDir_repl=$(echo $KafkaRootDir | sed 's/\//\\\//g')
 		sed "s/{KafkaInstallDir}/$KafkaRootDir_repl/g" $install_dir/template/script/CreateQueues_Template.sh > $install_dir/bin/CreateQueues.sh
 		sed "s/{KafkaInstallDir}/$KafkaRootDir_repl/g" $install_dir/template/script/WatchOutputQueue_Template.sh > $install_dir/bin/WatchOutputQueue.sh
@@ -52,3 +59,5 @@ else
 fi
 
 chmod 777 $install_dir/bin/*.*
+
+cd $pwdnm
