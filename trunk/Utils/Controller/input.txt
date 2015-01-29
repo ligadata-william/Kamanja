@@ -1,0 +1,29 @@
+{
+    "ZookeeperInfo": {
+        "ZooKeeperNodeBasePath": "/ligadata",
+        "ZooKeeperConnectString": "localhost:2181",
+        "ZooKeeperUpdateFrequency": “500“
+    },
+    “StatusQs”:{}
+    “OutputQs”:{}
+    "inputProcessString":""
+    "ModelsToMonitor": {
+        "Models": [
+            {
+                "name": "com.ligadata.pmml.System_COPDRiskAssessment_100",
+                "keys": [
+                    "COPDSymptoms","COPDSeverity"
+                ],
+                "displayValues":[]
+            },
+            {
+                "name": "com.ligadata.pmml.System_COPDRiskAssessment_200",
+                "keys": [
+                    "AATDeficiency"
+                ],
+                "displayValues":[]
+            }
+        ]
+    }
+}
+

@@ -6,20 +6,26 @@ ivyPath=$3
 KafkaRootDir=$4
 
 if [ ! -d "$installPath" ]; then
-        echo "No install path supplied.  It should be a directory that can be written to and whose current content is of no value (will be overwritten) "
-        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies>"
+        echo "Not valid install path supplied.  It should be a directory that can be written to and whose current content is of no value (will be overwritten) "
+        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies> <kafka installation path>"
         exit 1
 fi
 
 if [ ! -d "$srcPath" ]; then
-        echo "No src path supplied.  It should be the trunk directory containing the jars, files, what not that need to be supplied."
-        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies>"
+        echo "Not valid src path supplied.  It should be the trunk directory containing the jars, files, what not that need to be supplied."
+        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies> <kafka installation path>"
         exit 1
 fi
 
 if [ ! -d "$ivyPath" ]; then
-        echo "No ivy path supplied.  It should be the ivy path for dependency the jars."
-        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies>"
+        echo "Not valid ivy path supplied.  It should be the ivy path for dependency the jars."
+        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies> <kafka installation path>"
+        exit 1
+fi
+
+if [ ! -d "$KafkaRootDir" ]; then
+        echo "Not valid Kafka path supplied."
+        echo "$0 <install path> <src tree trunk directory> <ivy directory path for dependencies> <kafka installation path>"
         exit 1
 fi
 

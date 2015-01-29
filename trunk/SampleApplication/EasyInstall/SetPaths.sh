@@ -1,3 +1,12 @@
+KafkaRootDir=$1
+if [ ! -d "$KafkaRootDir" ]; then
+        echo "Not valid Kafka path supplied."
+        echo "$0 <kafka installation path>"
+        exit 1
+fi
+
+KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
+
 jar_full_path=$(which jar)
 
 if [ "$?" != "0" ]; then
@@ -8,7 +17,7 @@ fi
 scala_full_path=$(which scala)
 
 if [ "$?" != "0" ]; then
-	echo "Not found java home directory."
+	echo "Not found scala home directory."
 	exit 1
 fi
 
@@ -42,15 +51,13 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application1/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/application1/metadata/config/MetadataAPIConfig.properties
 
 # Expecting 1st Parameter as Kafka Install directory
-if [ "$#" -ne 1 ] || ! [ -d "$1" ]; then
+if [ "$#" -ne 1 ] || ! [ -d "$KafkaRootDir" ]; then
 	echo "WARN: Not given/found Kafka install directory. Not going to create CreateQueues.sh, WatchOutputQueue.sh and WatchStatusQueue.sh"
 else
-	kafkatopics="$1/bin/kafka-topics.sh"
+	kafkatopics="$KafkaRootDir/bin/kafka-topics.sh"
 	if [ ! -f "$kafkatopics" ]; then
-		echo "WARN: Not found bin/kafka-topics.sh in given Kafka install directory $1. Not going to create CreateQueues.sh, WatchOutputQueue.sh and WatchStatusQueue.sh"
+		echo "WARN: Not found bin/kafka-topics.sh in given Kafka install directory $KafkaRootDir. Not going to create CreateQueues.sh, WatchOutputQueue.sh and WatchStatusQueue.sh"
 	else
-		KafkaRootDir=$1
-		KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 		KafkaRootDir_repl=$(echo $KafkaRootDir | sed 's/\//\\\//g')
 		sed "s/{KafkaInstallDir}/$KafkaRootDir_repl/g" $install_dir/template/script/CreateQueues_Template.sh > $install_dir/bin/CreateQueues.sh
 		sed "s/{KafkaInstallDir}/$KafkaRootDir_repl/g" $install_dir/template/script/WatchOutputQueue_Template.sh > $install_dir/bin/WatchOutputQueue.sh
