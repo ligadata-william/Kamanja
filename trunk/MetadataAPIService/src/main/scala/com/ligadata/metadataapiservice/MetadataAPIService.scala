@@ -262,13 +262,15 @@ trait MetadataAPIService extends HttpService {
             removeConfigService ! RemoveEngineConfigService.Process(configJson)
 	  }
       } ~
-      // yet to figure out passing both jarname and bytearray togethor
+      // Must have the name of the Jar file in the Name parameter
       (put & path("UploadJar")) {
+        parameters('name) {jarName => 
           entity(as[Array[Byte]]) { byteArray =>
             requestContext =>
             val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext)))
-            uploadJarService ! UploadJarService.Process("myjar",byteArray)
-	  }
+            uploadJarService ! UploadJarService.Process(jarName,byteArray)
+          }          
+        }
       }
     }
 }
