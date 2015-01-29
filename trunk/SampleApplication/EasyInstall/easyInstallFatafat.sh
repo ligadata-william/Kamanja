@@ -183,7 +183,7 @@ cp $ivyPath/cache/commons-io/commons-io/jars/commons-io-2.4.jar $systemlib
 cp $ivyPath/cache/commons-lang/commons-lang/jars/commons-lang-2.6.jar $systemlib
 cp $ivyPath/cache/commons-logging/commons-logging/jars/commons-logging-1.1.3.jar $systemlib
 cp $ivyPath/cache/commons-net/commons-net/jars/commons-net-3.1.jar $systemlib
-cp $ivyPath/cache/commons-pool/commons-pool/jars/commons-pool-1.5.2.jar $systemlib
+cp $ivyPath/cache/commons-pool/commons-pool/jars/commons-pool-1.6.jar $systemlib
 cp $ivyPath/cache/io.netty/netty/bundles/netty-3.9.0.Final.jar $systemlib
 cp $ivyPath/cache/javax.activation/activation/jars/activation-1.1.jar $systemlib
 cp $ivyPath/cache/javax.servlet.jsp/jsp-api/jars/jsp-api-2.1.jar $systemlib
@@ -240,7 +240,6 @@ cp $ivyPath/cache/tomcat/jasper-compiler/jars/jasper-compiler-5.5.23.jar $system
 cp $ivyPath/cache/tomcat/jasper-runtime/jars/jasper-runtime-5.5.23.jar $systemlib
 cp $ivyPath/cache/voldemort/voldemort/jars/voldemort-0.96.jar $systemlib
 cp $ivyPath/cache/xmlenc/xmlenc/jars/xmlenc-0.52.jar $systemlib
-cp $ivyPath/cache/commons-pool/commons-pool/jars/commons-pool-1.5.2.jar $systemlib
 cp $ivyPath/cache/com.twitter/chill_2.10/jars/chill_2.10-0.3.6.jar $systemlib
 cp $ivyPath/cache/org.apache.kafka/kafka_2.10/jars/*.jar $systemlib
 cp $ivyPath/cache/net.sf.jopt-simple/jopt-simple/jars/jopt-simple-3.2.jar $systemlib
