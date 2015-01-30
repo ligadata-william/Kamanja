@@ -251,7 +251,7 @@ object OnLEPLeader {
           if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
             LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
             var cntr: Int = 0
-            val txnIdCntrPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
+            val txnIdCntrPerPartition: Long = com.ligadata.Utils.Utils.MaxTransactionsPerPartition
             var nextTxnIdCntrIdx: Long = (maxUsedTxnIdInValidationRes / txnIdCntrPerPartition) + 1
             allPartitionUniqueRecordKeys.foreach(k => {
               val fnd = foundKeysInValidation.getOrElse(k._2.toLowerCase, null)
