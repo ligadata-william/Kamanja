@@ -164,7 +164,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private[this] def lockIdx(tempTransId: Long): Int = {
-    return ((tempTransId / com.ligadata.Utils.Utils.MaxTransactionsPerPartition) % _buckets).toInt
+    return (tempTransId % _buckets).toInt
   }
 
   private[this] def getTransactionContext(tempTransId: Long, addIfMissing: Boolean): TransactionContext = {
