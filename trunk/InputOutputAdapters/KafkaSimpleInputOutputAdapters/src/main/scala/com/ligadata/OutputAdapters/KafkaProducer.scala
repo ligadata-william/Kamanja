@@ -21,13 +21,13 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val clientId = qc.Name + "_" + hashCode.toString
 
   val compress: Boolean = false
-  val synchronously: Boolean = true // This parameter specifies whether the messages are sent asynchronously in a background thread. Valid values are (1) async for asynchronous send and (2) sync for synchronous send. By setting the producer to async we allow batching together of requests (which is great for throughput) but open the possibility of a failure of the client machine dropping unsent data.
-  val batchSize: Integer = 1 // Each message send immediately
-  val queueTime: Integer = 5
-  // val queueSize: Integer = 1000000
-  // val bufferMemory: Integer = 67108864
+  val synchronously: Boolean = false
+  val batchSize: Integer = 1024
+  val queueTime: Integer = 1000
+  val queueSize: Integer = 16 * 1024 * 1024
+  val bufferMemory: Integer = 64 * 1024 * 1024
   val messageSendMaxRetries: Integer = 3
-  val requestRequiredAcks: Integer = -1 // which means that the producer gets an acknowledgement after all in-sync replicas have received the data. This option provides the best durability, we guarantee that no messages will be lost as long as at least one in sync replica remains.
+  val requestRequiredAcks: Integer = 1
 
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
 
@@ -38,10 +38,10 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   props.put("batch.num.messages", batchSize.toString)
   props.put("batch.size", batchSize.toString)
   props.put("queue.time", queueTime.toString)
-  // props.put("queue.size", queueSize.toString)
+  props.put("queue.size", queueSize.toString)
   props.put("message.send.max.retries", messageSendMaxRetries.toString)
   props.put("request.required.acks", requestRequiredAcks.toString)
-  // props.put("buffer.memory", bufferMemory.toString)
+  props.put("buffer.memory", bufferMemory.toString)
   // props.put("buffer.size", bufferMemory.toString)
   // props.put("socket.send.buffer", bufferMemory.toString)
   // props.put("socket.receive.buffer", bufferMemory.toString)

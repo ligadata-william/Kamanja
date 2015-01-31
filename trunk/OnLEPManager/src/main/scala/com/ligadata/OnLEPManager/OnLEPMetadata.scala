@@ -15,6 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
@@ -369,11 +370,29 @@ object OnLEPMetadata {
   private[this] var modelObjects = new HashMap[String, MdlInfo]
   private[this] var zkListener: ZooKeeperListener = _
 
-  private[this] val lock = new Object()
+  private[this] val reent_lock = new ReentrantReadWriteLock(true);
 
   private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
-    removedContainers: ArrayBuffer[(String, String, Int)]): Unit = lock.synchronized {
+    removedContainers: ArrayBuffer[(String, String, Int)]): Unit = {
+
+    var exp: Exception = null
+
+    reent_lock.writeLock().lock();
+    try {
+      localUpdateOnLepMdObjects(msgObjects, contObjects, mdlObjects, removedModels, removedMessages, removedContainers)
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.writeLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+  }
+
+  private def localUpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
+    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
+    removedContainers: ArrayBuffer[(String, String, Int)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
 
     // First removing the objects
@@ -604,7 +623,7 @@ object OnLEPMetadata {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
       // return
     }
-    
+
     //// Check for Jars -- End
 
     zkTransaction.Notifications.foreach(zkMessage => {
@@ -710,36 +729,138 @@ object OnLEPMetadata {
     UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
   }
 
-  def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = lock.synchronized {
+  def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
+    var exp: Exception = null
+    var v: MsgContainerObjAndTransformInfo = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetMessgeInfo(msgType)
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getModel(mdlName: String): MdlInfo = {
+    var exp: Exception = null
+    var v: MdlInfo = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetModel(mdlName)
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getContainer(containerName: String): MsgContainerObjAndTransformInfo = {
+    var exp: Exception = null
+    var v: MsgContainerObjAndTransformInfo = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetContainer(containerName)
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getAllMessges: Map[String, MsgContainerObjAndTransformInfo] = {
+    var exp: Exception = null
+    var v: Map[String, MsgContainerObjAndTransformInfo] = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetAllMessges
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getAllModels: Map[String, MdlInfo] = {
+    var exp: Exception = null
+    var v: Map[String, MdlInfo] = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetAllModels
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
+    var exp: Exception = null
+    var v: Map[String, MsgContainerObjAndTransformInfo] = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetAllContainers
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  private def localgetMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(msgType.toLowerCase, null)
     if (v == null || v.msgobj == null) return null
     v
   }
 
-  def getModel(mdlName: String): MdlInfo = lock.synchronized {
+  private def localgetModel(mdlName: String): MdlInfo = {
     if (modelObjects == null) return null
     modelObjects.getOrElse(mdlName.toLowerCase, null)
   }
 
-  def getContainer(containerName: String): MsgContainerObjAndTransformInfo = lock.synchronized {
+  private def localgetContainer(containerName: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(containerName.toLowerCase, null)
     if (v == null || v.msgobj != null) return null
     v
   }
 
-  def getAllMessges: Map[String, MsgContainerObjAndTransformInfo] = lock.synchronized {
+  private def localgetAllMessges: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
     messageContainerObjects.filter(o => o._2.msgobj != null).toMap
   }
 
-  def getAllModels: Map[String, MdlInfo] = lock.synchronized {
+  private def localgetAllModels: Map[String, MdlInfo] = {
     if (modelObjects == null) return null
     modelObjects.toMap
   }
 
-  def getAllContainers: Map[String, MsgContainerObjAndTransformInfo] = lock.synchronized {
+  private def localgetAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
     messageContainerObjects.filter(o => o._2.msgobj == null).toMap
   }
