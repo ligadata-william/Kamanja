@@ -158,9 +158,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
           if (isValidPartitionKey && finalTopMsgOrContainer != null) {
             allMdlsResults = envContext.getModelsResult(tempTransId, partitionKeyData)
-            if (allMdlsResults == null)
-              allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
           }
+          if (allMdlsResults == null)
+            allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
           // Run all models
           val results = RunAllModels(tempTransId, finalTopMsgOrContainer, envContext)
           if (results.size > 0) {
@@ -168,15 +168,24 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
             if (elapseTmFromRead < 0)
               elapseTmFromRead = 1
-            // Prepare final output and update the models persistance map
-            results.foreach(res => {
-              // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
-              res.uniqKey = uk
-              res.uniqVal = uv
-              res.xformedMsgCntr = xformedMsgCntr
-              res.totalXformedMsgs = totalXformedMsgs
-              allMdlsResults(res.mdlName) = res
-            })
+
+            try {
+              // Prepare final output and update the models persistance map
+              results.foreach(res => {
+                // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
+                res.uniqKey = uk
+                res.uniqVal = uv
+                res.xformedMsgCntr = xformedMsgCntr
+                res.totalXformedMsgs = totalXformedMsgs
+                allMdlsResults(res.mdlName) = res
+              })
+            } catch {
+              case e: Exception =>
+                {
+                  LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+                  e.printStackTrace
+                }
+            }
 
             val json =
               ("ModelsResult" -> results.toList.map(res =>

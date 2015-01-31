@@ -1,0 +1,60 @@
+{
+  "ZookeeperInfo": {
+    "ZooKeeperNodeBasePath": "/ligadata",
+    "ZooKeeperConnectString": "localhost:2181",
+    "ZooKeeperUpdateFrequency": "500"
+  },
+  "KafkaInfo": {
+    "OutputQs": [
+      {
+        "Name": "TestOut_1",
+        "Format": "JSON",
+        "ClassName": "com.ligadata.OutputAdapters.KafkaProducer$",
+        "JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
+        "DependencyJars": [
+          "jopt-simple-3.2.jar",
+          "kafka_2.10-0.8.1.1.jar",
+          "metrics-core-2.2.0.jar",
+          "zkclient-0.3.jar",
+          "onlepbase_2.10-1.0.jar"
+        ],
+        "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"testout_1\" }"
+      }
+    ],
+    "StatusQs": [
+      {
+        "Name": "TestStatus_1",
+        "Format": "CSV",
+        "ClassName": "com.ligadata.OutputAdapters.KafkaProducer$",
+        "JarName": "kafkasimpleinputoutputadapters_2.10-1.0.jar",
+        "DependencyJars": [
+          "jopt-simple-3.2.jar",
+          "kafka_2.10-0.8.1.1.jar",
+          "metrics-core-2.2.0.jar",
+          "zkclient-0.3.jar",
+          "onlepbase_2.10-1.0.jar"
+        ],
+        "AdapterSpecificCfg": "{\"HostList\": \"localhost:9092\",\"TopicName\": \"teststatus_1\" }"
+      }
+    ]
+  },
+  "inputProcessString": "java -jar /mnt/ssd1/Fatafat_20150128/bin/SimpleKafkaProducer-0.1.0 --gz true --topics \"testin_1\" --threads 1 --topicpartitions 8 --brokerlist \"localhost:9092\" --files \"/mnt/ssd1/Fatafat_20150128/input/application1/data/copd_demo.csv.gz\" --partitionkeyidxs \"1\"  --sleep 10 --format CSV",
+  "ModelsToMonitor": {
+    "Models": [
+      {
+        "name": "System.AsthmaRiskAssessment",
+        "keys": [
+          "AsthmaSeverity"
+        ],
+        "displayValues": []
+      },
+      {
+        "name": "System.COPDRiskAssessment",
+        "keys": [
+          "COPDSeverity"
+        ],
+        "displayValues": []
+      }
+    ]
+  }
+}

@@ -141,10 +141,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getAllStatusStrings = _statusStrings
   }
 
-  private[this] val _lock = new Object()
+  private[this] val _buckets = 257 // Prime number
+
+  private[this] val _locks = new Array[Object](_buckets)
 
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
-  private[this] val _txnContexts = scala.collection.mutable.Map[Long, TransactionContext]()
+  private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (String, Int, Int)]()
   private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ModelResult]]()
 
@@ -156,13 +158,30 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _runningTxnsDataStore: DataStore = null
   private[this] var _checkPointAdapInfoDataStore: DataStore = null
 
-  private[this] def getTransactionContext(tempTransId: Long, addIfMissing: Boolean): TransactionContext = _lock.synchronized {
-    var txnCtxt = _txnContexts.getOrElse(tempTransId, null)
-    if (txnCtxt == null && addIfMissing) {
-      txnCtxt = new TransactionContext(tempTransId)
-      _txnContexts(tempTransId) = txnCtxt
+  for (i <- 0 until _buckets) {
+    _txnContexts(i) = scala.collection.mutable.Map[Long, TransactionContext]()
+    _locks(i) = new Object()
+  }
+
+  private[this] def lockIdx(tempTransId: Long): Int = {
+    return (tempTransId % _buckets).toInt
+  }
+
+  private[this] def getTransactionContext(tempTransId: Long, addIfMissing: Boolean): TransactionContext = {
+    _locks(lockIdx(tempTransId)).synchronized {
+      var txnCtxt = _txnContexts(lockIdx(tempTransId)).getOrElse(tempTransId, null)
+      if (txnCtxt == null && addIfMissing) {
+        txnCtxt = new TransactionContext(tempTransId)
+        _txnContexts(lockIdx(tempTransId))(tempTransId) = txnCtxt
+      }
+      return txnCtxt
     }
-    txnCtxt
+  }
+
+  private[this] def removeTransactionContext(tempTransId: Long): Unit = {
+    _locks(lockIdx(tempTransId)).synchronized {
+      _txnContexts(lockIdx(tempTransId)) -= tempTransId
+    }
   }
 
   /**
@@ -181,7 +200,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       try {
         val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
         _allDataDataStore.get(makeKey(msgOrCont.objFullName, key), buildOne)
-        msgOrCont.data(key.toLowerCase) = objs(0)
+        msgOrCont.synchronized {
+          msgOrCont.data(key.toLowerCase) = objs(0)
+        }
       } catch {
         case e: ClassNotFoundException => {
           logger.error(s"unable to create a container named ${msgOrCont.containerType.typeString}... is it defined in the metadata?")
@@ -404,7 +425,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def loadObjFromDb(msgOrCont: MsgContainerInfo, key: String): MessageContainerBase = _lock.synchronized {
+  private def loadObjFromDb(tempTransId: Long, msgOrCont: MsgContainerInfo, key: String): MessageContainerBase = {
     var objs: Array[MessageContainerBase] = new Array[MessageContainerBase](1)
     val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
     try {
@@ -414,12 +435,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         logger.trace("Data not found for key:" + key)
       }
     }
-    if (objs(0) != null)
-      msgOrCont.data(key.toLowerCase) = objs(0)
+    if (objs(0) != null) {
+      val lockObj = if (msgOrCont.loadedAll) msgOrCont else _locks(lockIdx(tempTransId))
+      lockObj.synchronized {
+        msgOrCont.data(key.toLowerCase) = objs(0)
+      }
+    }
     return objs(0)
   }
 
-  private def localGetObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = _lock.synchronized {
+  private def localGetObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase = {
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getObject(containerName, key)
@@ -430,12 +455,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (container != null) {
       val v = container.data.getOrElse(key.toLowerCase, null)
       if (v != null) return v
-      return loadObjFromDb(container, key)
+      return loadObjFromDb(tempTransId, container, key)
     }
     null
   }
 
-  private def localGetAllKeyValues(tempTransId: Long, containerName: String): scala.collection.immutable.Map[String, MessageContainerBase] = _lock.synchronized {
+  private def localGetAllKeyValues(tempTransId: Long, containerName: String): scala.collection.immutable.Map[String, MessageContainerBase] = {
     val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (fnd != null) {
       if (fnd.loadedAll) {
@@ -456,12 +481,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def localGetAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase] = _lock.synchronized {
+  private def localGetAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase] = {
     val keysVals = localGetAllKeyValues(tempTransId, containerName)
     keysVals.values.toArray
   }
 
-  private def localGetAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int) = _lock.synchronized {
+  private def localGetAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int) = {
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getAdapterUniqueKeyValue(key)
@@ -479,12 +504,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         logger.trace("Data not found for key:" + key)
       }
     }
-    if (objs(0) != null)
-      _adapterUniqKeyValData(key) = objs(0)
+    if (objs(0) != null) {
+      _adapterUniqKeyValData.synchronized {
+        _adapterUniqKeyValData(key) = objs(0)
+      }
+    }
     return objs(0)
   }
 
-  private def localGetModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult] = _lock.synchronized {
+  private def localGetModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult] = {
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getModelsResult(key)
@@ -503,13 +531,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      _modelsResult(key) = objs(0)
+      _modelsResult.synchronized {
+        _modelsResult(key) = objs(0)
+      }
       return objs(0)
     }
     return scala.collection.mutable.Map[String, ModelResult]()
   }
 
-  private def localContains(tempTransId: Long, containerName: String, key: String): Boolean = _lock.synchronized {
+  private def localContains(tempTransId: Long, containerName: String, key: String): Boolean = {
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
       if (txnCtxt.containsAny(containerName, scala.collection.immutable.Set(key)))
@@ -520,7 +550,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (container != null) {
       if (container.data.contains(key.toString.toLowerCase))
         return true
-      val dta = loadObjFromDb(container, key)
+      val dta = loadObjFromDb(tempTransId, container, key)
       if (dta != null)
         return true
     }
@@ -530,7 +560,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Does at least one of the supplied keys exist in a container with the supplied name?
    */
-  private def localContainsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = _lock.synchronized {
+  private def localContainsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
     val keysSet = keys.toSet
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
@@ -546,7 +576,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       })
 
       keysSet.foreach(key => {
-        val dta = loadObjFromDb(container, key)
+        val dta = loadObjFromDb(tempTransId, container, key)
         if (dta != null)
           return true
       })
@@ -557,7 +587,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Do all of the supplied keys exist in a container with the supplied name?
    */
-  private def localContainsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = _lock.synchronized {
+  private def localContainsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean = {
     val remainingKeys = scala.collection.mutable.Set[String]()
     keys.foreach(key => {
       remainingKeys += key.toLowerCase
@@ -579,7 +609,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
       val keysSet1 = remainingKeys.toSet
       keysSet1.foreach(key => {
-        val dta = loadObjFromDb(container, key)
+        val dta = loadObjFromDb(tempTransId, container, key)
         if (dta == null) {
           // This key is not found any where. Simply return false
           return false
@@ -591,21 +621,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     (remainingKeys.size == 0)
   }
 
-  private def localSetObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
+  private def localSetObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = {
     var txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt != null) {
       txnCtxt.setObject(containerName, key, value)
     }
   }
 
-  private def localSetAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = _lock.synchronized {
+  private def localSetAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
     var txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt != null) {
       txnCtxt.setAdapterUniqueKeyValue(key, value, xformedMsgCntr, totalXformedMsgs)
     }
   }
 
-  private def localSaveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = _lock.synchronized {
+  private def localSaveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
     var txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt != null) {
       txnCtxt.saveModelsResult(key, value)
@@ -622,7 +652,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _classLoader = cl
   }
 
-  override def Shutdown: Unit = _lock.synchronized {
+  //BUGBUG:: May be we need to lock before we do anything here
+  override def Shutdown: Unit = {
     _adapterUniqKeyValData.clear
     if (_allDataDataStore != null)
       _allDataDataStore.Shutdown
@@ -641,7 +672,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Adding new messages or Containers
-  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit = _lock.synchronized {
+  //BUGBUG:: May be we need to lock before we do anything here
+  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit = {
     logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     if (_allDataDataStore == null) {
       logger.info("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
@@ -736,20 +768,20 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localContainsAll(tempTransId, containerName, keys)
   }
 
-  override def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = _lock.synchronized {
+  override def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit = {
     localSetObject(tempTransId, containerName, key, value)
   }
 
-  override def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = _lock.synchronized {
+  override def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
     localSetAdapterUniqueKeyValue(tempTransId, key, value, xformedMsgCntr, totalXformedMsgs)
   }
 
-  override def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = _lock.synchronized {
+  override def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
     localSaveModelsResult(tempTransId, key, value)
   }
 
   // Final Commit for the given transaction
-  override def commitData(tempTransId: Long): Unit = _lock.synchronized {
+  override def commitData(tempTransId: Long): Unit = {
     // Commit Data and Removed Transaction information from status
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt == null)
@@ -849,7 +881,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
     })
-
+    
     val txn = _allDataDataStore.beginTx()
     try {
       _allDataDataStore.putBatch(storeObjects)
@@ -864,11 +896,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     // Remove the current transaction
-    _txnContexts -= tempTransId
+    removeTransactionContext(tempTransId)
   }
 
   // Set Reload Flag
-  override def setReloadFlag(tempTransId: Long, containerName: String): Unit = _lock.synchronized {
+  override def setReloadFlag(tempTransId: Long, containerName: String): Unit = {
     // BUGBUG:: Set Reload Flag
     val txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt != null) {
@@ -877,7 +909,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Saving Status
-  override def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit = _lock.synchronized {
+  override def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit = {
     val txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt == null)
       return
@@ -915,7 +947,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Clear Intermediate results before Restart processing
-  override def clearIntermediateResults: Unit = _lock.synchronized {
+  //BUGBUG:: May be we need to lock before we do anything here
+  override def clearIntermediateResults: Unit = {
     // BUGBUG:: What happens to containers with reload flag
     _messagesOrContainers.foreach(v => {
       if (v._2.loadedAll == false) {
@@ -929,7 +962,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Get all Status information from intermediate table
-  override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = _lock.synchronized {
+  override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     val keys = ArrayBuffer[(String, String)]()
     val keyCollector = (key: Key) => { collectKey(key, keys) }
@@ -951,7 +984,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Get Status information from intermediate table for given keys. No Transaction required here.
-  override def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] = _lock.synchronized {
+  override def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] = {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
@@ -970,7 +1003,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Get Status information from Final table
-  override def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] = _lock.synchronized {
+  override def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] = {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
@@ -989,12 +1022,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Save Current State of the machine
-  override def PersistLocalNodeStateEntries: Unit = _lock.synchronized {
+  override def PersistLocalNodeStateEntries: Unit = {
     // BUGBUG:: Persist all state on this node.
   }
 
   // Save Remaining State of the machine
-  override def PersistRemainingStateEntriesOnLeader: Unit = _lock.synchronized {
+  override def PersistRemainingStateEntriesOnLeader: Unit = {
     // BUGBUG:: Persist Remaining state (when other nodes goes down, this helps)
   }
 
