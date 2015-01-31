@@ -239,10 +239,11 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             })
 
             try {
-              // Sleep here, Note, the input constant may be zero (if it is zero, balls to the wall!) better be a very busy system.
-              if (qc.noDataSleepTimeInMs > 0) {
+              // Sleep here, only if input parm for sleep is set and we haven't gotten any messages on the previous kafka call.
+              if ((qc.noDataSleepTimeInMs > 0) && (messagesProcessed == 0)) {
                 Thread.sleep(qc.noDataSleepTimeInMs)
               }
+              messagesProcessed = 0
             } catch {
               case e: java.lang.InterruptedException =>
                 LOG.info("KAFKA ADAPTER: Forcing down the Consumer Reader thread")
