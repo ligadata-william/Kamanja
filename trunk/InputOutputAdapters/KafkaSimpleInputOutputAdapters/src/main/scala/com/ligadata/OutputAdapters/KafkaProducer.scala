@@ -23,9 +23,9 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
   val compress: Boolean = false
   val synchronously: Boolean = false
   val batchSize: Integer = 1024
-  val queueTime: Integer = 1000
+  val queueTime: Integer = 50
   val queueSize: Integer = 16 * 1024 * 1024
-  val bufferMemory: Integer = 64 * 1024 * 1024
+  val bufferMemory: Integer = 16 * 1024 * 1024
   val messageSendMaxRetries: Integer = 3
   val requestRequiredAcks: Integer = 1
 
