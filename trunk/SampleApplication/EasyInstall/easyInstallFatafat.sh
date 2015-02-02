@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 installPath=$1
 srcPath=$2
 ivyPath=$3
