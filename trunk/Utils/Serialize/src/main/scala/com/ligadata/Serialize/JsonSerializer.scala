@@ -702,7 +702,6 @@ object JsonSerializer {
 	        pretty(render(json))
 	      }
 	      case o:ContainerDef => {
-          println("BIGDEBUG2")
 	        val json = (("ObjectType"      -> "ContainerDef") ~
 		                  ("Operation"       -> operation) ~
 		                  ("NameSpace"       -> o.nameSpace) ~
@@ -796,7 +795,7 @@ object JsonSerializer {
             		      ("NameSpace"       -> o.nameSpace) ~
             		      ("Name"            -> o.name) ~
             		      ("Version"         -> o.ver) ~
-            		      ("PhysicalName"    -> o.physicalName) ~
+                      ("PhysicalName"    -> o.physicalName) ~
             		      ("JarName"         -> o.jarName) ~
             		      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
       	  pretty(render(json))
@@ -805,10 +804,10 @@ object JsonSerializer {
       	  val json = (("ObjectType"      -> "JarDef") ~
             		      ("Operation"       -> operation) ~
             		      ("NameSpace"       -> o.nameSpace) ~
-            		      ("Name"            -> o.name) ~
+             	        ("Name"            -> o.name) ~
             		      ("Version"         -> o.ver) ~
-            		      ("PhysicalName"    -> o.physicalName) ~
-            		      ("JarName"         -> o.jarName) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
             		      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
       	  pretty(render(json))
       	}
