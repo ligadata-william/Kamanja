@@ -656,169 +656,169 @@ object JsonSerializer {
   def zkSerializeObjectToJson(mdObj: BaseElemDef, operation:String) : String = {
     try{
       mdObj match{ 
-	// Assuming that zookeeper transaction will be different based on type of object
-	case o:ModelDef => {
-	  val json =  (("ObjectType"      -> "ModelDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:MessageDef => {
-	  val json = (("ObjectType"      -> "MessageDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:MappedMsgTypeDef => {
-	  val json = (("ObjectType"      -> "MappedMsgTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:StructTypeDef => {
-	  val json = (("ObjectType"      -> "StructTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:ContainerDef => {
-	  val json = (("ObjectType"      -> "ContainerDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:ArrayTypeDef => {
-	  val json = (("ObjectType"      -> "ArrayTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:ArrayBufTypeDef => {
-	  val json = (("ObjectType"      -> "ArrayBufTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:SortedSetTypeDef => {
-	  val json = (("ObjectType"      -> "SortedSetTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:ImmutableMapTypeDef => {
-	  val json = (("ObjectType"      -> "ImmutableMapTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:MapTypeDef => {
-	  val json = (("ObjectType"      -> "MapTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:SetTypeDef => {
-	  val json = (("ObjectType"      -> "SetTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:ImmutableSetTypeDef => {
-	  val json = (("ObjectType"      -> "ImmutableSetTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:TreeSetTypeDef => {
-	  val json = (("ObjectType"      -> "TreeSetTypeDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case o:JarDef => {
-	  val json = (("ObjectType"      -> "JarDef") ~
-		      ("Operation"       -> operation) ~
-		      ("NameSpace"       -> o.nameSpace) ~
-		      ("Name"            -> o.name) ~
-		      ("Version"         -> o.ver) ~
-		      ("PhysicalName"    -> o.physicalName) ~
-		      ("JarName"         -> o.jarName) ~
-		      ("DependantJars"   -> o.dependencyJarNames.toList))
-	  pretty(render(json))
-	}
-	case _ => {
+        // Assuming that zookeeper transaction will be different based on type of object
+        case o:ModelDef => {
+          val json =  (("ObjectType"      -> "ModelDef") ~
+                       ("Operation"       -> operation) ~
+                       ("NameSpace"       -> o.nameSpace) ~
+                       ("Name"            -> o.name) ~
+                       ("Version"         -> o.ver) ~
+                       ("PhysicalName"    -> o.physicalName) ~
+                       ("JarName"         -> o.jarName) ~
+                       ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:MessageDef => {
+          val json = (("ObjectType"      -> "MessageDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:MappedMsgTypeDef => {
+          val json = (("ObjectType"      -> "MappedMsgTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:StructTypeDef => {
+          val json = (("ObjectType"      -> "StructTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:ContainerDef => {
+          val json = (("ObjectType"      -> "ContainerDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:ArrayTypeDef => {
+          val json = (("ObjectType"      -> "ArrayTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:ArrayBufTypeDef => {
+          val json = (("ObjectType"      -> "ArrayBufTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:SortedSetTypeDef => {
+          val json = (("ObjectType"      -> "SortedSetTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:ImmutableMapTypeDef => {
+          val json = (("ObjectType"      -> "ImmutableMapTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:MapTypeDef => {
+          val json = (("ObjectType"      -> "MapTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:SetTypeDef => {
+          val json = (("ObjectType"      -> "SetTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:ImmutableSetTypeDef => {
+          val json = (("ObjectType"      -> "ImmutableSetTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:TreeSetTypeDef => {
+          val json = (("ObjectType"      -> "TreeSetTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:JarDef => {
+          val json = (("ObjectType"      -> "JarDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case _ => {
             throw new UnsupportedObjectException("zkSerializeObjectToJson doesn't support the  objects of type objectType of " + mdObj.getClass().getName() + " yet.")
-	}
-      }
+          	}
+          }
     } catch {
       case e:Exception =>{
-	e.printStackTrace()
-	throw Json4sSerializationException(e.getMessage())
+        e.printStackTrace()
+        throw Json4sSerializationException(e.getMessage())
       }
     }
   }
