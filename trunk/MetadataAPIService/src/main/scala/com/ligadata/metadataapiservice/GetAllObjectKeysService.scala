@@ -42,7 +42,7 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
       context.stop(self)
   }
 
-  def GetAllObjectKeys(objectType:String): Array[String] = {
+  def GetAllObjectKeys(objectType:String): String = {
     var apiResult:Array[String] = new Array[String](0)
 
     objectType match {
@@ -76,16 +76,14 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
 	apiResult(0) = "The " + objectType + " is not supported yet "
       }
     }
-    apiResult
+    new ApiResult(0, "Object Keys", apiResult.mkString(",")).toString
   }
 
   def process(objectType: String) = {
     logger.trace(APIName + ":" + objectType)
     val objectList = GetAllObjectKeys(objectType)
-    val json = (objectList.toList)
-    val apiResult = pretty(render(json))
-    logger.trace(APIName + "(results):" + apiResult)
-    requestContext.complete(apiResult)
+    logger.trace(APIName + "(results):" + objectList)
+    requestContext.complete(objectList)
   }
 }
 
