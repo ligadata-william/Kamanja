@@ -5,7 +5,7 @@ import org.scalatest.junit.AssertionsForJUnit
 
 class BasicCassandraUnitTest
 {
-	@Test
+	//@Test
 	def testCassandraLocal()
 	{
 		val connectinfo = new PropertyMap
@@ -57,7 +57,7 @@ class BasicCassandraUnitTest
 	}
 
 
-	@Test
+	//@Test
 	def testGetAllKeysLocal()
 	{
 		val connectinfo = new PropertyMap

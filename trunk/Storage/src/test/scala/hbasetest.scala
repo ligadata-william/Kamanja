@@ -13,7 +13,7 @@ import com.ligadata.keyvaluestore._
 
 class BasicHBaseUnitTest
 {
-	@Test
+	//@Test
 	def testHBaseLocal()
 	{
 		val connectinfo = new PropertyMap
@@ -63,7 +63,7 @@ class BasicHBaseUnitTest
 		println("testHBaseLocal - Done")
 	}
 
-	@Test
+	//@Test
 	def testHBaseLocalAdd()
 	{
 		val connectinfo = new PropertyMap
@@ -123,7 +123,7 @@ class BasicHBaseUnitTest
 		println("testHBaseLocalAdd - Done")
 	}
 
-	@Test
+	//@Test
 	def testGetAllKeysLocal()
 	{
 		val connectinfo = new PropertyMap
