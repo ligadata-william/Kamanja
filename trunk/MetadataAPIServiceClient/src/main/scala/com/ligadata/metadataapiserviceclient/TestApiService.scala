@@ -305,56 +305,74 @@ object TestApiService {
     }
   }
 
-  def GetHttpResponse(url:String,body: Option[String], bodyType: MediaType ): String = {
+  def GetHttpResponse(reqType:String, url:String,body: Option[String], bodyType: MediaType ): String = {
     var response:Response = null
     try{
       val httpClient = new HttpClient(config)
       if( body == None){
-	response = httpClient.get(new URL(url))
+        logger.trace(reqType+":URL => " + url)
+        if (reqType.equalsIgnoreCase("get")) {
+	        response = httpClient.get(new URL(url))
+          println(response.toString)
+          return response.body.asString
+        }
+        response = httpClient.delete(new URL(url))
+        return response.body.asString
+        println(response.toString)
       }
       else{
-	logger.trace("URL => " + url + ", parameter => " + body.get)
-	bodyType match {
-	  case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
-	    val requestBody = new StringRequestBody(body.get,bodyType)
-	    response = httpClient.put(new URL(url),requestBody)
-	  }
-	  case APPLICATION_OCTET_STREAM => {
-	    // assuming the parameter is name of the binary file such as jar file
-	    val ba = GetJarAsArrayOfBytes(body.get)
-	    val requestBody = new BinaryRequestBody(ba,bodyType)
-	    response = httpClient.put(new URL(url),requestBody)
-	  }
-	  case _ => {
-	    val errStr = "The MediaType " + bodyType + " is not supported yet"
-	    throw new Exception(errStr)
-	  }
-	}
+	      logger.trace("URL => " + url + ", parameter => " + body.get)
+	      bodyType match {
+	         case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
+             if (reqType.equalsIgnoreCase("put")) {
+	             val requestBody = new StringRequestBody(body.get,bodyType)
+	             response = httpClient.put(new URL(url),requestBody)
+             } else {
+               val requestBody = new StringRequestBody(body.get,bodyType)
+               response = httpClient.post(new URL(url),Some(requestBody))
+             }
+	         }
+	         case APPLICATION_OCTET_STREAM => {
+	           // assuming the parameter is name of the binary file such as jar file
+	           val ba = GetJarAsArrayOfBytes(body.get)
+	           val requestBody = new BinaryRequestBody(ba,bodyType)
+	           response = httpClient.put(new URL(url),requestBody)
+	        }
+	        case _ => {
+	          val errStr = "The MediaType " + bodyType + " is not supported yet"
+	          throw new Exception(errStr)
+	        }
+	      }
       }
       response.body.asString
     } catch {
       case e: Exception =>
-	val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status
-	throw new Exception(errStr)
+	      val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status
+	      throw new Exception(errStr)
     }
   }
 
-  def MakeHttpRequest(host_url:String, apiFunctionName: String, parameterType:String, parameterValue:String) :String = {
+  def MakeHttpRequest(reqType: String, host_url:String, apiFunctionName: String, parameterType:String, parameterValue:String) :String = {
     try{
       var url = host_url + "/api/" + apiFunctionName
+      logger.info(url+"   "+parameterType+ " "+parameterValue)
       var bodyType:MediaType = TEXT_PLAIN
       parameterType match {
-	case "STR"  => bodyType = TEXT_PLAIN
-	case "XML"  => bodyType = TEXT_XML
-	case "JSON" => bodyType = APPLICATION_JSON
-	case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
-	case _      => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
+	      case "STR"  => bodyType = TEXT_PLAIN
+	      case "XML"  => bodyType = TEXT_XML
+	      case "JSON" => bodyType = APPLICATION_JSON
+	      case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
+	      case _      => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
       }
-      var apiParameters = Some(parameterValue)
-      GetHttpResponse(url,apiParameters,bodyType)
+      var apiParameters: Option[String] = None 
+      if (parameterValue != null) {
+        apiParameters = Some(parameterValue)
+      }
+
+      GetHttpResponse(reqType, url, apiParameters, bodyType)
     } catch {
       case e: Exception =>
-	throw new Exception(e.getMessage())
+	    throw new Exception(e.getMessage())
     }
   }
 
@@ -375,7 +393,8 @@ object TestApiService {
   def GetAllObjectKeys(objectType:String): Array[String] = {
     var objKeys:Array[String] = new Array[String](0)
     try{
-      val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR",objectType)
+     // val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR",objectType)
+      val objKeysJson = MakeHttpRequest("get",host_url,"keys/"+objectType,"STR",null)
       implicit val jsonFormats: Formats = DefaultFormats
       logger.trace("result => " + objKeysJson)
       val json = parse(objKeysJson)
@@ -392,7 +411,8 @@ object TestApiService {
   def GetAllMetadataObjects = {
     var objKeys:Array[String] = new Array[String](0)
     try{
-      val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR","ALL")
+    //  val objKeysJson = MakeHttpRequest("get",host_url,"GetAllObjectKeys/ALL","STR",null)
+      val objKeysJson = MakeHttpRequest("get",host_url,"keys/ALL","STR",null)
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(objKeysJson)
       objKeys = json.extract[Array[String]]
@@ -406,7 +426,8 @@ object TestApiService {
 
   def GetConfigObjects(objectType:String) = {
     try{
-      val objJson = MakeHttpRequest(host_url,"GetConfigObjects","STR",objectType)
+      println("---->"+objectType+"<---------")
+      val objJson = MakeHttpRequest("get",host_url,"GetConfigObjects/"+objectType,"STR",null)
       logger.trace(objJson)
     }catch {
       case e: Exception => {
@@ -439,8 +460,8 @@ object TestApiService {
     try{
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
-	println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	return
+	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	      return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
@@ -451,14 +472,14 @@ object TestApiService {
       val choice:Int = readInt()
 
       if ( choice < 1 || choice > keys.length ){
-	println("Invalid choice " + choice + ",start with main menu...")
-	return
+	      println("Invalid choice " + choice + ",start with main menu...")
+	      return
       }
 
       val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
       val apiName = "GetObjects"
-      val apiResult = MakeHttpRequest(host_url,apiName,"JSON",apiArgJson)
+      val apiResult = MakeHttpRequest("get",host_url,objectType+"/"+key,"JSON",null)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -494,16 +515,16 @@ object TestApiService {
     try{
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
-	println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	return
+	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	      return
       }
 
       var seq = 0
       keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
-    }catch {
-      case e: Exception => {
-	e.printStackTrace()
-      }
+    } catch {
+       case e: Exception => {
+	       e.printStackTrace()
+       }
     }
   }
 
@@ -553,10 +574,19 @@ object TestApiService {
 
   def ActivateObjects(objectType: String){
     try{
+      
+      val key = "test.bb.33"
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "ActivateObjects"
+      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
+
+      
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
-	println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	return
+	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	      return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
@@ -567,15 +597,16 @@ object TestApiService {
       val choice:Int = readInt()
 
       if ( choice < 1 || choice > keys.length ){
-	println("Invalid choice " + choice + ",start with main menu...")
-	return
+	      println("Invalid choice " + choice + ",start with main menu...")
+	      return
       }
 
-      val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "ActivateObjects"
-      val apiResult = MakeHttpRequest(host_url,apiName,"JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
+     // val key = keys(choice-1)
+     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
+     // val apiName = "ActivateObjects"
+     // println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+     // val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
+     // println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -609,10 +640,20 @@ object TestApiService {
 
   def DeactivateObjects(objectType: String){
     try{
+      
+      
+      val key = "test.bb.44"
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "DeactivateObjects"
+          println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
+      
+      
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
-	println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	return
+	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	      return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
@@ -623,19 +664,20 @@ object TestApiService {
       val choice:Int = readInt()
 
       if ( choice < 1 || choice > keys.length ){
-	println("Invalid choice " + choice + ",start with main menu...")
-	return
+	      println("Invalid choice " + choice + ",start with main menu...")
+	      return
       }
 
-      val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "DeactivateObjects"
-      val apiResult = MakeHttpRequest(host_url,apiName,"JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
+      //val key = keys(choice-1)
+     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
+     // val apiName = "DeactivateObjects"
+     //     println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+    //  val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
+    //  println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
-	e.printStackTrace()
+	      e.printStackTrace()
       }
     }
   }
@@ -665,10 +707,11 @@ object TestApiService {
 
   def RemoveObjects(objectType: String){
     try{
+      println("*&^*&^*&^*&^*&^*&^*")
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
-	println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	return
+	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
+	      return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
@@ -679,14 +722,15 @@ object TestApiService {
       val choice:Int = readInt()
 
       if ( choice < 1 || choice > keys.length ){
-	println("Invalid choice " + choice + ",start with main menu...")
-	return
+	      println("Invalid choice " + choice + ",start with main menu...")
+	      return
       }
 
       val key = keys(choice-1)
       val apiArgJson = MakeJsonStrForArgList(key,objectType)
       val apiName = "RemoveObjects"
-      val apiResult = MakeHttpRequest(host_url,apiName,"JSON",apiArgJson)
+      println("---->"+ objectType + "/"+key)
+      val apiResult = MakeHttpRequest("delete",host_url,objectType+"/"+key,"JSON",null)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -742,7 +786,7 @@ object TestApiService {
       val choice:Int = readInt()
 
       if( choice == pmmlFiles.length + 1){
-	return
+	       return
       }
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
 	  logger.fatal("Invalid Choice : " + choice)
@@ -752,7 +796,7 @@ object TestApiService {
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
-      var res = MakeHttpRequest(host_url, "AddModel","XML",pmmlStr)
+      var res = MakeHttpRequest("put",host_url, "Model","XML",pmmlStr)
       logger.trace("Results of AddModel Operation => " + res)
     }catch {
       case e: Exception => {
@@ -805,7 +849,8 @@ object TestApiService {
 	  val contDefFile = contFiles(choice-1).toString
     	  logger.setLevel(Level.TRACE);
 	  val contStr = Source.fromFile(contDefFile).mkString
-    	  val res : String =  MakeHttpRequest(host_url, "AddContainerDef","JSON",contStr)
+    	  //val res : String =  MakeHttpRequest("put",host_url, "AddContainerDef","JSON",contStr)
+        val res : String =  MakeHttpRequest("put",host_url, "Container","JSON",contStr)
     	  results += Tuple3(choice.toString, contDefFile, res)
     	})
       } else {
@@ -869,7 +914,7 @@ object TestApiService {
 	  }
 	  val msgDefFile = msgFiles(choice-1).toString
 	  val msgStr = Source.fromFile(msgDefFile).mkString
-    	  val res : String = MakeHttpRequest(host_url, "AddContainerDef","JSON",msgStr)
+    	  val res : String = MakeHttpRequest("put",host_url, "Message","JSON",msgStr)
     	  results += Tuple3(choice.toString, msgDefFile, res)
     	})
       } else {
@@ -925,7 +970,7 @@ object TestApiService {
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
-      val res : String = MakeHttpRequest(host_url, "UploadConfig","JSON",cfgStr)
+      val res : String = MakeHttpRequest("put",host_url, "UploadConfig","JSON",cfgStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -942,12 +987,12 @@ object TestApiService {
     try{
       var dirName = metadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if( ! IsValidDir(dirName) )
-	return
+	      return
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
-	return
+	      logger.fatal("No config files in the directory " + dirName)
+	      return
       }
 
       var cfgFilePath = ""
@@ -962,16 +1007,16 @@ object TestApiService {
       val choice:Int = readInt()
 
       if( choice == cfgFiles.length + 1){
-	return
+	      return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
-	  return
+	      logger.fatal("Invalid Choice : " + choice)
+	      return
       }
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
-      val res : String = MakeHttpRequest(host_url, "RemoveConfig","JSON",cfgStr)
+      val res : String = MakeHttpRequest("put",host_url, "RemoveConfig","JSON",cfgStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: Exception => {
@@ -1014,7 +1059,8 @@ object TestApiService {
       }
 
       jarFilePath = jarFiles(choice-1).toString
-      val res : String = MakeHttpRequest(host_url, "UploadJar","BINARY_FILE",jarFilePath)
+      val jarUrl = "UploadJars?name="+jarFilePath
+      val res : String = MakeHttpRequest("put",host_url, jarUrl,"BINARY_FILE",jarFilePath)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1061,7 +1107,7 @@ object TestApiService {
       functionFilePath = functionFiles(choice-1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest(host_url, "AddFunction","JSON",functionStr)
+      val res = MakeHttpRequest("put",host_url, "Function","JSON",functionStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1078,12 +1124,12 @@ object TestApiService {
     try{
       var dirName = metadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if( ! IsValidDir(dirName) )
-	return
+	      return
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
-	logger.fatal("No function files in the directory " + dirName)
-	return
+	      logger.fatal("No function files in the directory " + dirName)
+	      return
       }
 
       var functionFilePath = ""
@@ -1098,24 +1144,25 @@ object TestApiService {
       val choice:Int = readInt()
 
       if( choice == functionFiles.length + 1){
-	return
+	      return
       }
       if( choice < 1 || choice > functionFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
-	  return
+	      logger.fatal("Invalid Choice : " + choice)
+	      return
       }
 
       functionFilePath = functionFiles(choice-1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest(host_url, "UpdateFunction","JSON",functionStr)
+      val res = MakeHttpRequest("post",host_url, "Function","JSON",functionStr)
       println("Results as json string => \n" + res)
+      
     }catch {
       case e: AlreadyExistsException => {
-	  logger.error("Function Already in the metadata....")
+	      logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+	      e.printStackTrace()
       }
     }
   }
@@ -1154,7 +1201,7 @@ object TestApiService {
       conceptFilePath = conceptFiles(choice-1).toString
 
       val conceptStr = Source.fromFile(conceptFilePath).mkString
-      val res = MakeHttpRequest(host_url, "AddConcept","JSON",conceptStr)
+      val res = MakeHttpRequest("put",host_url, "Concept","JSON",conceptStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1169,6 +1216,13 @@ object TestApiService {
 
   def UpdateConcept {
     try{
+      
+ 
+
+      val res = MakeHttpRequest("post",host_url, "Concept","JSON","conceptStr")
+      
+      println("Results as json string => \n" + res)
+      
       var dirName = metadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if( ! IsValidDir(dirName) )
 	return
@@ -1200,9 +1254,9 @@ object TestApiService {
 
       conceptFilePath = conceptFiles(choice-1).toString
 
-      val conceptStr = Source.fromFile(conceptFilePath).mkString
-      val res = MakeHttpRequest(host_url, "UpdateConcept","JSON",conceptStr)
-      println("Results as json string => \n" + res)
+    //  val conceptStr = Source.fromFile(conceptFilePath).mkString
+   //   val res = MakeHttpRequest("post",host_url, "Concept","JSON",conceptStr)
+   //   println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Concept Already in the metadata....")
@@ -1248,7 +1302,7 @@ object TestApiService {
       typeFilePath = typeFiles(choice-1).toString
 
       val typeStr = Source.fromFile(typeFilePath).mkString
-      val res = MakeHttpRequest(host_url, "AddType","JSON",typeStr)
+      val res = MakeHttpRequest("put",host_url, "AddType","JSON",typeStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1298,7 +1352,7 @@ object TestApiService {
 	}
       }
 
-      val res = MakeHttpRequest(host_url, "GetAllTypesByObjType","JSON",selectedType)
+      val res = MakeHttpRequest("get",host_url, "GetAllTypesByObjType","JSON",selectedType)
       println("Results as json string => \n" + res)
 
     } catch{
