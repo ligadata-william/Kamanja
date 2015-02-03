@@ -131,7 +131,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
 	  	var simpleKey : String = if (hasArgs) buildSimpleKey(scalaFcnName, argTypes.map( argTriple => argTriple._1)) else s"$scalaFcnName()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.trace(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.info(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
 	  	var funcDef : FunctionDef = ctx.MetadataHelper.FunctionByTypeSig(simpleKey)
 	  	var winningKey : String = null

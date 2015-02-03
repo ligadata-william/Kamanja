@@ -1,0 +1,23 @@
+{
+   	"Container": { 
+   		"NameSpace":"System",
+   		"Name":"ZipRange6",
+   		"Version":"00.01.00",
+   		"Description":"Container int range values",
+   		"Fixed":"true",
+   		"Elements" : [
+   		   {
+   		   "Field" : {
+                "Name":"lowerBound",
+                "Type":"System.Int"
+   		     }
+   		   },
+   		   {
+   		   "Field" : {
+                "Name":"upperBound",
+                "Type":"System.Int"
+   		     }
+   		   }
+   		]
+   	}
+}

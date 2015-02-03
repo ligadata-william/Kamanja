@@ -387,6 +387,52 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     setExprs.contains(fldRefExpr)
   }
 
+ /** FoundInAnyRange */
+  def FoundInAnyRange(fldRefExpr: String, tuples: Array[(String,String)], inclusive : Boolean): Boolean = {
+    tuples.filter(tup =>  { 
+    	if (inclusive) 
+    	  (fldRefExpr >= tup._1 && fldRefExpr <= tup._2)
+    	else 
+    	  (fldRefExpr > tup._1 && fldRefExpr < tup._2)   	  
+    }).length > 0
+  }
+
+  def FoundInAnyRange(fldRefExpr: Int, tuples: Array[(Int,Int)], inclusive : Boolean): Boolean = {
+    tuples.filter(tup =>  { 
+    	if (inclusive) 
+    	  (fldRefExpr >= tup._1 && fldRefExpr <= tup._2)
+    	else 
+    	  (fldRefExpr > tup._1 && fldRefExpr < tup._2)   	  
+    }).length > 0
+  }
+
+  def FoundInAnyRange(fldRefExpr: Long, tuples: Array[(Long,Long)], inclusive : Boolean): Boolean = {
+    tuples.filter(tup =>  { 
+    	if (inclusive) 
+    	  (fldRefExpr >= tup._1 && fldRefExpr <= tup._2)
+    	else 
+    	  (fldRefExpr > tup._1 && fldRefExpr < tup._2)   	  
+    }).length > 0
+  }
+
+  def FoundInAnyRange(fldRefExpr: Float, tuples: Array[(Float,Float)], inclusive : Boolean): Boolean = {
+     tuples.filter(tup =>  { 
+    	if (inclusive) 
+    	  (fldRefExpr >= tup._1 && fldRefExpr <= tup._2)
+    	else 
+    	  (fldRefExpr > tup._1 && fldRefExpr < tup._2)   	  
+    }).length > 0
+  }
+
+  def FoundInAnyRange(fldRefExpr: Double, tuples: Array[(Double,Double)], inclusive : Boolean): Boolean = {
+    tuples.filter(tup =>  { 
+    	if (inclusive) 
+    	  (fldRefExpr >= tup._1 && fldRefExpr <= tup._2)
+    	else 
+    	  (fldRefExpr > tup._1 && fldRefExpr < tup._2)   	  
+    }).length > 0
+  }
+
   /** AnyBetween */
   def AnyBetween(arrayExpr: ArrayBuffer[String], leftMargin: String, rightMargin: String, inclusive: Boolean): Boolean = {
     arrayExpr.filter(Between(_, leftMargin, rightMargin, inclusive)).length > 0

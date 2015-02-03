@@ -158,6 +158,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		
 		mgr.AddTupleType(MdMgr.sysNS, "TupleOfStringString", Array((MdMgr.sysNS,"String"), (MdMgr.sysNS,"String")), baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfTupleOfStringString", MdMgr.sysNS, "TupleOfStringString", 1, baseTypesVer)
+
+		mgr.AddTupleType(MdMgr.sysNS, "TupleOfString2", Array((MdMgr.sysNS,"String"), (MdMgr.sysNS,"String")), baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfTupleOfString2", MdMgr.sysNS, "TupleOfString2", 1, baseTypesVer)
+		mgr.AddTupleType(MdMgr.sysNS, "TupleOfLong2", Array((MdMgr.sysNS,"Long"), (MdMgr.sysNS,"Long")), baseTypesVer)
+		mgr.AddArray(MdMgr.sysNS, "ArrayOfTupleOfLong2", MdMgr.sysNS, "TupleOfLong2", 1, baseTypesVer)
+
 		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfIntInt", (MdMgr.sysNS, "Int"), (MdMgr.sysNS, "Int"), baseTypesVer)
 		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfIntArrayBufferOfInt", (MdMgr.sysNS, "Int"), (MdMgr.sysNS, "ArrayBufferOfInt"), baseTypesVer)
 
@@ -978,6 +984,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfFloat")), null)
 		mgr.AddFunc("Pmml", "IsIn", "com.ligadata.pmml.udfs.Udfs.IsIn", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("setExprs", "System", "ImmutableSetOfDouble")), null)
 				
+		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "String"),("tuples", "System", "ArrayOfTupleOfString2"),("inclusive", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Int"),("tuples", "System", "ArrayOfTupleOfInt2"),("inclusive", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Long"),("tuples", "System", "ArrayOfTupleOfLong2"),("inclusive", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Float"),("tuples", "System", "ArrayOfTupleOfFloat2"),("inclusive", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Double"),("tuples", "System", "ArrayOfTupleOfDouble2"),("inclusive", "System", "Boolean")), null)
+
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean")), null)

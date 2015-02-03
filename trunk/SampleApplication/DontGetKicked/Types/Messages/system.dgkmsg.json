@@ -1,0 +1,249 @@
+{
+    "Message": {
+        "NameSpace": "System",
+        "Name": "DGKMsg",
+        "Version": "00.01.00",
+        "Description": "Don't Get Kicked Message",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "RefID",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "IsBadBuy",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "PurchDate",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Auction",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VehYear",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VehicleAge",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Make",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Model",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Trim",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "SubModel",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Color",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Transmission",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "WheelTypeID",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "WheelType",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VehOdo",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Nationality",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "Size",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "TopThreeAmericanName",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRAcquisitionAuctionAveragePrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRAcquisitionAuctionCleanPrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRAcquisitionRetailAveragePrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRAcquisitonRetailCleanPrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRCurrentAuctionAveragePrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRCurrentAuctionCleanPrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRCurrentRetailAveragePrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "MMRCurrentRetailCleanPrice",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "PRIMEUNIT",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "AUCGUART",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "BYRNO",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VNZIP1",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VNST",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "VehBCost",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "IsOnlineSale",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "WarrantyCost",
+                    "Type": "System.Int"
+                }
+            }
+        ]
+    }
+}

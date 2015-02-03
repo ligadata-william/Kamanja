@@ -1,0 +1,235 @@
+
+
+<!--
+	Barclay Bank Driving Digital Ruleset.  
+
+	Summary:
+		This model is intended to inform Personal and Premier (no relationship mgr) customers that are either
+			1) registered for funds transfer for funds transfer activities but not using this feature or 
+			2) customers that are not registered
+		that bank transfers can be easily accomplished from their mobile or other computing device.  This will
+		be done by sending them specific messages according to certain criteria found either in their account
+		characteristics or from the account usage information in the past three months.
+			 
+		See DontGetKickedDesign.doc document for complete details regarding the inputs, outputs, rules, and general 
+		data flows. 
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="LigaDATA (2014)" description="Rules that predict lemon cars likely to be kicked back at car carpurchase ">
+		<Application name="DontGetKicked" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="DGKMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+
+		<DataField name="VNZIP1" displayName="CustomerMsg" optype="categorical" dataType="integer"/>
+		<DataField name="RefID" displayName="RefID" optype="categorical" dataType="integer"/>
+		<DataField name="Make" displayName="Make" optype="categorical" dataType="string"/>
+		<DataField name="SubModel" displayName="SubModel" optype="categorical" dataType="string"/>
+		<DataField name="WheelTypeID" displayName="WheelTypeID" optype="categorical" dataType="integer"/>
+
+	</DataDictionary>
+
+	<TransformationDictionary>
+
+		<!--
+			**********************************************************
+			*  EnvContext Access 
+			**********************************************************
+		-->
+
+		<!--
+		  Obtain the QuiteRiskyCarPurchasedZipTuples 
+		-->
+		<DerivedField name="QuiteRiskyCarPurchasedZipRangeBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
+		  	<Apply function="GetArray">
+		    	<FieldRef field="gCtx"/>
+		    	<Constant dataType="string">system.quiteriskycarpurchasezipranges</Constant>
+		  	</Apply>
+		</DerivedField>
+
+		<DerivedField name="QuiteRiskyCarPurchasedZipRanges" dataType="ArrayOfZipRange7" optype="categorical">
+		  	<Apply function="DownCastArrayMembers">
+		    	<FieldRef field="QuiteRiskyCarPurchasedZipRangeBases"/>
+		      	<Constant dataType="mbrTypename">QuiteRiskyCarPurchasedZipRanges</Constant>
+		  	</Apply>
+		</DerivedField>
+
+		<DerivedField name="QuiteRiskyCarPurchasedZipTuples" dataType="ArrayOfTupleOfInt2" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerMap">
+		       		<FieldRef field="QuiteRiskyCarPurchasedZipRanges"/>
+		 			<Constant dataType="ident">lowerBound</Constant> 
+		 			<Constant dataType="ident">upperBound</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<!--
+		  Obtain the PossiblyRiskyCarPurchasedZipTuples 
+		-->
+		<DerivedField name="PossiblyRiskyCarPurchasedZipRangeBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
+		  <Apply function="GetArray">
+		    	<FieldRef field="gCtx"/>
+		    	<Constant dataType="string">system.possiblyriskycarpurchasezipranges</Constant>
+		  </Apply>
+		</DerivedField>
+
+		<DerivedField name="PossiblyRiskyCarPurchasedZipRanges" dataType="ArrayOfZipRange6" optype="categorical">
+		  <Apply function="DownCastArrayMembers">
+		    	<FieldRef field="PossiblyRiskyCarPurchasedZipRangeBases"/>
+		      	<Constant dataType="mbrTypename">PossiblyRiskyCarPurchasedZipRanges</Constant>
+		  </Apply>
+		</DerivedField>
+
+		<DerivedField name="PossiblyRiskyCarPurchasedZipTuples" dataType="ArrayOfTupleOfInt2" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerMap">
+		       		<FieldRef field="PossiblyRiskyCarPurchasedZipRanges"/>
+		 			<Constant dataType="ident">lowerBound</Constant> 
+		 			<Constant dataType="ident">upperBound</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+
+		<!--
+			**********************************************************
+			*  Generally used derivations 
+			**********************************************************
+		-->
+
+		<!-- 
+			Materialize these variables from their containers to derived fields to make
+			them accessible for output emission 
+		-->
+		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
+			<Apply function="and">
+				<Apply function="Put">  
+					<Constant dataType="string">RefID</Constant>
+					<FieldRef field="msg.refid"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">VNZIP1</Constant>
+					<FieldRef field="msg.vnzip1"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">Make</Constant>
+					<FieldRef field="msg.make"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">SubModel</Constant>
+					<FieldRef field="msg.submodel"/>
+				</Apply>
+				<Apply function="Put">  
+					<Constant dataType="string">WheelTypeID</Constant>
+					<FieldRef field="msg.wheeltypeid"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+		<!--
+			**********************************************************
+			*  Principal descriminators
+			**********************************************************
+		-->
+
+		<!--
+		  Through a modeling effort, it has been determined that the zip code where 
+		  the car was purchased is highly predictive of whether the car will be kicked 
+		  back to the carpurchase.
+
+		  Tables QuiteRiskyCarPurchasedZipRangeBases and PossiblyRiskyCarPurchasedZipTuples
+		  contain such zip codes, with QuiteRiskyCarPurchasedZipRangeBases being a better
+		  predictor than PossiblyRiskyCarPurchasedZipTuples.
+		-->
+		<DerivedField name="isLemonCar086" dataType="boolean" optype="categorical">
+		    <Apply function="and">
+		    	<FieldRef field="MaterializeOutputs"/>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">0</Constant>
+			    </Apply>
+			    <Apply function="FoundInAnyRange">
+			        <FieldRef field="msg.vnzip1"/>
+			        <FieldRef field="QuiteRiskyCarPurchasedZipTuples"/>
+			        <Constant dataType="boolean">true</Constant> <!-- inclusive range compare -->
+			    </Apply>
+		    </Apply>
+		</DerivedField>
+
+		<DerivedField name="isLemonCar021" dataType="boolean" optype="categorical">
+		    <Apply function="and">
+		    	<FieldRef field="MaterializeOutputs"/>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">0</Constant>
+			    </Apply>
+			    <Apply function="FoundInAnyRange">
+			        <FieldRef field="msg.vnzip1"/>
+			        <FieldRef field="PossiblyRiskyCarPurchasedZipTuples"/>
+			        <Constant dataType="boolean">true</Constant> <!-- inclusive range compare -->
+			    </Apply>
+		    </Apply>
+		</DerivedField>
+
+		<DerivedField name="WheelCheck" dataType="boolean" optype="categorical">
+		    <Apply function="or">
+		    	<FieldRef field="MaterializeOutputs"/>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">0</Constant> 
+			    </Apply>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">1</Constant> 
+			    </Apply>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">2</Constant> 
+			    </Apply>
+			    <Apply function="equal">
+			        <FieldRef field="msg.wheeltypeid"/>
+			        <Constant dataType="integer">3</Constant>
+			    </Apply>
+		    </Apply>
+		</DerivedField>
+
+	</TransformationDictionary>
+
+	<!--
+		**********************************************************
+		*  RuleSetModel
+		**********************************************************
+	-->
+	<RuleSetModel modelName="DontGetKicked" functionName="classification" algorithmName="RuleSet">
+	    <MiningSchema>
+
+			<MiningField name="RefID" usageType="predicted"/>
+
+			<MiningField name="VNZIP1" usageType="supplementary"/>
+			<MiningField name="Make" usageType="supplementary"/>
+			<MiningField name="SubModel" usageType="supplementary"/>
+			<MiningField name="WheelTypeID" usageType="supplementary"/>
+
+	    </MiningSchema>
+	
+		<RuleSet defaultScore="0">  
+			<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="QuiteRisky086" score="0.86">
+				<SimplePredicate field="isLemonCar086" operator="equal" value="true"/>
+			</SimpleRule>
+			<SimpleRule id="PossiblyRisky021" score="0.21">
+				<SimplePredicate field="isLemonCar021" operator="equal" value="true"/>
+			</SimpleRule>
+		</RuleSet> 
+	</RuleSetModel>
+</PMML>
