@@ -1,0 +1,836 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>Serialize - com.ligadata.Serialize</title>
+          <meta name="description" content="Serialize - com.ligadata.Serialize" />
+          <meta name="keywords" content="Serialize com.ligadata.Serialize" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../index.html';
+            var hash = 'com.ligadata.Serialize.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../lib/package_big.png" />
+        <p id="owner"><a href="../../package.html" class="extype" name="com">com</a>.<a href="../package.html" class="extype" name="com.ligadata">ligadata</a></p>
+        <h1>Serialize</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Serialize</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.ligadata.Serialize.ApiArgListParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ApiArgListParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ApiArgListParsingException:ApiArgListParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ApiArgListParsingException.html"><span class="name">ApiArgListParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ApiResultParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ApiResultParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ApiResultParsingException:ApiResultParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ApiResultParsingException.html"><span class="name">ApiResultParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Argument" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ArgumentextendsProductwithSerializable"></a>
+      <a id="Argument:Argument"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Argument.html"><span class="name">Argument</span></a><span class="params">(<span name="ArgName">ArgName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ArgTypeNameSpace">ArgTypeNameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ArgTypeName">ArgTypeName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Attr" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="AttrextendsProductwithSerializable"></a>
+      <a id="Attr:Attr"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Attr.html"><span class="name">Attr</span></a><span class="params">(<span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Int">Int</span></span>, <span name="CollectionType">CollectionType: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="Type">Type: <a href="TypeDef.html" class="extype" name="com.ligadata.Serialize.TypeDef">TypeDef</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Concept" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ConceptextendsProductwithSerializable"></a>
+      <a id="Concept:Concept"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Concept.html"><span class="name">Concept</span></a><span class="params">(<span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeNameSpace">TypeNameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeName">TypeName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ConceptList" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ConceptListextendsProductwithSerializable"></a>
+      <a id="ConceptList:ConceptList"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ConceptList.html"><span class="name">ConceptList</span></a><span class="params">(<span name="Concepts">Concepts: <span class="extype" name="scala.List">List</span>[<a href="Concept.html" class="extype" name="com.ligadata.Serialize.Concept">Concept</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ConceptListParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ConceptListParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ConceptListParsingException:ConceptListParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ConceptListParsingException.html"><span class="name">ConceptListParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ConceptParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ConceptParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ConceptParsingException:ConceptParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ConceptParsingException.html"><span class="name">ConceptParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ContainerDefParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ContainerDefParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ContainerDefParsingException:ContainerDefParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ContainerDefParsingException.html"><span class="name">ContainerDefParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ContainerDefinition" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ContainerDefinitionextendsProductwithSerializable"></a>
+      <a id="ContainerDefinition:ContainerDefinition"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ContainerDefinition.html"><span class="name">ContainerDefinition</span></a><span class="params">(<span name="Container">Container: <a href="MessageStruct.html" class="extype" name="com.ligadata.Serialize.MessageStruct">MessageStruct</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.CreateStoreFailedException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CreateStoreFailedExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="CreateStoreFailedException:CreateStoreFailedException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="CreateStoreFailedException.html"><span class="name">CreateStoreFailedException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.DerivedConcept" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="DerivedConceptextendsProductwithSerializable"></a>
+      <a id="DerivedConcept:DerivedConcept"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="DerivedConcept.html"><span class="name">DerivedConcept</span></a><span class="params">(<span name="FunctionDefinition">FunctionDefinition: <a href="Function.html" class="extype" name="com.ligadata.Serialize.Function">Function</a></span>, <span name="Attributes">Attributes: <span class="extype" name="scala.List">List</span>[<a href="Attr.html" class="extype" name="com.ligadata.Serialize.Attr">Attr</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.EngineConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EngineConfigextendsProductwithSerializable"></a>
+      <a id="EngineConfig:EngineConfig"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="EngineConfig.html"><span class="name">EngineConfig</span></a><span class="params">(<span name="Clusters">Clusters: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.List">List</span>[<a href="JClusterInfo.html" class="extype" name="com.ligadata.Serialize.JClusterInfo">JClusterInfo</a>]]</span>, <span name="Adapters">Adapters: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.List">List</span>[<a href="JAdapterInfo.html" class="extype" name="com.ligadata.Serialize.JAdapterInfo">JAdapterInfo</a>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.EngineConfigParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="EngineConfigParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="EngineConfigParsingException:EngineConfigParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="EngineConfigParsingException.html"><span class="name">EngineConfigParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Function" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FunctionextendsProductwithSerializable"></a>
+      <a id="Function:Function"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Function.html"><span class="name">Function</span></a><span class="params">(<span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="PhysicalName">PhysicalName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ReturnTypeNameSpace">ReturnTypeNameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ReturnTypeName">ReturnTypeName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Arguments">Arguments: <span class="extype" name="scala.List">List</span>[<a href="Argument.html" class="extype" name="com.ligadata.Serialize.Argument">Argument</a>]</span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependantJars">DependantJars: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.FunctionList" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FunctionListextendsProductwithSerializable"></a>
+      <a id="FunctionList:FunctionList"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FunctionList.html"><span class="name">FunctionList</span></a><span class="params">(<span name="Functions">Functions: <span class="extype" name="scala.List">List</span>[<a href="Function.html" class="extype" name="com.ligadata.Serialize.Function">Function</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.FunctionListParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FunctionListParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="FunctionListParsingException:FunctionListParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FunctionListParsingException.html"><span class="name">FunctionListParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.FunctionParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="FunctionParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="FunctionParsingException:FunctionParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="FunctionParsingException.html"><span class="name">FunctionParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JAdapterInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JAdapterInfoextendsProductwithSerializable"></a>
+      <a id="JAdapterInfo:JAdapterInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JAdapterInfo.html"><span class="name">JAdapterInfo</span></a><span class="params">(<span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeString">TypeString: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DataFormat">DataFormat: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="InputAdapterToVerify">InputAdapterToVerify: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="ClassName">ClassName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependencyJars">DependencyJars: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]]</span>, <span name="AdapterSpecificCfg">AdapterSpecificCfg: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JClusterCfg" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JClusterCfgextendsProductwithSerializable"></a>
+      <a id="JClusterCfg:JClusterCfg"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JClusterCfg.html"><span class="name">JClusterCfg</span></a><span class="params">(<span name="DataStore">DataStore: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="StatusInfo">StatusInfo: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ZooKeeperInfo">ZooKeeperInfo: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="EnvironmentContext">EnvironmentContext: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JClusterInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JClusterInfoextendsProductwithSerializable"></a>
+      <a id="JClusterInfo:JClusterInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JClusterInfo.html"><span class="name">JClusterInfo</span></a><span class="params">(<span name="ClusterId">ClusterId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Config">Config: <a href="JClusterCfg.html" class="extype" name="com.ligadata.Serialize.JClusterCfg">JClusterCfg</a></span>, <span name="Nodes">Nodes: <span class="extype" name="scala.List">List</span>[<a href="JNodeInfo.html" class="extype" name="com.ligadata.Serialize.JNodeInfo">JNodeInfo</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JDataStore" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JDataStoreextendsProductwithSerializable"></a>
+      <a id="JDataStore:JDataStore"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JDataStore.html"><span class="name">JDataStore</span></a><span class="params">(<span name="StoreType">StoreType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="SchemaName">SchemaName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Location">Location: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JNodeInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JNodeInfoextendsProductwithSerializable"></a>
+      <a id="JNodeInfo:JNodeInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JNodeInfo.html"><span class="name">JNodeInfo</span></a><span class="params">(<span name="NodeId">NodeId: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="NodePort">NodePort: <span class="extype" name="scala.Int">Int</span></span>, <span name="NodeIpAddr">NodeIpAddr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarPaths">JarPaths: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="Scala_home">Scala_home: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Java_home">Java_home: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Classpath">Classpath: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JStatusInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JStatusInfoextendsProductwithSerializable"></a>
+      <a id="JStatusInfo:JStatusInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JStatusInfo.html"><span class="name">JStatusInfo</span></a><span class="params">(<span name="StoreType">StoreType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="SchemaName">SchemaName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Location">Location: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JZooKeeperInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JZooKeeperInfoextendsProductwithSerializable"></a>
+      <a id="JZooKeeperInfo:JZooKeeperInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JZooKeeperInfo.html"><span class="name">JZooKeeperInfo</span></a><span class="params">(<span name="ZooKeeperNodeBasePath">ZooKeeperNodeBasePath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ZooKeeperConnectString">ZooKeeperConnectString: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ZooKeeperSessionTimeoutMs">ZooKeeperSessionTimeoutMs: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ZooKeeperConnectionTimeoutMs">ZooKeeperConnectionTimeoutMs: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Json4sParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Json4sParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="Json4sParsingException:Json4sParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Json4sParsingException.html"><span class="name">Json4sParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Json4sSerializationException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Json4sSerializationExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="Json4sSerializationException:Json4sSerializationException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Json4sSerializationException.html"><span class="name">Json4sSerializationException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.JsonException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JsonExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="JsonException:JsonException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="JsonException.html"><span class="name">JsonException</span></a><span class="params">(<span name="message">message: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.KryoSerializationException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="KryoSerializationExceptionextendsThrowablewithProductwithSerializable"></a>
+      <a id="KryoSerializationException:KryoSerializationException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="KryoSerializationException.html"><span class="name">KryoSerializationException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Throwable">Throwable</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.KryoSerializer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="KryoSerializerextendsSerializer"></a>
+      <a id="KryoSerializer:KryoSerializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="KryoSerializer.html"><span class="name">KryoSerializer</span></a><span class="result"> extends <a href="Serializer.html" class="extype" name="com.ligadata.Serialize.Serializer">Serializer</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MessageDefParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MessageDefParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="MessageDefParsingException:MessageDefParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MessageDefParsingException.html"><span class="name">MessageDefParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MessageDefinition" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MessageDefinitionextendsProductwithSerializable"></a>
+      <a id="MessageDefinition:MessageDefinition"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MessageDefinition.html"><span class="name">MessageDefinition</span></a><span class="params">(<span name="Message">Message: <a href="MessageStruct.html" class="extype" name="com.ligadata.Serialize.MessageStruct">MessageStruct</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MessageStruct" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MessageStructextendsProductwithSerializable"></a>
+      <a id="MessageStruct:MessageStruct"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MessageStruct.html"><span class="name">MessageStruct</span></a><span class="params">(<span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="FullName">FullName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Int">Int</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="PhysicalName">PhysicalName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependencyJars">DependencyJars: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="Attributes">Attributes: <span class="extype" name="scala.List">List</span>[<a href="Attr.html" class="extype" name="com.ligadata.Serialize.Attr">Attr</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MetadataApiArg" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MetadataApiArgextendsProductwithSerializable"></a>
+      <a id="MetadataApiArg:MetadataApiArg"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MetadataApiArg.html"><span class="name">MetadataApiArg</span></a><span class="params">(<span name="ObjectType">ObjectType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="FormatType">FormatType: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MetadataApiArgList" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MetadataApiArgListextendsProductwithSerializable"></a>
+      <a id="MetadataApiArgList:MetadataApiArgList"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MetadataApiArgList.html"><span class="name">MetadataApiArgList</span></a><span class="params">(<span name="ArgList">ArgList: <span class="extype" name="scala.List">List</span>[<a href="MetadataApiArg.html" class="extype" name="com.ligadata.Serialize.MetadataApiArg">MetadataApiArg</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.MetadataApiConfig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="MetadataApiConfigextendsProductwithSerializable"></a>
+      <a id="MetadataApiConfig:MetadataApiConfig"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="MetadataApiConfig.html"><span class="name">MetadataApiConfig</span></a><span class="params">(<span name="ApiConfigParameters">ApiConfigParameters: <a href="ParameterMap.html" class="extype" name="com.ligadata.Serialize.ParameterMap">ParameterMap</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ModelDefParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ModelDefParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ModelDefParsingException:ModelDefParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ModelDefParsingException.html"><span class="name">ModelDefParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ModelDefinition" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ModelDefinitionextendsProductwithSerializable"></a>
+      <a id="ModelDefinition:ModelDefinition"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ModelDefinition.html"><span class="name">ModelDefinition</span></a><span class="params">(<span name="Model">Model: <a href="ModelInfo.html" class="extype" name="com.ligadata.Serialize.ModelInfo">ModelInfo</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ModelInfo" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ModelInfoextendsProductwithSerializable"></a>
+      <a id="ModelInfo:ModelInfo"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ModelInfo.html"><span class="name">ModelInfo</span></a><span class="params">(<span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ModelType">ModelType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="PhysicalName">PhysicalName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependencyJars">DependencyJars: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="InputAttributes">InputAttributes: <span class="extype" name="scala.List">List</span>[<a href="Attr.html" class="extype" name="com.ligadata.Serialize.Attr">Attr</a>]</span>, <span name="OutputAttributes">OutputAttributes: <span class="extype" name="scala.List">List</span>[<a href="Attr.html" class="extype" name="com.ligadata.Serialize.Attr">Attr</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ObjectNotFoundException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ObjectNotFoundExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ObjectNotFoundException:ObjectNotFoundException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ObjectNotFoundException.html"><span class="name">ObjectNotFoundException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ParameterMap" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ParameterMapextendsProductwithSerializable"></a>
+      <a id="ParameterMap:ParameterMap"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ParameterMap.html"><span class="name">ParameterMap</span></a><span class="params">(<span name="RootDir">RootDir: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="GitRootDir">GitRootDir: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Database">Database: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DatabaseHost">DatabaseHost: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarTargetDir">JarTargetDir: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ScalaHome">ScalaHome: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JavaHome">JavaHome: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ManifestPath">ManifestPath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ClassPath">ClassPath: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="NotifyEngine">NotifyEngine: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="ZooKeeperConnectString">ZooKeeperConnectString: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ProtoBufSerializationException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProtoBufSerializationExceptionextendsThrowablewithProductwithSerializable"></a>
+      <a id="ProtoBufSerializationException:ProtoBufSerializationException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ProtoBufSerializationException.html"><span class="name">ProtoBufSerializationException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Throwable">Throwable</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ProtoBufSerializer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ProtoBufSerializerextendsSerializer"></a>
+      <a id="ProtoBufSerializer:ProtoBufSerializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="ProtoBufSerializer.html"><span class="name">ProtoBufSerializer</span></a><span class="result"> extends <a href="Serializer.html" class="extype" name="com.ligadata.Serialize.Serializer">Serializer</a></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.Serializer" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="SerializerextendsAnyRef"></a>
+      <a id="Serializer:Serializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Serializer.html"><span class="name">Serializer</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.SerializerManagerException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SerializerManagerExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="SerializerManagerException:SerializerManagerException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="SerializerManagerException.html"><span class="name">SerializerManagerException</span></a><span class="params">(<span name="message">message: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.TypeDef" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypeDefextendsProductwithSerializable"></a>
+      <a id="TypeDef:TypeDef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TypeDef.html"><span class="name">TypeDef</span></a><span class="params">(<span name="MetadataType">MetadataType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeTypeName">TypeTypeName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeNameSpace">TypeNameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="TypeName">TypeName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="PhysicalName">PhysicalName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependencyJars">DependencyJars: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="Implementation">Implementation: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Fixed">Fixed: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>, <span name="NumberOfDimensions">NumberOfDimensions: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>, <span name="KeyTypeNameSpace">KeyTypeNameSpace: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="KeyTypeName">KeyTypeName: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="ValueTypeNameSpace">ValueTypeNameSpace: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="ValueTypeName">ValueTypeName: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="TupleDefinitions">TupleDefinitions: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.List">List</span>[<a href="TypeDef.html" class="extype" name="com.ligadata.Serialize.TypeDef">TypeDef</a>]]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.TypeDefList" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypeDefListextendsProductwithSerializable"></a>
+      <a id="TypeDefList:TypeDefList"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TypeDefList.html"><span class="name">TypeDefList</span></a><span class="params">(<span name="Types">Types: <span class="extype" name="scala.List">List</span>[<a href="TypeDef.html" class="extype" name="com.ligadata.Serialize.TypeDef">TypeDef</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.TypeDefListParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypeDefListParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="TypeDefListParsingException:TypeDefListParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TypeDefListParsingException.html"><span class="name">TypeDefListParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.TypeDefProcessingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypeDefProcessingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="TypeDefProcessingException:TypeDefProcessingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TypeDefProcessingException.html"><span class="name">TypeDefProcessingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.TypeParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TypeParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="TypeParsingException:TypeParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TypeParsingException.html"><span class="name">TypeParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.UnexpectedMetadataApiException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UnexpectedMetadataApiExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="UnexpectedMetadataApiException:UnexpectedMetadataApiException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="UnexpectedMetadataApiException.html"><span class="name">UnexpectedMetadataApiException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.UnsupportedObjectException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="UnsupportedObjectExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="UnsupportedObjectException:UnsupportedObjectException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="UnsupportedObjectException.html"><span class="name">UnsupportedObjectException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ZkTransactionParsingException" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ZkTransactionParsingExceptionextendsExceptionwithProductwithSerializable"></a>
+      <a id="ZkTransactionParsingException:ZkTransactionParsingException"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ZkTransactionParsingException.html"><span class="name">ZkTransactionParsingException</span></a><span class="params">(<span name="e">e: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Exception">Exception</span> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ZooKeeperNotification" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ZooKeeperNotificationextendsProductwithSerializable"></a>
+      <a id="ZooKeeperNotification:ZooKeeperNotification"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ZooKeeperNotification.html"><span class="name">ZooKeeperNotification</span></a><span class="params">(<span name="ObjectType">ObjectType: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Operation">Operation: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="NameSpace">NameSpace: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Name">Name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="Version">Version: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="PhysicalName">PhysicalName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="JarName">JarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="DependantJars">DependantJars: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.ZooKeeperTransaction" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ZooKeeperTransactionextendsProductwithSerializable"></a>
+      <a id="ZooKeeperTransaction:ZooKeeperTransaction"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="ZooKeeperTransaction.html"><span class="name">ZooKeeperTransaction</span></a><span class="params">(<span name="Notifications">Notifications: <span class="extype" name="scala.List">List</span>[<a href="ZooKeeperNotification.html" class="extype" name="com.ligadata.Serialize.ZooKeeperNotification">ZooKeeperNotification</a>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.ligadata.Serialize.JsonSerializer" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="JsonSerializer"></a>
+      <a id="JsonSerializer:JsonSerializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="JsonSerializer$.html"><span class="name">JsonSerializer</span></a>
+      </span>
+      </h4>
+      
+    </li><li name="com.ligadata.Serialize.SerializerManager" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SerializerManager"></a>
+      <a id="SerializerManager:SerializerManager"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="SerializerManager$.html"><span class="name">SerializerManager</span></a>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../lib/template.js"></script>
+    </body>
+      </html>
