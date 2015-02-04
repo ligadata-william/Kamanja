@@ -73,6 +73,8 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
               nextOption(map ++ Map('typeDefsPath -> value), tail)
         	case "--fcnDefsPath" :: value :: tail =>
               nextOption(map ++ Map('fcnDefsPath -> value), tail)
+            case "--exclude" :: value :: tail =>
+              nextOption(map ++ Map('exclude -> value), tail)
 
             case option :: tail =>
               println("Unknown option " + option)
@@ -89,6 +91,7 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
         val versionNumber = if (options.contains('versionNumber)) options.apply('versionNumber) else null
         val typePath = if (options.contains('typeDefsPath)) options.apply('typeDefsPath) else null
         val fcnPath = if (options.contains('fcnDefsPath)) options.apply('fcnDefsPath) else null
+        val exclude = if (options.contains('exclude)) options.apply('exclude) else null
        
         val reasonableArguments : Boolean = (sbtProject != null && fullObjectPath != null && namespace != null && versionNumber != null && typePath != null && fcnPath != null)
         if (! reasonableArguments) { 
@@ -129,15 +132,32 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
 
 		val extractCmd = s"$pwd/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0"
 		/** Pass deps without quotes... the Seq takes care of presenting it as a "string" */
-		val extractCmdSeq : Seq[String] = Seq("java"
-											, "-jar", extractCmd 
-											,"--object", fullObjectPath
-											,"--namespace", namespace
-											,"--versionNumber", versionNoArg
-											,"--deps" , depJarsStr
-											,"--cp" , classPathStr
-											,"--typeDefsPath" , typePath 
-											,"--fcnDefsPath" , fcnPath)
+    
+    val extractCmdSeq : Seq[String] = {
+      if (exclude != null) {
+        Seq("java"
+				, "-jar", extractCmd 
+				,"--object", fullObjectPath
+				,"--namespace", namespace
+				,"--versionNumber", versionNoArg
+				,"--deps" , depJarsStr
+				,"--cp" , classPathStr
+				,"--typeDefsPath" , typePath 
+				,"--fcnDefsPath" , fcnPath
+        ,"--exclude", exclude)
+      } else {
+        Seq("java"
+        , "-jar", extractCmd 
+        ,"--object", fullObjectPath
+        ,"--namespace", namespace
+        ,"--versionNumber", versionNoArg
+        ,"--deps" , depJarsStr
+        ,"--cp" , classPathStr
+        ,"--typeDefsPath" , typePath 
+        ,"--fcnDefsPath" , fcnPath)
+      }
+    }
+
 		val jsonMetadataStr : String = Process(extractCmdSeq).!!.trim
 		println(jsonMetadataStr)
 
