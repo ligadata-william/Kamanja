@@ -938,7 +938,7 @@ class MdMgr {
       throw new AlreadyExistsException(s"Scalar $nameSpace.$name already exists.")
     }
     if (implementationName == null) {
-      throw new IllegalArgumentException(s"Expecting ImplementationName for type.")
+      throw new IllegalArgumentException(s"Expecting ImplementationName for type $nameSpace.$name with physicalName $physicalName")
     }
 
     val st: ScalarTypeDef = new ScalarTypeDef
