@@ -271,7 +271,7 @@ cp *.csv $installPath/input/application1/data
 # Copy documentation files
 # *******************************
 cd $srcPath/Documentation
-cp * $installPath/documentation
+cp -rf * $installPath/documentation
 
 # *******************************
 # copy models, messages, containers, config, scripts, types  messages data prep
