@@ -1,18 +1,8 @@
 
 
 <!--
-	Barclay Bank Driving Digital Ruleset.  
-
-	Summary:
-		This model is intended to inform Personal and Premier (no relationship mgr) customers that are either
-			1) registered for funds transfer for funds transfer activities but not using this feature or 
-			2) customers that are not registered
-		that bank transfers can be easily accomplished from their mobile or other computing device.  This will
-		be done by sending them specific messages according to certain criteria found either in their account
-		characteristics or from the account usage information in the past three months.
-			 
-		See DontGetKickedDesign.doc document for complete details regarding the inputs, outputs, rules, and general 
-		data flows. 
+	Kaggle Car Auction "Don't Get Kicked" model regarding car auctioneers predicting lemon cars that might be returned to them..  
+	See http://www.kaggle.com/c/DontGetKicked for details.
 -->
 
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">

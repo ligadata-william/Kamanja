@@ -96,7 +96,11 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	  
 	  	}
 	  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
-	  	logger.info(s"selectMacro ...macroDef produced?  $foundDef")
+	  	if (macroDef != null) { 
+	  		logger.info(s"selectMacro ...macroDef produced?  $foundDef")
+	  	} else {
+	  		logger.error(s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
+	  	}
 	  	(macroDef, argTypes)
 	}
 	

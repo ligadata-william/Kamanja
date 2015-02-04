@@ -159,8 +159,12 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		winningKey = simpleKey
 	  		new FcnTypeInfo(funcDef, argTypes, argTypesExp, winningKey)
 	  	}
-	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}!!"
-	  	logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}...see if it is a macro."
+	  	if (typeInfo != null) { 
+	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  	} else {
+	  		logger.warn(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  	}
 	  	
 	  	typeInfo
 	}
@@ -263,7 +267,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  	}
 	  		}
 	  		val foundMbrDef : String = if (winningMbrKey != null)  s"YES ...mbr key $winningMbrKey found ${node.function}" else s"NO mbr function $elemFcnName for ${node.function}!!"
-	  		logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  		if (winningMbrKey != null) {
+	  			logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  		} else {
+	  			logger.error(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  		}
 	  	}
 	  	
 	  	/** Perform the iterable function lookup in any event.  It is currently acceptable
@@ -296,7 +304,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  	})
 	  		}
   			val foundIterableFcnDef : String = if (winningKey != null)  s"YES ...$winningKey found ${node.function}" else s"NO!! ${node.function}"
-	  		logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+	  		if (winningKey != null) {
+	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+	  		} else {
+	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")	  			
+	  		}
 
   			/** 
   			 *  Record information that will be used by the printer to print the right phrase for the function invocation
