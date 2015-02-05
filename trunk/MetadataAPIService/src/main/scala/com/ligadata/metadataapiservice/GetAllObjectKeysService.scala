@@ -47,33 +47,34 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
 
     objectType match {
       case "Model" => {
-	apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
+	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
       }
       case "Message" => {
-	apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
       }
       case "Container" => {
-	apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
       }
       case "Function" => {
-	apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
       }
       case "Concept" => {
-	apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
       }
       case "Type" => {
-	apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
       }
       case "ALL" => {
-	apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
-		    MetadataAPIImpl.GetAllMessagesFromCache(true) ++
-		    MetadataAPIImpl.GetAllContainersFromCache(true) ++
-		    MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
-		    MetadataAPIImpl.GetAllConceptsFromCache(true) ++
-		    MetadataAPIImpl.GetAllTypesFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
+		      MetadataAPIImpl.GetAllMessagesFromCache(true) ++
+		      MetadataAPIImpl.GetAllContainersFromCache(true) ++
+		      MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
+		      MetadataAPIImpl.GetAllConceptsFromCache(true) ++
+		      MetadataAPIImpl.GetAllTypesFromCache(true)
       }
       case _ => {
-	apiResult(0) = "The " + objectType + " is not supported yet "
+         apiResult = Array[String]("The " + objectType + " is not supported yet ")
+         return new ApiResult(-1,"Invalid URL",apiResult.mkString).toString
       }
     }
     new ApiResult(0, "Object Keys", apiResult.mkString(",")).toString

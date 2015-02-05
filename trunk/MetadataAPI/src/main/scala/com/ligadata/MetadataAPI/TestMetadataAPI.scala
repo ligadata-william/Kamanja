@@ -1,36 +1,21 @@
 package com.ligadata.MetadataAPI
 
-import org.scalatest.Assertions._
-import scala.collection.mutable.{ArrayBuffer}
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import java.io.{ByteArrayOutputStream, _}
 
 import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.ResultSet
-
-import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.cassandra._
-
-import com.ligadata._
-import org.apache.log4j._
-import java.util.Properties
-
-import java.io._
-import scala.io._
-import com.ligadata.messagedef._
-import com.ligadata.Compiler._
-
-import com.twitter.chill.ScalaKryoInstantiator
-import java.io.ByteArrayOutputStream
 import com.esotericsoftware.kryo.io.{Input, Output}
-
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
-import org.apache.curator.framework.CuratorFramework
+import com.ligadata.keyvaluestore._
+import com.ligadata.olep.metadata._
+import com.ligadata.olep.metadataload.MetadataLoad
+import com.twitter.chill.ScalaKryoInstantiator
+import org.apache.log4j._
 import org.apache.zookeeper.CreateMode
+import org.scalatest.Assertions._
+
+import scala.collection.mutable.ArrayBuffer
+import scala.io._
 
 case class MissingArgumentException(e: String) extends Throwable(e)
 
@@ -886,6 +871,80 @@ object TestMetadataAPI{
     }
   }
 
+  def UpdateContainer{
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
+      if ( dirName == null  ){
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+        logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if ( ! IsValidDir(dirName) ){
+        return
+      }
+      val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if ( contFiles.length == 0 ){
+        logger.fatal("No json container files in the directory " + dirName)
+        return
+      }
+
+      println("\nPick a Container Definition file(s) from below choices\n")
+
+      var seq = 0
+      contFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr:String = readLine()
+
+      var valid : Boolean = true
+      var choices : List [Int] = List[Int]()
+      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
+      try {
+        choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _:Throwable => valid = false
+      }
+
+      if (valid) {
+        choices.foreach(choice => {
+          if( choice == contFiles.length + 1){
+            return
+          }
+          if( choice < 1 || choice > contFiles.length + 1 ){
+            logger.fatal("Invalid Choice : " + choice)
+            return
+          }
+
+          val contDefFile = contFiles(choice-1).toString
+          logger.setLevel(Level.TRACE);
+          val contStr = Source.fromFile(contDefFile).mkString
+          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+          val res : String = MetadataAPIImpl.UpdateContainer(contStr,"JSON")
+          results += Tuple3(choice.toString, contDefFile, res)
+        })
+      } else {
+        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        return
+      }
+
+      results.foreach(triple => {
+        val (choice,filePath,result) : (String,String,String) = triple
+        println(s"Results for container [$choice] $filePath => \n$result")
+      })
+
+    }catch {
+      case e: AlreadyExistsException => {
+        logger.error("Container Already in the metadata...." + e.getMessage())
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+
   def AddContainer{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
@@ -974,6 +1033,76 @@ object TestMetadataAPI{
       true
   }
 
+  def UpdateMessage: Unit = {
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
+      if ( dirName == null  ){
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+        logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if( ! IsValidDir(dirName) )
+        return
+
+      val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if ( msgFiles.length == 0 ){
+        logger.fatal("No json message files in the directory " + dirName)
+        return
+      }
+      println("\nPick a Message Definition file(s) from below choices\n")
+
+      var seq = 0
+      msgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr:String = readLine()
+
+      var valid : Boolean = true
+      var choices : List [Int] = List[Int]()
+      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
+      try {
+        choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _:Throwable => valid = false
+      }
+
+      if (valid) {
+
+        choices.foreach(choice => {
+          if( choice == msgFiles.length + 1){
+            return
+          }
+          if( choice < 1 || choice > msgFiles.length + 1 ){
+            logger.fatal("Invalid Choice : " + choice)
+            return
+          }
+
+          val msgDefFile = msgFiles(choice-1).toString
+          logger.setLevel(Level.TRACE);
+          val msgStr = Source.fromFile(msgDefFile).mkString
+          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+          val res : String = MetadataAPIImpl.UpdateMessage(msgStr,"JSON")
+          results += Tuple3(choice.toString, msgDefFile, res)
+        })
+      } else {
+        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        return
+      }
+
+      results.foreach(triple => {
+        val (choice,filePath,result) : (String,String,String) = triple
+        println(s"Results for message [$choice] $filePath => \n$result")
+      })
+
+    }catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
 
   def AddMessage{
     try{
@@ -1049,6 +1178,53 @@ object TestMetadataAPI{
     }
   }
 
+  def UpdateModel: Unit = {
+    try {
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
+      if (dirName == null) {
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        logger.info("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
+      }
+
+      if(!IsValidDir(dirName))
+        return
+
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
+      if(pmmlFiles.length == 0) {
+        logger.fatal("No model files in the directory " + dirName)
+        return
+      }
+
+      var pmmlFilePath = ""
+      println("Pick a Model Definition file(pmml) from the below choice")
+
+      var seq = 0
+      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if(choice == pmmlFiles.length + 1)
+        return
+
+      if( choice < 1 || choice > pmmlFiles.length + 1 ){
+        logger.fatal("Invalid Choice: " + choice)
+        return
+      }
+
+      pmmlFilePath = pmmlFiles(choice-1).toString
+      val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      // Save the model
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr))
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
 
   def AddModel {
     try{
@@ -1737,13 +1913,16 @@ object TestMetadataAPI{
       val getModel = ()                   => { GetModelFromCache }
       val getAllModels = ()               => { GetAllModelsFromCache }
       val removeModel = ()                => { RemoveModel }
+      val updateModel = ()                => { UpdateModel }
       val deactivateModel = ()            => { DeactivateModel }
       val activateModel = ()              => { ActivateModel }
       val addMessage = ()                 => { AddMessage }
+      val updateMessage = ()              => { UpdateMessage }
       val getMessage = ()                 => { GetMessageFromCache }
       val getAllMessages = ()             => { GetAllMessagesFromCache }
       val removeMessage = ()              => { RemoveMessage }
       val addContainer = ()               => { AddContainer }
+      val updateContainer = ()            => { UpdateContainer}
       val getContainer = ()               => { GetContainerFromCache }
       val getAllContainers = ()           => { GetAllContainersFromCache }
       val removeContainer = ()            => { RemoveContainer }
@@ -1776,13 +1955,16 @@ object TestMetadataAPI{
 			      ("Get Model",getModel),
 			      ("Get All Models",getAllModels),
 			      ("Remove Model",removeModel),
+            ("Update Model",updateModel),
 			      ("Deactivate Model",deactivateModel),
 			      ("Activate Model",activateModel),
 			      ("Add Message",addMessage),
+            ("Update Message", updateMessage),
 			      ("Get Message",getMessage),
 			      ("Get All Messages",getAllMessages),
 			      ("Remove Message",removeMessage),
 			      ("Add Container",addContainer),
+            ("Update Container", updateContainer),
 			      ("Get Container",getContainer),
 			      ("Get All Containers",getAllContainers),
 			      ("Remove Container",removeContainer),
