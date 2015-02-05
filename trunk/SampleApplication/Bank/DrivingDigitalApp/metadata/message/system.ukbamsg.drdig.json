@@ -1,0 +1,109 @@
+{
+    "Message": {
+        "NameSpace": "System",
+        "Name": "DrDigMsg",
+        "Version": "00.01.00",
+        "Description": "UKBA DB2 src - Driving Digital Event Message",
+        "Fixed": "true",
+        "Elements": [
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "SEG_TYPE",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "DATE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "PRECISE_TIME",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_SOURCE",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_SEQUENCE_NUM",
+                    "Type": "System.String"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "BRANCH",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ACCOUNT",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_AMOUNT_TYPE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_SOURCE_CODE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_TYPE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_CODE",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "ENTRY_AMOUNT",
+                    "Type": "System.Double"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "BENORIG_BRANCH",
+                    "Type": "System.Int"
+                }
+            },
+            {
+                "Field": {
+                    "NameSpace": "System",
+                    "Name": "BENORIG_ACCOUNT",
+                    "Type": "System.Int"
+                }
+            }
+        ]
+    }
+}

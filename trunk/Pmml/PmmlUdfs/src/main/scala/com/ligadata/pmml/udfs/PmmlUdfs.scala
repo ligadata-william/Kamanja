@@ -2744,7 +2744,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *  @return ISO8601 date for someDate - numYrs
    */
   def YearsAgoAsISO8601(someDate: Int, numYrs: Int): Int = {
-    AsCompressedDate(DaysAgo(someDate, numYrs))
+    AsCompressedDate(YearsAgo(someDate, numYrs))
   }
 
   /**
@@ -2780,7 +2780,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *  @return ISO8601 date for someDate - numMos
    */
   def MonthsAgoAsISO8601(someDate: Int, numMos: Int): Int = {
-    AsCompressedDate(DaysAgo(someDate, numMos))
+    AsCompressedDate(MonthsAgo(someDate, numMos))
   }
 
   /**
@@ -2816,7 +2816,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
    *  @return ISO8601 date for someDate - numWks
    */
   def WeeksAgoAsISO8601(someDate: Int, numWks: Int): Int = {
-    AsCompressedDate(DaysAgo(someDate, numWks))
+    AsCompressedDate(WeeksAgo(someDate, numWks))
   }
 
    /**
@@ -2864,7 +2864,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     val yyyy: Int = yyyymmdd / 10000
     val mm: Int = (yyyymmdd % 1000) / 100
     val day: Int = yyyymmdd % 100
-    val someDate: DateTime = new DateTime(yyyy, mm, day)
+    val someDate: DateTime = new DateTime(yyyy, mm, day, 0, 0)
     someDate
   }
 
