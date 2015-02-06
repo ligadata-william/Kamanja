@@ -30,6 +30,7 @@
 	       <Value value="msg" property="valid"/>
 	    </DataField>
 
+		<DataField name="SendMsg" displayName="SendMsg" optype="categorical" dataType="boolean"/>
 		<DataField name="CustomerMsg" displayName="CustomerMsg" optype="categorical" dataType="string"/>
 
 		<DataField name="ENTRY_SEQUENCE_NUM" displayName="ENTRY_SEQUENCE_NUM" optype="categorical" dataType="string"/>
@@ -88,35 +89,42 @@
 		-->
 		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
 			<Apply function="and">
-				<Apply function="Put">  
-					<Constant dataType="string">ACCOUNT</Constant>
-					<FieldRef field="msg.account"/>
+				<Apply function="and">
+					<Apply function="Put">  
+						<Constant dataType="string">ACCOUNT</Constant>
+						<FieldRef field="msg.account"/>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">ENTRY_SEQUENCE_NUM</Constant>
+						<FieldRef field="msg.entry_sequence_num"/>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">DATE</Constant>
+						<FieldRef field="msg.date"/>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">PRECISE_TIME</Constant>
+						<FieldRef field="msg.precise_time"/>
+					</Apply>
 				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">ENTRY_SEQUENCE_NUM</Constant>
-					<FieldRef field="msg.entry_sequence_num"/>
+				<Apply function="and">
+					<Apply function="Put">  
+						<Constant dataType="string">BRANCH</Constant>
+						<FieldRef field="msg.branch"/>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">ACCT_SHORT_NM</Constant>
+						<Constant dataType="string">BMB Account Name</Constant>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">MOBILE_NUMBER</Constant>
+						<Constant dataType="string">011-123-456-7890</Constant>
+					</Apply>
+					<Apply function="Put">  
+						<Constant dataType="string">SendMsg</Constant>
+						<Constant dataType="boolean">false</Constant>
+					</Apply>
 				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">DATE</Constant>
-					<FieldRef field="msg.date"/>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">PRECISE_TIME</Constant>
-					<FieldRef field="msg.precise_time"/>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">BRANCH</Constant>
-					<FieldRef field="msg.branch"/>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">ACCT_SHORT_NM</Constant>
-					<Constant dataType="string">BMB Account Name</Constant>
-				</Apply>
-				<Apply function="Put">  
-					<Constant dataType="string">MOBILE_NUMBER</Constant>
-					<Constant dataType="string">011-123-456-7890</Constant>
-				</Apply>
-
 			</Apply>
 		</DerivedField>
 
@@ -124,9 +132,34 @@
 	  		Based upon the event timestamp, compute the timestamp three months ago
 	  		that will be used to do range filter on xfer activity check... 
 	  	-->
+		<DerivedField name="SendMessage" dataType="boolean" optype="categorical">
+			<Apply function="Put">  
+				<Constant dataType="string">SendMsg</Constant>
+				<Constant dataType="boolean">false</Constant>
+			</Apply>
+		</DerivedField>
+
+	  	<!-- 
+	  		Based upon the event timestamp in Julian form, coerce it to ISO8601
+	  		format.
+
+	  		Should the date be malformed (not valid yyddd form), the epoch is returned.
+	  		This error is logged.  YYDDD assumes 21st century date.  
+	  	-->
+		<DerivedField name="JulianMsgDateAsISO8601" dataType="integer" optype="categorical">
+			<Apply function="AsCompressedDate">
+				<Apply function="toMillisFromJulian">
+					<FieldRef field="msg.date"/>
+				</Apply>
+			</Apply>
+		</DerivedField>
+
+	  	<!-- 
+	  		Based upon the event timestamp, compute the timestamp three months ago
+	  	-->
 		<DerivedField name="ThreeMonthsAgo" dataType="integer" optype="categorical">
 			<Apply function="MonthsAgoAsISO8601">
-				<FieldRef field="msg.date"/>
+				<FieldRef field="JulianMsgDateAsISO8601"/>
 				<Constant dataType="integer">3</Constant>
 			</Apply>
 		</DerivedField>
@@ -190,11 +223,8 @@
 						<Constant dataType="integer">23</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual"> 
-						<FieldRef field="msg.date"/>
-						<Apply function="MonthsAgo">
-							<FieldRef field="msg.date"/>
-							<Constant dataType="integer">3</Constant>
-						</Apply>
+						<FieldRef field="JulianMsgDateAsISO8601"/>
+						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
 				</Apply>
 
@@ -222,7 +252,7 @@
 						<Constant dataType="integer">69</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual"> 
-						<FieldRef field="msg.date"/>
+						<FieldRef field="JulianMsgDateAsISO8601"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
 				</Apply>
@@ -251,7 +281,7 @@
 						<Constant dataType="integer">27</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual"> 
-						<FieldRef field="msg.date"/>
+						<FieldRef field="JulianMsgDateAsISO8601"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
 				</Apply>
@@ -280,7 +310,7 @@
 						<Constant dataType="integer">27</Constant>
 					</Apply>
 					<Apply function="greaterOrEqual"> 
-						<FieldRef field="msg.date"/>
+						<FieldRef field="JulianMsgDateAsISO8601"/>
 						<FieldRef field="ThreeMonthsAgo"/>
 					</Apply>
 				</Apply>
@@ -299,19 +329,19 @@
 			<Apply function="if">
 				<FieldRef field="FirstPartyXferImmediate"/> 
 
-				<Constant dataType="boolean">true</Constant> <!-- true action -->
+				<FieldRef field="SendMessage"/> <!-- true action -->
 				<Apply function="if">  					<!-- false action -->
 					<FieldRef field="FirstPartyXferDiarised"/> 
 
-					<Constant dataType="boolean">true</Constant> <!-- true action -->
+					<FieldRef field="SendMessage"/> <!-- true action -->
 					<Apply function="if">   					<!-- false action -->
 						<FieldRef field="ThirdPartyXferImmediate"/> 
 
-						<Constant dataType="boolean">true</Constant> <!-- true action -->
+						<FieldRef field="SendMessage"/> <!-- true action -->
 						<Apply function="if">  					<!-- false action -->
 							<FieldRef field="ThirdPartyXferDiarised"/> 
 
-							<Constant dataType="boolean">true</Constant>  <!-- true action -->
+							<FieldRef field="SendMessage"/>  <!-- true action -->
 							<Constant dataType="boolean">false</Constant> <!-- false action -->
 
 						</Apply>
@@ -409,8 +439,9 @@
 	<RuleSetModel modelName="DrivingDigital" functionName="classification" algorithmName="RuleSet">
 	    <MiningSchema>
 
-			<MiningField name="CustomerMsg" usageType="predicted"/>
+			<MiningField name="SendMsg" usageType="predicted"/>
 
+			<MiningField name="CustomerMsg" usageType="supplementary"/>
 			<MiningField name="ThreeMonthsAgo" usageType="supplementary"/>
 			<MiningField name="ACCOUNT" usageType="supplementary"/>
 			<MiningField name="BRANCH" usageType="supplementary"/>

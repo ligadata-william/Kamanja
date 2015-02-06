@@ -9,6 +9,8 @@ chmod 0700 input/application1/bin/*
 input/application1/bin/ApplicationMetadata.sh
 input/DrivingDigitalApp/bin/ApplicationMetadata.sh
 
+# cp Samp*/Bank/Dri*/metadata/model/Dr*l /tmp/drdigital/input/Dri*/metadata/model/
+
 input/application1/bin/InitKvStores.sh
 # input/DrivingDigitalApp/bin/InitKvStores.sh  <<< nothing to do yet
 
