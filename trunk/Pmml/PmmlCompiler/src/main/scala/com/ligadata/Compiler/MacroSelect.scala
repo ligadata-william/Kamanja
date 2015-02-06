@@ -99,7 +99,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	if (macroDef != null) { 
 	  		logger.info(s"selectMacro ...macroDef produced?  $foundDef")
 	  	} else {
-	  		logger.error(s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
+	  		PmmlError.logError(ctx, s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
 	  	}
 	  	(macroDef, argTypes)
 	}
