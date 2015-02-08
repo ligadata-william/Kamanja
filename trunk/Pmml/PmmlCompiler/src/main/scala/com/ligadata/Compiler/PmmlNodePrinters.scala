@@ -180,11 +180,14 @@ object NodePrinterHelpers extends LogTrait {
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
 				    , funcDef : FunctionDef) : Unit = {
-	  
 		val fcnName = s"$scalaFcnName("
 		fcnBuffer.append(fcnName)
 		
 		val noChildren = node.Children.length
+		if (node.function == "if" && noChildren != 3) {
+			PmmlError.logError(ctx, s"if statement encountered that does not have 3 parts... a predicate, a true action and a false action.")
+			logger.error(s"only functional form ('if (predicate) trueAction else falseAction') supported. ")
+		}
 		var cnt = 0
 		node.Children.foreach((child) => {
 			cnt += 1	
@@ -502,7 +505,7 @@ object NodePrinterHelpers extends LogTrait {
 			case Some(ifActionElems) => {
 				if (ifActionElems.length == 2)  {
 					val truthAction : PmmlExecNode = ifActionElems.apply(0)
-					val falseAction = ifActionElems.apply(1)
+					val falseAction : PmmlExecNode = ifActionElems.apply(1)
 					generator.generateCode1(Some(truthAction), actionBuffer, generator, CodeFragment.FUNCCALL)
 					truthStr = actionBuffer.toString
 					actionBuffer.clear
@@ -515,8 +518,6 @@ object NodePrinterHelpers extends LogTrait {
 		}
  		
  		if (ifActionElemsLen == 2) {
- 			/** FIXME: The action statement's return value is returned for the result here. 
- 			 *  Should the predictate's result value be returned instead? ... i.e., $ fldName above ... leave it for now.*/
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
 			if (ctx.injectLogging) {
 				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
