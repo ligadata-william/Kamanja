@@ -130,7 +130,17 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 */
 	def getFieldType(fldname : String, expandCompoundFieldTypes : Boolean) : Array[(String,Boolean,BaseTypeDef)] = {	
 		val names : Array[String] = if (fldname.contains(".")) {
-			fldname.split('.')
+			val fldNames : Array[String] = fldname.split('.')
+			val isDictItem : Boolean = (dDict.contains(fldNames(0)) || xDict.contains(fldNames(0)))
+			/** fold keys to lower case except for dictionary names when hiearchical container field reference detected */
+			if (isDictItem) {
+				var arr : ArrayBuffer[String] = ArrayBuffer[String]()
+				arr += fldNames(0)
+				fldNames.tail.foreach(itm => arr += itm.toLowerCase)
+				arr.toArray
+			} else {
+			  	fldname.split('.').map(_.toLowerCase) 
+			 }
 		} else {
 			Array(fldname)
 		}

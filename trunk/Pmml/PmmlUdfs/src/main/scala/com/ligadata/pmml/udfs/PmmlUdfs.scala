@@ -190,28 +190,22 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     true
   }
 
-  /** comparisons */
+  /** if expressions */
 
   def If(boolexpr: Boolean): Boolean = {
     boolexpr
   }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    And(boolexpr, boolexpr1)
+  //def If(boolexpr: Boolean, expr1: Any, expr2: Any): Any = {
+  //  if (boolexpr) expr1 else expr2
+  //}
+
+  def If[T](boolexpr: Boolean, expr1: T, expr2: T): T = {
+    if (boolexpr) expr1 else expr2
   }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    And(boolexpr, boolexpr1, boolexpr2)
-  }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    And(boolexpr, boolexpr1, boolexpr2, boolexpr3)
-  }
-
-  def If(boolexprs: ArrayBuffer[Boolean]): Boolean = {
-    boolexprs.reduceLeft(_ && _)
-  }
-
+  /** logical and */
   def And(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr && boolexpr1)
   }
@@ -260,7 +254,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
   }
 
-  def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
+  /** logical or */
+ def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr || boolexpr1)
   }
 
@@ -2882,7 +2877,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
    *   @return Long value of millisecs from epoch.
    */
   def toMillisFromJulian(yyddd: Int): Long = {
-    val yydddStr : String = yyddd.toString
+    val ydStr : String = yyddd.toString
+    val yydddStr : String = if (ydStr.size == 4) ("0" + ydStr) else ydStr
     val reasonable : Boolean = if (yydddStr.length == 5) {
     	val yy : Int = yydddStr.slice(0, 2).toInt
     	val ddd : Int = yydddStr.slice(2,5).toInt
