@@ -155,8 +155,12 @@ trait MetadataAPIService extends HttpService {
    * 
    */
   private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext):Unit = {
-    if (objtype.equalsIgnoreCase("Container") ) {
-      println(createGetArg(objKey,objtype))
+    if (objtype.equalsIgnoreCase("Container") ||
+        objtype.equalsIgnoreCase("Model") || 
+        objtype.equalsIgnoreCase("Message") ||
+        objtype.equalsIgnoreCase("Function") ||
+        objtype.equalsIgnoreCase("Concept") || 
+        objtype.equalsIgnoreCase("Type")) {
       val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext)))
       removeObjectsService ! RemoveObjectsService.Process(createGetArg(objKey,objtype))
     } else {
