@@ -634,7 +634,7 @@ object MetadataAPIImpl extends MetadataAPI {
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
-      }
+	   }
       case e: Exception => {
         logger.error("Failed to Save the object(" + obj.FullNameWithVer + "): " + e.getMessage())
       }
@@ -2529,7 +2529,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val latestVersion = GetLatestModel(modDef)
       var isValid = true
       if (latestVersion != None) {
-        isValid = IsValidVersion(latestVersion.get, modDef)
+	        isValid = IsValidVersion(latestVersion.get, modDef)
       }
       if (isValid) {
         RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
@@ -2990,8 +2990,12 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("model not in the cache => " + key)
           None
         case Some(m) =>
-          logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
-          Some(m.asInstanceOf[ModelDef])
+          val model = GetLatestModelFromModels(m)
+          if (model != null) {
+            logger.trace("model found => " + model.asInstanceOf[ModelDef].FullNameWithVer)
+            Some(model.asInstanceOf[ModelDef])
+          } else
+            None   
       }
     } catch {
       case e: Exception => {
@@ -2999,6 +3003,24 @@ object MetadataAPIImpl extends MetadataAPI {
         throw new UnexpectedMetadataAPIException(e.getMessage())
       }
     }
+  }
+
+  //Get the Higher Version Model from the Set of Models
+  def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
+    var model: ModelDef = null
+    var verList: List[Int] = List[Int]()
+    var modelmap: scala.collection.mutable.Map[Int, ModelDef] = scala.collection.mutable.Map()
+    try {
+      modelSet.foreach(m => {
+        modelmap.put(m.Version, m)
+        verList = m.Version :: verList
+      })
+       model = modelmap.getOrElse(verList.max, null)
+    } catch {
+      case e: Exception =>
+        throw new Exception("Error in traversing Model set " + e.getMessage())
+    }
+    model
   }
 
   // Get the latest message for a given FullName
