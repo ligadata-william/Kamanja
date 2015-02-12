@@ -576,7 +576,7 @@ class MdMgr {
     }
     fcns
   }
-
+  
   /* full key name and full arguments names */
   def Function(key: String, args: List[String], ver: Int, onlyActive: Boolean): Option[FunctionDef] = {
     // get functions which match to key & arguments

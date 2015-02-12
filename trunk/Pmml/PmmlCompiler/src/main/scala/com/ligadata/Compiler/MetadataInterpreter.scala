@@ -375,6 +375,23 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		functions
 	}
 	
+	/** 
+	 *  Answer any function definitions with the supplied namespace and name that have the indefinite arity feature.
+	 *  
+	 *  @param nameSpace : the namespace for this function
+	 *  @param name : the name of this function
+	 *  @return scala.collection.immutable.Set[FunctionDef] if any are present else null
+	 */
+	def FunctionsAvailableWithIndefiniteArity(nameSpace : String, name : String) : scala.collection.immutable.Set[FunctionDef] = {
+		val fcnsAvailable : scala.collection.immutable.Set[FunctionDef] = mgr.FunctionsAvailable(nameSpace, name)
+		val indefArityFcns : scala.collection.immutable.Set[FunctionDef] = if (fcnsAvailable != null) {
+			fcnsAvailable.filter(fcn => fcn.features.contains(FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		} else {
+		    null
+		}
+		indefArityFcns
+  	}
+
 	def FunctionByTypeSig(typesig : String) : FunctionDef = {
 		var fdef : FunctionDef = null
 		val buffer : StringBuilder = new StringBuilder

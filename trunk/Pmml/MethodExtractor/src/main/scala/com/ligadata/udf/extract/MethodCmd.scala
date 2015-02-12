@@ -70,7 +70,8 @@ class FuncDefArgs (val namespace : String
 				, val returnNmSpc : String
 				, val returnTypeName : String
 				, val argTriples : Array[(String,String,String)] 
-				, val versionNo : Int)
+				, val versionNo : Int
+				, val hasIndefiniteArity : Boolean)
 {}
 
 class MethodCmd(  val mgr : MdMgr
@@ -91,8 +92,8 @@ class MethodCmd(  val mgr : MdMgr
 	def makeFuncDef : (FuncDefArgs,String) = {
 
 	  	val buffer : StringBuilder = new StringBuilder()
-	  	val (returnTypeVal, baseElem) : (String, BaseElemDef) = ReturnType
-	  	val (argNm_NmSpc_TypNm, argTriples) : (Array[String], Array[(String,String,String)]) = TypeSig
+	  	val (returnTypeVal, baseElem, _) : (String, BaseElemDef, Boolean) = ReturnType
+	  	val (argNm_NmSpc_TypNm, argTriples, hasIndefiniteArity) : (Array[String], Array[(String,String,String)], Boolean) = TypeSig
 
 	  	buffer.append(s"MdMgr.MakeFunc(mgr, ${'"'}$namespace${'"'}, ")
 	  	val rStr = returnTypeVal.toString
@@ -115,7 +116,7 @@ class MethodCmd(  val mgr : MdMgr
 	  	
 	  	buffer.append(s"), null)\n")
 	  	
-	  	val funcDefArgs = new FuncDefArgs(namespace, name, fullName, baseElem.NameSpace, baseElem.Name, argTriples, initialVersion)
+	  	val funcDefArgs = new FuncDefArgs(namespace, name, fullName, baseElem.NameSpace, baseElem.Name, argTriples, initialVersion, hasIndefiniteArity)
 	  	
 	  	
 	  	(funcDefArgs, buffer.toString)
@@ -124,7 +125,7 @@ class MethodCmd(  val mgr : MdMgr
 	/** 
 	 *  Answer the return type string with a namespace injected as necessary.
 	 */
-	private def ReturnType : (String, BaseElemDef) = {
+	private def ReturnType : (String, BaseElemDef, Boolean) = {
 		collectType(returnType.split('.'), returnType)
 	}
 
@@ -141,13 +142,13 @@ class MethodCmd(  val mgr : MdMgr
 	 *  
 	 *  @return a type string for each argument.
 	 */
-	private def TypeSig : (Array[String], Array[(String,String,String)]) = {
+	private def TypeSig : (Array[String], Array[(String,String,String)], Boolean) = {
 	  
 		var typeArgTriples : ArrayBuffer[(String,String,String)] = ArrayBuffer[(String,String,String)]()
 		
 		val typeSigArgs : String = encloseElementArgs(typeSig, '(', ')')
-		val nm_nmspc_typnm : Array[String] = if (typeSigArgs == "") {
-			Array[String]()
+		val (nm_nmspc_typnm, hasIndefiniteArity) : (Array[String],Boolean) = if (typeSigArgs == "") {
+			(Array[String](),false)
 		} else {	
 			val reNames = "[a-zA-Z0-9_]+:".r
 			var argNames : Array[String] = null
@@ -162,7 +163,7 @@ class MethodCmd(  val mgr : MdMgr
 			}
 			
 			if (argNames.size == 0 || argTypes.size == 0) {
-				Array[String]()
+				(Array[String](), false)
 			} else {
 				/** a few transformations... */
 				
@@ -172,7 +173,7 @@ class MethodCmd(  val mgr : MdMgr
 				}
 				
 				/** Collect the types of each argument */
-				val argsWithNmSpcFixed : Array[(String,BaseElemDef)] = argTypes.map( argtype => {
+				val argsWithNmSpcFixed : Array[(String,BaseElemDef,Boolean)] = argTypes.map( argtype => {
 					val argNodes : Array[String] = argtype.split('.')
 					if (argtype.contains("scala.Double, scala.Double, scala.Double")) {
 						val stop : Int = 0
@@ -183,8 +184,8 @@ class MethodCmd(  val mgr : MdMgr
 				/** transform the names and the argtype namespace and typename to a triple */
 				val nameAndTypePair = argNames.zip(argsWithNmSpcFixed)
 				val nameNmSpcTypNameTriples : Array[(String,String,String)] = nameAndTypePair.map( pair => {
-				  val (name, typeNSNmTypePair) = pair
-				  val (typeNSNm, _) : (String, BaseElemDef) = typeNSNmTypePair
+				  val (name, typeNSNmTypeTriple) = pair
+				  val (typeNSNm, _, _) : (String, BaseElemDef, Boolean) = typeNSNmTypeTriple
 				  val typePairSplit = typeNSNm.split('.')
 				  val typePair  = typePairSplit.map(_.trim)  
 				  
@@ -196,11 +197,11 @@ class MethodCmd(  val mgr : MdMgr
 					typeArgTriples += tup /** ... and remember the triple too */
 					s"($nm, $nmspc, $typnm)"
 				})
-				
-				nmnmspctyptrip
+				val repeatingArg : Boolean = argsWithNmSpcFixed.last._3
+				(nmnmspctyptrip,repeatingArg)
 			}
 		}
-		(nm_nmspc_typnm, typeArgTriples.toArray)
+		(nm_nmspc_typnm, typeArgTriples.toArray, hasIndefiniteArity)
 	}
 
 	/** 
@@ -212,9 +213,9 @@ class MethodCmd(  val mgr : MdMgr
 	 *  @param typeParts the nodes of the type string split on the dots
 	 *  @return type string for this type fully qualified with '.' as delimiter and the BaseElemDef for it
 	 */
-	private def collectType(typeParts : Array[String], typeString : String) : (String, BaseElemDef) = {
-	  	val (typeCollected,typeInstance) : (String, BaseElemDef) = if (typeParts.size == 0) ("", null) else {
-			val unQualifiedTypeName = typePartsLast(typeParts, typeString) 
+	private def collectType(typeParts : Array[String], typeString : String) : (String, BaseElemDef, Boolean) = {
+	  	val (typeCollected, typeInstance, hasIndefiniteArity) : (String, BaseElemDef, Boolean) = if (typeParts.size == 0) ("", null, false) else {
+			val (unQualifiedTypeName, isRepeatingArg) : (String, Boolean) = typePartsLast(typeParts, typeString) 
 			val (typeName, typInst) : (String, BaseElemDef) = unQualifiedTypeName match {
 				case "List" => ListType(unQualifiedTypeName, typeParts)
 				case "Array" => ArrayType(unQualifiedTypeName, typeParts)
@@ -271,9 +272,9 @@ class MethodCmd(  val mgr : MdMgr
 					}
 				}
 			}
-			(typeName, typInst)
+			(typeName, typInst, isRepeatingArg)
 	  	}
-	  	(typeCollected,typeInstance)
+	  	(typeCollected,typeInstance,hasIndefiniteArity)
 	}
 	
 	/** 
@@ -758,7 +759,11 @@ class MethodCmd(  val mgr : MdMgr
 	  	val typesX : Array[String] = types.map(typ => {
 	  		val trimmedTyp : String = typ.trim
 			val argNodes : Array[String] = trimmedTyp.split('.')
-			val (typeStr, elemDef) : (String, BaseElemDef) = collectType(argNodes, trimmedTyp)
+			/** NOTE: indefinite arity should never be set here */
+			val (typeStr, elemDef, hasIndefArity) : (String, BaseElemDef, Boolean) = collectType(argNodes, trimmedTyp)
+			if (hasIndefArity) {
+				val stop : Boolean = true
+			}
 			val typeStrSansNmSpc : String = typeStr.split('.').last
 	  		if (typeStrSansNmSpc.size == 1 && AlphaCaps.contains(typeStrSansNmSpc)) "Any" else typeStrSansNmSpc
 	  	})
@@ -800,7 +805,7 @@ class MethodCmd(  val mgr : MdMgr
 		val buffer : StringBuilder = new StringBuilder()
 		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
 	  	val types : Array[String] = args.split(',')
-	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
+	  	val typesRecursed : Array[(String, BaseElemDef, Boolean)] = types.map( typ => {
 	  		if (typ.contains("[")) {
 	  			collectType(typ.split('.'), typ)
 	  		} else {
@@ -810,14 +815,14 @@ class MethodCmd(  val mgr : MdMgr
 	  				typ
 	  			}
 	  			val elem : BaseElemDef = mgr.ActiveType("System", key) 
-	  			(key, elem)
+	  			(key, elem, false)
 	  		}
 	  	})
 	  	if (args.size == 1 && AlphaCaps.contains(args)) {
 	  		buffer.append("Any")
 	  	} else {
-	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
-	  			val (typStr, typedef) : (String, BaseElemDef) = typPair
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typTrip => { 
+	  			val (typStr, typedef, hasIndefArity) : (String, BaseElemDef, Boolean) = typTrip
 	  			typStr.split('.').last 
 	  		})
 	  		typesWithoutDots.addString(buffer, "")
@@ -830,7 +835,7 @@ class MethodCmd(  val mgr : MdMgr
 	private def formNmSpcQualifedElementSpecifiers(unQualifiedTypeName : String) : Array[(String,String)] = {
 		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
 	  	val types : Array[String] = args.split(',')
-	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
+	  	val typesRecursed : Array[(String, BaseElemDef, Boolean)] = types.map( typ => {
 	  		if (typ.contains("[")) {
 	  			collectType(typ.split('.'), typ)
 	  		} else {
@@ -840,14 +845,14 @@ class MethodCmd(  val mgr : MdMgr
 	  				typ
 	  			}
 	  			val elem : BaseElemDef = mgr.ActiveType("System", key) 
-	  			(key, elem)
+	  			(key, elem, false)
 	  		}
 	  	})
 	  	val nmspcdAndQuoted = if (args.size == 1 && AlphaCaps.contains(args)) {
 	  		Array(("System","Any"))
 	  	} else {
-	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
-	  			val (typStr, typedef) : (String, BaseElemDef) = typPair   		  
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typTrip => { 
+	  			val (typStr, typedef, hasIndefArity) : (String, BaseElemDef, Boolean) = typTrip   		  
 	  			typStr.split('.').last 		
 	  		})
 	  		typesWithoutDots.map( typ => ("System", typ))
@@ -859,19 +864,19 @@ class MethodCmd(  val mgr : MdMgr
 	private def formQuotedNmSpcQualifedElementSpecifiers(unQualifiedTypeName : String) : Array[(String,String)] = {
 		val args : String = encloseElementArgs(unQualifiedTypeName, '[', ']')
 	  	val types : Array[String] = args.split(',')
-	  	val typesRecursed : Array[(String, BaseElemDef)] = types.map( typ => {
+	  	val typesRecursed : Array[(String, BaseElemDef, Boolean)] = types.map( typ => {
 	  		if (typ.contains("[")) {
 	  			collectType(typ.split('.'), typ)
 	  		} else {
 	  			val elem : BaseElemDef = mgr.ActiveType("System", typ) 
-	  			(typ, elem)
+	  			(typ, elem, false)
 	  		}
 	  	})
 	  	val nmspcdAndQuoted = if (args.size == 1 && AlphaCaps.contains(args)) {
 	  		Array((s"${'"'}System${'"'}",s"${'"'}Any${'"'}"))
 	  	} else {
-	  		val typesWithoutDots : Array[String] = typesRecursed.map( typPair => { 
-	  			val (typStr, typedef) : (String, BaseElemDef) = typPair   		  
+	  		val typesWithoutDots : Array[String] = typesRecursed.map( typTrip => { 
+	  			val (typStr, typedef, hasIndefArity) : (String, BaseElemDef, Boolean) = typTrip   		  
 	  			typStr.split('.').last 		
 	  		})
 	  		typesWithoutDots.map( typ => (s"${'"'}System${'"'}", s"${'"'}$typ${'"'}"))
@@ -933,7 +938,7 @@ class MethodCmd(  val mgr : MdMgr
 	 *  	Int, scala.Int, etc
 	 *  
 	 */
-	private def typePartsLast(typeParts : Array[String], typeString : String) : String = {
+	private def typePartsLast(typeParts : Array[String], typeString : String) : (String, Boolean) = {
 	  
 		/** for the ordinary case, the . split done by the caller is adequate.  For a case where dots
 		 *  appear in the collection element spec, the dots break badly.  Therefore we look re-look 
@@ -946,7 +951,7 @@ class MethodCmd(  val mgr : MdMgr
 				idx += 1
 			})
 		}
-		val lastPart : String = if (idx < typeParts.size) {
+		val (lastPart,hasIndefiniteArity) : (String, Boolean) = if (idx < typeParts.size) {
 			val elementArgPart : String = encloseElementArgs(typeString, '[', ']')
 			/** check for tuple ... when true transform type TupleOf<whatever is in the ()> */
 			val elementArgPartsChecked : String = if (elementArgPart(0) == '(') {
@@ -964,17 +969,23 @@ class MethodCmd(  val mgr : MdMgr
 			buf.append("[")
 			buf.append(elementArgPartsChecked)
 			buf.append("]")
-			buf.toString
+			(buf.toString, false)  /** FIXME: It is possible that a collection can be tagged variadic as well */
 		} else {
 			/** it is still possibly a tuple type expression of form '(type,type,...,type)' */
 			if (typeString(0) == '(') {
 				val (nmSpcQualifiedTupTypeString, elemDef) : (String, BaseElemDef) = TupleType(typeString)
-				nmSpcQualifiedTupTypeString.split('.').last
+				(nmSpcQualifiedTupTypeString.split('.').last, false) /** FIXME: ditto tuples can be tagged variadic as well */
 			} else {
-				typeParts.last
+				val hasIndefiniteArity : Boolean = typeParts.last.endsWith("*")
+				if (hasIndefiniteArity) {
+					(typeParts.last.slice(0, typeParts.last.size - 1), hasIndefiniteArity)
+				} else {
+					(typeParts.last, hasIndefiniteArity)
+				}
+				
 			}
 		}
-		lastPart
+		(lastPart,hasIndefiniteArity)
 	}
 }
 

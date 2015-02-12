@@ -607,7 +607,7 @@ class FunctionDef extends BaseElemDef {
 }
 
 /** 
- *  The FcnMacroAttr.Feature is used to describe the sort of macro is being defined.  Briefly,
+ *  The FcnMacroAttr.Feature is used to describe the sort of macro or function is being defined.  Briefly,
  *  
  *    ITERABLE - when included in a MacroDef instance's features set, the first argument of the macro
  *    	is a Scala Iterable and the code that will be generated looks like arg1.filter( itm => arg2(arg3,arg4,...,argN)
@@ -619,10 +619,21 @@ class FunctionDef extends BaseElemDef {
  *      class representing the derived field.  A global optimization of the derived field's function would be needed to 
  *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
  *      parts. 
+ *    HAS_INDEFINITE_ARITY when set this function def as a varargs or if you prefer variadic specification on its last
+ *      argument (e.g., def And(boolExpr : Boolean*) ).  
  */
 object FcnMacroAttr extends Enumeration {
 	type Feature = Value
-	val ITERABLE, CLASSUPDATE = Value
+	val ITERABLE, CLASSUPDATE, HAS_INDEFINITE_ARITY = Value
+	
+	def fromString(feat : String) : Feature = {
+		val feature : Feature = feat match {
+			case "ITERABLE" =>  ITERABLE
+			case "CLASSUPDATE" => CLASSUPDATE
+			case "HAS_INDEFINITE_ARITY" => HAS_INDEFINITE_ARITY
+		}
+		feature
+	}
 }
 
 class MacroDef extends FunctionDef {

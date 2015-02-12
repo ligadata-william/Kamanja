@@ -192,120 +192,29 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
   /** if expressions */
 
-  def If(boolexpr: Boolean): Boolean = {
-    boolexpr
-  }
-
-  //def If(boolexpr: Boolean, expr1: Any, expr2: Any): Any = {
-  //  if (boolexpr) expr1 else expr2
-  //}
-
   def If[T](boolexpr: Boolean, expr1: T, expr2: T): T = {
     if (boolexpr) expr1 else expr2
   }
 
 
   /** logical and */
-  def And(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    (boolexpr && boolexpr1)
+  def And(boolexpr : Boolean*): Boolean = {
+	boolexpr.reduceLeft(_ && _) 
   }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2)
+  
+  def And(boolexpr : Int*): Int = {
+	if (boolexpr.filter(_ == 0).size == 0) 1 else 0
   }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5 && boolexpr6)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
-  }
-
+  
   /** logical or */
- def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    (boolexpr || boolexpr1)
+  def Or(boolexpr : Boolean*): Boolean = {
+	boolexpr.reduceLeft(_ || _) 
   }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2)
+  
+  def Or(boolexpr : Int*): Int = {
+	if (boolexpr.filter(_ != 0).size > 0) 1 else 0 
   }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5 || boolexpr6)
-  }
-
-  def Or(boolexprs: ArrayBuffer[Boolean]): Boolean = {
-    boolexprs.reduceLeft(_ || _)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0 || boolexpr6 != 0)
-  }
+  
 
   def IsIn(fldRefExpr: String, setExprs: ArrayBuffer[String]): Boolean = {
     setExprs.filter(_ == fldRefExpr).length > 0

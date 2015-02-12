@@ -990,34 +990,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Float"),("tuples", "System", "ArrayOfTupleOfFloat2"),("inclusive", "System", "Boolean")), null)
 		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Double"),("tuples", "System", "ArrayOfTupleOfDouble2"),("inclusive", "System", "Boolean")), null)
 
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
 
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int"),("boolexpr6", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int")), null)
-
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean"),("boolexpr6", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean"),("boolexpr5", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean"),("boolexpr4", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
-
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int"),("boolexpr6", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int"),("boolexpr5", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int"),("boolexpr4", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int"),("boolexpr3", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int")), null)
-
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Int"), List(("boolexpr", "System", "Int")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Int"), List(("boolexpr", "System", "Int")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("expr1", "System", "Any"),("expr2", "System", "Any")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
 
