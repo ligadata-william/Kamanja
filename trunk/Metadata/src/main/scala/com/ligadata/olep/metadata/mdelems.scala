@@ -183,7 +183,7 @@ class BaseElemDef extends BaseElem {
   // Override in other places if required
   override def equals(that: Any) = {
     that match {
-      case f: BaseElemDef => f.FullNameWithVer == FullNameWithVer
+      case f: BaseElemDef => f.FullNameWithVer+ "."+f.IsDeleted == FullNameWithVer+"."+IsDeleted
       case _ => false
     }
   }

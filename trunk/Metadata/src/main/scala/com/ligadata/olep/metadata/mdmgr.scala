@@ -159,9 +159,11 @@ class MdMgr {
             // We can use this, but it will loop thru all elements 
             // elems.filter(e => e.Version == ver)
             es.foreach(e => {
-              if (e.Version == ver) {
-                elm = Some(e)
-                break
+              if (!e.IsDeleted) {
+                (e.Version == ver) {
+                  elm = Some(e)
+                  break
+                }
               }
             })
           }
@@ -183,9 +185,12 @@ class MdMgr {
         try {
           breakable {
             es.foreach(e => {
-              if (elm == None || maxVer < e.Version) {
-                elm = Some(e)
-                maxVer = e.Version
+              // At this point, we only want to consider objects that are not deleted.  Deactivated are ok.
+              if (!e.IsDeleted) {
+                if (elm == None || maxVer < e.Version) {
+                  elm = Some(e)
+                  maxVer = e.Version
+                }                
               }
             })
           }
@@ -478,6 +483,8 @@ class MdMgr {
 
   /** Answer the BaseTypeDef with the supplied key  */
   def Type(key: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
+  
+  
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
     val typ: Option[BaseTypeDef] = GetReqValue(Types(key.toLowerCase(), true, false), -1)
@@ -1256,20 +1263,17 @@ class MdMgr {
     if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Map $nameSpace.$name already exists.")
     }
-
     val (keyNmSp, keyTypeNm) = key
     val (valNmSp, valTypeNm) = value
     val keyDef = GetElem(Type(keyNmSp, keyTypeNm, -1, false), s"Key type $keyNmSp.$keyTypeNm does not exist")
     val valDef = GetElem(Type(valNmSp, valTypeNm, -1, false), s"Value type $valNmSp.$valTypeNm does not exist")
     if (keyDef == null || valDef == null) { throw new NoSuchElementException(s"Either key type ($keyNmSp.$keyTypeNm) and/or value type ($valNmSp.$valTypeNm) does not exist") }
-
     val depJarSet = scala.collection.mutable.Set[String]()
     if (keyDef.JarName != null) depJarSet += keyDef.JarName
     if (keyDef.DependencyJarNames != null) depJarSet ++= keyDef.DependencyJarNames
     if (valDef.JarName != null) depJarSet += valDef.JarName
     if (valDef.DependencyJarNames != null) depJarSet ++= valDef.DependencyJarNames
     val depJars = if (depJarSet.size > 0) depJarSet.toArray else null
-
     val st = new ImmutableMapTypeDef
     SetBaseElem(st, nameSpace, name, ver, null, depJars)
     st.keyDef = keyDef
@@ -1542,7 +1546,6 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
-
     if (Container(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Container $nameSpace.$name already exists.")
     }
