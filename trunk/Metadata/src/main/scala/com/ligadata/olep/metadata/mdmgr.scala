@@ -1660,10 +1660,23 @@ class MdMgr {
 
   def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): ModelDef = {
 
-    val modelToBeReplaced: Boolean = (Model(nameSpace, name, -1, false) != None)
-    if (modelToBeReplaced) {
-      throw new AlreadyExistsException(s"Model $nameSpace.$name already exists.")
+    var modelExists: Boolean = false
+    val existingModel = Model(nameSpace, name, -1, false)
+    if (existingModel != None) {
+      val latesmodel = existingModel.get.asInstanceOf[ModelDef]
+      if (ver <= latesmodel.Version) {
+        modelExists = true
+      }
     }
+    if (modelExists) {
+      throw new AlreadyExistsException(s"Model $nameSpace.$name version should be higher than existing Models.")
+    }
+
+    //val modelToBeReplaced: Boolean = (Model(nameSpace, name, -1, false) != None)
+    //  if (modelToBeReplaced) {
+    //   throw new AlreadyExistsException(s"Model $nameSpace.$name already exists.")
+    // }
+
     val mdl: ModelDef = new ModelDef
     mdl.PhysicalName(physicalName)
     mdl.modelType = modelType
@@ -2349,9 +2362,23 @@ class MdMgr {
   }
 
   def AddModelDef(mdl: ModelDef): Unit = {
-    if (Model(mdl.FullName, -1, false) != None) {
-      throw new AlreadyExistsException(s"Model ${mdl.FullName} already exists.")
+
+    var modelExists: Boolean = false
+    val existingModel = Model(mdl.FullName, -1, false)
+    if (existingModel != None) {
+      val latesmodel = existingModel.get.asInstanceOf[ModelDef]
+      if (mdl.Version <= latesmodel.Version) {
+        modelExists = true
+      }
     }
+
+    if (modelExists) {
+      throw new AlreadyExistsException(s"Model ${mdl.FullName}  should be higher than existing models.")
+    }
+
+    // if (Model(mdl.FullName, -1, false) != None) {
+    //    throw new AlreadyExistsException(s"Model ${mdl.FullName} already exists.")
+    // }
     modelDefs.addBinding(mdl.FullName, mdl)
   }
 

@@ -397,32 +397,45 @@ object TestApiService {
       val objKeysJson = MakeHttpRequest("get",host_url,"keys/"+objectType,"STR",null)
       implicit val jsonFormats: Formats = DefaultFormats
       logger.trace("result => " + objKeysJson)
-      val json = parse(objKeysJson)
-      objKeys = json.extract[Array[String]]
-      objKeys
+      val json1 = parse(objKeysJson).values.asInstanceOf[Map[String,Any]]
+      val allValues = json1.getOrElse("APIResults",null).asInstanceOf[Map[String,Any]]
+      if (allValues == null) {
+        logger.error("BAD MESSAGE: No Results, need to investigate")
+        return new Array[String](0)
+      }
+      
+      val resultsValues = allValues.getOrElse("resultData",null).asInstanceOf[String]
+      if (resultsValues == null) {
+        logger.info("No Objects Found")
+        return new Array[String](0)
+      }
+        
+      val objKeys:Array[String] = resultsValues.split(",")
+      return objKeys
     }catch {
       case e: Exception => {
-	e.printStackTrace()
-	objKeys
+        	e.printStackTrace()
+          return null
       }
     }
   }
-
+  
+  
   def GetAllMetadataObjects = {
     var objKeys:Array[String] = new Array[String](0)
     try{
-    //  val objKeysJson = MakeHttpRequest("get",host_url,"GetAllObjectKeys/ALL","STR",null)
-      val objKeysJson = MakeHttpRequest("get",host_url,"keys/ALL","STR",null)
-      implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(objKeysJson)
-      objKeys = json.extract[Array[String]]
-      objKeys.foreach( k => { println(k)});
-    }catch {
-      case e: Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
+      //  val objKeysJson = MakeHttpRequest("get",host_url,"GetAllObjectKeys/ALL","STR",null)
+       val objKeysJson = MakeHttpRequest("get",host_url,"keys/ALL","STR",null)
+       implicit val jsonFormats: Formats = DefaultFormats
+       val json = parse(objKeysJson)
+       objKeys = json.extract[Array[String]]
+       objKeys.foreach( k => { println(k)});
+     }catch {
+       case e: Exception => {
+          e.printStackTrace()
+       }
+     }
+   }
 
   def GetConfigObjects(objectType:String) = {
     try{
