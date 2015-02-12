@@ -160,7 +160,7 @@ class MdMgr {
             // elems.filter(e => e.Version == ver)
             es.foreach(e => {
               if (!e.IsDeleted) {
-                (e.Version == ver) {
+                if (e.Version == ver) {
                   elm = Some(e)
                   break
                 }

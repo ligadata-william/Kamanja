@@ -587,15 +587,7 @@ object TestApiService {
 
   def ActivateObjects(objectType: String){
     try{
-      
-      val key = "test.bb.33"
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "ActivateObjects"
-      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
 
-      
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
 	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
@@ -614,12 +606,12 @@ object TestApiService {
 	      return
       }
 
-     // val key = keys(choice-1)
-     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
-     // val apiName = "ActivateObjects"
-     // println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-     // val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
-     // println("Result as Json String => \n" + apiResult)
+      val key = keys(choice-1)
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "ActivateObjects"
+      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -653,16 +645,7 @@ object TestApiService {
 
   def DeactivateObjects(objectType: String){
     try{
-      
-      
-      val key = "test.bb.44"
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "DeactivateObjects"
-          println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
-      
-      
+         
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
 	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
@@ -681,12 +664,12 @@ object TestApiService {
 	      return
       }
 
-      //val key = keys(choice-1)
-     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
-     // val apiName = "DeactivateObjects"
-     //     println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-    //  val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
-    //  println("Result as Json String => \n" + apiResult)
+      val key = keys(choice-1)
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "DeactivateObjects"
+      println("DE-Activating Objects ->"+objectType+"/deactivate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
