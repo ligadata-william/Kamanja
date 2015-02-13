@@ -58,26 +58,24 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
 
     arg.ObjectType match {
       case "Model" => {
-	apiResult = MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
       }
       case "Message" => {
-	apiResult = MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
       }
       case "Container" => {
-	apiResult = MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
       }
       case "Function" => {
-	apiResult = MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
       }
       case "Concept" => {
-	apiResult = MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
       }
       case "Type" => {
-	apiResult = MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
       }
     }
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    resultData
   }
 
   def process(apiArgListJson: String) = {
@@ -87,28 +85,34 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
     var resultStr:String = ""
+    var finalRC: Int = 0
+    var deletedObjects: Array[String] = new Array[String](0)
+    var finalAPIResult = ""
 
     if ( arguments.length > 0 ){
       var loop = new Breaks
       loop.breakable{
-	arguments.foreach(arg => {
-	  if(arg.ObjectType == null ){
-	    resultStr = APIName + ":Error: The value of object type can't be null"
-	    loop.break
-	  }
-	  if(arg.Name == null ){
-	    resultStr = APIName + ":Error: The value of object name can't be null"
-	    loop.break
-	  }
-	  else {
-	    resultStr = resultStr + RemoveObjectDef(arg)
-	  }
-	})
+        arguments.foreach(arg => {
+          if(arg.ObjectType == null ) {
+            deletedObjects +:= APIName + ":Error: The value of object type can't be null"
+            finalRC = -1 
+            loop.break
+          } else if(arg.Name == null ) {
+            deletedObjects +:= APIName + ":Error: The value of object name can't be null"
+            finalRC = -1
+            loop.break
+          } else {
+            val iResult = RemoveObjectDef(arg)
+            val (iStatusCode,iResultData) = MetadataAPIImpl.getApiResult(iResult)
+            if (iStatusCode == 0)  deletedObjects +:= iResultData else finalRC = -1
+          }
+        })
       }
+      finalAPIResult = (new ApiResult(finalRC, "Deleted Objects", deletedObjects.mkString(","))).toString
     }
     else{
-      resultStr = APIName + ":No arguments passed to the API, nothing much to do"
+      finalAPIResult = (new ApiResult(-1, "Deleted Objects", APIName + ":No arguments passed to the API, nothing much to do")).toString
     }
-    requestContext.complete(resultStr)
+    requestContext.complete(finalAPIResult)
   }
 }
