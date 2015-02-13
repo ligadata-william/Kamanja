@@ -61,7 +61,7 @@ trait MetadataAPIService extends HttpService {
             }  else if( toknRoute(0).equalsIgnoreCase("Activate") || 
                         toknRoute(0).equalsIgnoreCase("Deactivate")) {
               entity(as[String]) { reqBody =>
-                requestContext => processPutRequest (toknRoute(0),reqBody,requestContext) 
+                requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext) 
               }
             } else {
               entity(as[String]) { reqBody =>  
@@ -137,13 +137,20 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("UploadConfig")) {
         val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
-    } else if (objtype.equalsIgnoreCase("Activate")) {
+    } 
+  }
+  
+    /**
+   * Modify Existing objects in the Metadata 
+   */
+  private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext):Unit = {
+    if (action.equalsIgnoreCase("Activate")) {
         val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext)))
-        activateObjectsService ! ActivateObjectsService.Process(body)
-    } else if (objtype.equalsIgnoreCase("Deactivate")) {
+        activateObjectsService ! ActivateObjectsService.Process(createGetArg(objKey,objtype))
+    } else if (action.equalsIgnoreCase("Deactivate")) {
        val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
-       deactivateObjectsService ! DeactivateObjectsService.Process(body)
-    }
+       deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
+    }  
   }
   
   /**
