@@ -35,14 +35,14 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">Udfs</span><span class="result"> extends <a href="UdfBase.html" class="extype" name="com.ligadata.pmml.udfs.UdfBase">UdfBase</a></span>
+        <span class="name">Udfs</span><span class="result"> extends <a href="UdfBase.html" class="extype" name="com.ligadata.pmml.udfs.UdfBase">UdfBase</a> with <a href="../../Pmml/Runtime/LogTrait.html" class="extype" name="com.ligadata.Pmml.Runtime.LogTrait">LogTrait</a></span>
       </span>
       </h4>
       
           <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>These are the udfs supplied with the system.
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
-          <div class="superTypes hiddenContent"><a href="UdfBase.html" class="extype" name="com.ligadata.pmml.udfs.UdfBase">UdfBase</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><a href="../../Pmml/Runtime/LogTrait.html" class="extype" name="com.ligadata.Pmml.Runtime.LogTrait">LogTrait</a>, <a href="UdfBase.html" class="extype" name="com.ligadata.pmml.udfs.UdfBase">UdfBase</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -60,7 +60,7 @@
                 <span class="filtertype">Inherited<br />
                 </span>
                 <ol id="linearization">
-                  <li class="in" name="com.ligadata.pmml.udfs.Udfs"><span>Udfs</span></li><li class="in" name="com.ligadata.pmml.udfs.UdfBase"><span>UdfBase</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  <li class="in" name="com.ligadata.pmml.udfs.Udfs"><span>Udfs</span></li><li class="in" name="com.ligadata.Pmml.Runtime.LogTrait"><span>LogTrait</span></li><li class="in" name="com.ligadata.pmml.udfs.UdfBase"><span>UdfBase</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                 </ol>
               </div><div id="ancestors">
             <span class="filtertype"></span>
@@ -319,7 +319,7 @@
         <span class="name">And</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr1">boolexpr1: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">logical and</p>
     </li><li name="com.ligadata.pmml.udfs.Udfs#AnyBetween" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="AnyBetween(arrayExpr:Array[Double],leftMargin:Double,rightMargin:Double,inclusive:Boolean):Boolean"></a>
       <a id="AnyBetween(Array[Double],Double,Double,Boolean):Boolean"></a>
@@ -2427,54 +2427,15 @@ FIXME:  Perhaps we should support the various flavor of keys?
       </h4>
       <p class="shortcomment cmt">GreaterThan</p>
     </li><li name="com.ligadata.pmml.udfs.Udfs#If" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="If(boolexprs:scala.collection.mutable.ArrayBuffer[Boolean]):Boolean"></a>
-      <a id="If(ArrayBuffer[Boolean]):Boolean"></a>
+      <a id="If[T](boolexpr:Boolean,expr1:T,expr2:T):T"></a>
+      <a id="If[T](Boolean,T,T):T"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">If</span><span class="params">(<span name="boolexprs">boolexprs: <span class="extype" name="scala.collection.mutable.ArrayBuffer">ArrayBuffer</span>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="com.ligadata.pmml.udfs.Udfs#If" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="If(boolexpr:Boolean,boolexpr1:Boolean,boolexpr2:Boolean,boolexpr3:Boolean):Boolean"></a>
-      <a id="If(Boolean,Boolean,Boolean,Boolean):Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">If</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr1">boolexpr1: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr2">boolexpr2: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr3">boolexpr3: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="com.ligadata.pmml.udfs.Udfs#If" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="If(boolexpr:Boolean,boolexpr1:Boolean,boolexpr2:Boolean):Boolean"></a>
-      <a id="If(Boolean,Boolean,Boolean):Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">If</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr1">boolexpr1: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr2">boolexpr2: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      
-    </li><li name="com.ligadata.pmml.udfs.Udfs#If" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="If(boolexpr:Boolean,boolexpr1:Boolean):Boolean"></a>
-      <a id="If(Boolean,Boolean):Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">If</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr1">boolexpr1: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+        <span class="name">If</span><span class="tparams">[<span name="T">T</span>]</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="expr1">expr1: <span class="extype" name="com.ligadata.pmml.udfs.Udfs.If.T">T</span></span>, <span name="expr2">expr2: <span class="extype" name="com.ligadata.pmml.udfs.Udfs.If.T">T</span></span>)</span><span class="result">: <span class="extype" name="com.ligadata.pmml.udfs.Udfs.If.T">T</span></span>
       </span>
       </h4>
       
@@ -2490,7 +2451,7 @@ FIXME:  Perhaps we should support the various flavor of keys?
         <span class="name">If</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">comparisons</p>
+      <p class="shortcomment cmt">if expressions</p>
     </li><li name="com.ligadata.pmml.udfs.Udfs#Intersect" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Intersect[T](left:scala.collection.mutable.TreeSet[T],right:scala.collection.immutable.Set[T])(implicitevidence$9:scala.reflect.ClassTag[T]):scala.collection.immutable.Set[T]"></a>
       <a id="Intersect[T](TreeSet[T],Set[T])(ClassTag[T]):Set[T]"></a>
@@ -5462,7 +5423,7 @@ FIXME:  Perhaps we should support the various flavor of keys?
         <span class="name">Or</span><span class="params">(<span name="boolexpr">boolexpr: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="boolexpr1">boolexpr1: <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt">logical or</p>
     </li><li name="com.ligadata.pmml.udfs.Udfs#Plus" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Plus(exprs:Array[Float]):Float"></a>
       <a id="Plus(Array[Float]):Float"></a>
@@ -9723,6 +9684,32 @@ def log10(expr : Float) : Double = {
 log10(expr)
 }
 </p>
+    </li><li name="com.ligadata.Pmml.Runtime.LogTrait#logger" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="logger:&lt;error&gt;"></a>
+      <a id="logger:&lt;error&gt;"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">logger</span><span class="result">: &lt;error&gt;</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../Pmml/Runtime/LogTrait.html" class="extype" name="com.ligadata.Pmml.Runtime.LogTrait">LogTrait</a></dd></dl></div>
+    </li><li name="com.ligadata.Pmml.Runtime.LogTrait#loggerName" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="loggerName:String"></a>
+      <a id="loggerName:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">loggerName</span><span class="result">: <span class="extype" name="java.lang.String">String</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../../Pmml/Runtime/LogTrait.html" class="extype" name="com.ligadata.Pmml.Runtime.LogTrait">LogTrait</a></dd></dl></div>
     </li><li name="com.ligadata.pmml.udfs.Udfs#lowercase" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="lowercase(str:String):String"></a>
       <a id="lowercase(String):String"></a>
@@ -9965,6 +9952,23 @@ log(expr)
 </p><div class="fullcomment"><div class="comment cmt"><p>Coerce the yyyymmdd ISO8601 type compressed in integer to a DateTime
 </p></div><dl class="paramcmts block"><dt class="param">yyyymmdd</dt><dd class="cmt"><p>ISO8601 type int compressed into integer</p></dd><dt>returns</dt><dd class="cmt"><p>joda DateTime
 </p></dd></dl></div>
+    </li><li name="com.ligadata.pmml.udfs.Udfs#toMillisFromJulian" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="toMillisFromJulian(yyddd:Int):Long"></a>
+      <a id="toMillisFromJulian(Int):Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toMillisFromJulian</span><span class="params">(<span name="yyddd">yyddd: <span class="extype" name="scala.Int">Int</span></span>)</span><span class="result">: <span class="extype" name="scala.Long">Long</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt"> Coerce the YYDDD Julian date to millisecs.</p><div class="fullcomment"><div class="comment cmt"><p> Coerce the YYDDD Julian date to millisecs.  21st century
+ dates are assumed.  If a bad Julian value is supplied, an error
+ message is logged and the epoch (i.e., 0) is returned.
+</p></div><dl class="paramcmts block"><dt class="param">yyddd</dt><dd class="cmt"><p>21st century julian date integer</p></dd><dt>returns</dt><dd class="cmt"><p>Long value of millisecs from epoch.
+</p></dd></dl></div>
     </li><li name="scala.AnyRef#toString" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="toString():String"></a>
       <a id="toString():String"></a>
@@ -10083,7 +10087,9 @@ log(expr)
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="com.ligadata.pmml.udfs.UdfBase">
+        <div class="parent" name="com.ligadata.Pmml.Runtime.LogTrait">
+              <h3>Inherited from <a href="../../Pmml/Runtime/LogTrait.html" class="extype" name="com.ligadata.Pmml.Runtime.LogTrait">LogTrait</a></h3>
+            </div><div class="parent" name="com.ligadata.pmml.udfs.UdfBase">
               <h3>Inherited from <a href="UdfBase.html" class="extype" name="com.ligadata.pmml.udfs.UdfBase">UdfBase</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
