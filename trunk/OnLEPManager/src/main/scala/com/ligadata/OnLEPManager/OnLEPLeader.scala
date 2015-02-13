@@ -420,7 +420,7 @@ object OnLEPLeader {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to print final Unique Keys. JsonString:" + receivedJsonStr)
+          LOG.error("Failed to print final Unique Keys. JsonString:%s, Reason:%s, Message:%s".format(receivedJsonStr, e.getCause, e.getMessage))
         }
       }
     })
