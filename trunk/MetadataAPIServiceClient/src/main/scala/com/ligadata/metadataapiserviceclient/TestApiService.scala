@@ -440,7 +440,7 @@ object TestApiService {
   def GetConfigObjects(objectType:String) = {
     try{
       println("---->"+objectType+"<---------")
-      val objJson = MakeHttpRequest("get",host_url,"GetConfigObjects/"+objectType,"STR",null)
+      val objJson = MakeHttpRequest("get",host_url,"Config/"+objectType,"STR",null)
       logger.trace(objJson)
     }catch {
       case e: Exception => {
