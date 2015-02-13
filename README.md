@@ -19,3 +19,7 @@ Fatafat simplifies the complexity of PMML development, and provides layering of 
 Fatafat is helping one financial partner reduce overnight global system transaction analysis from over 10 minutes to under a few seconds, resulting in millions saved each period. 
 
 Medical applications are using Fatafat to create a system that analyzes physician notes, test results and patient input to identify certain combinations of information that may alert health care practitioners to new or changed conditions.
+
+###To Install Fatafat
+- Clone Fatafat/trunk
+- Please see the Setup and Running guide at ~\LigaData\Fatafat\trunk\Documentation for installation details, and brief instructions to run the engine..
