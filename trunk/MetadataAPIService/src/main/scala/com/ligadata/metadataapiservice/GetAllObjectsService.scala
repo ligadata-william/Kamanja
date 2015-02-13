@@ -38,26 +38,26 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
     var apiResult:String = ""
 
     objectType match {
-      case "Model" => {
+      case "model" => {
 	apiResult = MetadataAPIImpl.GetAllModelDefs("JSON")
       }
-      case "Message" => {
+      case "message" => {
 	apiResult = MetadataAPIImpl.GetAllMessageDefs("JSON")
       }
-      case "Container" => {
+      case "container" => {
 	apiResult = MetadataAPIImpl.GetAllContainerDefs("JSON")
       }
-      case "Function" => {
+      case "function" => {
 	val(fsize,result) = MetadataAPIImpl.GetAllFunctionDefs("JSON")
 	apiResult = result
       }
-      case "Concept" => {
+      case "concept" => {
 	apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
       }
-      case "Type" => {
+      case "type" => {
 	apiResult = MetadataAPIImpl.GetAllTypes("JSON")
       }
-      case "ALL" => {
+      case "all" => {
 	apiResult = MetadataAPIImpl.GetAllModelDefs("JSON") +
 		    MetadataAPIImpl.GetAllMessageDefs("JSON") +
 		    MetadataAPIImpl.GetAllContainerDefs("JSON") +
@@ -65,7 +65,7 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
 		    MetadataAPIImpl.GetAllConcepts("JSON") +
 		    MetadataAPIImpl.GetAllTypes("JSON")
       }
-      case "Node" => {
+      case "node" => {
 	apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
       case "Cluster" => {
