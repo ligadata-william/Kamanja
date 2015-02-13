@@ -22,4 +22,4 @@ Medical applications are using Fatafat to create a system that analyzes physicia
 
 ###To Install Fatafat
 - Clone Fatafat/trunk
-- Please see the Setup and Running guide at ~\LigaData\Fatafat\trunk\Documentation for installation details, and brief instructions to run the engine..
+- Please see the Setup and Running guide at ~\LigaData\Fatafat\trunk\Documentation for installation details, and brief instructions to run the engine.
