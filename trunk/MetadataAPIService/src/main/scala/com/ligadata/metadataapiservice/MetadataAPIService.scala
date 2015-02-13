@@ -34,9 +34,9 @@ trait MetadataAPIService extends HttpService {
           if (toknRoute.size == 1) {
             requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext)
           } else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-            requestContext =>  processGetKeysRequest(toknRoute(1),requestContext)
+            requestContext =>  processGetKeysRequest(toknRoute(1).toLowerCase,requestContext)
           } else { 
-            requestContext => processGetObjectRequest(toknRoute(0), toknRoute(1), requestContext)
+            requestContext => processGetObjectRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)
           }       
         } 
       } 
@@ -69,7 +69,7 @@ trait MetadataAPIService extends HttpService {
                   if (toknRoute.size == 1) {      
                     requestContext => processPutRequest (toknRoute(0),reqBody,requestContext)
                   } else {
-                    requestContext => processPutRequest (toknRoute(1),reqBody,requestContext)
+                    requestContext => processPutRequest (toknRoute(1).toLowerCase,reqBody,requestContext)
                   }             
                 }
               }
@@ -102,7 +102,7 @@ trait MetadataAPIService extends HttpService {
           {
             val toknRoute = str.split("/")
             logger.info("DELETE "+str)
-            requestContext => processDeleteRequest(toknRoute(0), toknRoute(1), requestContext)   
+            requestContext => processDeleteRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)   
           }
         }
       }
@@ -183,7 +183,7 @@ trait MetadataAPIService extends HttpService {
    *  
    */
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext): Unit = {
-    if (objtype.equalsIgnoreCase("GetConfigObjects")) {
+    if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
     } else {
