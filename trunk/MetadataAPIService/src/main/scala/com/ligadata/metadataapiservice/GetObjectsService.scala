@@ -56,22 +56,22 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
     }
 
     arg.ObjectType match {
-      case "Model" => {
+      case "model" => {
 	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
       }
-      case "Message" => {
+      case "message" => {
 	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
       }
-      case "Container" => {
+      case "container" => {
 	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
       }
-      case "Function" => {
+      case "function" => {
 	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
       }
-      case "Concept" => {
+      case "concept" => {
 	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
       }
-      case "Type" => {
+      case "type" => {
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
       }
     }
