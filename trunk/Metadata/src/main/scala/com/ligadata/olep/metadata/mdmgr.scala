@@ -213,7 +213,7 @@ class MdMgr {
       elems match {
         case None => None
         case Some(es) => {
-          if (onlyActive) Some(es.filter(e => e.IsActive).toSet) else Some(es.toSet)
+          if (onlyActive) Some(es.filter(e => {e.IsActive && !e.IsDeleted}).toSet) else Some(es.filter(e => !e.IsDeleted).toSet)
         }
       }
     } else {
@@ -560,7 +560,8 @@ class MdMgr {
         case Some(fs) => {
           var newFns = scala.collection.mutable.Map[String, FunctionDef]()
           fs.foreach(f => {
-            if (onlyActive == false || (onlyActive && f.IsActive)) {
+            if ( !f.IsDeleted &&
+                (onlyActive == false || (onlyActive && f.IsActive))) {
               val fnm = f.FullName // this returns like system.fn1(int, int)
               val existingFn = newFns.getOrElse(fnm, null)
               if (existingFn == null || existingFn.Version < f.Version)
