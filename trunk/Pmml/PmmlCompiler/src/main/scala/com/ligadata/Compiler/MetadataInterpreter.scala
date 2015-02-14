@@ -95,7 +95,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 					val containerType : ContainerTypeDef = getContainerWithNamesType(fld.dataType)
 					if (containerType == null && names.size != 1) { /** this is not a container and therefore should be last name */
 						PmmlError.logError(ctx, s"Malformed compound name... The name '$name' in field reference value '$fieldRefRep' is not a container. ")
-						logger.error(s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")
+						PmmlError.logError(ctx, s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")
 					} else {
 						/** it may indeed be the last one, but let's see if there is more */
 						if (containerType == null) {
@@ -114,7 +114,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 								val parentsName : String = if (parentContainer != null) parentContainer.Name else "(no parent name avaialable)"
 								/** embarrassing situation... there is a logic error in this code... fix it */
 								PmmlError.logError(ctx, s"The name '$name' in '$fieldRefRep' was not found.  Its parent was '$parentsName'. ")
-								logger.error(s"If there is a parent name, then there is a logic error. Contact us.")
+								PmmlError.logError(ctx, s"If there is a parent name, then there is a logic error. Contact us.")
 							}
 						} else {
 							/** this is a container */
@@ -131,7 +131,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 						val containerType : ContainerTypeDef = getContainerWithNamesType(fld.dataType)
 						if (containerType == null && names.size != 1) { /** this is not a container and therefore should be last name */
 							PmmlError.logError(ctx, s"Malformed compound name... The name '$name' in field reference value '$fieldRefRep' is not a container. ")
-							logger.error(s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")
+							PmmlError.logError(ctx, s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")
 						} else {
 							/** it may indeed be the last one, but let's see if there is more */
 							if (containerType == null) {
@@ -150,7 +150,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 									val parentsName : String = if (parentContainer != null) parentContainer.Name else "(no parent name avaialable)"
 									/** embarrassing situation... there is a logic error in this code... fix it */
 									PmmlError.logError(ctx, s"The name '$name' in '$fieldRefRep' was not found.  Its parent was '$parentsName'. ")
-									logger.error(s"If there is a parent name, then there is a logic error. Contact us.")
+									PmmlError.logError(ctx, s"If there is a parent name, then there is a logic error. Contact us.")
 								}
 							} else {
 								/** this is a container */
@@ -176,7 +176,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 							} else {
 								val parentsName : String = if (parentContainer != null) parentContainer.Name else "NO PARENT"
 								PmmlError.logError(ctx, s"The name '$name' in field reference value '$fieldRefRep' could not be found in parent container '$parentsName'. ")
-								logger.error(s"Either the name is incorrect or this field should be added as an attribute to the $parentsName.")
+								PmmlError.logError(ctx, s"Either the name is incorrect or this field should be added as an attribute to the $parentsName.")
 							}
 						} else {
 							/** This may be the sole element in the field reference and a public concept... let's see */
@@ -190,7 +190,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 								val parentsName : String = if (parentContainer != null) parentContainer.Name else "(no parent name avaialable)"
 								/** embarrassing situation... there is a logic error in this code... fix it */
 								PmmlError.logError(ctx, s"The name '$name' in '$fieldRefRep' was not found.  Its parent was '$parentsName'. ")
-								logger.error(s"If there is a parent name, then there is a logic error. Contact us.")
+								PmmlError.logError(ctx, s"If there is a parent name, then there is a logic error. Contact us.")
 							}
 						}
 					}	  
@@ -201,7 +201,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	  		val newParentContainer = if (priorType.isInstanceOf[ContainerTypeDef]) priorType.asInstanceOf[ContainerTypeDef] else null
 	  		if (newParentContainer == null) {
 				PmmlError.logError(ctx, s"Malformed compound name... The name '$name' in field reference value '$fieldRefRep' is not a container. ")
-				logger.error(s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")	  
+				PmmlError.logError(ctx, s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")	  
 	  		} else {
 		  		/** discard the just processed name and recurse to interpret remaining names... */
 	  			val restOfNames : Array[String] = names.tail

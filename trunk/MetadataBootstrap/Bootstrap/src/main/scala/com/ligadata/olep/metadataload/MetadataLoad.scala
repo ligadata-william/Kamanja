@@ -1018,10 +1018,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int"),("boolexpr2", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Int"),("boolexpr1", "System", "Int")), null)
 
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexprs", "System", "ArrayBufferOfBoolean")), null)
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean"),("boolexpr3", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean"),("boolexpr2", "System", "Boolean")), null)
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("boolexpr1", "System", "Boolean")), null)
+		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("expr1", "System", "Any"),("expr2", "System", "Any")), null)
 		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
 
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
@@ -1309,7 +1306,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		//mgr.AddFunc("Pmml", "toDateTime", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "DateTime"), List(("yyyymmdd", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2MilliSecs", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("compressedTime", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "toMillisFromJulian", "com.ligadata.pmml.udfs.Udfs.toMillisFromJulian", ("System", "Long"), List(("yyddd", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2MilliSecs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2MilliSecs", ("System", "Long"), List(("compressedTime", "System", "Int")), null)
 
 		mgr.AddFunc("Pmml", "DaysAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.DaysAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "WeeksAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.WeeksAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)

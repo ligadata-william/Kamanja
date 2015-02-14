@@ -26,6 +26,12 @@ import org.joda.time.tz
 import org.joda.time.LocalDate
 import org.joda.time.DateTime
 import org.joda.time.Years
+import org.joda.time.LocalDateTime
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.DateTimeFormatter
+import org.joda.time.chrono.JulianChronology
+
+import org.apache.log4j.Logger
 
 import com.ligadata.Pmml.Runtime._
 import com.ligadata.OnLEPBase._
@@ -33,8 +39,7 @@ import com.ligadata.OnLEPBase._
 /**
  * These are the udfs supplied with the system.
  */
-
-object Udfs extends com.ligadata.pmml.udfs.UdfBase {
+object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
   /** Exists checking implemented in the EnvContext */
 
@@ -185,28 +190,22 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     true
   }
 
-  /** comparisons */
+  /** if expressions */
 
   def If(boolexpr: Boolean): Boolean = {
     boolexpr
   }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    And(boolexpr, boolexpr1)
+  //def If(boolexpr: Boolean, expr1: Any, expr2: Any): Any = {
+  //  if (boolexpr) expr1 else expr2
+  //}
+
+  def If[T](boolexpr: Boolean, expr1: T, expr2: T): T = {
+    if (boolexpr) expr1 else expr2
   }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    And(boolexpr, boolexpr1, boolexpr2)
-  }
 
-  def If(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    And(boolexpr, boolexpr1, boolexpr2, boolexpr3)
-  }
-
-  def If(boolexprs: ArrayBuffer[Boolean]): Boolean = {
-    boolexprs.reduceLeft(_ && _)
-  }
-
+  /** logical and */
   def And(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr && boolexpr1)
   }
@@ -255,7 +254,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
   }
 
-  def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
+  /** logical or */
+ def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
     (boolexpr || boolexpr1)
   }
 
@@ -2866,6 +2866,35 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase {
     val day: Int = yyyymmdd % 100
     val someDate: DateTime = new DateTime(yyyy, mm, day, 0, 0)
     someDate
+  }
+
+  /** 
+   *  Coerce the YYDDD Julian date to millisecs.  21st century
+   *  dates are assumed.  If a bad Julian value is supplied, an error
+   *  message is logged and the epoch (i.e., 0) is returned.
+   *  
+   *   @param yyddd  21st century julian date integer
+   *   @return Long value of millisecs from epoch.
+   */
+  def toMillisFromJulian(yyddd: Int): Long = {
+    val ydStr : String = yyddd.toString
+    val yydddStr : String = if (ydStr.size == 4) ("0" + ydStr) else ydStr
+    val reasonable : Boolean = if (yydddStr.length == 5) {
+    	val yy : Int = yydddStr.slice(0, 2).toInt
+    	val ddd : Int = yydddStr.slice(2,5).toInt
+    	(yy >= 1 && yy <= 99 && ddd >= 1 && ddd <= 366)	
+    } else {
+    	false
+    }
+    val millis : Long = if (! reasonable) {
+    	logger.error(s"toMillisFromJulian(yyddd = $yydddStr) ... malformed Julian date... expect YYDDD where YY>0 && YY <= 99 && DDD>0 && DDD<366")
+    	0
+    } else { 
+	    val formatter : DateTimeFormatter  = DateTimeFormat.forPattern("yyyyDDD").withChronology(JulianChronology.getInstance)
+	    val lcd : DateTime = formatter.parseDateTime("20" + yydddStr);
+	    lcd.getMillis()
+    }
+    millis
   }
 
   /**

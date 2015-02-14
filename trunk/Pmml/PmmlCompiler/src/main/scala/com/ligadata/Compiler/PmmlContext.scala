@@ -130,7 +130,17 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 */
 	def getFieldType(fldname : String, expandCompoundFieldTypes : Boolean) : Array[(String,Boolean,BaseTypeDef)] = {	
 		val names : Array[String] = if (fldname.contains(".")) {
-			fldname.split('.')
+			val fldNames : Array[String] = fldname.split('.')
+			val isDictItem : Boolean = (dDict.contains(fldNames(0)) || xDict.contains(fldNames(0)))
+			/** fold keys to lower case except for dictionary names when hiearchical container field reference detected */
+			if (isDictItem) {
+				var arr : ArrayBuffer[String] = ArrayBuffer[String]()
+				arr += fldNames(0)
+				fldNames.tail.foreach(itm => arr += itm.toLowerCase)
+				arr.toArray
+			} else {
+			  	fldname.split('.').map(_.toLowerCase) 
+			 }
 		} else {
 			Array(fldname)
 		}
@@ -297,7 +307,10 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, fldType)).asInstanceOf[BaseTypeDef]
 			if (fldTypedef != null) {
 				fldTypedef.typeString
-			} else null
+			} else {
+				PmmlError.logError(this, s"getXDictFieldType: unknown type $fldType")
+				null  // allow processing to continue.. even though this is likely a disaster for the compile
+			}
 		} else null 
 		(scalaType,fldTypedef)
 	}
@@ -322,7 +335,12 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(fldType)
 				/** verify it is present in the metadata and get metadata description for it */
 				fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, scalaVersionOfPmmlBuiltinType))
-				fldTypedef.typeString
+				if (fldTypedef == null) {
+					PmmlError.logError(this, s"getXDictFieldType: unknown type $scalaVersionOfPmmlBuiltinType ($fldType)")
+					null  // allow processing to continue.. even though this is likely a disaster for the compile
+				} else {
+					fldTypedef.typeString
+				}
 			}
 		} else null 
 		(scalaType,fldTypedef)
@@ -338,7 +356,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		  case _ => {
 		    PmmlError.logError(this, s"getContainerType: the container $nmSpc.$container is not a container or message.  Did you forget to catalog it?")
 		    val objStr : String = if (baseTypeDef == null) "null" else baseTypeDef.toString
-		    logger.error(s"getContainerType: the object returned is $objStr")
+		    PmmlError.logError(this, s"getContainerType: the object returned is $objStr")
 		    null
 		  }
 		}

@@ -163,7 +163,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	if (typeInfo != null) { 
 	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	} else {
-	  		logger.warn(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  		PmmlError.logWarning(ctx, s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	}
 	  	
 	  	typeInfo
@@ -270,7 +270,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		if (winningMbrKey != null) {
 	  			logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		} else {
-	  			logger.error(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  			PmmlError.logError(ctx, s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		}
 	  	}
 	  	
