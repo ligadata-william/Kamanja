@@ -620,7 +620,7 @@ class FunctionDef extends BaseElemDef {
  *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
  *      parts. 
  *    HAS_INDEFINITE_ARITY when set this function def as a varargs or if you prefer variadic specification on its last
- *      argument (e.g., def And(boolExpr : Boolean*) ).  
+ *      argument (e.g., And(boolExpr : Boolean*) ).  
  */
 object FcnMacroAttr extends Enumeration {
 	type Feature = Value

@@ -102,8 +102,10 @@ object JsonSerializer {
       funcList.Functions.map( fn => {
 	try{
 	  val argList = fn.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-	  var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
-	  fn.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
+	  var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]() 
+	  if (fn.Features != null) {
+		  fn.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
+	  } 
 	  val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace,fn.Name,fn.PhysicalName,
 					   (fn.ReturnTypeNameSpace,fn.ReturnTypeName),
 					   argList,featureSet,
@@ -481,7 +483,9 @@ object JsonSerializer {
       val functionInst = json.extract[Function]
       val argList = functionInst.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
       var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
-	  functionInst.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
+	  if (functionInst.Features != null) {
+		  functionInst.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
+	  } 
 
       val function = MdMgr.GetMdMgr.MakeFunc(functionInst.NameSpace,
 					     functionInst.Name,

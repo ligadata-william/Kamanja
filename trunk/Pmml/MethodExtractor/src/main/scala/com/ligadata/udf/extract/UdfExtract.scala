@@ -233,9 +233,12 @@ object MethodExtract extends App with LogTrait{
 		writeFile(typesAsJson, typedefPath)
 
 		/** Create the FunctionDef objects to be serialized by combining the FuncDefArgs collected with the version and deps info */
-		val features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = null
+		
 		val funcDefs : Array[FunctionDef] = funcDefArgs.toArray.map( fArgs => {
-			
+			var features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
+			if (fArgs.hasIndefiniteArity) {
+				features +=  FcnMacroAttr.HAS_INDEFINITE_ARITY
+			}
 			mgr.MakeFunc(fArgs.namespace
 						, fArgs.fcnName
 						, fArgs.physicalName

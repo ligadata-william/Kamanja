@@ -737,6 +737,18 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1e)
 	  	}
 	  		  	
+	  	/** 2. */
+	  	/** 
+	  	 *  If one or more of the functions registered in the metadata with this name have the HAS_INDEFINITE_ARITY feature,
+	  	 *  produce keys for them. 
+	  	 */
+	  	val variadicFcns : scala.collection.immutable.Set[FunctionDef] = ctx.MetadataHelper.FunctionsAvailableWithIndefiniteArity(fcnName)
+	  	if (variadicFcns != null && variadicFcns.size > 0) {
+		  	variadicFcns.foreach(fcndef => {
+		  		relaxedKeys += fcndef.typeString
+		  	})
+	  	}
+	  		  	
 	  	/** 3. */
 	  	/** 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract

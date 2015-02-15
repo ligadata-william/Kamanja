@@ -342,7 +342,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	 * @param fcnName the name, possibly "namespace." qualified key 
 	 * @return FunctionDef
 	 */
-	def getFunctions(fcnName : String) : Set[FunctionDef] = {
+	def getFunctions(fcnName : String) : scala.collection.immutable.Set[FunctionDef] = {
 
 		var functions : Set[FunctionDef] = Set[FunctionDef]()
 		var nmSpcFunctions : Set[FunctionDef] = null
@@ -378,12 +378,14 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	/** 
 	 *  Answer any function definitions with the supplied namespace and name that have the indefinite arity feature.
 	 *  
-	 *  @param nameSpace : the namespace for this function
-	 *  @param name : the name of this function
+	 *  @param name : the name, possibly prefixed with a namespace, of this function.  With namespace, only it will be
+	 *  	searched.  If no namespace is is specified, the namespace search path (part of the PmmlContext containing
+	 *   	possibly multiple namespaces in a list) is used to
+	 *   	for keys for the metadata search.
 	 *  @return scala.collection.immutable.Set[FunctionDef] if any are present else null
 	 */
-	def FunctionsAvailableWithIndefiniteArity(nameSpace : String, name : String) : scala.collection.immutable.Set[FunctionDef] = {
-		val fcnsAvailable : scala.collection.immutable.Set[FunctionDef] = mgr.FunctionsAvailable(nameSpace, name)
+	def FunctionsAvailableWithIndefiniteArity(fcnName : String) : scala.collection.immutable.Set[FunctionDef] = {
+		val fcnsAvailable : scala.collection.immutable.Set[FunctionDef] = getFunctions(fcnName)
 		val indefArityFcns : scala.collection.immutable.Set[FunctionDef] = if (fcnsAvailable != null) {
 			fcnsAvailable.filter(fcn => fcn.features.contains(FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		} else {
@@ -392,31 +394,66 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		indefArityFcns
   	}
 
+	/** 
+	 *  Answer if indefinite arity feature is present in any function with this name.
+	 *  
+	 *  @param name : the name, possibly prefixed with a namespace, of this function.  With namespace, only it will be
+	 *  	searched.  If no namespace is is specified, the namespace search path (part of the PmmlContext containing
+	 *   	possibly multiple namespaces in a list) is used to
+	 *   	for keys for the metadata search.
+	 *  @return Boolean
+	 */
+	def FunctionsWithIndefiniteArity(fcnName : String) : Boolean = {
+		(FunctionsAvailableWithIndefiniteArity(fcnName).size > 0)
+  	}
+
+	/** 
+	 *  With the supplied function signature, try to find the FunctionDef that matches it
+	 *  
+	 *  @paramn typesig : a function identifer with args in the form [namespace.]fcnName([argtype1,argtype2,...,argtypeN]) 
+	 *  @return matching FunctionDef or null
+	 */
 	def FunctionByTypeSig(typesig : String) : FunctionDef = {
 		var fdef : FunctionDef = null
 		val buffer : StringBuilder = new StringBuilder
 		breakable {
-		  	ctx.namespaceSearchPath.foreach( path => {
-		  		buffer.clear
-		  		buffer.append(path)
-		  		buffer.append(".")
-		  		buffer.append(typesig)
-		  		val key = buffer.toString
-		  		fdef = mgr.FunctionByTypeSig(key)
+		  	/** if the namespace was supplied... allow it */
+		  	if (typesig.split('(').head.contains(".")) {
+		  		fdef = mgr.FunctionByTypeSig(typesig)
 		  		if (fdef != null) {
 		  			break
 		  		}
-		  	})
+		  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
+			  	ctx.namespaceSearchPath.foreach( path => {
+			  		buffer.clear
+			  		buffer.append(path)
+			  		buffer.append(".")
+			  		buffer.append(typesig)
+			  		val key = buffer.toString
+			  		fdef = mgr.FunctionByTypeSig(key)
+			  		if (fdef != null) {
+			  			break
+			  		}
+			  	})
+		  	}
 		}
 	  	fdef
 	}
 	
-	/** The macro search is always without namespace prefix ... */
+	/** 
+	 *  With the supplied function signature, try to find the MacroByTypeSig that matches it
+	 *  
+	 *  @paramn typesig : a function identifer with args in the form [namespace.]fcnName([argtype1,argtype2,...,argtypeN]) 
+	 *  @return matching MacroDef or null
+	 *  
+	 *  Note: The macro search is always without namespace prefix ...
+	 */
+
 	def MacroByTypeSig(typesig : String) : MacroDef = {
 		var mdef : MacroDef = null
 		val buffer : StringBuilder = new StringBuilder
 		breakable {
-		  	ctx.namespaceSearchPath.foreach( path => {
+			ctx.namespaceSearchPath.foreach( path => {
 		  		buffer.clear
 		  		buffer.append(path)
 		  		buffer.append(".")

@@ -58,6 +58,8 @@ object NodePrinterHelpers extends LogTrait {
 			case _ => true
 		}
 		
+		val variadic : Boolean = ctx.MetadataHelper.FunctionsWithIndefiniteArity(scalaFcnName)
+		
 		/** 
 		 *  There are four cases:
 		 *  	1) "built in" function.  These are functions supported from the Pmml specification
@@ -72,7 +74,7 @@ object NodePrinterHelpers extends LogTrait {
 		 */
 
 		ctx.elementStack.push(node) /** track the element as it is processed */
-		if (isPmmlBuiltin) {	/** pmml functions in the spec */
+		if (isPmmlBuiltin && ! variadic) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
 			simpleFcnPrint(scalaFcnName
 						, node
@@ -82,7 +84,7 @@ object NodePrinterHelpers extends LogTrait {
 					    , order
 					    , fcnBuffer
 					    , null)					
-		} else {
+		} else { /** several of the builtins... or, and, etc... have variadic implementations... we want to go through FunctionSelect for them */
 			var funcDef : FunctionDef = null
 			val functionSelector : FunctionSelect = new FunctionSelect(ctx, ctx.mgr, node)
 			val isIterable = functionSelector.isIterableFcn
@@ -105,7 +107,7 @@ object NodePrinterHelpers extends LogTrait {
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectSimpleFcn
 				if (fcnTypeInfo != null && fcnTypeInfo.fcnDef != null) {
 					node.SetTypeInfo(fcnTypeInfo)
-					val scalaFcnName : String = node.function
+					//val scalaFcnName : String = node.function
 					simpleFcnPrint(scalaFcnName
 								, node
 							    , ctx
@@ -293,8 +295,6 @@ object NodePrinterHelpers extends LogTrait {
 			}
 		}
 
-
-
 	 */
 
 	def ruleSetModelHelper(node : xRuleSetModel, ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
@@ -438,7 +438,11 @@ object NodePrinterHelpers extends LogTrait {
 			if (node.Children.apply(0).isInstanceOf[xApply]) {
 				val applyFcn : xApply = node.Children.apply(0).asInstanceOf[xApply]			
 				val ifActionElements = applyFcn.IfActionElements
-				if (ifActionElements.length > 0) Some(ifActionElements) else None
+				if (ifActionElements.length > 0) {
+					Some(ifActionElements) 
+				} else {
+					None
+				}
 			} else {
 				None
 			}
@@ -482,6 +486,10 @@ object NodePrinterHelpers extends LogTrait {
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
 		
+		if (node.name == "IfElsePred1") {
+			val stop : Boolean = true
+		}
+		
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"        logger.info(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
 		}
@@ -490,8 +498,15 @@ object NodePrinterHelpers extends LogTrait {
 		val apply : Option[xApply] = applyFromTopLevelChild(node)
 		val fcnName : String = apply match {
 			case Some(apply) => {
-				generator.generateCode1(Some(apply), fcnBuffer, generator, CodeFragment.FUNCCALL)
-				apply.function
+				val fcnNm : String = if (apply.function == "if") {
+					/** grab the predicate for the if and print it... the 'if' actions have been stripped already for top level if functions */
+					generator.generateCode1(Some(apply.Children.head), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					""
+				} else {
+					generator.generateCode1(Some(apply), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					apply.function
+				}
+				fcnNm
 			}
 			case _ => ""
 		}
