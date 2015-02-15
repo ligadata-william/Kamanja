@@ -182,32 +182,72 @@ object NodePrinterHelpers extends LogTrait {
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
 				    , funcDef : FunctionDef) : Unit = {
-		val fcnName = s"$scalaFcnName("
-		fcnBuffer.append(fcnName)
+	  
+		if (scalaFcnName == "if") {
+			ifFcnPrint(scalaFcnName
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)
+		} else {
+			val fcnName = s"$scalaFcnName("
+			fcnBuffer.append(fcnName)
+			
+			val noChildren = node.Children.length
+			var cnt = 0
+			node.Children.foreach((child) => {
+				cnt += 1	
+				generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+		  		if (cnt < noChildren) {
+		  			fcnBuffer.append(", ")
+		  		}  
+	  		})
+	  		
+	  		val closingParen : String = ")"
+	  		fcnBuffer.append(closingParen)
+	  		
+	  		val fcnUseRep : String = fcnBuffer.toString
+	  		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
+	  		val huh : String = "huh" // debugging rest stop 	
+		}
+	}
+
+	def ifFcnPrint(scalaFcnName : String
+					, node : xApply
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+	  
+		val ifFcnBuffer : StringBuilder = new StringBuilder()
 		
 		val noChildren = node.Children.length
 		if (node.function == "if" && noChildren != 3) {
 			PmmlError.logError(ctx, s"if statement encountered that does not have 3 parts... a predicate, a true action and a false action.")
 			logger.error(s"only functional form ('if (predicate) trueAction else falseAction') supported. ")
 		}
-		var cnt = 0
-		node.Children.foreach((child) => {
-			cnt += 1	
-			generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
-	  		if (cnt < noChildren) {
-	  			fcnBuffer.append(", ")
-	  		}  
-  		})
-  		
-  		val closingParen : String = ")"
-  		fcnBuffer.append(closingParen)
-  		
-  		val fcnUseRep : String = fcnBuffer.toString
-  		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
-  		val huh : String = "huh" // debugging rest stop 
-	}
+		
+		val predicate : PmmlExecNode = node.Children(0)
+		val trueAction : PmmlExecNode = node.Children(1)
+		val falseAction : PmmlExecNode = node.Children(2)
+		
+		ifFcnBuffer.append("if(")
+		generator.generateCode1(Some(predicate), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		ifFcnBuffer.append(") {")
+		generator.generateCode1(Some(trueAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		ifFcnBuffer.append("} else {")
+		generator.generateCode1(Some(falseAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+  		ifFcnBuffer.append("}")
 
-  		
+  		val ifFcnUseRep : String = ifFcnBuffer.toString
+  		fcnBuffer.append(ifFcnBuffer.toString)
+	}
+	
 	/** 
 		<SimpleRule id="RULE1" score="1">
 			<CompoundPredicate booleanOperator="and">

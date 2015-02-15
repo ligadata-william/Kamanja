@@ -991,15 +991,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "FoundInAnyRange", "com.ligadata.pmml.udfs.Udfs.FoundInAnyRange", ("System", "Boolean"), List(("fldRefExpr", "System", "Double"),("tuples", "System", "ArrayOfTupleOfDouble2"),("inclusive", "System", "Boolean")), null)
 
 
-		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Int"), List(("boolexpr", "System", "Int")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		mgr.AddFunc("Pmml", "IntAnd", "com.ligadata.pmml.udfs.Udfs.IntAnd", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		mgr.AddFunc("Pmml", "And", "com.ligadata.pmml.udfs.Udfs.And", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		
-		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Int"), List(("boolexpr", "System", "Int")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		mgr.AddFunc("Pmml", "IntOr", "com.ligadata.pmml.udfs.Udfs.IntOr", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean"),("expr1", "System", "Any"),("expr2", "System", "Any")), null)
-		mgr.AddFunc("Pmml", "If", "com.ligadata.pmml.udfs.Udfs.If", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), null)
-
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "MessageContainerBase")), null)

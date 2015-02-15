@@ -206,9 +206,11 @@ object PmmlTypes extends LogTrait {
   	
   	def scalaBuiltinNameFcnSelector(opname : String) : String = {
 		val fcnName = opname match {
-		      case "if" => "If"
+		      case "if" => "if"
 		      case "or" => "Or"
 		      case "and" => "And"
+		      case "IntOr" => "IntOr"  /** equivalent to 'or' but with int args ... renamed to avoid dup type due to type erasure */
+		      case "IntAnd" => "IntAnd"   /** equivalent to 'and' but with int args ... renamed to avoid dup type due to type erasure */
 		      case "xor" => "Xor"
 		      case "equal" => "Equal"
 		      case "notEqual" => "NotEqual"

@@ -190,11 +190,13 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     true
   }
 
-  /** if expressions */
+  /** if UDF no longer used... native scala if pred { tAction } else { fAction } generated for short circuit 
 
   def If[T](boolexpr: Boolean, expr1: T, expr2: T): T = {
     if (boolexpr) expr1 else expr2
-  }
+  } 
+  
+  */
 
 
   /** logical and */
@@ -202,8 +204,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 	boolexpr.reduceLeft(_ && _) 
   }
   
-  def And(boolexpr : Int*): Int = {
-	if (boolexpr.filter(_ == 0).size == 0) 1 else 0
+  def IntAnd(boolexpr : Int*): Boolean = {
+	if (boolexpr.filter(_ == 0).size == 0) true else false 
   }
   
   /** logical or */
@@ -211,8 +213,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 	boolexpr.reduceLeft(_ || _) 
   }
   
-  def Or(boolexpr : Int*): Int = {
-	if (boolexpr.filter(_ != 0).size > 0) 1 else 0 
+  def IntOr(boolexpr : Int*): Boolean = {
+	if (boolexpr.filter(_ != 0).size > 0) true else false 
   }
   
 

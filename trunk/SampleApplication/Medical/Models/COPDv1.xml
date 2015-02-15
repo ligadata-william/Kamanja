@@ -513,7 +513,7 @@ AsthmaPMML.xml
 			
 			Compare this function that examines multiple characteristics of hl7
 			with one pass versus the method in the derivations above that 
-			examine one only at a time.  This requires an 'or' udf that 
+			examine one only at a time.  This requires an Int version of 'or' udf that 
 			can accept 'Int' types where '0' is false and 'non 0' is true
 		-->
 		<DerivedField name="FamilyHistory" dataType="boolean" optype="categorical">
@@ -526,7 +526,7 @@ AsthmaPMML.xml
 					<Apply function="CollectionLength">
 						<Apply function="ContainerFilter">
 				       		<FieldRef field="hl7InfoThisLastYear"/>
-				 			<Constant dataType="fIdent">or</Constant> 
+				 			<Constant dataType="fIdent">IntOr</Constant> 
 				 			<Constant dataType="ident">ChronicCough</Constant> 
 				 			<Constant dataType="ident">Sp_Copd</Constant> 
 				 			<Constant dataType="ident">Shortnessofbreath</Constant> 
