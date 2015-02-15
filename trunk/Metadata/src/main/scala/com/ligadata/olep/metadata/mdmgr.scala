@@ -1529,7 +1529,7 @@ class MdMgr {
   @throws(classOf[NoSuchElementException])
   def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): MessageDef = {
 
-    if (Message(nameSpace, name, -1, false) != None) {
+    if (Message(nameSpace, name, ver, false) != None) {
       throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
     }
     var msg: MessageDef = new MessageDef

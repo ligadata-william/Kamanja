@@ -3028,17 +3028,17 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var key = msgDef.nameSpace + "." + msgDef.name + "." + msgDef.ver
       val o = MdMgr.GetMdMgr.Messages(msgDef.nameSpace.toLowerCase,
-        msgDef.name.toLowerCase,
-        false,
-        true)
+                                      msgDef.name.toLowerCase,
+                                      false,
+                                      true)
       o match {
         case None =>
           None
           logger.trace("message not in the cache => " + key)
           None
         case Some(m) =>
-          logger.trace("message found => " + m.asInstanceOf[MessageDef].FullNameWithVer)
-          Some(m.asInstanceOf[MessageDef])
+          logger.trace("message found => " + m.head.asInstanceOf[MessageDef].FullNameWithVer)
+          Some(m.head.asInstanceOf[MessageDef])
       }
     } catch {
       case e: Exception => {
