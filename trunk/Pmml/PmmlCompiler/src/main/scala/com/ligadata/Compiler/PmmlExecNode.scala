@@ -1296,7 +1296,7 @@ class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("Com
 		ext
 	}
   
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
+	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, fragmentKind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
 	{
 	  	val fcnBuffer : StringBuilder = new StringBuilder()
 		val compoundPredStr : String = order match {
@@ -1304,19 +1304,35 @@ class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("Com
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
 				val boolOpFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(booleanOperator)
-				val cPred = s"$boolOpFcn("
-				fcnBuffer.append(cPred)
-				var i : Int = 0
-
-		  		Children.foreach((child) => {
-		  			i += 1
-			  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
-			  		if (i < Children.length) fcnBuffer.append(", ")
-		  		})
-
-		  		val closingParen : String = s")"
-		  		fcnBuffer.append(closingParen)
-		  		fcnBuffer.toString
+				val isShortCircuitOp = (boolOpFcn == "or" || boolOpFcn == "and")
+				if (isShortCircuitOp) {
+					val op : String = if (boolOpFcn == "or") "||" else "&&"
+			  		fcnBuffer.append("(")
+					NodePrinterHelpers.andOrFcnPrint(op
+													, this
+												    , ctx
+												    , generator
+												    , fragmentKind
+												    , Traversal.INORDER
+												    , fcnBuffer
+												    , null)		    
+			  		fcnBuffer.append(")")
+			  		fcnBuffer.toString
+				} else {
+					val cPred = s"$boolOpFcn("
+					fcnBuffer.append(cPred)
+					var i : Int = 0
+	
+			  		Children.foreach((child) => {
+			  			i += 1
+				  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+				  		if (i < Children.length) fcnBuffer.append(", ")
+			  		})
+	
+			  		val closingParen : String = s")"
+			  		fcnBuffer.append(closingParen)
+			  		fcnBuffer.toString
+				}
 			}
 		}
 		compoundPredStr

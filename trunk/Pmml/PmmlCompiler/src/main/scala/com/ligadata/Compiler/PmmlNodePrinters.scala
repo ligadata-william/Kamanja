@@ -183,8 +183,8 @@ object NodePrinterHelpers extends LogTrait {
 				    , fcnBuffer : StringBuilder
 				    , funcDef : FunctionDef) : Unit = {
 	  
-		if (scalaFcnName == "if") {
-			ifFcnPrint(scalaFcnName
+		if (scalaFcnName == "if" || scalaFcnName == "and" || scalaFcnName == "or") {
+			shortCircuitFcnPrint(scalaFcnName
 					, node
 				    , ctx
 				    , generator
@@ -215,6 +215,92 @@ object NodePrinterHelpers extends LogTrait {
 		}
 	}
 
+	/** 
+	 *	Control printing of inline function which we wish to short circuit using scala
+	 *  generation.  Currently 'and' and 'or' are supported.
+	 */
+	def shortCircuitFcnPrint(scalaFcnName : String
+					, node : xApply
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+
+		scalaFcnName match {
+		  case "if" => {
+			ifFcnPrint(scalaFcnName
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		  case "and" => {
+			andOrFcnPrint("&&"
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		  case "or" => {
+			andOrFcnPrint("||"
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		}
+	}
+	
+	/** 
+	 *	Printing of either 'and' and 'or' variadic function expressions
+	 * 
+	 * 	@param scalaFcnName a string that is either "&&" or "||"
+	 *  @param node the original PmmlExecNode describing the Pmml Apply element
+	 *  @param ctx the PmmlCompiler context
+	 *  @param the generator used to navigate the syntax tree print
+	 *  @param order a hint to the generator as to which order to traverse the tree
+	 *  @param fcnBuffer a StringBuilder that will contain the generated code upon exit
+	 *  @param the function definition (currently not used)
+	 *  
+	 */
+	def andOrFcnPrint(scalaFcnName : String
+					, node : PmmlExecNode
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+	  
+		val andOrFcnBuffer : StringBuilder = new StringBuilder()
+		
+		val noChildren = node.Children.length
+		var cnt = 0
+		node.Children.foreach((child) => {
+			cnt += 1	
+			andOrFcnBuffer.append("(")
+			generator.generateCode1(Some(child), andOrFcnBuffer, generator, CodeFragment.FUNCCALL)
+			andOrFcnBuffer.append(")")
+	  		if (cnt < noChildren) {
+	  			andOrFcnBuffer.append(s" $scalaFcnName ")
+	  		}  
+  		})
+  		
+  		val andOrFcnUseRep : String = andOrFcnBuffer.toString
+  		fcnBuffer.append(andOrFcnUseRep)
+	}
+	
 	def ifFcnPrint(scalaFcnName : String
 					, node : xApply
 				    , ctx : PmmlContext
