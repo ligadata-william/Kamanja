@@ -38,19 +38,19 @@ class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
     var apiResult:String = ""
 
     objectType match {
-      case "Node" => {
+      case "node" => {
 	apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
-      case "Cluster" => {
+      case "cluster" => {
 	apiResult = MetadataAPIImpl.GetAllClusters("JSON")
       }
-      case "Adapter" => {
+      case "adapter" => {
 	apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
       }
-      case "ClusterCfg" => {
+      case "clustercfg" => {
 	apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
       }
-      case "ALL" => {
+      case "all" => {
 	apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
       }
       case _ => {

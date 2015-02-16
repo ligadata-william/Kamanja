@@ -34,9 +34,9 @@ trait MetadataAPIService extends HttpService {
           if (toknRoute.size == 1) {
             requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext)
           } else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-            requestContext =>  processGetKeysRequest(toknRoute(1),requestContext)
+            requestContext =>  processGetKeysRequest(toknRoute(1).toLowerCase,requestContext)
           } else { 
-            requestContext => processGetObjectRequest(toknRoute(0), toknRoute(1), requestContext)
+            requestContext => processGetObjectRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)
           }       
         } 
       } 
@@ -58,13 +58,18 @@ trait MetadataAPIService extends HttpService {
                  }
                  }
                }
+            }  else if( toknRoute(0).equalsIgnoreCase("Activate") || 
+                        toknRoute(0).equalsIgnoreCase("Deactivate")) {
+              entity(as[String]) { reqBody =>
+                requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext) 
+              }
             } else {
               entity(as[String]) { reqBody =>  
                 {
                   if (toknRoute.size == 1) {      
                     requestContext => processPutRequest (toknRoute(0),reqBody,requestContext)
                   } else {
-                    requestContext => processPutRequest (toknRoute(1),reqBody,requestContext)
+                    requestContext => processPutRequest (toknRoute(1).toLowerCase,reqBody,requestContext)
                   }             
                 }
               }
@@ -77,8 +82,16 @@ trait MetadataAPIService extends HttpService {
         path("api" / Rest) {str => 
           {
             val toknRoute = str.split("/") 
-            logger.info ("POST REQUEST: "+str)
-            requestContext => processPutRequest(toknRoute(0), reqBody, requestContext)
+            logger.info ("POST REQUEST: "+str)           
+            if (toknRoute.size == 1) {
+              entity(as[String]) { 
+                reqBody => {
+                  requestContext => processPostRequest (toknRoute(0),reqBody,requestContext) 
+                }
+              }
+            } else {
+              requestContext => println ("UNKNOWN REQUEST - " + str)
+            }
           }
         }
       }
@@ -89,7 +102,7 @@ trait MetadataAPIService extends HttpService {
           {
             val toknRoute = str.split("/")
             logger.info("DELETE "+str)
-            requestContext => processDeleteRequest(toknRoute(0), toknRoute(1), requestContext)   
+            requestContext => processDeleteRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)   
           }
         }
       }
@@ -97,10 +110,54 @@ trait MetadataAPIService extends HttpService {
   }
   
   /**
-   * 
+   * Modify Existing objects in the Metadata 
    */
   private def processPutRequest(objtype:String, body: String, rContext: RequestContext):Unit = {
     if (objtype.equalsIgnoreCase("Container")) {
+        val updateContainerDefsService = actorRefFactory.actorOf(Props(new UpdateContainerService(rContext)))
+        updateContainerDefsService ! UpdateContainerService.Process(body)
+    } else if (objtype.equalsIgnoreCase("Model")) {
+        val updateModelService:ActorRef = actorRefFactory.actorOf(Props(new UpdateModelService(rContext)))
+        updateModelService ! UpdateModelService.Process(body)
+    } else if (objtype.equalsIgnoreCase("Message")) {
+        val updateMessageDefsService = actorRefFactory.actorOf(Props(new UpdateMessageService(rContext)))
+        updateMessageDefsService ! UpdateMessageService.Process(body,"JSON")
+    } else if (objtype.equalsIgnoreCase("Type")) {
+        val updateTypeDefsService = actorRefFactory.actorOf(Props(new UpdateTypeService(rContext)))
+        updateTypeDefsService ! AddTypeService.Process(body,"JSON")
+    } else if (objtype.equalsIgnoreCase("Concept")) {
+        val updateConceptDefsService = actorRefFactory.actorOf(Props(new UpdateConceptService(rContext)))
+        updateConceptDefsService ! UpdateConceptService.Process(body)
+    } else if (objtype.equalsIgnoreCase("Function")) {
+        val updateFunctionDefsService = actorRefFactory.actorOf(Props(new UpdateFunctionService(rContext)))
+        updateFunctionDefsService ! UpdateFunctionService.Process(body)
+    } else if (objtype.equalsIgnoreCase("RemoveConfig")) {
+        val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
+        removeConfigService ! RemoveEngineConfigService.Process(body)
+    } else if (objtype.equalsIgnoreCase("UploadConfig")) {
+        val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext)))
+        uploadConfigService ! UploadEngineConfigService.Process(body)
+    } 
+  }
+  
+    /**
+   * Modify Existing objects in the Metadata 
+   */
+  private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext):Unit = {
+    if (action.equalsIgnoreCase("Activate")) {
+        val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext)))
+        activateObjectsService ! ActivateObjectsService.Process(createGetArg(objKey,objtype))
+    } else if (action.equalsIgnoreCase("Deactivate")) {
+       val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
+       deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
+    }  
+  }
+  
+  /**
+   * Create new Objects in the Metadata
+   */
+  private def processPostRequest(objtype:String, body: String, rContext: RequestContext):Unit = {
+   if (objtype.equalsIgnoreCase("Container")) {
         val addContainerDefsService = actorRefFactory.actorOf(Props(new AddContainerService(rContext)))
         addContainerDefsService ! AddContainerService.Process(body)
     } else if (objtype.equalsIgnoreCase("Model")) {
@@ -109,7 +166,7 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("Message")) {
         val addMessageDefsService = actorRefFactory.actorOf(Props(new AddMessageService(rContext)))
         addMessageDefsService ! AddMessageService.Process(body)
-    } else if (objtype.equalsIgnoreCase("AddType")) {
+    } else if (objtype.equalsIgnoreCase("Type")) {
         val addTypeDefsService = actorRefFactory.actorOf(Props(new AddTypeService(rContext)))
         addTypeDefsService ! AddTypeService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Concept")) {
@@ -118,16 +175,7 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("Function")) {
         val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
-    } else if (objtype.equalsIgnoreCase("RemoveConfig")) {
-        val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
-        removeConfigService ! RemoveEngineConfigService.Process(body)
-    } else if (objtype.equalsIgnoreCase("Activate")) {
-        val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext)))
-        activateObjectsService ! ActivateObjectsService.Process(body)
-    } else if (objtype.equalsIgnoreCase("Deactivate")) {
-       val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
-       deactivateObjectsService ! DeactivateObjectsService.Process(body)
-    }
+    } 
   }
   
   /**
@@ -142,7 +190,7 @@ trait MetadataAPIService extends HttpService {
    *  
    */
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext): Unit = {
-    if (objtype.equalsIgnoreCase("GetConfigObjects")) {
+    if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
     } else {
