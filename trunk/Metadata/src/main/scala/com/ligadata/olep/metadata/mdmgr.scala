@@ -1547,7 +1547,7 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
-    if (Container(nameSpace, name, -1, false) != None) {
+    if (Container(nameSpace, name, ver, false) != None) {
       throw new AlreadyExistsException(s"Container $nameSpace.$name already exists.")
     }
     var container = new ContainerDef

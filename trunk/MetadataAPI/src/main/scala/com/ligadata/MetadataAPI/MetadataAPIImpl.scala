@@ -3062,8 +3062,8 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("container not in the cache => " + key)
           None
         case Some(m) =>
-          logger.trace("container found => " + m.asInstanceOf[ContainerDef].FullNameWithVer)
-          Some(m.asInstanceOf[ContainerDef])
+          logger.trace("container found => " + m.head.asInstanceOf[ContainerDef].FullNameWithVer)
+          Some(m.head.asInstanceOf[ContainerDef])
       }
     } catch {
       case e: Exception => {

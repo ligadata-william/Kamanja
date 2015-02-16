@@ -18,7 +18,7 @@ object UpdateContainerService {
 
 class UpdateContainerService(requestContext: RequestContext) extends Actor {
 
-  import AddContainerService._
+  import UpdateContainerService._
   
   implicit val system = context.system
   import system.dispatcher
@@ -31,7 +31,7 @@ class UpdateContainerService(requestContext: RequestContext) extends Actor {
   }
   
   def process(containerJson:String) = {
-    log.info("Requesting AddContainer {}",containerJson)
+    log.info("Requesting UpdateContainer {}",containerJson)
     val apiResult = MetadataAPIImpl.UpdateContainer(containerJson,"JSON")
     requestContext.complete(apiResult)
   }
