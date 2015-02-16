@@ -36,7 +36,7 @@ trait MetadataAPIService extends HttpService {
           } else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
             requestContext =>  processGetKeysRequest(toknRoute(1).toLowerCase,requestContext)
           } else { 
-            requestContext => processGetObjectRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)
+            requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext)
           }       
         } 
       } 
