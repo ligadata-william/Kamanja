@@ -2555,8 +2555,75 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     round(expr)
   }
 
-  /** isMissing, isNotMissing */
-
+  /** 
+   *  IsMissing determines if the named field DOES NOT exist or EXISTS but with no legal value.
+   *  
+   *  @param ctx the runtime context for a given model
+   *  @param fldName the name of the field being sought... it can be compound '.' qualified name
+   *  
+   *  NOTE: Compound names are currently limited to two names (e.g., container.fld).  This will change
+   *  when metadata is made available to the runtime context for the models. 
+   *  
+   */
+  def IsMissing(ctx : Context, fldName : String) : Boolean = {
+	  val nameParts : Array[String] = if (fldName.contains(".")) {
+		  fldName.split('.')
+	  } else {
+		  Array(fldName)
+	  }
+	  /** if just one name, look in dictionaries */
+	  val notMissing : Boolean = if (nameParts.size == 1) {
+		  ctx.valueSetFor(fldName)
+	  } else {
+		  /** 
+		   *  Obtain the MessageContainerBase for the message or container ... for now just the first namePart
+		   *  FIXME: This will change when derived concepts (ModelNamespace.ModelName.field) are introduced 
+		   */
+		  if (nameParts.size == 2) {
+			  val msgContainerName : String = nameParts(0)
+			  val fieldName : String = nameParts(1)
+			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(fldName)) {
+				  ctx.xDict.apply(fldName).asInstanceOf[MessageContainerBase]
+			  } else {
+				  if (ctx.isFieldInDataDict(fldName)) {
+					  ctx.dDict.apply(fldName).asInstanceOf[MessageContainerBase]
+				  } else {
+					  null
+				  }
+			  }
+		
+			  val itsThere : Boolean = if (msgOrContainer != null) {
+				  (msgOrContainer.IsFixed || (msgOrContainer.IsKv && (msgOrContainer.getOrElse(fieldName,null) != null)))
+			  } else {
+				  false
+			  }
+			  itsThere
+		  } else {
+			  logger.error("Unable to handle isMissing tests on container of containers at this time... more complete solution coming...")
+			  logger.error("... need metadata manager to find type information at runtime to walk down hierarchies > 2 levels.")
+			  false
+		  }	  
+	  }
+    
+	  (! notMissing)
+  }
+  
+  
+  /** 
+   *  IsNotMissing determines if the named field exists with a legal value.
+   *  
+   *  @param ctx the runtime context for a given model
+   *  @param fldName the name of the field being sought... it can be compound '.' qualified name
+   *  
+   *  NOTE: Compound names are currently limited to two names (e.g., container.fld).  This will change
+   *  when metadata is made available to the runtime context for the models. 
+   *  
+   */
+  def IsNotMissing(ctx : Context, fldName : String) : Boolean = {
+	  (! IsMissing(ctx,fldName))
+  }
+  
+  /** other pmml builtins */
   def uppercase(str: String): String = {
     str.toUpperCase()
   }

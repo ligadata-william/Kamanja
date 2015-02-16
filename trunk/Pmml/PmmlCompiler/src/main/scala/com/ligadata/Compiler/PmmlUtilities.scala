@@ -223,8 +223,8 @@ object PmmlTypes extends LogTrait {
 		      case "lessOrEqual" => "LessOrEqual"
 		      case "greaterThan" => "GreaterThan"
 		      case "greaterOrEqual" => "GreaterOrEqual"
-		      case "isMissing" => "IsMissing"
-		      case "isNotMissing" => "IsNotMissing"
+		      /**case "isMissing" => "IsMissing"   these are not simple functions ... they are macros ... need to go through macro logic 
+		         case "isNotMissing" => "IsNotMissing"*/
 		      case "isIn" => "IsIn"
 		      case "isNotIn" => "IsNotIn"
 		      case _  => "Unknown Operator"

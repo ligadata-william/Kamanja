@@ -1816,7 +1816,31 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
-					
+
+		/** 
+		 *  isMissing and isNotMissing macros
+		 *  no special macro needed for mapped ... 
+		 */
+		val isMissingMacro : String =   """IsMissing(ctx, %1%)"""
+		val isNotMissingMacro : String =   """IsNotMissing(ctx, %1%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "isMissing"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("fieldRefName", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (isMissingMacro,isMissingMacro)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "isNotMissing"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("fieldRefName", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (isNotMissingMacro,isNotMissingMacro)
+					,-1)	  
+		  
+
 		/** 
 			DowncastArrayMbr Macro used to cast arrays of MessageContainerBase to arrays of some specified type
 		 */			
