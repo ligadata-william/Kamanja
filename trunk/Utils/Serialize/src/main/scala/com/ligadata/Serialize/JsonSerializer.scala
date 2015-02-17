@@ -279,13 +279,13 @@ object JsonSerializer {
       conceptList.Concepts.map(o => {
 	try{
 	  //logger.trace("Create Concept for " + o.NameSpace + "." + o.Name)
-	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
-						o.Name,
-						o.TypeNameSpace,
-						o.TypeName,
+	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace.toLowerCase,
+						o.Name.toLowerCase,
+						o.TypeNameSpace.toLowerCase,
+						o.TypeName.toLowerCase,
 						o.Version.toInt,
-						false)
-	  logger.trace("Created AttributeDef for " + o.NameSpace + "." + o.Name)
+						true)
+	  logger.trace("Created AttributeDef for " + o.NameSpace.toLowerCase + "." + o.Name.toLowerCase)
 	  attrDefList(i) =  attr
 	  i = i + 1
 	} catch {

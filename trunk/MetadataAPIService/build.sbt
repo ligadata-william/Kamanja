@@ -35,6 +35,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x contains "org\\objectweb\\asm\\" => MergeStrategy.last
     case x if x contains "org/objectweb/asm/" => MergeStrategy.last
     case x if x contains "org/apache/commons/collections" =>  MergeStrategy.last
+    case x if x contains "org\\apache\\commons\\collections" =>  MergeStrategy.last
     case x if x endsWith "StaticLoggerBinder.class" =>  MergeStrategy.first
     case x if x endsWith "StaticMDCBinder.class" =>  MergeStrategy.first
     case x if x endsWith "StaticMarkerBinder.class" =>  MergeStrategy.first

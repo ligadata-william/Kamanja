@@ -7,6 +7,10 @@ import uk.co.bigbeeconsultants.http.response._
 import uk.co.bigbeeconsultants.http.request._
 import uk.co.bigbeeconsultants.http.header._
 import uk.co.bigbeeconsultants.http.header.MediaType._
+import request.Request
+import header.Headers
+import header.HeaderName._
+
 import java.net.URL
 import org.apache.log4j._
 import org.json4s._
@@ -307,18 +311,30 @@ object TestApiService {
 
   def GetHttpResponse(reqType:String, url:String,body: Option[String], bodyType: MediaType ): String = {
     var response:Response = null
+
+    val ha = new Array[Header](2)
+    ha(0) = new Header("username","lonestarr")
+    ha(1) = new Header("password","vespa")
+
+
+    val requestHeaders = new Headers(ha.toList)
+    
     try{
       val httpClient = new HttpClient(config)
       if( body == None){
         logger.trace(reqType+":URL => " + url)
         if (reqType.equalsIgnoreCase("get")) {
-	        response = httpClient.get(new URL(url))
-          println(response.toString)
+	  val request = Request.get(new URL(url))
+	  response = httpClient.makeRequest(request + requestHeaders)
+	  //response = httpClient.get(new URL(url))
+          //println(response.toString)
           return response.body.asString
         }
-        response = httpClient.delete(new URL(url))
-        return response.body.asString
-        println(response.toString)
+	else{
+          response = httpClient.delete(new URL(url))
+          //println(response.toString)
+          return response.body.asString
+	}
       }
       else{
 	      logger.trace("URL => " + url + ", parameter => " + body.get)
