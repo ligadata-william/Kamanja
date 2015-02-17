@@ -2,6 +2,8 @@ package com.ligadata.udf.extract
 
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{ universe => ru }
+import scala.reflect.api._
+import scala.reflect.runtime.universe.MemberScope 
 import scala.collection.mutable._
 import scala.collection.immutable.{Set, TreeMap}
 import scala.Symbol
@@ -168,14 +170,22 @@ object MethodExtract extends App with LogTrait{
 			val name = fcnMethodObj.name
 			val returnType = fcnMethodObj.returnType
 			val fullName = fcnMethodObj.fullName
+			
+			if (name.toString == "And" || name.toString == "Or") {
+				val stop : Int = 0
+			}
+			
 			val typeSig = fcnMethodObj.typeSignature
+
 			if (fullName.contains(justObjectsFcns)) {
 				val nm : String = name.toString
 				val fnm : String = fullName.toString
 				val rt : String = returnType.toString
 				val ts : String = typeSig.toString
+							
 				val notExcluded : Boolean = (excludeList.filter( exclnm => nm.contains(exclnm) || rt.contains(exclnm)).length == 0)
 				if (notExcluded && ! nm.contains("$")) {		  
+					
 					val cmd : MethodCmd = new MethodCmd(mgr, versionNumber, namespace, typeMap, typeArray, nm, fnm, rt, ts)
 					if (cmd != null) {
 						val (funcInfo,cmdStr) : (FuncDefArgs,String) = cmd.makeFuncDef
@@ -223,9 +233,12 @@ object MethodExtract extends App with LogTrait{
 		writeFile(typesAsJson, typedefPath)
 
 		/** Create the FunctionDef objects to be serialized by combining the FuncDefArgs collected with the version and deps info */
-		val features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = null
+		
 		val funcDefs : Array[FunctionDef] = funcDefArgs.toArray.map( fArgs => {
-			
+			var features: scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
+			if (fArgs.hasIndefiniteArity) {
+				features +=  FcnMacroAttr.HAS_INDEFINITE_ARITY
+			}
 			mgr.MakeFunc(fArgs.namespace
 						, fArgs.fcnName
 						, fArgs.physicalName

@@ -337,7 +337,7 @@ object TestApiService {
 	}
       }
       else{
-	      logger.trace("URL => " + url + ", parameter => " + body.get)
+	      logger.trace(reqType+"URL => " + url + ", parameter => " + body.get)
 	      bodyType match {
 	         case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
              if (reqType.equalsIgnoreCase("put")) {
@@ -456,7 +456,7 @@ object TestApiService {
   def GetConfigObjects(objectType:String) = {
     try{
       println("---->"+objectType+"<---------")
-      val objJson = MakeHttpRequest("get",host_url,"GetConfigObjects/"+objectType,"STR",null)
+      val objJson = MakeHttpRequest("get",host_url,"Config/"+objectType,"STR",null)
       logger.trace(objJson)
     }catch {
       case e: Exception => {
@@ -603,15 +603,7 @@ object TestApiService {
 
   def ActivateObjects(objectType: String){
     try{
-      
-      val key = "test.bb.33"
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "ActivateObjects"
-      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
 
-      
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
 	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
@@ -630,12 +622,12 @@ object TestApiService {
 	      return
       }
 
-     // val key = keys(choice-1)
-     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
-     // val apiName = "ActivateObjects"
-     // println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-     // val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
-     // println("Result as Json String => \n" + apiResult)
+      val key = keys(choice-1)
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "ActivateObjects"
+      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -669,16 +661,7 @@ object TestApiService {
 
   def DeactivateObjects(objectType: String){
     try{
-      
-      
-      val key = "test.bb.44"
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
-      val apiName = "DeactivateObjects"
-          println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
-      println("Result as Json String => \n" + apiResult)
-      
-      
+         
       val keys = GetAllObjectKeys(objectType)
       if( keys.length == 0 ){
 	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
@@ -697,12 +680,12 @@ object TestApiService {
 	      return
       }
 
-      //val key = keys(choice-1)
-     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
-     // val apiName = "DeactivateObjects"
-     //     println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-    //  val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
-    //  println("Result as Json String => \n" + apiResult)
+      val key = keys(choice-1)
+      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val apiName = "DeactivateObjects"
+      println("DE-Activating Objects ->"+objectType+"/deactivate " +apiArgJson )
+      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -825,7 +808,7 @@ object TestApiService {
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
-      var res = MakeHttpRequest("put",host_url, "Model","XML",pmmlStr)
+      var res = MakeHttpRequest("post",host_url, "Model","XML",pmmlStr)
       logger.trace("Results of AddModel Operation => " + res)
     }catch {
       case e: Exception => {
@@ -879,7 +862,7 @@ object TestApiService {
     	  logger.setLevel(Level.TRACE);
 	  val contStr = Source.fromFile(contDefFile).mkString
     	  //val res : String =  MakeHttpRequest("put",host_url, "AddContainerDef","JSON",contStr)
-        val res : String =  MakeHttpRequest("put",host_url, "Container","JSON",contStr)
+        val res : String =  MakeHttpRequest("post",host_url, "Container","JSON",contStr)
     	  results += Tuple3(choice.toString, contDefFile, res)
     	})
       } else {
@@ -943,7 +926,7 @@ object TestApiService {
 	  }
 	  val msgDefFile = msgFiles(choice-1).toString
 	  val msgStr = Source.fromFile(msgDefFile).mkString
-    	  val res : String = MakeHttpRequest("put",host_url, "Message","JSON",msgStr)
+    	  val res : String = MakeHttpRequest("post",host_url, "Message","JSON",msgStr)
     	  results += Tuple3(choice.toString, msgDefFile, res)
     	})
       } else {
@@ -1136,7 +1119,7 @@ object TestApiService {
       functionFilePath = functionFiles(choice-1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest("put",host_url, "Function","JSON",functionStr)
+      val res = MakeHttpRequest("post",host_url, "Function","JSON",functionStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1183,7 +1166,7 @@ object TestApiService {
       functionFilePath = functionFiles(choice-1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest("post",host_url, "Function","JSON",functionStr)
+      val res = MakeHttpRequest("put",host_url, "Function","JSON",functionStr)
       println("Results as json string => \n" + res)
       
     }catch {
@@ -1230,7 +1213,7 @@ object TestApiService {
       conceptFilePath = conceptFiles(choice-1).toString
 
       val conceptStr = Source.fromFile(conceptFilePath).mkString
-      val res = MakeHttpRequest("put",host_url, "Concept","JSON",conceptStr)
+      val res = MakeHttpRequest("post",host_url, "Concept","JSON",conceptStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1246,20 +1229,18 @@ object TestApiService {
   def UpdateConcept {
     try{
       
- 
-
-      val res = MakeHttpRequest("post",host_url, "Concept","JSON","conceptStr")
+     // val res = MakeHttpRequest("put",host_url, "Concept","JSON","conceptStr")
       
-      println("Results as json string => \n" + res)
+     // println("Results as json string => \n" + res)
       
       var dirName = metadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if( ! IsValidDir(dirName) )
-	return
+	      return
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
-	logger.fatal("No concept files in the directory " + dirName)
-	return
+	      logger.fatal("No concept files in the directory " + dirName)
+	      return
       }
 
       var conceptFilePath = ""
@@ -1274,18 +1255,18 @@ object TestApiService {
       val choice:Int = readInt()
 
       if( choice == conceptFiles.length + 1){
-	return
+	      return
       }
       if( choice < 1 || choice > conceptFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
-	  return
+	       logger.fatal("Invalid Choice : " + choice)
+	       return
       }
 
       conceptFilePath = conceptFiles(choice-1).toString
 
-    //  val conceptStr = Source.fromFile(conceptFilePath).mkString
-   //   val res = MakeHttpRequest("post",host_url, "Concept","JSON",conceptStr)
-   //   println("Results as json string => \n" + res)
+      val conceptStr = Source.fromFile(conceptFilePath).mkString
+      val res = MakeHttpRequest("put",host_url, "Concept","JSON",conceptStr)
+      println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Concept Already in the metadata....")
@@ -1331,7 +1312,7 @@ object TestApiService {
       typeFilePath = typeFiles(choice-1).toString
 
       val typeStr = Source.fromFile(typeFilePath).mkString
-      val res = MakeHttpRequest("put",host_url, "AddType","JSON",typeStr)
+      val res = MakeHttpRequest("post",host_url, "Type","JSON",typeStr)
       println("Results as json string => \n" + res)
     }catch {
       case e: AlreadyExistsException => {
@@ -1404,6 +1385,8 @@ object TestApiService {
       val getMessage = ()                 => { GetMessage }
       val getAllMessages = ()             => { GetAllMessages }
       val removeMessage = ()              => { RemoveMessage }
+      val activateMessage = ()            => { ActivateMessage }
+      val deactivateMessage = ()          => { DeactivateMessage }
       val addContainer = ()               => { AddContainer }
       val getContainer = ()               => { GetContainer }
       val getAllContainers = ()           => { GetAllContainers }
@@ -1443,6 +1426,8 @@ object TestApiService {
 			      ("Get Message",getMessage),
 			      ("Get All Messages",getAllMessages),
 			      ("Remove Message",removeMessage),
+            ("Activate Message",activateMessage),
+            ("Deactivate Message",deactivateMessage),
 			      ("Add Container",addContainer),
 			      ("Get Container",getContainer),
 			      ("Get All Containers",getAllContainers),

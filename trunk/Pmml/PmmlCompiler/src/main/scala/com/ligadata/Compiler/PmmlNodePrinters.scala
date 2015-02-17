@@ -58,6 +58,8 @@ object NodePrinterHelpers extends LogTrait {
 			case _ => true
 		}
 		
+		val variadic : Boolean = ctx.MetadataHelper.FunctionsWithIndefiniteArity(scalaFcnName)
+		
 		/** 
 		 *  There are four cases:
 		 *  	1) "built in" function.  These are functions supported from the Pmml specification
@@ -72,7 +74,7 @@ object NodePrinterHelpers extends LogTrait {
 		 */
 
 		ctx.elementStack.push(node) /** track the element as it is processed */
-		if (isPmmlBuiltin) {	/** pmml functions in the spec */
+		if (isPmmlBuiltin && ! variadic) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
 			simpleFcnPrint(scalaFcnName
 						, node
@@ -82,7 +84,7 @@ object NodePrinterHelpers extends LogTrait {
 					    , order
 					    , fcnBuffer
 					    , null)					
-		} else {
+		} else { /** several of the builtins... or, and, etc... have variadic implementations... we want to go through FunctionSelect for them */
 			var funcDef : FunctionDef = null
 			val functionSelector : FunctionSelect = new FunctionSelect(ctx, ctx.mgr, node)
 			val isIterable = functionSelector.isIterableFcn
@@ -105,7 +107,7 @@ object NodePrinterHelpers extends LogTrait {
 				val fcnTypeInfo :  FcnTypeInfo = functionSelector.selectSimpleFcn
 				if (fcnTypeInfo != null && fcnTypeInfo.fcnDef != null) {
 					node.SetTypeInfo(fcnTypeInfo)
-					val scalaFcnName : String = node.function
+					//val scalaFcnName : String = node.function
 					simpleFcnPrint(scalaFcnName
 								, node
 							    , ctx
@@ -180,32 +182,158 @@ object NodePrinterHelpers extends LogTrait {
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
 				    , funcDef : FunctionDef) : Unit = {
-		val fcnName = s"$scalaFcnName("
-		fcnBuffer.append(fcnName)
+	  
+		if (scalaFcnName == "if" || scalaFcnName == "and" || scalaFcnName == "or") {
+			shortCircuitFcnPrint(scalaFcnName
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)
+		} else {
+			val fcnName = s"$scalaFcnName("
+			fcnBuffer.append(fcnName)
+			
+			val noChildren = node.Children.length
+			var cnt = 0
+			node.Children.foreach((child) => {
+				cnt += 1	
+				generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+		  		if (cnt < noChildren) {
+		  			fcnBuffer.append(", ")
+		  		}  
+	  		})
+	  		
+	  		val closingParen : String = ")"
+	  		fcnBuffer.append(closingParen)
+	  		
+	  		val fcnUseRep : String = fcnBuffer.toString
+	  		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
+	  		val huh : String = "huh" // debugging rest stop 	
+		}
+	}
+
+	/** 
+	 *	Control printing of inline function which we wish to short circuit using scala
+	 *  generation.  Currently 'and' and 'or' are supported.
+	 */
+	def shortCircuitFcnPrint(scalaFcnName : String
+					, node : xApply
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+
+		scalaFcnName match {
+		  case "if" => {
+			ifFcnPrint(scalaFcnName
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		  case "and" => {
+			andOrFcnPrint("&&"
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		  case "or" => {
+			andOrFcnPrint("||"
+					, node
+				    , ctx
+				    , generator
+				    , generate
+				    , order
+				    , fcnBuffer
+				    , funcDef)		    
+		  }
+		}
+	}
+	
+	/** 
+	 *	Printing of either 'and' and 'or' variadic function expressions
+	 * 
+	 * 	@param scalaFcnName a string that is either "&&" or "||"
+	 *  @param node the original PmmlExecNode describing the Pmml Apply element
+	 *  @param ctx the PmmlCompiler context
+	 *  @param the generator used to navigate the syntax tree print
+	 *  @param order a hint to the generator as to which order to traverse the tree
+	 *  @param fcnBuffer a StringBuilder that will contain the generated code upon exit
+	 *  @param the function definition (currently not used)
+	 *  
+	 */
+	def andOrFcnPrint(scalaFcnName : String
+					, node : PmmlExecNode
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+	  
+		val andOrFcnBuffer : StringBuilder = new StringBuilder()
+		
+		val noChildren = node.Children.length
+		var cnt = 0
+		node.Children.foreach((child) => {
+			cnt += 1	
+			andOrFcnBuffer.append("(")
+			generator.generateCode1(Some(child), andOrFcnBuffer, generator, CodeFragment.FUNCCALL)
+			andOrFcnBuffer.append(")")
+	  		if (cnt < noChildren) {
+	  			andOrFcnBuffer.append(s" $scalaFcnName ")
+	  		}  
+  		})
+  		
+  		val andOrFcnUseRep : String = andOrFcnBuffer.toString
+  		fcnBuffer.append(andOrFcnUseRep)
+	}
+	
+	def ifFcnPrint(scalaFcnName : String
+					, node : xApply
+				    , ctx : PmmlContext
+				    , generator : PmmlModelGenerator
+				    , generate : CodeFragment.Kind
+				    , order : Traversal.Order
+				    , fcnBuffer : StringBuilder
+				    , funcDef : FunctionDef) : Unit = {
+	  
+		val ifFcnBuffer : StringBuilder = new StringBuilder()
 		
 		val noChildren = node.Children.length
 		if (node.function == "if" && noChildren != 3) {
 			PmmlError.logError(ctx, s"if statement encountered that does not have 3 parts... a predicate, a true action and a false action.")
 			logger.error(s"only functional form ('if (predicate) trueAction else falseAction') supported. ")
 		}
-		var cnt = 0
-		node.Children.foreach((child) => {
-			cnt += 1	
-			generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
-	  		if (cnt < noChildren) {
-	  			fcnBuffer.append(", ")
-	  		}  
-  		})
-  		
-  		val closingParen : String = ")"
-  		fcnBuffer.append(closingParen)
-  		
-  		val fcnUseRep : String = fcnBuffer.toString
-  		//logger.trace(s"simpleFcnPrint ... fcn use : $fcnUseRep")
-  		val huh : String = "huh" // debugging rest stop 
-	}
+		
+		val predicate : PmmlExecNode = node.Children(0)
+		val trueAction : PmmlExecNode = node.Children(1)
+		val falseAction : PmmlExecNode = node.Children(2)
+		
+		ifFcnBuffer.append("if(")
+		generator.generateCode1(Some(predicate), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		ifFcnBuffer.append(") {")
+		generator.generateCode1(Some(trueAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		ifFcnBuffer.append("} else {")
+		generator.generateCode1(Some(falseAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+  		ifFcnBuffer.append("}")
 
-  		
+  		val ifFcnUseRep : String = ifFcnBuffer.toString
+  		fcnBuffer.append(ifFcnBuffer.toString)
+	}
+	
 	/** 
 		<SimpleRule id="RULE1" score="1">
 			<CompoundPredicate booleanOperator="and">
@@ -292,8 +420,6 @@ object NodePrinterHelpers extends LogTrait {
 				}
 			}
 		}
-
-
 
 	 */
 
@@ -438,7 +564,11 @@ object NodePrinterHelpers extends LogTrait {
 			if (node.Children.apply(0).isInstanceOf[xApply]) {
 				val applyFcn : xApply = node.Children.apply(0).asInstanceOf[xApply]			
 				val ifActionElements = applyFcn.IfActionElements
-				if (ifActionElements.length > 0) Some(ifActionElements) else None
+				if (ifActionElements.length > 0) {
+					Some(ifActionElements) 
+				} else {
+					None
+				}
 			} else {
 				None
 			}
@@ -482,6 +612,10 @@ object NodePrinterHelpers extends LogTrait {
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
 		
+		if (node.name == "IfElsePred1") {
+			val stop : Boolean = true
+		}
+		
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"        logger.info(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
 		}
@@ -490,8 +624,15 @@ object NodePrinterHelpers extends LogTrait {
 		val apply : Option[xApply] = applyFromTopLevelChild(node)
 		val fcnName : String = apply match {
 			case Some(apply) => {
-				generator.generateCode1(Some(apply), fcnBuffer, generator, CodeFragment.FUNCCALL)
-				apply.function
+				val fcnNm : String = if (apply.function == "if") {
+					/** grab the predicate for the if and print it... the 'if' actions have been stripped already for top level if functions */
+					generator.generateCode1(Some(apply.Children.head), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					""
+				} else {
+					generator.generateCode1(Some(apply), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					apply.function
+				}
+				fcnNm
 			}
 			case _ => ""
 		}

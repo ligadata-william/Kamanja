@@ -112,6 +112,30 @@ class Context(val xId : Long) extends LogTrait {
 		returnvalue
 	}
 	
+	
+	/** 
+	 *  Determine if the DataField or DerivedField has been set  
+	 *  
+	 *  @param fldName : the name of the DataField or DerivedField of interest
+	 *  @return true if the field has a valid value.
+	 */ 
+	def valueSetFor(fldName : String) : Boolean = {
+
+		val isSet : Boolean = if (dDict.contains(fldName)) {
+			val fld : DataField = dDict.apply(fldName)
+			fld.ValueSet
+		} else {
+			if (xDict.contains(fldName)) {
+				 /** lazy evaluation done for transaction dict derived fields */
+				val fld : DerivedField = xDict.apply(fldName)
+				fld.ValueSet 
+			} else {
+				false
+			}
+		}
+		isSet
+	}
+	
 	/** 
 	 *  General data value update (explicit set of value vs executing associated function (for the derived fields)
 	 */ 
@@ -230,6 +254,8 @@ class Context(val xId : Long) extends LogTrait {
 	def isFieldInDataDict(fldName : String) : Boolean = {
 		dDict.contains(fldName)
 	}
+	
+	
 }
 
 

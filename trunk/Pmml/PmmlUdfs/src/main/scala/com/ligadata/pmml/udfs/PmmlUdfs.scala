@@ -190,122 +190,33 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     true
   }
 
-  /** if expressions */
-
-  def If(boolexpr: Boolean): Boolean = {
-    boolexpr
-  }
-
-  //def If(boolexpr: Boolean, expr1: Any, expr2: Any): Any = {
-  //  if (boolexpr) expr1 else expr2
-  //}
+  /** if UDF no longer used... native scala if pred { tAction } else { fAction } generated for short circuit 
 
   def If[T](boolexpr: Boolean, expr1: T, expr2: T): T = {
     if (boolexpr) expr1 else expr2
-  }
+  } 
+  
+  */
 
 
   /** logical and */
-  def And(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    (boolexpr && boolexpr1)
+  def And(boolexpr : Boolean*): Boolean = {
+	boolexpr.reduceLeft(_ && _) 
   }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2)
+  
+  def IntAnd(boolexpr : Int*): Boolean = {
+	if (boolexpr.filter(_ == 0).size == 0) true else false 
   }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5)
-  }
-
-  def And(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
-    (boolexpr && boolexpr1 && boolexpr2 && boolexpr3 && boolexpr4 && boolexpr5 && boolexpr6)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0)
-  }
-
-  def And(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
-    (boolexpr != 0 && boolexpr1 != 0 && boolexpr2 != 0 && boolexpr3 != 0 && boolexpr4 != 0 && boolexpr5 != 0 && boolexpr6 != 0)
-  }
-
+  
   /** logical or */
- def Or(boolexpr: Boolean, boolexpr1: Boolean): Boolean = {
-    (boolexpr || boolexpr1)
+  def Or(boolexpr : Boolean*): Boolean = {
+	boolexpr.reduceLeft(_ || _) 
   }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2)
+  
+  def IntOr(boolexpr : Int*): Boolean = {
+	if (boolexpr.filter(_ != 0).size > 0) true else false 
   }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5)
-  }
-
-  def Or(boolexpr: Boolean, boolexpr1: Boolean, boolexpr2: Boolean, boolexpr3: Boolean, boolexpr4: Boolean, boolexpr5: Boolean, boolexpr6: Boolean): Boolean = {
-    (boolexpr || boolexpr1 || boolexpr2 || boolexpr3 || boolexpr4 || boolexpr5 || boolexpr6)
-  }
-
-  def Or(boolexprs: ArrayBuffer[Boolean]): Boolean = {
-    boolexprs.reduceLeft(_ || _)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0)
-  }
-
-  def Or(boolexpr: Int, boolexpr1: Int, boolexpr2: Int, boolexpr3: Int, boolexpr4: Int, boolexpr5: Int, boolexpr6: Int): Boolean = {
-    (boolexpr != 0 || boolexpr1 != 0 || boolexpr2 != 0 || boolexpr3 != 0 || boolexpr4 != 0 || boolexpr5 != 0 || boolexpr6 != 0)
-  }
+  
 
   def IsIn(fldRefExpr: String, setExprs: ArrayBuffer[String]): Boolean = {
     setExprs.filter(_ == fldRefExpr).length > 0
@@ -2644,8 +2555,75 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     round(expr)
   }
 
-  /** isMissing, isNotMissing */
-
+  /** 
+   *  IsMissing determines if the named field DOES NOT exist or EXISTS but with no legal value.
+   *  
+   *  @param ctx the runtime context for a given model
+   *  @param fldName the name of the field being sought... it can be compound '.' qualified name
+   *  
+   *  NOTE: Compound names are currently limited to two names (e.g., container.fld).  This will change
+   *  when metadata is made available to the runtime context for the models. 
+   *  
+   */
+  def IsMissing(ctx : Context, fldName : String) : Boolean = {
+	  val nameParts : Array[String] = if (fldName.contains(".")) {
+		  fldName.split('.')
+	  } else {
+		  Array(fldName)
+	  }
+	  /** if just one name, look in dictionaries */
+	  val notMissing : Boolean = if (nameParts.size == 1) {
+		  ctx.valueSetFor(fldName)
+	  } else {
+		  /** 
+		   *  Obtain the MessageContainerBase for the message or container ... for now just the first namePart
+		   *  FIXME: This will change when derived concepts (ModelNamespace.ModelName.field) are introduced 
+		   */
+		  if (nameParts.size == 2) {
+			  val msgContainerName : String = nameParts(0)
+			  val fieldName : String = nameParts(1)
+			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(fldName)) {
+				  ctx.xDict.apply(fldName).asInstanceOf[MessageContainerBase]
+			  } else {
+				  if (ctx.isFieldInDataDict(fldName)) {
+					  ctx.dDict.apply(fldName).asInstanceOf[MessageContainerBase]
+				  } else {
+					  null
+				  }
+			  }
+		
+			  val itsThere : Boolean = if (msgOrContainer != null) {
+				  (msgOrContainer.IsFixed || (msgOrContainer.IsKv && (msgOrContainer.getOrElse(fieldName,null) != null)))
+			  } else {
+				  false
+			  }
+			  itsThere
+		  } else {
+			  logger.error("Unable to handle isMissing tests on container of containers at this time... more complete solution coming...")
+			  logger.error("... need metadata manager to find type information at runtime to walk down hierarchies > 2 levels.")
+			  false
+		  }	  
+	  }
+    
+	  (! notMissing)
+  }
+  
+  
+  /** 
+   *  IsNotMissing determines if the named field exists with a legal value.
+   *  
+   *  @param ctx the runtime context for a given model
+   *  @param fldName the name of the field being sought... it can be compound '.' qualified name
+   *  
+   *  NOTE: Compound names are currently limited to two names (e.g., container.fld).  This will change
+   *  when metadata is made available to the runtime context for the models. 
+   *  
+   */
+  def IsNotMissing(ctx : Context, fldName : String) : Boolean = {
+	  (! IsMissing(ctx,fldName))
+  }
+  
+  /** other pmml builtins */
   def uppercase(str: String): String = {
     str.toUpperCase()
   }

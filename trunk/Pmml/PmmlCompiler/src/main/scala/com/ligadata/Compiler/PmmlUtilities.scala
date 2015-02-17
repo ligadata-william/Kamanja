@@ -206,9 +206,11 @@ object PmmlTypes extends LogTrait {
   	
   	def scalaBuiltinNameFcnSelector(opname : String) : String = {
 		val fcnName = opname match {
-		      case "if" => "If"
-		      case "or" => "Or"
-		      case "and" => "And"
+		      case "if" => "if"
+		      case "or" => "or"
+		      case "and" => "and"
+		      case "IntOr" => "IntOr"  /** equivalent to 'or' but with int args ... renamed to avoid dup type due to type erasure */
+		      case "IntAnd" => "IntAnd"   /** equivalent to 'and' but with int args ... renamed to avoid dup type due to type erasure */
 		      case "xor" => "Xor"
 		      case "equal" => "Equal"
 		      case "notEqual" => "NotEqual"
@@ -221,8 +223,8 @@ object PmmlTypes extends LogTrait {
 		      case "lessOrEqual" => "LessOrEqual"
 		      case "greaterThan" => "GreaterThan"
 		      case "greaterOrEqual" => "GreaterOrEqual"
-		      case "isMissing" => "IsMissing"
-		      case "isNotMissing" => "IsNotMissing"
+		      /**case "isMissing" => "IsMissing"   these are not simple functions ... they are macros ... need to go through macro logic 
+		         case "isNotMissing" => "IsNotMissing"*/
 		      case "isIn" => "IsIn"
 		      case "isNotIn" => "IsNotIn"
 		      case _  => "Unknown Operator"
