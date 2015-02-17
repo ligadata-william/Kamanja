@@ -31,7 +31,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x contains "com.esotericsoftware.minlog/minlog/pom.properties" => MergeStrategy.first
     case x if x contains "org\\objectweb\\asm\\" => MergeStrategy.last
     case x if x contains "org/objectweb/asm/" => MergeStrategy.last
-    case x if x endsWith "ArrayStack.class" =>  MergeStrategy.last
+    case x if x contains "org/apache/commons/collections" =>  MergeStrategy.last
+    case x if x contains "org\\apache\\commons\\collections" =>  MergeStrategy.last
     case "log4j.properties" => MergeStrategy.first
     case "unwanted.txt"     => MergeStrategy.discard
     case x => old(x)
@@ -39,7 +40,7 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
 }
 
 excludedJars in assembly <<= (fullClasspath in assembly) map { cp => 
-  val excludes = Set("commons-beanutils-1.7.0.jar", "google-collections-1.0.jar", "commons-collections-3.2.1.jar" )
+  val excludes = Set("commons-beanutils-1.7.0.jar", "google-collections-1.0.jar", "commons-collections4-4.0.jar" )
   cp filter { jar => excludes(jar.data.getName) }
 }
 

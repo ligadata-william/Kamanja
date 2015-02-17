@@ -32,7 +32,7 @@ class UpdateMessageService(requestContext: RequestContext) extends Actor {
 	
 	def process(messageJson:String, formatType:String) = {
 	  
-		log.info("Requesting AddMessage {},{}",messageJson,formatType)
+		log.info("Requesting Update {},{}",messageJson,formatType)
 		
 		val apiResult = MetadataAPIImpl.UpdateMessage(messageJson,formatType)
 		

@@ -46,25 +46,25 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
     var apiResult:Array[String] = new Array[String](0)
 
     objectType match {
-      case "Model" => {
+      case "model" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
       }
-      case "Message" => {
+      case "message" => {
 	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
       }
-      case "Container" => {
+      case "container" => {
 	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
       }
-      case "Function" => {
+      case "function" => {
 	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
       }
-      case "Concept" => {
+      case "concept" => {
 	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
       }
-      case "Type" => {
+      case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
       }
-      case "ALL" => {
+      case "all" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
 		      MetadataAPIImpl.GetAllMessagesFromCache(true) ++
 		      MetadataAPIImpl.GetAllContainersFromCache(true) ++

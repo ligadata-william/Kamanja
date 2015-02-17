@@ -48,7 +48,7 @@ excludedJars in assembly <<= (fullClasspath in assembly) map
 {
 	cp => val excludes = Set("google-collections-1.0.jar"
 						, "commons-beanutils-1.7.0.jar"
-						, "commons-collections-3.2.1.jar"
+						, "commons-collections4-4.0.jar"
 						, "slf4j-log4j12-1.7.5.jar")
 		   cp filter { jar => excludes(jar.data.getName) }
 }

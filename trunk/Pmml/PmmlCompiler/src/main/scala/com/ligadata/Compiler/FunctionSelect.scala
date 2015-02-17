@@ -652,11 +652,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *          	unchanged.
 	 *           	b) Change the member types to Any keeping the outer collection the same.
 	 *            	c) If the returnTypes array has a type or types in it, use it as the member types
-	 *  	relaxation 2) If there are containers in the argument list, collect the superclasses
+	 *      relaxation 2) If there is or more functions by this name that have been marked HAS_INDEFINITE_ARITY,
+	 *      		create a function key according to that FunctionDef's type signature.
+	 *  	relaxation 3) If there are containers in the argument list, collect the superclasses
 	 *   			for each of them, find the first abstract or trait and use it
-	 *      relaxation 3) Change containers to Any
-	 *      relaxation 4) If there are scalars, broaden their width
-	 *      relaxation 5) Make all arguments "Any"
+	 *      relaxation 4) Change containers to Any
+	 *      relaxation 5) If there are scalars, broaden their width
+	 *      relaxation 6) Make all arguments "Any"
 	 *      
 	 *  @param fcnName the function' name
 	 *  @param argTypes the function's argument type info
@@ -678,7 +680,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  member type(s) is not changed. Non container arguments are left unchanged. In certain cases, it is possible
 	  	 *  to have no candidates returned... hence the guard.
 	  	 */
-	  	if (fcnName == "GroupBy") {
+	  	if (fcnName == "And") {
 	  		val debug : Boolean = true
 	  	}
 	  	val containerArgsWithPromotedMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypesToFirstTraitOrAbstractClass(argTypes)
@@ -737,6 +739,18 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  	
 	  	/** 2. */
 	  	/** 
+	  	 *  If one or more of the functions registered in the metadata with this name have the HAS_INDEFINITE_ARITY feature,
+	  	 *  produce keys for them. 
+	  	 */
+	  	val variadicFcns : scala.collection.immutable.Set[FunctionDef] = ctx.MetadataHelper.FunctionsAvailableWithIndefiniteArity(fcnName)
+	  	if (variadicFcns != null && variadicFcns.size > 0) {
+		  	variadicFcns.foreach(fcndef => {
+		  		relaxedKeys += fcndef.typeString
+		  	})
+	  	}
+	  		  	
+	  	/** 3. */
+	  	/** 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract
 	  	 *  class or trait 
 	  	 */
@@ -749,7 +763,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes2)
 	  	}
 	  		  	
-	  	/** 3. */
+	  	/** 4. */
 	  	val relaxedTypes3 : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		if (isContainer) {
@@ -760,7 +774,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	})
 	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes3)
 	  		  	
-	  	/** 4. */
+	  	/** 5. */
 	  	val relaxedTypes4 : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		arg match {
@@ -771,7 +785,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	})
 	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4)
 	  	
-	  	/** 5. */
+	  	/** 6. */
 	  	val relaxedTypes5 : Array[String] = argTypes.map( argInfo => {
 	  		"Any"
 	  	})

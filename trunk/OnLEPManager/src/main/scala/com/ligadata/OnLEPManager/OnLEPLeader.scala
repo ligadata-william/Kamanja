@@ -378,7 +378,7 @@ object OnLEPLeader {
             var totalMsgs = 0
             if (ptmpV != null) {
               val doneVal = uKV(indx)
-              if (doneVal._1.compareTo(ptmpV._1) == 0) {
+              if (doneVal != null && doneVal._1.compareTo(ptmpV._1) == 0) {
                 // Already written what ever we were processing. Just take this in the ignored list
                 pV = vals(indx)
                 // LOG.info("====================================> Key:%s found in process(ed) keys, Value is :%s. ProcessedVal: %s".format(uk._1, pV.Serialize, vals(indx).Serialize))
