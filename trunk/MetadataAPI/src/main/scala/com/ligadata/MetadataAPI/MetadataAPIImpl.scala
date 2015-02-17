@@ -110,6 +110,13 @@ object MetadataAPIImpl extends MetadataAPI {
   var zkc: CuratorFramework = null
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
+  
+  // For future debugging  purposes, we want to know which properties were not set - so create a set
+  // of values that can be set via our config files
+  var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST",
+                               "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE",
+                               "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
+                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -4576,7 +4583,8 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   /**
-   * 
+   * setPropertyFromConfigFile - convert a specific KEY:VALUE pair in the config file into the
+   * KEY:VALUE pair in the  Properties object
    */
   private def setPropertyFromConfigFile(key:String, value:String) {  
     var finalKey = key
@@ -4593,7 +4601,9 @@ object MetadataAPIImpl extends MetadataAPI {
     // so we set the JAR_PATH if it was never set.. no worries, if JAR_PATH comes later, it willsimply
     // overwrite the value.
     if (key.equalsIgnoreCase("JAR_TARGET_DIR") && (metadataAPIConfig.getProperty("JAR_PATHS")==null)) {
-      metadataAPIConfig.setProperty("JAR_PATHS", value)
+      metadataAPIConfig.setProperty("JAR_PATHS", finalValue)
+      logger.trace("JAR_PATHS = " + value)
+      pList = pList - "JAR_PATHS"
     }
     
     // Special case 2.. MetadataLocation must set 2 properties in the config object.. 1. prop set by DATABASE_HOST,
@@ -4601,6 +4611,10 @@ object MetadataAPIImpl extends MetadataAPI {
     if (key.equalsIgnoreCase("MetadataLocation")) {
       metadataAPIConfig.setProperty("DATABASE_LOCATION", finalValue)
       metadataAPIConfig.setProperty("DATABASE_HOST", finalValue)
+      logger.trace("DATABASE_LOCATION  = " + finalValue)
+       pList = pList - "DATABASE_LOCATION"
+      logger.trace("DATABASE_HOST  = " + finalValue)
+       pList = pList - "DATABASE_HOST"
       return
     }
     
@@ -4617,9 +4631,16 @@ object MetadataAPIImpl extends MetadataAPI {
     if (key.equalsIgnoreCase("MetadataSchemaName")) {
       finalKey = "DATABASE_SCHEMA"
     } 
+    
+    // Special case 4: DATABASE can come under DATABASE or MetaDataStoreType
+    if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
+      finalKey = "DATABASE"
+    }
   
     // Store the Key/Value pair
     metadataAPIConfig.setProperty(finalKey.toUpperCase, finalValue)
+    logger.trace(finalKey.toUpperCase + " = " + value)
+    pList = pList - finalKey.toUpperCase
   }
 
 
@@ -4641,182 +4662,19 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.error("Failed to load configuration")
         return
       }
+      
+      // some zookeper vals can be safely defaulted to.
+      setPropertyFromConfigFile("ZK_SESSION_TIMEOUT_MS","3000")
+      setPropertyFromConfigFile("ZK_CONNECTION_TIMEOUT_MS","3000")
 
+      // Loop through and set the rest of the values.
       val eProps1 = prop.propertyNames();
       while (eProps1.hasMoreElements()) {
         val key = eProps1.nextElement().asInstanceOf[String]
         val value = prop.getProperty(key);
-        logger.trace("The key=" + key + ", to value=" + value);
         setPropertyFromConfigFile(key,value)
       }
-/*
-      var database = null
-      var database_host = null
-      var database_schema = null
-      var database_location = null
-      var jar_target_dir = null
-      var jar_paths: String = null
-      var scala_home = null
-      var java_home = null
-      var manifest_path = null
-      var classpath = null
-      var notify_engine = null
-      var znode_path = null
-      var zookeeper_connect_string = null
-      var node_id = null
-      var service_host = null
-      var service_port = null
-      var api_leader_selection_zk_node = null
-      var zk_session_timeout_ms = null
-      var zk_connection_timeout_ms = null
-      var config_files_dir = null
-      var model_files_dir = null
-      var message_files_dir =  null
-      var container_files_dir = null
-      var function_files_dir = null
-      var concept_files_dir = null
-      var type_files_dir = null
-      var compiler_work_dir = null
-      var model_exec_log = null
-
-      val eProps2 = prop.propertyNames();
-      while (eProps2.hasMoreElements()) {
-        val key = eProps2.nextElement().asInstanceOf[String]
-        val value = prop.getProperty(key);
-        logger.trace("The key=" + key + "; value=" + value);
-        if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
-          database = value
-          logger.trace("database => " + database)
-      
-      
-      
-        } else if (key.equalsIgnoreCase("DATABASE_HOST")) {
-          if (database_host == null) {
-            // Make sure you dont over-write the MetadataLocation value, which takes precedense here
-            database_host = value
-            logger.trace("database_host => " + database_host)
-          }
-        } else if (key.equalsIgnoreCase("MetadataLocation")) {
-          database_host = value
-          database_location = value
-          logger.trace("database_host => " + database_host + ", database_location(applicable to treemap or hashmap only) => " + database_location)
-        } else if (key.equalsIgnoreCase("DATABASE_SCHEMA") || key.equalsIgnoreCase("MetadataSchemaName")) {
-          database_schema = value
-          logger.trace("database_schema(applicable to cassandra only) => " + database_schema)
-        } else if (key.equalsIgnoreCase("DATABASE_LOCATION")) {
-          database_location = value
-          logger.trace("database_location(applicable to treemap or hashmap only) => " + database_location)
-         
-         
-         
-        } else if (key.equalsIgnoreCase("JAR_TARGET_DIR")) {
-          metadataAPIConfig.setProperty("JAR_TARGET_DIR", value)
-          logger.trace("JAR_TARGET_DIR => " + value)
-        } else if (key.equalsIgnoreCase("JarPaths") || key.equalsIgnoreCase("JAR_PATHS")) {
-          jar_paths = value
-          logger.trace("JarPaths => " + jar_paths)
-        } else if (key.equalsIgnoreCase("SCALA_HOME")) {
-          metadataAPIConfig.setProperty("SCALA_HOME", value)
-          logger.trace("SCALA_HOME => " + value)
-        } else if (key.equalsIgnoreCase("JAVA_HOME")) {
-          metadataAPIConfig.setProperty("JAVA_HOME", value)
-          logger.trace("JAVA_HOME => " + value)
-        } else if (key.equalsIgnoreCase("MANIFEST_PATH")) {
-          metadataAPIConfig.setProperty("MANIFEST_PATH", value)
-          logger.trace("MANIFEST_PATH => " + value)
-        } else if (key.equalsIgnoreCase("CLASSPATH")) {
-          metadataAPIConfig.setProperty("CLASSPATH", value)
-          logger.trace("CLASSPATH => " + value)
-        } else if (key.equalsIgnoreCase("NOTIFY_ENGINE")) {
-          metadataAPIConfig.setProperty("NOTIFY_ENGINE", value)
-          logger.trace("NOTIFY_ENGINE => " + value)
-        } else if (key.equalsIgnoreCase("ZNODE_PATH")) {
-          metadataAPIConfig.setProperty("ZNODE_PATH", value)
-          logger.trace("ZNODE_PATH => " + value)
-        } else if (key.equalsIgnoreCase("ZOOKEEPER_CONNECT_STRING")) {
-          metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING", value)
-          logger.trace("ZOOKEEPER_CONNECT_STRING => " + value)
-        } else if (key.equalsIgnoreCase("NODE_ID")) {
-          metadataAPIConfig.setProperty("NODE_ID", value)
-          logger.trace("NODE_ID => " + value)
-        } else if (key.equalsIgnoreCase("SERVICE_HOST")) {
-          metadataAPIConfig.setProperty("SERVICE_HOST", value)
-          logger.trace("SERVICE_HOST => " + value)
-        } else if (key.equalsIgnoreCase("SERVICE_PORT")) {
-          metadataAPIConfig.setProperty("SERVICE_PORT", value)
-          logger.trace("SERVICE_PORT => " + value)
-        } else if (key.equalsIgnoreCase("API_LEADER_SELECTION_ZK_NODE")) {
-          metadataAPIConfig.setProperty("API_LEADER_SELECTION_ZK_NODE", value)
-          logger.trace("API_LEADER_SELECTION_ZK_NODE => " + value)
-        } else if (key.equalsIgnoreCase("ZK_SESSION_TIMEOUT_MS")) {
-          metadataAPIConfig.setProperty("ZK_SESSION_TIMEOUT_MS", value)
-          logger.trace("ZK_SESSION_TIMEOUT_MS => " + value)
-        } else if (key.equalsIgnoreCase("ZK_CONNECTION_TIMEOUT_MS")) {
-          metadataAPIConfig.setProperty("ZK_CONNECTION_TIMEOUT_MS", value)
-          logger.trace("ZK_CONNECTION_TIMEOUT_MS => " + value)
-        } else if (key.equalsIgnoreCase("MODEL_FILES_DIR")) {
-          model_files_dir = value
-          logger.trace("MODEL_FILES_DIR => " + model_files_dir)
-        } else if (key.equalsIgnoreCase("CONFIG_FILES_DIR")) {
-          metadataAPIConfig.setProperty("CONFIG_FILES_DIR", value)
-          logger.trace("CONFIG_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("MESSAGE_FILES_DIR")) {
-          metadataAPIConfig.setProperty("MESSAGE_FILES_DIR", value)
-          logger.trace("MESSAGE_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("CONTAINER_FILES_DIR")) {
-          metadataAPIConfig.setProperty("CONTAINER_FILES_DIR", value)
-          logger.trace("CONTAINER_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("CONCEPT_FILES_DIR")) {
-          metadataAPIConfig.setProperty("CONCEPT_FILES_DIR", value)
-          logger.trace("CONCEPT_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("FUNCTION_FILES_DIR")) {
-          metadataAPIConfig.setProperty("FUNCTION_FILES_DIR", value)
-          logger.trace("FUNCTION_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("TYPE_FILES_DIR")) {
-          metadataAPIConfig.setProperty("TYPE_FILES_DIR", value)
-          logger.trace("TYPE_FILES_DIR => " + value)
-        } else if (key.equalsIgnoreCase("COMPILER_WORK_DIR")) {
-          metadataAPIConfig.setProperty("COMPILER_WORK_DIR", value)
-          logger.trace("COMPILER_WORK_DIR => " + value)
-        } else if (key.equalsIgnoreCase("MODEL_EXEC_LOG")) {
-          metadataAPIConfig.setProperty("MODEL_EXEC_LOG", value)
-          logger.trace("MODEL_EXEC_LOG => " + value)
-        }
-      }
-      
-      metadataAPIConfig.setProperty("ROOT_DIR", root_dir)
-      metadataAPIConfig.setProperty("DATABASE", database)
-      metadataAPIConfig.setProperty("DATABASE_HOST", database_host)
-      metadataAPIConfig.setProperty("DATABASE_SCHEMA", database_schema)
-      metadataAPIConfig.setProperty("DATABASE_LOCATION", database_location)
-      metadataAPIConfig.setProperty("GIT_ROOT", git_root)
-      metadataAPIConfig.setProperty("JAR_TARGET_DIR", jar_target_dir)
-      val jp = if (jar_paths != null) jar_paths else jar_target_dir
-      val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
-      metadataAPIConfig.setProperty("JAR_PATHS", j_paths.mkString(","))
-      metadataAPIConfig.setProperty("SCALA_HOME", scala_home)
-      metadataAPIConfig.setProperty("JAVA_HOME", java_home)
-      metadataAPIConfig.setProperty("MANIFEST_PATH", manifest_path)
-      metadataAPIConfig.setProperty("CLASSPATH", classpath)
-      metadataAPIConfig.setProperty("NOTIFY_ENGINE", notify_engine)
-      metadataAPIConfig.setProperty("ZNODE_PATH", znode_path)
-      metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING", zookeeper_connect_string)
-      metadataAPIConfig.setProperty("NODE_ID", node_id)
-      metadataAPIConfig.setProperty("SERVICE_HOST", service_host)
-      metadataAPIConfig.setProperty("SERVICE_PORT", service_port)
-      metadataAPIConfig.setProperty("API_LEADER_SELECTION_ZK_NODE", api_leader_selection_zk_node)
-      metadataAPIConfig.setProperty("ZK_SESSION_TIMEOUT_MS", zk_session_timeout_ms)
-      metadataAPIConfig.setProperty("ZK_CONNECTION_TIMEOUT_MS", zk_connection_timeout_ms)
-      metadataAPIConfig.setProperty("CONFIG_FILES_DIR", config_files_dir)
-      metadataAPIConfig.setProperty("MODEL_FILES_DIR", model_files_dir)
-      metadataAPIConfig.setProperty("TYPE_FILES_DIR", type_files_dir)
-      metadataAPIConfig.setProperty("FUNCTION_FILES_DIR", function_files_dir)
-      metadataAPIConfig.setProperty("CONCEPT_FILES_DIR", concept_files_dir)
-      metadataAPIConfig.setProperty("MESSAGE_FILES_DIR", message_files_dir)
-      metadataAPIConfig.setProperty("CONTAINER_FILES_DIR", container_files_dir)
-      metadataAPIConfig.setProperty("COMPILER_WORK_DIR", compiler_work_dir)
-      metadataAPIConfig.setProperty("MODEL_EXEC_LOG", model_exec_log) */
-
+      pList.map(v => logger.error(v+" remains unset"))
       propertiesAlreadyLoaded = true;
 
     } catch {
