@@ -1529,9 +1529,14 @@ class MdMgr {
   @throws(classOf[NoSuchElementException])
   def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): MessageDef = {
 
-    if (Message(nameSpace, name, ver, false) != None) {
-      throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+    val latestActiveMessage = Message(nameSpace, name, -1, false)  
+    if (latestActiveMessage != None) {
+      //Only make a message if the version is greater then the last known version already in the system.
+      if (latestActiveMessage.get.Version >= ver) {
+        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
+      } 
     }
+    
     var msg: MessageDef = new MessageDef
     msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1547,9 +1552,15 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
-    if (Container(nameSpace, name, ver, false) != None) {
-      throw new AlreadyExistsException(s"Container $nameSpace.$name already exists.")
+  
+    val latestActiveContainer = Container(nameSpace, name, -1, false)  
+    if (latestActiveContainer != None) {
+      //Only make a message if the version is greater then the last known version already in the system.
+      if (latestActiveContainer.get.Version >= ver) {
+        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
+      } 
     }
+    
     var container = new ContainerDef
     container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
