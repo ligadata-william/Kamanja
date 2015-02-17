@@ -19,7 +19,7 @@ case class TypeDef(MetadataType:String, NameSpace: String, Name: String, TypeTyp
 case class TypeDefList(Types: List[TypeDef])
 
 case class Argument(ArgName: String, ArgTypeNameSpace:String, ArgTypeName: String)
-case class Function(NameSpace:String, Name:String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Features : List[String], Version:String, JarName: String, DependantJars: List[String])
+case class Function(NameSpace:String, Name:String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Version:String, JarName: String, DependantJars: List[String])
 case class FunctionList(Functions: List[Function])
 
 //case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String,Description: String, Author: String, ActiveDate: String)
@@ -102,13 +102,9 @@ object JsonSerializer {
       funcList.Functions.map( fn => {
 	try{
 	  val argList = fn.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-	  var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]() 
-	  if (fn.Features != null) {
-		  fn.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
-	  } 
 	  val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace,fn.Name,fn.PhysicalName,
 					   (fn.ReturnTypeNameSpace,fn.ReturnTypeName),
-					   argList,featureSet,
+					   argList,null,
 					   fn.Version.toInt,
 					   fn.JarName,
 					   fn.DependantJars.toArray)
@@ -283,13 +279,13 @@ object JsonSerializer {
       conceptList.Concepts.map(o => {
 	try{
 	  //logger.trace("Create Concept for " + o.NameSpace + "." + o.Name)
-	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace.toLowerCase,
-						o.Name.toLowerCase,
-						o.TypeNameSpace.toLowerCase,
-						o.TypeName.toLowerCase,
+	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
+						o.Name,
+						o.TypeNameSpace,
+						o.TypeName,
 						o.Version.toInt,
-						true)
-	  logger.trace("Created AttributeDef for " + o.NameSpace.toLowerCase + "." + o.Name.toLowerCase)
+						false)
+	  logger.trace("Created AttributeDef for " + o.NameSpace + "." + o.Name)
 	  attrDefList(i) =  attr
 	  i = i + 1
 	} catch {
@@ -351,16 +347,13 @@ object JsonSerializer {
       val concept = json.extract[DerivedConcept]
       val attrList = concept.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, attr.CollectionType.get))
       val argList = concept.FunctionDefinition.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-      var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
-	  concept.FunctionDefinition.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
-
       val func = MdMgr.GetMdMgr.MakeFunc(concept.FunctionDefinition.NameSpace,
 					 concept.FunctionDefinition.Name,
 					 concept.FunctionDefinition.PhysicalName,
 					 (concept.FunctionDefinition.ReturnTypeNameSpace,
 					  concept.FunctionDefinition.ReturnTypeName),
 					 argList,
-					 featureSet,
+					 null,
 					 concept.FunctionDefinition.Version.toInt,
 					 concept.FunctionDefinition.JarName,
 					 concept.FunctionDefinition.DependantJars.toArray)
@@ -482,17 +475,12 @@ object JsonSerializer {
 
       val functionInst = json.extract[Function]
       val argList = functionInst.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
-      var featureSet : scala.collection.mutable.Set[FcnMacroAttr.Feature] = scala.collection.mutable.Set[FcnMacroAttr.Feature]()
-	  if (functionInst.Features != null) {
-		  functionInst.Features.foreach(arg => featureSet += FcnMacroAttr.fromString(arg))
-	  } 
-
       val function = MdMgr.GetMdMgr.MakeFunc(functionInst.NameSpace,
 					     functionInst.Name,
 					     functionInst.PhysicalName,
 					     (functionInst.ReturnTypeNameSpace,functionInst.ReturnTypeName),
 					     argList,
-					     featureSet,
+					     null,
 					     functionInst.Version.toInt,
 					     functionInst.JarName,
 					     functionInst.DependantJars.toArray)
@@ -903,7 +891,6 @@ object JsonSerializer {
 				                ("ArgTypeName"      -> arg.Type.name)
 				              )
 				            }) ~
-				        ("Features"   -> o.features.map(_.toString).toList) ~
 		                ("Version"    -> o.ver) ~
 		                ("JarName"    -> o.jarName) ~
 		                ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList)~
