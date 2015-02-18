@@ -2374,7 +2374,6 @@ object MetadataAPIImpl extends MetadataAPI {
   def DeactivateModel(nameSpace: String, name: String, version: Int): String = {
     try {
       var key = nameSpace + "." + name + "." + version
-      logger.trace("Looking for "+key)
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
         case None =>
