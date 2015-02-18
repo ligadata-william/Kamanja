@@ -8,7 +8,7 @@ import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
+import com.ligadata.OnLEPBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
@@ -358,7 +358,7 @@ class OnLEPMetadata {
   }
 }
 
-object OnLEPMetadata {
+object OnLEPMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
@@ -727,6 +727,18 @@ object OnLEPMetadata {
 
     // Lock the global object here and update the global objects
     UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
+  }
+
+  override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {
+    var v: MsgContainerObjAndTransformInfo = null
+
+    v = getMessgeInfo(MsgContainerType)
+    if (v == null)
+      v = getContainer(MsgContainerType)
+    if (v == null)
+      return null
+
+    v.msgobj.CreateNewMessage
   }
 
   def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
