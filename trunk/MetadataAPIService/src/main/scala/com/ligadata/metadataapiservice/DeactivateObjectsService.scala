@@ -57,16 +57,13 @@ class DeactivateObjectsService(requestContext: RequestContext) extends Actor {
     }
 
     arg.ObjectType match {
-      case "Model" => {
- 	      apiResult = MetadataAPIImpl.DeactivateModel(nameSpace,arg.Name,version.toInt)
-	      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-	      resultStr = resultData
+      case "model" => {
+ 	      MetadataAPIImpl.DeactivateModel(nameSpace,arg.Name,version.toInt).toString
       }
       case _ => {
-	      resultStr = "Deactivate/Activate on " + arg.ObjectType + " is not supported yet "
+	      new ApiResult(-1, APIName, "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 
       }
     }
-    resultStr
   }
 
   def process(apiArgListJson: String) = {
@@ -82,11 +79,11 @@ class DeactivateObjectsService(requestContext: RequestContext) extends Actor {
       loop.breakable{
 	      arguments.foreach(arg => {
 	        if(arg.ObjectType == null ){
-	          resultStr = APIName + ":Error: The value of object type can't be null"
+	          resultStr = new ApiResult(-1, APIName, "Error: The value of object type can't be null").toString
 	          loop.break
 	        }
 	        if(arg.Name == null ){
-	          resultStr = APIName + ":Error: The value of object name can't be null"
+	          resultStr = new ApiResult(-1, APIName, "Error: The value of object name can't be null").toString
 	          loop.break
 	        }
 	        else {
@@ -96,7 +93,7 @@ class DeactivateObjectsService(requestContext: RequestContext) extends Actor {
       }
     }
     else{
-      resultStr = APIName + ":No arguments passed to the API, nothing much to do"
+      resultStr = new ApiResult(-1, APIName, "No arguments passed to the API, nothing much to do").toString 
     }
     requestContext.complete(resultStr)
   }
