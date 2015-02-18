@@ -1840,6 +1840,19 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (isNotMissingMacro,isNotMissingMacro)
 					,-1)	  
 		  
+		/** 
+		 *  Transaction id access
+		 *  no special macro needed for mapped ... 
+		 */
+		val getXidMacro : String =   """ctx.xId"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetXid"
+					, (MdMgr.sysNS, "Long")
+					, List()
+					, fcnMacrofeatures
+					, (getXidMacro,getXidMacro)
+					,-1)	  
 
 		/** 
 			DowncastArrayMbr Macro used to cast arrays of MessageContainerBase to arrays of some specified type
