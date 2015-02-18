@@ -2379,7 +2379,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.trace("No active model found => " + key)
-          var apiResult = new ApiResult(-1, "Failed to Fetch the model:(" + key + " may not be active", key)
+          var apiResult = new ApiResult(-1, "Failed to Fetch the model: " + key + " may not be active", key)
           apiResult.toString()
         case Some(m) =>
           logger.trace("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)

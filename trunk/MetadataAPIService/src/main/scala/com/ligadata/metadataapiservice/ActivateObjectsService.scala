@@ -57,16 +57,13 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
     }
 
     arg.ObjectType match {
-      case "Model" => {
-	apiResult = MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt)
-	val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-	resultStr = resultData
+      case "model" => {
+	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt).toString
       }
       case _ => {
-	resultStr = "Activate/Deactivate on " + arg.ObjectType + " is not supported yet "
+	      new ApiResult(-1, APIName, "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 
       }
     }
-    resultStr
   }
 
   def process(apiArgListJson: String) = {
@@ -80,23 +77,23 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
     if ( arguments.length > 0 ){
       var loop = new Breaks
       loop.breakable{
-	arguments.foreach(arg => {
-	  if(arg.ObjectType == null ){
-	    resultStr = APIName + ":Error: The value of object type can't be null"
-	    loop.break
-	  }
-	  if(arg.Name == null ){
-	    resultStr = APIName + ":Error: The value of object name can't be null"
-	    loop.break
-	  }
-	  else {
-	    resultStr = resultStr + ActivateObjectDef(arg)
-	  }
-	})
+	      arguments.foreach(arg => {
+	        if(arg.ObjectType == null ){
+	          resultStr =  new ApiResult(-1, APIName, "Error: The value of object type can't be null").toString
+	          loop.break
+	        }
+	        if(arg.Name == null ){
+	          resultStr = new ApiResult(-1, APIName, "Error: The value of object name can't be null").toString 
+	          loop.break
+	        }
+	        else {
+	          resultStr = resultStr + ActivateObjectDef(arg)
+	        }
+	      })
       }
     }
     else{
-      resultStr = APIName + ":No arguments passed to the API, nothing much to do"
+      resultStr = new ApiResult(-1, APIName, "No arguments passed to the API, nothing much to do").toString 
     }
     requestContext.complete(resultStr)
   }

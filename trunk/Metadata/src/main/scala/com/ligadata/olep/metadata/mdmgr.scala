@@ -190,7 +190,7 @@ class MdMgr {
                 if (elm == None || maxVer < e.Version) {
                   elm = Some(e)
                   maxVer = e.Version
-                }                
+                }
               }
             })
           }
@@ -213,7 +213,7 @@ class MdMgr {
       elems match {
         case None => None
         case Some(es) => {
-          if (onlyActive) Some(es.filter(e => {e.IsActive && !e.IsDeleted}).toSet) else Some(es.filter(e => !e.IsDeleted).toSet)
+          if (onlyActive) Some(es.filter(e => { e.IsActive && !e.IsDeleted }).toSet) else Some(es.filter(e => !e.IsDeleted).toSet)
         }
       }
     } else {
@@ -483,8 +483,7 @@ class MdMgr {
 
   /** Answer the BaseTypeDef with the supplied key  */
   def Type(key: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
-  
-  
+
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
     val typ: Option[BaseTypeDef] = GetReqValue(Types(key.toLowerCase(), true, false), -1)
@@ -560,8 +559,8 @@ class MdMgr {
         case Some(fs) => {
           var newFns = scala.collection.mutable.Map[String, FunctionDef]()
           fs.foreach(f => {
-            if ( !f.IsDeleted &&
-                (onlyActive == false || (onlyActive && f.IsActive))) {
+            if (!f.IsDeleted &&
+              (onlyActive == false || (onlyActive && f.IsActive))) {
               val fnm = f.FullName // this returns like system.fn1(int, int)
               val existingFn = newFns.getOrElse(fnm, null)
               if (existingFn == null || existingFn.Version < f.Version)
@@ -584,7 +583,7 @@ class MdMgr {
     }
     fcns
   }
-  
+
   /* full key name and full arguments names */
   def Function(key: String, args: List[String], ver: Int, onlyActive: Boolean): Option[FunctionDef] = {
     // get functions which match to key & arguments
@@ -1529,14 +1528,14 @@ class MdMgr {
   @throws(classOf[NoSuchElementException])
   def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): MessageDef = {
 
-    val latestActiveMessage = Message(nameSpace, name, -1, false)  
+    val latestActiveMessage = Message(nameSpace, name, -1, false)
     if (latestActiveMessage != None) {
       //Only make a message if the version is greater then the last known version already in the system.
       if (latestActiveMessage.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
-      } 
+        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+      }
     }
-    
+
     var msg: MessageDef = new MessageDef
     msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1552,15 +1551,15 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
-  
-    val latestActiveContainer = Container(nameSpace, name, -1, false)  
+
+    val latestActiveContainer = Container(nameSpace, name, -1, false)
     if (latestActiveContainer != None) {
       //Only make a message if the version is greater then the last known version already in the system.
       if (latestActiveContainer.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
-      } 
+        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+      }
     }
-    
+
     var container = new ContainerDef
     container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1588,8 +1587,12 @@ class MdMgr {
   @throws(classOf[NoSuchElementException])
   def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MessageDef = {
 
-    if (Message(nameSpace, name, -1, false) != None) {
-      throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+    val latestActiveMessage = Message(nameSpace, name, -1, false)
+    if (latestActiveMessage != None) {
+      //Only make a message if the version is greater then the last known version already in the system.
+      if (latestActiveMessage.get.Version >= ver) {
+        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+      }
     }
 
     var msg: MessageDef = new MessageDef
@@ -1607,9 +1610,15 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): ContainerDef = {
-    if (Container(nameSpace, name, -1, false) != None) {
-      throw new AlreadyExistsException(s"Container$nameSpace.$name already exists.")
+
+    val latestActiveContainer = Container(nameSpace, name, -1, false)
+    if (latestActiveContainer != None) {
+      //Only make a message if the version is greater then the last known version already in the system.
+      if (latestActiveContainer.get.Version >= ver) {
+        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+      }
     }
+
     var container = new ContainerDef
     container.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -2580,6 +2589,35 @@ object MdMgr extends LogTrait {
   /** Helper function to form a proper search key */
   def MkFullNameWithVersion(nameSpace: String, name: String, ver: Int): String = (nameSpace.trim + "." + name.trim + "." + ver).toLowerCase // Ignoring version for now
 
+  private def CheckVerDigits(value: Int, orgVerInfo: String): Unit = {
+    if (value < 0 || value > 99)
+      throw new Exception("Expecting only 0 to 99 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
+  }
+
+  // Make sure the version is in the format of nn.nn.nn
+  def FormatVersion(verInfo: String): String = {
+    /*
+	    //BUGBUG:: This is returning non found matches, may be better to go with split
+		val numPattern = "[0-9]+".r
+		val verParts = numPattern.findAllIn(verInfo).toList
+	*/
+    val verParts = verInfo.split("\\.")
+    var major = (if (verParts.size > 0) verParts(0).toInt else 0)
+    var mini = (if (verParts.size > 1) verParts(1).toInt else 0)
+    var micro = (if (verParts.size > 2) verParts(2).toInt else 0)
+
+    CheckVerDigits(major, verInfo)
+    CheckVerDigits(mini, verInfo)
+    CheckVerDigits(micro, verInfo)
+
+    val retVerInfo = "%02d.%02d.%02d".format(major, mini, micro)
+    retVerInfo
+  }
+
+  // Expecting Formatted version as input
+  def ConvertVersionToInt(verInfo: String): Int = {
+    verInfo.replaceAll("[.]", "").toInt
+  }
 }
 
 
