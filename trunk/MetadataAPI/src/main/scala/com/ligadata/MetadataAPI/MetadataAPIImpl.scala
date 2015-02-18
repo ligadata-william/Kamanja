@@ -4636,6 +4636,11 @@ object MetadataAPIImpl extends MetadataAPI {
     if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
       finalKey = "DATABASE"
     }
+    
+    // Special case 5: NodeId or Node_ID is possible
+    if (key.equalsIgnoreCase("NODE_ID") || key.equalsIgnoreCase("NODEID")) {
+      finalKey = "NODE_ID"
+    }
   
     // Store the Key/Value pair
     metadataAPIConfig.setProperty(finalKey.toUpperCase, finalValue)
