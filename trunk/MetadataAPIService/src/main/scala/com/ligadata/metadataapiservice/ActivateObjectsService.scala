@@ -57,13 +57,13 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
     }
 
     arg.ObjectType match {
-      case "Model" => {
-	apiResult = MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt)
-	val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-	resultStr = resultData
+      case "model" => {
+	      apiResult = MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt)
+	      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+	      resultStr = resultData
       }
       case _ => {
-	resultStr = "Activate/Deactivate on " + arg.ObjectType + " is not supported yet "
+	      resultStr = "Activate/Deactivate on " + arg.ObjectType + " is not supported yet "
       }
     }
     resultStr
@@ -80,19 +80,19 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
     if ( arguments.length > 0 ){
       var loop = new Breaks
       loop.breakable{
-	arguments.foreach(arg => {
-	  if(arg.ObjectType == null ){
-	    resultStr = APIName + ":Error: The value of object type can't be null"
-	    loop.break
-	  }
-	  if(arg.Name == null ){
-	    resultStr = APIName + ":Error: The value of object name can't be null"
-	    loop.break
-	  }
-	  else {
-	    resultStr = resultStr + ActivateObjectDef(arg)
-	  }
-	})
+	      arguments.foreach(arg => {
+	        if(arg.ObjectType == null ){
+	          resultStr = APIName + ":Error: The value of object type can't be null"
+	          loop.break
+	        }
+	        if(arg.Name == null ){
+	          resultStr = APIName + ":Error: The value of object name can't be null"
+	          loop.break
+	        }
+	        else {
+	          resultStr = resultStr + ActivateObjectDef(arg)
+	        }
+	      })
       }
     }
     else{
