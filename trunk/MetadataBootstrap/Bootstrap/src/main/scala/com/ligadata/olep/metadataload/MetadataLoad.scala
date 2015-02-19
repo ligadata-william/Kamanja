@@ -1289,7 +1289,9 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "WeeksAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.WeeksAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "MonthsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.MonthsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "YearsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.YearsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
-		
+	
+		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
 	}
 
 	def InitFcns = {

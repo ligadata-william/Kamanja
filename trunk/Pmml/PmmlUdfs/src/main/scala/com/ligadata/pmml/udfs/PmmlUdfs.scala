@@ -41,6 +41,31 @@ import com.ligadata.OnLEPBase._
  */
 object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
+  /** BaseMsg & BaseContainer access 
+      FIXME: There should only be one function for both BaseMsg and BaseContainer as they
+      inherit the MessageContainerBase trait where in fact the Version function exists.
+      This requires a more complete job of generating alternate function sig keys in FunctionSelect
+      Only the first trait is used.  Keys need to be generated for all of the traits.
+  */
+
+  def Version(msg : BaseMsg) : String = {
+      val ver : String = if (msg != null) {
+          msg.Version
+      } else {
+          "00.00.00"
+      }
+      ver
+  }
+
+  def Version(container : BaseContainer) : String = {
+      val ver : String = if (container != null) {
+          container.Version
+      } else {
+          "00.00.00"
+      }
+      ver
+  }
+
   /** Exists checking implemented in the EnvContext */
 
   def Contains(xId: Long, gCtx: EnvContext, containerName: String, key: String): Boolean = {
