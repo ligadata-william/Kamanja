@@ -113,8 +113,8 @@ object MetadataAPIImpl extends MetadataAPI {
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
-  var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST",
-                               "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE",
+  var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST","API_LEADER_SELECTION_ZK_NODE",
+                               "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
                                "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID")
   var isCassandra = false
@@ -4669,6 +4669,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       
       // some zookeper vals can be safely defaulted to.
+      setPropertyFromConfigFile("NODE_ID","Undefined")
+      setPropertyFromConfigFile("API_LEADER_SELECTION_ZK_NODE","/ligadata")
       setPropertyFromConfigFile("ZK_SESSION_TIMEOUT_MS","3000")
       setPropertyFromConfigFile("ZK_CONNECTION_TIMEOUT_MS","3000")
 
