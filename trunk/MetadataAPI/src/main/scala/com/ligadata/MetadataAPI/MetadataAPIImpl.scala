@@ -2989,19 +2989,18 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
       val o = MdMgr.GetMdMgr.Models(modDef.nameSpace.toLowerCase,
-        modDef.name.toLowerCase,
-        false,
-        true)
+                                    modDef.name.toLowerCase,
+                                    false,
+                                    true)
       o match {
         case None =>
           None
           logger.trace("model not in the cache => " + key)
           None
         case Some(m) =>
-          val model = GetLatestModelFromModels(m)
-          if (model != null) {
-            logger.trace("model found => " + model.asInstanceOf[ModelDef].FullNameWithVer)
-            Some(model.asInstanceOf[ModelDef])
+          if (m.size > 0) {
+            logger.trace("model found => " + m.head.asInstanceOf[ModelDef].FullNameWithVer)
+            Some(m.head.asInstanceOf[ModelDef])
           } else
             None   
       }
@@ -3011,24 +3010,6 @@ object MetadataAPIImpl extends MetadataAPI {
         throw new UnexpectedMetadataAPIException(e.getMessage())
       }
     }
-  }
-
-  //Get the Higher Version Model from the Set of Models
-  def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
-    var model: ModelDef = null
-    var verList: List[Int] = List[Int]()
-    var modelmap: scala.collection.mutable.Map[Int, ModelDef] = scala.collection.mutable.Map()
-    try {
-      modelSet.foreach(m => {
-        modelmap.put(m.Version, m)
-        verList = m.Version :: verList
-      })
-       model = modelmap.getOrElse(verList.max, null)
-    } catch {
-      case e: Exception =>
-        throw new Exception("Error in traversing Model set " + e.getMessage())
-    }
-    model
   }
 
   // Get the latest message for a given FullName
