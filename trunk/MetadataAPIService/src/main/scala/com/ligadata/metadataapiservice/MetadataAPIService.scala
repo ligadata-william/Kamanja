@@ -92,7 +92,7 @@ trait MetadataAPIService extends HttpService {
                 }
               }
             } else {
-              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "POST for api/"+ str)).toString)
+              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown POST route")).toString)
             }
           }
         }
@@ -140,7 +140,7 @@ trait MetadataAPIService extends HttpService {
         val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "PUT for api/"+ objtype)).toString)
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown PUT route")).toString)
     }
   }
   
@@ -155,7 +155,7 @@ trait MetadataAPIService extends HttpService {
        val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
        deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "PUT for api/"+ action + "/" + objtype + "/" + objKey)).toString)     
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown PUT route")).toString)     
     } 
   }
   
@@ -182,7 +182,7 @@ trait MetadataAPIService extends HttpService {
         val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "POST for api/"+ objtype)).toString)     
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown POST route")).toString)     
     } 
   }
   
@@ -195,7 +195,7 @@ trait MetadataAPIService extends HttpService {
       val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext)))
       allObjectKeysService ! GetAllObjectKeysService.Process(objtype)  
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "GET for api/keys"+ objtype)).toString) 
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString) 
     }
   }
   
@@ -211,7 +211,7 @@ trait MetadataAPIService extends HttpService {
         val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext)))
         getObjectsService ! GetObjectsService.Process(createGetArg(objKey,objtype))  
     } else {
-        rContext.complete((new ApiResult(-1, "Unknown URL", "GET for api/"+ objtype)).toString) 
+        rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString) 
     }
   }
   
@@ -227,7 +227,7 @@ trait MetadataAPIService extends HttpService {
       val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
       removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "DELETE for api/"+ objtype + "/" + objKey)).toString)     
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString)     
     }
   }
   
