@@ -92,7 +92,7 @@ trait MetadataAPIService extends HttpService {
                 }
               }
             } else {
-              requestContext => println ("UNKNOWN REQUEST - " + str)
+              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "POST for api/"+ str)).toString)
             }
           }
         }
