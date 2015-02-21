@@ -6,6 +6,7 @@ import spray.routing._
 import spray.http._
 import MediaTypes._
 import org.apache.log4j._
+import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
 
 
@@ -47,15 +48,16 @@ trait MetadataAPIService extends HttpService {
             logger.info("PUT: " + str)
             val toknRoute = str.split("/")
             if(toknRoute(0).equalsIgnoreCase("UploadJars")) {
-               entity(as[Array[Byte]]) { reqBody => {
-                 parameters('name) {jarName => 
-                   {
-                     logger.info("Uploading jar "+ jarName)
-                     requestContext => 
-                       val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext)))
-                       uploadJarService ! UploadJarService.Process(jarName,reqBody)
-                   }   
-                 }
+               entity(as[Array[Byte]]) { 
+                 reqBody => {
+                   parameters('name) {jarName => 
+                     {
+                       logger.info("Uploading jar "+ jarName)
+                       requestContext => 
+                         val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext)))
+                         uploadJarService ! UploadJarService.Process(jarName,reqBody)
+                     }   
+                   }
                  }
                }
             }  else if( toknRoute(0).equalsIgnoreCase("Activate") || 
@@ -137,7 +139,9 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("UploadConfig")) {
         val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
-    } 
+    } else {
+      rContext.complete((new ApiResult(-1, "Unknown URL", "PUT for api/"+ objtype)).toString)
+    }
   }
   
     /**
@@ -150,7 +154,9 @@ trait MetadataAPIService extends HttpService {
     } else if (action.equalsIgnoreCase("Deactivate")) {
        val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
        deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
-    }  
+    } else {
+      rContext.complete((new ApiResult(-1, "Unknown URL", "PUT for api/"+ action + "/" + objtype + "/" + objKey)).toString)     
+    } 
   }
   
   /**
@@ -175,6 +181,8 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("Function")) {
         val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
+    } else {
+      rContext.complete((new ApiResult(-1, "Unknown URL", "POST for api/"+ objtype)).toString)     
     } 
   }
   
@@ -182,8 +190,13 @@ trait MetadataAPIService extends HttpService {
    * 
    */
   private def processGetKeysRequest(objtype:String,rContext: RequestContext): Unit = {
-    val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext)))
-    allObjectKeysService ! GetAllObjectKeysService.Process(objtype)        
+    if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || objtype.equalsIgnoreCase("Function") ||
+        objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
+      val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext)))
+      allObjectKeysService ! GetAllObjectKeysService.Process(objtype)  
+    } else {
+      rContext.complete((new ApiResult(-1, "Unknown URL", "GET for api/keys"+ objtype)).toString) 
+    }
   }
   
   /**
@@ -193,9 +206,12 @@ trait MetadataAPIService extends HttpService {
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
-    } else {
+    } else if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || 
+               objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type"))  {
         val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext)))
         getObjectsService ! GetObjectsService.Process(createGetArg(objKey,objtype))  
+    } else {
+        rContext.complete((new ApiResult(-1, "Unknown URL", "GET for api/"+ objtype)).toString) 
     }
   }
   
@@ -203,17 +219,15 @@ trait MetadataAPIService extends HttpService {
    * 
    */
   private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext):Unit = {
-    if (objtype.equalsIgnoreCase("Container") ||
-        objtype.equalsIgnoreCase("Model") || 
-        objtype.equalsIgnoreCase("Message") ||
-        objtype.equalsIgnoreCase("Function") ||
-        objtype.equalsIgnoreCase("Concept") || 
-        objtype.equalsIgnoreCase("Type")) {
+    if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
+        objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
       val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext)))
       removeObjectsService ! RemoveObjectsService.Process(createGetArg(objKey,objtype))
-    } else {
+    } else if (objtype.equalsIgnoreCase("Config")) {
       val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
       removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
+    } else {
+      rContext.complete((new ApiResult(-1, "Unknown URL", "DELETE for api/"+ objtype + "/" + objKey)).toString)     
     }
   }
   
