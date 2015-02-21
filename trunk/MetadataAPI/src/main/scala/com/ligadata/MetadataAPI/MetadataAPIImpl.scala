@@ -4598,7 +4598,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val jp = value
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
       finalValue = j_paths.mkString(",")
-      fianlKey = "JAR_PATHS"
+      finalKey = "JAR_PATHS"
     } 
     
     // Special case 1. for config.  if JAR_PATHS is never set, then it should default to JAR_TARGET_DIR..
@@ -4606,7 +4606,7 @@ object MetadataAPIImpl extends MetadataAPI {
     // overwrite the value.
     if (key.equalsIgnoreCase("JAR_TARGET_DIR") && (metadataAPIConfig.getProperty("JAR_PATHS")==null)) {
       metadataAPIConfig.setProperty("JAR_PATHS", finalValue)
-      logger.trace("JAR_PATHS = " + value)
+      logger.trace("JAR_PATHS = " + finalValue)
       pList = pList - "JAR_PATHS"
     }
     
@@ -4648,7 +4648,7 @@ object MetadataAPIImpl extends MetadataAPI {
   
     // Store the Key/Value pair
     metadataAPIConfig.setProperty(finalKey.toUpperCase, finalValue)
-    logger.trace(finalKey.toUpperCase + " = " + value)
+    logger.trace(finalKey.toUpperCase + " = " + finalValue)
     pList = pList - finalKey.toUpperCase
   }
 
