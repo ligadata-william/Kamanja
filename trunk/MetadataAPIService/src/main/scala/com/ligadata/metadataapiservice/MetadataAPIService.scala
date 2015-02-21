@@ -104,7 +104,11 @@ trait MetadataAPIService extends HttpService {
           {
             val toknRoute = str.split("/")
             logger.info("DELETE "+str)
-            requestContext => processDeleteRequest(toknRoute(0), toknRoute(1).toLowerCase, requestContext)   
+            if (toknRoute.size != 2) {
+              requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext)   
+            } else {
+              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown DELETE route")).toString)
+            }
           }
         }
       }
