@@ -1292,6 +1292,10 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
+		mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
+					, ("System", "MessageContainerBase")
+					, List(("fqclassname", MdMgr.sysNS, "String")), null)
+		
 	}
 
 	def InitFcns = {
@@ -1505,6 +1509,66 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		fcnMacrofeatures += FcnMacroAttr.CLASSUPDATE
 		  
 		
+		/** Macros Associated with this macro template:
+	  		"incrementBy(Any,Int,Int)"  
+	  		"incrementBy(Any,Double,Double)"  
+	  		"incrementBy(Any,Long,Long)"  
+	  		
+	  		Something like the following code would cause the macro to be used were
+	  		the AlertsToday a FixedField container...
+	  		<Apply function="incrementBy">
+				<FieldRef field="AlertsToday.Sent"/>
+				<Constant dataType="integer">1</Constant> 
+			</Apply>
+	  		
+		 */
+		val SetFieldMacroStringFixed : String =  """
+	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	{
+	  	def setField  : Boolean = { %1%.%2% = %3%; true }
+	} """
+		
+		val SetFieldMacroStringMapped : String =  """
+	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	{
+	  	def setField  : Boolean = { %1%(%2%) = %3%; true }
+	} """
+		
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "Double"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Boolean"), ("value", MdMgr.sysNS, "Boolean"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
 		/** Macros Associated with this macro template:
 	  		"incrementBy(Any,Int,Int)"  
 	  		"incrementBy(Any,Double,Double)"  

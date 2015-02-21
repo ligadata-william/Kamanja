@@ -41,6 +41,16 @@ import com.ligadata.OnLEPBase._
  */
 object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
+  /** BaseMsg & BaseContainer instantiation
+      Instantiate an empty BaseMsg or BaseContainer. 
+  */
+  
+  def NewMessageOrContainer(fqclassname : String) : MessageContainerBase = {
+      val msgOrContainer : MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
+      msgOrContainer
+  }
+
+
   /** BaseMsg & BaseContainer access 
       FIXME: There should only be one function for both BaseMsg and BaseContainer as they
       inherit the MessageContainerBase trait where in fact the Version function exists.
