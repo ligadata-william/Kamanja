@@ -4598,6 +4598,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val jp = value
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
       finalValue = j_paths.mkString(",")
+      fianlKey = "JAR_PATHS"
     } 
     
     // Special case 1. for config.  if JAR_PATHS is never set, then it should default to JAR_TARGET_DIR..
