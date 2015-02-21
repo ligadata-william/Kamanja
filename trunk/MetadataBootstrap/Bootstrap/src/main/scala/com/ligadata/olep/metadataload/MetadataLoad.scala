@@ -1295,6 +1295,24 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
 					, ("System", "MessageContainerBase")
 					, List(("fqclassname", MdMgr.sysNS, "String")), null)
+					
+					
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "Float")), null)
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "Double")), null)
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "Long")), null)
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "String")), null)
+ 
 		
 	}
 
@@ -1569,6 +1587,90 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 
+		
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Boolean"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+
+		val SetFieldMacroContainerStringFixed : String =  """
+	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	{
+	  	def setField  : Boolean = { %1%.%2% = %3%.%4%; true }
+	} """
+		
+		val SetFieldMacroContainerStringMapped : String =  """
+	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	{
+	  	def setField  : Boolean = { %1%(%2%) = %3%(%4%); true }
+	} """
+		
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("toContainer", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Int"), ("fromContainer", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (SetFieldMacroContainerStringFixed,SetFieldMacroContainerStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("toContainer", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Double"), ("fromContainer", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Double"))
+					, fcnMacrofeatures
+					, (SetFieldMacroContainerStringFixed,SetFieldMacroContainerStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("toContainer", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Long"), ("fromContainer", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (SetFieldMacroContainerStringFixed,SetFieldMacroContainerStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("toContainer", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Boolean"), ("fromContainer", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Boolean"))
+					, fcnMacrofeatures
+					, (SetFieldMacroContainerStringFixed,SetFieldMacroContainerStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("toContainer", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "String"), ("fromContainer", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (SetFieldMacroContainerStringFixed,SetFieldMacroContainerStringMapped))	  
+		  
 		/** Macros Associated with this macro template:
 	  		"incrementBy(Any,Int,Int)"  
 	  		"incrementBy(Any,Double,Double)"  
@@ -2017,6 +2119,68 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (getObjectMacroTemplate,getObjectMacroTemplate)
 					,-1)	  
 
+
+		val getObjectElseNewMacroTemplate : String =   """GetMsgContainerElseNew(ctx.xId, %1%, %2%, %3%, %4%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Float"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("key", MdMgr.sysNS, "Double"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)	  
+
+					
+					
+					
+					
 		val containsMacroTemplate : String =   """Contains(ctx.xId, %1%, %2%, %3%)"""
 
 		mgr.AddMacro(MdMgr.sysNS

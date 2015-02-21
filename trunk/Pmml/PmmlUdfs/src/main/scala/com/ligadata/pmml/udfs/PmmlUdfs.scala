@@ -187,6 +187,63 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     gCtx.getObject(xId, containerId, key.toString)
   }
 
+  /** 
+   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
+   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
+   *  
+   *  @param xId : transaction id from Pmml Runtime Context
+   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   */
+  
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: String): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+    if (mc != null) {
+    	mc
+    } else {
+    	NewMessageOrContainer(fqClassName)
+    }
+  }
+
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Int): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+    if (mc != null) {
+    	mc
+    } else {
+    	NewMessageOrContainer(fqClassName)
+    }
+  }
+
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Long): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+    if (mc != null) {
+    	mc
+    } else {
+    	NewMessageOrContainer(fqClassName)
+    }
+  }
+
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Double): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+    if (mc != null) {
+    	mc
+    } else {
+    	NewMessageOrContainer(fqClassName)
+    }
+  }
+
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Float): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+    if (mc != null) {
+    	mc
+    } else {
+    	NewMessageOrContainer(fqClassName)
+    }
+  }
+
   /**
    * EnvContext GetArray functions
    */
