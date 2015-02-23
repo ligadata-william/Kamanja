@@ -150,7 +150,7 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  		  val expandCompoundFieldTypes : Boolean = false
 	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
 	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
-	  		  if (typestr != null) typestr else "Any"
+	  		  if (typestr != null) s"${'"'}$typestr${'"'}" else "Any"
 	  		}
 	  		case "mbrTypename"  => { 
 	  		  /** 

@@ -37,7 +37,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 	  	
 	  	/** debug helper */
-	  	val ofInterest : Boolean = (ctx.elementStack.filter( elem => elem.isInstanceOf[xDerivedField] && elem.asInstanceOf[xDerivedField].name == "AlertHistoryUpdate").size > 0)
+	  	val ofInterest : Boolean = (node.function == "setField")
 	  	if (ofInterest) {
 	  		val stop : Int = 0
 	  	}
@@ -258,8 +258,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 									val fcnArgNm = child.asInstanceOf[xApply].function + "Result" +  idx.toString
 									(fcnArgNm, argTypeStr)
 					  			} else {
-					  			    if (isContainer) {
-				  			    		val containerType : ContainerTypeDef = if (argElem.isInstanceOf[ContainerTypeDef]) argElem.asInstanceOf[ContainerTypeDef] else null
+					  			    if (isContainer && argElem.isInstanceOf[ContainerTypeDef]) {
+				  			    		val containerType : ContainerTypeDef = argElem.asInstanceOf[ContainerTypeDef]
 		  			    				val containerName : String = child.asInstanceOf[xFieldRef].field
 		  			    				(containerName, argTypeStr)
 					  			    } else {
@@ -369,12 +369,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 				val whichType : String = typStr
 				buffer.append(s"ctx.valueFor(${'"'}$argName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
 			} else {
-				if (childNode != null && childNode.isInstanceOf[xFieldRef] && !(elemdef.isInstanceOf[ContainerTypeDef])) {
-					val argNameQuoted : String = if (argName.contains(s"${'"'}")) argName else s"${'"'}$argName${'"'}"
-					buffer.append(argNameQuoted)
-				} else {
-					buffer.append(exprStr)
-				}
+				buffer.append(exprStr)
 			}
 			cnt += 1
 			if (cnt < paramCnt) {
