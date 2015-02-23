@@ -231,7 +231,7 @@ trait MetadataAPIService extends HttpService {
       val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
       removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString)     
+      rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown DELETE route")).toString)     
     }
   }
   
