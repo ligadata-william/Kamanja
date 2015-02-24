@@ -284,7 +284,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   var messageObj: BaseMsgObj = _
   var containerObj: BaseContainerObj = _
   var objFullName: String = _
-  var kryoSer: com.ligadata.Serialize.Serializer = null
+  // var kryoSer: com.ligadata.Serialize.Serializer = null
 
   if (isOk) {
     kvNameCorrType = mdMgr.ActiveType(kvname.toLowerCase)
@@ -374,12 +374,13 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       logger.error("Failed to instantiate message or conatiner object :" + clsName)
       isOk = false
     }
-
+/*
     if (isOk) {
       kryoSer = SerializerManager.GetSerializer("kryo")
       if (kryoSer != null)
         kryoSer.SetClassLoader(kvInitLoader.loader)
     }
+*/
   }
 
   private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KvInitClassLoader): Boolean = {
@@ -537,8 +538,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         if (messageOrContainer != null) {
           messageOrContainer.populate(inputData)
           try {
-            val v = kryoSer.SerializeObjectToByteArray(messageOrContainer)
-            SaveObject(objFullName, key, v, kvstore, "kryo")
+            val v = SerializeDeserialize.Serialize(messageOrContainer)
+            SaveObject(objFullName, key, v, kvstore, "manual")
             processedRows += 1
           } catch {
             case e: Exception => {

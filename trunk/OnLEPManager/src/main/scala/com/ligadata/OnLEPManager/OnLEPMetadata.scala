@@ -8,7 +8,7 @@ import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
+import com.ligadata.OnLEPBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +21,7 @@ class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
 
 // msgobj is null for Containers
-class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgobj: BaseMsgObj) {
+class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var contmsgobj: MessageContainerObjBase) {
   var parents = new ArrayBuffer[(String, String)] // Immediate parent comes at the end, grand parent last but one, ... Messages/Containers. the format is Message/Container Type name and the variable in that.
   var childs = new ArrayBuffer[(String, String)] // Child Messages/Containers (Name & type). We fill this when we create message and populate parent later from this
 }
@@ -165,40 +165,50 @@ class OnLEPMetadata {
 
     var isContainer = true
 
-    /*
-		// If required we need to enable this test
-		// Convert class name into a class
-		var curClz = Class.forName(clsName, true, loader)
-		
-		isContainer = false
-		
-		while (curClz != null && isContainer == false) {
-		isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
-		if (isContainer == false)
-		curClz = curClz.getSuperclass()
-		}
-		*/
-    /*
-      if (isContainer) {
-        try {
-          val module = mirror.staticModule(clsName)
-          val obj = mirror.reflectModule(module)
 
-          val objinst = obj.instance
-          if (objinst.isInstanceOf[BaseContainer]) {
-            val containerobj = objinst.asInstanceOf[BaseContainer]
-            val containerName = (container.NameSpace.trim + "." + container.Name.trim).toLowerCase
-            containerObjects(containerName) = containerobj
-          } else
-            LOG.error("Failed to instantiate container object :" + clsName)
-        } catch {
-          case e: Exception => LOG.error("Failed to instantiate container object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+    try {
+      // If required we need to enable this test
+      // Convert class name into a class
+      var curClz = Class.forName(clsName, true, loader)
+
+      isContainer = false
+
+      while (curClz != null && isContainer == false) {
+        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
+        if (isContainer == false)
+          curClz = curClz.getSuperclass()
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to get classname :" + clsName)
+        e.printStackTrace
+      }
+    }
+
+    if (isContainer) {
+      try {
+        val module = mirror.staticModule(clsName)
+        val obj = mirror.reflectModule(module)
+        val objinst = obj.instance
+        if (objinst.isInstanceOf[BaseContainerObj]) {
+          val containerobj = objinst.asInstanceOf[BaseContainerObj]
+          val contName = container.FullName.toLowerCase
+          val contObj = new MsgContainerObjAndTransformInfo(null, containerobj)
+          GetChildsFromEntity(container.containerType, contObj.childs)
+          containerObjects(contName) = contObj
+
+          LOG.info("Created Container:" + contName)
+        } else {
+          LOG.error("Failed to instantiate container object :" + clsName)
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
         }
       }
-*/
-    val containerObj = new MsgContainerObjAndTransformInfo(null, null)
-    GetChildsFromEntity(container.containerType, containerObj.childs)
-    containerObjects(containerName) = containerObj
+    } else {
+      LOG.error("Failed to instantiate containerObjects object :" + clsName)
+    }    
   }
 
   def PrepareModel(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
@@ -358,7 +368,7 @@ class OnLEPMetadata {
   }
 }
 
-object OnLEPMetadata {
+object OnLEPMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
@@ -729,6 +739,21 @@ object OnLEPMetadata {
     UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
   }
 
+  override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {
+    var v: MsgContainerObjAndTransformInfo = null
+
+    v = getMessgeInfo(MsgContainerType)
+    
+    if (v != null && v.contmsgobj != null) {
+     return v.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
+    }
+    v = getContainer(MsgContainerType)
+    if (v != null && v.contmsgobj != null) {
+      return v.contmsgobj.asInstanceOf[BaseContainerObj].CreateNewContainer
+    }
+    return null
+  }
+
   def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
     var exp: Exception = null
     var v: MsgContainerObjAndTransformInfo = null
@@ -834,7 +859,7 @@ object OnLEPMetadata {
   private def localgetMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(msgType.toLowerCase, null)
-    if (v == null || v.msgobj == null) return null
+    if (v == null || v.contmsgobj == null) return null
     v
   }
 
@@ -846,13 +871,13 @@ object OnLEPMetadata {
   private def localgetContainer(containerName: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(containerName.toLowerCase, null)
-    if (v == null || v.msgobj != null) return null
+    if (v == null || v.contmsgobj != null) return null
     v
   }
 
   private def localgetAllMessges: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
-    messageContainerObjects.filter(o => o._2.msgobj != null).toMap
+    messageContainerObjects.filter(o => o._2.contmsgobj != null).toMap
   }
 
   private def localgetAllModels: Map[String, MdlInfo] = {
@@ -862,7 +887,7 @@ object OnLEPMetadata {
 
   private def localgetAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
-    messageContainerObjects.filter(o => o._2.msgobj == null).toMap
+    messageContainerObjects.filter(o => o._2.contmsgobj == null).toMap
   }
 
   def getMdMgr: MdMgr = mdMgr

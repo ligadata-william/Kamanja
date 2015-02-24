@@ -157,6 +157,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _allDataDataStore: DataStore = null
   private[this] var _runningTxnsDataStore: DataStore = null
   private[this] var _checkPointAdapInfoDataStore: DataStore = null
+  private[this] var _mdres: MdBaseResolveInfo = null
 
   for (i <- 0 until _buckets) {
     _txnContexts(i) = scala.collection.mutable.Map[Long, TransactionContext]()
@@ -262,6 +263,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         if (_kryoSer != null) {
           objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[MessageContainerBase]
         }
+      }
+      case "manual" => {
+        val valInfo = getValueInfo(tupleBytes)
+        objs(0) = SerializeDeserialize.Deserialize(valInfo, _mdres, _classLoader, true).asInstanceOf[MessageContainerBase]
       }
       case _ => {
         throw new Exception("Found un-handled Serializer Info: " + serInfo)
@@ -652,6 +657,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _classLoader = cl
   }
 
+  override def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit = {
+    _mdres = mdres
+  }
+
   //BUGBUG:: May be we need to lock before we do anything here
   override def Shutdown: Unit = {
     _adapterUniqKeyValData.clear
@@ -810,10 +819,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         v._2.data.foreach(kv => {
           mc.data(kv._1) = kv._2
           try {
-            val serVal = _kryoSer.SerializeObjectToByteArray(kv._2)
+            val serVal = SerializeDeserialize.Serialize(kv._2)
             object obj extends IStorage {
               val k = makeKey(mc.objFullName, kv._1)
-              val v = makeValue(serVal, "kryo")
+              val v = makeValue(serVal, "manual")
 
               def Key = k
               def Value = v
@@ -831,6 +840,39 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         })
       }
     })
+
+    /**
+     * // Using kryo for Messages & containers
+     * messagesOrContainers.foreach(v => {
+     * val mc = _messagesOrContainers.getOrElse(v._1, null)
+     * if (mc != null) {
+     * if (v._2.reload)
+     * mc.reload = true
+     * v._2.data.foreach(kv => {
+     * mc.data(kv._1) = kv._2
+     * try {
+     * val serVal = _kryoSer.SerializeObjectToByteArray(kv._2)
+     * object obj extends IStorage {
+     * val k = makeKey(mc.objFullName, kv._1)
+     * val v = makeValue(serVal, "kryo")
+     *
+     * def Key = k
+     * def Value = v
+     * def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+     * }
+     * storeObjects(cntr) = obj
+     * cntr += 1
+     * } catch {
+     * case e: Exception => {
+     * logger.error("Failed to serialize/write data.")
+     * e.printStackTrace
+     * throw e
+     * }
+     * }
+     * })
+     * }
+     * })
+     */
 
     adapterUniqKeyValData.foreach(v1 => {
       _adapterUniqKeyValData(v1._1) = v1._2
@@ -881,7 +923,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
     })
-    
+
     val txn = _allDataDataStore.beginTx()
     try {
       _allDataDataStore.putBatch(storeObjects)

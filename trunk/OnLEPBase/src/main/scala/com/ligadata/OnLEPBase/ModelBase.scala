@@ -91,6 +91,7 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
 trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
+  def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
