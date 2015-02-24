@@ -2989,19 +2989,18 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
       val o = MdMgr.GetMdMgr.Models(modDef.nameSpace.toLowerCase,
-        modDef.name.toLowerCase,
-        false,
-        true)
+                                    modDef.name.toLowerCase,
+                                    false,
+                                    true)
       o match {
         case None =>
           None
           logger.trace("model not in the cache => " + key)
           None
         case Some(m) =>
-          val model = GetLatestModelFromModels(m)
-          if (model != null) {
-            logger.trace("model found => " + model.asInstanceOf[ModelDef].FullNameWithVer)
-            Some(model.asInstanceOf[ModelDef])
+          if (m.size > 0) {
+            logger.trace("model found => " + m.head.asInstanceOf[ModelDef].FullNameWithVer)
+            Some(m.head.asInstanceOf[ModelDef])
           } else
             None   
       }
@@ -3011,24 +3010,6 @@ object MetadataAPIImpl extends MetadataAPI {
         throw new UnexpectedMetadataAPIException(e.getMessage())
       }
     }
-  }
-
-  //Get the Higher Version Model from the Set of Models
-  def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
-    var model: ModelDef = null
-    var verList: List[Int] = List[Int]()
-    var modelmap: scala.collection.mutable.Map[Int, ModelDef] = scala.collection.mutable.Map()
-    try {
-      modelSet.foreach(m => {
-        modelmap.put(m.Version, m)
-        verList = m.Version :: verList
-      })
-       model = modelmap.getOrElse(verList.max, null)
-    } catch {
-      case e: Exception =>
-        throw new Exception("Error in traversing Model set " + e.getMessage())
-    }
-    model
   }
 
   // Get the latest message for a given FullName
@@ -4617,6 +4598,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val jp = value
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
       finalValue = j_paths.mkString(",")
+      finalKey = "JAR_PATHS"
     } 
     
     // Special case 1. for config.  if JAR_PATHS is never set, then it should default to JAR_TARGET_DIR..
@@ -4624,7 +4606,7 @@ object MetadataAPIImpl extends MetadataAPI {
     // overwrite the value.
     if (key.equalsIgnoreCase("JAR_TARGET_DIR") && (metadataAPIConfig.getProperty("JAR_PATHS")==null)) {
       metadataAPIConfig.setProperty("JAR_PATHS", finalValue)
-      logger.trace("JAR_PATHS = " + value)
+      logger.trace("JAR_PATHS = " + finalValue)
       pList = pList - "JAR_PATHS"
     }
     
@@ -4666,7 +4648,7 @@ object MetadataAPIImpl extends MetadataAPI {
   
     // Store the Key/Value pair
     metadataAPIConfig.setProperty(finalKey.toUpperCase, finalValue)
-    logger.trace(finalKey.toUpperCase + " = " + value)
+    logger.trace(finalKey.toUpperCase + " = " + finalValue)
     pList = pList - finalKey.toUpperCase
   }
 
