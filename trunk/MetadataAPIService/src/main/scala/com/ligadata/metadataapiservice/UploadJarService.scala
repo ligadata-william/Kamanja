@@ -36,6 +36,6 @@ class UploadJarService(requestContext: RequestContext) extends Actor {
     
     val apiResult = MetadataAPIImpl.UploadJarToDB(jarName,byteArray)
     
-    requestContext.complete(apiResult.toString)
+    requestContext.complete(apiResult)
   }
 }
