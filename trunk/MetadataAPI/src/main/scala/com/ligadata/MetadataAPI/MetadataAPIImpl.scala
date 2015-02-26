@@ -878,13 +878,13 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
 
-  def UploadJarToDB(jarName:String,byteArray: Array[Byte]) {
+  def UploadJarToDB(jarName:String,byteArray: Array[Byte]): String = {
     try {
         var key = jarName
         var value = byteArray
         logger.trace("Update the jarfile (size => " + value.length + ") of the object: " + jarName)
         SaveObject(key, value, jarStore)
-        var apiResult = new ApiResult(-1, "Uploaded Jar successfully:", jarName)
+        var apiResult = new ApiResult(0, "Uploaded Jar successfully:", jarName)
         apiResult.toString()
     } catch {
       case e: Exception => {
