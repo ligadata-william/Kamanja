@@ -20,7 +20,7 @@ object GetConfigObjectsService {
   case class Process(formatType:String)
 }
 
-class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
+class GetConfigObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import GetConfigObjectsService._
   
@@ -70,6 +70,11 @@ class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
   
   def process(objectType:String) = {
     log.info("Requesting GetConfigObjects {}",objectType)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"read")) {
+      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
+    }
+    
     val apiResult = GetConfigObjects(objectType)
     requestContext.complete(apiResult)
   }

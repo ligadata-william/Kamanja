@@ -16,7 +16,7 @@ object RemoveEngineConfigService {
   case class Process(cfgJson:String)
 }
 
-class RemoveEngineConfigService(requestContext: RequestContext) extends Actor {
+class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import RemoveEngineConfigService._
   
@@ -33,6 +33,10 @@ class RemoveEngineConfigService(requestContext: RequestContext) extends Actor {
   def process(cfgJson:String) = {
     
     log.info("Requesting RemoveEngineConfig {}",cfgJson)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
     
     val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)
     

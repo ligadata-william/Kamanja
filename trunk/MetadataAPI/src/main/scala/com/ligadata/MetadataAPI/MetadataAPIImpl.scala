@@ -4,6 +4,11 @@ import java.util.Properties
 import java.io._
 import scala.Enumeration
 import scala.io._
+import scala.collection.mutable._
+//import scala.reflect.runtime.universe._
+import scala.reflect.runtime.{ universe => ru }
+import java.net.URL
+import java.net.URLClassLoader
 
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata._
@@ -99,6 +104,28 @@ case class KryoSerializationException(e: String) extends Exception(e)
 case class InternalErrorException(e: String) extends Exception(e)
 case class TranIdNotFoundException(e: String) extends Exception(e)
 
+/**
+ *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the 
+ *  reflective calls
+ */
+class MetadataClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  override def addURL(url: URL) {
+    super.addURL(url)
+  }
+}
+
+/**
+ * MetadataLoaderInfo
+ */
+class MetadataLoader {
+  // class loader
+  val loader: MetadataClassLoader = new MetadataClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+  // Loaded jars
+  val loadedJars: TreeSet[String] = new TreeSet[String]
+  // Get a mirror for reflection
+  //val mirror: scala.reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+}
+
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI {
 
@@ -108,6 +135,7 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val serializer = SerializerManager.GetSerializer("kryo")
   lazy val metadataAPIConfig = new Properties()
   var zkc: CuratorFramework = null
+  var authObj: SecurityAdapter = null
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
   
@@ -137,7 +165,79 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  /**
+   * InitSecImpl  - Create the Security Adapter class.  The class name and jar name containing 
+   *                the implementation of that class are specified in the CONFIG FILE.
+   */
+  def InitSecImpl: Unit = {
+    logger.trace("Establishing connection to domain security server..")
+    val classLoader: MetadataLoader = new MetadataLoader
+    // If already have one, use that!
+    if (authObj != null) {
+      return
+    } 
+    
+    // Load the location and name of the implementing class from the 
+    val implJarName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_JAR").trim
+    val implClassName = metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS").trim 
+    if (implClassName == null) {
+      logger.error("Security Adapter Class is not specified")
+      return
+    }
+    
+    // Add the Jarfile to the class loader
+    val fl = new File(implJarName)
+    if (fl.exists) {
+      try {
+        classLoader.loader.addURL(fl.toURI().toURL())
+        logger.trace("Jar " + implJarName.trim + " added to class path.")
+        classLoader.loadedJars += fl.getPath()     
+      } catch {
+          case e: Exception => {
+            logger.error("Failed to add "+implJarName + " due to internal exception " + e.printStackTrace)
+            return
+          }
+        }
+    } else {
+      logger.error("Unable to locate Jar '"+implJarName+"'")
+      return 
+    }
+    
+    // All is good, create the new class 
+    var blah = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.SecurityAdapter]]
+    authObj = blah.newInstance
+    logger.trace("Created class "+ blah.getName)    
+    return
+  }
+  
+  /**
+   * checkAuth
+   */
+  def checkAuth (usrid:Option[String], password:Option[String], cert:Option[String], action: String): Boolean = {  
+    
+    var authParms: java.util.Properties = new Properties
+    // Do we want to run AUTH?
+    if (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES")) return true
+    
+    // check if the Auth object exists
+    if (authObj == null) return false
+    
+    // Run the Auth - if userId is supplied, derfer to that.
+    if ((usrid == None) && (cert == None)) return false
+    if (usrid != None) {
+      authParms.setProperty("userid",usrid.get.asInstanceOf[String])
+      authParms.setProperty("password", password.get.asInstanceOf[String]) 
+    } else {
+      authParms.setProperty("cert", cert.get.asInstanceOf[String])
+    }
+    authParms.setProperty("action",action)    
+    return authObj.preformAuth(authParms) 
+  }
 
+  /**
+   * InitZooKeeper - Establish a connection to zookeeper
+   */
   def InitZooKeeper: Unit = {
     logger.trace("Connect to zookeeper..")
     if (zkc != null) {
@@ -878,6 +978,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
 
+  /**
+   *  UploadJarToDB - Interface to the SERIVCES
+   */
   def UploadJarToDB(jarName:String,byteArray: Array[Byte]) {
     try {
         var key = jarName
@@ -4924,6 +5027,7 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
+    MetadataAPIImpl.InitSecImpl
   }
 
   def InitMdMgrFromBootStrap(configFile: String) {
@@ -4938,6 +5042,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
+    MetadataAPIImpl.InitSecImpl
   }
 
   def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String) {
@@ -4953,5 +5058,6 @@ object MetadataAPIImpl extends MetadataAPI {
 
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
+    MetadataAPIImpl.InitSecImpl
   }
 }

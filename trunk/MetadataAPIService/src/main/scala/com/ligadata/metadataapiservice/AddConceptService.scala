@@ -16,7 +16,7 @@ object AddConceptService {
 	case class Process(conceptJson:String, formatType:String)
 }
 
-class AddConceptService(requestContext: RequestContext) extends Actor {
+class AddConceptService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
 	import AddConceptService._
 	

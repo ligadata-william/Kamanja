@@ -16,7 +16,7 @@ object AddContainerService {
   case class Process(containerJson:String)
 }
 
-class AddContainerService(requestContext: RequestContext) extends Actor {
+class AddContainerService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import AddContainerService._
   
