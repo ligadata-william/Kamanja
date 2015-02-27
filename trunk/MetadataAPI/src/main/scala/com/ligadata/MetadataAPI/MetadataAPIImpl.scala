@@ -806,7 +806,9 @@ object MetadataAPIImpl extends MetadataAPI {
       var valueList = new Array[Array[Byte]](0)
 
       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-      
+
+      logger.trace("jarpaths => " + jarPaths)
+
       keyList = keyList :+ obj.jarName
       var jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
       var value = GetJarAsArrayOfBytes(jarName)
@@ -2007,9 +2009,15 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.trace("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
+	  if( recompile ){
+            RemoveMessage(msg.nameSpace, msg.name, msg.ver)
+	  }
           AddMessageDef(msg)
         }
         case cont: ContainerDef => {
+	  if( recompile ){
+            RemoveContainer(cont.nameSpace, cont.name, cont.ver)
+	  }
           AddContainerDef(cont)
         }
       }
@@ -4747,6 +4755,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val jp = value
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
       finalValue = j_paths.mkString(",")
+      finalKey = "JAR_PATHS"
     } 
     
     // Special case 1. for config.  if JAR_PATHS is never set, then it should default to JAR_TARGET_DIR..
