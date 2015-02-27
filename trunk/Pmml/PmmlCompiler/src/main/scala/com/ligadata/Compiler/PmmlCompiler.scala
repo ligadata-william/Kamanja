@@ -425,7 +425,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	 *  FIXME: The jars required by the model is to be returned as the second object in the pair returned.
 	 *  This is not implemented.  The jars for any Message or ContainerDef encountered during parse needs to 
 	 *  collected in a set and returned. */
-	def compile(pmmlString : String,workDir: String)  : (String, ModelDef) = {
+	def compile(pmmlString : String,workDir: String,recompile: Boolean = false)  : (String, ModelDef) = {
 	  
 		logger.trace("compile begins")
 		
@@ -465,12 +465,12 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
 		logger.trace("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
 		
-		val modelDef : ModelDef = constructModelDef(ctx)
+		val modelDef : ModelDef = constructModelDef(ctx,recompile)
 		(srcCode, modelDef)
 	}
 	//
 	
-	private def constructModelDef(ctx : PmmlContext) : ModelDef = {
+	private def constructModelDef(ctx : PmmlContext,recompile:Boolean = false) : ModelDef = {
 		/**
 			val modelPkg = s"com.$clientName.$classname.pmml"
 			ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
@@ -534,7 +534,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 							    , outputVars
 							    , modelVersion
 							    , jarName
-							    , ctx.classPathJars.toArray)
+							    , ctx.classPathJars.toArray
+							    , recompile)
 
 		modelDef
 	  
@@ -728,7 +729,14 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		//createManifest(ctx, s"$workDir/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
 
 		/** create the jar */
-		val moduleNameJar : String = JarName(ctx)
+		var moduleNameJar : String = JarName(ctx)
+
+		var d = new java.util.Date()
+		var epochTime = d.getTime
+		// insert epochTime into jar file
+		val jar_tokens = moduleNameJar.split("\\.")
+	        moduleNameJar = jar_tokens(0) + "_" + epochTime + ".jar"
+		
 		logger.trace(s"create the jar $workDir/$moduleNameJar")
 		val jarCmd : String = s"$javahome/bin/jar cvf $workDir/$moduleNameJar -C $workDir/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")

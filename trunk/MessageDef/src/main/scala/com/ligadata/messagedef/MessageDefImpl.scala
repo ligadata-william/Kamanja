@@ -1989,7 +1989,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr): (String, ContainerDef) = {
+  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
     var ver: String = null
     var classstr_1: String = null
@@ -2002,12 +2002,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
         message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
-          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr)
+          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr,recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
 
         } else if (message.Fixed.equals("false")) {
-          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr)
+          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr,recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
         }
@@ -2022,7 +2022,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
@@ -2033,9 +2033,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createFixedMsgDef(message, list, mdMgr, argsList)
+        containerDef = createFixedMsgDef(message, list, mdMgr, argsList,recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createFixedContainerDef(message, list, mdMgr, argsList)
+        containerDef = createFixedContainerDef(message, list, mdMgr, argsList,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2045,7 +2045,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr): (String, ContainerDef) = {
+  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     try {
@@ -2055,9 +2055,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createMappedMsgDef(message, list, mdMgr, argsList)
+        containerDef = createMappedMsgDef(message, list, mdMgr, argsList,recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createMappedContainerDef(message, list, mdMgr, argsList)
+        containerDef = createMappedContainerDef(message, list, mdMgr, argsList,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2145,15 +2145,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
+  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
 
     try {
 
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2163,13 +2163,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
+  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
     try {
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2179,13 +2179,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msgDef
   }
 
-  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): ContainerDef = {
+  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     try {
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2195,14 +2195,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)]): MessageDef = {
+  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
 
     try {
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()

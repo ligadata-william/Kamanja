@@ -1528,13 +1528,21 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): MessageDef = {
+  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null,recompile: Boolean = false): MessageDef = {
 
     val latestActiveMessage = Message(nameSpace, name, -1, false)  
     if (latestActiveMessage != None) {
-      //Only make a message if the version is greater then the last known version already in the system.
-      if (latestActiveMessage.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
+      if( recompile ){
+	//Only make a message if the version is greater then the last known version already in the system.
+	if (latestActiveMessage.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
+	}
+      }
+      else{
+	//Only make a message if the version is greater or equal then the last known version already in the system.
+	if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
+	}
       } 
     }
     
@@ -1552,14 +1560,22 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): ContainerDef = {
+  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null,recompile: Boolean = false): ContainerDef = {
   
     val latestActiveContainer = Container(nameSpace, name, -1, false)  
     if (latestActiveContainer != None) {
-      //Only make a message if the version is greater then the last known version already in the system.
-      if (latestActiveContainer.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
-      } 
+      if( recompile ){
+	//Only make a message if the version is greater then the last known version already in the system.
+	if (latestActiveContainer.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
+	}
+      }
+      else{
+	//Only make a message if the version is greater then the last known version already in the system.
+	if (latestActiveContainer.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
+	}
+      }	
     }
     
     var container = new ContainerDef
@@ -1587,13 +1603,11 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean): MessageDef = {
 
-    val latestActiveMessage = Message(nameSpace, name, -1, false)
-    if (latestActiveMessage != None) {
-      //Only make a message if the version is greater then the last known version already in the system.
-      if (latestActiveMessage.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+    if( ! recompile ){
+      if (Message(nameSpace, name, -1, false) != None) {
+	throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
       }
     }
 
@@ -1611,16 +1625,12 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): ContainerDef = {
-
-    val latestActiveContainer = Container(nameSpace, name, -1, false)
-    if (latestActiveContainer != None) {
-      //Only make a message if the version is greater then the last known version already in the system.
-      if (latestActiveContainer.get.Version >= ver) {
-        throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean = false): ContainerDef = {
+    if( ! recompile ){
+      if (Container(nameSpace, name, -1, false) != None) {
+	throw new AlreadyExistsException(s"Container$nameSpace.$name already exists.")
       }
     }
-
     var container = new ContainerDef
     container.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1644,9 +1654,11 @@ class MdMgr {
    */
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MessageDef = {
-    if (Message(nameSpace, name, -1, false) != None) {
-      throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean): MessageDef = {
+    if( ! recompile ){
+      if (Message(nameSpace, name, -1, false) != None) {
+	throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+      }
     }
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
@@ -1684,14 +1696,21 @@ class MdMgr {
    *
    */
 
-  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): ModelDef = {
+  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null,recompile:Boolean = false): ModelDef = {
 
     var modelExists: Boolean = false
     val existingModel = Model(nameSpace, name, -1, false)
     if (existingModel != None) {
-      val latesmodel = existingModel.get.asInstanceOf[ModelDef]
-      if (ver <= latesmodel.Version) {
-        modelExists = true
+      val latestmodel = existingModel.get.asInstanceOf[ModelDef]
+      if( recompile == true ){ // version equality is OK, if we are recompiling
+	if ( ver < latestmodel.Version) {
+	  modelExists = true
+	}
+      }
+      else{
+	if (ver <= latestmodel.Version) {
+          modelExists = true
+	}
       }
     }
     if (modelExists) {
@@ -2277,7 +2296,7 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
-    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey,false))
   }
 
   /**
@@ -2291,7 +2310,7 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): Unit = {
-    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey,false))
   }
 
   @throws(classOf[AlreadyExistsException])
@@ -2620,6 +2639,7 @@ object MdMgr extends LogTrait {
   def ConvertVersionToInt(verInfo: String): Int = {
     verInfo.replaceAll("[.]", "").toInt
   }
+
 }
 
 

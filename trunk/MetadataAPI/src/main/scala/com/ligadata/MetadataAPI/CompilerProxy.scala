@@ -147,7 +147,10 @@ class CompilerProxy{
     }
 
     /** create the jar */
-    val moduleNameJar : String = moduleNamespace + "_" + moduleName + "_" + moduleVersion + ".jar"
+    var d = new java.util.Date()
+    var epochTime = d.getTime
+    // insert epochTime into jar file
+    val moduleNameJar : String = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
     val jarPath = compiler_work_dir + "/" + moduleNameJar
     val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
@@ -170,7 +173,7 @@ class CompilerProxy{
     (0, s"$moduleNameJar")
   }
 
-  def compilePmml(pmmlStr: String) : (String,ModelDef) = {
+  def compilePmml(pmmlStr: String, recompile: Boolean = false) : (String,ModelDef) = {
     try{
       /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
       var injectLoggingStmts : Boolean = false 
@@ -182,7 +185,7 @@ class CompilerProxy{
 
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
 				       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
-      val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir)
+      val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir,recompile)
 
       var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 
@@ -202,7 +205,7 @@ class CompilerProxy{
 	}
       }
 
-      val (jarFile,depJars) = 
+      var (jarFile,depJars) = 
 	compiler.createJar(classStr,
 			   classPath,
 			   pmmlScalaFile,
@@ -245,12 +248,12 @@ class CompilerProxy{
 
 
   @throws(classOf[MsgCompilationFailedException])
-  def compileMessageDef(msgDefStr: String) : (String,ContainerDef) = {
+  def compileMessageDef(msgDefStr: String,recompile:Boolean = false) : (String,ContainerDef) = {
     try{
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
       logger.trace("Call Message Compiler ....")
-      val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr)
+      val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)
       logger.trace("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
 
       

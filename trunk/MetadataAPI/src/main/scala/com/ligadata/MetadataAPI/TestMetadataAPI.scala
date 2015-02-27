@@ -2042,6 +2042,7 @@ object TestMetadataAPI{
       MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
       serializer.SetLoggerLevel(Level.TRACE)
       JsonSerializer.SetLoggerLevel(Level.TRACE)
+      GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
