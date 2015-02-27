@@ -3475,7 +3475,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllObjectsIntoCache {
     try {
-      //val configAvailable = LoadAllConfigObjectsIntoCache
+      val configAvailable = LoadAllConfigObjectsIntoCache
       //if( configAvailable ){
       //RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
       //}
