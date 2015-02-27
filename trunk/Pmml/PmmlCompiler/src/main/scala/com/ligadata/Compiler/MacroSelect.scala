@@ -249,7 +249,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  			fcnArgTypes += argTypeStr
 	  			idx += 1
 	  			val (fldArgType, isFldAContainer, fldElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
-   				val actualfieldName : String = if (nmSet.contains(fieldName)) (fieldName + ctx.Counter().toString) else { nmSet += fieldName; fieldName }
+   				//val actualfieldName : String = if (nmSet.contains(fieldName)) (fieldName + ctx.Counter().toString) else { nmSet += fieldName; fieldName }
+   				val actualfieldName : String = fieldName
 	  			fcnArgValues += Tuple3(actualfieldName,fieldName,false)
 	  			fcnArgTypes += fldArgType
 	  		} else {
