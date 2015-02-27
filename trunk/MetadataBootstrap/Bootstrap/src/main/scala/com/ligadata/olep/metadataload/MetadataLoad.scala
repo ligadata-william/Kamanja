@@ -1570,7 +1570,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroStringMapped : String =  """
 	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%(%2%) = %3%; true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1654,7 +1654,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroContainerStringMapped : String =  """
 	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%(%2%) = %3%(%4%); true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%")); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1714,7 +1714,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val incrementByMacroStringMapped : String =  """
 	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def incrementBy  : Boolean = { %1%(%2%) = %1%(%2%) + %3%; true }
+	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%") + %3%)); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1749,7 +1749,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val putGlobalContainerMappedMacroTemplate : String =  """
 	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get(%4%).asInstanceOf[%4_type%].toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get("%4%").asInstanceOf[%4_type%].toString, %5%); true }
 	} """
 		
 		/**	EnvContext write access methods:
