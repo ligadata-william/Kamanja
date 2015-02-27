@@ -3476,12 +3476,12 @@ object MetadataAPIImpl extends MetadataAPI {
   def LoadAllObjectsIntoCache {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
-      //if( configAvailable ){
-      //RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
-      //}
-      //else{
-      //logger.trace("Assuming bootstrap... No config objects in persistent store")
-      //}
+      if( configAvailable ){
+	RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
+      }
+      else{
+	logger.trace("Assuming bootstrap... No config objects in persistent store")
+      }
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
