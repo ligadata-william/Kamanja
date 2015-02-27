@@ -232,6 +232,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	 *  in the tuple is used in the "does" string formation that is immediately inserted into the derived field's execute
 	  	 *  function printer.  For the containers, we need to regenerate a variable extraction for just the container name.
 	  	 */
+		/** insure variable names are unique by using  */
+		var nmSet : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   		node.Children.foreach((child) => {
   			val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
 	  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
@@ -242,11 +244,13 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  			val compoundNm : Array[String] = child.asInstanceOf[xFieldRef].field.split('.')
 	  			val containerName : String = compoundNm(0)
 	  			val fieldName : String = compoundNm(1)
-	  			fcnArgValues += Tuple3(containerName,containerName,true)
+   				val actualcontainerName : String = if (nmSet.contains(containerName)) (containerName + ctx.Counter().toString) else { nmSet += containerName; containerName }
+	  			fcnArgValues += Tuple3(actualcontainerName,containerName,true)
 	  			fcnArgTypes += argTypeStr
 	  			idx += 1
 	  			val (fldArgType, isFldAContainer, fldElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
-	  			fcnArgValues += Tuple3(fieldName,fieldName,false)
+   				val actualfieldName : String = if (nmSet.contains(fieldName)) (fieldName + ctx.Counter().toString) else { nmSet += fieldName; fieldName }
+	  			fcnArgValues += Tuple3(actualfieldName,fieldName,false)
 	  			fcnArgTypes += fldArgType
 	  		} else {
 	  			val (argNam,argTyp) : (String,String) = if (child.isInstanceOf[xConstant]) {
@@ -261,10 +265,12 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 					  			    if (isContainer && argElem.isInstanceOf[ContainerTypeDef]) {
 				  			    		val containerType : ContainerTypeDef = argElem.asInstanceOf[ContainerTypeDef]
 		  			    				val containerName : String = child.asInstanceOf[xFieldRef].field
-		  			    				(containerName, argTypeStr)
+		  			    				val actualCntrName : String = if (nmSet.contains(containerName)) (containerName + ctx.Counter().toString) else { nmSet += containerName; containerName }
+		  			    				(actualCntrName, argTypeStr)
 					  			    } else {
 					  			    	if (child.isInstanceOf[xFieldRef]) {
 					  			    		val fld : String = child.asInstanceOf[xFieldRef].field
+			  			    				val actualfld : String = if (nmSet.contains(fld)) (fld + ctx.Counter().toString) else { nmSet += fld; fld }
 					  			    		(fld, argTypeStr)
 					  			    	} else {
 					  			    		(argPrint, argTypeStr)
