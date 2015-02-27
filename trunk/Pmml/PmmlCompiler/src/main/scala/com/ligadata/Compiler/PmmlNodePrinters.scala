@@ -779,25 +779,46 @@ object NodePrinterHelpers extends LogTrait {
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 		commentBuffer.append(s"package $modelPkg\n\n")
 
-		commentBuffer.append(s"import com.ligadata.OnLEPBase._\n")
 		
-		/** 
-		 *  FIXME: This next statement needs to be dynamically generated.
-		 *  It needs to be supplied either by the pmml or via metadata when the UDFs are 
-		 *  cataloged.  As one of the initialization tasks (e.g., finding the containers in 
-		 *  the xml is one of those), the functions in use in the pmml need to be scanned,
-		 *  their fully qualified classname fields extracted from the FunctionDef and added 
-		 *  to a set.  The resulting set is then used to create the package names here. 
-		 *  
-		 *  This also brings up one of the issues with the function metadata.  We have two, not
-		 *  one schema scheme in use.  We need the real package name that should uniquely 
-		 *  qualify the function as well as the schema name which may or may not (from the 
-		 *  perspective of the compile of the generated source, uniquely qualify the functions. 
-		 */
+		/** Add core udf lib always to import so names don't have to be qualified with full package spec. */
+		commentBuffer.append(s"/**Core Udfs... */\n\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
+	
+		/** If there were user defined udfs defined in the model, add these packages as well. */
+		val pkgNames : Array[String] = ctx.udfSearchPath 
+		val pkgsOnly : Array[String] = if (pkgNames.size > 0) {
+			if (pkgNames.contains(".")) {
+				val pkgs : Array[String] = pkgNames.map(pkg => {
+					val pkgNmNodes : Array[String] = pkg.split('.').dropRight(1)
+					val buf : StringBuilder = new StringBuilder
+					pkgNmNodes.addString(buf, ".")
+					buf.toString
+				})
+				pkgs
+			} else {
+				Array[String]()
+			}
+		} else {
+			Array[String]()
+		}
 		
+		if (pkgNames.size > 0) {
+			commentBuffer.append(s"/** Custom Udf Libraries Specified in PMML */\n")
+			pkgNames.foreach( fullPkgObjName => {
+				commentBuffer.append(s"import $fullPkgObjName._\n")
+			})
+			
+			pkgsOnly.foreach( pkg => {
+				commentBuffer.append(s"import $pkg._\n")
+			})
+		} else {
+			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML */\n")
+		}
 		
+		/** Give the rest... */
+		commentBuffer.append(s"/** Other Packages... */\n")
+		commentBuffer.append(s"import com.ligadata.OnLEPBase._\n")
 		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
