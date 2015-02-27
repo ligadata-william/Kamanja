@@ -1455,6 +1455,12 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
 
 			}
+			case "typename" => {
+				val typenameStr : String = constNode.asString(ctx)
+				logger.trace(s"constantKeyForSimpleNode - typename value : $typenameStr ... typename string argument to function ${node.function}")
+				Array[(String,Boolean,BaseTypeDef)](("String",false,null))
+
+			}
 			case _ => { /** ordinary constant.. use its dataType to build information */
 				val scalaType : String = PmmlTypes.scalaDataType(constNode.dataType)
 				val (typestr, typedef) : (String, BaseTypeDef) = ctx.MetadataHelper.getType(constNode.dataType)
