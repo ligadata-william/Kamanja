@@ -967,8 +967,18 @@ object NodePrinterHelpers extends LogTrait {
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
 
-		
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = ctx.containersInScope.filter( _._1 == "msg").head
+		/** plan for the day when there are multiple messages present in the constructor */
+		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
+			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
+			isPrintedInCtor
+		}).toArray
+
+		/** pick the first one (and only one) AFTER the gCtx for now */
+		val msgContainerInfoSize : Int = msgNameContainerInfo.size
+		if (msgContainerInfoSize <= 1) {
+			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+		}
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
 		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
 		val msgTypeStr : String = msgTypedef.typeString
 		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
