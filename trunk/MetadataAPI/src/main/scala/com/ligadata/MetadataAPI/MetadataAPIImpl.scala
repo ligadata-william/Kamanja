@@ -1995,6 +1995,12 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.trace("Message Compiler returned an object of type " + msgDef.getClass().getName())
       msgDef match {
         case msg: MessageDef => {
+          val latestVersion = GetLatestMessage(msg)
+          if (latestVersion != None) {
+            logger.trace("Messasge already exists.. trying to update")
+            return UpdateCompiledMessage(msg, latestVersion, msg.FullNameWithVer)
+          }
+          
           AddObjectToCache(msg, MdMgr.GetMdMgr)
           UploadJarsToDB(msgDef)
           var objectsAdded = AddMessageTypes(msg, MdMgr.GetMdMgr)
@@ -2006,6 +2012,12 @@ object MetadataAPIImpl extends MetadataAPI {
           apiResult.toString()
         }
         case cont: ContainerDef => {
+          val latestVersion = GetLatestContainer(cont)
+          if (latestVersion != None) {
+            logger.trace("Container already exists.. trying to update")
+            return UpdateCompiledContainer(cont, latestVersion, cont.FullNameWithVer)
+          }          
+          
           AddObjectToCache(cont, MdMgr.GetMdMgr)
           UploadJarsToDB(msgDef)
           var objectsAdded = AddMessageTypes(cont, MdMgr.GetMdMgr)
@@ -2041,6 +2053,12 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.trace("Message Compiler returned an object of type " + msgDef.getClass().getName())
       msgDef match {
         case msg: MessageDef => {
+          val latestVersion = GetLatestMessage(msg)
+          if (latestVersion != None) {
+            logger.trace("Messasge already exists.. trying to update")
+            return UpdateCompiledMessage(msg, latestVersion, msg.FullNameWithVer)
+          }
+          
           AddObjectToCache(msg, MdMgr.GetMdMgr)
           UploadJarsToDB(msgDef)
           var objectsAdded = AddMessageTypes(msg, MdMgr.GetMdMgr)
@@ -2051,7 +2069,13 @@ object MetadataAPIImpl extends MetadataAPI {
           var apiResult = new ApiResult(0, "Added the message successfully:", msg.FullNameWithVer)
           apiResult.toString()
         }
-        case cont: ContainerDef => {
+        case cont: ContainerDef => {   
+          val latestVersion = GetLatestContainer(cont)
+          if (latestVersion != None) {
+            logger.trace("Container already exists.. trying to update")
+            return UpdateCompiledContainer(cont, latestVersion, cont.FullNameWithVer)
+          }
+                  
           AddObjectToCache(cont, MdMgr.GetMdMgr)
           UploadJarsToDB(msgDef)
           var objectsAdded = AddMessageTypes(cont, MdMgr.GetMdMgr)
@@ -2089,31 +2113,11 @@ object MetadataAPIImpl extends MetadataAPI {
       msgDef match {
         case msg: MessageDef => {
           val latestVersion = GetLatestMessage(msg)
-          var isValid = true
-          if (latestVersion != None) {
-            isValid = IsValidVersion(latestVersion.get, msg)
-          }
-          if (isValid) {
-            RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
-            AddMessageDef(msg)
-          } else {
-            var apiResult = new ApiResult(-1, "Failed to update the message:" + key, "Invalid Version")
-            apiResult.toString()
-          }
+          UpdateCompiledMessage (msg, latestVersion, key)
         }
         case msg: ContainerDef => {
           val latestVersion = GetLatestContainer(msg)
-          var isValid = true
-          if (latestVersion != None) {
-            isValid = IsValidVersion(latestVersion.get, msg)
-          }
-          if (isValid) {
-            RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
-            AddContainerDef(msg)
-          } else {
-            var apiResult = new ApiResult(-1, "Failed to update the container:" + key, "Invalid Version")
-            apiResult.toString()
-          }
+          UpdateCompiledContainer(msg, latestVersion, key)
         }
       }
     } catch {
@@ -2144,6 +2148,39 @@ object MetadataAPIImpl extends MetadataAPI {
   def UpdateMessage(messageText: String): String = {
     UpdateMessage(messageText,"JSON")
   }
+  
+  /**
+   * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
+   */
+  private def UpdateCompiledContainer( msg:ContainerDef, latestVersion:Option[ContainerDef], key:String): String = {
+    var isValid = true
+    if (latestVersion != None) {
+      isValid = IsValidVersion(latestVersion.get, msg)
+    }
+    if (isValid) {
+      RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+      AddContainerDef(msg)
+    } else {
+      (new ApiResult(-1, "Failed to update the container:" + key, "Invalid Version")).toString
+    }   
+  }
+  
+    /**
+   * UpdateCompiledContainer - called from a few places to update a compiled ContainerDef
+   */
+  private def UpdateCompiledMessage( msg: MessageDef, latestVersion: Option[MessageDef], key:String): String = {
+    var isValid = true
+    if (latestVersion != None) {
+      isValid = IsValidVersion(latestVersion.get, msg)
+    }
+    if (isValid) {
+      RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+      AddMessageDef(msg)
+    } else {
+      (new ApiResult(-1, "Failed to update the message:" + key, "Invalid Version")).toString
+    }  
+  }
+  
 
   // Remove container with Container Name and Version Number
   def RemoveContainer(nameSpace: String, name: String, version: Int): String = {
@@ -3026,6 +3063,8 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("message not in the cache => " + key)
           None
         case Some(m) =>
+          // We can get called from the Add Message path, and M could be empty.
+          if (m.size == 0) return None
           logger.trace("message found => " + m.head.asInstanceOf[MessageDef].FullNameWithVer)
           Some(m.head.asInstanceOf[MessageDef])
       }
@@ -3050,7 +3089,9 @@ object MetadataAPIImpl extends MetadataAPI {
           None
           logger.trace("container not in the cache => " + key)
           None
-        case Some(m) =>
+        case Some(m) => 
+          // We can get called from the Add Container path, and M could be empty.
+          if (m.size == 0) return None
           logger.trace("container found => " + m.head.asInstanceOf[ContainerDef].FullNameWithVer)
           Some(m.head.asInstanceOf[ContainerDef])
       }
