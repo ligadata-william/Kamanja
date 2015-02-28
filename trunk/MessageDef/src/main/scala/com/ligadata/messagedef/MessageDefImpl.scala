@@ -1522,6 +1522,7 @@ import java.io.{ DataInputStream, DataOutputStream }
     val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver +  recompile_rdmnbr + space + xtends + space + oname
 
     (clssb.append(clsstr), objsb.append(objstr))
+    
   }
 
   //trait - BaseMsg	
