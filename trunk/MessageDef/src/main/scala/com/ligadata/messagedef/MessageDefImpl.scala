@@ -1495,7 +1495,7 @@ import java.io.{ DataInputStream, DataOutputStream }
 
   }
 
-  private def classname(msg: Message): (StringBuilder, StringBuilder) = {
+  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder) = {
     var sname: String = ""
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
@@ -1513,9 +1513,13 @@ import java.io.{ DataInputStream, DataOutputStream }
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
-
-    val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + space + xtends + space + sname
-    val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + space + xtends + space + oname
+    val cur_time = System.currentTimeMillis
+    var recompile_rdmnbr = ""
+    if(recompile)
+      recompile_rdmnbr = uscore+cur_time.toString
+        
+    val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver +  recompile_rdmnbr + space + xtends + space + sname
+    val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver +  recompile_rdmnbr + space + xtends + space + oname
 
     (clssb.append(clsstr), objsb.append(objstr))
   }
@@ -1638,7 +1642,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     } else if (msgFixed.toLowerCase().equals("false")) {
 
       getsetters = getsetters.append("""
-    override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+    override def set(key: String, value: Any): Unit = {
+	  if (key == null) throw new Exception(" key should not be null in set method")
+	  fields.put(key, value)
+    }
     override def get(key: String): Any = {
       fields.get(key)
     }
@@ -1976,7 +1983,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
-  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+ /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -1988,7 +1995,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
   }
-
+*/
+  
   def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
     var ver: String = null
@@ -2029,7 +2037,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      createScalaFile(classstr, ver, classname)
+    //  createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2051,7 +2059,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      createScalaFile(classstr, ver, classname)
+     // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2090,7 +2098,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val (btrait, striat, csetters) = getBaseTrait(message)
       val cobj = createObj(message, partkeyPos, primarykeyPos)
       val isFixed = getIsFixed(message)
-      val (clsstr, objstr) = classname(message)
+      val (clsstr, objstr) = classname(message, recompile)
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
@@ -2120,7 +2128,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val cobj = createObj(message, partitionPos, primaryPos)
       val isFixed = getIsFixed(message)
       val getSerializedFuncStr = getSerializedFunction(serializedBuf)
-      val (clsstr, objstr) = classname(message)
+      val (clsstr, objstr) = classname(message, recompile)
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + SerDeserStr + " \n}")
     } catch {
@@ -2199,10 +2207,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var msgDef: MessageDef = new MessageDef()
 
     try {
+      var version = msg.Version.replaceAll("[.]", "").toInt
+      //if(recompile) 
+    //	  version = version+1
+      
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2214,7 +2226,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the serialized function in generated scala class 
   private def getSerializedFunction(serStr: String): String = {
-    var getSerFunc: String = ""
+    var getSerFunc: String = "" 
 
     if (serStr != null && serStr.trim() != "") {
       getSerFunc = """
