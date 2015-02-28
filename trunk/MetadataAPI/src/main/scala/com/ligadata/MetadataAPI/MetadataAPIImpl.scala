@@ -2002,6 +2002,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   private def AddContainerOrMessage(contOrMsgText: String, format: String, recompile:Boolean = false): String = {
+    var resultStr:String = ""
     try {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
@@ -2012,16 +2013,40 @@ object MetadataAPIImpl extends MetadataAPI {
 	  if( recompile ){
             RemoveMessage(msg.nameSpace, msg.name, msg.ver)
 	  }
-          AddMessageDef(msg)
-        }
+          resultStr = AddMessageDef(msg)
+	  if( recompile ){
+	    val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
+	    if( depModels.length > 0 ){
+	      depModels.foreach(mod => {
+		logger.trace("DependentModel => " + mod.FullNameWithVer)
+		resultStr = resultStr + RecompileModel(mod)
+	      })
+	    }
+	  }
+	  resultStr
+	}
         case cont: ContainerDef => {
 	  if( recompile ){
             RemoveContainer(cont.nameSpace, cont.name, cont.ver)
 	  }
-          AddContainerDef(cont)
+          resultStr = AddContainerDef(cont)
+	  if( recompile ){
+	    val depModels = GetDependentModels(cont.NameSpace,cont.Name,cont.ver)
+	    if( depModels.length > 0 ){
+	      depModels.foreach(mod => {
+		logger.trace("DependentModel => " + mod.FullNameWithVer)
+		resultStr = resultStr + RecompileModel(mod)
+	      })
+	    }
+	  }
+	  resultStr
         }
       }
     } catch {
+      case e: ModelCompilationFailedException => {
+        var apiResult = new ApiResult(-1, "Failed to compile the Model :", e.toString)
+        apiResult.toString()
+      }
       case e: MsgCompilationFailedException => {
         var apiResult = new ApiResult(-1, "Failed to compile the Container/Message:", e.toString)
         apiResult.toString()
@@ -2050,6 +2075,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def RecompileMessage(msgFullName: String): String = {
+    var resultStr:String = ""
     try {
       var messageText:String = null
 
@@ -2067,7 +2093,9 @@ object MetadataAPIImpl extends MetadataAPI {
       else{
 	messageText = latestMsgDef.get.objectDefinition
       }
-      AddContainerOrMessage(messageText,"JSON",true)
+      resultStr = AddContainerOrMessage(messageText,"JSON",true)
+      resultStr
+
     } catch {
       case e: MsgCompilationFailedException => {
         var apiResult = new ApiResult(-1, "Failed to recompile the Container/Message:", e.toString)
@@ -3475,13 +3503,13 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllObjectsIntoCache {
     try {
-      //val configAvailable = LoadAllConfigObjectsIntoCache
-      //if( configAvailable ){
-      //RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
-      //}
-      //else{
-      //logger.trace("Assuming bootstrap... No config objects in persistent store")
-      //}
+      val configAvailable = LoadAllConfigObjectsIntoCache
+      if( configAvailable ){
+	RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
+      }
+      else{
+	logger.trace("Assuming bootstrap... No config objects in persistent store")
+      }
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
