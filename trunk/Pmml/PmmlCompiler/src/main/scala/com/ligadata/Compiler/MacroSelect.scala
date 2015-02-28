@@ -207,7 +207,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	 */
 	  	
 	  	val fcnBuffer : StringBuilder = new StringBuilder
-		var fcnArgValues : ArrayBuffer[(String,String,Boolean)] = ArrayBuffer[(String,String,Boolean)]()
+		var fcnArgValues : ArrayBuffer[((String,String),String,Boolean)] = ArrayBuffer[((String,String),String,Boolean)]()
 		var fcnArgTypes : ArrayBuffer[String] = ArrayBuffer[String]()
   		fcnBuffer.clear
   		var idx : Int = 0
@@ -244,42 +244,42 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  			val compoundNm : Array[String] = child.asInstanceOf[xFieldRef].field.split('.')
 	  			val containerName : String = compoundNm(0)
 	  			val fieldName : String = compoundNm(1)
-   				val actualcontainerName : String = if (nmSet.contains(containerName)) (containerName + ctx.Counter().toString) else { nmSet += containerName; containerName }
-	  			fcnArgValues += Tuple3(actualcontainerName,containerName,true)
+   				val (buildsContainerName,doesContainerName) : (String,String) = if (nmSet.contains(containerName)) ((containerName + ctx.Counter().toString), containerName) else { nmSet += containerName; (containerName,containerName) }
+	  			fcnArgValues += Tuple3((buildsContainerName,doesContainerName),containerName,true)
 	  			fcnArgTypes += argTypeStr
 	  			idx += 1
 	  			val (fldArgType, isFldAContainer, fldElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
-   				//val actualfieldName : String = if (nmSet.contains(fieldName)) (fieldName + ctx.Counter().toString) else { nmSet += fieldName; fieldName }
+   				val (buildsfieldName,doesFieldName) : (String,String) = if (nmSet.contains(fieldName)) (fieldName,(fieldName + ctx.Counter().toString)) else { nmSet += fieldName; (fieldName,fieldName) }
    				val actualfieldName : String = fieldName
-	  			fcnArgValues += Tuple3(actualfieldName,fieldName,false)
+	  			fcnArgValues += Tuple3((buildsfieldName,doesFieldName),fieldName,false)
 	  			fcnArgTypes += fldArgType
 	  		} else {
-	  			val (argNam,argTyp) : (String,String) = if (child.isInstanceOf[xConstant]) {
+	  			val (argNams,argTyp) : ((String,String),String) = if (child.isInstanceOf[xConstant]) {
 	  							val uniqNo : Int = ctx.Counter()
 			  					val constNm = "value" + uniqNo.toString 
-			  					(constNm,argTypeStr)
+			  					((constNm,constNm),argTypeStr)
 				  			} else {
 				  				if (child.isInstanceOf[xApply]) {
 									val fcnArgNm = child.asInstanceOf[xApply].function + "Result" +  idx.toString
-									(fcnArgNm, argTypeStr)
+									((fcnArgNm,fcnArgNm), argTypeStr)
 					  			} else {
 					  			    if (isContainer && argElem.isInstanceOf[ContainerTypeDef]) {
 				  			    		val containerType : ContainerTypeDef = argElem.asInstanceOf[ContainerTypeDef]
 		  			    				val containerName : String = child.asInstanceOf[xFieldRef].field
-		  			    				val actualCntrName : String = if (nmSet.contains(containerName)) (containerName + ctx.Counter().toString) else { nmSet += containerName; containerName }
-		  			    				(actualCntrName, argTypeStr)
+		  			    				val (buildsCntrName,doesCntrName) : (String,String) = if (nmSet.contains(containerName)) ((containerName + ctx.Counter().toString),containerName) else { nmSet += containerName; (containerName,containerName) }
+		  			    				((buildsCntrName,doesCntrName), argTypeStr)
 					  			    } else {
 					  			    	if (child.isInstanceOf[xFieldRef]) {
 					  			    		val fld : String = child.asInstanceOf[xFieldRef].field
-			  			    				val actualfld : String = if (nmSet.contains(fld)) (fld + ctx.Counter().toString) else { nmSet += fld; fld }
-					  			    		(fld, argTypeStr)
+			  			    				val (buildsFldNm,doesFldNm) : (String,String) = if (nmSet.contains(fld)) ((fld + ctx.Counter().toString),fld) else { nmSet += fld; (fld,fld) }
+					  			    		((buildsFldNm,doesFldNm), argTypeStr)
 					  			    	} else {
-					  			    		(argPrint, argTypeStr)
+					  			    		((argPrint,argPrint), argTypeStr)
 					  			    	}
 					  			    }
 					  			}
 				  			}
-	  			fcnArgValues += Tuple3(argNam,argPrint,false)
+	  			fcnArgValues += Tuple3(argNams,argPrint,false)
 	  			fcnArgTypes += argTyp
 	  		}
   			idx += 1
@@ -298,10 +298,10 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val (argval, argtype) = pair._1
   			val argidx : Int = pair._2 + 1
   			val argIdxName = argidx.toString 
-  			val argName : String = argval._1
+  			val (buildsName,doesName) : (String,String) = argval._1
   			val argIdxTypeName = argidx.toString + "_type"
-  			logger.trace(s"%$argIdxName% = $argName, %$argIdxTypeName% = $argtype)")
-  			substitutionMap += s"%$argIdxName%" -> s"$argName"
+  			logger.trace(s"%$argIdxName% = $buildsName, %$argIdxTypeName% = $argtype)")
+  			substitutionMap += s"%$argIdxName%" -> s"$buildsName"
   			substitutionMap += s"%$argIdxTypeName%" -> s"$argtype"
   		})
   		
@@ -328,6 +328,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		 */
 		val classUpdateClassName : String = getClassName(substitutedClassExpr)
 		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
+		// var fcnArgValues : ArrayBuffer[((String,String),String,Boolean)]
 		val doesCmd : String = generateDoes(macroDef, argTypes, fcnArgValues, classUpdateClassName, parametersUsed)
 
 		logger.trace("'does' use of 'builds' class to be used:")
@@ -345,19 +346,26 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  	this MacroSelect instance).
 	 *  @param argTypes an array of triples - one per argument supplied to the macro function in the pmml - where
 	 *  	the values are (typeString representation, isAContainer, the BaseTypeDef for the argument)
-	 *  @param fcnArgValues - an ArrayBuffer of triples where a) the first string is the declared variable name that was crafted during creation of
-	 *  	the class that will handle the UPDATE job this function macro to invoke, b) the second string is the what the standard generate 
-	 *   	function produced; this will be used in most cases to produce the arguments for the "does" snippet to be produced here, and c) the 
-	 *    	boolean flag as to whether the argument was one that is a Container.field pattern.  When that is the case, the standard generate
-	 *     	text is incorrect because it is fetching the field content, not the reference to the container, the field's parent needed for the
-	 *      update.
+	 *  @param fcnArgValues - an ArrayBuffer of triples where 
+	 *  
+	 *  	<ul> 
+	 *   	<li>The first argument is a string tuple that contains the "builds" name that was used to generate the class that was 
+	 *    	written by the caller.  The second of the tuple is the "does" name appropriate for generating the expression to 
+	 *     	create the instance of the builds class. It has the original name in it, and is the one used here.</li>  
+	 *      <li>The second string is the what the standard generate function produced; this will be used in most cases to produce 
+	 *      the arguments for the "does" snippet to be produced here, and</li>
+	 *    	<li>The boolean flag as to whether the argument was one that is a Container.field pattern.  When that is the case, 
+	 *     	the standard generate text is incorrect because it is fetching the field content, not the reference to the container, 
+	 *      the field's parent needed for the update.</li>
+	 *      </ul>
+	 *      
 	 *  @param classUpdateClassName - this is the generated class name produced in (e.g.,...) generateClassBuildsAndDoes.  It will be part of 
 	 *  	string to be generated here "
 	 *  @param parameterIndices - these are indices into the fcnArgValues parameter (the 2nd arg) that are needed for the "does" arguments to 
 	 *  	be produced here.
 	 *  @return the generated use of the class that was generated by the "builds" method .
 	 */
-	def generateDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)], fcnArgValues : ArrayBuffer[(String,String,Boolean)], classUpdateClassName : String, parameterIndices : Array[Int]) : String = {
+	def generateDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)], fcnArgValues : ArrayBuffer[((String,String),String,Boolean)], classUpdateClassName : String, parameterIndices : Array[Int]) : String = {
 		val buffer : StringBuilder = new StringBuilder
 		buffer.append(s"new $classUpdateClassName(ctx, ")
 		var cnt : Int = 0
@@ -367,14 +375,14 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		}
 		parameterIndices.foreach( idx => {
 			val (typStr, isCntnr, elemdef) : (String,Boolean,BaseTypeDef) = argTypes(idx)
-			val (argName, exprStr, isContainer) : (String,String,Boolean) = fcnArgValues(idx)
+			val ((buildsArgName, doesArgName), exprStr, isContainer) : ((String,String),String,Boolean) = fcnArgValues(idx)
 			//val childNode = if (! isContainer) node.Children.apply(cnt) else null
 			val childNode = if (! elemdef.isInstanceOf[ContainerTypeDef]) node.Children.apply(cnt) else null
 			if (elemdef.isInstanceOf[ContainerTypeDef]) {
 				val appropriateTypeArgs = argTypes(cnt)
 				val (typeStr, isCtnr, elem) : (String,Boolean,BaseTypeDef) = appropriateTypeArgs
 				val whichType : String = typStr
-				buffer.append(s"ctx.valueFor(${'"'}$argName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
+				buffer.append(s"ctx.valueFor(${'"'}$doesArgName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
 			} else {
 				buffer.append(exprStr)
 			}
