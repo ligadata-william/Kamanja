@@ -1122,7 +1122,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
     } else if (msgFixed.toLowerCase().equals("false")) {
 
       getsetters = getsetters.append("""
-    override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+    override def set(key: String, value: Any): Unit = {
+	  if (key == null) throw new Exception(" key should not be null in set method")
+	  fields.put(key, value)
+    }
+          
     override def get(key: String): Any = {
       fields.get(key)
     }
