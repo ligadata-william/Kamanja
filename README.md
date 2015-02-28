@@ -20,7 +20,7 @@ Fatafat is helping one financial partner reduce overnight global system transact
 
 Medical applications are using Fatafat to create a system that analyzes physician notes, test results and patient input to identify certain combinations of information that may alert health care practitioners to new or changed conditions.
 
-###How to get Started
+###How to Get Started
 
 	1. Download latest Fatafat binaries from here:
 	
