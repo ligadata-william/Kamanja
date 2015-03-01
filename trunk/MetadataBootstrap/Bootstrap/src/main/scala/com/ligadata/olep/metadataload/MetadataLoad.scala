@@ -35,6 +35,18 @@ trait LogTrait {
  *  
  */
 
+object MetadataLoad {
+	def BaseContainersInfo: Array[(String, String, String, List[(String, String, String, String, Boolean, String)])] = {
+		// nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)
+		return Array[(String, String, String, List[(String, String, String, String, Boolean, String)])](
+			(MdMgr.sysNS, "EnvContext", "com.ligadata.OnLEPBase.EnvContext", List()),
+			(MdMgr.sysNS, "BaseMsg", "com.ligadata.OnLEPBase.BaseMsg", List()),
+			(MdMgr.sysNS, "BaseContainer", "com.ligadata.OnLEPBase.BaseContainer", List()),
+			(MdMgr.sysNS, "MessageContainerBase", "com.ligadata.OnLEPBase.MessageContainerBase", List()),
+			(MdMgr.sysNS, "Context", "com.ligadata.Pmml.Runtime.Context", List()))
+	}
+}
+
 class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : String, val attrPath : String, msgCtnPath : String) extends LogTrait {
 	val baseTypesVer = 100 // Which is 00.01.00
   
@@ -63,38 +75,13 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	}
 	
 	// CMS messages + the dimensional data (treated as Containers)
-	def InitBaseContainers : Unit = {
-		logger.trace("MetadataLoad...loading EnvContext")		
-		mgr.AddFixedContainer(MdMgr.sysNS
-			    , "EnvContext"
-			    , "com.ligadata.OnLEPBase.EnvContext"
-		  		, List()) 
-		 		  		
-		logger.trace("MetadataLoad...loading BaseMsg")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "BaseMsg"
-							    , "com.ligadata.OnLEPBase.BaseMsg"
-						  		, List()) 
-		  		
-		logger.trace("MetadataLoad...loading BaseContainer")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "BaseContainer"
-							    , "com.ligadata.OnLEPBase.BaseContainer"
-						  		, List()) 		
-				  		
-		logger.trace("MetadataLoad...loading MessageContainerBase")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "MessageContainerBase"
-							    , "com.ligadata.OnLEPBase.MessageContainerBase"
-						  		, List()) 		
-				  		
-		logger.trace("MetadataLoad...loading com.ligadata.Pmml.Runtime.Context")
-		 mgr.AddFixedContainer(MdMgr.sysNS
-							    , "Context"
-							    , "com.ligadata.Pmml.Runtime.Context"
-						  		, List()) 		
+	def InitBaseContainers: Unit = {
+		val baseContainerInfo = MetadataLoad.BaseContainersInfo
+		baseContainerInfo.foreach(bc => {
+			logger.trace("MetadataLoad...loading " + bc._2)
+			mgr.AddFixedContainer(bc._1, bc._2, bc._3, bc._4)
+		})
 	}
-
 
 	/** Define any types that may be used in the container, message, fcn, and model metadata */
 	def InitTypeDefs = {
