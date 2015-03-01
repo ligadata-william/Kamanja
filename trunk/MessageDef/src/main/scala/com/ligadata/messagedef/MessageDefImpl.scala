@@ -793,7 +793,7 @@ class MessageDefImpl {
             deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
             deserializedBuf.append("%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline))
             deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false);%s".format(pad2, newline))
+            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format( pad2, childType,newline ))
             deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
 
           }
@@ -939,9 +939,11 @@ class MessageDefImpl {
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevVerObj.%s)%s".format(pad2, f.Name, newline))
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = curVerObj}%s".format(pad2, f.Name, newline))
       }
+    //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
+
       deserializedBuf.append("%s{%s%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline, pad2, newline))
       deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false);%s".format(pad2, newline))
+      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2,  msgDef.PhysicalName , newline))
       deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s}%s".format(pad2, f.Name, newline, pad2, newline))
 
     } catch {

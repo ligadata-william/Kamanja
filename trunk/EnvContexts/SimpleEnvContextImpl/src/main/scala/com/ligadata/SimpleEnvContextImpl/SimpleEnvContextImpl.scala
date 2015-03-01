@@ -266,7 +266,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       case "manual" => {
         val valInfo = getValueInfo(tupleBytes)
-        objs(0) = SerializeDeserialize.Deserialize(valInfo, _mdres, _classLoader, true).asInstanceOf[MessageContainerBase]
+        objs(0) = SerializeDeserialize.Deserialize(valInfo, _mdres, _classLoader, true, "").asInstanceOf[MessageContainerBase]
       }
       case _ => {
         throw new Exception("Found un-handled Serializer Info: " + serInfo)
