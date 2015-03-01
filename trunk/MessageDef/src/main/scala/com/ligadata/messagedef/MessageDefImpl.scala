@@ -616,7 +616,7 @@ class MessageDefImpl {
             addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
             if (msg.PrimaryKeys != null) {
               getMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
-              getMsg.append("%s%s.foreach(o => {%s%sval pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}%s%s)}%s%s}".format(pad3, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2))
+              getMsg.append("%s%s.foreach(o => {%s%sif(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s)}%s%s}".format(pad3, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2))
             }
           }
         //assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
@@ -746,10 +746,10 @@ class MessageDefImpl {
                 getMsg.append(newline + pad3 + "val x = getOrElse(\"" + f.Name + "\", null)" + newline)
                 getMsg.append(pad3 + "if (x == null) return null" + newline)
                 getMsg.append(pad3 + "val " + f.Name + "= x.asInstanceOf[" + typ.get.typeString + "]" + newline + pad3)
-                getMsg.append("%s%s.foreach(o => {%s%sval pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
+                getMsg.append("%s%s.foreach(o => {%s%s if(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s} }%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
 
               } else if (msg.Fixed.toLowerCase().equals("true")) {
-                getMsg.append("%s%s.foreach(o => {%s%sval pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
+                getMsg.append("%s%s.foreach(o => {%s%s if(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
               }
             }
 
