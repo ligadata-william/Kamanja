@@ -10,7 +10,7 @@ import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
 import com.ligadata.OnLEPBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
-import org.apache.log4j.Logger
+import org.apache.log4j._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
@@ -29,6 +29,8 @@ class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 class OnLEPMetadata {
   val LOG = Logger.getLogger(getClass);
+
+  // LOG.setLevel(Level.TRACE)
 
   // Metadata manager
   val messageObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
@@ -382,6 +384,8 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
 
+  LOG.setLevel(Level.TRACE)
+
   private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
     removedContainers: ArrayBuffer[(String, String, Int)]): Unit = {
@@ -547,6 +551,9 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
   def UpdateMetadata(receivedJsonStr: String): Unit = {
+
+    LOG.trace("Process ZooKeeper notification " + receivedJsonStr)
+
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
       return
@@ -578,6 +585,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      LOG.trace("Processing ZooKeeperNotification, the object => " +  key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
@@ -638,6 +646,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      LOG.trace("Processing ZooKeeperNotification, the object => " +  key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)      
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
@@ -730,7 +739,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           }
         }
         case _ => {
-          LOG.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
+          LOG.warn("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
         }
       }
     })
