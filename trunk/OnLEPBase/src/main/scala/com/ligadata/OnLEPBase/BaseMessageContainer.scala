@@ -69,7 +69,7 @@ object SerializeDeserialize {
     null
   }
 
-  def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject: Boolean): MessageContainerBase = {
+  def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject:Boolean, desClassName: String): MessageContainerBase = {
     var dis = new DataInputStream(new ByteArrayInputStream(bytearray));
 
     val typName = dis.readUTF
@@ -82,13 +82,13 @@ object SerializeDeserialize {
         if (isTopObject) {
           mdResolver.getMessgeOrContainerInstance(typName)
         } else {
-          var curClz = Class.forName(classname, true, loader)
+          var curClz = Class.forName(desClassName, true, loader)
           curClz.newInstance().asInstanceOf[MessageContainerBase]
         }
       if (typ == null) {
         throw new Exception("Message/Container %s not found to deserialize".format(typName))
       }
-	typ.Deserialize(dis, mdResolver, loader, version.toString)
+      typ.Deserialize(dis, mdResolver, loader, version.toString)
       dis.close
       return typ
     } catch {

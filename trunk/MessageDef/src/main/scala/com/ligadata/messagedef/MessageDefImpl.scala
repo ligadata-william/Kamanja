@@ -27,7 +27,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String])
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr:Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -57,7 +57,7 @@ class MessageDefImpl {
 
   //creates the class string
 
-  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int]): (StringBuilder) = {
+  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname:String ): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
     var tdataexists: String = ""
     var tattribs: String = ""
@@ -88,13 +88,13 @@ class MessageDefImpl {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     }
     cobj
@@ -154,12 +154,12 @@ class MessageDefImpl {
     "\toverride def Version: String = " + "\"" + msg.Version + "\""
 
   }
-  private def createNewMessage(msg: Message) = {
-    "\toverride def CreateNewMessage: BaseMsg  = new " + msg.NameSpace + "_" + msg.Name + "_" + msg.Version.replaceAll("[.]", "").toInt + "()"
+  private def createNewMessage(msg: Message, classname: String) = {
+    "\toverride def CreateNewMessage: BaseMsg  = new " + classname + "()"
   }
 
-  private def createNewContainer(msg: Message) = {
-    "\toverride def CreateNewContainer: BaseContainer  = new " + msg.NameSpace + "_" + msg.Name + "_" + msg.Version.replaceAll("[.]", "").toInt + "()"
+  private def createNewContainer(msg: Message, classname: String) = {
+    "\toverride def CreateNewContainer: BaseContainer  = new " + classname + "()"
   }
 
   private def gettdataexists = {
@@ -464,7 +464,7 @@ class MessageDefImpl {
                 }
               }
             }
-            if (memberExists && !recompile) {
+            if (memberExists) {
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
               convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
             }
@@ -528,7 +528,7 @@ class MessageDefImpl {
     //prevVerObj.icd9_dgns_cds.foreach(v => icd9_dgns_cds :+= v);)
     // prevVerObj.inpaticonvertOldObjtoNewObjBufent_claims.foreach(ip => inpatient_claims += ip)
     //typ.get.typeString.toString().split("\\[")(1)
-    if (memberExists && !recompile) {
+    if (memberExists) {
       //prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(v => %s :+= v);%s".format(pad1, fieldName, fieldName, newline))
       prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, fieldName, fieldName, newline))
       convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, fieldName, fieldName, newline))
@@ -777,7 +777,7 @@ class MessageDefImpl {
             val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
 
             // prevVerObj.inpatient_claims.foreach(ip => inpatient_claims += ip)
-            if (memberExists && !recompile) {
+            if (memberExists) {
               // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s  = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childType, newline))
@@ -793,7 +793,7 @@ class MessageDefImpl {
             deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
             deserializedBuf.append("%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline))
             deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false);%s".format(pad2, newline))
+            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format( pad2, childType,newline ))
             deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
 
           }
@@ -932,16 +932,18 @@ class MessageDefImpl {
           }
         }
       }
-      if (memberExists && !recompile) {
+      if (memberExists) {
         // convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
 
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s{%s%sval curVerObj = new %s()%s".format(pad2, newline, pad2, msgDef.typeString, newline))
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevVerObj.%s)%s".format(pad2, f.Name, newline))
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = curVerObj}%s".format(pad2, f.Name, newline))
       }
+    //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
+
       deserializedBuf.append("%s{%s%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline, pad2, newline))
       deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false);%s".format(pad2, newline))
+      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2,  msgDef.PhysicalName , newline))
       deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s}%s".format(pad2, f.Name, newline, pad2, newline))
 
     } catch {
@@ -1495,7 +1497,7 @@ import java.io.{ DataInputStream, DataOutputStream }
 
   }
 
-  private def classname(msg: Message): (StringBuilder, StringBuilder) = {
+  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String ) = {
     var sname: String = ""
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
@@ -1513,11 +1515,11 @@ import java.io.{ DataInputStream, DataOutputStream }
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
+     val clsname =  msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
+    val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + sname
+    val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
 
-    val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + space + xtends + space + sname
-    val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + space + xtends + space + oname
-
-    (clssb.append(clsstr), objsb.append(objstr))
+    (clssb.append(clsstr), objsb.append(objstr), clsname)
   }
 
   //trait - BaseMsg	
@@ -1638,7 +1640,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     } else if (msgFixed.toLowerCase().equals("false")) {
 
       getsetters = getsetters.append("""
-    override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
+    override def set(key: String, value: Any): Unit = {
+	  if (key == null) throw new Exception(" key should not be null in set method")
+	  fields.put(key, value)
+    }
     override def get(key: String): Any = {
       fields.get(key)
     }
@@ -1976,7 +1981,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
-  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+ /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -1988,7 +1993,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
   }
-
+*/
+  
   def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
     var ver: String = null
@@ -2029,7 +2035,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      createScalaFile(classstr, ver, classname)
+    //  createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2051,7 +2057,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      createScalaFile(classstr, ver, classname)
+     // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2088,9 +2094,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
       val (btrait, striat, csetters) = getBaseTrait(message)
-      val cobj = createObj(message, partkeyPos, primarykeyPos)
+       val (clsstr, objstr, clasname) = classname(message, recompile)
+      val cobj = createObj(message, partkeyPos, primarykeyPos, clasname)
       val isFixed = getIsFixed(message)
-      val (clsstr, objstr) = classname(message)
+     
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
@@ -2117,10 +2124,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
       val (btrait, striat, csetters) = getBaseTrait(message)
-      val cobj = createObj(message, partitionPos, primaryPos)
+      val (clsstr, objstr, clasname) = classname(message, recompile)
+      val cobj = createObj(message, partitionPos, primaryPos, clasname)
       val isFixed = getIsFixed(message)
       val getSerializedFuncStr = getSerializedFunction(serializedBuf)
-      val (clsstr, objstr) = classname(message)
+      
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + SerDeserStr + " \n}")
     } catch {
@@ -2199,10 +2207,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var msgDef: MessageDef = new MessageDef()
 
     try {
+      var version = msg.Version.replaceAll("[.]", "").toInt
+      //if(recompile) 
+    //	  version = version+1
+      
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null,recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2214,7 +2226,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the serialized function in generated scala class 
   private def getSerializedFunction(serStr: String): String = {
-    var getSerFunc: String = ""
+    var getSerFunc: String = "" 
 
     if (serStr != null && serStr.trim() != "") {
       getSerFunc = """
@@ -2241,7 +2253,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile:Boolean): String = {
     var preVerDeserStr: String = ""
-    if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+    // if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+   
+      if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
       val prevVerObjStr = "val prevVerObj = new %s()".format(prevVerMsgObjstr)
       preVerDeserStr = """
         if (prevVer < currentVer) {
@@ -2405,7 +2419,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msg1
   }
 
-  private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+ /* private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
     var pkg: String = "com.ligadata.messagescontainers"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString
     var tdata: TransformData = null
@@ -2427,8 +2441,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null, null)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), null, tdataexists, tdata, null, pkg, conceptList, null, null, null, null, null, 0)
   }
+  * 
+  */
 
   // Make sure the version is in the format of nn.nn.nn
   private def extractVersion(message: Map[String, Any]): String = {
@@ -2496,8 +2512,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList)
+    val cur_time = System.currentTimeMillis
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString +"_"+cur_time
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
