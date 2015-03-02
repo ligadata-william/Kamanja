@@ -107,9 +107,9 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
             val (iStatusCode,iResultData) = MetadataAPIImpl.getApiResult(iResult)
             if (iStatusCode == 0)  {
               deletedObjects +:= iResultData
-              resultDesc = "Deleted Objects" 
+              resultDesc = "Delete Successful" 
             } else {
-              resultDesc = "Deleted Objects: Object Not Found" 
+              resultDesc = "Unable to Delete: Object Not Found" 
             }
           }
         })
