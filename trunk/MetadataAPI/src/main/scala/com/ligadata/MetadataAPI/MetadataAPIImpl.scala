@@ -213,12 +213,12 @@ object MetadataAPIImpl extends MetadataAPI {
       o
     } catch {
       case e: KeyNotFoundException => {
-        logger.trace("The object " + key + " is not found in the database. Error => " + e.getMessage())
+        logger.trace("The object " + KeyAsStr(key) + " is not found in the database. Error => " + e.getMessage())
         throw new ObjectNotFoundException(e.getMessage())
       }
       case e: Exception => {
         e.printStackTrace()
-        logger.trace("The object " + key + " is not found in the database, Generic Exception: Error => " + e.getMessage())
+        logger.trace("The object " + KeyAsStr(key) + " is not found in the database, Generic Exception: Error => " + e.getMessage())
         throw new ObjectNotFoundException(e.getMessage())
       }
     }
@@ -1927,7 +1927,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-
+/*
   def UpdateMessageDef(msgDef: MessageDef): String = {
     try {
       UpdateObjectInCache(msgDef,"Activate", MdMgr.GetMdMgr)
@@ -1965,8 +1965,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-
-  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
+*/
+  // As per Model Compiler requirement, Add array/arraybuf/sortedset types for this messageDef
   // along with the messageDef.  
   def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr): Array[BaseElemDef] = {
     logger.trace("The class name => " + msgDef.getClass().getName())
@@ -2414,71 +2414,12 @@ object MetadataAPIImpl extends MetadataAPI {
           types
         }
         case _ => {
-          throw new InternalErrorException("Unknown class in AddMessageTypes")
+          throw new InternalErrorException("Unknown class in GetAdditionalTypesAdded")
         }
       }
     } catch {
       case e: Exception => {
         throw new Exception(e.getMessage())
-      }
-    }
-  }
-
-  // Remove message with Message Name and Version Number
-  def RemoveMessageFromCache(zkMessage: ZooKeeperNotification) = {
-    try {
-      var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      val o = MdMgr.GetMdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
-      o match {
-        case None =>
-          None
-          logger.trace("Message not found, Already Removed? => " + key)
-        case Some(m) =>
-          val msgDef = m.asInstanceOf[MessageDef]
-          logger.trace("message found => " + msgDef.FullNameWithVer)
-          val types = GetAdditionalTypesAdded(msgDef, MdMgr.GetMdMgr)
-
-          var typeName = zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "arrayof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "sortedsetof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "arraybufferof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt)
-      }
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to delete the Message from cache:" + e.toString)
-      }
-    }
-  }
-
-  def RemoveContainerFromCache(zkMessage: ZooKeeperNotification) = {
-    try {
-      var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      val o = MdMgr.GetMdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
-      o match {
-        case None =>
-          None
-          logger.trace("Message not found, Already Removed? => " + key)
-        case Some(m) =>
-          val msgDef = m.asInstanceOf[MessageDef]
-          logger.trace("message found => " + msgDef.FullNameWithVer)
-          var typeName = zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "arrayof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "sortedsetof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          typeName = "arraybufferof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          MdMgr.GetMdMgr.RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt)
-      }
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to delete the Message from cache:" + e.toString)
       }
     }
   }
