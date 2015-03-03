@@ -13,7 +13,7 @@ object UpdateConceptService {
   case class Process(conceptJson:String)
 }
 
-class UpdateConceptService(requestContext: RequestContext) extends Actor {
+class UpdateConceptService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import UpdateConceptService._
   
@@ -30,6 +30,10 @@ class UpdateConceptService(requestContext: RequestContext) extends Actor {
   def process(conceptJson:String) = {
     
     log.info("Requesting UpdateConcept {}",conceptJson)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
     
     val apiResult = MetadataAPIImpl.UpdateConcepts(conceptJson,"JSON")
     

@@ -16,7 +16,7 @@ object UpdateTypeService {
   case class Process(containerJson:String)
 }
 
-class UpdateTypeService(requestContext: RequestContext) extends Actor {
+class UpdateTypeService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import AddContainerService._
   
@@ -32,6 +32,11 @@ class UpdateTypeService(requestContext: RequestContext) extends Actor {
   
   def process(containerJson:String) = {
     log.info("Requesting AddContainer {}",containerJson)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
+    
     val apiResult = MetadataAPIImpl.UpdateType(containerJson,"JSON")
     requestContext.complete(apiResult)
   }

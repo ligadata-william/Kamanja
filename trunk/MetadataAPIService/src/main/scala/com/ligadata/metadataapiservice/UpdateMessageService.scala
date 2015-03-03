@@ -16,7 +16,7 @@ object UpdateMessageService {
 	case class Process(messageJson:String, formatType:String)
 }
 
-class UpdateMessageService(requestContext: RequestContext) extends Actor {
+class UpdateMessageService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
 	import UpdateMessageService._
 	
@@ -33,6 +33,10 @@ class UpdateMessageService(requestContext: RequestContext) extends Actor {
 	def process(messageJson:String, formatType:String) = {
 	  
 		log.info("Requesting Update {},{}",messageJson,formatType)
+
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 		
 		val apiResult = MetadataAPIImpl.UpdateMessage(messageJson,formatType)
 		

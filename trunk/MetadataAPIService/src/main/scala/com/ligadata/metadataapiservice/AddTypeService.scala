@@ -16,7 +16,7 @@ object AddTypeService {
 	case class Process(typeJson:String, formatType:String)
 }
 
-class AddTypeService(requestContext: RequestContext) extends Actor {
+class AddTypeService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
 	import AddTypeService._
 	

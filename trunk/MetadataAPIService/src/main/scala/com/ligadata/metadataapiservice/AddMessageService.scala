@@ -16,7 +16,7 @@ object AddMessageService {
   case class Process(messageJson:String)
 }
 
-class AddMessageService(requestContext: RequestContext) extends Actor {
+class AddMessageService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import AddMessageService._
   

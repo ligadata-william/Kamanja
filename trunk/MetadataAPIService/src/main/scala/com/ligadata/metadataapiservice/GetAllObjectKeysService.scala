@@ -22,7 +22,7 @@ object GetAllObjectKeysService {
   case class Process(formatType:String)
 }
 
-class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
+class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import GetAllObjectKeysService._
   
@@ -44,6 +44,10 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
 
   def GetAllObjectKeys(objectType:String): String = {
     var apiResult:Array[String] = new Array[String](0)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"read")) {
+      return new ApiResult(-1,"Security","READ not allowed for this user").toString  
+    }
 
     objectType match {
       case "model" => {

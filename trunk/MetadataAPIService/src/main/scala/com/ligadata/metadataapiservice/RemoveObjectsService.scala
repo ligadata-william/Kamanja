@@ -18,7 +18,7 @@ object RemoveObjectsService {
 	case class Process(apiArgListJson: String)
 }
 
-class RemoveObjectsService(requestContext: RequestContext) extends Actor {
+class RemoveObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import RemoveObjectsService._
   
@@ -81,6 +81,10 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
   def process(apiArgListJson: String) = {
     
     logger.trace(APIName + ":" + apiArgListJson)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList

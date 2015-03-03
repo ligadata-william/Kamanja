@@ -27,121 +27,103 @@ trait MetadataAPIService extends HttpService {
   logger.setLevel(Level.TRACE);
 
   val metadataAPIRoute = {
-    get {     
-      path("api" / Rest) {str => 
-        {      
-          val toknRoute = str.split("/") 
-          logger.info(str + " => "+ toknRoute(0))
-          if (toknRoute.size == 1) {
-            requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext)
-          } else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-            requestContext =>  processGetKeysRequest(toknRoute(1).toLowerCase,requestContext)
-          } else { 
-            requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext)
-          }       
+    optionalHeaderValueByName("userid") { userId => { optionalHeaderValueByName("password") { password => {optionalHeaderValueByName("certificate")  { cert =>
+      get {     
+        path("api" / Rest) {str => 
+          {  
+            val toknRoute = str.split("/") 
+            logger.info("GET reqeust : api/"+str)
+            if (toknRoute.size == 1) { requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,cert) }
+            else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,cert) }    
+            else { requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,cert) }           
+          } 
         } 
-      } 
-    } ~
-    put {
-       path("api" / Rest) {str =>
-         {
-            logger.info("PUT: " + str)
-            val toknRoute = str.split("/")
-            if(toknRoute(0).equalsIgnoreCase("UploadJars")) {
-               entity(as[Array[Byte]]) { 
-                 reqBody => {
-                   parameters('name) {jarName => 
-                     {
-                       logger.info("Uploading jar "+ jarName)
-                       requestContext => 
-                         val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext)))
-                         uploadJarService ! UploadJarService.Process(jarName,reqBody)
-                     }   
+      } ~
+      put {
+         path("api" / Rest) {str =>
+           {
+              logger.info("PUT reqeust : api/"+str)
+              val toknRoute = str.split("/")
+              if(toknRoute(0).equalsIgnoreCase("UploadJars")) {
+                 entity(as[Array[Byte]]) { 
+                   reqBody => {
+                     parameters('name) {jarName => 
+                       {
+                         logger.info("Uploading jar "+ jarName)
+                         requestContext => 
+                           val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext,userId,password,cert)))
+                           uploadJarService ! UploadJarService.Process(jarName,reqBody)
+                       }   
+                     }
                    }
                  }
-               }
-            }  else if( toknRoute(0).equalsIgnoreCase("Activate") || 
-                        toknRoute(0).equalsIgnoreCase("Deactivate")) {
-              entity(as[String]) { reqBody =>
-                requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext) 
-              }
-            } else {
-              entity(as[String]) { reqBody =>  
-                {
-                  if (toknRoute.size == 1) {      
-                    requestContext => processPutRequest (toknRoute(0),reqBody,requestContext)
-                  } else {
-                    requestContext => processPutRequest (toknRoute(1).toLowerCase,reqBody,requestContext)
-                  }             
+              }  else if( toknRoute(0).equalsIgnoreCase("Activate") || toknRoute(0).equalsIgnoreCase("Deactivate")) { 
+                entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext,userId,password,cert) }
+              } else {
+                entity(as[String]) { reqBody =>  
+                  {
+                    if (toknRoute.size == 1) {  requestContext => processPutRequest (toknRoute(0),reqBody,requestContext,userId,password,cert) }      
+                    else { requestContext => processPutRequest (toknRoute(1).toLowerCase,reqBody,requestContext,userId,password,cert) }            
+                  }
                 }
               }
-            }
+           }
          }
-       }
-    } ~
-    post {
-      entity(as[String]) { reqBody =>
-        path("api" / Rest) {str => 
-          {
-            val toknRoute = str.split("/") 
-            logger.info ("POST REQUEST: "+str)           
-            if (toknRoute.size == 1) {
-              entity(as[String]) { 
-                reqBody => {
-                  requestContext => processPostRequest (toknRoute(0),reqBody,requestContext) 
-                }
-              }
-            } else {
-              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown POST route")).toString)
+      } ~
+      post {
+        entity(as[String]) { reqBody =>
+          path("api" / Rest) {str => 
+            {
+              val toknRoute = str.split("/") 
+              logger.info("POST reqeust : api/"+str)          
+              if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,userId,password,cert) }}}
+              else { requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown POST route")).toString) }
+            }
+          }
+        }
+      } ~
+      delete {
+        entity(as[String]) { reqBody =>
+          path("api" / Rest) { str =>
+            {
+              val toknRoute = str.split("/")
+              logger.info("DELETE reqeust : api/"+str)
+              if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,cert) }  
+              else {  requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown DELETE route")).toString) }
             }
           }
         }
       }
-    } ~
-    delete {
-      entity(as[String]) { reqBody =>
-        path("api" / Rest) { str =>
-          {
-            val toknRoute = str.split("/")
-            logger.info("DELETE "+str)
-            if (toknRoute.size == 2) {
-              requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext)   
-            } else {
-              requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL", "Unknown DELETE route")).toString)
-            }
-          }
-        }
-      }
-    }
-  }
+    }}}}} // Close all the Header parens
+  } 
   
   /**
    * Modify Existing objects in the Metadata 
    */
-  private def processPutRequest(objtype:String, body: String, rContext: RequestContext):Unit = {
+  private def processPutRequest(objtype:String, body: String, rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]):Unit = {
     if (objtype.equalsIgnoreCase("Container")) {
-        val updateContainerDefsService = actorRefFactory.actorOf(Props(new UpdateContainerService(rContext)))
+        val updateContainerDefsService = actorRefFactory.actorOf(Props(new UpdateContainerService(rContext,userid,password,cert)))
         updateContainerDefsService ! UpdateContainerService.Process(body)
     } else if (objtype.equalsIgnoreCase("Model")) {
-        val updateModelService:ActorRef = actorRefFactory.actorOf(Props(new UpdateModelService(rContext)))
+        val updateModelService:ActorRef = actorRefFactory.actorOf(Props(new UpdateModelService(rContext,userid,password,cert)))
         updateModelService ! UpdateModelService.Process(body)
     } else if (objtype.equalsIgnoreCase("Message")) {
-        val updateMessageDefsService = actorRefFactory.actorOf(Props(new UpdateMessageService(rContext)))
+        val updateMessageDefsService = actorRefFactory.actorOf(Props(new UpdateMessageService(rContext,userid,password,cert)))
         updateMessageDefsService ! UpdateMessageService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Type")) {
-        val updateTypeDefsService = actorRefFactory.actorOf(Props(new UpdateTypeService(rContext)))
+        val updateTypeDefsService = actorRefFactory.actorOf(Props(new UpdateTypeService(rContext,userid,password,cert)))
         updateTypeDefsService ! AddTypeService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Concept")) {
-        val updateConceptDefsService = actorRefFactory.actorOf(Props(new UpdateConceptService(rContext)))
+        val updateConceptDefsService = actorRefFactory.actorOf(Props(new UpdateConceptService(rContext,userid,password,cert)))
         updateConceptDefsService ! UpdateConceptService.Process(body)
     } else if (objtype.equalsIgnoreCase("Function")) {
-        val updateFunctionDefsService = actorRefFactory.actorOf(Props(new UpdateFunctionService(rContext)))
+        val updateFunctionDefsService = actorRefFactory.actorOf(Props(new UpdateFunctionService(rContext,userid,password,cert)))
         updateFunctionDefsService ! UpdateFunctionService.Process(body)
     } else if (objtype.equalsIgnoreCase("RemoveConfig")) {
-        val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
+        val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext,userid,password,cert)))
         removeConfigService ! RemoveEngineConfigService.Process(body)
     } else if (objtype.equalsIgnoreCase("UploadConfig")) {
-        val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext)))
+        val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext,userid,password,cert)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
     } else {
       rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown PUT route")).toString)
@@ -151,12 +133,12 @@ trait MetadataAPIService extends HttpService {
     /**
    * Modify Existing objects in the Metadata 
    */
-  private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext):Unit = {
+  private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]):Unit = {
     if (action.equalsIgnoreCase("Activate")) {
-        val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext)))
+        val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext,userid,password,cert)))
         activateObjectsService ! ActivateObjectsService.Process(createGetArg(objKey,objtype))
     } else if (action.equalsIgnoreCase("Deactivate")) {
-       val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext)))
+       val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext,userid,password,cert)))
        deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
     } else {
       rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown PUT route")).toString)     
@@ -166,24 +148,24 @@ trait MetadataAPIService extends HttpService {
   /**
    * Create new Objects in the Metadata
    */
-  private def processPostRequest(objtype:String, body: String, rContext: RequestContext):Unit = {
+  private def processPostRequest(objtype:String, body: String, rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]):Unit = {
    if (objtype.equalsIgnoreCase("Container")) {
-        val addContainerDefsService = actorRefFactory.actorOf(Props(new AddContainerService(rContext)))
+        val addContainerDefsService = actorRefFactory.actorOf(Props(new AddContainerService(rContext,userid,password,cert)))
         addContainerDefsService ! AddContainerService.Process(body)
     } else if (objtype.equalsIgnoreCase("Model")) {
-        val addModelService:ActorRef = actorRefFactory.actorOf(Props(new AddModelService(rContext)))
+        val addModelService:ActorRef = actorRefFactory.actorOf(Props(new AddModelService(rContext,userid,password,cert)))
         addModelService ! AddModelService.Process(body)
     } else if (objtype.equalsIgnoreCase("Message")) {
-        val addMessageDefsService = actorRefFactory.actorOf(Props(new AddMessageService(rContext)))
+        val addMessageDefsService = actorRefFactory.actorOf(Props(new AddMessageService(rContext,userid,password,cert)))
         addMessageDefsService ! AddMessageService.Process(body)
     } else if (objtype.equalsIgnoreCase("Type")) {
-        val addTypeDefsService = actorRefFactory.actorOf(Props(new AddTypeService(rContext)))
+        val addTypeDefsService = actorRefFactory.actorOf(Props(new AddTypeService(rContext,userid,password,cert)))
         addTypeDefsService ! AddTypeService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Concept")) {
-        val addConceptDefsService = actorRefFactory.actorOf(Props(new AddConceptService(rContext)))
+        val addConceptDefsService = actorRefFactory.actorOf(Props(new AddConceptService(rContext,userid,password,cert)))
         addConceptDefsService ! AddConceptService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Function")) {
-        val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext)))
+        val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext,userid,password,cert)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
     } else {
       rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown POST route")).toString)     
@@ -193,10 +175,10 @@ trait MetadataAPIService extends HttpService {
   /**
    * 
    */
-  private def processGetKeysRequest(objtype:String,rContext: RequestContext): Unit = {
+  private def processGetKeysRequest(objtype:String,rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]): Unit = {
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || objtype.equalsIgnoreCase("Function") ||
         objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
-      val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext)))
+      val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext,userid,password,cert)))
       allObjectKeysService ! GetAllObjectKeysService.Process(objtype)  
     } else {
       rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString) 
@@ -206,13 +188,13 @@ trait MetadataAPIService extends HttpService {
   /**
    *  
    */
-  private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext): Unit = {
+  private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]): Unit = {
     if (objtype.equalsIgnoreCase("Config")) {
-        val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext)))
+        val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,cert)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
     } else if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || 
                objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type"))  {
-        val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext)))
+        val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext,userid,password,cert)))
         getObjectsService ! GetObjectsService.Process(createGetArg(objKey,objtype))  
     } else {
         rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown GET route")).toString) 
@@ -222,13 +204,13 @@ trait MetadataAPIService extends HttpService {
   /**
    * 
    */
-  private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext):Unit = {
+  private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]):Unit = {
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
         objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
-      val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext)))
+      val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext,userid,password,cert)))
       removeObjectsService ! RemoveObjectsService.Process(createGetArg(objKey,objtype))
     } else if (objtype.equalsIgnoreCase("Config")) {
-      val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext)))
+      val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext,userid,password,cert)))
       removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
     } else {
       rContext.complete((new ApiResult(-1, "Unknown URL", "Unknown DELETE route")).toString)     

@@ -18,7 +18,7 @@ object ActivateObjectsService {
 	case class Process(apiArgListJson: String)
 }
 
-class ActivateObjectsService(requestContext: RequestContext) extends Actor {
+class ActivateObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import ActivateObjectsService._
   
@@ -69,6 +69,10 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
   def process(apiArgListJson: String) = {
     
     logger.trace(APIName + ":" + apiArgListJson)
+
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList

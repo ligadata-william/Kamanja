@@ -16,7 +16,7 @@ object UploadEngineConfigService {
   case class Process(cfgJson:String)
 }
 
-class UploadEngineConfigService(requestContext: RequestContext) extends Actor {
+class UploadEngineConfigService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import UploadEngineConfigService._
   
@@ -33,6 +33,10 @@ class UploadEngineConfigService(requestContext: RequestContext) extends Actor {
   def process(cfgJson:String) = {
     
     log.info("Requesting UploadEngineConfig {}",cfgJson)
+
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
     
     val apiResult = MetadataAPIImpl.UploadConfig(cfgJson)
     

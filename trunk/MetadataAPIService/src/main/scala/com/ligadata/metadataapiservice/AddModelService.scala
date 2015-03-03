@@ -19,7 +19,7 @@ object AddModelService {
   case class Process(pmmlStr:String)
 }
 
-class AddModelService(requestContext: RequestContext) extends Actor {
+class AddModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import AddModelService._
   
