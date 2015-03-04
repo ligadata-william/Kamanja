@@ -28,13 +28,13 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
 
     val username = secParams.getProperty("userid")
     if( username == null ){
-      log.error("userid is not supplied: unable to authenticate")
+      log.error("SimpleApacheShiroAdapter: userid is not supplied: unable to authenticate")
       return false;
     }
 
     val password = secParams.getProperty("password")
     if( username == null ){
-      log.error("password is not supplied: unable to authenticate")
+      log.error("SimpleApacheShiroAdapter: password is not supplied: unable to authenticate")
       return false;
     }
 
@@ -42,7 +42,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     val privilege = secParams.getProperty("action")
 
     if( role == null && privilege == null ){
-      log.error("Either role or privilege must be supplied: unable to authenticate")
+      log.error("SimpleApacheShiroAdapter: Either role or privilege must be supplied: unable to authenticate")
       return false;
     }
 
@@ -50,64 +50,63 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     val currentUser = SecurityUtils.getSubject();
 
     // let's login the current user so we can check against roles and permissions:
-    var authenticated = false;
     if (!currentUser.isAuthenticated()) {
       val token = new UsernamePasswordToken(username,password);
       token.setRememberMe(true);
       try {
         currentUser.login(token);
-	      authenticated = true;
       } catch {
-	      case uae:UnknownAccountException => {
-          log.error("There is no user with username of " + token.getPrincipal());
+        case uae:UnknownAccountException => {
+          log.error("SimpleApacheShiroAdapter: There is no user with username of " + token.getPrincipal());
+          return false
+        } 
+        case ice:IncorrectCredentialsException => {
+          log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
           return false
 	      } 
-	      case ice:IncorrectCredentialsException => {
-          log.error("Password for account " + token.getPrincipal() + " was incorrect!");
-          return false
-	      } 
-	      case lae:LockedAccountException => {
-          log.error("The account for username " + token.getPrincipal() + " is locked.  " +
-                   "Please contact your administrator to unlock it.");
+        case lae:LockedAccountException => {
+          log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
+                    "Please contact your administrator to unlock it.");
           return false
 	      }
 	      // ... catch more exceptions here, maybe custom ones specific to your application?
-	      case ae: AuthenticationException => {
-	        ae.printStackTrace()
-	        log.error("Unexpected authorization exception " + ae.getMessage())
+        case ae: AuthenticationException => {
+          ae.printStackTrace()
+          log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
+          return false
+        }
+        case e: Exception => {
+          e.printStackTrace()
+          log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage())
           return false
         }
       }
-    } else {
-      authenticated = true
-    }
+    } 
 
-    if (authenticated == true ){
-      //say who they are:
-      //print their identifying principal (in this case, a username):
-      log.trace("User [" + currentUser.getPrincipal() + "] authenticated successfully... checking authorization");
+    // Authentication is done, if we have passed it, we need to see if Authorization for this function is valid
+    log.trace("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authenticated successfully... checking authorization");
 
-      //test a role:
-      if( role != null ){
-	      if (currentUser.hasRole(role)) {
-	        log.debug("The role " + role + " is authorized !");
-	      } else {
-	        log.debug("The role " + role + " is not authorized !");
-	        return false
-	      }
+    //test a role:
+    if( role != null ){
+      if (currentUser.hasRole(role)) {
+        log.trace("SimpleApacheShiroAdapter: The role " + role + " is authorized !");
+      } else {
+        log.trace("SimpleApacheShiroAdapter: The role " + role + " is not authorized !");
+        return false
       }
+    }
       
-      //test a typed permission (not instance-level)
-      if( privilege != null ){
-	      if (currentUser.isPermitted(privilege)) {
-	        log.debug("The privilege " + privilege + " is authorized ")
-	      } else {
-	        log.debug("The privilege " + privilege + " is not authorized ")
-	        return false
-	      }
+    //test a typed permission (not instance-level)
+    if( privilege != null ){
+      if (currentUser.isPermitted(privilege)) {
+        log.trace("SimpleApacheShiroAdapter: The privilege " + privilege + " is authorized ")
+	    } else {
+        log.trace("SimpleApacheShiroAdapter: The privilege " + privilege + " is not authorized ")
+        return false
       }
     }
-
+    // if we are here.. Both Auth and Authorization is passed..
+    log.trace("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authorized successfully");
     return true
-  }
+
 }
