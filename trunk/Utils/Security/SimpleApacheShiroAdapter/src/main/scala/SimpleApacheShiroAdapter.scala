@@ -108,5 +108,5 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     // if we are here.. Both Auth and Authorization is passed..
     log.trace("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authorized successfully");
     return true
-
+  }
 }
