@@ -56,57 +56,58 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
       token.setRememberMe(true);
       try {
         currentUser.login(token);
-	authenticated = true;
+	      authenticated = true;
       } catch {
-	case uae:UnknownAccountException => {
+	      case uae:UnknownAccountException => {
           log.error("There is no user with username of " + token.getPrincipal());
-	} 
-	case ice:IncorrectCredentialsException => {
+          return false
+	      } 
+	      case ice:IncorrectCredentialsException => {
           log.error("Password for account " + token.getPrincipal() + " was incorrect!");
-	} 
-	case lae:LockedAccountException => {
+          return false
+	      } 
+	      case lae:LockedAccountException => {
           log.error("The account for username " + token.getPrincipal() + " is locked.  " +
                    "Please contact your administrator to unlock it.");
-	}
-	// ... catch more exceptions here, maybe custom ones specific to your application?
-	case ae: AuthenticationException => {
-	  ae.printStackTrace()
-	  log.error("Unexpected authorization exception " + ae.getMessage())
-	}
+          return false
+	      }
+	      // ... catch more exceptions here, maybe custom ones specific to your application?
+	      case ae: AuthenticationException => {
+	        ae.printStackTrace()
+	        log.error("Unexpected authorization exception " + ae.getMessage())
+          return false
+        }
       }
-    }
-    else{
+    } else {
       authenticated = true
     }
 
-    if( authenticated == true ){
+    if (authenticated == true ){
       //say who they are:
       //print their identifying principal (in this case, a username):
-      log.debug("User [" + currentUser.getPrincipal() + "] logged in successfully.");
+      log.trace("User [" + currentUser.getPrincipal() + "] authenticated successfully... checking authorization");
 
       //test a role:
       if( role != null ){
-	if (currentUser.hasRole(role)) {
-	  log.debug("The role " + role + " is authorized !");
-	} else {
-	  log.debug("The role " + role + " is not authorized !");
-	  return false
-	}
+	      if (currentUser.hasRole(role)) {
+	        log.debug("The role " + role + " is authorized !");
+	      } else {
+	        log.debug("The role " + role + " is not authorized !");
+	        return false
+	      }
       }
-
+      
+      //test a typed permission (not instance-level)
       if( privilege != null ){
-	//test a typed permission (not instance-level)
-	if (currentUser.isPermitted(privilege)) {
-	  log.debug("The privilege " + privilege + " is authorized ")
-	} else {
-	  log.debug("The privilege " + privilege + " is not authorized ")
-	  return false
-	}
+	      if (currentUser.isPermitted(privilege)) {
+	        log.debug("The privilege " + privilege + " is authorized ")
+	      } else {
+	        log.debug("The privilege " + privilege + " is not authorized ")
+	        return false
+	      }
       }
     }
 
     return true
-    //all done - log out!
-    //currentUser.logout();
   }
 }
