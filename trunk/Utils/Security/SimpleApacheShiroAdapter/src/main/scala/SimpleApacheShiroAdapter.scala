@@ -68,8 +68,8 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
                     "Please contact your administrator to unlock it.");
           return false
-	      }
-	      // ... catch more exceptions here, maybe custom ones specific to your application?
+        }
+        // ... catch more exceptions here, maybe custom ones specific to your application?
         case ae: AuthenticationException => {
           ae.printStackTrace()
           log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
