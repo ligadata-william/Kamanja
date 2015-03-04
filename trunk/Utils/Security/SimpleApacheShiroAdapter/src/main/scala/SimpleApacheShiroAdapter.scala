@@ -63,7 +63,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
         case ice:IncorrectCredentialsException => {
           log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
           return false
-	      } 
+       } 
         case lae:LockedAccountException => {
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
                     "Please contact your administrator to unlock it.");
