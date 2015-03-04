@@ -27,7 +27,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr:Long)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -57,7 +57,7 @@ class MessageDefImpl {
 
   //creates the class string
 
-  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname:String ): (StringBuilder) = {
+  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname: String): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
     var tdataexists: String = ""
     var tattribs: String = ""
@@ -390,7 +390,7 @@ class MessageDefImpl {
     }
   }
 
-  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String) = {
+  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -454,16 +454,22 @@ class MessageDefImpl {
           //val deserType = getDeserializedType(typ.get.physicalName)
           if (deserType != null && deserType.trim() != "") {
             deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
+
             var memberExists: Boolean = false
+            var sameType: Boolean = false
             if (childs != null) {
-              var value = childs.getOrElse(f.Name, null)
               if (childs.contains(f.Name)) {
-                value = childs.getOrElse(f.Name, null)
-                if (value != null && value.trim() != "" && value.equals(typ.get.FullName)) {
-                  memberExists = true
+                var child = childs.getOrElse(f.Name, null)
+                if (child != null) {
+                  val fullname = child.asInstanceOf[AttributeDef].aType.FullName
+                  if (fullname != null && fullname.trim() != "" && fullname.equals(typ.get.FullName)) {
+                    memberExists = true
+
+                  }
                 }
               }
             }
+
             if (memberExists) {
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
               convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
@@ -493,7 +499,7 @@ class MessageDefImpl {
   }
 
   ///serialize deserialize primative types
-  private def getSerDeserPrimitives(typeString: String, typFullName: String, fieldName: String, implName: String, childs: Map[String, String], isArayBuf: Boolean, recompile:Boolean): (String, String, String, String) = {
+  private def getSerDeserPrimitives(typeString: String, typFullName: String, fieldName: String, implName: String, childs: Map[String, Any], isArayBuf: Boolean, recompile: Boolean): (String, String, String, String) = {
     var serializedBuf = new StringBuilder(8 * 1024)
     var deserializedBuf = new StringBuilder(8 * 1024)
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
@@ -516,12 +522,16 @@ class MessageDefImpl {
     serializedBuf.append("%s})}%s".format(pad2, newline))
 
     var memberExists: Boolean = false
+    var sameType: Boolean = false
     if (childs != null) {
-      var value = childs.getOrElse(fieldName, null)
       if (childs.contains(fieldName)) {
-        value = childs.getOrElse(fieldName, null)
-        if (value != null && value.trim() != "" && value.equals(typFullName)) {
-          memberExists = true
+        var child = childs.getOrElse(fieldName, null)
+        if (child != null) {
+          val fullname = child.asInstanceOf[AttributeDef].aType.FullName
+          if (fullname != null && fullname.trim() != "" && fullname.equals(typFullName)) {
+            memberExists = true
+
+          }
         }
       }
     }
@@ -543,14 +553,14 @@ class MessageDefImpl {
     deserializedBuf.append("%sval inst = %s(%s);%s".format(pad1, deserType, dis, newline))
     if (isArayBuf)
       deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    else{
-     // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
+    else {
+      // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
       deserializedBuf.append("%s%s(i) = inst;%s%s}%s%s%s}}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    }
+    }
     (serializedBuf.toString, prevObjDeserializedBuf.toString, deserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
   }
 
-  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String) = {
+  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -642,7 +652,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
   }
 
-  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
+  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -763,26 +773,41 @@ class MessageDefImpl {
             // if (deserType != null && deserType.trim() != "") {
             //  deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
 
+            val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
+
             var memberExists: Boolean = false
+            var sameType: Boolean = false
             if (childs != null) {
-              var value = childs.getOrElse(f.Name, null)
               if (childs.contains(f.Name)) {
-                value = childs.getOrElse(f.Name, null)
-                if (value != null && value.trim() != "" && value.equals(typ.get.FullName)) {
-                  memberExists = true
+                var child = childs.getOrElse(f.Name, null)
+                if (child != null) {
+                  val fullname = child.asInstanceOf[AttributeDef].aType.FullName
+                  if (fullname != null && fullname.trim() != "" && fullname.equals(typ.get.FullName)) {
+                    memberExists = true
+                    val childPhysicalName = child.asInstanceOf[AttributeDef].aType.typeString
+                     if (childPhysicalName != null && childPhysicalName.trim() != ""){
+                      val childName = childPhysicalName.toString().split("\\[")(1).substring(0, childPhysicalName.toString().split("\\[")(1).length() - 1)
+                      if (childName.equals(childType))
+                      sameType = true
+		    }
+                  }
                 }
               }
             }
 
-            val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
-
             // prevVerObj.inpatient_claims.foreach(ip => inpatient_claims += ip)
             if (memberExists) {
+
               // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s  = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childType, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
+              if (sameType)
+                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child})%s".format(pad2, f.Name, newline))
+              else {
+
+                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childType, newline))
+                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
+                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
+              }
 
             }
 
@@ -793,7 +818,7 @@ class MessageDefImpl {
             deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
             deserializedBuf.append("%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline))
             deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format( pad2, childType,newline ))
+            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, childType, newline))
             deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
 
           }
@@ -816,7 +841,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, msgAndCntnrsStr.toString, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
   }
 
-  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element, recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
+  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element, recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -862,7 +887,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString)
   }
 
-  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element, msg: Message, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String) = {
+  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -923,15 +948,19 @@ class MessageDefImpl {
       serializedBuf.append("%sdos.write(bytes);%s".format(pad2, newline))
 
       var memberExists: Boolean = false
+      var sameType: Boolean = false
       if (childs != null) {
-        var value = childs.getOrElse(f.Name, null)
         if (childs.contains(f.Name)) {
-          value = childs.getOrElse(f.Name, null)
-          if (value != null && value.trim() != "" && value.equals(msgDef.FullName)) {
-            memberExists = true
+          var child = childs.getOrElse(f.Name, null)
+          if (child != null) {
+            val fullname = child.asInstanceOf[AttributeDef].aType.FullName
+            if (fullname != null && fullname.trim() != "" && fullname.equals(msgDef.FullName)) {
+              memberExists = true
+            }
           }
         }
       }
+
       if (memberExists) {
         // convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
 
@@ -939,11 +968,11 @@ class MessageDefImpl {
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevVerObj.%s)%s".format(pad2, f.Name, newline))
         prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = curVerObj}%s".format(pad2, f.Name, newline))
       }
-    //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
+      //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
 
       deserializedBuf.append("%s{%s%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline, pad2, newline))
       deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2,  msgDef.PhysicalName , newline))
+      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, msgDef.PhysicalName, newline))
       deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s}%s".format(pad2, f.Name, newline, pad2, newline))
 
     } catch {
@@ -1023,7 +1052,7 @@ class MessageDefImpl {
   //get the childs from previous existing message or container
 
   //generates the variables string and assign string
-  private def classStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, Array[Int], Array[Int], String, String, String, String, String) = {
+  private def classStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, Array[Int], Array[Int], String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -1064,7 +1093,7 @@ class MessageDefImpl {
     var partitionPos = Array[Int]()
     var primaryPos = Array[Int]()
     var prevVerMsgObjstr: String = ""
-    var childs: Map[String, String] = Map[String, String]()
+    var childs: Map[String, Any] = Map[String, Any]()
     try {
 
       //Get the previous added Message or Container from Metadata and get all the childs from the Previous message/Container for Deserialize purpose
@@ -1378,10 +1407,10 @@ class MessageDefImpl {
 
   }
 
-  private def getPrevVerMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): Map[String, String] = {
+  private def getPrevVerMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): Map[String, Any] = {
     var prevVerCtrdef: ContainerDef = new ContainerDef()
     var prevVerMsgdef: MessageDef = new MessageDef()
-    var childs: Map[String, String] = Map[String, String]()
+    var childs: Map[String, Any] = Map[String, Any]()
 
     if (pMsgdef != null) {
       if (fixed.toLowerCase().equals("true")) {
@@ -1392,7 +1421,7 @@ class MessageDefImpl {
         }
         val memberDefs = prevVerCtrdef.containerType.asInstanceOf[StructTypeDef].memberDefs
         if (memberDefs != null) {
-          childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a.asInstanceOf[AttributeDef].aType.FullName))
+          childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a))
         }
       }
     }
@@ -1497,7 +1526,7 @@ import java.io.{ DataInputStream, DataOutputStream }
 
   }
 
-  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String ) = {
+  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String) = {
     var sname: String = ""
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
@@ -1515,7 +1544,7 @@ import java.io.{ DataInputStream, DataOutputStream }
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
-     val clsname =  msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
+    val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
     val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + sname
     val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
 
@@ -1981,7 +2010,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
- /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+  /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -1994,8 +2023,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 */
-  
-  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+
+  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
     var ver: String = null
     var classstr_1: String = null
@@ -2008,12 +2037,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
         message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
-          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr,recompile)
+          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
 
         } else if (message.Fixed.equals("false")) {
-          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr,recompile)
+          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
         }
@@ -2028,20 +2057,20 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
     try {
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-    //  createScalaFile(classstr, ver, classname)
+      //  createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createFixedMsgDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createFixedMsgDef(message, list, mdMgr, argsList, recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createFixedContainerDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createFixedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2051,19 +2080,19 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-     // createScalaFile(classstr, ver, classname)
+      // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createMappedMsgDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createMappedMsgDef(message, list, mdMgr, argsList, recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createMappedContainerDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createMappedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2073,7 +2102,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createClassStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -2088,16 +2117,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
       val getDeserializedFuncStr = getDeserializedFunction(deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
       val convertOldObjtoNewObj = getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName)
-      println("convertOldObjtoNewObj " + convertOldObjtoNewObj)
       list_msg = list
       argsList_msg = argsList
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
       val (btrait, striat, csetters) = getBaseTrait(message)
-       val (clsstr, objstr, clasname) = classname(message, recompile)
+      val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partkeyPos, primarykeyPos, clasname)
       val isFixed = getIsFixed(message)
-     
+
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
@@ -2109,7 +2137,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg)
   }
 
-  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -2128,7 +2156,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val cobj = createObj(message, partitionPos, primaryPos, clasname)
       val isFixed = getIsFixed(message)
       val getSerializedFuncStr = getSerializedFunction(serializedBuf)
-      
+
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + SerDeserStr + " \n}")
     } catch {
@@ -2153,15 +2181,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
+  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
 
     try {
 
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2171,13 +2199,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
+  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
     try {
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2187,13 +2215,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msgDef
   }
 
-  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
+  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     try {
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2203,18 +2231,18 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
+  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
 
     try {
       var version = msg.Version.replaceAll("[.]", "").toInt
       //if(recompile) 
-    //	  version = version+1
-      
+      //	  version = version+1
+
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2226,7 +2254,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the serialized function in generated scala class 
   private def getSerializedFunction(serStr: String): String = {
-    var getSerFunc: String = "" 
+    var getSerFunc: String = ""
 
     if (serStr != null && serStr.trim() != "") {
       getSerFunc = """
@@ -2251,11 +2279,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the deserialized function in generated scala class 
 
-  private def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile:Boolean): String = {
+  private def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean): String = {
     var preVerDeserStr: String = ""
     // if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
-   
-      if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+
+    if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
       val prevVerObjStr = "val prevVerObj = new %s()".format(prevVerMsgObjstr)
       preVerDeserStr = """
         if (prevVer < currentVer) {
@@ -2303,7 +2331,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
      """
   }
 
-  private def getDeserializedFunction(deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile:Boolean): String = {
+  private def getDeserializedFunction(deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile: Boolean): String = {
 
     var getDeserFunc: String = ""
     var preVerDeserStr: String = ""
@@ -2419,7 +2447,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msg1
   }
 
- /* private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+  /* private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
     var pkg: String = "com.ligadata.messagescontainers"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString
     var tdata: TransformData = null
@@ -2513,7 +2541,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val cur_time = System.currentTimeMillis
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString +"_"+cur_time
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString + "_" + cur_time
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
