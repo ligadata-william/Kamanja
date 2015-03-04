@@ -99,6 +99,15 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def Put(ctx: Context, variableName: String, value: String): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
+
+      val stopIt2 : Boolean = (variableName == "At_High_Risk_for_COPD___Criteria_3_Type")
+      if (stopIt2) {
+    	  val stopNow : Int = 0
+      }
+      val stopIt3 : Boolean = (variableName == "At_High_Risk_for_COPD___Criteria_3_Name")
+      if (stopIt3) {
+    	  val stopNow : Int = 0
+      }
       set = ctx.valuePut(variableName, new StringDataValue(value))
     }
     set
@@ -139,6 +148,12 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def Put(ctx: Context, variableName: String, value: Boolean): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
+
+      val stopIt1 : Boolean = (variableName == "At_High_Risk_for_COPD")
+      if (stopIt1) {
+    	  val stopNow : Int = 0
+      }
+      
       set = ctx.valuePut(variableName, new BooleanDataValue(value))
     }
     set
@@ -2674,11 +2689,17 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 		  if (nameParts.size == 2) {
 			  val msgContainerName : String = nameParts(0)
 			  val fieldName : String = nameParts(1)
-			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(fldName)) {
-				  ctx.xDict.apply(fldName).asInstanceOf[MessageContainerBase]
+			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(msgContainerName)) {
+				  val derivedFld : DataValue = ctx.valueFor(msgContainerName)
+				  val anyValue : AnyDataValue = if (derivedFld.isInstanceOf[AnyDataValue]) derivedFld.asInstanceOf[AnyDataValue] else null
+				  val mOrC : MessageContainerBase = if (anyValue.Value.isInstanceOf[MessageContainerBase]) anyValue.Value.asInstanceOf[MessageContainerBase] else null
+				  mOrC
 			  } else {
-				  if (ctx.isFieldInDataDict(fldName)) {
-					  ctx.dDict.apply(fldName).asInstanceOf[MessageContainerBase]
+				  if (ctx.isFieldInDataDict(msgContainerName)) {
+					  val dataFld : DataValue = ctx.valueFor(msgContainerName)
+					  val anyValue : AnyDataValue = if (dataFld.isInstanceOf[AnyDataValue]) dataFld.asInstanceOf[AnyDataValue] else null
+					  val mOrC : MessageContainerBase = if (anyValue.Value.isInstanceOf[MessageContainerBase]) anyValue.Value.asInstanceOf[MessageContainerBase] else null
+					  mOrC
 				  } else {
 					  null
 				  }

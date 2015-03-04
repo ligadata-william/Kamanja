@@ -948,6 +948,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def DownloadJarFromDB(obj: BaseElemDef) {
+    var curJar : String = ""
     try {
       //val key:String = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       if (obj.jarName == null) {
@@ -974,6 +975,7 @@ object MetadataAPIImpl extends MetadataAPI {
         }
         
         allJars.foreach(jar => {
+          curJar = jar
           // download only if it doesn't already exists
           val b = IsDownloadNeeded(jar, obj)
           if (b == true) {
@@ -987,7 +989,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.error("Failed to download the Jar of the object(" + obj.FullNameWithVer + "): " + e.getMessage())
+        logger.error("Failed to download the Jar of the object(" + obj.FullNameWithVer + "'s dep jar " + curJar + "): " + e.getMessage())
       }
     }
   }
