@@ -79,4 +79,6 @@ lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(
 
 lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters)
 
+lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata)
+
 

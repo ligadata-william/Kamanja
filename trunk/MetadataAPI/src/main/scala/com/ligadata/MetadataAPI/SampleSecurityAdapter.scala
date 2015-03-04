@@ -5,7 +5,7 @@ import java.util.Properties
 
 class SampleSecurityAdapter extends SecurityAdapter{
   
-  override def preformAuth (secParms: java.util.Properties): Boolean = {
+  override def performAuth (secParms: java.util.Properties): Boolean = {
     println("Nothing implemented... so proceed")
     return true  
   }

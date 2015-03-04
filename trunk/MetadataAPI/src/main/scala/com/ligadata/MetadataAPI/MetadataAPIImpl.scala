@@ -4,6 +4,7 @@ import java.util.Properties
 import java.io._
 import scala.Enumeration
 import scala.io._
+
 import scala.collection.mutable._
 //import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{ universe => ru }
@@ -189,7 +190,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
     
     // Add the Jarfile to the class loader
-    val fl = new File(implJarName)
+    val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+    val jarName = JarPathsUtils.GetValidJarFile(jarPaths, implJarName)
+    val fl = new File(jarName)
     if (fl.exists) {
       try {
         classLoader.loader.addURL(fl.toURI().toURL())
@@ -229,12 +232,15 @@ object MetadataAPIImpl extends MetadataAPI {
     if ((usrid == None) && (cert == None)) return false
     if (usrid != None) {
       authParms.setProperty("userid",usrid.get.asInstanceOf[String])
-      authParms.setProperty("password", password.get.asInstanceOf[String]) 
-    } else {
-      authParms.setProperty("cert", cert.get.asInstanceOf[String])
     }
+    if (password != None) {
+      authParms.setProperty("password", password.get.asInstanceOf[String]) 
+    } 
+    if (cert != None) {
+      authParms.setProperty("cert", cert.get.asInstanceOf[String]) 
+    } 
     authParms.setProperty("action",action)    
-    return authObj.preformAuth(authParms) 
+    return authObj.performAuth(authParms) 
   }
 
   /**
@@ -3207,7 +3213,7 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.trace("model not in the cache => " + key)
           None
         case Some(m) =>
-          val model = GetLatestModelFromModels(m)
+          val model = GetLatestModelFromModels(m.asInstanceOf[scala.collection.mutable.Set[com.ligadata.olep.metadata.ModelDef]])
           if (model != null) {
             logger.trace("model found => " + model.asInstanceOf[ModelDef].FullNameWithVer)
             Some(model.asInstanceOf[ModelDef])

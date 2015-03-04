@@ -2035,6 +2035,10 @@ object TestMetadataAPI{
     }
   }
 
+  def TestCheckAuth: Unit = {
+    MetadataAPIImpl.checkAuth(Some("lonestarr"),Some("vespa"),Some("goodguy"),"winnebago:drive:eagle5")
+  }
+
   def main(args: Array[String]){
     try{
       logger.setLevel(Level.TRACE);

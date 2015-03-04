@@ -10,5 +10,5 @@ trait SecurityAdapter {
   def setProperties(props: Map[String,Any]): Unit = {adapterProperties = props}
   
   // Implement this method
-  def preformAuth(secParms: java.util.Properties): Boolean
+  def performAuth(secParms: java.util.Properties): Boolean
 }
