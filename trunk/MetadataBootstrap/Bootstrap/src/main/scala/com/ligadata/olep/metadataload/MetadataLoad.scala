@@ -1313,9 +1313,9 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
-		mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
-					, ("System", "MessageContainerBase")
-					, List(("fqclassname", MdMgr.sysNS, "String")), null)
+		//mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
+		//			, ("System", "MessageContainerBase")
+		//			, List(("fqclassname", MdMgr.sysNS, "String")), null)
 					
 					
 		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"

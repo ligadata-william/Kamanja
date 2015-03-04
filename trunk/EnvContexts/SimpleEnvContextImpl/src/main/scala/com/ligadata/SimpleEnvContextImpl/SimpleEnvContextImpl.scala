@@ -30,6 +30,11 @@ case class ObjKey(Obj: String, Key: String)
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
+	override def NewMessageOrContainer(fqclassname : String) : MessageContainerBase = {
+		val msgOrContainer : MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
+		msgOrContainer
+	}
+
   class TxnCtxtKey {
     var containerName: String = _
     var key: String = _
@@ -106,6 +111,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         container.data(k) = value
       }
     }
+    
 
     // Adapters Keys & values
     def setAdapterUniqueKeyValue(key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
@@ -139,6 +145,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getAllAdapterUniqKeyValData = _adapterUniqKeyValData.toMap
     def getAllModelsResult = _modelsResult.toMap
     def getAllStatusStrings = _statusStrings
+    
+    
   }
 
   private[this] val _buckets = 257 // Prime number

@@ -43,12 +43,12 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
   /** BaseMsg & BaseContainer instantiation
       Instantiate an empty BaseMsg or BaseContainer. 
-  */
+  
   
   def NewMessageOrContainer(fqclassname : String) : MessageContainerBase = {
       val msgOrContainer : MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
       msgOrContainer
-  }
+  }*/
 
 
   /** BaseMsg & BaseContainer access 
@@ -219,7 +219,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -228,7 +228,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -237,7 +237,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -246,7 +246,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -255,7 +255,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
