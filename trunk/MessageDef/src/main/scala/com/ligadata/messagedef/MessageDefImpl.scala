@@ -359,8 +359,8 @@ class MessageDefImpl {
         jarset = jarset + typ.get.JarName
       else if (typ.get.dependencyJarNames != null)
         jarset = jarset ++ typ.get.dependencyJarNames
-
-      val dval: String = getDefVal(f.Ttype)
+     
+       val dval: String = getDefVal(typ.get.typeString.toLowerCase())
       list = (f.Name, f.Ttype) :: list
 
       if (fixed.toLowerCase().equals("true")) {
@@ -1209,13 +1209,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
   //input function conversion
   private def getDefVal(valType: String): String = {
     valType match {
-      case "system.int" => "0"
-      case "system.float" => "0"
-      case "system.boolean" => "false"
-      case "system.double" => "0.0"
-      case "system.long" => "0"
-      case "system.char" => "\' \'"
-      case "system.string" => "\"\""
+      case "int" => "0"
+      case "float" => "0"
+      case "boolean" => "false"
+      case "double" => "0.0"
+      case "long" => "0"
+      case "char" => "\' \'"
+      case "string" => "\"\""
       case _ => ""
     }
   }
