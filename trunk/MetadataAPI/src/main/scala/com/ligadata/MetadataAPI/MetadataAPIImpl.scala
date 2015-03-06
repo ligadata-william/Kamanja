@@ -219,27 +219,23 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * checkAuth
    */
-  def checkAuth (usrid:Option[String], password:Option[String], cert:Option[String], action: String): Boolean = {  
-    
+  def checkAuth (usrid:Option[String], password:Option[String], role: Option[String], privilige: String): Boolean = {  
+
     var authParms: java.util.Properties = new Properties
     // Do we want to run AUTH?
     if (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES")) return true
-    
+
     // check if the Auth object exists
     if (authObj == null) return false
+   
+    // Run the Auth - if userId is supplied, defer to that.
+    if ((usrid == None) && (role == None)) return false
     
-    // Run the Auth - if userId is supplied, derfer to that.
-    if ((usrid == None) && (cert == None)) return false
-    if (usrid != None) {
-      authParms.setProperty("userid",usrid.get.asInstanceOf[String])
-    }
-    if (password != None) {
-      authParms.setProperty("password", password.get.asInstanceOf[String]) 
-    } 
-    if (cert != None) {
-      authParms.setProperty("cert", cert.get.asInstanceOf[String]) 
-    } 
-    authParms.setProperty("action",action)    
+    if (usrid != None) authParms.setProperty("userid",usrid.get.asInstanceOf[String])
+    if (password != None) authParms.setProperty("password", password.get.asInstanceOf[String]) 
+    if (role != None) authParms.setProperty("role", role.get.asInstanceOf[String]) 
+    authParms.setProperty("privilige",privilige)  
+
     return authObj.performAuth(authParms) 
   }
 

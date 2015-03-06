@@ -15,7 +15,7 @@ import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 
-class APIService {
+class APIService extends LigadataSSLConfiguration {
 
   private type OptionMap = Map[Symbol, Any]
 
@@ -56,29 +56,28 @@ class APIService {
     try{
       var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.error("Config File defaults to " + configFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
-      }
-      else{
-	val options = nextOption(Map(), args.toList)
-	val cfgfile = options.getOrElse('config, null)
-	if (cfgfile == null) {
-	  logger.error("Need configuration file as parameter")
-	  throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
-	}
-	configFile = cfgfile.asInstanceOf[String]
+        logger.error("Config File defaults to " + configFile)
+        logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+        logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+      } else {
+        val options = nextOption(Map(), args.toList)
+        val cfgfile = options.getOrElse('config, null)
+        if (cfgfile == null) {
+          logger.error("Need configuration file as parameter")
+          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
+        }
+        configFile = cfgfile.asInstanceOf[String]
       }
 
       val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
-	logger.error(failStr)
-	Shutdown(1)
-	return
+        logger.error(failStr)
+        Shutdown(1)
+        return
       }
       if (loadConfigs == null) {
-	Shutdown(1)
-	return
+        Shutdown(1)
+        return
       }
 
       APIInit.SetConfigFile(configFile.toString)
@@ -91,31 +90,31 @@ class APIService {
 
       // create and start our service actor
       val callbackActor = actor(new Act {
-	become {
-	  case b @ Bound(connection) => logger.info(b.toString)
-	  case cf @ CommandFailed(command) => logger.error(cf.toString)
-	  case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
-	}
+        become {
+          case b @ Bound(connection) => logger.info(b.toString)
+          case cf @ CommandFailed(command) => logger.error(cf.toString)
+          case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
+        }
       })
       val service = system.actorOf(Props[MetadataAPIServiceActor], "metadata-api-service")
 
-      // start a new HTTP server on port 8080 with our service actor as the handler
+      // start a new HTTP server on a specified port with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
       logger.trace("Started the service")
 
       sys.addShutdownHook({
-	logger.trace("ShutdownHook called")
-	Shutdown(0)
+        logger.trace("ShutdownHook called")
+        Shutdown(0)
       })
 
       Thread.sleep(365*24*60*60*1000L)
     } catch {
       case e: InterruptedException => {
-	  logger.trace("Unexpected Interrupt")
+        logger.trace("Unexpected Interrupt")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     } finally {
       Shutdown(0)

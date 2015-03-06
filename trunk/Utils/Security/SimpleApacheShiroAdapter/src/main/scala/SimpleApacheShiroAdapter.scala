@@ -38,8 +38,8 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
       return false;
     }
 
-    val role = secParams.getProperty("cert")
-    val privilege = secParams.getProperty("action")
+    val role = secParams.getProperty("role")
+    val privilege = secParams.getProperty("privilige")
 
     if( role == null && privilege == null ){
       log.error("SimpleApacheShiroAdapter: Either role or privilege must be supplied: unable to authenticate")
@@ -97,7 +97,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     }
       
     //test a typed permission (not instance-level)
-    if( privilege != null ){
+    if( privilege != null ) {
       if (currentUser.isPermitted(privilege)) {
         log.trace("SimpleApacheShiroAdapter: The privilege " + privilege + " is authorized ")
 	    } else {
