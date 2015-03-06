@@ -2,6 +2,7 @@ package com.ligadata.metadataapiservice
 
 import org.apache.camel.util.jsse.{KeyStoreParameters, KeyManagersParameters, SSLContextParameters}
 import javax.net.ssl.SSLContext
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 // Must be enabled in the applicatin.conf
 trait LigadataSSLConfiguration {
@@ -9,7 +10,7 @@ trait LigadataSSLConfiguration {
   // if there is no SSLContext in scope implicitly the HttpServer uses the default SSLContext,
   // since we want non-default settings in this example we make a custom SSLContext available here
   implicit def sslContext: SSLContext = {
-    val keyStoreResource = "/Users/dan/Documents/dev/Fatafat/trunk/keystore.jks"
+    val keyStoreResource = MetadataAPIImpl.getSSLCertificatePath  
     
     val ksp = new KeyStoreParameters()
     ksp.setResource(keyStoreResource);

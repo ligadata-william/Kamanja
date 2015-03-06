@@ -147,7 +147,8 @@ object MetadataAPIImpl extends MetadataAPI {
   var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST","API_LEADER_SELECTION_ZK_NODE",
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
-                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID")
+                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","DO_AUTH","SECURITY_IMPL_CLASS",
+                               "SECURITY_IMPL_JAR")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -237,6 +238,15 @@ object MetadataAPIImpl extends MetadataAPI {
     authParms.setProperty("privilige",privilige)  
 
     return authObj.performAuth(authParms) 
+  }
+  
+  /**
+   * getSSLCertificatePath
+   */
+  def getSSLCertificatePath: String = {
+    val certPath = metadataAPIConfig.getProperty("SSL_CERTIFICATE")  
+    if (certPath != null) return certPath
+    ""
   }
 
   /**
