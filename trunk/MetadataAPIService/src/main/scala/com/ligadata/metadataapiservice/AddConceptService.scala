@@ -33,6 +33,10 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
 	def process(conceptJson:String, formatType:String) = {
 	  
 		log.info("Requesting AddConcept {},{}",conceptJson,formatType)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 		
 		val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
 		

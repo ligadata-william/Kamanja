@@ -41,6 +41,10 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
     
     logger.trace("Requesting AddModel: " + pmmlStr.substring(0,500))
     
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
+    
     val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
     
     requestContext.complete(apiResult)

@@ -33,6 +33,10 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
 	def process(functionJson:String, formatType:String) = {
 	  
 		log.info("Requesting AddFunction {},{}",functionJson,formatType)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 		
 		val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
 		

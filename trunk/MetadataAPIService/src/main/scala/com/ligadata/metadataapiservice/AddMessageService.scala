@@ -34,6 +34,10 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
     
     log.info("Requesting AddMessage {}",messageJson)
     
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
+    
     val apiResult = MetadataAPIImpl.AddMessage(messageJson)
     
     requestContext.complete(apiResult)

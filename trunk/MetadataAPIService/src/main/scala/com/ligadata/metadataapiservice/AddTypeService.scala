@@ -33,6 +33,10 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
 	def process(typeJson:String, formatType:String) = {
 	  
 		log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 		
 		val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType)
 		
