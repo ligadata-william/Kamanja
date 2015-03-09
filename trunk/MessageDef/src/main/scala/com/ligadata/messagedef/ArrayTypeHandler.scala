@@ -118,6 +118,7 @@ object ArrayTypeHandler {
         childTypeStr = childtype.split("\\[")(1).substring(0, childtype.split("\\[")(1).length() - 1)
       }
       var memberExists: Boolean = false
+      var childName: String = ""
       var sameType: Boolean = false
       if (childs != null) {
         if (childs.contains(f.Name)) {
@@ -128,7 +129,7 @@ object ArrayTypeHandler {
               memberExists = true
               val childPhysicalName = child.asInstanceOf[AttributeDef].aType.typeString
               if (childPhysicalName != null && childPhysicalName.trim() != "") {
-                val childName = childPhysicalName.toString().split("\\[")(1).substring(0, childPhysicalName.toString().split("\\[")(1).length() - 1)
+                childName = childPhysicalName.toString().split("\\[")(1).substring(0, childPhysicalName.toString().split("\\[")(1).length() - 1)
                 if (childName.equals(childTypeStr))
                   sameType = true
               }
@@ -150,10 +151,11 @@ object ArrayTypeHandler {
       } else if (fixed.toLowerCase().equals("false")) {
         if (memberExists) {
           prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s{var obj =  prevVerObj.getOrElse(\"%s\", null)%s".format(newline, pad2, f.Name, newline))
+
           if (sameType)
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sif(obj != null){set(\"%s\", obj)}}%s".format(pad2, f.Name, newline))
           else {
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sif(obj != null){obj.foreach(child => {%s".format(pad2, newline))
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%stype typ = scala.collection.mutable.ArrayBuffer[%s]%s%sif(obj != null  && obj.isInstanceOf[typ]){obj.asInstanceOf[typ].foreach(child => {%s".format(pad2, childName, newline, pad2, newline))
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childTypeStr, newline))
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})}%s".format(pad2, f.Name, newline))
