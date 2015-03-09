@@ -329,7 +329,7 @@ class MessageDefImpl {
 			if (map.contains("""" + fname + """" )){
 				arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
 			if (arr != null) {
-				" arr.map(v => {""" + fname + """  :+=""" + typeImpl + """(v)})
+				""" + funcName + """   = arr.map(v => {""" + fname + """  :+=""" + typeImpl + """(v)})
 			}else 
 				""" + funcName + """   = null
 	    }
@@ -427,6 +427,7 @@ class MessageDefImpl {
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
       fname = typ.get.implementationName + ".Input"
+
       if ((typ.get.dependencyJarNames != null) && (typ.get.JarName != null))
         jarset = jarset + typ.get.JarName ++ typ.get.dependencyJarNames
       else if (typ.get.JarName != null)
@@ -434,7 +435,7 @@ class MessageDefImpl {
       else if (typ.get.dependencyJarNames != null)
         jarset = jarset ++ typ.get.dependencyJarNames
 
-      val dval: String = getDefVal(f.Ttype)
+      val dval: String = getDefVal(typ.get.typeString.toLowerCase())
       list = (f.Name, f.Ttype) :: list
 
       if (fixed.toLowerCase().equals("true")) {
@@ -442,41 +443,6 @@ class MessageDefImpl {
         assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
         assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
         assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
-
-        if (typ.get.physicalName != null && typ.get.physicalName.trim() != "") {
-          val serType = typ.get.implementationName + ".SerializeIntoDataOutputStream"
-          //val serType = getSerializedType(typ.get.physicalName)
-          if (serType != null && serType.trim() != "") {
-            serializedBuf = serializedBuf.append("%s%s(%s,%s);%s".format(pad1, serType, "dos", f.Name, newline))
-          }
-          val deserType = typ.get.implementationName + ".DeserializeFromDataInputStream"
-          val dis = "dis"
-          //val deserType = getDeserializedType(typ.get.physicalName)
-          if (deserType != null && deserType.trim() != "") {
-            deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
-
-            var memberExists: Boolean = false
-            var sameType: Boolean = false
-            if (childs != null) {
-              if (childs.contains(f.Name)) {
-                var child = childs.getOrElse(f.Name, null)
-                if (child != null) {
-                  val fullname = child.asInstanceOf[AttributeDef].aType.FullName
-                  if (fullname != null && fullname.trim() != "" && fullname.equals(typ.get.FullName)) {
-                    memberExists = true
-
-                  }
-                }
-              }
-            }
-
-            if (memberExists) {
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
-              convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
-            }
-          }
-        }
-
       } else if (fixed.toLowerCase().equals("false")) {
 
         if (keysSet != null)
@@ -487,6 +453,12 @@ class MessageDefImpl {
 
         keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
       }
+
+      serializedBuf = serializedBuf.append(BaseTypesHandler.serializeMsgContainer(typ, fixed, f, dval, fname))
+      deserializedBuf = deserializedBuf.append(BaseTypesHandler.deSerializeMsgContainer(typ, fixed, f))
+      val (prevObjDeserialized, convertOldObjtoNewObj) = BaseTypesHandler.prevObjDeserializeMsgContainer(typ, fixed, f, childs)
+      prevObjDeserializedBuf = prevObjDeserializedBuf.append(prevObjDeserialized)
+      convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(convertOldObjtoNewObj)
 
     } catch {
       case e: Exception => {
@@ -499,66 +471,6 @@ class MessageDefImpl {
   }
 
   ///serialize deserialize primative types
-  private def getSerDeserPrimitives(typeString: String, typFullName: String, fieldName: String, implName: String, childs: Map[String, Any], isArayBuf: Boolean, recompile: Boolean): (String, String, String, String) = {
-    var serializedBuf = new StringBuilder(8 * 1024)
-    var deserializedBuf = new StringBuilder(8 * 1024)
-    var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
-    var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
-    val pad1 = "\t"
-    val pad2 = "\t\t"
-    val pad3 = "\t\t\t"
-    val pad4 = "\t\t\t\t"
-    val newline = "\n"
-
-    if (implName == null || implName.trim() == "")
-      throw new Exception("Check Type Implementation Name")
-
-    val serType = implName + ".SerializeIntoDataOutputStream"
-
-    serializedBuf.append("%sif (%s==null || %s.size == 0) com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,0);%s".format(pad2, fieldName, fieldName, newline))
-    serializedBuf.append("%selse {%s%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,%s.size);%s".format(pad2, newline, pad2, fieldName, newline))
-    serializedBuf.append("%s%s.foreach(v => {%s".format(pad2, fieldName, newline))
-    serializedBuf.append("%s%s(%s, v);%s".format(pad1, serType, "dos", newline))
-    serializedBuf.append("%s})}%s".format(pad2, newline))
-
-    var memberExists: Boolean = false
-    var sameType: Boolean = false
-    if (childs != null) {
-      if (childs.contains(fieldName)) {
-        var child = childs.getOrElse(fieldName, null)
-        if (child != null) {
-          val fullname = child.asInstanceOf[AttributeDef].aType.FullName
-          if (fullname != null && fullname.trim() != "" && fullname.equals(typFullName)) {
-            memberExists = true
-
-          }
-        }
-      }
-    }
-    //prevVerObj.icd9_dgns_cds.foreach(v => icd9_dgns_cds :+= v);)
-    // prevVerObj.inpaticonvertOldObjtoNewObjBufent_claims.foreach(ip => inpatient_claims += ip)
-    //typ.get.typeString.toString().split("\\[")(1)
-    if (memberExists) {
-      //prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(v => %s :+= v);%s".format(pad1, fieldName, fieldName, newline))
-      prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, fieldName, fieldName, newline))
-      convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, fieldName, fieldName, newline))
-    }
-
-    val deserType = implName + ".DeserializeFromDataInputStream"
-    val dis = "dis"
-
-    deserializedBuf.append("%s{%s%s%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis);%s".format(pad1, newline, pad1, pad2, newline))
-    deserializedBuf.append("%sval i:Int = 0;%s".format(pad2, newline))
-    deserializedBuf.append("%s if(arraySize > 0){ %s = new Array[%s](arraySize)%s%s for (i <- 0 until arraySize) {%s".format(pad2, fieldName, typeString, newline, pad2, newline))
-    deserializedBuf.append("%sval inst = %s(%s);%s".format(pad1, deserType, dis, newline))
-    if (isArayBuf)
-      deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    else {
-      // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
-      deserializedBuf.append("%s%s(i) = inst;%s%s}%s%s%s}}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    }
-    (serializedBuf.toString, prevObjDeserializedBuf.toString, deserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
-  }
 
   private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -599,18 +511,18 @@ class MessageDefImpl {
             assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
-            val (serStr, prevDeserStr, deserStr, converToNewObj) = getSerDeserPrimitives(arrayType.elemDef.physicalName, typ.get.FullName, f.Name, arrayType.elemDef.implementationName, childs, false, recompile)
-            serializedBuf.append(serStr)
-            deserializedBuf.append(deserStr)
-            prevObjDeserializedBuf.append(prevDeserStr)
-            convertOldObjtoNewObjBuf.append(converToNewObj)
-
           } else if (msg.Fixed.toLowerCase().equals("false")) {
 
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
             assignCsvdata.append(" ")
           }
+          val (serStr, prevDeserStr, deserStr, converToNewObj) = ArrayTypeHandler.getSerDeserPrimitives(arrayType.elemDef.physicalName, typ.get.FullName, f.Name, arrayType.elemDef.implementationName, childs, false, recompile, msg.Fixed.toLowerCase())
+         // println("serStr   " + serStr)
+          serializedBuf.append(serStr)
+          deserializedBuf.append(deserStr)
+          prevObjDeserializedBuf.append(prevDeserStr)
+          convertOldObjtoNewObjBuf.append(converToNewObj)
         }
         assignJsondata.append(assignJsonForArray(f.Name, fname, msg))
 
@@ -618,7 +530,7 @@ class MessageDefImpl {
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")) {
           assignCsvdata.append(newline + getArrayStr(f.Name, arrayType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
           assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, arrayType.elemDef.physicalName))
-          keysStr.append("(\"" + f.Name + "\",")
+          keysStr.append("\"" + f.Name + "\",")
         }
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage"))
           if (typ.get.typeString.toString().split("\\[").size == 2) {
@@ -694,13 +606,15 @@ class MessageDefImpl {
             // scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
-            val (serStr, prevDeserStr, deserStr, converToNewObj) = getSerDeserPrimitives(arrayBufType.elemDef.physicalName, typ.get.FullName, f.Name, arrayBufType.elemDef.implementationName, childs, true, recompile)
+            val (serStr, prevDeserStr, deserStr, converToNewObj) = ArrayTypeHandler.getSerDeserPrimitives(arrayBufType.elemDef.physicalName, typ.get.FullName, f.Name, arrayBufType.elemDef.implementationName, childs, true, recompile, msg.Fixed.toLowerCase())
             serializedBuf.append(serStr)
             deserializedBuf.append(deserStr)
             prevObjDeserializedBuf.append(prevDeserStr)
             convertOldObjtoNewObjBuf.append(converToNewObj)
 
           } else if (msg.Fixed.toLowerCase().equals("false")) {
+            scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
+
             assignCsvdata.append(" ")
             //Adding fields to keys Map
             // keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
@@ -713,8 +627,8 @@ class MessageDefImpl {
           msgNameSpace = msg.NameSpace
         argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
         val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.OnLEPBase.BaseMsg]"
-        if (msg.Fixed.toLowerCase().equals("true"))
-          scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
+        //if (msg.Fixed.toLowerCase().equals("true"))  //--- --- commented to declare the arraybuffer of messages in memeber variables section for both fixed adn mapped messages
+        scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
         if (f.ElemType.toLowerCase().equals("container")) {
           assignCsvdata.append("%s//%s Implementation of Array Buffer of Container is not handled %s".format(pad2, f.Name, newline))
@@ -723,7 +637,7 @@ class MessageDefImpl {
             assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, typ.get.typeString.toString().split("\\[")(1).split("\\]")(0)))
           }
           if (msg.Fixed.toLowerCase().equals("false")) {
-            keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
+            //    keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
           }
           // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
           // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
@@ -740,9 +654,9 @@ class MessageDefImpl {
 
               addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
               addMsg.append(newline + pad3 + "val x = getOrElse(\"" + f.Name + "\", null)" + newline + pad3)
-              addMsg.append("var " + f.Name + ": " + typ.get.typeString + " = null " + newline)
+              // addMsg.append("var " + f.Name + ": " + typ.get.typeString + " = null " + newline)  //--- commented to declare the arraybuffer of messages in memeber variables section
               addMsg.append(pad3 + "if (x == null) {" + newline + pad3 + f.Name + " = new " + typ.get.typeString + newline + pad3 + "} else {" + newline)
-              addMsg.append(pad3 + f.Name + "= x.asInstanceOf[" + typ.get.typeString + newline + pad3 + "}" + newline)
+              addMsg.append(pad3 + f.Name + "= x.asInstanceOf[" + typ.get.typeString + "]" + newline + pad3 + "}" + newline)
               addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline)
               addMsg.append(pad3 + "fields(\"" + f.Name + "\") = " + f.Name + newline + pad2 + newline + pad2 + "} else ")
 
@@ -762,69 +676,16 @@ class MessageDefImpl {
                 getMsg.append("%s%s.foreach(o => {%s%s if(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
               }
             }
-
-            serializedBuf.append("%sif ((%s==null) ||(%s.size == 0)) com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,0);%s".format(pad2, f.Name, f.Name, newline))
-            serializedBuf.append("%selse {%s%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,%s.size);%s".format(pad2, newline, pad2, f.Name, newline))
-            serializedBuf.append("%s%s.foreach(obj => {%s".format(pad2, f.Name, newline))
-            serializedBuf.append("%sval bytes = SerializeDeserialize.Serialize(obj)%s".format(pad2, newline))
-            serializedBuf.append("%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,bytes.length)%s".format(pad2, newline))
-            serializedBuf.append("%sdos.write(bytes)})}%s".format(pad2, newline))
-
-            // if (deserType != null && deserType.trim() != "") {
-            //  deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
-
-            val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
-
-            var memberExists: Boolean = false
-            var sameType: Boolean = false
-            if (childs != null) {
-              if (childs.contains(f.Name)) {
-                var child = childs.getOrElse(f.Name, null)
-                if (child != null) {
-                  val fullname = child.asInstanceOf[AttributeDef].aType.FullName
-                  if (fullname != null && fullname.trim() != "" && fullname.equals(typ.get.FullName)) {
-                    memberExists = true
-                    val childPhysicalName = child.asInstanceOf[AttributeDef].aType.typeString
-                     if (childPhysicalName != null && childPhysicalName.trim() != ""){
-                      val childName = childPhysicalName.toString().split("\\[")(1).substring(0, childPhysicalName.toString().split("\\[")(1).length() - 1)
-                      if (childName.equals(childType))
-                      sameType = true
-		    }
-                  }
-                }
-              }
-            }
-
-            // prevVerObj.inpatient_claims.foreach(ip => inpatient_claims += ip)
-            if (memberExists) {
-
-              // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s  = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
-              if (sameType)
-                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child})%s".format(pad2, f.Name, newline))
-              else {
-
-                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childType, newline))
-                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-                prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
-              }
-
-            }
-
-            // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(obj => %s += obj);%s".format(pad1, f.Name, f.Name, newline))
-
-            deserializedBuf.append("%s{%s%s%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis);%s".format(pad1, newline, pad1, pad2, newline))
-            deserializedBuf.append("%sval i:Int = 0;%s".format(pad2, newline))
-            deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
-            deserializedBuf.append("%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline))
-            deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, childType, newline))
-            deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
-
           }
         }
+        serializedBuf = serializedBuf.append(ArrayTypeHandler.serializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        deserializedBuf = deserializedBuf.append(ArrayTypeHandler.deSerializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        val (prevObjDeserialized, convertOldObjtoNewObj) = ArrayTypeHandler.prevObjDeserializeMsgContainer(typ, msg.Fixed.toLowerCase(), f, childs)
+        prevObjDeserializedBuf = prevObjDeserializedBuf.append(prevObjDeserialized)
+        convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(convertOldObjtoNewObj)
+        msgAndCntnrsStr.append("\"" + f.Name + "\",")
       }
-      msgAndCntnrsStr.append("\"" + f.Name + "\",")
+
       if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
         jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
       else if (arrayBufType.JarName != null)
@@ -875,7 +736,7 @@ class MessageDefImpl {
         jarset = jarset ++ ctrDef.dependencyJarNames
       // val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true)
       argsList = (f.NameSpace, f.Name, ctrDef.NameSpace, ctrDef.Name, false, null) :: argsList
-      keysStr.append("(\"" + f.Name + "\",")
+      //   keysStr.append("\"" + f.Name + "\",")
       // argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
     } catch {
@@ -1015,7 +876,7 @@ class MessageDefImpl {
 
         if (f.Name.split("\\.").size == 2) {
 
-          val dval: String = getDefVal("system." + attribute.typeString.toLowerCase())
+          val dval: String = getDefVal("system." + attribute.typeString.toString().toLowerCase())
 
           scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name.split("\\.")(1), attribute.typeString, newline))
           assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name.split("\\.")(1), fname, pad2))
@@ -1413,20 +1274,53 @@ class MessageDefImpl {
     var childs: Map[String, Any] = Map[String, Any]()
 
     if (pMsgdef != null) {
+
+      if (isMsg) {
+        prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
+      } else {
+        prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
+      }
       if (fixed.toLowerCase().equals("true")) {
-        if (isMsg) {
-          prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
-        } else {
-          prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
-        }
         val memberDefs = prevVerCtrdef.containerType.asInstanceOf[StructTypeDef].memberDefs
         if (memberDefs != null) {
           childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a))
+        }
+      } else if (fixed.toLowerCase().equals("false")) {
+        val attrMap = prevVerCtrdef.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
+        if (attrMap != null) {
+        //  attrMap.map(a => { println("=========== " + a._2.Name + "==== " + a._2.typeString) })
+          childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef])).map(a => (a._2.Name, a._2))
         }
       }
     }
     childs
   }
+
+  /* private def getPrevVerMappedMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): Map[String, Any] = {
+    var prevVerCtrdef: ContainerDef = new ContainerDef()
+    var prevVerMsgdef: MessageDef = new MessageDef()
+    var childs: Map[String, Any] = Map[String, Any]()
+
+    if (pMsgdef != null) {
+
+      if (isMsg) {
+        prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
+      } else {
+        prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
+      }
+      if (fixed.toLowerCase().equals("false")) {
+        val memberDefs = prevVerCtrdef.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
+        children ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef] && (a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[MappedMsgTypeDef] || a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[StructTypeDef]))).map(a => (a._2.Name, a._2.asInstanceOf[AttributeDef]))
+
+        if (memberDefs != null) {
+          //    childs ++= memberDefs.filter(a => (a.isInstanceOf[MappedMsgTypeDef])).map(a => (a.Name, a))
+        }
+      }
+    }
+    childs
+  }
+  * 
+  */
 
   /*
    * function to convert the old version to new version in desrializarion of messages especially when ArrayBuffer/Array of child messages or Child Message occurs
@@ -1759,13 +1653,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
   //input function conversion
   private def getDefVal(valType: String): String = {
     valType match {
-      case "system.int" => "0"
-      case "system.float" => "0"
-      case "system.boolean" => "false"
-      case "system.double" => "0.0"
-      case "system.long" => "0"
-      case "system.char" => "\' \'"
-      case "system.string" => "\"\""
+      case "int" => "0"
+      case "float" => "0"
+      case "boolean" => "false"
+      case "double" => "0.0"
+      case "long" => "0"
+      case "char" => "\' \'"
+      case "string" => "\"\""
       case _ => ""
     }
   }
@@ -2010,7 +1904,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
-  /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -2022,7 +1916,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
   }
-*/
 
   def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
@@ -2042,7 +1935,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
           containerDef = containerDefVal
 
         } else if (message.Fixed.equals("false")) {
-          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr, recompile)
+          val (classStrVal, containerDefVal) = createMappedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
         }
@@ -2064,7 +1957,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      //  createScalaFile(classstr, ver, classname)
+      //createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2080,13 +1973,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
+  private def createMappedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-      // createScalaFile(classstr, ver, classname)
+     // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2151,14 +2044,17 @@ class XmlData(var dataInput: String) extends InputData(){ }
       argsList_msg = argsList
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
+      val getSerializedFuncStr = getSerializedFunction(serializedBuf)
+      val getDeserializedFuncStr = getDeserializedFunction(deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
+      val convertOldObjtoNewObj = getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName)
+
       val (btrait, striat, csetters) = getBaseTrait(message)
       val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partitionPos, primaryPos, clasname)
       val isFixed = getIsFixed(message)
-      val getSerializedFuncStr = getSerializedFunction(serializedBuf)
 
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + SerDeserStr + " \n}")
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
       case e: Exception => {
         e.printStackTrace()
