@@ -241,6 +241,15 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   /**
+   * getPrivilegeName 
+   */
+  def getPrivilegeName(op: String, objName: String): String = {
+    // check if the Auth object exists
+    if (authObj == null) return ""
+    return authObj.getPrivilegeName (op,objName)
+  }
+  
+  /**
    * getSSLCertificatePath
    */
   def getSSLCertificatePath: String = {

@@ -33,7 +33,7 @@ class UpdateTypeService(requestContext: RequestContext, userid:Option[String], p
   def process(containerJson:String) = {
     log.info("Requesting AddContainer {}",containerJson)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","type"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     

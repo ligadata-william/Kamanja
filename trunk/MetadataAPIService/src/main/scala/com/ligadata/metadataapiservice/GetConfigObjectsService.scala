@@ -71,7 +71,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
   def process(objectType:String) = {
     log.info("Requesting GetConfigObjects {}",objectType)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"read")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
       requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
     }
     

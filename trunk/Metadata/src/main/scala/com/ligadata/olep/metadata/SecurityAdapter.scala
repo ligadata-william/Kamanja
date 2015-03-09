@@ -11,4 +11,7 @@ trait SecurityAdapter {
   
   // Implement this method
   def performAuth(secParms: java.util.Properties): Boolean
+  
+  // get the name of the READ privilege name
+  def getPrivilegeName(operation: String, objectName: String): String
 }

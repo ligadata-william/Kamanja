@@ -33,7 +33,7 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
   def process(containerJson:String) = {
     log.info("Requesting AddContainer {}",containerJson)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }    
     

@@ -54,6 +54,10 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     if( arg.FormatType != null ){
       formatType = arg.FormatType
     }
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
+      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
+    }
 
     arg.ObjectType match {
       case "model" => {
@@ -81,10 +85,6 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
   def process(apiArgListJson: String) = {
     
     logger.trace(APIName + ":" + apiArgListJson)
-    
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"read")) {
-      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
-    }
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
@@ -92,25 +92,25 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
 
     if ( arguments.length > 0 ){
       var loop = new Breaks
-      loop.breakable{
-	arguments.foreach(arg => {
-	  if(arg.ObjectType == null ){
-	    resultStr = APIName + ":Error: The value of object type can't be null"
-	    loop.break
-	  }
-	  if(arg.Name == null ){
-	    resultStr = APIName + ":Error: The value of object name can't be null"
-	    loop.break
-	  }
-	  else {
-	    resultStr = resultStr + GetObjectDef(arg)
-	  }
-	})
+      loop.breakable {
+	      arguments.foreach(arg => {
+	        if (arg.ObjectType == null ) {
+	          resultStr = APIName + ":Error: The value of object type can't be null"
+	          loop.break
+	        } 
+          
+          if (arg.Name == null ) {
+	          resultStr = APIName + ":Error: The value of object name can't be null"
+	          loop.break
+	        } else {
+	          resultStr = resultStr + GetObjectDef(arg)
+	        }
+	      })
       }
-    }
-    else{
+    } else {
       resultStr = APIName + ":No arguments passed to the API, nothing much to do"
     }
+    
     logger.trace("resultStr => " + resultStr)
     requestContext.complete(resultStr)
   }

@@ -34,7 +34,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
     
     log.info("Requesting AddMessage {}",messageJson)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","message"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     

@@ -31,7 +31,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
     
     log.info("Requesting UpdateFunction {}",functionJson)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","function"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     

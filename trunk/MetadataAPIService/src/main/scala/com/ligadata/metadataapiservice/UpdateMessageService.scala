@@ -34,7 +34,7 @@ class UpdateMessageService(requestContext: RequestContext, userid:Option[String]
 	  
 		log.info("Requesting Update {},{}",messageJson,formatType)
 
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","message"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
 		

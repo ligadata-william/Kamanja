@@ -34,7 +34,7 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
     
     log.info("Requesting UploadJar {}",jarName)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","jars"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }  
     

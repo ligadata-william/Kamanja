@@ -70,7 +70,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     
     logger.trace(APIName + ":" + apiArgListJson)
 
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
 

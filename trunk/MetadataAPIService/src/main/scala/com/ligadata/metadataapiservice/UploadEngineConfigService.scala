@@ -34,7 +34,7 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
     
     log.info("Requesting UploadEngineConfig {}",cfgJson)
 
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     

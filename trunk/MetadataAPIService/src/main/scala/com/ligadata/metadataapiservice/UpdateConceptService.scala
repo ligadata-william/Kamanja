@@ -31,7 +31,7 @@ class UpdateConceptService(requestContext: RequestContext, userid:Option[String]
     
     log.info("Requesting UpdateConcept {}",conceptJson)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","concept"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     

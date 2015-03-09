@@ -34,7 +34,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
 	  
 		log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","type"))) {
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
 		

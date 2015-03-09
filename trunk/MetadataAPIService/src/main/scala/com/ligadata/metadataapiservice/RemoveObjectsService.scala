@@ -55,6 +55,10 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     if( arg.FormatType != null ){
       formatType = arg.FormatType
     }
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
+      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+    }
 
     arg.ObjectType match {
       case "model" => {
@@ -81,10 +85,6 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
   def process(apiArgListJson: String) = {
     
     logger.trace(APIName + ":" + apiArgListJson)
-    
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
-    }
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
