@@ -3631,7 +3631,7 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(modDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        logger.warn("Unable to load the model " + key + " into cache, object doesn't exist in the database store: " + e.getMessage())
       }
     }
   }
@@ -3646,7 +3646,7 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(contDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        logger.warn("Unable to load the container " + key + " into cache, object doesn't exist in the database store: " + e.getMessage())
       }
     }
   }
@@ -3658,7 +3658,7 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(cont.asInstanceOf[FunctionDef], MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        logger.warn("Unable to load the function " + key + " into cache, object doesn't exist in the database store: " + e.getMessage())
       }
     }
   }
@@ -4836,10 +4836,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
     else{
       metadataAPIConfig.setProperty("JAR_PATHS", jarPaths.mkString(","))
-      logger.trace("JarPaths Based on node(%s) => %s".format(nodeId,jarPaths))
+      logger.info("JarPaths Based on node(%s) => %s".format(nodeId,jarPaths))
       val jarDir = compact(render(jarPaths(0))).replace("\"", "").trim
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
-      logger.trace("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
+      logger.info("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
@@ -4852,7 +4852,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     val zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     metadataAPIConfig.setProperty("ZNODE_PATH", zkNodeBasePath)
-    logger.trace("ZNODE_PATH(based on nodeid) => " + zkNodeBasePath)
+    logger.info("ZNODE_PATH(based on nodeid) => " + zkNodeBasePath)
 
     val zkSessionTimeoutMs1 = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
     // Taking minimum values in case if needed
