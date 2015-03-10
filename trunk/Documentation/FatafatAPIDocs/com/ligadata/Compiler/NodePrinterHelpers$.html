@@ -163,6 +163,21 @@
       </span>
       </h4>
       <p class="shortcomment cmt"> Answer the IfActionElements for this node if it is the top level function in the supplied derived field.</p>
+    </li><li name="com.ligadata.Compiler.NodePrinterHelpers#andOrFcnPrint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="andOrFcnPrint(scalaFcnName:String,node:com.ligadata.Compiler.PmmlExecNode,ctx:com.ligadata.Compiler.PmmlContext,generator:com.ligadata.Compiler.PmmlModelGenerator,generate:com.ligadata.Compiler.CodeFragment.Kind,order:com.ligadata.Compiler.Traversal.Order,fcnBuffer:StringBuilder,funcDef:com.ligadata.olep.metadata.FunctionDef):Unit"></a>
+      <a id="andOrFcnPrint(String,PmmlExecNode,PmmlContext,PmmlModelGenerator,Kind,Order,StringBuilder,FunctionDef):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">andOrFcnPrint</span><span class="params">(<span name="scalaFcnName">scalaFcnName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="node">node: <a href="PmmlExecNode.html" class="extype" name="com.ligadata.Compiler.PmmlExecNode">PmmlExecNode</a></span>, <span name="ctx">ctx: <a href="PmmlContext.html" class="extype" name="com.ligadata.Compiler.PmmlContext">PmmlContext</a></span>, <span name="generator">generator: <a href="PmmlModelGenerator.html" class="extype" name="com.ligadata.Compiler.PmmlModelGenerator">PmmlModelGenerator</a></span>, <span name="generate">generate: <a href="CodeFragment$.html#Kind=com.ligadata.Compiler.CodeFragment.Value" class="extmbr" name="com.ligadata.Compiler.CodeFragment.Kind">Kind</a></span>, <span name="order">order: <a href="Traversal$.html#Order=com.ligadata.Compiler.Traversal.Value" class="extmbr" name="com.ligadata.Compiler.Traversal.Order">Order</a></span>, <span name="fcnBuffer">fcnBuffer: <span class="extype" name="scala.collection.mutable.StringBuilder">StringBuilder</span></span>, <span name="funcDef">funcDef: <a href="../olep/metadata/FunctionDef.html" class="extype" name="com.ligadata.olep.metadata.FunctionDef">FunctionDef</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Printing of either 'and' and 'or' variadic function expressions
+</p><div class="fullcomment"><div class="comment cmt"><p>Printing of either 'and' and 'or' variadic function expressions
+</p></div><dl class="paramcmts block"><dt class="param">scalaFcnName</dt><dd class="cmt"><p>a string that is either &quot;&amp;&amp;&quot; or &quot;||&quot;</p></dd><dt class="param">node</dt><dd class="cmt"><p>the original PmmlExecNode describing the Pmml Apply element</p></dd><dt class="param">ctx</dt><dd class="cmt"><p>the PmmlCompiler context</p></dd><dt class="param">order</dt><dd class="cmt"><p>a hint to the generator as to which order to traverse the tree</p></dd><dt class="param">fcnBuffer</dt><dd class="cmt"><p>a StringBuilder that will contain the generated code upon exit</p></dd></dl></div>
     </li><li name="com.ligadata.Compiler.NodePrinterHelpers#applyFromTopLevelChild" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="applyFromTopLevelChild(node:com.ligadata.Compiler.xDerivedField):Option[com.ligadata.Compiler.xApply]"></a>
       <a id="applyFromTopLevelChild(xDerivedField):Option[xApply]"></a>
@@ -394,6 +409,19 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="com.ligadata.Compiler.NodePrinterHelpers#ifFcnPrint" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ifFcnPrint(scalaFcnName:String,node:com.ligadata.Compiler.xApply,ctx:com.ligadata.Compiler.PmmlContext,generator:com.ligadata.Compiler.PmmlModelGenerator,generate:com.ligadata.Compiler.CodeFragment.Kind,order:com.ligadata.Compiler.Traversal.Order,fcnBuffer:StringBuilder,funcDef:com.ligadata.olep.metadata.FunctionDef):Unit"></a>
+      <a id="ifFcnPrint(String,xApply,PmmlContext,PmmlModelGenerator,Kind,Order,StringBuilder,FunctionDef):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ifFcnPrint</span><span class="params">(<span name="scalaFcnName">scalaFcnName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="node">node: <a href="xApply.html" class="extype" name="com.ligadata.Compiler.xApply">xApply</a></span>, <span name="ctx">ctx: <a href="PmmlContext.html" class="extype" name="com.ligadata.Compiler.PmmlContext">PmmlContext</a></span>, <span name="generator">generator: <a href="PmmlModelGenerator.html" class="extype" name="com.ligadata.Compiler.PmmlModelGenerator">PmmlModelGenerator</a></span>, <span name="generate">generate: <a href="CodeFragment$.html#Kind=com.ligadata.Compiler.CodeFragment.Value" class="extmbr" name="com.ligadata.Compiler.CodeFragment.Kind">Kind</a></span>, <span name="order">order: <a href="Traversal$.html#Order=com.ligadata.Compiler.Traversal.Value" class="extmbr" name="com.ligadata.Compiler.Traversal.Order">Order</a></span>, <span name="fcnBuffer">fcnBuffer: <span class="extype" name="scala.collection.mutable.StringBuilder">StringBuilder</span></span>, <span name="funcDef">funcDef: <a href="../olep/metadata/FunctionDef.html" class="extype" name="com.ligadata.olep.metadata.FunctionDef">FunctionDef</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -600,6 +628,22 @@
 				}
 			}
 		}</p></div></div>
+    </li><li name="com.ligadata.Compiler.NodePrinterHelpers#shortCircuitFcnPrint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="shortCircuitFcnPrint(scalaFcnName:String,node:com.ligadata.Compiler.xApply,ctx:com.ligadata.Compiler.PmmlContext,generator:com.ligadata.Compiler.PmmlModelGenerator,generate:com.ligadata.Compiler.CodeFragment.Kind,order:com.ligadata.Compiler.Traversal.Order,fcnBuffer:StringBuilder,funcDef:com.ligadata.olep.metadata.FunctionDef):Unit"></a>
+      <a id="shortCircuitFcnPrint(String,xApply,PmmlContext,PmmlModelGenerator,Kind,Order,StringBuilder,FunctionDef):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">shortCircuitFcnPrint</span><span class="params">(<span name="scalaFcnName">scalaFcnName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="node">node: <a href="xApply.html" class="extype" name="com.ligadata.Compiler.xApply">xApply</a></span>, <span name="ctx">ctx: <a href="PmmlContext.html" class="extype" name="com.ligadata.Compiler.PmmlContext">PmmlContext</a></span>, <span name="generator">generator: <a href="PmmlModelGenerator.html" class="extype" name="com.ligadata.Compiler.PmmlModelGenerator">PmmlModelGenerator</a></span>, <span name="generate">generate: <a href="CodeFragment$.html#Kind=com.ligadata.Compiler.CodeFragment.Value" class="extmbr" name="com.ligadata.Compiler.CodeFragment.Kind">Kind</a></span>, <span name="order">order: <a href="Traversal$.html#Order=com.ligadata.Compiler.Traversal.Value" class="extmbr" name="com.ligadata.Compiler.Traversal.Order">Order</a></span>, <span name="fcnBuffer">fcnBuffer: <span class="extype" name="scala.collection.mutable.StringBuilder">StringBuilder</span></span>, <span name="funcDef">funcDef: <a href="../olep/metadata/FunctionDef.html" class="extype" name="com.ligadata.olep.metadata.FunctionDef">FunctionDef</a></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Control printing of inline function which we wish to short circuit using scala
+ generation.</p><div class="fullcomment"><div class="comment cmt"><p>Control printing of inline function which we wish to short circuit using scala
+ generation.  Currently 'and' and 'or' are supported.
+</p></div></div>
     </li><li name="com.ligadata.Compiler.NodePrinterHelpers#simpleFcnPrint" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="simpleFcnPrint(scalaFcnName:String,node:com.ligadata.Compiler.xApply,ctx:com.ligadata.Compiler.PmmlContext,generator:com.ligadata.Compiler.PmmlModelGenerator,generate:com.ligadata.Compiler.CodeFragment.Kind,order:com.ligadata.Compiler.Traversal.Order,fcnBuffer:StringBuilder,funcDef:com.ligadata.olep.metadata.FunctionDef):Unit"></a>
       <a id="simpleFcnPrint(String,xApply,PmmlContext,PmmlModelGenerator,Kind,Order,StringBuilder,FunctionDef):Unit"></a>
