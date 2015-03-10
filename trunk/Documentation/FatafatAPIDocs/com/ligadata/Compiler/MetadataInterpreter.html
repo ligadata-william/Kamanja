@@ -166,7 +166,7 @@
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
-    </li><li name="com.ligadata.Compiler.MetadataInterpreter#FunctionByTypeSig" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+    </li><li name="com.ligadata.Compiler.MetadataInterpreter#FunctionByTypeSig" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="FunctionByTypeSig(typesig:String):com.ligadata.olep.metadata.FunctionDef"></a>
       <a id="FunctionByTypeSig(String):FunctionDef"></a>
       <h4 class="signature">
@@ -178,7 +178,40 @@
         <span class="name">FunctionByTypeSig</span><span class="params">(<span name="typesig">typesig: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../olep/metadata/FunctionDef.html" class="extype" name="com.ligadata.olep.metadata.FunctionDef">FunctionDef</a></span>
       </span>
       </h4>
-      
+      <p class="shortcomment cmt"> With the supplied function signature, try to find the FunctionDef that matches it
+</p><div class="fullcomment"><div class="comment cmt"><p> With the supplied function signature, try to find the FunctionDef that matches it
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>matching FunctionDef or null
+</p></dd></dl></div>
+    </li><li name="com.ligadata.Compiler.MetadataInterpreter#FunctionsAvailableWithIndefiniteArity" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="FunctionsAvailableWithIndefiniteArity(fcnName:String):scala.collection.immutable.Set[com.ligadata.olep.metadata.FunctionDef]"></a>
+      <a id="FunctionsAvailableWithIndefiniteArity(String):Set[FunctionDef]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">FunctionsAvailableWithIndefiniteArity</span><span class="params">(<span name="fcnName">fcnName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.collection.immutable.Set">Set</span>[<a href="../olep/metadata/FunctionDef.html" class="extype" name="com.ligadata.olep.metadata.FunctionDef">FunctionDef</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt"> Answer any function definitions with the supplied namespace and name that have the indefinite arity feature.</p><div class="fullcomment"><div class="comment cmt"><p> Answer any function definitions with the supplied namespace and name that have the indefinite arity feature.
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>scala.collection.immutable.Set[FunctionDef] if any are present else null
+</p></dd></dl></div>
+    </li><li name="com.ligadata.Compiler.MetadataInterpreter#FunctionsWithIndefiniteArity" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="FunctionsWithIndefiniteArity(fcnName:String):Boolean"></a>
+      <a id="FunctionsWithIndefiniteArity(String):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">FunctionsWithIndefiniteArity</span><span class="params">(<span name="fcnName">fcnName: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt"> Answer if indefinite arity feature is present in any function with this name.</p><div class="fullcomment"><div class="comment cmt"><p> Answer if indefinite arity feature is present in any function with this name.
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>Boolean
+</p></dd></dl></div>
     </li><li name="com.ligadata.Compiler.MetadataInterpreter#MacroByTypeSig" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="MacroByTypeSig(typesig:String):com.ligadata.olep.metadata.MacroDef"></a>
       <a id="MacroByTypeSig(String):MacroDef"></a>
@@ -191,7 +224,10 @@
         <span class="name">MacroByTypeSig</span><span class="params">(<span name="typesig">typesig: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../olep/metadata/MacroDef.html" class="extype" name="com.ligadata.olep.metadata.MacroDef">MacroDef</a></span>
       </span>
       </h4>
-      <p class="shortcomment cmt">The macro search is always without namespace prefix .</p><div class="fullcomment"><div class="comment cmt"><p>The macro search is always without namespace prefix ...</p></div></div>
+      <p class="shortcomment cmt"> With the supplied function signature, try to find the MacroByTypeSig that matches it
+</p><div class="fullcomment"><div class="comment cmt"><p> With the supplied function signature, try to find the MacroByTypeSig that matches it
+</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>matching MacroDef or null</p><p> Note: The macro search is always without namespace prefix ...
+</p></dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <a id="asInstanceOf[T0]:T0"></a>
