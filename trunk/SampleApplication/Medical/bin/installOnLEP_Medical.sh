@@ -107,7 +107,6 @@ cp $srcPath/Utils/Serialize/target/scala-2.10/serialize_2.10-1.0.jar $ONLEPLIBPA
 
 # env context jars
 echo "env context jars..."
-cp $HOME/.ivy2/cache/asm/asm/jars/asm-3.1.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/com.codahale.metrics/metrics-core/bundles/metrics-core-3.0.2.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/com.yammer.metrics/metrics-core/jars/metrics-core-2.2.0.jar $ONLEPLIBPATH
 cp $HOME/.ivy2/cache/com.datastax.cassandra/cassandra-driver-core/bundles/cassandra-driver-core-2.0.2.jar $ONLEPLIBPATH
