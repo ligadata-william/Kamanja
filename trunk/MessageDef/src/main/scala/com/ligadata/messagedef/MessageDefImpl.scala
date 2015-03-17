@@ -1241,7 +1241,7 @@ class MessageDefImpl {
         e.printStackTrace()
       }
     }
-    println("version from metadata  =========" + msgdef.get.Version)
+    log.trace("version from metadata " + msgdef.get.Version)
 
     formatNewVersionToStr(msgdef.get.Version.toString)
   }
@@ -1276,7 +1276,7 @@ class MessageDefImpl {
     }
 
     versionStr = "%02d.%02d.%02d".format(major, minor, micro)
-    println("formatted version ======== " + versionStr)
+    log.trace("formatted version " + versionStr)
     versionStr
   }
   //Get the previous Existing Message/continer from metadata for deserialize function purpose
