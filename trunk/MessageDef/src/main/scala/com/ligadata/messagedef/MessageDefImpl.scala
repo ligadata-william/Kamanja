@@ -518,7 +518,7 @@ class MessageDefImpl {
             assignCsvdata.append(" ")
           }
           val (serStr, prevDeserStr, deserStr, converToNewObj) = ArrayTypeHandler.getSerDeserPrimitives(arrayType.elemDef.physicalName, typ.get.FullName, f.Name, arrayType.elemDef.implementationName, childs, false, recompile, msg.Fixed.toLowerCase())
-         // println("serStr   " + serStr)
+          // println("serStr   " + serStr)
           serializedBuf.append(serStr)
           deserializedBuf.append(deserStr)
           prevObjDeserializedBuf.append(prevDeserStr)
@@ -1216,6 +1216,69 @@ class MessageDefImpl {
 
   }
 
+  //Get the actve Message or container from Metadata 
+  private def getRecompiledMsgContainerVersion(messagetype: String, namespace: String, name: String, mdMgr: MdMgr): String = {
+    var msgdef: Option[ContainerDef] = null
+
+    if (namespace == null || namespace.trim() == "")
+      throw new Exception("Proper Namespace do not exists in message/container definition")
+    if (name == null || name.trim() == "")
+      throw new Exception("Proper Name do not exists in message")
+    if (messagetype == null || messagetype.trim() == "")
+      throw new Exception("Proper Version do not exists in message/container definition")
+
+    try {
+
+      if (messagetype.toLowerCase().equals("message")) {
+        msgdef = mdMgr.Message(namespace, name, -1, false)
+        val isMsg = true
+      } else if (messagetype.toLowerCase().equals("container")) {
+        msgdef = mdMgr.Container(namespace, name, -1, false)
+      }
+
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+    println("version from metadata  =========" + msgdef.get.Version)
+
+    formatNewVersionToStr(msgdef.get.Version.toString)
+  }
+
+  private def formatNewVersionToStr(version: String): String = {
+    var versionStr: String = ""
+    var major = 0
+    var minor = 0
+    var micro = 0
+    if (version.length() == 1 || version.length() == 2){
+      micro = version.toInt
+      micro = micro+1
+    }
+   
+    if (version.length() >= 3) {
+      micro = version.substring(version.length() - 2, version.length()).toInt
+       micro = micro+1
+      if (version.length() == 3)
+        minor = version.substring(0, 1).toInt
+      else if (version.length() == 4)
+        minor = version.substring(0, 2).toInt
+    }
+
+    if (version.length() >= 5) {
+      minor = version.substring(version.length() - 4, version.length() - 2).toInt
+
+      if (version.length() == 5)
+        major = version.substring(0, 1).toInt
+      else if (version.length() == 6)
+        major = version.substring(0, 2).toInt
+
+    }
+
+    versionStr = "%02d.%02d.%02d".format(major, minor, micro)
+    println("formatted version ======== " + versionStr)
+    versionStr
+  }
   //Get the previous Existing Message/continer from metadata for deserialize function purpose
 
   private def getPrevVersionMsgContainer(message: Message, mdMgr: MdMgr): (Boolean, ContainerDef, String) = {
@@ -1288,7 +1351,7 @@ class MessageDefImpl {
       } else if (fixed.toLowerCase().equals("false")) {
         val attrMap = prevVerCtrdef.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
         if (attrMap != null) {
-        //  attrMap.map(a => { println("=========== " + a._2.Name + "==== " + a._2.typeString) })
+          //  attrMap.map(a => { println("=========== " + a._2.Name + "==== " + a._2.typeString) })
           childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef])).map(a => (a._2.Name, a._2))
         }
       }
@@ -1927,7 +1990,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw new Exception("MdMgr is not found")
       if (msgDfType.equals("JSON")) {
         var message: Message = null
-        message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
+        message = processJson(jsonstr, mdMgr, recompile).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
           val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr, recompile)
@@ -1979,7 +2042,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-     // createScalaFile(classstr, ver, classname)
+      // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
@@ -2279,7 +2342,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 */
-  private def processJson(json: String, mdMgr: MdMgr): Message = {
+  private def processJson(json: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var message: Message = null
     var jtype: String = null
     //val parsed = JSON.parseFull(json)
@@ -2289,7 +2352,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var key: String = ""
     try {
       jtype = geJsonType(map)
-      message = processJsonMap(jtype, map).asInstanceOf[Message]
+      message = processJsonMap(jtype, map, mdMgr, recompile).asInstanceOf[Message]
 
     } catch {
       case e: Exception => {
@@ -2318,7 +2381,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     jtype
   }
 
-  private def processJsonMap(key: String, map: Map[String, Any]): Message = {
+  private def processJsonMap(key: String, map: Map[String, Any], mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var msg1: Message = null
     type messageMap = Map[String, Any]
     try {
@@ -2326,7 +2389,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         if (map.get(key).get.isInstanceOf[messageMap]) {
           val message = map.get(key).get.asInstanceOf[Map[String, Any]]
           // if (message.get("Fixed").get.equals("true")) {
-          msg1 = getMsgorCntrObj(message, key).asInstanceOf[Message]
+          msg1 = getMsgorCntrObj(message, key, mdMgr, recompile).asInstanceOf[Message]
           //  } else if (message.get("Fixed").get.equals("false")) {
           //    msg1 = geKVMsgorCntrObj(message, key).asInstanceOf[Message]
           //  } else throw new Exception("Message in json is not Map")
@@ -2375,7 +2438,33 @@ class XmlData(var dataInput: String) extends InputData(){ }
     MdMgr.FormatVersion(message.getOrElse("Version", "0").toString)
   }
 
-  private def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+  private def CheckVerDigits(value: Int, orgVerInfo: String): Unit = {
+    if (value < 0 || value > 99)
+      throw new Exception("Expecting only 0 to 99 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
+  }
+
+  private def formatRecompileVersion(verInfo: String): String = {
+
+    val verParts = verInfo.split("\\.")
+    var major = (if (verParts.size > 0) verParts(0).toInt else 0)
+    var mini = (if (verParts.size > 1) verParts(1).toInt else 0)
+    var micro = (if (verParts.size > 2) verParts(2).toInt else 0)
+    micro = micro + 1
+    CheckVerDigits(major, verInfo)
+    CheckVerDigits(mini, verInfo)
+    CheckVerDigits(micro, verInfo)
+
+    val retVerInfo = "%02d.%02d.%02d".format(major, mini, micro)
+    retVerInfo
+  }
+
+  private def extractRecompiledMsgVer(message: Map[String, Any]): String = {
+
+    formatRecompileVersion(message.getOrElse("Version", "0").toString)
+
+  }
+
+  private def getMsgorCntrObj(message: Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var ele: List[Element] = null
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -2387,6 +2476,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var partitionKeysList: List[String] = null
     var primaryKeysList: List[String] = null
     var conceptsList: List[String] = null
+    var msgVersion: String = ""
     try {
       if (message != null) {
         for (key: String <- message.keys) {
@@ -2429,6 +2519,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
         }
         if (ele == null)
           throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (recompile) {
+          msgVersion = getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
+        } else {
+          msgVersion = extractVersion(message)
+        }
+
       }
     } catch {
       case e: Exception => {
@@ -2437,8 +2534,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val cur_time = System.currentTimeMillis
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString + "_" + cur_time
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(msgVersion).toString + "_" + cur_time
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
