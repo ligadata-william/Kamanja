@@ -694,6 +694,10 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Min", "com.ligadata.pmml.udfs.Udfs.Min", ("System", "Double"), List(("expr1", "System", "Int"),("expr2", "System", "Double")), null)
 		mgr.AddFunc("Pmml", "Min", "com.ligadata.pmml.udfs.Udfs.Min", ("System", "Double"), List(("expr1", "System", "Double"),("expr2", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Min", "com.ligadata.pmml.udfs.Udfs.Min", ("System", "Int"), List(("expr1", "System", "Int"),("expr2", "System", "Int")), null)
+		
+		mgr.AddFunc("Pmml", "Mod", "com.ligadata.pmml.udfs.Udfs.Mod", ("System", "Int"), List(("expr1", "System", "Int"),("expr2", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "Mod", "com.ligadata.pmml.udfs.Udfs.Mod", ("System", "Long"), List(("expr1", "System", "Long"),("expr2", "System", "Long")), null)
+	
 		mgr.AddFunc("Pmml", "Divide", "com.ligadata.pmml.udfs.Udfs.Divide", ("System", "Float"), List(("exprs", "System", "ArrayBufferOfFloat")), null)
 		mgr.AddFunc("Pmml", "Divide", "com.ligadata.pmml.udfs.Udfs.Divide", ("System", "Double"), List(("exprs", "System", "ArrayBufferOfDouble")), null)
 		mgr.AddFunc("Pmml", "Divide", "com.ligadata.pmml.udfs.Udfs.Divide", ("System", "Long"), List(("exprs", "System", "ArrayBufferOfLong")), null)
@@ -1023,6 +1027,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
 
+		mgr.AddFunc("Pmml", "GetOrElseNew", "com.ligadata.pmml.udfs.Udfs.GetOrElseNew", ("System", "Any"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("partitionKey", "System", "String"),("modelContainerKey", "System", "String"),("conceptKey", "System", "String"), ("mapMissingToValue", "System", "String")), null)
+		
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "QueueOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ListOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "SortedSetOfAny")), null)

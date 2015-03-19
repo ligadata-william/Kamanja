@@ -270,10 +270,6 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 		/** ditto for SimpleRule class */
 		ctx.simpleRuleInfoCollector() 
 		
-		/** collect the input field and output fields for model definition generation */
-		ctx.collectModelInputVars
-		ctx.collectModelOutputVars
-
 		
 		/** 
 		 *  Build the source code returning StringBuilders for the pieces.  The
@@ -288,6 +284,10 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 		val classDeclsBuffer : StringBuilder = NodePrinterHelpers.classDecls(ctx, this)
 		val modelClassBuffer : StringBuilder = NodePrinterHelpers.modelClass(ctx, this)
 		
+		/** collect the input field and output fields for model definition generation */
+		ctx.collectModelInputVars
+		ctx.collectModelOutputVars
+
 		codeBuffer.append(modelClassBuffer.toString)
 		codeBuffer.append(classDeclsBuffer.toString)
 		codeBuffer.toString

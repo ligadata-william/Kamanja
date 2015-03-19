@@ -53,6 +53,10 @@ version := "1.0"
 
 scalaVersion := "2.10.4"
 
+libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.7.3"
+
+libraryDependencies += "com.assembla.scala-incubator" % "graph-dot_2.10" % "1.7.3"
+
 libraryDependencies += "org.joda" % "joda-convert" % "1.6"
 
 libraryDependencies += "joda-time" % "joda-time" % "2.3"

@@ -344,14 +344,14 @@ class MdMgr {
           val fk = new ForeignKey
           fk.constraintName = if (v._1 != null) v._1 else null
           fk.key = v._2.toArray
-          fk.forignContainerName = v._3
-          fk.forignKey = v._4.toArray
+          fk.foreignContainerName = v._3
+          fk.foreignKey = v._4.toArray
           fk
         }).toArray
     }
 
     if (pKeys != null && fKeys != null)
-      entity.keys = pKeys ++ pKeys
+      entity.keys = pKeys ++ fKeys
   }
 
   /**
@@ -670,6 +670,24 @@ class MdMgr {
 
   /** Get All Versions of Models */
   def Models(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ModelDef]] = { GetImmutableSet(Some(modelDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
+  /** Answer all active models */
+  def ActiveModels : scala.collection.immutable.Set[ModelDef] = { 
+    val optModels : Option[scala.collection.immutable.Set[ModelDef]] = Models(true,false)
+    val activeModels : scala.collection.immutable.Set[ModelDef] = optModels match {
+      case Some(optModels) => optModels
+      case _ => null
+    }
+    activeModels
+  }
+  /** Answer most recent version of all active models */
+  def ActiveCurrentModels : scala.collection.immutable.Set[ModelDef] = { 
+    val optModels : Option[scala.collection.immutable.Set[ModelDef]] = Models(true,true)
+    val activeCurrentModels : scala.collection.immutable.Set[ModelDef] = optModels match {
+      case Some(optModels) => optModels
+      case _ => null
+    }
+    activeCurrentModels
+  }
 
   /** Get All Versions of Models for Key */
   def Models(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ModelDef]] = { GetImmutableSet(modelDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
@@ -678,6 +696,15 @@ class MdMgr {
   /** Answer the ModelDef with the supplied namespace and name  */
   def Model(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[ModelDef] = Model(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
   def Model(key: String, ver: Int, onlyActive: Boolean): Option[ModelDef] = GetReqValue(Models(key, onlyActive, false), ver)
+  
+  def ActiveModel(nameSpace : String, name: String) : ModelDef = {
+	  val optModel : Option[ModelDef] = Model(nameSpace, name, -1, true)
+	  val model : ModelDef = optModel match {
+	    case Some(optModel) => optModel
+	    case _ => null
+	  }
+	  model
+  }
 
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyModel(nameSpace: String, name: String, ver: Int, operation: String): ModelDef = {
@@ -1674,7 +1701,7 @@ class MdMgr {
    *
    */
 
-  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): ModelDef = {
+  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[ModelInputVariable], outputVars: List[ModelOutputVariable], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): ModelDef = {
 
     var modelExists: Boolean = false
     val existingModel = Model(nameSpace, name, -1, false)
@@ -1701,21 +1728,8 @@ class MdMgr {
     val mdlNm = MdMgr.MkFullName(nameSpace, name)
     // val mdlOutputVars = outputVars.map(o => (mdlNm, o._1, o._2, o._3))
 
-    mdl.outputVars = outputVars.map(o => {
-      val (nm, typnsp, typenm) = o
-      val atr = MakeAttribDef(mdlNm, nm, typnsp, typenm, ver, false, null) //BUGBUG::Making all local Attributes and Collection Types does not handled
-      if (atr.JarName != null) depJarSet += atr.JarName
-      if (atr.DependencyJarNames != null) depJarSet ++= atr.DependencyJarNames
-      atr
-    }).toArray
-
-    mdl.inputVars = inputVars.map(elem => {
-      val (varNameSp, varName, typeNameNs, typeName, isGlobal, collectionType) = elem
-      val atr = MakeAttribDef(varNameSp, varName, typeNameNs, typeName, ver, isGlobal, collectionType)
-      if (atr.JarName != null) depJarSet += atr.JarName
-      if (atr.DependencyJarNames != null) depJarSet ++= atr.DependencyJarNames
-      atr
-    }).toArray
+    mdl.outputVars = outputVars.map(o => { o }).toArray
+    mdl.inputVars = inputVars.map(i => { i }).toArray
 
     if (depJars != null) depJarSet ++= depJars
     val dJars = if (depJarSet.size > 0) depJarSet.toArray else null
@@ -2373,7 +2387,7 @@ class MdMgr {
    *  @return the ModelDef instance as a measure of convenience
    *
    */
-  def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
+  def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[ModelInputVariable], outputVars: List[ModelOutputVariable], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
     AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
   }
 

@@ -493,26 +493,28 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
 		val versionNo : String = optVersion match {
 		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no version for this model... incredible as it seems"
+		}
+
+		val optNameSpace = ctx.pmmlTerms.apply("NameSpace")
+		val modelNamespace : String = optNameSpace match {
+		  case Some(optNameSpace) => optNameSpace.toString
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
-		/** FIXME: The model namespace perhaps should be specified in the model xml ? */
-		val modelNamespace = MdMgr.sysNS
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
+		val nmspc : String = modelNamespace + "_"
 		
 		val fqClassName : String = modelPkg + "." + nmspc + className + "_" + versionNo
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
-		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
+		val inputVars : List[ModelInputVariable] = ctx.modelInputs.values.toList
 		logger.trace(s"\n\ndump of the inputVars for the model metadata construction:")
 		inputVars.foreach(aVar => {
-			val (modelNmSpc, varnm, typeNmspc, typeNm, isGlobal, collectionType) : (String,String,String,String,Boolean,String) = aVar
-			logger.trace(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal, $collectionType)")
+			logger.trace(s"${aVar.toString}")
 		})
-		val outputVars : List[(String,String,String)] = ctx.modelOutputs.values.toList
+		val outputVars : List[ModelOutputVariable] = ctx.modelOutputs.values.toList
 		logger.trace(s"\n\ndump of the outputVars for the model metadata construction:")
 		outputVars.foreach(aVar => {
-			val (varnm, typeNmspc, typeNm) : (String,String,String) = aVar
-			logger.trace(s"(${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'})")
+			logger.trace(s"(${'"'}${aVar.key}${'"'}, ${'"'}${aVar.typenameInfo.toString}${'"'}, ${'"'}${aVar.isDerivedConcept}${'"'})")
 		})
 		
 		val modelVer : Option[String] = ctx.pmmlTerms.apply("VersionNumber")
@@ -655,17 +657,26 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	
 	/** get the jar name (sans path) for this model */
 	private def JarName(ctx : PmmlContext) : String = {
+	  
+		val optNameSpace = ctx.pmmlTerms.apply("NameSpace")
+		val modelNamespace : String = optNameSpace match {
+		  case Some(optNameSpace) => optNameSpace.toString
+		  case _ => "there is no class name for this model... incredible as it seems"
+		}
+		val nmspc : String = modelNamespace + "_"
+
 		val appNm : Option[String] = ctx.pmmlTerms.apply("ClassName")
 		val moduleName : String = appNm match {
 		  case Some(appNm) => appNm
 		  case _ => "None"
 		}
+		
 		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
 		val versionNo : String = optVersion match {
 		  case Some(optVersion) => optVersion.toString
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
+
 		val moduleNameJar : String = s"$nmspc$moduleName${'_'}$versionNo.jar"
 		moduleNameJar.toLowerCase
 	}

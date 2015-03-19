@@ -129,12 +129,36 @@ trait EnvContext {
   def GetValidateAdapterInformation: Array[(String, String)]
   
   /** 
+   *  A more general version of getObject that will return any value.  Retrieval of derived concepts (values produced in other
+   *  models than the current model executing) uses this method, where the containerName is the fully qualified model name with
+   *  version, the partitionKey is the partitionKey from the incoming message, and the key is the name of the derived field 
+   *  that was published by that model in its mining field output.
+   *  @param tempTransId the transaction id supplied to the executing model at instantiation.
+   *  @param partitionKey is the partition key of the incoming message of the currently executing model
+   *  @param containerName is the name of the model that has produced a value for this partition key
+   *  @param key the name of the derived field sought in the container named 'containerName'
+   *  @return Any object .. the value of the derived field sought in the container named 'containerName'
+   *  
+   *  Note: Full type information is available in the OutputVars array of the model mentioned in containerName that can be used
+   *  to instantiate the type.  This field must either be a MessageContainerBase instance or support the TypeImplementation[T]
+   *  trait so the engine can instantiate the serialized form of the value.
+   */
+  def getAnyObject(tempTransId: Long, partitionKey : String, containerName: String, key: String): Any
+
+  /** 
    *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is 
    *  invalid, null is returned.
    *  @param fqclassname : a full package qualifed class name 
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname : String) : MessageContainerBase
+
+  /** 
+   *  Answer an empty instance of any object. If the name is invalid, null is returned.
+   *  @param fqclassname : a full package qualifed class name 
+   *  @return Any of that ilk
+   */
+  def NewObject(fqclassname : String) : Any
 
 }
 

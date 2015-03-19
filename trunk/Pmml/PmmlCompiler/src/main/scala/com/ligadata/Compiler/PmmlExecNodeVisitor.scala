@@ -1,5 +1,6 @@
 package com.ligadata.Compiler
 
+import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
 
@@ -11,34 +12,102 @@ trait PmmlExecVisitor {
 }
 
 /** 
- *  										[(message name, (appears in ctor signature?, message type for named message, varName))] 
- *  var containersInScope : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = ArrayBuffer[(String, Boolean, BaseTypeDef, String)]()
- *  
- *  (model var namespace (could be msg or concept or modelname), variable name, type namespace
-   *  					, type name, and whether the variable is global (a concept that has been independently cataloged))
- *  
+ *  Collect model input variables from both the incoming messages and derived variables produced by other models.  These
+ *  both share the characteristic that they have a compound '.' delimited name.
  */
-
-
-class ContainerFieldRefCollector(ctx : PmmlContext) extends PmmlExecVisitor {
+class ContainerFieldRefCollector(ctx : PmmlContext) extends PmmlExecVisitor with LogTrait {
   
 	override def Visit(node : PmmlExecNode) {
 		val expandCompoundFieldTypes : Boolean = true
 		node match {
 		  case x : xFieldRef => {
 			  val fldRef : xFieldRef = node.asInstanceOf[xFieldRef]
+			  /** Consider multiple '.' delimited name nodes here */
 			  if (fldRef.field.contains('.')) {
 				  val names : Array[String] = fldRef.field.split('.')
-				  /** FIXME: there could be multiple nodes here */
-				  val containerName : String = names(0)
-				  val fieldName : String = names(1)
-				  val aContainerInScope = ctx.containersInScope.filter(_._1 == containerName)
-				  if (aContainerInScope.size > 0) {
+
+				  /** Consider if this is a model field reference */
+				  val hasModelPrefix : Boolean = ctx.MetadataHelper.IsDerivedConcept(fldRef.field)
+				  val hasNamespacePrefix : Boolean = ctx.MetadataHelper.HasNameSpacePrefix(fldRef.field)
+				  val hasNamespaceButIsNotModel : Boolean = (hasNamespacePrefix && ! hasModelPrefix)
+
+				  val (containerName,fieldName) : (String,String) = if (! hasModelPrefix) {
+					  if (hasNamespacePrefix && names.size > 2) (names(1),names(2)) else (names(0),names(1))
+				  } else {
+					  (null,null)
+				  }
+				  
+				  val aContainerInScope = if (containerName != null) {
+					  ctx.containersInScope.filter(_._1 == containerName)  
+				  } else {
+					  ArrayBuffer[(String, Boolean, BaseTypeDef, String)]()
+				  }
+ 
+				  if (aContainerInScope.size > 0) { /** examine containers whose origin is not another model ( ! derived fields) ... */
 					  val containerInfo = aContainerInScope.head
 					  val (cName, inCtor, baseType, varName) : (String, Boolean, BaseTypeDef, String) = containerInfo
 					  val (typeStr, isCntr, typedef) : (String,Boolean,BaseTypeDef) = ctx.getFieldType(fldRef.field, ! expandCompoundFieldTypes).head
 					  val isGlobal : Boolean = (ctx.mgr.Attribute(containerName, fieldName, -1, true) != None)
-					  ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal, null) // BUGBUG:: We need to fill collectionType properly instead of null
+
+					  /** 
+					   *  For the input variables, the type hierarchy from the outer container to the leaf is needed.  As such
+					   *  the names (conventional '.' delimited compound name) corresponds to an array of namespace,typename pairs
+					   *  found by the getFieldType. 
+					   */
+					  val typeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(fldRef.field, expandCompoundFieldTypes)
+					  if (typeInfo == null || (typeInfo != null && typeInfo.size == 0) || (typeInfo != null && typeInfo.size > 0 && typeInfo(0)._3 == null)) {
+						  //throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
+						  logger.error(s"mining field named '${fldRef.field}' does not exist... your model is going to fail... however, let's see how far we can go to find any other issues...")
+						  val bogusInput :  ModelInputVariable = new ModelInputVariable(fldRef.field, null, false)
+						  ctx.modelInputs(fldRef.field.toLowerCase()) = bogusInput
+					  } else {
+			
+						  val miningTypeInfo : Array[(String, String)] = typeInfo.map( info => {
+							  val (typestr, isCntnr, typedef) : (String, Boolean, BaseTypeDef) = info
+							  (typedef.NameSpace, typedef.Name)
+						  })
+						  
+						  /** legit (non derived concept) data or field... */
+						  val inputVar :  ModelInputVariable = new ModelInputVariable(fldRef.field, miningTypeInfo, hasModelPrefix)
+						  ctx.modelInputs(fldRef.field.toLowerCase()) = inputVar		
+					  }
+				  } else {  /** Is this a derived field?  (i.e., an output variable computed in another model?) */
+				    
+					  val inputVar :  ModelInputVariable = if (hasModelPrefix) {
+						  val (model, modelContainerKey, conceptKey, subFldKeys) : (ModelDef, String, String, String) = ctx.MetadataHelper.GetDerivedConceptModel(fldRef.field)
+						  val modelName : String = model.FullNameWithVer
+						  val conceptName : String = fldRef.field.split('.').last
+						  val inputVarName : String = modelName + "." + conceptName
+						  
+						  val (typeNameSpace,typeName) : (String,String) = model.OutputVarType(inputVarName)
+						  /** Check to see if this type is available in the metadata */
+						  val typedef : BaseTypeDef = if (typeNameSpace != null && typeName != null) {
+							  val typ : BaseTypeDef = ctx.mgr.ActiveType(typeNameSpace,typeName)
+							  if (typ != null) {
+								  typ
+							  } else {
+								  logger.error(s"type could not be found for output variable '${typeNameSpace}.${typeName} in the metadata cache...")
+								  null
+							  }
+						  } else {
+							  logger.error(s"while collecting model input variables, the type could not be found for output variable '${inputVarName}'...")
+							  null
+						  }
+						  
+					  	  if (typedef != null) {
+					  		  new ModelInputVariable(inputVarName, Array[(String,String)]((typeNameSpace,typeName)), hasModelPrefix)
+					  	  } else {
+					  		  null
+					  	  }
+					  } else {
+						  null
+					  } 
+					  
+					  if (inputVar != null) {
+						  ctx.modelInputs(fldRef.field.toLowerCase()) = inputVar
+					  } else {
+						  logger.error(s"while collecting model input variables, the type could not be found for output variable '${fldRef.field}'...")
+					  }
 				  }
 			  }
 		  }

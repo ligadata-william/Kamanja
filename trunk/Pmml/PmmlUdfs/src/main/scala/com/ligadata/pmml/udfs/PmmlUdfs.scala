@@ -260,12 +260,39 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   }
 
   /**
-   * EnvContext GetArray functions
+   * EnvContext GetArray functions 
    */
 
   def GetArray(xId: Long, gCtx: EnvContext, containerId: String): Array[MessageContainerBase] = {
     gCtx.getAllObjects(xId, containerId)
   }
+  
+  /** 
+   *  Get a derived value from the model specified in the 'modelContainerKey' with the derived field named 'conceptKey' for the
+   *  partitionKey from the current partitionkey represented with a '.' delimited form if more than one key is present in the 
+   *  partitionKey.
+   *  @param tempTransId the transaction id supplied to the executing model at instantiation.
+   *  @param gCtx the EnvContext that will be called to service this request.
+   *  @param primaryOrPartKey is the partition key of the incoming message of the currently executing model (if multi field key, '.' delimited)
+   *  @param containerName is the name of the model that has produced a value for this partition key
+   *  @param key the name of the derived field sought in the container named 'containerName'
+   *  @return Any object .. the value of the derived field sought in the container named 'containerName'.  Should the object not be found,
+   *  	the mapMissingTo value is treated as a fully qualified classname that will produce a benign value to return 
+   *  
+   *  Note: Full type information is available in the OutputVars array of the model mentioned in containerName that can be used
+   *  to instantiate the type.  This field must either be a MessageContainerBase instance or support the TypeImplementation[T]
+   *  trait so the engine can instantiate the serialized form of the value.  
+   */
+  def GetOrElseNew( xId : Long, gCtx : EnvContext, partitionKey : String, modelContainerKey : String,  conceptKey :  String, mapMissingTo : String) : Any = {
+    val mc : Any = gCtx.getAnyObject(xId, partitionKey, modelContainerKey, conceptKey)
+    if (mc != null) {
+    	mc
+    } else {
+    	gCtx.NewObject(mapMissingTo) /** Assume that the mapMissingTo value following the concept key is a fqclassname that provides 
+    	 a benign object instance when the derived concept cannot be found wiht the supplied key. */
+    }
+  }
+
 
   /**
    * EnvContext Put functions
@@ -1151,7 +1178,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     !(expr1 == expr2)
   }
 
-  /**   +, -, * and / */
+  /**   +, -, * and / AND % */
 
   def Plus(expr1: String, expr2: String): String = {
     (expr1 + expr2)
@@ -1602,6 +1629,16 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def Divide(exprs: ArrayBuffer[Float]): Float = {
     exprs.reduceLeft(_ / _)
   }
+
+  
+  def Mod(expr1: Int, expr2: Int): Int = {
+    (expr1 % expr2)
+  }
+
+  def Mod(expr1: Long, expr2: Long): Long = {
+    (expr1 % expr2)
+  }
+
 
   /**  min, max, sum, avg, median, product */
 

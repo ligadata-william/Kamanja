@@ -462,8 +462,8 @@ class PrimaryKey extends RelationKeyBase {
 
 class ForeignKey extends RelationKeyBase {
   def KeyType: RelationKeyType = tForeign
-  var forignContainerName:String = _// Container or Message Name
-  var forignKey:Array[String] = _ // Names in Foreign Container (which are primary keys there). Expecting same number of names in key & forignKey
+  var foreignContainerName:String = _// Container or Message Name
+  var foreignKey:Array[String] = _ // Names in Foreign Container (which are primary keys there). Expecting same number of names in key & foreignKey
 }
 
 trait EntityType {
@@ -609,17 +609,14 @@ class FunctionDef extends BaseElemDef {
 /** 
  *  The FcnMacroAttr.Feature is used to describe the sort of macro or function is being defined.  Briefly,
  *  
- *    ITERABLE - when included in a MacroDef instance's features set, the first argument of the macro
+ *    ITERABLE - when included in a FunctionDef instance's features set, the first argument of the macro
  *    	is a Scala Iterable and the code that will be generated looks like arg1.filter( itm => arg2(arg3,arg4,...,argN)
  *      or other iterable function (e.g., map, foldLeft, zip, etc).  
  *    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect 
  *    	and return whether the update happened as a Boolean.  This is needed so that the variable updates can be folded into 
  *      the flow of a pmml predicate interpretation.  Variable updates are currently done inside a class as a variable arg
- *      to the constructor.  These classes are added to the current derived field class before the enclosing '}' for the
- *      class representing the derived field.  A global optimization of the derived field's function would be needed to 
- *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
- *      parts. 
- *    HAS_INDEFINITE_ARITY when set this function def as a varargs or if you prefer variadic specification on its last
+ *      to the constructor.  
+ *    HAS_INDEFINITE_ARITY when set this FunctionDef has varargs or if you prefer variadic specification on its last
  *      argument (e.g., And(boolExpr : Boolean*) ).  
  */
 object FcnMacroAttr extends Enumeration {
@@ -650,14 +647,78 @@ class MacroDef extends FunctionDef {
   var macroTemplate: (String,String) = ("","")
 }
 
-class ModelDef extends BaseElemDef {
-  var modelType: String = _ // type of models (RuleSet,..)
-  var inputVars: Array[BaseAttributeDef] = _
-  var outputVars: Array[BaseAttributeDef] = _
+/** Simple container that describes the model input variables.  Model input variables are used to construct
+ *  a dependency graph of the models in the engine's working set (i.e., a DAG).
+ *  
+ *  Input variables are made available to models from the following sources:
+ *  
+ *  <ol type="a">
+ *  <li>via a message container supplied to the model's constructor, or </li>
+ *  <li>as a derived variable that was computed by another "upstream" model. The model name and optionally the
+ *  model's namespace (e.g., foomodel or foonamespace.foomodel) must prefix the variable.</li> 
+ *  </ol>
+ *  
+ *  Note: Only namespace qualified model names with/without version are supported at this point.  When the namespace searchspace goes 
+ *  in, model prefixed variable names will be supported.
+ */
+trait ModelVariable
+case class ModelInputVariable(val key : String, val typenameInfo : Array[(String,String)], val isDerivedConcept : Boolean) extends ModelVariable {
 
-  def typeString: String = PhysicalName
+	override def toString : String = {
+	  	val typeBuff : StringBuilder = new StringBuilder
+	  	typeBuff.append("[")
+	  	var i : Int = 0
+	  	typenameInfo.foreach(typTup => {
+	  		typeBuff.append(s"${typTup.toString}")
+	  		i += 1
+	  		if (i < typenameInfo.size) {
+	  			typeBuff.append(",")
+	  		}
+
+	  	})
+	  	typeBuff.append("]")
+	  	val buff : StringBuilder = new StringBuilder
+	  	buff.append(s"${'"'}$key${'"'}, ${typeBuff.toString}, ${isDerivedConcept.toString}")
+	  	buff.toString
+	}
 }
 
+/** Like ModelInputVariable, but simpler.  There is no possibility of a nested container.
+ *  
+ *  Output variables are emitted from models either as the prediction or a supplementary variable.  The key 
+ *  is a '.' delimited values in the following order:
+ *  
+ *  	model namespace, model name, derived variable name[, version]
+ *   
+ *  Although not currently supported, models can be nested in standard PMMML.  For this reason we will prefix the
+ *  model namespace and name should we see this implemented in the future.  Note that version is optional. If this is omitted,
+ *  the latest version of the namespace.modelName ModelDef is assumed.
+ */
+case class ModelOutputVariable(val key : String, val typenameInfo : (String,String), val isDerivedConcept : Boolean) extends ModelVariable {
+
+}
+
+class ModelDef extends BaseElemDef {
+  var modelType: String = _ // type of model (RuleSet, et al)
+  var inputVars: Array[ModelInputVariable] = _
+  var outputVars: Array[ModelOutputVariable] = _
+
+  def DerivedConceptInputs : Array[ModelInputVariable] = { inputVars.filter( v => v.isDerivedConcept) }
+  def MsgAndContainerFieldInputs : Array[ModelInputVariable] = { inputVars.filter( v => ! v.isDerivedConcept) }
+  def InputVars : Array[ModelInputVariable] = inputVars
+  def OutputVars : Array[ModelOutputVariable] = outputVars
+  def OutputVarType(key : String) : (String,String) = {
+	  val outVars : Array[ModelOutputVariable] = outputVars.filter(outVar => outVar.key == key)
+	  val (typeNameSpc,typeName) : (String,String) = if (outVars != null && outVars.size > 0) outVars.head.typenameInfo else (null,null)
+	  (typeNameSpc,typeName)
+  }
+  def InputVarTypes(key : String) : Array[(String,String)] = {
+	  val outVars : Array[ModelInputVariable] = inputVars.filter(inVar => inVar.key == key)
+	  val typeInfo : Array[(String,String)] = if (inputVars != null && inputVars.size > 0) inputVars.head.typenameInfo else null
+	  typeInfo
+  }
+  def typeString: String = PhysicalName
+}
 
 class JarDef extends BaseElemDef{
   def typeString: String = PhysicalName

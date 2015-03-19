@@ -33,7 +33,15 @@ case class MessageStruct(NameSpace: String,Name: String, FullName: String, Versi
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
-case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
+// class ModelInputVariable(val key : String, val typenameInfo	: Array[(String,String)], val isDerivedConcept : Boolean) {}
+// class ModelOutputVariable(val key : String, val typenameInfo : (String,String), val isDerivedConcept : Boolean) {}
+trait ModelVar
+case class ModelVarNmSpcNm(val nmspc : String, val nm : String)
+case class ModelInputVar(val key : String, val typenameInfo	: Array[ModelVarNmSpcNm], val isDerivedConcept : Boolean) extends ModelVar
+case class ModelOutputVar(val key : String, val typenameInfo : ModelVarNmSpcNm, val isDerivedConcept : Boolean) extends ModelVar
+
+case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[ModelInputVar], OutputAttributes: List[ModelOutputVar])
+// old way : case class ModelInfo(NameSpace: String,Name: String,Version: String,ModelType: String, JarName: String,PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
 case class ModelDefinition(Model: ModelInfo)
 
 case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZooKeeperConnectString: String)
@@ -546,9 +554,6 @@ object JsonSerializer {
   }
 
 
-
-
-
   @throws(classOf[Json4sParsingException])
   @throws(classOf[ModelDefParsingException])
   def parseModelDef(modDefJson:String,formatType:String) : ModelDef = {
@@ -559,25 +564,24 @@ object JsonSerializer {
       logger.trace("Parsed the json : " + modDefJson)
 
       val ModDefInst = json.extract[ModelDefinition]
-
-      val inputAttrList = ModDefInst.Model.InputAttributes
-      var inputAttrList1 = List[(String, String, String,String,Boolean,String)]()
-      for (attr <- inputAttrList) {
-	inputAttrList1 ::= (attr.NameSpace,attr.Name, attr.Type.NameSpace,attr.Type.Name,false, attr.CollectionType.get)
-      }
-
-      val outputAttrList = ModDefInst.Model.OutputAttributes
-      var outputAttrList1 = List[(String, String, String)]()
-      for (attr <- outputAttrList) {
-	outputAttrList1 ::= (attr.Name, attr.Type.NameSpace,attr.Type.Name)
-      }
+      val inputVarList : List[ModelInputVar] = ModDefInst.Model.InputAttributes
+      val inputVarList1 : List[ModelInputVariable] = inputVarList.map( v => {
+    	  val typeInfo : Array[(String,String)] = v.typenameInfo.map (t => (t.nmspc,t.nm))
+    	  ModelInputVariable(v.key, typeInfo, v.isDerivedConcept)
+      })
+    
+      val outputVarList : List[ModelOutputVar]  = ModDefInst.Model.OutputAttributes
+      val outputVarList1 : List[ModelOutputVariable] = outputVarList.map( v => {
+    	  val typeInfo : (String,String) = (v.typenameInfo.nmspc,v.typenameInfo.nm)
+    	  ModelOutputVariable(v.key, typeInfo, v.isDerivedConcept)
+      })
 
       val modDef = MdMgr.GetMdMgr.MakeModelDef(ModDefInst.Model.NameSpace,
 					       ModDefInst.Model.Name,
 					       ModDefInst.Model.PhysicalName,
 					       ModDefInst.Model.ModelType,
-					       inputAttrList1,
-					       outputAttrList1,
+					       inputVarList1,
+					       outputVarList1,
 					       ModDefInst.Model.Version.toInt,
 					       ModDefInst.Model.JarName,
 					       ModDefInst.Model.DependencyJars.toArray)
@@ -987,30 +991,31 @@ object JsonSerializer {
       }
       
       case o:ModelDef => {
-	      val json = ( "Model" ->
-                     ("NameSpace" -> o.nameSpace) ~
-		                 ("Name" -> o.name) ~
-		                 ("Version" -> o.ver) ~
-		                 ("ModelType"  -> o.modelType) ~
-		                 ("JarName" -> o.jarName) ~
-		                 ("PhysicalName" -> o.typeString) ~
-		                 ("ObjectDefinition" -> o.objectDefinition) ~
-		                 ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
-		                 ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
-		                 ("Deleted"         -> o.deleted) ~
-		                 ("Active"          -> o.active) ~
-		                 ("TransactionId" -> o.tranId))
-	      var jsonStr = pretty(render(json))
-	      jsonStr = replaceLast(jsonStr,"}\n}","").trim
-	      jsonStr = jsonStr + ",\n\"InputAttributes\": "
-	      var memberDefJson = SerializeObjectListToJson(o.inputVars)
-	      jsonStr += memberDefJson
+	val json = ( "Model" -> 
+			("NameSpace" -> o.nameSpace) ~
+		    ("Name" -> o.name) ~
+		    ("Version" -> o.ver) ~
+		    ("ModelType"  -> o.modelType) ~
+		    ("JarName" -> o.jarName) ~
+		    ("PhysicalName" -> o.typeString) ~
+		    ("ObjectDefinition" -> o.objectDefinition) ~
+		    ("ObjectFormat" -> ObjFormatType.asString(o.objectFormat)) ~
+		    ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
+		    ("Deleted"         -> o.deleted) ~
+		    ("Active"          -> o.active) ~
+		    ("TransactionId" -> o.tranId))
+	var jsonStr = pretty(render(json))
+	//jsonStr = jsonStr.replaceAll("}","").trim
+	jsonStr = replaceLast(jsonStr,"}\n}","").trim
+	jsonStr = jsonStr + ",\n\"InputAttributes\": "
+	var memberDefJson = SerializeModelVarListToJson(o.inputVars)
+	jsonStr += memberDefJson
 
-	      jsonStr = jsonStr + ",\n\"OutputAttributes\": "
-	      memberDefJson = SerializeObjectListToJson(o.outputVars)
-	      memberDefJson = memberDefJson + "}\n}"
-	      jsonStr += memberDefJson
-	      jsonStr
+	jsonStr = jsonStr + ",\n\"OutputAttributes\": "
+	memberDefJson = SerializeModelVarListToJson(o.outputVars)
+	memberDefJson = memberDefJson + "}\n}"
+	jsonStr += memberDefJson
+	jsonStr
       }
 
       case o:AttributeDef => {
@@ -1314,6 +1319,66 @@ object JsonSerializer {
         throw new UnsupportedObjectException(s"SerializeObjectToJson doesn't support the objectType of " + mdObj.getClass().getName() + "  yet")
       }
     }
+  }
+
+  def getJarList(jarArray: Array[String]): List[String] = {
+    if (jarArray != null ){
+      jarArray.toList
+    }
+    else{
+      new Array[String](0).toList
+    }
+  }
+
+// class ModelInputVariable(val key : String, val typenameInfo	: Array[(String,String)], val isDerivedConcept : Boolean) {}
+// class ModelOutputVariable(val key : String, val typenameInfo : (String,String), val isDerivedConcept : Boolean) {}
+//trait ModelVar
+//case class ModelVarNmSpcNm(val nmspc : String, val nm : String)
+//case class ModelInputVar(val key : String, val typenameInfo	: Array[ModelVarNmSpcNm], val isDerivedConcept : Boolean) extends ModelVar
+//case class ModelOutputVar(val key : String, val typenameInfo : ModelVarNmSpcNm, val isDerivedConcept : Boolean) extends ModelVar
+
+  @throws(classOf[UnsupportedObjectException])
+  def SerializeModelVarToJson(mdObj: ModelVariable): String = {
+	    mdObj match{
+	      //class ModelOutputVariable(val key : String, val typenameInfo : (String,String), val isDerivedConcept : Boolean) extends ModelVariable {
+	      case i:ModelOutputVariable => {
+	        val modVarNmSpc : ModelVarNmSpcNm = ModelVarNmSpcNm(i.typenameInfo._1, i.typenameInfo._2)
+			val json = (
+			    ("key"  -> i.key) ~
+				("typenameInfo"  -> 
+					("nmspc" -> i.typenameInfo._1) ~ 
+					("nm"  -> i.typenameInfo._2) 
+				) ~
+			    ("isDerivedConcept"    -> i.isDerivedConcept)
+			)
+			pretty(render(json))
+	      }
+	      //class ModelInputVariable(val key : String, val typenameInfo	: Array[(String,String)], val isDerivedConcept : Boolean) extends ModelVariable {
+	      case o:ModelInputVariable => {
+			val json = (
+			    ("NameSpace"  -> o.key) ~
+			    ("typenameInfo"  -> o.typenameInfo.toList.map{ arg => 
+					  (
+					    ("nmspc" -> arg._1) ~
+					    ("nm"    -> arg._2)
+					  )
+			    }) ~
+			    ("isDerivedConcept"    -> o.isDerivedConcept)
+			)
+			pretty(render(json))
+	      }
+	      case _ => {
+	        throw new UnsupportedObjectException(s"SerializeModelVarToJson doesn't support the objectType of " + mdObj.getClass().getName() + "  yet")
+	      }
+	  }
+  }
+
+  def SerializeModelVarListToJson[T <: ModelVariable](objList: Array[T]) : String = {
+    var json = "[ \n" 
+    objList.toList.map(obj =>  {var objJson = SerializeModelVarToJson(obj); json += objJson; json += ",\n"})
+    json = json.stripSuffix(",\n")
+    json += " ]\n"
+    json 
   }
 
   def SerializeObjectListToJson[T <: BaseElemDef](objList: Array[T]) : String = {

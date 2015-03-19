@@ -209,6 +209,60 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	  		}
 	  	}
 	}
+	
+	/**
+	 * This getFieldType variant uses the model information supplied to locate the derived concept (output variable from some model) and then
+	 * form an array of triples consisting of (type name string, isContainer boolean, typedef declaration for this type) using the derivedFieldKey 
+	 * and subFldKeys (if supplied). The subFldKeys name, when not null, is expected to be one or more field names delimited with '.'.  When 
+	 * this field is null, only the derived concept type information is returned in the array of triple.
+	 * 
+	 * @param model the ModelDef that has the supplied derived field key in its output variables.
+	 * @param derivedFieldKey the fully qualified key name of some published output variable from the supplied model.
+	 * @param subFldKeys this contains a (possibly) '.' delimited reference to a field found in the container or one of the subcontainers
+	 *		it contains ad infinitum
+	 * @return an array of (typeNameStr, isContainer, typedef) tuples describing the type information for each node in subFldKeys from 
+	 * 		outer type to terminal field type  
+	 */
+	def getFieldType(model : ModelDef, derivedFieldKey : String, subFldKeys  : String) : Array[(String,Boolean,BaseTypeDef)] = {
+		var subFldKeyTypeInfo : ArrayBuffer[(String,Boolean,BaseTypeDef)] = ArrayBuffer[(String,Boolean,BaseTypeDef)]()
+		val fullConceptKey : String = model.FullNameWithVer + "." + derivedFieldKey
+		val (conceptTypeNamespace, conceptTypeName) : (String,String) = model.OutputVarType(fullConceptKey)
+		if (conceptTypeNamespace != null && conceptTypeName != null) {
+			val typedef : BaseTypeDef = ctx.mgr.ActiveType(conceptTypeNamespace, conceptTypeName)
+			if (typedef != null) {
+				val isContainer : Boolean = isContainerWithFieldOrKeyNames(typedef)
+				val typeStr : String = typedef.typeString
+				subFldKeyTypeInfo += Tuple3(typeStr, isContainer, typedef)
+			} else {
+				PmmlError.logError(ctx, s"Unable to locate the derived field $fullConceptKey's $conceptTypeNamespace.$conceptTypeName in the metadata")
+			}
+			if (subFldKeys != null) {
+				var isContainer : Boolean = isContainerWithFieldOrKeyNames(typedef)
+				var currContainerTypeName : String = conceptTypeName
+				var currTypeDef : BaseTypeDef = typedef
+				if (! isContainer) {
+					PmmlError.logError(ctx, s"derived field $derivedFieldKey is not a container but was given field names...$subFldKeys ....")
+				} else {
+					val subFldKeyNodes : Array[String] = subFldKeys.split(".")
+					subFldKeyNodes.foreach(node => {
+						val attrdef : BaseAttributeDef = attributeFor(currTypeDef, node)
+						if (attrdef != null) {
+							currTypeDef = attrdef.typeDef
+							currContainerTypeName = currTypeDef.Name
+							isContainer = isContainerWithFieldOrKeyNames(currTypeDef)
+							subFldKeyTypeInfo += Tuple3(currTypeDef.typeString, isContainer, currTypeDef)
+						} else {
+							PmmlError.logError(ctx, s"Bad attribute name supplied $node")
+						}
+					})
+				}
+			} 
+		} else {
+			PmmlError.logError(ctx, s"Unable to locate the derived field $fullConceptKey in the model ${model.FullNameWithVer}. A typo perhaps?")
+		}
+		 
+		subFldKeyTypeInfo.toArray
+	}
 			
 	/** 
 	 *  Answer a ContainerTypeDef that has names (either fields or known keys) or null 
@@ -617,7 +671,268 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	def isContainerWithFieldOrKeyNames(typedef : BaseTypeDef) : Boolean = {
 	  	(typedef != null && (typedef.isInstanceOf[StructTypeDef] || typedef.isInstanceOf[MappedMsgTypeDef]))
 	}
+	
+	
+	/** 
+	 *  Answer the BaseAttributeDef for the supplied attribute name that is presumably part of the supplied container or message.
+	 *  @param typedef A BaseTypeDef of a container or message that has named fields
+	 *  @param attrName the name (presumably) of one of the StructTypeDef's or MappedMsgTypeDef's attributes
+	 *  @return BaseAttributeDef for the supplied attrName or null if not present
+	 */
+	def attributeFor(typedef : BaseTypeDef, attrName : String) : BaseAttributeDef = {
+	  	val attr : BaseAttributeDef = if (isContainerWithFieldOrKeyNames(typedef)) {
+	  		if (typedef.isInstanceOf[StructTypeDef]) {
+	  			typedef.asInstanceOf[StructTypeDef].attributeFor(attrName)
+	  		} else {
+	  			if (typedef.isInstanceOf[MappedMsgTypeDef]) {
+	  				typedef.asInstanceOf[MappedMsgTypeDef].attributeFor(attrName)
+	  			} else {
+	  				PmmlError.logError(ctx, s"The supplied field name $attrName does not exist in container type ${typedef.FullNameWithVer} ")
+	  				null
+	  			}
+	  		}
+	  	} else {
+			PmmlError.logError(ctx, s"The container type ${typedef.FullNameWithVer} is not a ContainerTypeDef with fieldNames.")
+			null
+	  	}
+	  	if (attr == null) {
+	  		PmmlError.logError(ctx, s"The supplied field name $attrName did not produce a BaseAttributeDef from container type ${typedef.FullNameWithVer}")
+	  	}
+	  	attr
+	}
+	
+	/** Derived Field interpretation */
+	
+	/**
+	 *  Is the supplied name prefixed with a known namespace?  Check the prefix node in the '.' delimited name, assuming it is present,
+	 *	against the known namespaces in this model.  
+	 * 
+	 *  @param name a String that represents some derived field that potentially has one of the known namespaces as a prefix.
+	 *  @return true if this name is prefixed with a namespace, else false
+	 *   
+	 */
+	def HasNameSpacePrefix(name : String) : Boolean = {
+	    val possibleNameSpace : String = if (name != null) name.split('.').head.toLowerCase else null
+		val hasNameSpcPrefix : Boolean = if (possibleNameSpace != null) {
+			(ctx.namespaceSearchPath.filter( nmspcCandidate => (nmspcCandidate.toLowerCase == possibleNameSpace)).size > 0)
+		} else {
+			false
+		}
+		hasNameSpcPrefix
+	}
+	
+	/**
+	 *  Find the derived concept's model with the supplied name key (from some FieldRef field). Check the prefix nodes in the 
+	 *  presumably '.' delimited name against the known models in the metadata.  If a name with four or more '.' delimited nodes is 
+	 *  supplied, the first three are treated as namespace,	modelname and version values. If the name has 3 nodes, treat first
+	 *  two names as namespace and model name.  The version is assumed to be the default (latest version).  Two node names 
+	 *  are not yet supported (i.e., try the namespaces in namespace search list as prefixes).
+	 *  
+	 *  The return value is a tuple quartet that contains the ModelDef that computed the derivation, the model name key, the concept name, and optionally
+	 *  the subfield names that are to be used to extract some aspect of the concept (when it is a message or container).
+	 *  
+	 *  Note that the modelName key may have 3, 2, or 1 nodes depending on if the an optional namespace, model name, and optional version
+	 *  number has been given.  When no namespace is given, the latest version of the model is assumed (version = -1).  If no namespace is given
+	 *  then the first matching namespace in the namespacesearch list is used (<b>NOTE: Not supported yet, but will be at some point. For the 
+	 *  time being, only the three node nmspc.name.ver and two node nmspc.name versions of keys are supported.</b>).
+	 *  
+	 *  Note that the concept name can have multiple nodes as well. There is the conceptName and then, if present, the subfields of the concept when it is 
+	 *  a container or message.  
+	 *  
+	 *  For example, if a derived field in the model holds the most recent event message of an array of events (perhaps the last one),  then some subfield 
+	 *  in the event element could be dereferenced with a dot delimited string.  For example,
+	 *  
+	 *  <code>
+	 *  	    <DerivedField name="currentmsg" dataType="SomeMessageType">
+     *				<Apply function="Last">
+     *  				<FieldRef field="msg.message"/>
+     *				</Apply>
+     *			</DerivedField>
+	 *  </code>
+	 *  
+	 *  declared in one model called 'consultco.demog1' that had a field called 'zipcode' in it might be accessed from another model with the following derived 
+	 *  concept access in a FieldRef:
+	 *  
+	 *  <code>
+     *			<Apply function="LivesOnTheCoast">
+     *  			<FieldRef field="consultco.demog1.currentmsg.zipcode"/>
+     *			</Apply>
+	 *  </code>
+	 *  
+	 *  In this example, the model container key would be 'consultco.demog1' and the concept name would be 'currentmsg.zipcode'.  Actually the derived concept 
+	 *  name <b>is</b> really just 'currentmsg', however, once the concept is retrieved, it's content can be examined with the '.zipcode' dereference.
+	 * 
+	 *  @param name a String that represents some derived field that presumably has one of the known model names in the 
+	 *  	metadata as a prefix. That is, this derived field was produced by some other model
+	 *  @return the quartet (ModelDef instance with this key else null, the model container key, derived concept name, remaining subfield nodes)  
+	 *   
+	 */
+	def GetDerivedConceptModel(name : String) : (ModelDef, String, String, String) = {		
 
+    	/** GetDerivedConceptModel helper function , makeKey */
+    	def makeKey(names : Array[String], nodesToInclude : Int) : String = {
+			val buffer : StringBuilder = new StringBuilder
+			for (i <- 0 until nodesToInclude) {
+				buffer.append(s"${names(i)}")
+				if (i < (nodesToInclude - 1)) {
+				    buffer.append('.')
+				}	    
+			}
+			val key : String = buffer.toString
+			key
+    	}
+    	
+    	/** Search is from most specific node key (nmspc.nm.ver) to the least specific (nm only).  First match used. */
+	    val nodes : Array[String] = if (name != null) name.split('.') else null
+	    val (model, modelContainerKey, conceptKey, subFieldKeys) : (ModelDef, String, String, String) = if (nodes != null) {
+	    	if (nodes.size > 3) {
+	    		val key : String = makeKey(nodes, 3)
+	    		val m : ModelDef = GetDerivedConceptModel(key,3)
+	    		if (m != null) {
+	    			val (containerKeys, concptKeys) : (Array[String], Array[String]) = nodes.splitAt(3)
+	    			val containerKeyStr : String = containerKeys.mkString(".")
+	    			val (concptKeyStr,subFieldStr) : (String,String) = if (concptKeys.size > 1) {
+	    				(concptKeys.head, concptKeys.tail.mkString("."))
+	    			} else {
+	    				(concptKeys.head,null)
+	    			}
+	    			(m,containerKeyStr, concptKeyStr, subFieldStr)
+	    		} else {
+	    			GetDerivedConceptModel(key) /** recurse with the reduced key which will cause the two node case to be tried */
+	    		}
+	    	} else {
+	    		if (nodes.size > 2) {
+		    		val key : String = makeKey(nodes, 2)
+		    		val m : ModelDef = GetDerivedConceptModel(key,2)
+		    		if (m != null) {
+		    			val (containerKeys, concptKeys) : (Array[String], Array[String]) = nodes.splitAt(2)
+		    			val containerKeyStr : String = containerKeys.mkString(".")
+		    			val (concptKeyStr,subFieldStr) : (String,String) = if (concptKeys.size > 1) {
+		    				(concptKeys.head, concptKeys.tail.mkString("."))
+		    			} else {
+		    				(concptKeys.head,null)
+		    			}
+		    			(m,containerKeyStr,concptKeyStr,subFieldStr)
+		    		} else {
+		    			GetDerivedConceptModel(key)
+		    		}
+	    		} else {
+	    			if (nodes.size > 1) {
+			    		val key : String = makeKey(nodes, 1)
+			    		val m : ModelDef = GetDerivedConceptModel(key,1)	
+		    			val (containerKeys, concptKeys) : (Array[String], Array[String]) = nodes.splitAt(1)
+		    			val containerKeyStr : String = containerKeys.mkString(".")
+		    			val (concptKeyStr,subFieldStr) : (String,String) = if (concptKeys.size > 1) {
+		    				(concptKeys.head, concptKeys.tail.mkString("."))
+		    			} else {
+		    				(concptKeys.head,null)
+		    			}
+		    			(m, containerKeyStr, concptKeyStr, subFieldStr)
+	    			} else {
+	    				(null,null,null,null)
+	    			}
+	    		} 
+	    	}
+	    } else {
+	      	(null,null,null,null)
+	    }
+  
+		(model, modelContainerKey, conceptKey, subFieldKeys)
+
+	}
+	
+	/**
+	 *  Find the derived concept's model with the supplied name key (from some FieldRef field). This version of 
+	 *  GetDerivedConceptModel serves the public one.  See (@see GetDerivedConceptModel(String) for semantics.
+	 * 
+	 *  @param name a String that represents some derived field that presumably has one of the known model names in the 
+	 *  	metadata as a prefix. That is, this derived field was produced by some other model
+	 *  @param numNameNodes is used to search appropriate cache of model names based upon this value.  @see activeModels, 
+	 *  	@see activeCurrentVerModels, and @see unqualifiedModelNames for details.
+	 *  @return the ModelDef instance with this key else null
+	 *  
+	 *  FIXME: NOTE: Currently only namespace.modelname.ver and namespace.modelname derived field specifiers are supported.
+	 *  Unqualifed modelnames will be added when a more general namespace search path implementation has been 
+	 *  implemented that can match arbitrary namespace prefixes with the unqualified model name.
+	 *   
+	 */
+	private def GetDerivedConceptModel(name : String, numNameNodes : Int) : ModelDef = {		
+	    val nameNodes : Array[String] = if (name != null) name.split('.') else null
+		val (conceptKey,keyNodeCnt) : (String,Int) = if (nameNodes != null && nameNodes.size == 3) {
+			(nameNodes(0).toLowerCase() + "." + nameNodes(1).toLowerCase() + "." + nameNodes(2).toLowerCase(), 3)
+		} else {
+			if (nameNodes != null && nameNodes.size == 2) {
+				(nameNodes(0).toLowerCase() + "." + nameNodes(1).toLowerCase(), 2)
+			} else {
+				if (nameNodes != null && nameNodes.size == 1) {
+					(nameNodes(0).toLowerCase(),1)
+				} else {
+					(null,0)
+				}
+			}
+		}
+		
+		val model : ModelDef = 	keyNodeCnt match {
+			case 3 => {
+				if (ctx.activeModels.contains(conceptKey)) ctx.activeModels(conceptKey) else null
+			}
+			case 2 => {
+				if (ctx.activeCurrentVerModels.contains(conceptKey)) ctx.activeCurrentVerModels(conceptKey) else null
+			}
+			case 1 => {
+				val modelExists : String = if (ctx.unqualifiedModelNames.contains(conceptKey)) "" else "not"
+				if (modelExists.size == 0) {
+					PmmlError.logError(ctx, s"$conceptKey does in fact refer to a model, but derived concept names must be namespace qualified in this release. ")
+					logger.error(s"You may wish to suffix it with '.version' of interest to be precise about which version of the model should be used to access the needed value.")
+				}
+				null
+			}
+			case _ => {
+				PmmlError.logError(ctx, s"This is an illegal derived concept names must be namespace qualified in this release. The FieldRef must have the form:")
+				logger.error(s"    namespace.modelname[.version].conceptname where the version may be omitted (current version = default)")
+				null
+			}
+		}
+
+		model
+	}
+	
+	/** 
+	 *  Answer if this is a derived concept.  The name must be of the form modelnamespace.modelname[.version].conceptname
+	 *  
+	 *  @param name a String that represents some derived field that presumably has one of the models in the system as a prefix.
+	 *  	That is, this derived field was produced by some other model
+	 *  @return true if this is a derived concept else false if not found
+	 */
+	def IsDerivedConcept(name : String) : Boolean = {
+	    val (model, modelContainerKey, conceptKey, subfldKeys) : (ModelDef, String, String, String) = GetDerivedConceptModel(name)
+	    (model != null)
+	}
+	
+	/** 
+	 *  Answer the model name from this presumably derived concept field name. If version number requested, include it in returned name.
+	 *  
+	 *  @param name a String that represents some derived field that presumably has one of the models in the system as a prefix.
+	 *  	That is, this derived field was produced by some other model
+	 *  @param withVersionNum a boolean that when true will suffix the modelnamespace.modelname with .versionnumber
+	 *  @return string representation of the model or models that matched this name.  It is possible that multiple models can be returned
+	 *  	each with a different version number.  In this case, a comma delimited list is returned.
+	 */
+	def ModelNameOfDerivedConcept(name : String, withVersionNumber : Boolean = false) : String = {
+	  
+	    val (model, modelContainerKey, conceptKey, subfldKeys) : (ModelDef, String, String, String) = GetDerivedConceptModel(name)
+	    val modelName : String = if (model != null) {
+	    	if (withVersionNumber) {
+	    		model.FullNameWithVer
+	    	} else {
+	    		model.FullName
+	    	}
+	    } else {
+	    	"Model.Not.Found"
+	    }
+		modelName
+	}
+	
 }
 
 

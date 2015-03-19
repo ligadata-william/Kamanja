@@ -30,10 +30,25 @@ case class ObjKey(Obj: String, Key: String)
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
+	/** Create an empty MessageContainerBase */
 	override def NewMessageOrContainer(fqclassname : String) : MessageContainerBase = {
 		val msgOrContainer : MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
 		msgOrContainer
 	}
+	
+	/** Create an empty Object of Any kind */
+	override def NewObject(fqclassname : String) : Any = {
+		val anObject : Any = Class.forName(fqclassname).newInstance()
+		anObject
+	}
+	
+	override def getAnyObject(tempTransId: Long, partitionKey : String, containerName: String, key: String): Any = {
+		/** FIXME: BugBug: we need an implementation for this that will either resurrect a MessageContainerBase or some
+		 *  simple object that has factory object TypeImplementation[T] support like those in BaseTypes.scala
+		 */
+		null
+	}
+	
 
   class TxnCtxtKey {
     var containerName: String = _

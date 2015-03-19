@@ -26,6 +26,11 @@ import scala.collection.immutable.Map
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.HashMap
 
+import scalax.collection.Graph // or scalax.collection.mutable.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
+import scalax.collection.io.dot._
+
 import com.ligadata.messagedef._
 
 import scala.xml.XML
@@ -64,8 +69,8 @@ case class MessageStruct(NameSpace: String, Name: String, FullName: String, Vers
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
-case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
-case class ModelDefinition(Model: ModelInfo)
+//case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
+//case class ModelDefinition(Model: ModelInfo)
 
 case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String])
 
@@ -2605,11 +2610,40 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Int): Array[Array[ModelDef]] = {
+      val msgObj = Array(msgNameSpace, msgName, msgVer).mkString(".").toLowerCase
+      val modDefs = MdMgr.GetMdMgr.Models(true, true)
+      val modelDefs :  scala.collection.immutable.Set[ModelDef] = MdMgr.GetMdMgr.ActiveModels  //(Models(true,false))
+      
+      val depModels : Array[Array[ModelDef]] = if (modelDefs != null) {
+    	  modelDefs.toArray.map(model => {
+    		  logger.trace("Checking model " + model.FullNameWithVer)
+    		  val modelInputs : Array[ModelInputVariable]  = model.DerivedConceptInputs 
+    		  modelInputs.map(depmod => {
+    			  val depModelNameParts : Array[String]  = depmod.key.split('.')
+    			  val modelnmspc : String = depModelNameParts(0)
+    			  val modelname : String = depModelNameParts(1)
+    			  val mod : ModelDef = MdMgr.GetMdMgr.ActiveModel(modelnmspc, modelname)
+    			  if (mod == null) {
+    				  logger.error(s"GetDependentModels... corrupt model reference in input dependencies for model ${model.FullNameWithVer}")
+    			  }
+    			  mod
+    		  })
+    	  })
+    	  
+      } else {
+    	  Array[Array[ModelDef]]()
+      }
+      
+      depModels
+   }
 
-  def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Int): Array[ModelDef] = {
+  def MessageConsumers(msgNameSpace: String, msgName: String, msgVer: Int): Array[ModelDef] = {
     try {
       val msgObj = Array(msgNameSpace, msgName, msgVer).mkString(".").toLowerCase
       val modDefs = MdMgr.GetMdMgr.Models(true, true)
+      
       var depModels = new Array[ModelDef](0)
       modDefs match {
         case None =>
@@ -2620,13 +2654,13 @@ object MetadataAPIImpl extends MetadataAPI {
             logger.trace("Checking model " + mod.FullNameWithVer)
             breakable {
               mod.inputVars.foreach(ivar => {
-                if (ivar.FullNameWithVer.toLowerCase == msgObj) {
+                if (ivar.key.toLowerCase == msgObj) {
                   depModels :+ mod
                   break
                 }
               })
               mod.outputVars.foreach(ivar => {
-                if (ivar.FullNameWithVer.toLowerCase == msgObj) {
+                if (ivar.key.toLowerCase == msgObj) {
                   depModels :+ mod
                   break
                 }
@@ -2714,6 +2748,22 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetAllModelsFromCache(active: Boolean): Array[String] = {
     var modelList: Array[String] = new Array[String](0)
     try {
+
+    val g1 = Graph(3~>1, 4~>5, 3~>5, 1~>4)
+    logger.info(s"graph = ${g1.toString}")
+
+    val e1 : DiEdge[String] = "now" ~> "is"
+    val e2 : DiEdge[String] = "is" ~> "the"
+    val e3 : DiEdge[String] = "the" ~> "time"
+    val e4 : DiEdge[String] = "time" ~> "for"
+    val e5 : DiEdge[String] = "for" ~> "all"
+    val e6 : DiEdge[String] = "all" ~> "good"
+    val e7 : DiEdge[String] = "good" ~> "men"
+
+    val g2 = Graph(e1,e2,e3,e4,e5,e6,e7)
+    logger.info(s"graph = ${g2.toString}")
+    //val dotg2 = g2.toDot(dotRoot, edgeTransformer)
+
       val modDefs = MdMgr.GetMdMgr.Models(active, true)
       modDefs match {
         case None =>

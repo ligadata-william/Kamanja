@@ -95,7 +95,18 @@ class ProtoBufSerializer extends Serializer{
   def buildModel(o: Model) : ModelDef = {
 
     try{
-      val inputAttrList = o.getInputVarsList()
+      /** 
+       *  FIXME: This is broken.  The model.inputVars and model.outputVars
+       *  are no longer represented as arrays of attributes.  Their elements
+       *  are now instances of ModelInputVariable and ModelOutputVariable respectively.
+       *  
+       *  Some new code is needed for the MetadataObjects.  I don't understand
+       *  protobuf well enough at this point to fix that.  Since we are using 
+       *  kryo, this is work left to do (OR we nuke this implementation).
+       *  
+       */
+      
+      val inputAttrList  = o.getInputVarsList()
 
       logger.trace("Prepping InputVarList...")
 
@@ -142,8 +153,8 @@ class ProtoBufSerializer extends Serializer{
 					  o.getPbe().getName(),
 					  o.getPbe().getPhysicalName(),
 					  o.getModelType(),
-					  inputAttrList1,
-					  outputAttrList1,
+					  null, //inputAttrList1,
+					  null, //outputAttrList1,
 					  o.getPbe().getVer(),
 					  o.getPbe().getJarName(),
 					  depJars1)

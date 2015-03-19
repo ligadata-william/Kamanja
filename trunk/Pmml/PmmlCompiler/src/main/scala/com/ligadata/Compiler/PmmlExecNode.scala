@@ -653,7 +653,7 @@ class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExec
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
 
-				PmmlExecNode.prepareFieldReference(ctx, field)
+				PmmlExecNode.prepareFieldReference(ctx, field, mapMissingTo)
 			}
 		}
 		fldRef
@@ -1499,7 +1499,11 @@ object PmmlExecNode extends LogTrait {
 	
 	def mkPmmlExecApplication(ctx : PmmlContext, headerNode : PmmlApplication) : Option[PmmlExecNode] = {
 		/** Collect the Application name and the version if it is present */
-		ctx.pmmlTerms("ApplicationName") = Some(headerNode.name)
+	  
+		val (nmSpc,appNm) : (String,String) = if (headerNode.name.contains(".")) 
+			(headerNode.name.split('.').head, headerNode.name.split('.').last) else ("System",headerNode.name)
+		ctx.pmmlTerms("NameSpace") = Some(nmSpc)
+		ctx.pmmlTerms("ApplicationName") = Some(appNm)
 		ctx.pmmlTerms("Version") = Some(headerNode.version)
 
 		/** update the header parent node with the application name and version, don't create node*/
@@ -1913,90 +1917,181 @@ object PmmlExecNode extends LogTrait {
 	
 	
 	
-	
+	/**
+	 * 	Write the appropriate FieldRef or SimplePredicate access statement.  When a FieldRef is supplied field name is supplied, the 
+	 *  mapMissingToValue may also be provided.  Currently it will be used when derived concepts (values computed in other models) are 
+	 *  being rendered for the call to the GetOrElse udf.
+	 *  
+	 *  @param ctx the PmmlContext .. a global context for the pmml compiler
+	 *  @param field the FieldRef's or SimplePredicate's field attribute value
+	 *  @param mapMissingToValue a string value from which an instance of the fieldRef can be instantiated.. if not supplied default is null
+	 *  @return scala generation for the FieldRef or SimplePredicate 
+	 */
 
-	def prepareFieldReference(ctx : PmmlContext, field : String, order : Traversal.Order = Traversal.PREORDER) : String = {
+	def prepareFieldReference(ctx : PmmlContext, field : String, mapMissingToValue : String = null) : String = {
 
-		val fieldRefStr : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
+		/** prepare a field usage reference for the supplied field */
+	  
+		val fieldNodes : Array[String] = field.split('.')
+		val possibleContainer : String = fieldNodes.head
+		val expandCompoundFieldTypes : Boolean = true
+		/** Assuming this is not a model reference, see about the types for the containers with this to educate ourselves about it */
+		val (derivedConceptModel, modelContainerKey, conceptKey, subFldKeys) : (ModelDef, String, String, String) =  ctx.MetadataHelper.GetDerivedConceptModel(field)
+		val explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)] = if (derivedConceptModel == null) 
+				{
+					ctx.getFieldType(field, expandCompoundFieldTypes) 
+				} else {
+					Array[(String,Boolean,BaseTypeDef)]()
+				}
 
-				/** prepare a field usage reference for the supplied field */
-			  
-				val fieldNodes : Array[String] = field.split('.')
-				val possibleContainer : String = fieldNodes.head
-				val expandCompoundFieldTypes : Boolean = true
-				/** See the types for the containers with this to educate ourselves about it */
-				val explodedFieldTypes : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(field, expandCompoundFieldTypes)
-
-				/** Verify outer level container is a defined container in the pmml... */
-				val isContainerInScope : Boolean = ctx.containersInScope.filter( tup4 => {
-					possibleContainer == tup4._1 
-				}).length > 0
-				if (isContainerInScope) {
-					val containerInfo : Option[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.find( p => p._1 == possibleContainer)
-
-					val (container, typeStr) : (BaseTypeDef, String) = containerInfo match {
-					  case Some(containerInfo) => (containerInfo._3, containerInfo._3.typeString)    //containerType.typeString)
-					  case _ => (null,"")
-					}
-					if (typeStr != "") {
-						val varRefBuffer : StringBuilder = new StringBuilder
-						val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
-						varRefBuffer.append(s"ctx.valueFor(${'"'}$possibleContainer${'"'}).asInstanceOf[$dataValueType]")
-						/** Handle arbitrarily nested fields e.g., container.sub.subsub.field */
-						if (fieldNodes.size > 1) { 
-							val containerField : String= fieldNodes(1)
-							val fieldsContainerType : ContainerTypeDef = container.asInstanceOf[ContainerTypeDef]
-							
-							/** lastContainer is non null when explodedFieldTypes.last is a container type.  It is stacked for use for determining field dereference 
-							 *  expression print... either a fixed print ( container.fld ) or "mapped" print ( container.get("fld") )
-							 */
-							val containerFieldRep : String = compoundFieldPrint(fieldsContainerType, fieldNodes.tail, explodedFieldTypes.tail)
-
-							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]$containerFieldRep")
-						} else {
-							varRefBuffer.append(s".Value.asInstanceOf[$typeStr]")
-						}
-						
-						varRefBuffer.toString
+		/** Verify outer level container is a defined container in the pmml... */
+		val isContainerInScope : Boolean = ctx.containersInScope.filter( tup4 => {
+			possibleContainer == tup4._1 
+		}).length > 0
 		
+		val fieldRefStr : String = if (isContainerInScope) {
+			val containerInfo : Option[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.find( p => p._1 == possibleContainer)
+
+			val (container, typeStr) : (BaseTypeDef, String) = containerInfo match {
+			  case Some(containerInfo) => (containerInfo._3, containerInfo._3.typeString)    //containerType.typeString)
+			  case _ => (null,"")
+			}
+			if (typeStr != "") {
+				val varRefBuffer : StringBuilder = new StringBuilder
+				val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
+				varRefBuffer.append(s"ctx.valueFor(${'"'}$possibleContainer${'"'}).asInstanceOf[$dataValueType]")
+				/** Handle arbitrarily nested fields e.g., container.sub.subsub.field */
+				if (fieldNodes.size > 1) { 
+					val containerField : String= fieldNodes(1)
+					val fieldsContainerType : ContainerTypeDef = container.asInstanceOf[ContainerTypeDef]
+					
+					/** lastContainer is non null when explodedFieldTypes.last is a container type.  It is stacked for use for determining field dereference 
+					 *  expression print... either a fixed print ( container.fld ) or "mapped" print ( container.get("fld") )
+					 */
+					val containerFieldRep : String = compoundFieldPrint(fieldsContainerType, fieldNodes.tail, explodedFieldTypes.tail)
+
+					varRefBuffer.append(s".Value.asInstanceOf[$typeStr]$containerFieldRep")
+				} else {
+					varRefBuffer.append(s".Value.asInstanceOf[$typeStr]")
+				}
+				
+				varRefBuffer.toString
+
+			} else {
+				field
+			}
+		} else {
+			/** 
+			 *  With the container dereference case handled above, consider the other possibilities:
+			 *  
+			 *  	a) derived concept (a computed value from another model)
+			 *   	b) locally computed data field or derived field
+			 */
+		  
+				
+			if (derivedConceptModel != null) {
+				
+				/** Use the field as a key for a code generation whose purpose is to retrieve the value from some other model. */ 
+				val derivedConceptModelName = derivedConceptModel.FullNameWithVer
+				val isReasonable : Boolean = derivedConceptModelName.contains(modelContainerKey.toLowerCase)
+				
+				/** FIXME: This is a bit brittle... get the model 'msg' field's type info and write a string that retrieves the partitionKey info for the
+				 *  msg at runtime.  This is needed for the 3rd argument to GetOrElseNew to be generated.
+				 */
+				val msgTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType("msg", ! expandCompoundFieldTypes)
+				val msgTypeStr : String = msgTypeInfo.head._1
+				val partitionKeyFetch : String = s"ctx.valueFor(${'"'}msg${'"'}).asInstanceOf[$msgTypeStr].PartitionKeyData.mkString(${'"'}.${'"'})"
+				val methodInvocation : String = s"GetOrElseNew(ctx.xId, ctx.valueFor(${'"'}gCtx${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[com.ligadata.OnLEPBase.EnvContext], $partitionKeyFetch, ${'"'}$modelContainerKey${'"'}, ${'"'}$conceptKey${'"'}, ${'"'}$mapMissingToValue${'"'})"
+				
+				val typeSuffixAndCoercion : String = buildConceptSuffix(ctx, derivedConceptModel, conceptKey, subFldKeys)
+				val conceptGenerationStr : String = methodInvocation + typeSuffixAndCoercion
+				conceptGenerationStr
+			} else { /** locally computed data field or derived field */		  
+				val expandCompoundFieldTypes : Boolean = true
+				val typeStrs : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(field, ! expandCompoundFieldTypes)
+				if (typeStrs != null && typeStrs.size > 0) {
+					val typeStr : String = typeStrs(0)._1
+					if (typeStr != "Unknown") {
+						val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
+						if (dataValueType == "AnyDataValue")
+							s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value.asInstanceOf[$typeStr]"
+						else
+							s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value"
 					} else {
-						field
+						PmmlError.logError(ctx, "Field '$field' is not known in either the data or transaction dictionary... fix this ")
+						s"ctx.valueFor(${'"'}$field${'"'})"  /** emit a proxy to keep the compilation going to maximize error discovery */
 					}
 				} else {
-					/** 
-					 *  With the container dereference case handled above, we can concern ourselves with only
-					 *  the simple fields and maps or arrays of same. Ask the context to determine the type
-					 *  and generate the correct coercion string suffix for the field access.
-					 *  
-					 *  FIXME: derived variables can also be dereferenced.  
-					 */
-					val expandCompoundFieldTypes : Boolean = true
-					val typeStrs : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(field, ! expandCompoundFieldTypes)
-					if (typeStrs != null && typeStrs.size > 0) {
-						val typeStr : String = typeStrs(0)._1
-						if (typeStr != "Unknown") {
-							val dataValueType : String = PmmlTypes.scalaTypeToDataValueType(typeStr)
-							if (dataValueType == "AnyDataValue")
-								s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value.asInstanceOf[$typeStr]"
-							else
-								s"ctx.valueFor(${'"'}$field${'"'}).asInstanceOf[$dataValueType].Value"
-						} else {
-							PmmlError.logError(ctx, "Field '$field' is not known in either the data or transaction dictionary... fix this ")
-							s"ctx.valueFor(${'"'}$field${'"'})"
-						}
-					} else {
-						PmmlError.logError(ctx, s"Field reference '$field' did not produce any type(s)... is it mis-spelled?")
-						
-						s"UNKNOWN FIELD $field"
-					}
+					PmmlError.logError(ctx, s"Field reference '$field' did not produce any type(s)... is it mis-spelled?")					
+					s"UNKNOWN FIELD $field"
 				}
 			}
 		}
 		fieldRefStr
 	}
+	
+	/** 
+	 *	Build the suffix string needed to access the content of a derived concept (a derived field value found in another model).
+	 *  The retrieval portion is done by the caller.  What is done here is to coerce the returned object to the appropriate type
+	 *  and possibly add code to dereference some part of the returned object (e.g., a field from a message or container).
+	 *  
+	 *  To do this, the type of the conceptKey (the derived field name from some model whose value is to be used) is retrieved
+	 *  from the supplied ModelDef and metadata store.  An 'asInstanceOf[<type>] string is added to the string to be returned.
+	 *  If subFldKeys is not null, this suggests that the type was some container or message.  A string to dereference the 
+	 *  container or message is added when this is the case.
+	 *   
+	 *  @param ctx the PmmlContext singleton for this compilation with global information of general use.
+	 *  @param derivedConceptModel a ModelDef that defines the model from which some derived field value will be retrieved
+	 *  @param conceptKey the name of the derived field in the concept model
+	 *  @param subFldKeys when not null, a '.' delimited string that describes the path   
+	 */
+	def buildConceptSuffix(ctx : PmmlContext, derivedConceptModel : ModelDef, conceptKey : String, subFldKeys : String) : String = {
+		val suffix : String = if (conceptKey != null) {	
+			/** Expectation: at least the conceptKey's info will be present in the fldKeyTypeInfo upon return from getFieldType.  If there are 
+			    subFldKeys present, there will be more triples in the array... one per subFldKeys node. */
+			val fldKeyTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.MetadataHelper.getFieldType(derivedConceptModel, conceptKey, subFldKeys)
+			val strRep : String = if (fldKeyTypeInfo != null && fldKeyTypeInfo.size > 0) {
+				val fields : Array[String] = if ( subFldKeys != null && subFldKeys.size > 1) subFldKeys.split('.') else null
+				
+				val fldRefBuffer : StringBuilder = new StringBuilder
+				val (containerField, fieldsContainerType, typeStr) : (String, ContainerTypeDef, String) = if (fldKeyTypeInfo != null) {
+					val fNm : String = conceptKey
+					val typedf : BaseTypeDef = fldKeyTypeInfo.head._3 /** see if the base type is a container with fields... */
+					val container : ContainerTypeDef = if (typedf.isInstanceOf[ContainerTypeDef]) typedf.asInstanceOf[ContainerTypeDef] else null
+					val typStr : String = typedf.typeString
+					(fNm, container, typStr)
+				} else {
+					PmmlError.logError(ctx, s"Incredible!... fldKeyTypeInfo is null after all!")
+					(null, null, null)
+				}
+				
+				if (fieldsContainerType != null && fldKeyTypeInfo.size > 1 && fields.size > 0) { 
+					val reasonable : Boolean = (fields.size + 1 == fldKeyTypeInfo.size)
+					if (! reasonable) {
+						PmmlError.logError(ctx, s"Assertion in ${derivedConceptModel.FullNameWithVer}.$conceptKey... '$subFldKeys' node size (${fields.size}) +1 != number of types found (${fldKeyTypeInfo.size})")
+					}
+					val containerFieldRep : String = compoundFieldPrint(fieldsContainerType, fields, fldKeyTypeInfo.tail)
+					fldRefBuffer.append(s".asInstanceOf[$typeStr]$containerFieldRep")
+				} else {
+					if (fldKeyTypeInfo.size > 0) {
+						fldRefBuffer.append(s".asInstanceOf[$typeStr]")
+					}
+				}
+				val suffixStr : String = fldRefBuffer.toString
+				suffixStr
+			} else {
+				PmmlError.logError(ctx, s"While building concept suffix for ${derivedConceptModel.FullNameWithVer}.$conceptKey, ... unable to create types.. inserting '$subFldKeys' for value")
+				subFldKeys
+			}
+			strRep
+		} else {
+			PmmlError.logError(ctx, s"While building concept suffix for ${derivedConceptModel.FullNameWithVer} ... concept name is 'null'... no suffix will be generated.")
+			""
+		}
+		  
+		suffix
+	}
+
 
 	/**
 		Print the remaining field nodes in the supplied array, coercing them to their corresponding type.  The outer

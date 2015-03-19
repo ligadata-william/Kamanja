@@ -262,109 +262,6 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		scalaType
 	}
 
-	/** 
-	 *  FIXME:  arbitrarily compound fields now supported.  This function SCHEDULED FOR REMOVAL - NOT USED.
-	 *  
-	 *  The two argument field type search assumes that this namespace/name search on attribute/field.
-	 *  The dDict and xDict are searched with and without the namespace as a key.
-	 *  If in neither, the standard attribute search is done with both the nmspace and name in the mgr
-	 */
-	def getFieldType(nmSpc : String, nm : String) : (String, Boolean, BaseTypeDef) = {	
-	
-		var scalaType : String = null
-		var fldTypedef : BaseTypeDef = null
-		val withNameSpace : Boolean = true
-		val withOutNameSpace : Boolean = false
-		var isContainer : Boolean = false
-
-		val (s,f) : (String,BaseTypeDef) = getDDictFieldType(nmSpc, nm, withOutNameSpace)
-		if (s != null) {
-			scalaType = s
-			fldTypedef = f
-		} else {
-			val (s,f) : (String,BaseTypeDef) = getDDictFieldType(nmSpc, nm, withNameSpace)
-			if (s != null) {
-				scalaType = s
-				fldTypedef = f
-			} else {
-				val (s,f) = getXDictFieldType(nmSpc, nm, withOutNameSpace)
-				if (s != null) {
-				  	scalaType = s
-				  	fldTypedef = f
-				} else {
-					val (s,f) : (String,BaseTypeDef) = getXDictFieldType(nmSpc, nm, withNameSpace)
-					if (s != null) {
-						scalaType = s
-						fldTypedef = f
-					} else {
-						val key : String = MdMgr.MkFullName(nmSpc, nm)
-						val elem : BaseTypeDef = mgr.ActiveType(key)
-						val (s,f) : (String,BaseTypeDef) = if (elem != null) (elem.typeString,elem) else ("None",null)
-						if (s != null) {
-							scalaType = s
-							fldTypedef = f
-						}
-					}
-				}
-			}
-		}
-		isContainer = (fldTypedef != null && fldTypedef.isInstanceOf[ContainerTypeDef])
-
-		(scalaType,isContainer,fldTypedef)
-	}
-		
-	/** 
-	 *  FIXME:  arbitrarily compound fields now supported.  This function SCHEDULED FOR REMOVAL - NOT USED.
-	 * 
-	 *  Helper ... search the dDict with supplied key 
-	 */
-	private def getDDictFieldType(nmSpc : String, nm : String, withNmSpc : Boolean) : (String,BaseTypeDef) = {	
-		val key : String = if (withNmSpc) nmSpc + "." + nm else nm
-		var fldTypedef : BaseTypeDef = null
-		val scalaType : String = if (dDict.contains(key)) {
-			val fld : xDataField = dDict.apply(key)
-			val fldType = fld.dataType
-			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, fldType)).asInstanceOf[BaseTypeDef]
-			if (fldTypedef != null) {
-				fldTypedef.typeString
-			} else {
-				PmmlError.logError(this, s"getXDictFieldType: unknown type $fldType")
-				null  // allow processing to continue.. even though this is likely a disaster for the compile
-			}
-		} else null 
-		(scalaType,fldTypedef)
-	}
-
-	/** 
-	 *  FIXME:  arbitrarily compound fields now supported.  This function SCHEDULED FOR REMOVAL - NOT USED.
-	 * 
-	 *  Helper ... search the xDict with supplied key 
-	 *   
-	 */
-	private def getXDictFieldType(nmSpc : String, nm : String, withNmSpc : Boolean) : (String,BaseTypeDef) = {	
-		val key : String = if (withNmSpc) nmSpc + "." + nm else nm
-		var fldTypedef : BaseTypeDef = null
-		val scalaType : String = if (xDict.contains(key)) {
-			val fld : xDerivedField = xDict.apply(key)
-			val fldType = fld.dataType
-			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, fldType)).asInstanceOf[BaseTypeDef]
-			if (fldTypedef != null) {
-				fldTypedef.typeString
-			} else {
-				/** Translate the possible builtin type to a scala equiv and try again. */
-				val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(fldType)
-				/** verify it is present in the metadata and get metadata description for it */
-				fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, scalaVersionOfPmmlBuiltinType))
-				if (fldTypedef == null) {
-					PmmlError.logError(this, s"getXDictFieldType: unknown type $scalaVersionOfPmmlBuiltinType ($fldType)")
-					null  // allow processing to continue.. even though this is likely a disaster for the compile
-				} else {
-					fldTypedef.typeString
-				}
-			}
-		} else null 
-		(scalaType,fldTypedef)
-	}
 
 	/** 
 	 *  Get the container's typedef associated with the supplied namespace and name. 
@@ -403,6 +300,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *      
 	 *  These will be used if present:
 	 *   	Version (string version from the Header)
+	 *    	NameSpace(from the Header's Application name if "." present else defaults to "System"
 	 *    	ApplicationName (from the Header)
 	 *    	Copyright (from the Header)
 	 *      Description (from the Header)
@@ -412,19 +310,40 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 */
 	var pmmlTerms : HashMap[String,Option[String]] = HashMap[String,Option[String]]() 
 	
-	/** this is from command line parameters... those Ole events that this model can/should handle */
+	/** this is from command line parameters... those events that this model can/should handle */
 	var eventsHandled : ArrayBuffer[String] = ArrayBuffer[String]()
 	
 	/** 
 	 *  [(message name, (appears in ctor signature?, message type for named message, varName))] 
 	 *  
-	 *  The containersInScope is used to create message and container references in generaal.  Those that are
+	 *  The containersInScope is used to create message and container references in general.  Those that are
 	 *  messages (declared in the "messages" data dictionary field), will also be generated as part of the 
 	 *  generated model's main constructor
 	 */
 	var containersInScope : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = ArrayBuffer[(String, Boolean, BaseTypeDef, String)]()
 	
-	/** Capture field ref variables that are inputs for the model under consideration for model def generation.  For now, this 
+	/** 
+	 *  Cache maps of the active models known at compiler initialization time.  These are used to disambiguate input variable (derived field) references.
+	 *  Two maps and one set maintained: 
+	 *  <ol>
+	 *  <li>map with all active models ... key = model.namespace + "." + model.name + "." +  model.version </li>
+	 *  <li>map with most recent version of active models only... key = model.namespace + "." + model.name </li>
+	 *  <li>set with simple unqualified names of the active models... key = model.name </li>
+	 *  </ol>
+	 *  
+	 *  NOTE: It is possible that a model could be added to the metadata cache of a newer version while the pmml compiler is using an older version.
+	 *  Before the new model being compiled is added to the metadata, the old model the new model references is deactivated... we might want to trap
+	 *  that for modelers using specific models versions.
+	 */
+
+	var activeModels : scala.collection.mutable.Map[String,ModelDef] = scala.collection.mutable.Map[String,ModelDef]()
+	mgr.ActiveModels.foreach( model =>  activeModels(model.FullNameWithVer) =  model)
+	var activeCurrentVerModels : scala.collection.mutable.Map[String,ModelDef] = scala.collection.mutable.Map[String,ModelDef]()
+	mgr.ActiveCurrentModels.foreach( model =>  activeCurrentVerModels(model.FullName) =  model)
+	val unqualifiedModelNames : scala.collection.immutable.Set[String] = mgr.ActiveCurrentModels.map(_.Name)
+
+	/** 
+	 *  Capture field ref variables that are inputs for the model under consideration for model def generation.  For now, this 
 	 *  means container field references.  Note: Other kinds of inputs are anticipated.  What makes it into this Map is a moving target.
 	 *  
 	 *  ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal)
@@ -432,11 +351,11 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  baseType namespace and name are the field's base type's namespace and name, and the boolean is an indication if this is a 
 	 *  global (was cataloged in the attrdef map explicitly). 
 	 */
-	var modelInputs : Map[String, (String, String, String, String, Boolean, String)] = Map[String, (String, String, String, String, Boolean, String)]()
+	var modelInputs : Map[String, ModelInputVariable] =  Map[String, ModelInputVariable]()
 	
 	/** Model outputs are collected here for ModelDef generation. 
 	 *  The triple consists of the field name, field's type namespace, and the field type */
-	var modelOutputs : Map[String, (String, String, String)] = Map[String, (String, String, String)]()
+	var modelOutputs : Map[String, ModelOutputVariable] = Map[String, ModelOutputVariable]()
 	
 	/** 
 	 *  Register any messages that will appear in the constructor of the generated model class.  Register the
@@ -763,47 +682,68 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		PmmlExecNodeVisitor.Visit(xDictNode, inVarCollector)
 	}
 	
+	
+	/**
+	 * Collect this model's output variables by examining the mining variables.  The modelOutputs map is updated
+	 */
 	def collectModelOutputVars : Unit = {
+
+		val optNameSpace = pmmlTerms.apply("NameSpace")
+		val modelNamespace : String = optNameSpace match {
+		  case Some(optNameSpace) => optNameSpace.toString
+		  case _ => "there is no NameSpace for this model... incredible as it seems"
+		}
+
+		val appNm : Option[String] = pmmlTerms.apply("ApplicationName")
+		val modelName : String = appNm match {
+		  case Some(appNm) => appNm
+		  case _ => "None"
+		}
+
+		val optVersion = pmmlTerms.apply("VersionNumber")
+		val versionNo : String = optVersion match {
+		  case Some(optVersion) => optVersion.toString
+		  case _ => "there is no version for this model... incredible as it seems"
+		}
+
 		/** filter for predicted and supplementary fields */
 		val outputMiningFields : Array[xMiningField] = 
 				miningSchemaMap.values.filter( fld => fld.usageType == "predicted" || fld.usageType == "supplementary").toArray
 		val expandCompoundFieldTypes : Boolean = true
 		outputMiningFields.foreach(fld => { 
-			val name = fld.name
+			val name = fld.name	/** leave case alone on the variable names... */
+			val nmSpcModelName : String = (modelNamespace + "." + modelName).toLowerCase /** .. but not on the metadata names */
+			val nmSpcModelNameVer : String = (nmSpcModelName + "." + versionNo).toLowerCase
 			
-			val typeInfo : Array[(String,Boolean,BaseTypeDef)] = getFieldType(name, expandCompoundFieldTypes)
-			if (typeInfo == null || (typeInfo != null && typeInfo.size == 0) || (typeInfo != null && typeInfo.size > 0 && typeInfo(0)._3 == null)) {
-				//throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
-				logger.error(s"mining field named '$name' does not exist... your model is going to fail... however, let's see how far we can go to find any other issues...")
-				modelOutputs(name.toLowerCase()) = (name, "is a bad mining variable referring to no valid dictionary item", "UNKNOWN TYPE")
+			/** Skip any derived concept that someone is trying to emit in the mining variables */
+			val hasModelPrefix : Boolean = mdHelper.IsDerivedConcept(name)
+			if (hasModelPrefix) {
+				val (model, modelContainerKey, conceptKey, subFldKeys) : (ModelDef, String, String, String) = mdHelper.GetDerivedConceptModel(name)
+				val modelName : String = if (model != null) model.FullNameWithVer else "unknown model"
+				logger.error(s"The mining field named '$name' was derived in another model named '$modelName'... it is pointless to make it an output here...")
+				logger.error(s"The downstream model will obtain its value directly from the '$modelName'")				
 			} else {
-			
-				/** FIXME: if a container is present (typeInfo.size > 1), should the container itself be added to the list of output
-				 	vars instead of the field?  I think so... otoh, there is likely just one row out of this message container.. can
-				 	the engine pull that row given the information provided.  Shouldn't there be a key emitted to select that row?  Or? */
-				if (typeInfo.size > 1) {
-					/** ... write them both for now and bring it up tomorrow */
-					val (containerType, isContainer, containerBaseTypeDef) = typeInfo(0)
-					val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(1)
-					val containerName : String = fld.name.split('.').head
-					val containervalue = (containerName, containerBaseTypeDef.NameSpace, containerBaseTypeDef.typeString)
-					/** give the full container.name for the field reference */
-					val typeStr : String = fieldBaseTypeDef.typeString
-					val fldTypeName : String = fieldBaseTypeDef.Name
-					val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
-					val fldvalue = (name, fldTypeNameSp, fldType)
-					//modelOutputs(containerName.toLowerCase()) = containervalue
-					modelOutputs(name.toLowerCase()) = fldvalue
+				val typeInfo : Array[(String,Boolean,BaseTypeDef)] = getFieldType(name, expandCompoundFieldTypes)
+				if (typeInfo == null || (typeInfo != null && typeInfo.size == 0) || (typeInfo != null && typeInfo.size > 0 && typeInfo(0)._3 == null)) {
+					//throw new RuntimeException(s"collectModelOutputVars: the mining field $name does not refer to a valid field in one of the dictionaries")
+					logger.error(s"collectModelOutputVars() ... mining field named '$name' does not exist... continuing.")
+					val key : String = nmSpcModelNameVer + "." + name
+					val bogusOutput :  ModelOutputVariable = new ModelOutputVariable(key, null, false)
+					modelOutputs(key.toLowerCase()) = bogusOutput
 				} else {
-					val (fldType, isFldAContainer, fieldBaseTypeDef) = typeInfo(0)
-					val typeStr : String = fldType
-					val fldTypeName : String = fieldBaseTypeDef.Name
-					val fldTypeNameSp : String = fieldBaseTypeDef.NameSpace
-					val fldvalue = (name, fldTypeNameSp, fldTypeName)
-					modelOutputs(name.toLowerCase()) = fldvalue
+					/** For the output variables, we don't need hierarchical information to represent a derived variable. 
+					    The  (typenamespace, typename) from the leaf element is sufficient. */
+	
+					val (leafElemType,isContainer,typedef) : (String, Boolean, BaseTypeDef) = typeInfo.last
+					val miningTypeInfo : (String,String) = (typedef.NameSpace, typedef.Name)
+				  
+					val key : String = nmSpcModelNameVer + "." + name
+					val outputVar : ModelOutputVariable = new ModelOutputVariable(key, miningTypeInfo, false)
+					if (outputVar != null) {
+						modelOutputs(key.toLowerCase()) = outputVar
+					}
 				}
 			}
-			
 		})
 	}
 
