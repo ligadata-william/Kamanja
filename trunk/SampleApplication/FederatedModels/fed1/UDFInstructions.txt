@@ -1,0 +1,23 @@
+******************************************
+* Running the Udf Metadata Extract Utility
+******************************************
+
+1) The `pwd` should be the project trunk.  The script is written to run from there.
+
+2) Make sure that the PmmlUdfs has been built (e.g., run the ezinstall script)
+
+3) Make sure that the `pwd`/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0" exists.
+
+4) Make sure extractUdfLibMetadata.scala and the script sbtProjDependencies.scala are on your execution PATH.  These are used to manage the json creation and build deps/claspaths respectively for MethodExtractor execution.  
+
+5) Here is the script command that actually does the metadata generation for the udf lib.  In this case the udfs are found in object com.ligadata.pmml.udfs.EdifecsPmmlUdfs:
+
+extractUdfLibMetadata.scala --sbtProject PmmlUdfs --fullObjectPath com.ligadata.pmml.udfs.EdifecsPmmlUdfs --namespace Pmml --versionNumber 100 --typeDefsPath ~/ligadata/edifecsModels/edfx3/metadata/type/edfxUdfs.types.json --fcnDefsPath ~/ligadata/edifecsModels/edfx3/metadata/function/edfxUdfs.fcns.json 
+
+Fix the paths as appropriate for your installation.  It is suggested that you drop the two output files directly in the ezinstall style model app setup.  In the example, the name of the model app that is to be copied to the <install folder>/input folder for your ez-installed installation is 'edfx2'.
+
+6) In other words, after fixing paths and running the script to produce the json, copy the model app directory to the <installdir>/input.  For example, 
+
+	cp -R ~/ligadata/edifecsModels/edfx2 <installdir>/input/
+
+

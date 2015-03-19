@@ -1,0 +1,29 @@
+{
+	"Message": 
+	{
+	    "NameSpace": "System",
+	    "Name": "aMsg",
+	    "Version": "00.01.00",
+	    "Description": "A msg with a few integer fields",
+	    "Fixed": "true",
+	    "Fields":
+	    [
+	    	{
+	    		"Name":"Id",
+	    		"Type":"System.String"
+	    	},
+	    	{
+	    		"Name":"int1",
+	    		"Type":"System.Int"
+	    	},
+	    	{
+	    		"Name":"int2",
+	    		"Type":"System.Int"
+	    	}
+	    ],
+	    "PartitionKey":
+	    [
+	    	"Id"
+	    ]
+    }
+}

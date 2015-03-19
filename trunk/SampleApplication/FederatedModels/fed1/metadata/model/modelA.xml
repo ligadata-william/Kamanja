@@ -1,0 +1,91 @@
+<!--
+modelA.xml
+-->
+
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+	<Header copyright="Copyright (it is to laugh)" description="model A description">
+		<Application name="modelA" version="00.01.00"/>
+	</Header>
+
+	<DataDictionary numberOfFields="4">
+		<DataField name="msg" displayName="msg" optype="categorical" dataType="aMsg"/>
+		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+	    <DataField name="parameters" displayName="parameters" dataType="container">
+	       <Value value="gCtx" property="valid"/>
+	       <Value value="msg" property="valid"/>
+	    </DataField>
+		<DataField name="righteousResult" displayName="righteousResult" optype="categorical" dataType="string"/>
+	</DataDictionary>
+	
+	
+	<TransformationDictionary>
+		<DerivedField name="product" dataType="integer" optype="continuous">
+			<Apply function="*">
+				<FieldRef field="msg.int1"/>
+				<FieldRef field="msg.int2"/>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="quotient" dataType="integer" optype="continuous">
+			<Apply function="if">
+				<Apply function="notEqual">
+					<FieldRef field="msg.int2"/>
+        			<Constant dataType="integer">0</Constant>
+				</Apply>
+
+				<Apply function="/">
+					<FieldRef field="msg.int1"/>
+					<FieldRef field="msg.int2"/>
+				</Apply>
+        		<Constant dataType="integer">1</Constant>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="summation" dataType="integer" optype="continuous">
+			<Apply function="+">
+				<FieldRef field="msg.int1"/>
+				<FieldRef field="msg.int2"/>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="difference" dataType="integer" optype="continuous">
+			<Apply function="-">
+				<FieldRef field="msg.int1"/>
+				<FieldRef field="msg.int2"/>
+			</Apply>
+		</DerivedField>
+		
+		<DerivedField name="modelAValue" dataType="boolean" optype="categorical">
+			<Apply function="notEqual">
+				<Apply function="+">
+					<FieldRef field="product"/>
+					<FieldRef field="quotient"/>
+					<FieldRef field="summation"/>
+					<FieldRef field="difference"/>
+				</Apply>
+        		<Constant dataType="integer">144000</Constant>
+			</Apply>
+		</DerivedField>
+		
+	</TransformationDictionary>
+	
+	<RuleSetModel modelName="modelA" functionName="classification" algorithmName="RuleSet">
+		<MiningSchema>
+			<MiningField name="righteousResult" usageType="predicted"/>
+			<MiningField name="product" usageType="supplementary"/>
+			<MiningField name="quotient" usageType="supplementary"/>
+			<MiningField name="summation" usageType="supplementary"/>
+			<MiningField name="difference" usageType="supplementary"/>
+			<MiningField name="modelAValue" usageType="supplementary"/>
+	    </MiningSchema>
+	    
+	    <RuleSet defaultScore="0">  
+    		<RuleSelectionMethod criterion="firstHit"/>
+			<SimpleRule id="modelAValueRule" score="1">
+				<SimplePredicate field="modelAValue" operator="equal" value="true"/>
+			</SimpleRule>
+	    </RuleSet>
+	</RuleSetModel>
+	
+</PMML>

@@ -1,0 +1,6 @@
+This directory is designed to be filled out with a model, its udf metadata, messages, containers and then copied
+into the ez install directory's input directory.  There is a config file in the metadata folder and some scripts
+here in the bin folder that need to be modified for your install location and general setup.
+
+See the general install documentation in the platform doc library for more information.
+

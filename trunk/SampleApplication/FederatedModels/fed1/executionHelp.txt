@@ -1,0 +1,30 @@
+1) See that Kafka  You will need to ensure that Zookeeper and Kafka are running before running Fatafat. This does it:
+rich@pepper:~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1$ bin/zookeeper-server-start.sh config/zookeeper.properties
+
+2) Change directory to the trunk you are planning to use and execute this (after fixing your directory references for install loca and kafka)
+rich@pepper:~/github/Bank/RTD/trunk$ easyInstallFatafat.sh /tmp/drdigital ~/github/Bank/RTD/trunk ~/.ivy2 ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
+
+3) Copy the edfxN directory to the installation directory's input folder.  Using the /tmp/drdigital location as an example, 
+cd /tmp/drdigital
+cp -R ~/ligadata/edifecsModels/edfx4 input/
+
+4) Run the ClusterMetadata.sh (after you have fixed all of the references to edfx4 to reflect your installation directory)
+bin/ClusterMetadata.sh
+
+5) If there were any kv store setups to do... run the following (after modifying it to reflect your requirement):
+input/edfx4/bin/InitKvStores.sh
+
+6) You will have to create the queues needed by kafka just once.  If this has not been accomplished, do so now
+bin/CreateQueues.sh
+
+7) Watch things.  Several scripts are available.  Start each one of interest in a separate window:
+
+bin/WatchInputQueue.sh
+bin/WatchOutputQueue.sh
+bin/WatchStatusQueue.sh
+
+8) Start the engine
+bin/StartEngine.sh
+
+9) Push data 
+input/edfx4/bin/PushSampleDataToKafka.sh
