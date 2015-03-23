@@ -33,11 +33,15 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
   def process(containerJson:String) = {
     log.info("Requesting UpdateContainer {}",containerJson)
     
+    val objectName = containerJson.substring(0,100)
+
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","container"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateContainer",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateContainer(containerJson,"JSON")
+    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateContainer",objectName,"Finished","unknown",apiResult)
     requestContext.complete(apiResult)
   }
 }

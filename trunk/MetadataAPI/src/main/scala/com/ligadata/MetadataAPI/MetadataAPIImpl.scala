@@ -2,6 +2,9 @@ package com.ligadata.MetadataAPI
 
 import java.util.Properties
 import java.io._
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import scala.Enumeration
 import scala.io._
 
@@ -245,6 +248,8 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def getPrivilegeName(op: String, objName: String): String = {
     // check if the Auth object exists
+    logger.trace("op => " + op)
+    logger.trace("objName => " + objName)
     if (authObj == null) return ""
     return authObj.getPrivilegeName (op,objName)
   }
@@ -300,6 +305,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private var otherStore: DataStore = _
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
+  private var auditStore: AuditStore = _
 
   def oStore = otherStore
 
@@ -1006,7 +1012,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    *  UploadJarToDB - Interface to the SERIVCES
    */
-  def UploadJarToDB(jarName:String,byteArray: Array[Byte]) {
+  def UploadJarToDB(jarName:String,byteArray: Array[Byte]): String = {
     try {
         var key = jarName
         var value = byteArray
@@ -1379,10 +1385,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  @throws(classOf[CreateStoreFailedException])
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String): DataStore = {
+  def GetDataStoreProperties(storeType: String, storeName: String, tableName: String): PropertyMap = {
+    var connectinfo = new PropertyMap
     try {
-      var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
       storeType match {
@@ -1416,11 +1421,40 @@ object MetadataAPIImpl extends MetadataAPI {
           throw new CreateStoreFailedException("The database type " + storeType + " is not supported yet ")
         }
       }
+      connectinfo
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new CreateStoreFailedException(e.getMessage())
+      }
+    }
+  }
+
+
+  @throws(classOf[CreateStoreFailedException])
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String): DataStore = {
+    try {
+      var connectinfo = GetDataStoreProperties(storeType,storeName,tableName)
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
         e.printStackTrace()
         throw new CreateStoreFailedException(e.getMessage())
+      }
+    }
+  }
+
+
+  @throws(classOf[CreateStoreFailedException])
+  def GetAuditStoreHandle(storeType: String, storeName: String, tableName: String): AuditStore = {
+    var as:AuditStore = null
+    try {
+      var connectinfo = GetDataStoreProperties(storeType,storeName,tableName)
+      AuditStoreManager.Get(connectinfo)
+    } catch {
+      case e: Exception => {
+	logger.warn("Unable to create database store connection for auditing: " + e.getMessage())
+        as
       }
     }
   }
@@ -1433,6 +1467,7 @@ object MetadataAPIImpl extends MetadataAPI {
       configStore = GetDataStoreHandle(storeType, "config_store", "config_objects")
       jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store")
       transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id")
+      auditStore = GetAuditStoreHandle(storeType, "metadata_audit", "metadata_audit")
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -1484,6 +1519,11 @@ object MetadataAPIImpl extends MetadataAPI {
         configStore.Shutdown()
         configStore = null
         logger.info("configStore closed")
+      }
+      if (auditStore != null) {
+        auditStore.Shutdown()
+        auditStore = null
+        logger.info("auditStore closed")
       }
     } catch {
       case e: Exception => {
@@ -4853,7 +4893,70 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def getCurrentTime: String = {
+    //val today = Calendar.getInstance().getTime()
+    new Date().getTime().toString()
+    //today.toString()
+    //val tformat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+    //tformat.format(today)
+  }
 
+  def logAuditRec(userOrRole:Option[String],userPrivilege:Option[String],action:String,objectAccessed:String,success:String,transactionId:String, notes:String) = {
+    if( auditStore != null ){
+      val a = new AuditRecord()
+      var u = "any user"
+      if( userOrRole != None ){
+	u = userOrRole.get
+      }
+      var p = "any privilege"
+      if( userPrivilege != None ){
+	p = userPrivilege.get
+      }
+
+      a.userOrRole = u
+      a.userPrivilege = p
+      a.auditTime = getCurrentTime
+      a.action = action
+      a.objectAccessed = objectAccessed
+      a.success = success
+      a.transactionId = transactionId
+      a.notes = notes
+      try{
+	auditStore.add(a)
+      } catch {
+	case e: Exception => {
+          throw new UpdateStoreFailedException("Failed to save audit record" + a.toString + ":" + e.getMessage())
+	}
+      }
+    }
+  }
+
+  def getAuditRec(startTime: Date, endTime: Date, userOrRole:String,action:String,objectAccessed:String) : String = {
+    var apiResultStr = ""
+    if( auditStore == null ){
+      apiResultStr = "no audit records found "
+      return apiResultStr
+    }
+    try{
+      val recs = auditStore.get(startTime,endTime,userOrRole,action,objectAccessed)
+      if( recs.length > 0 ){
+	recs.foreach( rec => {
+	  apiResultStr = apiResultStr + rec.toString + "\n"
+	})
+      }
+      else{
+	apiResultStr = "no audit records found "
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to fetch all the audit objects:", e.toString)
+        apiResultStr = apiResult.toString()
+      }
+    }
+    logger.trace(apiResultStr)
+    apiResultStr
+  }
+    
   def dumpMetadataAPIConfig {
     val e = metadataAPIConfig.propertyNames()
     while (e.hasMoreElements()) {

@@ -56,30 +56,40 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
       formatType = arg.FormatType
     }
     
+    val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveObjects",objectName,"Failed","unknown","DELETE not allowed for this user") 
+              requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
+
 
     arg.ObjectType match {
       case "model" => {
-	      return MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
-      }
+	      apiResult = MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveModel",objectName,"Finished","unknown",apiResult)
+     }
       case "message" => {
-	      return MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
+	      apiResult = MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveMessage",objectName,"Finished","unknown",apiResult)
       }
       case "container" => {
-	      return MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
+	      apiResult = MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveContainer",objectName,"Finished","unknown",apiResult)
       }
       case "function" => {
-	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
+	      apiResult = MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveFunction",objectName,"Finished","unknown",apiResult)
       }
       case "concept" => {
-	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
+	      apiResult = MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveConcept",objectName,"Finished","unknown",apiResult)
       }
       case "type" => {
-	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
+	      apiResult = MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
+	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveType",objectName,"Finished","unknown",apiResult)
       }
     }
+    apiResult
   }
 
   def process(apiArgListJson: String) = {

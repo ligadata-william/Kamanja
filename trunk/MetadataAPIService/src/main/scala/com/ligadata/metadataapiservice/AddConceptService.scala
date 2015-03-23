@@ -25,21 +25,23 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
 	val log = Logging(system, getClass)
 	
 	def receive = {
-		case Process(conceptJson, formatType) =>
-			process(conceptJson, formatType)
-			context.stop(self)
+	  case Process(conceptJson, formatType) =>
+	    process(conceptJson, formatType)
+	    context.stop(self)
 	}
 	
 	def process(conceptJson:String, formatType:String) = {
-	  
-		log.info("Requesting AddConcept {},{}",conceptJson,formatType)
+	  log.info("Requesting AddConcept {},{}",conceptJson,formatType)
     
-    if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
-    }
+	  val objectName = conceptJson.substring(0,100)
+
+	  if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
+	    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddConcept",objectName,"Failed","unknown","UPDATE not allowed for this user")
+	    requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+	  }
 		
-		val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
-		
-		requestContext.complete(apiResult)
+	  val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
+	  MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddConcept",objectName,"Finished","unknown",apiResult)
+	  requestContext.complete(apiResult)
 	}
 }

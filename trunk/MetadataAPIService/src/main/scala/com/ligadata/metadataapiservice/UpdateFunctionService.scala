@@ -30,13 +30,16 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
   def process(functionJson:String) = {
     
     log.info("Requesting UpdateFunction {}",functionJson)
+
+    val objectName = functionJson.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","function"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateFunction",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON")
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateFunction",objectName,"Finished","unknown",apiResult)            
     requestContext.complete(apiResult)
   }
 }

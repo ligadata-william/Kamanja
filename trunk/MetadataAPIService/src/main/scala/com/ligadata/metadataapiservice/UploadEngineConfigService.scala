@@ -33,13 +33,14 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
   def process(cfgJson:String) = {
     
     log.info("Requesting UploadEngineConfig {}",cfgJson)
-
+    val objectName = cfgJson.substring(0,100)    
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UploadConfig",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UploadConfig(cfgJson)
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UploadConfig",objectName,"Finished","unknown",apiResult)            
     requestContext.complete(apiResult)
   }
 }

@@ -30,13 +30,14 @@ class UpdateConceptService(requestContext: RequestContext, userid:Option[String]
   def process(conceptJson:String) = {
     
     log.info("Requesting UpdateConcept {}",conceptJson)
-    
+    val objectName = conceptJson.substring(0,100)        
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","concept"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateConcept",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateConcepts(conceptJson,"JSON")
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateConcept",objectName,"Finished","unknown",apiResult)            
     requestContext.complete(apiResult)
   }
 }

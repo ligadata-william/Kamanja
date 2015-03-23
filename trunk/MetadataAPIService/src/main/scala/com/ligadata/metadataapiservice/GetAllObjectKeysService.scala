@@ -46,27 +46,34 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     var apiResult:Array[String] = new Array[String](0)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
-      return new ApiResult(-1,"Security","READ not allowed for this user").toString  
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllObjectKeys","AllObjects","Failed","unknown","READ not allowed for this user")
+	      return new ApiResult(-1,"Security","READ not allowed for this user").toString  
     }
 
     objectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllModelDefs","AllModels","Finished","unknown",apiResult.mkString(","))
       }
       case "message" => {
 	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllMessageDefs","AllMessages","Finished","unknown",apiResult.mkString(","))
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllContainerDefs","AllContainers","Finished","unknown",apiResult.mkString(","))
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllFunctionDefs","AllFunctions","Finished","unknown",apiResult.mkString(","))
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllConceptDefs","AllConcepts","Finished","unknown",apiResult.mkString(","))
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllTypeDefs","AllTypes","Finished","unknown",apiResult.mkString(","))
       }
       case "all" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
@@ -75,6 +82,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
 		      MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
 		      MetadataAPIImpl.GetAllConceptsFromCache(true) ++
 		      MetadataAPIImpl.GetAllTypesFromCache(true)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllMdobjDefs","AllMdobjs","Finished","unknown",apiResult.mkString(","))
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")

@@ -40,7 +40,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
 
   def GetObjectDef(arg: MetadataApiArg): String = {
     var resultStr:String = ""
-    var nameSpace = "str"
+    var nameSpace = "system"
     var version = "-1"
     var formatType = "JSON"
     var apiResult:String = ""
@@ -55,28 +55,36 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
       formatType = arg.FormatType
     }
     
+    val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
-      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetObjects",objectName,"Failed","unknown","READ not allowed for this user")
+	      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
     }
 
     arg.ObjectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetModelDef",objectName,"Finished","unknown",apiResult)
       }
       case "message" => {
 	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetMessageDef",objectName,"Finished","unknown",apiResult)
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetContainerDef",objectName,"Finished","unknown",apiResult)
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetFunctionDef",objectName,"Finished","unknown",apiResult)
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConceptDef",objectName,"Finished","unknown",apiResult)
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
+	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetTypeDef",objectName,"Finished","unknown",apiResult)
       }
     }
     apiResult

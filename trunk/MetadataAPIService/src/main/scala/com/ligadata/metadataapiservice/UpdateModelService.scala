@@ -31,12 +31,15 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
     
     log.info("Requesting UpdateModel {}",pmmlStr)
 
+    val objectName = pmmlStr.substring(0,100)
+
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateModel",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateModel",objectName,"Finished","unknown",apiResult)    
     requestContext.complete(apiResult)
   }
 }

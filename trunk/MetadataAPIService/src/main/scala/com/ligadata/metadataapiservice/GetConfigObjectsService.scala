@@ -58,6 +58,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
       }
     }
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Finished","unknown",resultData)
     resultData
   }
 
@@ -72,6 +73,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     log.info("Requesting GetConfigObjects {}",objectType)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Failed","unknown","READ not allowed for this user")
       requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
     }
     

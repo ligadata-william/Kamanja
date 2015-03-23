@@ -16,6 +16,7 @@ import org.scalatest.Assertions._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io._
+import java.util.Date
 
 case class MissingArgumentException(e: String) extends Throwable(e)
 
@@ -2039,6 +2040,14 @@ object TestMetadataAPI{
     MetadataAPIImpl.checkAuth(Some("lonestarr"),Some("vespa"),Some("goodguy"),"winnebago:drive:eagle5")
   }
 
+  def TestLogAuditRec: Unit = {
+    MetadataAPIImpl.logAuditRec(Some("lonestarr"),Some("write"),"Create Model Started","system.copdriskassessment.100","success","-1","Initiated operation")
+  }
+
+  def TestGetAuditRec: Unit = {
+    MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
+  }
+
   def main(args: Array[String]){
     try{
       logger.setLevel(Level.TRACE);
@@ -2065,7 +2074,9 @@ object TestMetadataAPI{
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
       databaseOpen = true
-      StartTest
+      //StartTest
+      TestLogAuditRec
+      TestGetAuditRec
     }catch {
       case e: Exception => {
 	e.printStackTrace()

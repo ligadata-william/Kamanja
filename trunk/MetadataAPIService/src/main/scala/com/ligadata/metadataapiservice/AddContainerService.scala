@@ -32,12 +32,16 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
   
   def process(containerJson:String) = {
     log.info("Requesting AddContainer {}",containerJson)
+
+    val objectName = containerJson.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddContainer",objectName,"Failed","unknown","UPDATE not allowed for this user")
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }    
     
     val apiResult = MetadataAPIImpl.AddContainer(containerJson,"JSON")
+    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddContainer",objectName,"Finished","unknown",apiResult)
     requestContext.complete(apiResult)
   }
 }

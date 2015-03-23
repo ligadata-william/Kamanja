@@ -13,33 +13,36 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
 object AddFunctionService {
-	case class Process(functionJson:String, formatType:String)
+  case class Process(functionJson:String, formatType:String)
 }
 
 class AddFunctionService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
-	import AddFunctionService._
-	
-	implicit val system = context.system
-	import system.dispatcher
-	val log = Logging(system, getClass)
-	
-	def receive = {
-		case Process(functionJson, formatType) =>
-			process(functionJson, formatType)
-			context.stop(self)
-	}
-	
-	def process(functionJson:String, formatType:String) = {
-	  
-		log.info("Requesting AddFunction {},{}",functionJson,formatType)
+  import AddFunctionService._
+  
+  implicit val system = context.system
+  import system.dispatcher
+  val log = Logging(system, getClass)
+  
+  def receive = {
+    case Process(functionJson, formatType) =>
+      process(functionJson, formatType)
+      context.stop(self)
+  }
+  
+  def process(functionJson:String, formatType:String) = {
     
+    log.info("Requesting AddFunction {},{}",functionJson,formatType)
+    
+    val objectName = functionJson.substring(0,100)
+
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","function"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddFunction",objectName,"Failed","unknown","UPDATE not allowed for this user")
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
-		
-		val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-		
-		requestContext.complete(apiResult)
-	}
+    
+    val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
+    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddFunction",objectName,"Finished","unknown",apiResult)        
+    requestContext.complete(apiResult)
+  }
 }

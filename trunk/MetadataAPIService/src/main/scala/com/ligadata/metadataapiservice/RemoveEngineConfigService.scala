@@ -33,13 +33,14 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
   def process(cfgJson:String) = {
     
     log.info("Requesting RemoveEngineConfig {}",cfgJson)
-    
+    val objectName = cfgJson.substring(0,100)        
     if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+      MetadataAPIImpl.logAuditRec(userid,Some("write"),"RemoveConfig",objectName,"Failed","unknown","UPDATE not allowed for this user") 
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("write"),"RemoveConfig",objectName,"Finished","unknown",apiResult)    
     requestContext.complete(apiResult)
   }
 }

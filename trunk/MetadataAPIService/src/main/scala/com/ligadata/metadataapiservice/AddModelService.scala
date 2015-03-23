@@ -40,13 +40,16 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
   def process(pmmlStr:String) = {
     
     logger.trace("Requesting AddModel: " + pmmlStr.substring(0,500))
+
+    val objectName = pmmlStr.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+	      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddModel",objectName,"Failed","unknown","UPDATE not allowed for this user") 
+	      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddModel",objectName,"Finished","unknown",apiResult)
     requestContext.complete(apiResult)
   }
 }

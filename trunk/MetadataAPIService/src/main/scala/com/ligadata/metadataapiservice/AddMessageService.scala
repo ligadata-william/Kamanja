@@ -33,13 +33,16 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
   def process(messageJson:String) = {
     
     log.info("Requesting AddMessage {}",messageJson)
+
+    val objectName = messageJson.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","message"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddMessage",objectName,"Failed","unknown","UPDATE not allowed for this user")
       requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.AddMessage(messageJson)
-    
+    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddMessage",objectName,"Finished","unknown",apiResult)    
     requestContext.complete(apiResult)
   }
 }
