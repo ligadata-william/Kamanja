@@ -29,10 +29,12 @@ trait LigadataSSLConfiguration {
     context
   }
 
+  /*
   implicit def sslEngineProvider: ServerSSLEngineProvider = {
     ServerSSLEngineProvider { engine =>
       engine.setEnabledProtocols(Array("SSLv3", "TLSv1"))
       engine
     }
   }
+  */
 }
