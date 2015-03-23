@@ -21,6 +21,7 @@ trait MetadataAPIService extends HttpService {
 
   APIInit.Init
   val KEY_TOKN = "keys"
+  val AUDIT_LOG_TOKN = "audit_log"
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -34,9 +35,26 @@ trait MetadataAPIService extends HttpService {
           {  
             val toknRoute = str.split("/") 
             logger.info("GET reqeust : api/"+str)
-            if (toknRoute.size == 1) { requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role) }
-            else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,role) }    
-            else { requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,role) }           
+            if (toknRoute.size == 1) {
+	      if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
+		requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
+	      }
+	      else{
+		requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
+	      }
+	    }
+            else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
+	      requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,role)
+	    }  
+            else if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
+	      // strip the first token and send the rest
+	      val filterParameters = toknRoute.slice(1,toknRoute.size)
+	      requestContext => processGetAuditLogRequest(filterParameters,requestContext,userId,password,role)
+	    }    
+            else {
+	      requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, 
+							requestContext,userId,password,role)
+	    }           
           } 
         } 
       } ~
@@ -183,6 +201,15 @@ trait MetadataAPIService extends HttpService {
   /**
    * 
    */
+  private def processGetAuditLogRequest(filterParameters: Array[String],rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
+    val auditLogService = actorRefFactory.actorOf(Props(new GetAuditLogService(rContext,userid,password,role)))
+    auditLogService ! GetAuditLogService.Process(filterParameters)  
+  }
+
+  /**
+   *
+   */
+
   private def processGetKeysRequest(objtype:String,rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
     MetadataAPIImpl.logAuditRec(userid,role,"GetKeys",objtype,"Started","unknown","GetKeys is being invoked")
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || objtype.equalsIgnoreCase("Function") ||

@@ -5,6 +5,7 @@ import java.io._
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.text.ParseException
 import scala.Enumeration
 import scala.io._
 
@@ -4954,6 +4955,85 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
     logger.trace(apiResultStr)
+    apiResultStr
+  }
+
+  def parseDateStr(dateStr: String) : Date = {
+    try{
+      val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
+      val d = format.parse(dateStr)
+      d
+    }catch {
+      case e:ParseException => {
+	val format = new java.text.SimpleDateFormat("yyyyMMdd")
+	val d = format.parse(dateStr)
+	d
+      }
+    }
+  }
+
+  def getAuditRec(filterParameters: Array[String]) : String = {
+    var apiResultStr = ""
+    if( auditStore == null ){
+      apiResultStr = "no audit records found "
+      return apiResultStr
+    }
+    try{
+      var startTime:Date = null
+      var endTime:Date = null
+      var userOrRole:String = null
+      var action:String = null
+      var objectAccessed:String = null
+
+      if (filterParameters != null ){
+	val paramCnt = filterParameters.size
+	paramCnt match {
+	  case 1 => {
+	    startTime = parseDateStr(filterParameters(0))
+	  }
+	  case 2 => {
+	    startTime = parseDateStr(filterParameters(0))
+	    endTime = parseDateStr(filterParameters(1))
+	  }
+	  case 3 => {
+	    startTime = parseDateStr(filterParameters(0))
+	    endTime = parseDateStr(filterParameters(1))
+	    userOrRole = filterParameters(2)
+	  }
+	  case 4 => {
+	    startTime = parseDateStr(filterParameters(0))
+	    endTime = parseDateStr(filterParameters(1))
+	    userOrRole = filterParameters(2)
+	    action = filterParameters(3)
+	  }
+	  case 5 => {
+	    startTime = parseDateStr(filterParameters(0))
+	    endTime = parseDateStr(filterParameters(1))
+	    userOrRole = filterParameters(2)
+	    action = filterParameters(3)
+	    objectAccessed = filterParameters(4)
+	  }
+	}
+      }
+      else{
+	logger.info("filterParameters is null")
+      }
+      val recs = auditStore.get(startTime,endTime,userOrRole,action,objectAccessed)
+      if( recs.length > 0 ){
+	recs.foreach( rec => {
+	  apiResultStr = apiResultStr + rec.toString + "\n"
+	})
+      }
+      else{
+	apiResultStr = "no audit records found "
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(-1, "Failed to fetch all the audit objects:", e.getMessage())
+        apiResultStr = apiResult.toString()
+      }
+    }
+    logger.info(apiResultStr)
     apiResultStr
   }
     

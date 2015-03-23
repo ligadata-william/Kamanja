@@ -2048,6 +2048,19 @@ object TestMetadataAPI{
     MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
   }
 
+  def TestGetAuditRec1: Unit = {
+    val filterParameters = new Array[String](1)
+    filterParameters(0) = "2015-03-20 00:00:00"
+    MetadataAPIImpl.getAuditRec(filterParameters)
+  }
+
+  def TestGetAuditRec2: Unit = {
+    val filterParameters = new Array[String](2)
+    filterParameters(0) = "2015-03-20 00:00:00"
+    filterParameters(1) = "2015-03-23 00:00:00"
+    MetadataAPIImpl.getAuditRec(filterParameters)
+  }
+
   def main(args: Array[String]){
     try{
       logger.setLevel(Level.TRACE);
