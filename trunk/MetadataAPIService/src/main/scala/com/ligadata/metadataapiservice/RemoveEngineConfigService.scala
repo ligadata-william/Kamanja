@@ -23,6 +23,7 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "RemoveEngineConfigService"
   
   def receive = {
     case Process(cfgJson) =>
@@ -36,7 +37,7 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
     val objectName = cfgJson.substring(0,100)        
     if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
       MetadataAPIImpl.logAuditRec(userid,Some("write"),"RemoveConfig",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)

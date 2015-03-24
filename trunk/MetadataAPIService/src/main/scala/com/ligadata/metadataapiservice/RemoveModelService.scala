@@ -20,6 +20,7 @@ class RemoveModelService(requestContext: RequestContext) extends Actor {
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName  = "RemoveModelService"
 
   def receive = {
   case Process(modelName,version) =>
@@ -33,7 +34,7 @@ class RemoveModelService(requestContext: RequestContext) extends Actor {
       val apiResult = MetadataAPIImpl.RemoveModel(modelName, Integer.parseInt(version))
       requestContext.complete(apiResult)
     } else {
-      val apiResult = new ApiResult(-1, "Failed to execute the request, I am not the leader node",
+      val apiResult = new ApiResult(-1, APIName, null, "Failed to execute the request, I am not the leader node" +
         "Please execute the request on the leader node " + MetadataAPIServiceLeader.LeaderNode)
       requestContext.complete(apiResult.toString())
     }

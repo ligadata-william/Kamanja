@@ -23,6 +23,7 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "UploadJarService"
   
   def receive = {
     case Process(jarName,byteArray) =>
@@ -38,7 +39,7 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","jars"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("update"),"UploadJar",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1,"Security", null,"UPDATE not allowed for this user").toString )
     }  
     
     val apiResult = MetadataAPIImpl.UploadJarToDB(jarName,byteArray)

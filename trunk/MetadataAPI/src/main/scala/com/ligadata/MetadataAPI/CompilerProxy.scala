@@ -316,7 +316,7 @@ class CompilerProxy{
       }
       case e:AlreadyExistsException =>{
 	logger.trace("Failed to compile the message definition " + e.toString)
-	e.printStackTrace
+	//e.printStackTrace
 	throw new MsgCompilationFailedException(e.getMessage())
       }
     }

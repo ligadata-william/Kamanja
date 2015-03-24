@@ -59,7 +59,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some("delete"),"RemoveObjects",objectName,"Failed","unknown","DELETE not allowed for this user") 
-              requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+        requestContext.complete(new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
 
 
@@ -108,24 +108,25 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
       loop.breakable{
         arguments.foreach(arg => {
           if(arg.ObjectType == null ) {
-            deletedObjects +:= APIName + ":Error: The value of object type can't be null"
+            deletedObjects +:= ":Error: The value of object type can't be null"
             finalRC = -1 
+            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else if(arg.Name == null ) {
-            deletedObjects +:= APIName + ":Error: The value of object name can't be null"
+            deletedObjects +:= ":Error: The value of object name can't be null"
             finalRC = -1
+            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else {
             val iResult = RemoveObjectDef(arg)
-            val (iStatusCode,iResultData) = MetadataAPIImpl.getApiResult(iResult)
-            if (iStatusCode == 0)  deletedObjects +:= iResultData else finalRC = -1
+            val apiResultStr = MetadataAPIImpl.getApiResult(iResult)
+            finalAPIResult = apiResultStr
           }
         })
       }
-      finalAPIResult = (new ApiResult(finalRC, "Deleted Objects", deletedObjects.mkString(","))).toString
     }
     else{
-      finalAPIResult = (new ApiResult(-1, "Deleted Objects", APIName + ":No arguments passed to the API, nothing much to do")).toString
+      finalAPIResult = (new ApiResult(-1, APIName, null, "Error:No arguments passed to the API, nothing much to do")).toString
     }
     requestContext.complete(finalAPIResult)
   }

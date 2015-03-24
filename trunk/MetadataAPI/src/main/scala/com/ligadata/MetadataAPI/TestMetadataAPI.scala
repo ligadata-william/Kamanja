@@ -133,9 +133,9 @@ object TestMetadataAPI{
       typOpt match {
         case None => None
         case Some(ts) => 
-          val apiResult = new ApiResult(0,"Successfully fetched typeDef",JsonSerializer.SerializeObjectToJson(ts)).toString()
-          val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-          println("Result as Json String => \n" + resultData)
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+         // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+          println("Result as Json String => \n" + apiResult)
       }
     }catch {
       case e: Exception => {
@@ -146,8 +146,8 @@ object TestMetadataAPI{
   
   def GetAllTypes{
     val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
     
   }
 
@@ -183,7 +183,7 @@ object TestMetadataAPI{
       val typVersion = typKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toInt)
 
-      val (statusCode1,resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }
@@ -199,57 +199,57 @@ object TestMetadataAPI{
   // TODO: Rewrite Update Type to allow a user to pick the file they wish to update a type from.
   def UpdateType = {
     val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
 
   def AddFunction = {
-    var apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+    val apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
+   // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveFunction = {
     val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min",100)
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+ //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def UpdateFunction = {
     val apiResult = MetadataAPIImpl.UpdateFunctions(SampleData.sampleFunctionStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def AddConcept = {
-    var apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+    val apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
+ //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcept = {
     val apiResult = MetadataAPIImpl.RemoveConcept("Ligadata.ProviderId.100")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+ //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcepts = {
     val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"))
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def UpdateConcept = {
     val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def AddDerivedConcept = {
-    var apiResult = MetadataAPIImpl.AddDerivedConcept(SampleData.sampleDerivedConceptStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+    val apiResult = MetadataAPIImpl.AddDerivedConcept(SampleData.sampleDerivedConceptStr,"JSON")
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def fileToString(filePath: String) :String = {
@@ -309,8 +309,8 @@ object TestMetadataAPI{
 	
       val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
       
     }catch {
       case e: Exception => {
@@ -358,8 +358,7 @@ object TestMetadataAPI{
 
       val apiResult = MetadataAPIImpl.GetMessageDefFromCache(msgNameSpace,msgName,"JSON",msgVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+      println("Result as Json String => \n" + apiResult)
       
     }catch {
       case e: Exception => {
@@ -375,8 +374,8 @@ object TestMetadataAPI{
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
       if( contKeys.length == 0 ){
-	println("Sorry, No containers available in the Metadata")
-	return
+	          println("Sorry, No containers available in the Metadata")
+	          return
       }
 
       println("\nPick the container to be presented from the following list: ")
@@ -398,13 +397,10 @@ object TestMetadataAPI{
       val contName = contKeyTokens(1)
       val contVersion = contKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace,contName,"JSON",contVersion)
-
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
-      
+     println("Result as Json String => \n" + apiResult)
     }catch {
       case e: Exception => {
-	e.printStackTrace()
+	          e.printStackTrace()
       }
     }
   }
@@ -443,8 +439,8 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace,modName,"JSON",modVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -487,8 +483,8 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace,modName,"JSON",modVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -528,7 +524,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -569,12 +565,15 @@ object TestMetadataAPI{
       val contVersion = contKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
+      case e: NumberFormatException => {
+        print("\n Entry not in desired format. Please enter only one choice correctly")
+      }
       case e: Exception => {
-	e.printStackTrace()
+	        logger.error(e.toString)
       }
     }
   }
@@ -610,7 +609,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -650,7 +649,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -691,7 +690,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -732,7 +731,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -772,7 +771,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toInt)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -1001,7 +1000,7 @@ object TestMetadataAPI{
     		   results += Tuple3(choice.toString, contDefFile, res)
     	  })
       } else {
-          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
       
@@ -1217,6 +1216,7 @@ object TestMetadataAPI{
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      println(pmmlStr)
       // Save the model
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr))
@@ -1475,8 +1475,8 @@ object TestMetadataAPI{
       val functionStr = Source.fromFile(functionFilePath).mkString
       //MdMgr.GetMdMgr.truncate("FunctionDef")
       val apiResult = MetadataAPIImpl.AddFunctions(functionStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Function Already in the metadata....")
@@ -1489,10 +1489,9 @@ object TestMetadataAPI{
 
   def DumpAllFunctionsAsJson{
     try{
-      val (fcnCount, apiResult) : (Int, String) = MetadataAPIImpl.GetAllFunctionDefs("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println(s"$fcnCount Functions are available => \n$resultData")
-      println(s"Functions available = $fcnCount")
+      val apiResult = MetadataAPIImpl.GetAllFunctionDefs("JSON")
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1544,8 +1543,8 @@ object TestMetadataAPI{
       val conceptStr = Source.fromFile(conceptFilePath).mkString
       MdMgr.GetMdMgr.truncate("ConceptDef")
       val apiResult = MetadataAPIImpl.AddConcepts(conceptStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Concept Already in the metadata....")
@@ -1559,8 +1558,8 @@ object TestMetadataAPI{
   def DumpAllConceptsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1609,8 +1608,8 @@ object TestMetadataAPI{
       val typeStr = Source.fromFile(typeFilePath).mkString
       //MdMgr.GetMdMgr.truncate("TypeDef")
       val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println(s"Status Code = $statusCode \nResult as Json String => \n$resultData")
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Type Already in the metadata....")
@@ -1660,8 +1659,8 @@ object TestMetadataAPI{
       }
 
       val apiResult = MetadataAPIImpl.GetAllTypesByObjType("JSON",selectedType)
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => " + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => " + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1672,8 +1671,8 @@ object TestMetadataAPI{
   def DumpAllNodesAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllNodes("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1684,8 +1683,8 @@ object TestMetadataAPI{
   def DumpAllClusterCfgsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1696,8 +1695,8 @@ object TestMetadataAPI{
   def DumpAllClustersAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllClusters("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1708,8 +1707,8 @@ object TestMetadataAPI{
   def DumpAllAdaptersAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1720,8 +1719,8 @@ object TestMetadataAPI{
   def DumpAllCfgObjectsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
