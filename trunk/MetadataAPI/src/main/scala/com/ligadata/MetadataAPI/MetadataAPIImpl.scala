@@ -4941,9 +4941,10 @@ object MetadataAPIImpl extends MetadataAPI {
     try{
       val recs = auditStore.get(startTime,endTime,userOrRole,action,objectAccessed)
       if( recs.length > 0 ){
-	recs.foreach( rec => {
-	  apiResultStr = apiResultStr + rec.toString + "\n"
-	})
+	apiResultStr = JsonSerializer.SerializeAuditRecordsToJson(recs)
+	//recs.foreach( rec => {
+	//  apiResultStr = apiResultStr + rec.toString + "\n"
+	//})
       }
       else{
 	apiResultStr = "no audit records found "
@@ -5018,15 +5019,7 @@ object MetadataAPIImpl extends MetadataAPI {
       else{
 	logger.info("filterParameters is null")
       }
-      val recs = auditStore.get(startTime,endTime,userOrRole,action,objectAccessed)
-      if( recs.length > 0 ){
-	recs.foreach( rec => {
-	  apiResultStr = apiResultStr + rec.toString + "\n"
-	})
-      }
-      else{
-	apiResultStr = "no audit records found "
-      }
+      apiResultStr = getAuditRec(startTime,endTime,userOrRole,action,objectAccessed)
     } catch {
       case e: Exception => {
         var apiResult = new ApiResult(-1, "Failed to fetch all the audit objects:", e.getMessage())

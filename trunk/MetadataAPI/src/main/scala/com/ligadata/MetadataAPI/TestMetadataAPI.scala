@@ -2050,14 +2050,14 @@ object TestMetadataAPI{
 
   def TestGetAuditRec1: Unit = {
     val filterParameters = new Array[String](1)
-    filterParameters(0) = "2015-03-20 00:00:00"
+    filterParameters(0) = "20150320000000"
     MetadataAPIImpl.getAuditRec(filterParameters)
   }
 
   def TestGetAuditRec2: Unit = {
     val filterParameters = new Array[String](2)
-    filterParameters(0) = "2015-03-20 00:00:00"
-    filterParameters(1) = "2015-03-23 00:00:00"
+    filterParameters(0) = "20150320000000"
+    filterParameters(1) = "20150323000000"
     MetadataAPIImpl.getAuditRec(filterParameters)
   }
 

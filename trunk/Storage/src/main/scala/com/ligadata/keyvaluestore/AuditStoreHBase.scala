@@ -1,6 +1,8 @@
 package com.ligadata.keyvaluestore.hbase
 
 import com.ligadata.keyvaluestore._
+import com.ligadata.olep.metadata._
+
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client._

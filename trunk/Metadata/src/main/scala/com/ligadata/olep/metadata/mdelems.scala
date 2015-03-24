@@ -748,3 +748,18 @@ class AdapterInfo {
   def AdapterSpecificCfg: String = adapterSpecificCfg
   def InputAdapterToVerify: String  = inputAdapterToVerify
 }
+
+class AuditRecord
+{
+  var auditTime: String = _
+  var action: String = _
+  var notes : String = _
+  var objectAccessed : String = _
+  var success: String = _
+  var transactionId: String = _
+  var userOrRole : String = _
+  var userPrivilege: String = _
+
+  override def toString : String = 
+    "(" + auditTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
+}

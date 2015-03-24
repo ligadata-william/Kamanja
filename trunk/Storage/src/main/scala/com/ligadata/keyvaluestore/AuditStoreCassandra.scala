@@ -1,12 +1,15 @@
 package com.ligadata.keyvaluestore.cassandra
 
 import com.ligadata.keyvaluestore._
+import com.ligadata.olep.metadata._
+
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
 import com.datastax.driver.core.querybuilder.Insert
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.BatchStatement
+
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import java.util.Date

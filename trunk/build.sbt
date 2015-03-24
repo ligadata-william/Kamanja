@@ -37,7 +37,7 @@ lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/Fi
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(OnLEPBase, Storage, Serialize)
 
-lazy val Storage = project.in(file("Storage"))
+lazy val Storage = project.in(file("Storage")) dependsOn("Metadata")
 
 lazy val Metadata = project.in(file("Metadata")) 
 
