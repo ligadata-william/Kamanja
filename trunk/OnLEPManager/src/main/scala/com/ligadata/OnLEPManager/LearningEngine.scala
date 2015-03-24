@@ -162,7 +162,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (allMdlsResults == null)
             allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
           // Run all models
-          val results = RunAllModels(tempTransId, finalTopMsgOrContainer, envContext)
+          // val results = RunAllModels(tempTransId, finalTopMsgOrContainer, envContext)
+          val results = if (topMsgTypeAndHasParent._2) RunAllModels(tempTransId, finalTopMsgOrContainer, envContext) else Array[ModelResult]()
           if (results.size > 0) {
             var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
 
