@@ -1369,9 +1369,9 @@ object JsonSerializer {
     val ft = new java.text.SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     try{
       val json = (ar.toList.map{ a => 
-		    val at = new java.util.Date(java.lang.Long.valueOf(a.auditTime))
+		    val at = new java.util.Date(java.lang.Long.valueOf(a.actionTime))
 		    (
-		      ("AuditTime"       -> ft.format(at)) ~
+		      ("ActionTime"       -> ft.format(at)) ~
 		      ("Action"          -> a.action) ~
 		      ("UserOrRole"      -> a.userOrRole) ~
 		      ("Status"          -> a.success) ~

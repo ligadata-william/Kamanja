@@ -152,7 +152,7 @@ object MetadataAPIImpl extends MetadataAPI {
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
                                "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR")
+                               "SECURITY_IMPL_JAR", "AUDIT_INTERVAL")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -4916,7 +4916,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
       a.userOrRole = u
       a.userPrivilege = p
-      a.auditTime = getCurrentTime
+      a.actionTime = getCurrentTime
       a.action = action
       a.objectAccessed = objectAccessed
       a.success = success
@@ -4980,8 +4980,13 @@ object MetadataAPIImpl extends MetadataAPI {
       return apiResultStr
     }
     try{
-      var startTime:Date = null
-      var endTime:Date = null
+      var audit_interval = 10
+      var ai = metadataAPIConfig.getProperty("AUDIT_INTERVAL")
+      if( ai != null ){
+	audit_interval = ai.toInt
+      }
+      var startTime:Date = new Date((new Date).getTime() - audit_interval * 60000)
+      var endTime:Date = new Date()
       var userOrRole:String = null
       var action:String = null
       var objectAccessed:String = null

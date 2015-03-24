@@ -2,6 +2,9 @@ package com.ligadata.metadataapiservice
 
 import org.apache.camel.util.jsse._
 import javax.net.ssl.SSLContext
+import java.security.KeyStore
+import javax.net.ssl.KeyManagerFactory
+import javax.net.ssl.TrustManagerFactory
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import spray.io._
 
@@ -28,13 +31,4 @@ trait LigadataSSLConfiguration {
     val context = scp.createSSLContext()
     context
   }
-
-  /*
-  implicit def sslEngineProvider: ServerSSLEngineProvider = {
-    ServerSSLEngineProvider { engine =>
-      engine.setEnabledProtocols(Array("SSLv3", "TLSv1"))
-      engine
-    }
-  }
-  */
 }

@@ -751,7 +751,7 @@ class AdapterInfo {
 
 class AuditRecord
 {
-  var auditTime: String = _
+  var actionTime: String = _
   var action: String = _
   var notes : String = _
   var objectAccessed : String = _
@@ -761,5 +761,5 @@ class AuditRecord
   var userPrivilege: String = _
 
   override def toString : String = 
-    "(" + auditTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
+    "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
 }

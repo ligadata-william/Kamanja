@@ -87,7 +87,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
   // Check if table exists or create if needed
   val createTblStmt = "CREATE TABLE IF NOT EXISTS " + table + 
     " (auditYear  int " +
-    " ,auditTime  bigint " +
+    " ,actionTime  bigint " +
     " ,userOrRole varchar" +
     " ,userPrivilege varchar" +
     " ,action varchar" +
@@ -95,7 +95,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
     " ,success varchar" +
     " ,transactionId varchar" +
     " ,notes varchar " +
-    " ,primary key(auditYear,auditTime) " +
+    " ,primary key(auditYear,actionTime) " +
     ");"
 
   session.execute(createTblStmt);
@@ -103,7 +103,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
   //
 
   var insertSql = "INSERT INTO " + table + 
-	   " (audityear,audittime,userorrole,userprivilege,action,objectaccessed,success,transactionid,notes) " +
+	   " (audityear,actiontime,userorrole,userprivilege,action,objectaccessed,success,transactionid,notes) " +
 	   " values(?,?,?,?,?,?,?,?,?);"
 
   var insertStmt = session.prepare(insertSql)
@@ -118,7 +118,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
 
   def add(rec: AuditRecord) = {
     try{
-      var at:java.lang.Long = rec.auditTime.toLong
+      var at:java.lang.Long = rec.actionTime.toLong
 
       var year:java.lang.Integer = 0
       year = getYear(at)
@@ -146,7 +146,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
   def get(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
     var auditRecords = new Array[AuditRecord](0)
     try{
-      var selectSql = "SELECT audittime,action,userorrole,objectAccessed,success,userprivilege,notes,transactionid from " + table + " where "
+      var selectSql = "SELECT actiontime,action,userorrole,objectAccessed,success,userprivilege,notes,transactionid from " + table + " where "
       var stime = (new Date().getTime() - 10 * 60 * 1000L)
       if( startTime != null ){
 	stime = startTime.getTime()
@@ -157,12 +157,12 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
 
       selectSql = selectSql + " audityear = " +  year.toString()
 
-      selectSql = selectSql + " and audittime >= " +  stime.toString()
+      selectSql = selectSql + " and actiontime >= " +  stime.toString()
       var etime = new Date().getTime()
       if( endTime != null ){
 	etime = endTime.getTime()
       }
-      selectSql = selectSql + " and audittime <= " +  etime.toString()
+      selectSql = selectSql + " and actiontime <= " +  etime.toString()
       if( userOrRole != null ){
 	selectSql = selectSql + " and userOrRole = '" + userOrRole + "'"
       }
@@ -182,7 +182,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
       for(i <- 0 to rowCount - 1){
 	var row = rowList.get(i)
 	val a = new AuditRecord()
-	a.auditTime      = row.getLong("audittime").toString()
+	a.actionTime     = row.getLong("actiontime").toString()
 	a.userOrRole     = row.getString("userorrole")
 	a.userPrivilege  = row.getString("userprivilege")
 	a.action         = row.getString("action")

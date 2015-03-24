@@ -70,7 +70,7 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
     val  admin = new HBaseAdmin(config);
     if (! admin.tableExists(tableName)) {
       val  tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
-      var  colDesc =  new HColumnDescriptor("audittime".getBytes())
+      var  colDesc =  new HColumnDescriptor("actiontime".getBytes())
       tableDesc.addFamily(colDesc)
       colDesc =  new HColumnDescriptor("userorrole".getBytes())
       tableDesc.addFamily(colDesc)
@@ -93,9 +93,9 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
 
   def add(rec: AuditRecord) = {
     try{
-      var at:java.lang.Long = rec.auditTime.toLong
+      var at:java.lang.Long = rec.actionTime.toLong
       var p = new Put(Bytes.toBytes(at.toString()))
-      //p.add(Bytes.toBytes("audittime"), Bytes.toBytes("base"),Bytes.toBytes(at))
+      //p.add(Bytes.toBytes("actiontime"), Bytes.toBytes("base"),Bytes.toBytes(at))
       p.add(Bytes.toBytes("userorrole"), Bytes.toBytes("base"),Bytes.toBytes(rec.userOrRole))
       p.add(Bytes.toBytes("userprivilege"), Bytes.toBytes("base"),Bytes.toBytes(rec.userPrivilege))
       p.add(Bytes.toBytes("action"), Bytes.toBytes("base"),Bytes.toBytes(rec.action))
@@ -126,11 +126,11 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
 
       val filters = new java.util.ArrayList[Filter]()
 
-      val filter1 = new SingleColumnValueFilter(Bytes.toBytes("audittime"), Bytes.toBytes("base"),
+      val filter1 = new SingleColumnValueFilter(Bytes.toBytes("actiontime"), Bytes.toBytes("base"),
 						CompareOp.GREATER_OR_EQUAL, Bytes.toBytes(stime.toString()))
       filters.add(filter1);  
 
-      val filter2 = new SingleColumnValueFilter(Bytes.toBytes("audittime"), Bytes.toBytes("base"),
+      val filter2 = new SingleColumnValueFilter(Bytes.toBytes("actiontime"), Bytes.toBytes("base"),
 						CompareOp.LESS_OR_EQUAL, Bytes.toBytes(etime.toString()))
       filters.add(filter2);  
 
@@ -161,14 +161,14 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
       while( it.hasNext() ){
 	val a = new AuditRecord()
 	val r = it.next()
-	a.auditTime = Bytes.toString(r.getRow())
+	a.actionTime = Bytes.toString(r.getRow())
 	val kvit = r.list().iterator()
 	while( kvit.hasNext() ){
 	  val kv = kvit.next()
 	  val q = Bytes.toString(kv.getFamily())
 	  q match  {
-	    case "audittime" => {
-	      a.auditTime = Bytes.toString(kv.getValue())
+	    case "actiontime" => {
+	      a.actionTime = Bytes.toString(kv.getValue())
 	    }
 	    case "userorrole" => {
 	      a.userOrRole = Bytes.toString(kv.getValue())
