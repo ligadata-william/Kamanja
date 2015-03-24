@@ -44,7 +44,6 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application1/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/application1/bin/PushSampleDataToKafka.sh
 
 # application-1-HelloWorld
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/script/InitKvStores_Template.sh > $install_dir/input/application-1-HelloWorld/bin/InitKvStores.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/script/StartMetadataAPI_Template.sh > $install_dir/input/application-1-HelloWorld/bin/ApplicationMetadata.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/application-1-HelloWorld/bin/PushSampleDataToKafka.sh
 # application-1-HelloWorld
