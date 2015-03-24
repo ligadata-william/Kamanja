@@ -23,6 +23,7 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "UpdateContainerService"
   
   def receive = {
     case Process(containerJson) =>
@@ -37,7 +38,7 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","container"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateContainer",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateContainer(containerJson,"JSON")

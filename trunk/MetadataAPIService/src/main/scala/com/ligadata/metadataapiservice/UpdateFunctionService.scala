@@ -20,6 +20,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "UpdateFunctionService"
   
   def receive = {
     case Process(functionJson) =>
@@ -35,7 +36,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","function"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateFunction",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON")

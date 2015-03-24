@@ -26,6 +26,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "AddModelService"
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -45,7 +46,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddModel",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-	      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+	      requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.AddModel(pmmlStr)

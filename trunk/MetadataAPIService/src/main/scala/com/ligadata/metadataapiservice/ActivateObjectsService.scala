@@ -61,7 +61,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt).toString
       }
       case _ => {
-	      new ApiResult(-1, APIName, "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 
+	      new ApiResult(-1, APIName, null,  "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 
       }
     }
   }
@@ -71,7 +71,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     logger.trace(APIName + ":" + apiArgListJson)
 
     if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) {
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     }
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
@@ -83,11 +83,11 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
       loop.breakable{
 	      arguments.foreach(arg => {
 	        if(arg.ObjectType == null ){
-	          resultStr =  new ApiResult(-1, APIName, "Error: The value of object type can't be null").toString
+	          resultStr =  new ApiResult(-1, APIName, null,"Error: The value of object type can't be null").toString
 	          loop.break
 	        }
 	        if(arg.Name == null ){
-	          resultStr = new ApiResult(-1, APIName, "Error: The value of object name can't be null").toString 
+	          resultStr = new ApiResult(-1, APIName, null, "Error: The value of object name can't be null").toString 
 	          loop.break
 	        }
 	        else {
@@ -97,7 +97,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
       }
     }
     else{
-      resultStr = new ApiResult(-1, APIName, "No arguments passed to the API, nothing much to do").toString 
+      resultStr = new ApiResult(-1, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
     requestContext.complete(resultStr)
   }

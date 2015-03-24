@@ -36,6 +36,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 
   def GetConfigObjects(objectType:String): String = {
     var apiResult:String = ""
+    var apiResultStr:String = ""
 
     objectType match {
       case "node" => {
@@ -57,9 +58,9 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 	apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Finished","unknown",resultData)
-    resultData
+    apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Finished","unknown",apiResultStr)
+    apiResultStr
   }
 
   
@@ -74,7 +75,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Failed","unknown","READ not allowed for this user")
-      requestContext.complete(new ApiResult(-1,"Security","READ not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
     }
     
     val apiResult = GetConfigObjects(objectType)

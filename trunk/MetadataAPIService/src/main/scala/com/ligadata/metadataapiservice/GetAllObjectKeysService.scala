@@ -47,7 +47,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllObjectKeys","AllObjects","Failed","unknown","READ not allowed for this user")
-	      return new ApiResult(-1,"Security","READ not allowed for this user").toString  
+	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
     objectType match {
@@ -86,10 +86,10 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
-         return new ApiResult(-1,"Invalid URL",apiResult.mkString).toString
+         return new ApiResult(-1, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
       }
     }
-    new ApiResult(0, "Object Keys", apiResult.mkString(",")).toString
+    new ApiResult(0,  APIName, null,  "Object Keys:" + apiResult.mkString(",")).toString
   }
 
   def process(objectType: String) = {

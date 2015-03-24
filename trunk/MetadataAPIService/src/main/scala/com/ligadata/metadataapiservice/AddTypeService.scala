@@ -23,6 +23,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "AddTypeService"
   
   def receive = {
     case Process(typeJson, formatType) =>
@@ -37,7 +38,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","type"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddType",objectName,"Failed","unknown","UPDATE not allowed for this user")
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType)

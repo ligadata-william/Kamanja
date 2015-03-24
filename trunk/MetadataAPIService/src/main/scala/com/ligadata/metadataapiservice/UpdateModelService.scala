@@ -20,6 +20,7 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "UpdateModelService"
   
   def receive = {
     case Process(pmmlStr) =>
@@ -35,7 +36,7 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateModel",objectName,"Failed","unknown","UPDATE not allowed for this user") 
-      requestContext.complete(new ApiResult(-1,"Security","UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)

@@ -62,15 +62,15 @@ class GetModelDefService(requestContext: RequestContext) extends Actor {
 	    }
 	    if( arg.Version != null ){
 	      var apiResult = MetadataAPIImpl.GetModelDefFromCache(arg.NameSpace,arg.Name,arg.FormatType,arg.Version)
-	      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-	      logger.trace("API Result => " + resultData)
-	      resultStr = resultStr + resultData
+	      val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+	      logger.trace("API Result => " + apiResultStr)
+	      resultStr = apiResultStr
 	    }
 	    else{
 	      var apiResult = MetadataAPIImpl.GetModelDef(arg.NameSpace,arg.Name,arg.FormatType)
-	      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-	      logger.trace("API Result => " + resultData)
-	      resultStr = resultStr + resultData
+	      val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+	      logger.trace("API Result => " + apiResultStr)
+	      resultStr = apiResultStr
 	    }
 	  }
 	})
