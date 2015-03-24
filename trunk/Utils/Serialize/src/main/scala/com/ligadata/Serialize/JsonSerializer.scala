@@ -1375,7 +1375,8 @@ object JsonSerializer {
 		      ("Action"          -> a.action) ~
 		      ("UserOrRole"      -> a.userOrRole) ~
 		      ("Status"          -> a.success) ~
-		      ("ObjectAccessed"  -> a.objectAccessed) 
+		      ("ObjectAccessed"  -> a.objectAccessed) ~
+		      ("ActionResult"    -> a.notes)
 		    )
 		  })
       pretty(render(json))
