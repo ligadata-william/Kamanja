@@ -303,8 +303,8 @@ class MessageDefImpl {
 			if (map.contains("""" + fname + """" )){
 				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				val arrFld = arr.asInstanceOf[""" + typ + """]
-				""" + funcName + """   = (-1, arrFld.map(v => """ + typeImpl + """(v.toString)).toArray)
+				val arrFld = CollectionAsArrString(arr)
+				""" + funcName + """   = (-1, arrFld.map(v =>  {""" + typeImpl + """(v.toString) } ).toArray)
 			}else 
 				""" + funcName + """   = (-1, new """ + typ + """(0))
 	    }
@@ -332,8 +332,8 @@ class MessageDefImpl {
 			if (map.contains("""" + fname + """" )){
 				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				val arrFld = arr.asInstanceOf[""" + typ + """]
-				""" + funcName + """   = (-1, arrFld.map(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)}))
+				val arrFld = CollectionAsArrString(arr)
+				""" + funcName + """   = (-1, arrFld.map(v => { {""" + fname + """  :+=""" + typeImpl + """(v.toString)}))
 			}else 
 				""" + funcName + """   = (-1, new """ + typ + """(0))
 	    }
@@ -1897,14 +1897,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  fields.put(key, (-1, value))
     }
     override def get(key: String): Any = {
-     //fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
       fields.get(key) match {
     	 case Some(f) => {
     		  //println("Key : "+ key + " Idx " + f._1 +" Value" + f._2 )
     		  return f._2
     	}
     	case None => {
-    		  println("Key - value null : "+ key )
+    		  //println("Key - value null : "+ key )
     		  return null
     	  }
     	}
@@ -2171,6 +2170,19 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
   private def assignMappedJsonData(assignJsonData: String) = {
     """
+	 def CollectionAsArrString(v: Any): Array[String] = {
+	  if (v.isInstanceOf[Set[_]]) {
+      	return v.asInstanceOf[Set[String]].toArray
+	  }
+	  if (v.isInstanceOf[List[_]]) {
+	  	return v.asInstanceOf[List[String]].toArray
+	  }
+	  if (v.isInstanceOf[Array[_]]) {
+     	return v.asInstanceOf[Array[String]].toArray
+	  }
+	  throw new Exception("Unhandled Collection")
+	 }
+
     
     def ValueToString(v: Any): String = {
 	  if (v.isInstanceOf[Set[_]]) {
@@ -2191,10 +2203,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	var list : List[Map[String, Any]] = null 
     var keySet: Set[Any] = Set();
 	try{
-	  
-	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	if (map == null)
-        	throw new Exception("Invalid json data")
+	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+       if (mapOriginal == null)
+         throw new Exception("Invalid json data")
+       
+       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
+       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+    
 	  	val msgsAndCntrs : scala.collection.mutable.Map[String, Any] = null
     
 	  	// Traverse through whole map and make KEYS are lowercase and populate
@@ -2217,7 +2232,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       })
     """ + assignJsonData +
       """
-    
+     // fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
+   
 	  } catch {
       	case e: Exception => {
         e.printStackTrace()
