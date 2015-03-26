@@ -2519,6 +2519,20 @@ class MdMgr {
     nodes.toMap
   }
 
+  def NodesForCluster(clusterId : String): Array[NodeInfo] = {
+    val id : String = if (clusterId != null) clusterId.toLowerCase else null 
+    val nodesForThisCluster : Array[NodeInfo] = if (id != null) {
+    	val cNodes : ArrayBuffer[NodeInfo] = ArrayBuffer[NodeInfo]()
+	    nodes.values.foreach( node => {
+	    	if (id == node.ClusterId.toLowerCase) cNodes += node
+	    })
+	    cNodes.toArray
+    } else {
+    	Array[NodeInfo]()
+    }
+    nodesForThisCluster
+  }
+
   def Adapters: scala.collection.immutable.Map[String, AdapterInfo] = {
     adapters.toMap
   }

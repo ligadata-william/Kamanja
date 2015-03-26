@@ -45,12 +45,14 @@ Usage()
 {
     echo 
     echo "Usage if building from source:"
-    echo "      FataFatClusterInstall.sh --MetadataAPIConfig  <metadataAPICfgPath>  "
+    echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
+    echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --KafkaInstallPath <kafka location>"
     echo "                               [ --NodeConfigPath <engine config path> ]"
     echo "                               [ --WorkingDir <alt working dir>  ]"
     echo "Usage if deploying tarball:"
-    echo "      FataFatClusterInstall.sh --MetadataAPIConfig  <metadataAPICfgPath> -"
+    echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
+    echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --TarballPath <tarball path>"
     echo "                               [ --NodeConfigPath <engine config path> ]"
     echo "                               [ --WorkingDir <alt working dir>  ]"
@@ -106,6 +108,7 @@ tarballPath=""
 nodeCfgGiven=""
 workDir="/tmp"
 stagingDirName="ToBeInstalled" 
+clusterId=""
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -124,6 +127,9 @@ while [ "$1" != "" ]; do
                                 ;;
         --WorkingDir )          shift
                                 workDir=$1
+                                ;;
+        --ClusterId )           shift
+                                clusterId=$1
                                 ;;
         * )                     echo 
                                 echo "Problem: Argument $1 is invalid named parameter."
@@ -213,6 +219,40 @@ if [ -n "$nodeConfigPath" ]; then
     fi
 fi
 
+# Check 13: There must be a clusterId and if a nodeConfigPath is specified, it must be the same value as the ClusterId value found there
+if [ -n "$clusterId" ]; then
+    if [ ! -f "$nodeConfigPath" ]; then
+        echo 
+        echo "Problem: The supplied (optional) NodeConfigPath $nodeConfigPath has a cluster id that is different than the clusterId"
+        Usage
+        exit 1
+    else
+        numberClusters=`cat $nodeConfigPath | grep '[C][l][u][s][t][e][r][I][d]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g' | wc -l`
+        if [ "$numberClusters" -ne 1 ]; then
+            echo 
+            echo "Problem: The $nodeConfigPath has more that one cluster definition in it.  That is not supported.  Create a node config with the desired cluster declaration and resubmit."
+            Usage
+            exit 1
+        fi
+        
+        nodeCfgClusterName=`cat $nodeConfigPath | grep '[C][l][u][s][t][e][r][I][d]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g'`
+        # case insensitive compare (bash 4x assumed...)
+        if [ "${nodeCfgClusterName,,}" != "${clusterId,,}" ]; then
+            echo 
+            echo "Problem: The supplied cluster identifier ($clusterId) must be same as one in $nodeConfigPath (i.e., $nodeCfgClusterName) when config is being supplied via node configuration file."
+            Usage
+            exit 1
+        fi
+    fi
+else
+    echo 
+    echo "Problem: The ClusterId must be supplied to select the nodes for use in the installation.  This is needed since multiple clusters can"
+    echo "         be defined in the same metadata store."
+    Usage
+    exit 1
+fi
+
+
 # Check N: more checks could probably be added ... 
 
 
@@ -256,11 +296,11 @@ ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
 nodeInfoExtractDir="$trunkDir/Utils/NodeInfoExtract/target/scala-$scalaversion"
 echo "...extract node information for the cluster to be installed from the Metadata and OnLEP config supplied"
 if  [ -n "$nodeCfgGiven" ]; then
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\""
-    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir"
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
+    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
 else # info is assumed to be present in the supplied metadata store... see trunk/utils/NodeInfoExtract for details 
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\""
-        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir"
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
+        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
 fi
 
 # 4) Push the tarballs to each machine defined in the supplied configuration
