@@ -43,11 +43,24 @@
 
 Usage()
 {
+    echo 
     echo "Usage if building from source:"
-    echo "  $0 --MetadataAPIConfig  <metadataAPICfgPath> --KafkaInstallPath <kafka location> [--NodeConfigPath <engine config path --WorkingDir <alt working dir>  ]"
+    echo "      FataFatClusterInstall.sh --MetadataAPIConfig  <metadataAPICfgPath>  "
+    echo "                               --KafkaInstallPath <kafka location>"
+    echo "                               [ --NodeConfigPath <engine config path> ]"
+    echo "                               [ --WorkingDir <alt working dir>  ]"
     echo "Usage if deploying tarball:"
-    echo "  $0 --MetadataAPIConfig  <metadataAPICfgPath> --TarballPath <tarball path> [--NodeConfigPath <engine config path --WorkingDir <alt working dir>  ]"
-    echo "  NOTE: Only tar'd gzip files supported for the tarballs at the moment."
+    echo "      FataFatClusterInstall.sh --MetadataAPIConfig  <metadataAPICfgPath> -"
+    echo "                               --TarballPath <tarball path>"
+    echo "                               [ --NodeConfigPath <engine config path> ]"
+    echo "                               [ --WorkingDir <alt working dir>  ]"
+    echo 
+    echo "  NOTES: Only tar'd gzip files are supported for the tarballs at the moment."
+    echo "         If the NodeConfigPath is not supplied, the MetadataAPIConfig will be assumed to already have the cluster information"
+    echo "         in it.  The working directory, by default, is /tmp.  If such a public location is abhorrent, chose a private one.  It"
+    echo "         must be an existing directory and readable by this script, however"
+    echo "         If both the KafkaInstallPath and the TarballPath are specified, the script fails."
+    echo 
 }
 
 scalaversion="2.10"
@@ -57,14 +70,16 @@ name1=$1
 if [[ "$#" -eq 4  || "$#" -eq 6  || "$#" -eq 8 ]]; then
     echo 
 else 
-    echo "Incorrect number of arguments"
+    echo 
+    echo "Problem: Incorrect number of arguments"
     Usage
     exit 1
 fi
 
 # Check 2: Is this even close to reasonable?
 if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--NodeConfigPath"  && "$name1" != "--KafkaInstallPath"   && "$name1" != "--TarballPath"  && "$name1" != "--WorkingDir" ]]; then
-	echo "Unreasonable number of arguments... as few as 2 and as many as 4 may be supplied."
+    echo 
+	echo "Problem: Unreasonable number of arguments... as few as 2 and as many as 4 may be supplied."
     Usage
 	exit 1
 fi
@@ -73,7 +88,8 @@ fi
 currDirPath=`pwd`
 currDir=`echo "$currDirPath" | sed 's/.*\/\(.*\)/\1/g'`
 if [ "$currDir" != "trunk" ]; then
-    echo "Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
+    echo 
+    echo "Problem: Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
     echo "It uses the NodeInfoExtract application found in the trunk/Utils/NodeInfoExtract/target/scala-$scalaversion/ "
     echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
     echo "currDir = $currDir"
@@ -89,11 +105,9 @@ nodeConfigPath=""
 tarballPath=""
 nodeCfgGiven=""
 workDir="/tmp"
-subDir="FataFat"
 stagingDirName="ToBeInstalled" 
 
 while [ "$1" != "" ]; do
-    echo "parameter is $1"
     case $1 in
         --MetadataAPIConfig )   shift
                                 metadataAPIConfig=$1
@@ -111,7 +125,8 @@ while [ "$1" != "" ]; do
         --WorkingDir )          shift
                                 workDir=$1
                                 ;;
-        * )                     echo "Argument $1 is invalid named parameter."
+        * )                     echo 
+                                echo "Problem: Argument $1 is invalid named parameter."
                                 Usage
                                 exit 1
                                 ;;
@@ -122,7 +137,8 @@ done
 
 # Check 4: Is this even close to reasonable?
 if [ -n "$TarballPath" -a -n "$KafkaInstallPath" ]; then
-    echo "Either install from source or use the tarball specification... just don't do both on same run."
+    echo 
+    echo "Problem: Either install from source or use the tarball specification... just don't do both on same run."
     Usage
     exit 1
 fi
@@ -130,14 +146,16 @@ fi
 # Check 5: if the working directory was given, make sure it is full qualified
 workDirHasLeadSlash=`echo "$workDir" | grep '^\/.*'`
 if [ -z "$workDirHasLeadSlash" ]; then
-    echo "The WorkingDir must be a fully qualified path."
+    echo 
+    echo "Problem: The WorkingDir must be a fully qualified path."
     Usage
     exit 1
 fi
 
 # Check 6: working directory must exist
 if [ ! -d "$workDir" ]; then
-    echo "The WorkingDir must exist and be a directory."
+    echo 
+    echo "Problem: The WorkingDir must exist and be a directory."
     Usage
     exit 1
 fi
@@ -145,34 +163,55 @@ fi
 if [ -n "$tarballPath" ]; then
     # Check 7: tarball path must exist
     if [ ! -f "$tarballPath" ]; then
-        echo "The TarballPath must exist and be a regular file."
+        echo 
+        echo "Problem: The TarballPath must exist and be a regular file."
         Usage
         exit 1
     fi
 
     # Check 8: tarball path must be readable
     if [ ! -r "$tarballPath" ]; then
-        echo "The TarballPath must be readable."
+        echo 
+        echo "Problem: The TarballPath must be readable."
         Usage
         exit 1
     fi
 fi
 
-if [ -n "$KafkaInstallPath" ]; then
+if [ -n "$kafkaInstallPath" ]; then
     # Check 9: Is Kafka legit?
-    if [ ! -d "$KafkaInstallPath" ]; then
-        echo "KafkaInstallPath must exist."
+    if [ ! -d "$kafkaInstallPath" ]; then
+        echo 
+        echo "Problem: KafkaInstallPath must exist."
         Usage
         exit 1
     fi
     # Check 10: Is Kafka legit?
-    if [ ! -f "$KafkaInstallPath/bin/kafka-server-start.sh" ]; then
-        echo "KafkaInstallPath doesn't look right... where is bin/kafka-server-start.sh?"
+    if [ ! -f "$kafkaInstallPath/bin/kafka-server-start.sh" ]; then
+        echo 
+        echo "Problem: KafkaInstallPath $kafkaInstallPath doesn't look right... where is bin/kafka-server-start.sh?"
         Usage
         exit 1
     fi
 fi
 
+# Check 11: Does the metadata api config exist?
+if [ ! -f "$metadataAPIConfig" ]; then
+    echo 
+    echo "Problem: The MetadataAPIConfig $metadataAPIConfig doesn't exist... please refer to a valid metadata api configuration file"
+    Usage
+    exit 1
+fi
+
+# Check 12: If the node config was given, does it exist?
+if [ -n "$nodeConfigPath" ]; then
+    if [ ! -f "$metadataAPIConfig" ]; then
+        echo 
+        echo "Problem: The supplied (optional) NodeConfigPath $nodeConfigPath doesn't exist... please refer to a valid node configuration file"
+        Usage
+        exit 1
+    fi
+fi
 
 # Check N: more checks could probably be added ... 
 
@@ -180,17 +219,27 @@ fi
 # Skip the build if tarballPath was supplied 
 dtPrefix="FataFat`date +"%Y%b%d"`"
 tarName="$dtPrefix.bz2"
+trunkDir=`pwd` #save the current trunk directory 
+
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
 
 if [ -z "$tarballPath" ]; then
     # 1 build the installation in the staging directory
     stagingDir="$workDir/$stagingDirName"
     mkdir -p "$stagingDir"
     echo "...build the FataFat installation directory in $stagingDir"
-    installOnLEP_Medical.sh "$stagingDir" `pwd`
+
+    # use the install directory given in the metadataAPI config file's ROOT_DIR's value
+    # we will use assume the current user's .ivy2 directory for the deps and the `pwd` for the build directory.
+    # the KafkaInstallPath supplied will be used for kafka
+    echo "...building the repo found in `pwd` staging to $stagingDir.  Each cluster node will have this build installed in $installDir."
+    easyInstallFatafat.sh "$stagingDir" `pwd` ~/.ivy2 "$kafkaInstallPath"
 
     # 2) compress staging dir and tar it
     echo "...compress and tar the installation directory $stagingDir to $tarName"
-    tar czf "$workDir/$tarName" "$stagingDir"
+    cd "$workDir"
+    tar czf "$workDir/$tarName" "$stagingDirName"
+    cd "$trunkDir"
 
     tarballPath="$workDir/$tarName"
 else
@@ -204,15 +253,14 @@ ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
 
-trunkDir=`pwd`
 nodeInfoExtractDir="$trunkDir/Utils/NodeInfoExtract/target/scala-$scalaversion"
 echo "...extract node information for the cluster to be installed from the Metadata and OnLEP config supplied"
 if  [ -n "$nodeCfgGiven" ]; then
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
-    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\""
+    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir"
 else # info is assumed to be present in the supplied metadata store... see trunk/utils/NodeInfoExtract for details 
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
-        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"
+    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\""
+        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir"
 fi
 
 # 4) Push the tarballs to each machine defined in the supplied configuration
@@ -230,20 +278,20 @@ exec 0<&12 12<&-
 echo
 
 # 5) untar/decompress tarballs there and move them into place
-echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$subDir/$stagingDirName... then move to corresponding target path"
+echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$stagingDirName... then move to corresponding target path"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipPathPairFile"
 while read LINE; do
     machine=$LINE
     read LINE
     targetPath=$LINE
+    echo "Extract the tarball $tarName and copy it to $targetPath"
 	ssh -T $machine  <<-EOF
 	        cd $workDir
-	        rm -Rf $subDir
 	        tar xzf $tarName
 	        rm -Rf $targetPath
 	        mkdir -p $targetPath
-	        cp -R $subDir/$stagingDirName/* $targetPath/
+	        cp -R $workDir/$stagingDirName/* $targetPath/
 EOF
 done
 exec 0<&12 12<&-
@@ -251,7 +299,7 @@ exec 0<&12 12<&-
 echo
 
 # 6) Push the node$nodeId.cfg file to each cluster node's working directory.
-echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$subDir/$stagingDirName) for this cluster "
+echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$stagingDirName) for this cluster "
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -280,7 +328,6 @@ echo
 #     read LINE
 #     targetPath=$LINE
 # 	ssh -T $machine  <<-EOF
-# 	        rm -Rf $workDir/$subDir
 #			rm -f "$workDir/$tarName"
 # EOF
 # done

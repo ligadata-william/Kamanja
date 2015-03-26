@@ -6,7 +6,7 @@ import java.io._
 import com.ligadata.MetadataAPI.{ MetadataAPIImpl }
 import com.ligadata.olep.metadata._
 
-class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String) {
+class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String, val installDir : String) {
 
 	//MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
 	MetadataAPIImpl.InitMdMgr(metadataAPIConfig)
@@ -49,12 +49,13 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 		 	Build a Set[String] of (nodeIp,installPath) pairs...
 		 	
 		 */	
+		val configDir : String = installDir + "/config"
 	    val ips : Array[String] = nodeInfos.values.map(info => info.nodeIpAddr).toSet.toSeq.sorted.toArray 
 	    val ipIdTargPaths : Array[(String,String,String)] = nodeInfos.values.map(info => {
-		      	(info.nodeIpAddr, info.nodeId, info.jarPaths.head.toString)}
+		      	(info.nodeIpAddr, info.nodeId, configDir)}
 		    ).toSet.toSeq.sorted.toArray 
 	   
-	    val uniqueNodePaths : Set[String] = nodeInfos.values.map(info => info.nodeIpAddr + "~" + info.jarPaths.head).toSet 
+	    val uniqueNodePaths : Set[String] = nodeInfos.values.map(info => info.nodeIpAddr + "~" + installDir).toSet 
 		val ipPathPairs : Array[(String,String)] = uniqueNodePaths.map(itm => (itm.split('~').head, itm.split('~').last)).toSeq.sorted.toArray
 		(ips, ipIdTargPaths, ipPathPairs)
 	}
@@ -102,6 +103,8 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
               nextOption(map ++ Map('workDir -> value), tail)  
             case "--ipIdCfgTargPathQuartetFileName" :: value :: tail =>
               nextOption(map ++ Map('ipIdCfgTargPathQuartetFileName -> value), tail)  
+            case "--installDir" :: value :: tail =>
+              nextOption(map ++ Map('installDir -> value), tail)  
             case option :: tail =>
               println("Unknown option " + option)
               println(usage)
@@ -118,9 +121,10 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
         val ipPathPairFileName = if (options.contains('ipPathPairFileName)) options.apply('ipPathPairFileName) else null
         val workDir = if (options.contains('workDir)) options.apply('workDir) else null
         val ipIdCfgTargPathQuartetFileName = if (options.contains('ipIdCfgTargPathQuartetFileName)) options.apply('ipIdCfgTargPathQuartetFileName) else null
+        val installDir = if (options.contains('installDir)) options.apply('installDir) else null
         
         val reasonableArguments : Boolean = (metadataAPIConfig != null && metadataAPIConfig.size > 0 
-            							//&& nodeConfigPath != null && nodeConfigPath.size > 0 /** it doesn't have to be present , but if there is used */
+            							&& installDir != null && installDir.size > 0 
             							&& ipFileName != null && ipFileName.size > 0 
             							&& ipPathPairFileName != null && ipPathPairFileName.size > 0 
             							&& workDir != null && workDir.size > 0 
@@ -132,7 +136,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
             throw new RuntimeException("Your arguments are not satisfactory")
         }
                     
-   		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath)
+   		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath, installDir)
    		if (nodeConfigPath != null) {
    			extractor.initializeEngineConfig
    		}
