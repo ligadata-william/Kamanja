@@ -223,9 +223,9 @@ object ArrayTypeHandler {
       deserializedBuf.append("%s if(arraySize > 0){ %s = new %s(arraySize)%s%s for (i <- 0 until arraySize) {%s".format(pad2, fieldName, typeString, newline, pad2, newline))
       deserializedBuf.append("%sval inst = %s(%s);%s".format(pad1, deserType, dis, newline))
       if (isArayBuf)
-        deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
+        deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s} }%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
       else {
-        deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
+       // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
         deserializedBuf.append("%s%s(i) = inst;%s%s}%s%s%s}}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
       }
 

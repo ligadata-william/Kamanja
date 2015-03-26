@@ -293,9 +293,9 @@ class MessageDefImpl {
 			if (map.contains("""" + fname + """")){
 				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				val arrFld = arr.asInstanceOf[""" + typ + """]
+				val arrFld = CollectionAsArrString(arr)
 				""" + fname + """  = arrFld.map(v => """ + typeImpl + """(v.toString)).toArray
-			}
+			} else """+ fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
@@ -322,9 +322,9 @@ class MessageDefImpl {
 			if (map.contains("""" + fname + """")){
 				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				val arrFld = arr.asInstanceOf[""" + typ + """]
+				val arrFld = CollectionAsArrString(arr)
 				 arrFld.map(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
-			}
+			}else """+ fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
@@ -934,7 +934,7 @@ class MessageDefImpl {
       deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, msgDef.PhysicalName, newline))
 
       if (msg.Fixed.toLowerCase().equals("true")) {
-        deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s}%s".format(pad2, f.Name, newline, pad2, newline))
+        deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s} }%s".format(pad2, f.Name, newline, pad2, newline))
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         deserializedBuf.append("%s fields(\"%s\") = (-1, inst.asInstanceOf[%s]);%s%s}%s".format(pad2, f.Name, msgDef.typeString, newline, pad2, newline))
         deserializedBuf.append("%s else fields(\"%s\") = (-1, new %s()) } %s".format(pad2, f.Name, msgDef.typeString, newline, pad2, newline))
@@ -1941,10 +1941,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		return partKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (map == null) {
+    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
     			return partKeyPos.map(pos => "")
     		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
     		return partitionKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -1974,10 +1976,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		return prmryKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (map == null) {
+    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
     			return prmryKeyPos.map(pos => "")
     		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
     		return primaryKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -2146,18 +2151,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  private def assignJsonData(assignJsonData: String) = {
+  private def collectionsStr = {
     """
-  private def assignJsonData(json: JsonData) : Unit =  {
+    def CollectionAsArrString(v: Any): Array[String] = {
+	  if (v.isInstanceOf[Set[_]]) {
+	  	return v.asInstanceOf[Set[String]].toArray
+	  }
+	  if (v.isInstanceOf[List[_]]) {
+	  	return v.asInstanceOf[List[String]].toArray
+	  }
+	  if (v.isInstanceOf[Array[_]]) {
+     	return v.asInstanceOf[Array[String]].toArray
+	  }
+	  throw new Exception("Unhandled Collection")
+	 }
+    """
+    
+  }
+  private def assignJsonData(assignJsonData: String) = {
+    collectionsStr +
+    """
+    private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
 	var list : List[Map[String, Any]] = null 
 	try{ 
-	  	
-	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	if (map == null)
+	  	val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+       	if (mapOriginal == null)
         	throw new Exception("Invalid json data")
-""" + assignJsonData +
+       
+       	val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
+       	mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+    
+	  """ + assignJsonData +
       """
 	  }catch{
   			case e:Exception =>{
@@ -2169,35 +2195,22 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	"""
   }
   private def assignMappedJsonData(assignJsonData: String) = {
+   collectionsStr +
     """
-	 def CollectionAsArrString(v: Any): Array[String] = {
-	  if (v.isInstanceOf[Set[_]]) {
-      	return v.asInstanceOf[Set[String]].toArray
-	  }
-	  if (v.isInstanceOf[List[_]]) {
-	  	return v.asInstanceOf[List[String]].toArray
-	  }
-	  if (v.isInstanceOf[Array[_]]) {
-     	return v.asInstanceOf[Array[String]].toArray
-	  }
-	  throw new Exception("Unhandled Collection")
-	 }
-
-    
-    def ValueToString(v: Any): String = {
-	  if (v.isInstanceOf[Set[_]]) {
-      	return v.asInstanceOf[Set[_]].mkString(",")
-	  }
-	  if (v.isInstanceOf[List[_]]) {
-      	return v.asInstanceOf[List[_]].mkString(",")
-	  }
-	  if (v.isInstanceOf[Array[_]]) {
-      	return v.asInstanceOf[Array[_]].mkString(",")
-	  }
-	  v.toString
+   	def ValueToString(v: Any): String = {
+		if (v.isInstanceOf[Set[_]]) {
+      		return v.asInstanceOf[Set[_]].mkString(",")
+	  	}
+	  	if (v.isInstanceOf[List[_]]) {
+      		return v.asInstanceOf[List[_]].mkString(",")
+	  	}
+	  	if (v.isInstanceOf[Array[_]]) {
+      		return v.asInstanceOf[Array[_]].mkString(",")
+	  	}
+	  	v.toString
 	}
     
-  private def assignJsonData(json: JsonData) : Unit =  {
+   private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
 	var list : List[Map[String, Any]] = null 
