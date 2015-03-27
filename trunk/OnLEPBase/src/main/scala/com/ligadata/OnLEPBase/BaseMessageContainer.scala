@@ -1,9 +1,12 @@
 
 package com.ligadata.OnLEPBase
+import java.net.URL
+import java.net.URLClassLoader
+import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 
 trait MessageContainerBase {
   def isMessage: Boolean
-  def isContainer: Boolean 
+  def isContainer: Boolean
   def IsFixed: Boolean
   def IsKv: Boolean
   def populate(inputdata: InputData): Unit
@@ -11,26 +14,93 @@ trait MessageContainerBase {
   def get(key: String): Any
   def getOrElse(key: String, default: Any): Any
   def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit
-  def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): BaseMsg
+  def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): BaseMsg
   def Version: String // Message or Container Version
   def PartitionKeyData: Array[String] // Partition key data
   def PrimaryKeyData: Array[String] // Primary key data
   def FullName: String // Message or Container Full Name
   def NameSpace: String // Message or Container NameSpace
   def Name: String // Message or Container Name
+  def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit
+  def Serialize(dos: DataOutputStream): Unit
 }
 
 trait MessageContainerObjBase {
   def isMessage: Boolean
-  def isContainer: Boolean 
+  def isContainer: Boolean
   def IsFixed: Boolean
   def IsKv: Boolean
   def FullName: String // Message or Container FullName
   def NameSpace: String // Message or Container NameSpace
   def Name: String // Message or Container Name
   def Version: String // Message or Container Version
-  def PartitionKeyData(inputdata:InputData): Array[String] // Partition key data
-  def PrimaryKeyData(inputdata:InputData): Array[String] // Primary key data
+  def PartitionKeyData(inputdata: InputData): Array[String] // Partition key data
+  def PrimaryKeyData(inputdata: InputData): Array[String] // Primary key data
+}
+
+trait MdBaseResolveInfo {
+  def getMessgeOrContainerInstance(typName: String): MessageContainerBase
+}
+
+object SerializeDeserialize {
+  def Serialize(inst: MessageContainerBase): Array[Byte] = {
+    val bos: ByteArrayOutputStream = new ByteArrayOutputStream(1024 * 1024)
+    val dos = new DataOutputStream(bos)
+
+    try {
+      dos.writeUTF(inst.FullName)
+      dos.writeUTF(inst.Version)
+      dos.writeUTF(inst.getClass.getName)
+      inst.Serialize(dos)
+      val arr = bos.toByteArray
+      dos.close
+      bos.close
+      return arr
+
+    } catch {
+      case e: Exception => {
+        // LOG.error("Failed to get classname :" + clsName)
+        e.printStackTrace
+        dos.close
+        bos.close
+        throw e
+      }
+    }
+    null
+  }
+
+  def Deserialize(bytearray: Array[Byte], mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, isTopObject:Boolean, desClassName: String): MessageContainerBase = {
+    var dis = new DataInputStream(new ByteArrayInputStream(bytearray));
+
+    val typName = dis.readUTF
+    val version = dis.readUTF
+    val classname = dis.readUTF
+    try {
+      // Expecting type name
+      // get class instance for this type
+      val typ =
+        if (isTopObject) {
+          mdResolver.getMessgeOrContainerInstance(typName)
+        } else {
+          var curClz = Class.forName(desClassName, true, loader)
+          curClz.newInstance().asInstanceOf[MessageContainerBase]
+        }
+      if (typ == null) {
+        throw new Exception("Message/Container %s not found to deserialize".format(typName))
+      }
+      typ.Deserialize(dis, mdResolver, loader, version.toString)
+      dis.close
+      return typ
+    } catch {
+      case e: Exception => {
+        // LOG.error("Failed to get classname :" + clsName)
+        e.printStackTrace
+        dis.close
+        throw e
+      }
+    }
+    null
+  }
 }
 
 trait BaseContainer extends MessageContainerBase {
@@ -41,7 +111,7 @@ trait BaseContainer extends MessageContainerBase {
 trait BaseContainerObj extends MessageContainerObjBase {
   override def isMessage: Boolean = false
   override def isContainer: Boolean = true
-  def CreateNewContainer: BaseContainer 
+  def CreateNewContainer: BaseContainer
 }
 
 trait BaseMsg extends MessageContainerBase {
@@ -54,7 +124,7 @@ trait BaseMsgObj extends MessageContainerObjBase {
   override def isContainer: Boolean = false
   def NeedToTransformData: Boolean // Filter & Rearrange input attributes if needed
   def TransformDataAttributes: TransformMessage // Filter & Rearrange input columns if needed
-  def CreateNewMessage: BaseMsg 
+  def CreateNewMessage: BaseMsg
 }
 
 // BUGBUG:: for now handling only CSV input data.

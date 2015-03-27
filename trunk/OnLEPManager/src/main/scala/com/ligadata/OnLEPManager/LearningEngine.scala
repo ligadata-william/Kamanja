@@ -123,7 +123,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     try {
       val (msgInfo, inputdata) = msgInputDataAndMsgInfo(msgType, msgFormat, msgData)
       if (msgInfo != null && inputdata != null) {
-        val partKeyData = msgInfo.msgobj.PartitionKeyData(inputdata)
+        val partKeyData = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata)
         val topMsgTypeAndHasParent = GetTopMsgName(msgType)
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
         val partitionKeyData = if (isValidPartitionKey) {
@@ -141,7 +141,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           var msg: BaseMsg = null
           var commitSameToplvlMsg = false
           if (topObj != null && topMsgTypeAndHasParent._2) {
-            msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.msgobj.PrimaryKeyData(inputdata))
+            msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PrimaryKeyData(inputdata))
           } else if (topObj != null && topMsgTypeAndHasParent._2 == false) { // This is top level node. Just modify it
             commitSameToplvlMsg = true
             msg = topObj.asInstanceOf[BaseMsg]
@@ -149,7 +149,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           var createdNewMsg = false
           if (msg == null) {
             createdNewMsg = true
-            msg = msgInfo.msgobj.CreateNewMessage
+            msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
           }
           msg.populate(inputdata)
           val finalTopMsgOrContainer: MessageContainerBase = if (topObj != null) topObj else msg
