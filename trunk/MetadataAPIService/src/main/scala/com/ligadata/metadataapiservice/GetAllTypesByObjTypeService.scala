@@ -30,7 +30,7 @@ class GetAllTypesByObjTypeService(requestContext: RequestContext) extends Actor 
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetAllTypesByObjType"
   
@@ -41,7 +41,7 @@ class GetAllTypesByObjTypeService(requestContext: RequestContext) extends Actor 
   }
   
   def process(objectType:String) = {
-    log.info("Requesting GetAllTypesByObjType {}",objectType)
+    log.debug("Requesting GetAllTypesByObjType {}",objectType)
     val apiResult = MetadataAPIImpl.GetAllTypesByObjType("JSON",objectType)
     requestContext.complete(apiResult)
   }

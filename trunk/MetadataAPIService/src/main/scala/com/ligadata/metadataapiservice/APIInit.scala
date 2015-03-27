@@ -17,9 +17,9 @@ import com.ligadata.Utils._
 object APIInit {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
-  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
+ // logger.setLevel(Level.TRACE);
+  //MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
   var configFile:String = _
   private[this] val lock = new Object()
@@ -54,7 +54,7 @@ object APIInit {
       databaseOpen = true
 
       // start Leader detection component
-      logger.trace("Initialize Leader Latch")
+      logger.debug("Initialize Leader Latch")
       InitLeaderLatch
     } catch {
       case e: Exception => {

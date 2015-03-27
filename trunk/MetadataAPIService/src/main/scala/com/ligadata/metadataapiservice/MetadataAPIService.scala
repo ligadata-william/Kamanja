@@ -25,16 +25,16 @@ trait MetadataAPIService extends HttpService {
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val metadataAPIRoute = {
     optionalHeaderValueByName("userid") { userId => { optionalHeaderValueByName("password") { password => {optionalHeaderValueByName("role")  { role =>
-      logger.trace("userid => " + userId + ",password => xxxxx" + ",role => " + role)
+      logger.debug("userid => " + userId + ",password => xxxxx" + ",role => " + role)
       get {     
         path("api" / Rest) {str => 
           {  
             val toknRoute = str.split("/") 
-            logger.info("GET reqeust : api/"+str)
+            logger.debug("GET reqeust : api/"+str)
             if (toknRoute.size == 1) {
 	      if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
 		requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
@@ -61,14 +61,14 @@ trait MetadataAPIService extends HttpService {
       put {
          path("api" / Rest) {str =>
            {
-              logger.info("PUT reqeust : api/"+str)
+              logger.debug("PUT reqeust : api/"+str)
               val toknRoute = str.split("/")
               if(toknRoute(0).equalsIgnoreCase("UploadJars")) {
                  entity(as[Array[Byte]]) { 
                    reqBody => {
                      parameters('name) {jarName => 
                        {
-                         logger.info("Uploading jar "+ jarName)
+                         logger.debug("Uploading jar "+ jarName)
                          requestContext => 
                            val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext,userId,password,role)))
                            uploadJarService ! UploadJarService.Process(jarName,reqBody)
@@ -94,7 +94,7 @@ trait MetadataAPIService extends HttpService {
           path("api" / Rest) {str => 
             {
               val toknRoute = str.split("/") 
-              logger.info("POST reqeust : api/"+str)          
+              logger.debug("POST reqeust : api/"+str)          
               if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }}}
               else { requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString) }
             }
@@ -106,7 +106,7 @@ trait MetadataAPIService extends HttpService {
           path("api" / Rest) { str =>
             {
               val toknRoute = str.split("/")
-              logger.info("DELETE reqeust : api/"+str)
+              logger.debug("DELETE reqeust : api/"+str)
               if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,role) }  
               else {  requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString) }
             }

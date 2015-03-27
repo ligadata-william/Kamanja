@@ -161,7 +161,7 @@ object ZooKeeperListenerTest {
     try {
       val znodePath = "/ligadata/metadata/metadataupdate"
       val zkcConnectString = "localhost:2181"
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
+    //  JsonSerializer.SetLoggerLevel(Level.TRACE)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
       zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
       if( firstTime == true ){
@@ -219,9 +219,9 @@ object ZooKeeperListenerTest {
       configFile = cfgfile.asInstanceOf[String]
     }
     try {
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+      //JsonSerializer.SetLoggerLevel(Level.TRACE)
       MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
       databaseOpen = true
       StartLocalListener

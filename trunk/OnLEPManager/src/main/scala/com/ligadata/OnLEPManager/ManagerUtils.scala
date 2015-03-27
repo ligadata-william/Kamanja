@@ -42,15 +42,15 @@ object ManagerUtils {
   def LoadJars(jars: Array[String], loadedJars: TreeSet[String], loader: OnLEPClassLoader): Boolean = {
     // Loading all jars
     for (j <- jars) {
-      LOG.info("Processing Jar " + j.trim)
+      LOG.debug("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
           if (loadedJars(fl.getPath())) {
-            LOG.info("Jar " + j.trim + " already loaded to class path.")
+            LOG.debug("Jar " + j.trim + " already loaded to class path.")
           } else {
             loader.addURL(fl.toURI().toURL())
-            LOG.info("Jar " + j.trim + " added to class path.")
+            LOG.debug("Jar " + j.trim + " added to class path.")
             loadedJars += fl.getPath()
           }
         } catch {
@@ -72,11 +72,11 @@ object ManagerUtils {
     var isIt: Boolean = false
 
     val interfecs = clz.getInterfaces()
-    LOG.info("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
+    LOG.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
 
     breakable {
       for (intf <- interfecs) {
-        LOG.info("Interface:" + intf.getName())
+        LOG.debug("Interface:" + intf.getName())
         if (intf.getName().equals(clsName)) {
           isIt = true
           break

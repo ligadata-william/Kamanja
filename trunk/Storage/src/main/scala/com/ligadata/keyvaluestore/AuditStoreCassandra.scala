@@ -107,7 +107,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
 	   " values(?,?,?,?,?,?,?,?,?);"
 
   var insertStmt = session.prepare(insertSql)
-  //logger.info(insertSql)
+  //logger.debug(insertSql)
 
   def getYear(dt: Long) : Int = {
     val cal = Calendar.getInstance();
@@ -173,7 +173,7 @@ class AuditStoreCassandra(parameter: PropertyMap) extends AuditStore {
 	selectSql = selectSql + " and objectAccessed = '" + objectAccessed + "'"
       }
       
-      logger.info(selectSql)
+      logger.debug(selectSql)
       val rs = session.execute(selectSql)
 
       var i = 0

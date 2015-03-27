@@ -154,7 +154,7 @@ class CompilerProxy{
     val jarPath = compiler_work_dir + "/" + moduleNameJar
     val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
-    logger.info(s"Jar $moduleNameJar produced.  Its contents:")
+    logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
     val jarRc : Int = Process(jarCmd).!
     if (jarRc != 0) {
       logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
@@ -236,11 +236,11 @@ class CompilerProxy{
       (classStr,modDef)
     } catch{
       case e:Exception =>{
-	logger.trace("Failed to compile the model definition " + e.toString)
+	logger.debug("Failed to compile the model definition " + e.toString)
 	throw new ModelCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
-	logger.trace("Failed to compile the model definition " + e.toString)
+	logger.debug("Failed to compile the model definition " + e.toString)
 	throw new ModelCompilationFailedException(e.getMessage())
       }
     }
@@ -252,9 +252,9 @@ class CompilerProxy{
     try{
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
-      logger.trace("Call Message Compiler ....")
+      logger.debug("Call Message Compiler ....")
       val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)
-      logger.trace("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
+      logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
 
       
       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
@@ -286,14 +286,14 @@ class CompilerProxy{
 				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
 
 
-      logger.trace("Status => " + status)
+      logger.debug("Status => " + status)
 
       if( status != 0 ){
 	logger.error("Compilation of MessgeDef scala file has failed, Message is not added")
 	throw new MsgCompilationFailedException(msgDefStr)
       }
 
-      logger.trace("Jar File => " + jarFile)
+      logger.debug("Jar File => " + jarFile)
 
       if ( msgDef.nameSpace == null ){
 	msgDef.nameSpace = MetadataAPIImpl.sysNS
@@ -310,12 +310,12 @@ class CompilerProxy{
     }
     catch{
       case e:Exception =>{
-	logger.trace("Failed to compile the message definition " + e.toString)
+	logger.debug("Failed to compile the message definition " + e.toString)
 	e.printStackTrace
 	throw new MsgCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
-	logger.trace("Failed to compile the message definition " + e.toString)
+	logger.debug("Failed to compile the message definition " + e.toString)
 	//e.printStackTrace
 	throw new MsgCompilationFailedException(e.getMessage())
       }

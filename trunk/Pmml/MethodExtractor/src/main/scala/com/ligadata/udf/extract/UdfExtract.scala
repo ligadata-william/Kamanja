@@ -195,7 +195,7 @@ object MethodExtract extends App with LogTrait{
 						initFcnBuffer.append(s"\t$cmdStr")
 					}
 				} else {
-					logger.trace(s"Method $fullName returning $rt excluded")
+					logger.debug(s"Method $fullName returning $rt excluded")
 				}
 			}
 		}

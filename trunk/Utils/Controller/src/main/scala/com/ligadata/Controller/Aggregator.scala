@@ -189,7 +189,7 @@ class SampleAggregator  {
 
     seed = 0
     if (SampleAggregator.tt == seedOffset) {
-      LOG.info("Using "+ total +"as seed")
+      LOG.debug("Using "+ total +"as seed")
       SampleAggregator.seed = total
       return
     } else {
@@ -296,9 +296,9 @@ class SampleAggregator  {
    */
   def printMonitoredData(): Unit = {
     models.foreach(model => {
-      LOG.info("Monitoring Model " + model + " with following parameters")
+      LOG.debug("Monitoring Model " + model + " with following parameters")
       keysToMonitor(model).foreach(key => {
-        LOG.info(" key:" + key + " ")
+        LOG.debug(" key:" + key + " ")
       })
       println()
     })

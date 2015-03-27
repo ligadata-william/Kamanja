@@ -196,7 +196,7 @@ class OnLEPManager {
   }
 
   private def ShutdownAdapters: Boolean = {
-    LOG.info("Shutdown Adapters started @ " + Utils.GetCurDtTmStr)
+    LOG.debug("Shutdown Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
 
     validateInputAdapters.foreach(ia => {
@@ -224,7 +224,7 @@ class OnLEPManager {
     statusAdapters.clear
 
     val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
-    LOG.info("Shutdown Adapters done @ " + Utils.GetCurDtTmStr + ". " + totaltm)
+    LOG.debug("Shutdown Adapters done @ " + Utils.GetCurDtTmStr + ". " + totaltm)
 
     true
   }
@@ -267,7 +267,7 @@ class OnLEPManager {
             OnLEPConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => LOG.info("Failed to load Wait Processing Info.")
+        case e: Exception => LOG.debug("Failed to load Wait Processing Info.")
       }
 
       OnLEPMetadata.InitBootstrap
@@ -368,14 +368,14 @@ class OnLEPManager {
 
     {
       // Printing all configuration
-      LOG.info("Configurations:")
+      LOG.debug("Configurations:")
       val it = loadConfigs.entrySet().iterator()
       val lowercaseconfigs = new Properties()
       while (it.hasNext()) {
         val entry = it.next();
-        LOG.info("\t" + entry.getKey().asInstanceOf[String] + " -> " + entry.getValue().asInstanceOf[String])
+        LOG.debug("\t" + entry.getKey().asInstanceOf[String] + " -> " + entry.getValue().asInstanceOf[String])
       }
-      LOG.info("\n")
+      LOG.debug("\n")
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
@@ -406,7 +406,7 @@ class OnLEPManager {
             sa.send(dispStr, "1")
           })
         } else {
-          LOG.info(dispStr)
+          LOG.debug(dispStr)
         }
       }
     }

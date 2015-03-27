@@ -70,7 +70,7 @@ object OnLEPLeader {
     try {
       val evntPthData = if (eventPathData != null) (new String(eventPathData)) else "{}"
       val extractedNode = ZKPaths.getNodeFromPath(eventPath)
-      LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s".format(eventType, eventPath, evntPthData, extractedNode))
+      LOG.debug("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s".format(eventType, eventPath, evntPthData, extractedNode))
 
       if (eventType.compareToIgnoreCase("CHILD_UPDATED") == 0) {
         if (curParticipents(extractedNode)) { // If this node is one of the participent, then work on this, otherwise ignore
@@ -114,7 +114,7 @@ object OnLEPLeader {
             } else {
               val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
               // Got different action. May be re-distribute. For now any non-expected action we will redistribute
-              LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
+              LOG.debug("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
               if (canRedistribute)
                 SetUpdatePartitionsFlag
             }
@@ -142,7 +142,7 @@ object OnLEPLeader {
     val cs = GetClusterStatus
     if (cs.isLeader == false || cs.leader != cs.nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
 
-    LOG.info("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.debug("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
 
     // Clear Previous Distribution Map
     distributionMap.clear
@@ -173,7 +173,7 @@ object OnLEPLeader {
             if (ukCnt > 0) {
               val serUK = uk.map(k => {
                 val kstr = k.Serialize
-                LOG.info("Unique Key in %s => %s".format(name, kstr))
+                LOG.debug("Unique Key in %s => %s".format(name, kstr))
                 (name, kstr)
               })
               allPartitionUniqueRecordKeys ++= serUK
@@ -186,7 +186,7 @@ object OnLEPLeader {
           val savedValidatedAdaptInfo = envCtxt.GetValidateAdapterInformation
           val map = scala.collection.mutable.Map[String, String]()
 
-          LOG.info("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
+          LOG.debug("savedValidatedAdaptInfo: " + savedValidatedAdaptInfo.mkString(","))
 
           savedValidatedAdaptInfo.foreach(kv => {
             map(kv._1.toLowerCase) = kv._2
@@ -237,7 +237,7 @@ object OnLEPLeader {
 
           // Expecting keys are lower case here
           foundKeysInValidation = CollectKeyValsFromValidation.get
-          LOG.info("foundKeysInValidation: " + foundKeysInValidation.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
+          LOG.debug("foundKeysInValidation: " + foundKeysInValidation.map(v => { (v._1.toString, v._2.toString) }).mkString(","))
 
           var maxUsedTxnIdInValidationRes: Long = 0
 
@@ -249,7 +249,7 @@ object OnLEPLeader {
           // Update New partitions for all nodes and Set the text
           val totalParticipents: Int = cs.participants.size
           if (allPartitionUniqueRecordKeys != null && allPartitionUniqueRecordKeys.size > 0) {
-            LOG.info("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
+            LOG.debug("allPartitionUniqueRecordKeys: %d".format(allPartitionUniqueRecordKeys.size))
             var cntr: Int = 0
             val txnIdCntrPerPartition: Long = com.ligadata.Utils.Utils.MaxTransactionsPerPartition
             var nextTxnIdCntrIdx: Long = (maxUsedTxnIdInValidationRes / txnIdCntrPerPartition) + 1
@@ -334,10 +334,10 @@ object OnLEPLeader {
 
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
-    LOG.info("EventChangeCallback => Enter")
+    LOG.debug("EventChangeCallback => Enter")
     SetClusterStatus(cs)
-    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
-    LOG.info("EventChangeCallback => Exit")
+    LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.debug("EventChangeCallback => Exit")
   }
 
   private def GetUniqueKeyValue(uk: String): (String, Int, Int) = {
@@ -360,16 +360,16 @@ object OnLEPLeader {
             processingKVs(kv._1.toLowerCase) = kv._2
           })
           val maxParts = adapMaxPartsMap.getOrElse(name, 0)
-          LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
+          LOG.debug("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
 
-          LOG.info("Deserializing Keys")
+          LOG.debug("Deserializing Keys")
           val keys = uAK.map(k => ia.DeserializeKey(k._1))
 
-          LOG.info("Deserializing Values")
+          LOG.debug("Deserializing Values")
           val vals = uKV.map(v => ia.DeserializeValue(if (v != null) v._1 else null))
 
           var indx = 0
-          LOG.info("Deserializing Processing Values")
+          LOG.debug("Deserializing Processing Values")
           val processingvals = uAK.map(uk => {
             val keyVal = uk._1.toLowerCase
             val ptmpV = processingKVs.getOrElse(keyVal, null)
@@ -381,7 +381,7 @@ object OnLEPLeader {
               if (doneVal != null && doneVal._1.compareTo(ptmpV._1) == 0) {
                 // Already written what ever we were processing. Just take this in the ignored list
                 pV = vals(indx)
-                // LOG.info("====================================> Key:%s found in process(ed) keys, Value is :%s. ProcessedVal: %s".format(uk._1, pV.Serialize, vals(indx).Serialize))
+                // LOG.debug("====================================> Key:%s found in process(ed) keys, Value is :%s. ProcessedVal: %s".format(uk._1, pV.Serialize, vals(indx).Serialize))
               } else {
                 // Processing some other record than what we persisted.
                 val sentOutAdap = foundKeysInVald.getOrElse(keyVal, null)
@@ -390,23 +390,23 @@ object OnLEPLeader {
                   processingMsg = sentOutAdap._2
                   totalMsgs = sentOutAdap._3
                   pV = ia.DeserializeValue(sentOutAdap._1)
-                  // LOG.info("====================================> Key:%s found in process(ing) keys, found in Sent to Output Adap, Value is :%s (%d, %d). ProcessedVal: %s".format(uk._1, sentOutAdap._1, sentOutAdap._2, sentOutAdap._3, vals(indx).Serialize))
+                  // LOG.debug("====================================> Key:%s found in process(ing) keys, found in Sent to Output Adap, Value is :%s (%d, %d). ProcessedVal: %s".format(uk._1, sentOutAdap._1, sentOutAdap._2, sentOutAdap._3, vals(indx).Serialize))
                 } else {
                   // If the key is not there in the above adapter, just take same vals object (pV = vals(indx)), otherwise deserialize the current one and ignore till that point. For now we are treating ignore send output unitl we fix reading from OuputAdapter
                   processingMsg = 0 // Need to update it
                   totalMsgs = 0 // Need to update it
                   pV = ia.DeserializeValue(ptmpV._1)
-                  // LOG.info("====================================> Key:%s found in process(ing) keys, not found in Sent to Output Adap, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
+                  // LOG.debug("====================================> Key:%s found in process(ing) keys, not found in Sent to Output Adap, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
                 }
               }
             } else { // May not be processed at all before. just take the vals(indx) 
               pV = vals(indx)
-              // LOG.info("====================================> Key:%s found in processing keys, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
+              // LOG.debug("====================================> Key:%s found in processing keys, Value is :%s. ProcessedVal: %s".format(uk._1, ptmpV._1, vals(indx).Serialize))
             }
             indx += 1
             (pV, processingMsg, totalMsgs)
           })
-          LOG.info("Deserializing Keys & Values done")
+          LOG.debug("Deserializing Keys & Values done")
 
           val quads = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](keys.size)
 
@@ -415,7 +415,7 @@ object OnLEPLeader {
             quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
           }
 
-          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
+          LOG.debug(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
           ia.StartProcessing(maxParts, quads.toArray, true)
         }
       } catch {
@@ -458,26 +458,26 @@ object OnLEPLeader {
 
   // Using canRedistribute as startup mechanism here, because until we do bootstap ignore all the messages from this 
   private def ActionOnAdaptersDistImpl(receivedJsonStr: String): Unit = lock.synchronized {
-    // LOG.info("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
+    // LOG.debug("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || canRedistribute == false) {
       // nothing to do
-      LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+      LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
       return
     }
 
     if (IsLeaderNodeAndUpdatePartitionsFlagSet) {
-      LOG.info("Already got Re-distribution request. Ignoring any actions from ActionOnAdaptersDistImpl") // Atleast this happens on main node
+      LOG.debug("Already got Re-distribution request. Ignoring any actions from ActionOnAdaptersDistImpl") // Atleast this happens on main node
       return
     }
 
-    LOG.info("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
+    LOG.debug("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
 
     try {
       // Perform the action here (STOP or DISTRIBUTE for now)
       val json = parse(receivedJsonStr)
       if (json == null || json.values == null) { // Not doing any action if not found valid json
-        LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+        LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
         return
       }
 
@@ -570,18 +570,18 @@ object OnLEPLeader {
           }
         }
         case _ => {
-          LOG.info("No action performed, because of invalid action %s in json %s".format(actionOnAdaptersMap.action, receivedJsonStr))
+          LOG.debug("No action performed, because of invalid action %s in json %s".format(actionOnAdaptersMap.action, receivedJsonStr))
         }
       }
 
       // 
     } catch {
       case e: Exception => {
-        LOG.info("Found invalid JSON: %s".format(receivedJsonStr))
+        LOG.debug("Found invalid JSON: %s".format(receivedJsonStr))
       }
     }
 
-    LOG.info("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+    LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
   }
 
   private def ActionOnAdaptersDistribution(receivedJsonStr: String): Unit = {
@@ -596,7 +596,7 @@ object OnLEPLeader {
     }
 
     if (IsLeaderNodeAndUpdatePartitionsFlagSet) {
-      LOG.info("Already got Re-distribution request. Ignoring any actions from ParticipentsAdaptersStatus")
+      LOG.debug("Already got Re-distribution request. Ignoring any actions from ParticipentsAdaptersStatus")
       return
     }
 
@@ -670,7 +670,7 @@ object OnLEPLeader {
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
       try {
         val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-        LOG.info("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath))
+        LOG.debug("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath))
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)

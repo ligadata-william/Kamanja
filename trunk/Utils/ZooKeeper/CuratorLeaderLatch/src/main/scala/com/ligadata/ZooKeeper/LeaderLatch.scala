@@ -29,12 +29,12 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
 
   class ZkLeaderLatchListener extends LeaderLatchListener {
     override def isLeader() {
-      LOG.info("Got leadership");
+      LOG.debug("Got leadership");
       updateClusterStatus
     }
 
     override def notLeader() {
-      LOG.info("Lost leadership");
+      LOG.debug("Lost leadership");
       updateClusterStatus
     }
   }
@@ -81,7 +81,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
       val isLeader = if (clstStatus.isLeader) "true" else "false"
 
       // Do something with cluster status (log leadership change, etc)
-      LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
+      LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
       if (EventChangeCallback != null)
         EventChangeCallback(clstStatus)
     } catch {
@@ -127,8 +127,8 @@ object ZkLeaderLatchTest {
   }
 
   private def PrintUsage(): Unit = {
-    LOG.info("Usage:")
-    LOG.info("    --zkconnectstring <ConnectString> --leaderpath <LeaderPathString> --nodeid <UniqueNodeIdString>")
+    LOG.debug("Usage:")
+    LOG.debug("    --zkconnectstring <ConnectString> --leaderpath <LeaderPathString> --nodeid <UniqueNodeIdString>")
   }
 
   def main(args: Array[String]): Unit = {
@@ -140,26 +140,26 @@ object ZkLeaderLatchTest {
     val options = nextOption(Map(), args.toList)
     val zkcConnectString = options.getOrElse('zkconnectstring, "").toString.replace("\"", "").trim
     if (zkcConnectString.size == 0) {
-      LOG.info("Need zkcConnectString")
+      LOG.debug("Need zkcConnectString")
       return
     }
 
     val leaderPath = options.getOrElse('leaderpath, "").toString.replace("\"", "").trim
     if (leaderPath.size == 0) {
-      LOG.info("Need leaderPath")
+      LOG.debug("Need leaderPath")
       return
     }
 
     val nodeId = options.getOrElse('nodeid, "").toString.replace("\"", "").trim
     if (nodeId.size == 0) {
-      LOG.info("Need nodeId")
+      LOG.debug("Need nodeId")
       return
     }
 
     val ll = new ZkLeaderLatch(zkcConnectString, leaderPath, nodeId, null)
     ll.SelectLeader
 
-    LOG.info("Sleeping for 365 days or CTRL + C")
+    LOG.debug("Sleeping for 365 days or CTRL + C")
     Thread.sleep(365L * 24 * 60 * 60 * 1000L)
   }
 }

@@ -25,9 +25,9 @@ class APIService extends LigadataSSLConfiguration {
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
-  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
+  //logger.setLevel(Level.TRACE);
+ // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
 
   private def PrintUsage(): Unit = {
@@ -82,7 +82,7 @@ class APIService extends LigadataSSLConfiguration {
 
       APIInit.SetConfigFile(configFile.toString)
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
-      logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
+      logger.debug("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
       // Identify the host and port the service is listening on
       val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_HOST")
@@ -91,7 +91,7 @@ class APIService extends LigadataSSLConfiguration {
       // create and start our service actor
       val callbackActor = actor(new Act {
         become {
-          case b @ Bound(connection) => logger.info(b.toString)
+          case b @ Bound(connection) => logger.debug(b.toString)
           case cf @ CommandFailed(command) => logger.error(cf.toString)
           case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
         }
@@ -101,17 +101,17 @@ class APIService extends LigadataSSLConfiguration {
       // start a new HTTP server on a specified port with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
-      logger.trace("Started the service")
+      logger.debug("Started the service")
 
       sys.addShutdownHook({
-        logger.trace("ShutdownHook called")
+        logger.debug("ShutdownHook called")
         Shutdown(0)
       })
 
       Thread.sleep(365*24*60*60*1000L)
     } catch {
       case e: InterruptedException => {
-        logger.trace("Unexpected Interrupt")
+        logger.debug("Unexpected Interrupt")
       }
       case e: Exception => {
         e.printStackTrace()
