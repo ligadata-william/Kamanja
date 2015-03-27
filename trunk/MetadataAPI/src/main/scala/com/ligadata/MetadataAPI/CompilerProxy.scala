@@ -236,11 +236,11 @@ class CompilerProxy{
       (classStr,modDef)
     } catch{
       case e:Exception =>{
-	logger.trace("Failed to compile the model definition " + e.toString)
+	logger.error("Failed to compile the model definition " + e.toString)
 	throw new ModelCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
-	logger.trace("Failed to compile the model definition " + e.toString)
+	logger.error("Failed to compile the model definition " + e.toString)
 	throw new ModelCompilationFailedException(e.getMessage())
       }
     }
