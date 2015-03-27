@@ -779,25 +779,46 @@ object NodePrinterHelpers extends LogTrait {
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 		commentBuffer.append(s"package $modelPkg\n\n")
 
-		commentBuffer.append(s"import com.ligadata.OnLEPBase._\n")
 		
-		/** 
-		 *  FIXME: This next statement needs to be dynamically generated.
-		 *  It needs to be supplied either by the pmml or via metadata when the UDFs are 
-		 *  cataloged.  As one of the initialization tasks (e.g., finding the containers in 
-		 *  the xml is one of those), the functions in use in the pmml need to be scanned,
-		 *  their fully qualified classname fields extracted from the FunctionDef and added 
-		 *  to a set.  The resulting set is then used to create the package names here. 
-		 *  
-		 *  This also brings up one of the issues with the function metadata.  We have two, not
-		 *  one schema scheme in use.  We need the real package name that should uniquely 
-		 *  qualify the function as well as the schema name which may or may not (from the 
-		 *  perspective of the compile of the generated source, uniquely qualify the functions. 
-		 */
+		/** Add core udf lib always to import so names don't have to be qualified with full package spec. */
+		commentBuffer.append(s"/**Core Udfs... */\n\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
+	
+		/** If there were user defined udfs defined in the model, add these packages as well. */
+		val pkgNames : Array[String] = ctx.udfSearchPath 
+		val pkgsOnly : Array[String] = if (pkgNames.size > 0) {
+			if (pkgNames.contains(".")) {
+				val pkgs : Array[String] = pkgNames.map(pkg => {
+					val pkgNmNodes : Array[String] = pkg.split('.').dropRight(1)
+					val buf : StringBuilder = new StringBuilder
+					pkgNmNodes.addString(buf, ".")
+					buf.toString
+				})
+				pkgs
+			} else {
+				Array[String]()
+			}
+		} else {
+			Array[String]()
+		}
 		
+		if (pkgNames.size > 0) {
+			commentBuffer.append(s"/** Custom Udf Libraries Specified in PMML */\n")
+			pkgNames.foreach( fullPkgObjName => {
+				commentBuffer.append(s"import $fullPkgObjName._\n")
+			})
+			
+			pkgsOnly.foreach( pkg => {
+				commentBuffer.append(s"import $pkg._\n")
+			})
+		} else {
+			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML */\n")
+		}
 		
+		/** Give the rest... */
+		commentBuffer.append(s"/** Other Packages... */\n")
+		commentBuffer.append(s"import com.ligadata.OnLEPBase._\n")
 		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
@@ -967,8 +988,18 @@ object NodePrinterHelpers extends LogTrait {
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
 
-		
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = ctx.containersInScope.filter( _._1 == "msg").head
+		/** plan for the day when there are multiple messages present in the constructor */
+		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
+			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
+			isPrintedInCtor
+		}).toArray
+
+		/** pick the first one (and only one) AFTER the gCtx for now */
+		val msgContainerInfoSize : Int = msgNameContainerInfo.size
+		if (msgContainerInfoSize <= 1) {
+			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+		}
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
 		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
 		val msgTypeStr : String = msgTypedef.typeString
 		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
@@ -1052,11 +1083,24 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"    }\n")
 		clsBuffer.append(s"\n")		
 		
+		/** plan for the day when there are multiple messages present in the constructor */
+		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
+			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
+			isPrintedInCtor
+		}).toArray
+
+		/** pick the first one (and only one) AFTER the gCtx for now */
+		val msgContainerInfoSize : Int = msgNameContainerInfo.size
+		if (msgContainerInfoSize <= 1) {
+			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+		}
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
+		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
 			
 		clsBuffer.append(s"\n")
 		clsBuffer.append(s"    /***********************************************************************/\n")
 		clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
-		clsBuffer.append(s"    ctx.dDict.apply(${'"'}msg${'"'}).Value(new AnyDataValue(msg))\n")
+		clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
 		clsBuffer.append(s"    /***********************************************************************/\n")
 		/** 
 		 *  Add the initialize function to the the class body 

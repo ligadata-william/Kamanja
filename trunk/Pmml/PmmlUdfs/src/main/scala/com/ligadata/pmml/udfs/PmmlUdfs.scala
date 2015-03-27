@@ -43,12 +43,12 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
   /** BaseMsg & BaseContainer instantiation
       Instantiate an empty BaseMsg or BaseContainer. 
-  */
+  
   
   def NewMessageOrContainer(fqclassname : String) : MessageContainerBase = {
       val msgOrContainer : MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
       msgOrContainer
-  }
+  }*/
 
 
   /** BaseMsg & BaseContainer access 
@@ -99,6 +99,15 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def Put(ctx: Context, variableName: String, value: String): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
+
+      val stopIt2 : Boolean = (variableName == "At_High_Risk_for_COPD___Criteria_3_Type")
+      if (stopIt2) {
+    	  val stopNow : Int = 0
+      }
+      val stopIt3 : Boolean = (variableName == "At_High_Risk_for_COPD___Criteria_3_Name")
+      if (stopIt3) {
+    	  val stopNow : Int = 0
+      }
       set = ctx.valuePut(variableName, new StringDataValue(value))
     }
     set
@@ -139,6 +148,12 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def Put(ctx: Context, variableName: String, value: Boolean): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
+
+      val stopIt1 : Boolean = (variableName == "At_High_Risk_for_COPD")
+      if (stopIt1) {
+    	  val stopNow : Int = 0
+      }
+      
       set = ctx.valuePut(variableName, new BooleanDataValue(value))
     }
     set
@@ -204,7 +219,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -213,7 +228,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -222,7 +237,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -231,7 +246,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -240,7 +255,7 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     if (mc != null) {
     	mc
     } else {
-    	NewMessageOrContainer(fqClassName)
+    	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
 
@@ -2674,11 +2689,17 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 		  if (nameParts.size == 2) {
 			  val msgContainerName : String = nameParts(0)
 			  val fieldName : String = nameParts(1)
-			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(fldName)) {
-				  ctx.xDict.apply(fldName).asInstanceOf[MessageContainerBase]
+			  val msgOrContainer : MessageContainerBase = if (ctx.isFieldInTransformationDict(msgContainerName)) {
+				  val derivedFld : DataValue = ctx.valueFor(msgContainerName)
+				  val anyValue : AnyDataValue = if (derivedFld.isInstanceOf[AnyDataValue]) derivedFld.asInstanceOf[AnyDataValue] else null
+				  val mOrC : MessageContainerBase = if (anyValue.Value.isInstanceOf[MessageContainerBase]) anyValue.Value.asInstanceOf[MessageContainerBase] else null
+				  mOrC
 			  } else {
-				  if (ctx.isFieldInDataDict(fldName)) {
-					  ctx.dDict.apply(fldName).asInstanceOf[MessageContainerBase]
+				  if (ctx.isFieldInDataDict(msgContainerName)) {
+					  val dataFld : DataValue = ctx.valueFor(msgContainerName)
+					  val anyValue : AnyDataValue = if (dataFld.isInstanceOf[AnyDataValue]) dataFld.asInstanceOf[AnyDataValue] else null
+					  val mOrC : MessageContainerBase = if (anyValue.Value.isInstanceOf[MessageContainerBase]) anyValue.Value.asInstanceOf[MessageContainerBase] else null
+					  mOrC
 				  } else {
 					  null
 				  }
@@ -3262,6 +3283,13 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     iArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple2[Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   /** ToArrayOf<Scalar> for Tuple3 */
   def ToArray(tuple: Tuple3[Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
@@ -3286,6 +3314,13 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     val arr: Array[Any] = tuple.productIterator.toArray
     val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple3[Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   /** ToArrayOf<Scalar> for Tuple4 */
@@ -3314,6 +3349,13 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     iArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple4[Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   /** ToArrayOf<Scalar> for Tuple5 */
   def ToArray(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
@@ -3338,6 +3380,13 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     val arr: Array[Any] = tuple.productIterator.toArray
     val iArray: Array[Int] = arr.map(itm => if (itm.isInstanceOf[Int]) itm.asInstanceOf[Int] else 0)
     iArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple5[Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   /** ToArrayOf<Scalar> for Tuple6 */
@@ -3366,69 +3415,188 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     iArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple6[Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   /** FIXME: Do ToArrayOf<Scalar> for the remaining tuples */
   def ToArray(tuple: Tuple7[Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple7[Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple8[Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple8[Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple9[Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple9[Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple11[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple11[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple12[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple12[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple13[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple13[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple14[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple14[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple15[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple15[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple16[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple16[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple17[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple17[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple18[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple18[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple19[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple19[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple20[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple20[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple21[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
   }
 
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple21[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
+  }
+
   def ToArray(tuple: Tuple22[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Any] = {
     tuple.productIterator.toArray
+  }
+
+  /** if the tuple is not boolean, a false is returned at that position */
+  def ToArrayOfBoolean(tuple: Tuple22[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]): Array[Boolean] = {
+    val arr: Array[Any] = tuple.productIterator.toArray
+    val bArray: Array[Boolean] = arr.map(itm => if (itm.isInstanceOf[Boolean]) itm.asInstanceOf[Boolean] else false)
+    bArray
   }
 
   def ToArray(tuple: Tuple1[Int]): Array[Int] = {
