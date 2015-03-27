@@ -39,7 +39,7 @@
       </span>
       </h4>
       
-          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p> The FcnMacroAttr.Feature is used to describe the sort of macro or function is being defined.  Briefly,</p><p>   ITERABLE - when included in a MacroDef instance's features set, the first argument of the macro
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p> The FcnMacroAttr.Feature is used to describe the sort of macro is being defined.  Briefly,</p><p>   ITERABLE - when included in a MacroDef instance's features set, the first argument of the macro
    	is a Scala Iterable and the code that will be generated looks like arg1.filter( itm =&gt; arg2(arg3,arg4,...,argN)
      or other iterable function (e.g., map, foldLeft, zip, etc).
    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect
@@ -49,8 +49,6 @@
      class representing the derived field.  A global optimization of the derived field's function would be needed to
      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple
      parts.
-   HAS_INDEFINITE_ARITY when set this function def as a varargs or if you prefer variadic specification on its last
-     argument (e.g., And(boolExpr : Boolean*) ).
 </p></div><div class="toggleContainer block">
           <span class="toggle">Linear Supertypes</span>
           <div class="superTypes hiddenContent"><span class="extype" name="scala.Enumeration">Enumeration</span>, <span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
@@ -242,19 +240,6 @@
       </span>
       </h4>
       
-    </li><li name="com.ligadata.olep.metadata.FcnMacroAttr#HAS_INDEFINITE_ARITY" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="HAS_INDEFINITE_ARITY:com.ligadata.olep.metadata.FcnMacroAttr.Value"></a>
-      <a id="HAS_INDEFINITE_ARITY:Value"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">HAS_INDEFINITE_ARITY</span><span class="result">: <a href="#ValueextendsOrdered[Enumeration.this.Value]withSerializable" class="extmbr" name="com.ligadata.olep.metadata.FcnMacroAttr.Value">Value</a></span>
-      </span>
-      </h4>
-      
     </li><li name="com.ligadata.olep.metadata.FcnMacroAttr#ITERABLE" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ITERABLE:com.ligadata.olep.metadata.FcnMacroAttr.Value"></a>
       <a id="ITERABLE:Value"></a>
@@ -410,19 +395,6 @@
     </span>)</span>
               
         </dd></dl></div>
-    </li><li name="com.ligadata.olep.metadata.FcnMacroAttr#fromString" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="fromString(feat:String):com.ligadata.olep.metadata.FcnMacroAttr.Feature"></a>
-      <a id="fromString(String):Feature"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">fromString</span><span class="params">(<span name="feat">feat: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="#Feature=com.ligadata.olep.metadata.FcnMacroAttr.Value" class="extmbr" name="com.ligadata.olep.metadata.FcnMacroAttr.Feature">Feature</a></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.AnyRef#getClass" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="getClass():Class[_]"></a>
       <a id="getClass():Class[_]"></a>

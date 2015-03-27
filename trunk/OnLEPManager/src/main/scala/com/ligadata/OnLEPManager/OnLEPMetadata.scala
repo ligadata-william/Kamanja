@@ -8,9 +8,9 @@ import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.OnLEPBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
+import com.ligadata.OnLEPBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
-import org.apache.log4j.Logger
+import org.apache.log4j._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
@@ -21,7 +21,7 @@ class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
 
 // msgobj is null for Containers
-class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var msgobj: BaseMsgObj) {
+class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, var contmsgobj: MessageContainerObjBase) {
   var parents = new ArrayBuffer[(String, String)] // Immediate parent comes at the end, grand parent last but one, ... Messages/Containers. the format is Message/Container Type name and the variable in that.
   var childs = new ArrayBuffer[(String, String)] // Child Messages/Containers (Name & type). We fill this when we create message and populate parent later from this
 }
@@ -29,6 +29,8 @@ class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 class OnLEPMetadata {
   val LOG = Logger.getLogger(getClass);
+
+  // LOG.setLevel(Level.TRACE)
 
   // Metadata manager
   val messageObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
@@ -155,50 +157,69 @@ class OnLEPMetadata {
     }
   }
 
-  def PrepareContainer(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean): Unit = {
+  def PrepareContainer(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
     if (loadJars)
       LoadJarIfNeeded(container, loadedJars, loader)
     // else Assuming we are already loaded all the required jars
 
-    val clsName = container.PhysicalName
-    val containerName = container.FullName.toLowerCase
+    if (ignoreClassLoad) {
+      val contName = container.FullName.toLowerCase
+      val containerObj = new MsgContainerObjAndTransformInfo(null, null)
+      GetChildsFromEntity(container.containerType, containerObj.childs)
+      containerObjects(contName) = containerObj
+      LOG.info("Added Base Container:" + contName)
+      return
+    }
+
+    var clsName = container.PhysicalName.trim
+    if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') // if no $ at the end we are taking $
+      clsName = clsName + "$"
 
     var isContainer = true
 
-    /*
-		// If required we need to enable this test
-		// Convert class name into a class
-		var curClz = Class.forName(clsName, true, loader)
-		
-		isContainer = false
-		
-		while (curClz != null && isContainer == false) {
-		isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
-		if (isContainer == false)
-		curClz = curClz.getSuperclass()
-		}
-		*/
-    /*
-      if (isContainer) {
-        try {
-          val module = mirror.staticModule(clsName)
-          val obj = mirror.reflectModule(module)
+    try {
+      // If required we need to enable this test
+      // Convert class name into a class
+      var curClz = Class.forName(clsName, true, loader)
 
-          val objinst = obj.instance
-          if (objinst.isInstanceOf[BaseContainer]) {
-            val containerobj = objinst.asInstanceOf[BaseContainer]
-            val containerName = (container.NameSpace.trim + "." + container.Name.trim).toLowerCase
-            containerObjects(containerName) = containerobj
-          } else
-            LOG.error("Failed to instantiate container object :" + clsName)
-        } catch {
-          case e: Exception => LOG.error("Failed to instantiate container object:" + clsName+ ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+      isContainer = false
+
+      while (curClz != null && isContainer == false) {
+        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
+        if (isContainer == false)
+          curClz = curClz.getSuperclass()
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to get classname :" + clsName)
+        e.printStackTrace
+      }
+    }
+
+    if (isContainer) {
+      try {
+        val module = mirror.staticModule(clsName)
+        val obj = mirror.reflectModule(module)
+        val objinst = obj.instance
+        if (objinst.isInstanceOf[BaseContainerObj]) {
+          val containerobj = objinst.asInstanceOf[BaseContainerObj]
+          val contName = container.FullName.toLowerCase
+          val contObj = new MsgContainerObjAndTransformInfo(null, containerobj)
+          GetChildsFromEntity(container.containerType, contObj.childs)
+          containerObjects(contName) = contObj
+
+          LOG.info("Created Container:" + contName)
+        } else {
+          LOG.error("Failed to instantiate container object :" + clsName)
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
         }
       }
-*/
-    val containerObj = new MsgContainerObjAndTransformInfo(null, null)
-    GetChildsFromEntity(container.containerType, containerObj.childs)
-    containerObjects(containerName) = containerObj
+    } else {
+      LOG.error("Failed to instantiate containerObjects object :" + clsName)
+    }
   }
 
   def PrepareModel(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
@@ -335,8 +356,14 @@ class OnLEPMetadata {
       LoadJarIfNeeded(container, loadedJars, loader)
     })
 
+    val baseContainersPhyName = scala.collection.mutable.Set[String]()
+    val baseContainerInfo = MetadataLoad.BaseContainersInfo
+    baseContainerInfo.foreach(bc => {
+      baseContainersPhyName += bc._3
+    })
+
     containerDefs.foreach(container => {
-      PrepareContainer(loadedJars, loader, mirror, container, false) // Already Loaded required dependency jars before calling this
+      PrepareContainer(loadedJars, loader, mirror, container, false, baseContainersPhyName.contains(container.PhysicalName.trim)) // Already Loaded required dependency jars before calling this
     })
 
   }
@@ -358,7 +385,7 @@ class OnLEPMetadata {
   }
 }
 
-object OnLEPMetadata {
+object OnLEPMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
@@ -371,6 +398,8 @@ object OnLEPMetadata {
   private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
+
+  LOG.setLevel(Level.TRACE)
 
   private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
@@ -537,6 +566,9 @@ object OnLEPMetadata {
 
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
   def UpdateMetadata(receivedJsonStr: String): Unit = {
+
+    LOG.trace("Process ZooKeeper notification " + receivedJsonStr)
+
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
       return
@@ -568,6 +600,7 @@ object OnLEPMetadata {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      LOG.trace("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
@@ -628,6 +661,7 @@ object OnLEPMetadata {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      LOG.trace("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
@@ -695,7 +729,7 @@ object OnLEPMetadata {
               try {
                 val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
                 if (container != None) {
-                  obj.PrepareContainer(loadedJars, loader, mirror, container.get, true)
+                  obj.PrepareContainer(loadedJars, loader, mirror, container.get, true, false)
                 } else {
                   LOG.error("Failed to find Container:" + key)
                 }
@@ -720,13 +754,25 @@ object OnLEPMetadata {
           }
         }
         case _ => {
-          LOG.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
+          LOG.warn("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
         }
       }
     })
 
     // Lock the global object here and update the global objects
     UpdateOnLepMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
+  }
+
+  override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {
+    var v: MsgContainerObjAndTransformInfo = null
+
+    v = getMessageOrContainer(MsgContainerType)
+    if (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseMsgObj]) {
+      return v.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
+    } else if (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseContainerObj]) { // NOTENOTE: Not considering Base containers here
+      return v.contmsgobj.asInstanceOf[BaseContainerObj].CreateNewContainer
+    }
+    return null
   }
 
   def getMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
@@ -770,6 +816,23 @@ object OnLEPMetadata {
     reent_lock.readLock().lock();
     try {
       v = localgetContainer(containerName)
+    } catch {
+      case e: Exception => { exp = e }
+    } finally {
+      reent_lock.readLock().unlock();
+    }
+    if (exp != null)
+      throw exp
+    v
+  }
+
+  def getMessageOrContainer(msgOrContainerName: String): MsgContainerObjAndTransformInfo = {
+    var exp: Exception = null
+    var v: MsgContainerObjAndTransformInfo = null
+
+    reent_lock.readLock().lock();
+    try {
+      v = localgetMessgeOrContainer(msgOrContainerName)
     } catch {
       case e: Exception => { exp = e }
     } finally {
@@ -834,8 +897,9 @@ object OnLEPMetadata {
   private def localgetMessgeInfo(msgType: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(msgType.toLowerCase, null)
-    if (v == null || v.msgobj == null) return null
-    v
+    if (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseMsgObj])
+      return v
+    return null
   }
 
   private def localgetModel(mdlName: String): MdlInfo = {
@@ -846,13 +910,24 @@ object OnLEPMetadata {
   private def localgetContainer(containerName: String): MsgContainerObjAndTransformInfo = {
     if (messageContainerObjects == null) return null
     val v = messageContainerObjects.getOrElse(containerName.toLowerCase, null)
-    if (v == null || v.msgobj != null) return null
+    if ((v != null && v.contmsgobj == null) // Base containers 
+      || (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseContainerObj]))
+      return v
+    return null
+  }
+
+  private def localgetMessgeOrContainer(msgOrContainerName: String): MsgContainerObjAndTransformInfo = {
+    if (messageContainerObjects == null) return null
+    val v = messageContainerObjects.getOrElse(msgOrContainerName.toLowerCase, null)
     v
   }
 
   private def localgetAllMessges: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
-    messageContainerObjects.filter(o => o._2.msgobj != null).toMap
+    messageContainerObjects.filter(o => {
+      val v = o._2
+      (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseMsgObj])
+    }).toMap
   }
 
   private def localgetAllModels: Map[String, MdlInfo] = {
@@ -862,7 +937,11 @@ object OnLEPMetadata {
 
   private def localgetAllContainers: Map[String, MsgContainerObjAndTransformInfo] = {
     if (messageContainerObjects == null) return null
-    messageContainerObjects.filter(o => o._2.msgobj == null).toMap
+    messageContainerObjects.filter(o => {
+      val v = o._2
+      ((v != null && v.contmsgobj == null) // Base containers 
+        || (v != null && v.contmsgobj != null && v.contmsgobj.isInstanceOf[BaseContainerObj]))
+    }).toMap
   }
 
   def getMdMgr: MdMgr = mdMgr

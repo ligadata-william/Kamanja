@@ -20,27 +20,6 @@ Fatafat is helping one financial partner reduce overnight global system transact
 
 Medical applications are using Fatafat to create a system that analyzes physician notes, test results and patient input to identify certain combinations of information that may alert health care practitioners to new or changed conditions.
 
-###How to Get Started
-
-	1. Download latest Fatafat binaries from here:
-	
-		http://www.ligadata.com/releases/bin/fatafat_install_v101.zip
-
-	2. Unzip the downloaded file
-	
-		a. On Mac OS just double click the fatafat_install_v101.zip file if it’s not already unzipped.
-		b. On Windows use ‘winrar’ or ‘winzip’ to unzip it. 
-		c. On other Linux based OS, use command “unzip fatafat_install_v101.zip -d destination_folder”. 
-	   	[Use “sudo apt-get install unzip” if unzip not found]
-
-
-	3. Get started with setup instructions found in InstallDirectory/documentation/Fatafat1_0SetupRunGuide.pdf
-
-	4. Ask questions, explore, and help improve Fatafat community at:
-	
-		https://groups.google.com/a/ligadata.com/forum/?hl=en#!forum/fatafat_userforum
-		[You may need to ask to join the group if you’re not already a member]
-
-###To Install Fatafat from Source Code
+###To Install Fatafat
 - Clone Fatafat/trunk
 - Please see the Setup and Running guide at ~\LigaData\Fatafat\trunk\Documentation for installation details, and brief instructions to run the engine.
