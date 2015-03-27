@@ -83,7 +83,11 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
 
     override def main( args : Array[String]) : Unit = {
 		
-        if (args.length == 0) println(usage)
+        if (args.length == 0) {
+            println("Problem: No arguments supplied")
+        	println(usage)
+        	sys.exit(1)
+        }
         val arglist = args.toList
         type OptionMap = Map[Symbol, String]
         //println(arglist)
@@ -107,7 +111,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
             case "--installDir" :: value :: tail =>
               nextOption(map ++ Map('installDir -> value), tail)  
             case option :: tail =>
-              println("Unknown option " + option)
+              println("Problem: Unknown option " + option)
               println(usage)
               sys.exit(1)
           }
@@ -132,9 +136,9 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
             							&& ipIdCfgTargPathQuartetFileName != null && ipIdCfgTargPathQuartetFileName.size > 0 
             							&& clusterId != null)
         if (! reasonableArguments) {
-            println("Your arguments are not satisfactory...Usage:")
+            println("Problem: Your arguments are not satisfactory...Usage:")
             println(usage)
-            throw new RuntimeException("Your arguments are not satisfactory")
+            sys.exit(1)
         }
                     
    		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath, clusterId, installDir)

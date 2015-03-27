@@ -41,6 +41,9 @@
 #   NOTE: Only tar'd gzip files supported at the moment for the tarballs.
 #
 
+scalaversion="2.10"
+name1=$1
+
 Usage()
 {
     echo 
@@ -62,11 +65,15 @@ Usage()
     echo "         in it.  The working directory, by default, is /tmp.  If such a public location is abhorrent, chose a private one.  It"
     echo "         must be an existing directory and readable by this script, however"
     echo "         If both the KafkaInstallPath and the TarballPath are specified, the script fails."
+    echo "         If neither the KafkaInstallPath or TarballPath  is supplied, the script will fail. "
+    echo "         A ClusterId is a required argument.  It will use only the nodes identified with that cluster id."
+    echo
+    echo "         In addition, the NodeInfoExtract application that is used by this installer to fetch cluster node configuration  "
+    echo "         information must be on the PATH.  It is found in the trunk/Utils/NodeInfoExtract/target/scala-$scalaversion/ "
+    echo
     echo 
 }
 
-scalaversion="2.10"
-name1=$1
 
 # Check 1: Is this even close to reasonable?
 if [[ "$#" -eq 4  || "$#" -eq 6  || "$#" -eq 8 ]]; then
@@ -86,20 +93,6 @@ if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--NodeConfigPath"  && "$
 	exit 1
 fi
 
-# Check 3: Is this even close to reasonable?
-currDirPath=`pwd`
-currDir=`echo "$currDirPath" | sed 's/.*\/\(.*\)/\1/g'`
-if [ "$currDir" != "trunk" ]; then
-    echo 
-    echo "Problem: Currently this script must be run from the trunk directory of a valid local git repo that has had NodeInfoExtract fat jar built."
-    echo "It uses the NodeInfoExtract application found in the trunk/Utils/NodeInfoExtract/target/scala-$scalaversion/ "
-    echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
-    echo "currDir = $currDir"
-    Usage
-    exit 1
-fi
-
-
 # Collect the named parameters 
 metadataAPIConfig=""
 kafkaInstallPath=""
@@ -107,7 +100,7 @@ nodeConfigPath=""
 tarballPath=""
 nodeCfgGiven=""
 workDir="/tmp"
-stagingDirName="ToBeInstalled" 
+installDirName="" 
 clusterId=""
 
 while [ "$1" != "" ]; do
@@ -140,9 +133,26 @@ while [ "$1" != "" ]; do
     shift
 done
 
+# Check 3: Is this even close to reasonable?
+currDirPath=`pwd`
+currDir=`echo "$currDirPath" | sed 's/.*\/\(.*\)/\1/g'`
+if [ "$currDir" != "trunk" -a "$tarballPath" ]; then
+    echo 
+    echo "Problem: Currently if building installation from source, this script must be run from the trunk directory of the "
+    echo "valid local git repo containing the desired software version."
+    echo
+    echo "This is the current directory : $currDir"
+    echo
+    Usage
+    exit 1
+fi
+
+
 
 # Check 4: Is this even close to reasonable?
-if [ -n "$TarballPath" -a -n "$KafkaInstallPath" ]; then
+echo "tarballPath = $tarballPath"
+echo "kafkaInstallPath = $kafkaInstallPath"
+if [ -n "$tarballPath" -a -n "$kafkaInstallPath" ]; then
     echo 
     echo "Problem: Either install from source or use the tarball specification... just don't do both on same run."
     Usage
@@ -150,6 +160,15 @@ if [ -n "$TarballPath" -a -n "$KafkaInstallPath" ]; then
 fi
 
 # Check 5: if the working directory was given, make sure it is full qualified
+if [ -z "$tarballPath" -a -z "$kafkaInstallPath" ]; then
+    echo 
+    echo "Problem: Installation impossible. Specify --KafkaInstallPath to install from sources."
+    echo "         Alternatively, specify a --TarballPath to install your tarball."
+    Usage
+    exit 1
+fi
+
+# Check 6: if the working directory was given, make sure it is full qualified
 workDirHasLeadSlash=`echo "$workDir" | grep '^\/.*'`
 if [ -z "$workDirHasLeadSlash" ]; then
     echo 
@@ -158,7 +177,7 @@ if [ -z "$workDirHasLeadSlash" ]; then
     exit 1
 fi
 
-# Check 6: working directory must exist
+# Check 7: working directory must exist
 if [ ! -d "$workDir" ]; then
     echo 
     echo "Problem: The WorkingDir must exist and be a directory."
@@ -167,7 +186,7 @@ if [ ! -d "$workDir" ]; then
 fi
 
 if [ -n "$tarballPath" ]; then
-    # Check 7: tarball path must exist
+    # Check 8: tarball path must exist
     if [ ! -f "$tarballPath" ]; then
         echo 
         echo "Problem: The TarballPath must exist and be a regular file."
@@ -175,7 +194,7 @@ if [ -n "$tarballPath" ]; then
         exit 1
     fi
 
-    # Check 8: tarball path must be readable
+    # Check 9: tarball path must be readable
     if [ ! -r "$tarballPath" ]; then
         echo 
         echo "Problem: The TarballPath must be readable."
@@ -185,14 +204,14 @@ if [ -n "$tarballPath" ]; then
 fi
 
 if [ -n "$kafkaInstallPath" ]; then
-    # Check 9: Is Kafka legit?
+    # Check 10: Is Kafka legit?
     if [ ! -d "$kafkaInstallPath" ]; then
         echo 
         echo "Problem: KafkaInstallPath must exist."
         Usage
         exit 1
     fi
-    # Check 10: Is Kafka legit?
+    # Check 11: Is Kafka legit?
     if [ ! -f "$kafkaInstallPath/bin/kafka-server-start.sh" ]; then
         echo 
         echo "Problem: KafkaInstallPath $kafkaInstallPath doesn't look right... where is bin/kafka-server-start.sh?"
@@ -201,7 +220,7 @@ if [ -n "$kafkaInstallPath" ]; then
     fi
 fi
 
-# Check 11: Does the metadata api config exist?
+# Check 12: Does the metadata api config exist?
 if [ ! -f "$metadataAPIConfig" ]; then
     echo 
     echo "Problem: The MetadataAPIConfig $metadataAPIConfig doesn't exist... please refer to a valid metadata api configuration file"
@@ -209,9 +228,9 @@ if [ ! -f "$metadataAPIConfig" ]; then
     exit 1
 fi
 
-# Check 12: If the node config was given, does it exist?
+# Check 13: If the node config was given, does it exist?
 if [ -n "$nodeConfigPath" ]; then
-    if [ ! -f "$metadataAPIConfig" ]; then
+    if [ ! -f "$nodeConfigPath" ]; then
         echo 
         echo "Problem: The supplied (optional) NodeConfigPath $nodeConfigPath doesn't exist... please refer to a valid node configuration file"
         Usage
@@ -219,15 +238,10 @@ if [ -n "$nodeConfigPath" ]; then
     fi
 fi
 
-# Check 13: There must be a clusterId and if a nodeConfigPath is specified, it must be the same value as the ClusterId value found there
+# Check 14: There must be a clusterId, and if a nodeConfigPath is specified, it must be the same value as the ClusterId value found there
 if [ -n "$clusterId" ]; then
-    if [ ! -f "$nodeConfigPath" ]; then
-        echo 
-        echo "Problem: The supplied (optional) NodeConfigPath $nodeConfigPath has a cluster id that is different than the clusterId"
-        Usage
-        exit 1
-    else
-        numberClusters=`cat $nodeConfigPath | grep '[C][l][u][s][t][e][r][I][d]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g' | wc -l`
+    if [ -f "$nodeConfigPath" ]; then
+        numberClusters=`cat $nodeConfigPath | grep '[Cc][lL][uU][sS][tT][eE][rR][Ii][dD]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g' | wc -l`
         if [ "$numberClusters" -ne 1 ]; then
             echo 
             echo "Problem: The $nodeConfigPath has more that one cluster definition in it.  That is not supported.  Create a node config with the desired cluster declaration and resubmit."
@@ -235,11 +249,11 @@ if [ -n "$clusterId" ]; then
             exit 1
         fi
         
-        nodeCfgClusterName=`cat $nodeConfigPath | grep '[C][l][u][s][t][e][r][I][d]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g'`
+        nodeCfgClusterName=`cat $nodeConfigPath | grep '[Cc][lL][uU][sS][tT][eE][rR][Ii][dD]' | sed 's/.*:[ \t][ \t]*\"\(.*\)\".*/\1/g'`
         # case insensitive compare (bash 4x assumed...)
         if [ "${nodeCfgClusterName,,}" != "${clusterId,,}" ]; then
             echo 
-            echo "Problem: The supplied cluster identifier ($clusterId) must be same as one in $nodeConfigPath (i.e., $nodeCfgClusterName) when config is being supplied via node configuration file."
+            echo "Problem: The supplied cluster identifier ($clusterId) must be same as one in $nodeConfigPath (i.e., $nodeCfgClusterName) when the node config is being supplied with a node configuration file."
             Usage
             exit 1
         fi
@@ -258,14 +272,14 @@ fi
 
 # Skip the build if tarballPath was supplied 
 dtPrefix="FataFat`date +"%Y%b%d"`"
-tarName="$dtPrefix.bz2"
+tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
 installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
-
+installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g'`
 if [ -z "$tarballPath" ]; then
     # 1 build the installation in the staging directory
-    stagingDir="$workDir/$stagingDirName"
+    stagingDir="$workDir/$installDirName"
     mkdir -p "$stagingDir"
     echo "...build the FataFat installation directory in $stagingDir"
 
@@ -278,7 +292,7 @@ if [ -z "$tarballPath" ]; then
     # 2) compress staging dir and tar it
     echo "...compress and tar the installation directory $stagingDir to $tarName"
     cd "$workDir"
-    tar czf "$workDir/$tarName" "$stagingDirName"
+    tar czvf "$workDir/$tarName" "$installDirName"
     cd "$trunkDir"
 
     tarballPath="$workDir/$tarName"
@@ -293,14 +307,27 @@ ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
 
-nodeInfoExtractDir="$trunkDir/Utils/NodeInfoExtract/target/scala-$scalaversion"
-echo "...extract node information for the cluster to be installed from the Metadata and OnLEP config supplied"
+echo "...extract node information for the cluster to be installed from the Metadata configuration and optional node information supplied"
 if  [ -n "$nodeCfgGiven" ]; then
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-    "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
+    echo "...Command = NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
+    NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
+    # Check 15: Bad NodeInfoExtract-1.0 arguments
+    if [ "$?" -ne 0 ]; then
+        echo
+        echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
+        Usage
+        exit 1
+    fi
 else # info is assumed to be present in the supplied metadata store... see trunk/utils/NodeInfoExtract for details 
     echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-        "$nodeInfoExtractDir"/NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
+        NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
+    # Check 15: Bad NodeInfoExtract-1.0 arguments
+    if [ "$?" -ne 0 ]; then
+        echo
+        echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
+        Usage
+        exit 1
+    fi
 fi
 
 # 4) Push the tarballs to each machine defined in the supplied configuration
@@ -318,20 +345,22 @@ exec 0<&12 12<&-
 echo
 
 # 5) untar/decompress tarballs there and move them into place
-echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$stagingDirName... then move to corresponding target path"
+echo "...for each directory specified on each machine participating in the cluster, untar and decompress the software to $workDir/$installDirName... then move to corresponding target path"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipPathPairFile"
 while read LINE; do
     machine=$LINE
     read LINE
     targetPath=$LINE
-    echo "Extract the tarball $tarName and copy it to $targetPath"
+    echo "Extract the tarball $tarName and copy it to $targetPath iff $workDir/$installDirName != $targetPath"
 	ssh -T $machine  <<-EOF
 	        cd $workDir
+            rm -Rf $targetPath
 	        tar xzf $tarName
-	        rm -Rf $targetPath
-	        mkdir -p $targetPath
-	        cp -R $workDir/$stagingDirName/* $targetPath/
+            if [ "$workDir/$installDirName" != "$targetPath" ]; then
+	           mkdir -p $targetPath
+	           cp -R $workDir/$installDirName/* $targetPath/
+            fi
 EOF
 done
 exec 0<&12 12<&-
@@ -339,7 +368,7 @@ exec 0<&12 12<&-
 echo
 
 # 6) Push the node$nodeId.cfg file to each cluster node's working directory.
-echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$stagingDirName) for this cluster "
+echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$installDirName) for this cluster "
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
