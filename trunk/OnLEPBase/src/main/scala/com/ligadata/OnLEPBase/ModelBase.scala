@@ -128,6 +128,15 @@ trait EnvContext {
 
   def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
   def GetValidateAdapterInformation: Array[(String, String)]
+
+  /**
+   *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is
+   *  invalid, null is returned.
+   *  @param fqclassname : a full package qualifed class name
+   *  @return a MesssageContainerBase of that ilk
+   */
+  def NewMessageOrContainer(fqclassname : String) : MessageContainerBase
+
 }
 
 trait ModelBase {
@@ -156,4 +165,3 @@ trait ModelBaseObj {
 
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
-
