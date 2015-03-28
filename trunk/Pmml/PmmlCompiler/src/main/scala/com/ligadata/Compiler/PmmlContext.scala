@@ -85,26 +85,6 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	var dDict : HashMap[String,xDataField] = HashMap[String,xDataField]()
 	def DataDict : HashMap[String,xDataField] = dDict
 	def DataDict( d : HashMap[String,xDataField]) { dDict = d }
-	
-	/**
-	 * Answer the full package qualifed names of the Scala Objects that contain udfs.  These are to be added to the 
-	 * import list of the generated scala for the model.  It is up to the modeler to specify which UDF objects to use
-	 * in the model.
-	 * 
-	 * By design, these full package qualified object names must be specified as enumerated values in the data dictionary
-	 * element named "UDFSearchPath".
-	 * 
-	 */
-	def udfSearchPath : Array[String] = {
-		val pathDataField : xDataField = if (dDict.contains("UDFSearchPath")) dDict("UDFSearchPath") else null
-		val srchPath : Array[String] = if (pathDataField != null) {
-			pathDataField.values.map( valPair => valPair._1).toArray
-		} else {
-			Array[String]()
-		}
-		srchPath
-	}
-	
 
 	var xDict : HashMap[String,xDerivedField] = HashMap[String,xDerivedField]()
 	def TransformDict : HashMap[String,xDerivedField] = xDict
