@@ -1281,6 +1281,19 @@ the FunctionDef either as a JSON or XML string depending on the parameter format
       </span>
       </h4>
       
+    </li><li name="com.ligadata.MetadataAPI.MetadataAPIImpl#GetLatestModelFromModels" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GetLatestModelFromModels(modelSet:Set[com.ligadata.olep.metadata.ModelDef]):com.ligadata.olep.metadata.ModelDef"></a>
+      <a id="GetLatestModelFromModels(Set[ModelDef]):ModelDef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">GetLatestModelFromModels</span><span class="params">(<span name="modelSet">modelSet: <span class="extype" name="scala.Predef.Set">Set</span>[<a href="../olep/metadata/ModelDef.html" class="extype" name="com.ligadata.olep.metadata.ModelDef">ModelDef</a>]</span>)</span><span class="result">: <a href="../olep/metadata/ModelDef.html" class="extype" name="com.ligadata.olep.metadata.ModelDef">ModelDef</a></span>
+      </span>
+      </h4>
+      
     </li><li name="com.ligadata.MetadataAPI.MetadataAPIImpl#GetMessageDef" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="GetMessageDef(objectName:String,version:String,formatType:String):String"></a>
       <a id="GetMessageDef(String,String,String):String"></a>
@@ -2707,15 +2720,15 @@ if we retry to upload it will throw an exception.</p></div><dl class="paramcmts 
 indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
 ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="" class="extype" name="com.ligadata.MetadataAPI.MetadataAPIImpl">MetadataAPIImpl</a> → <a href="MetadataAPI.html" class="extype" name="com.ligadata.MetadataAPI.MetadataAPI">MetadataAPI</a></dd></dl></div>
     </li><li name="com.ligadata.MetadataAPI.MetadataAPIImpl#UploadJarToDB" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="UploadJarToDB(jarName:String,byteArray:Array[Byte]):String"></a>
-      <a id="UploadJarToDB(String,Array[Byte]):String"></a>
+      <a id="UploadJarToDB(jarName:String,byteArray:Array[Byte]):Unit"></a>
+      <a id="UploadJarToDB(String,Array[Byte]):Unit"></a>
       <h4 class="signature">
       <span class="modifier_kind">
         <span class="modifier"></span>
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">UploadJarToDB</span><span class="params">(<span name="jarName">jarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="byteArray">byteArray: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">UploadJarToDB</span><span class="params">(<span name="jarName">jarName: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="byteArray">byteArray: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Byte">Byte</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       </h4>
       
@@ -2950,19 +2963,6 @@ ApiResult.statusDescription and ApiResult.resultData indicate the nature of the 
       </span>
       </h4>
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="com.ligadata.MetadataAPI.MetadataAPIImpl#isCassandra" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="isCassandra:Boolean"></a>
-      <a id="isCassandra:Boolean"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">var</span>
-      </span>
-      <span class="symbol">
-        <span class="name">isCassandra</span><span class="result">: <span class="extype" name="scala.Boolean">Boolean</span></span>
-      </span>
-      </h4>
-      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <a id="isInstanceOf[T0]:Boolean"></a>
@@ -3064,19 +3064,6 @@ ApiResult.statusDescription and ApiResult.resultData indicate the nature of the 
       </span>
       <span class="symbol">
         <span class="name">oStore</span><span class="result">: <a href="../keyvaluestore/DataStore.html" class="extype" name="com.ligadata.keyvaluestore.DataStore">DataStore</a></span>
-      </span>
-      </h4>
-      
-    </li><li name="com.ligadata.MetadataAPI.MetadataAPIImpl#pList" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="pList:Set[String]"></a>
-      <a id="pList:Set[String]"></a>
-      <h4 class="signature">
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">var</span>
-      </span>
-      <span class="symbol">
-        <span class="name">pList</span><span class="result">: <span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       </h4>
       

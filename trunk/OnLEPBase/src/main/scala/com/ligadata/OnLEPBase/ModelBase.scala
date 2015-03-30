@@ -91,6 +91,7 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
 trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
+  def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
@@ -127,11 +128,11 @@ trait EnvContext {
 
   def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
   def GetValidateAdapterInformation: Array[(String, String)]
-  
-  /** 
-   *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is 
+
+  /**
+   *  Answer an empty instance of the message or container with the supplied fully qualified class name.  If the name is
    *  invalid, null is returned.
-   *  @param fqclassname : a full package qualifed class name 
+   *  @param fqclassname : a full package qualifed class name
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname : String) : MessageContainerBase
@@ -164,4 +165,3 @@ trait ModelBaseObj {
 
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
-

@@ -85,7 +85,6 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
     var resultStr:String = ""
-    var resultDesc:String = ""
     var finalRC: Int = 0
     var deletedObjects: Array[String] = new Array[String](0)
     var finalAPIResult = ""
@@ -105,16 +104,11 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
           } else {
             val iResult = RemoveObjectDef(arg)
             val (iStatusCode,iResultData) = MetadataAPIImpl.getApiResult(iResult)
-            if (iStatusCode == 0)  {
-              deletedObjects +:= iResultData
-              resultDesc = "Delete Successful" 
-            } else {
-              resultDesc = "Unable to Delete: Object Not Found" 
-            }
+            if (iStatusCode == 0)  deletedObjects +:= iResultData else finalRC = -1
           }
         })
       }
-      finalAPIResult = (new ApiResult(finalRC, resultDesc, deletedObjects.mkString(","))).toString
+      finalAPIResult = (new ApiResult(finalRC, "Deleted Objects", deletedObjects.mkString(","))).toString
     }
     else{
       finalAPIResult = (new ApiResult(-1, "Deleted Objects", APIName + ":No arguments passed to the API, nothing much to do")).toString

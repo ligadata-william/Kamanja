@@ -6,6 +6,7 @@ import scala.io.Source._
 import java.util._
 
 import scala.util.parsing.json.{ JSONObject, JSONArray }
+import java.io.{ DataOutputStream, DataInputStream }
 
 // define some enumerations 
 object ObjFormatType extends Enumeration {
@@ -221,6 +222,9 @@ trait TypeImplementation[T] {
   def Input(value: String): T // Converts String to Type T
   def Serialize(value: T): Array[Byte] // Convert Type T to Array[Byte]
   def Deserialize(value: Array[Byte]): T // Convert Array[Byte] to Type T
+  def SerializeIntoDataOutputStream(dos: DataOutputStream, value: T): Unit
+  def DeserializeFromDataInputStream(dis: DataInputStream): T
+ 
   def toString(value: T): String // Convert Type T to String
   def toJsonString(value: T): String // Convert Type T to Json String
 }

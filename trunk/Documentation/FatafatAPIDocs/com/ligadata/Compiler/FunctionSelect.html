@@ -839,13 +839,11 @@
          	unchanged.
           	b) Change the member types to Any keeping the outer collection the same.
            	c) If the returnTypes array has a type or types in it, use it as the member types
-     relaxation 2) If there is or more functions by this name that have been marked HAS_INDEFINITE_ARITY,
-     		create a function key according to that FunctionDef's type signature.
- 	relaxation 3) If there are containers in the argument list, collect the superclasses
+ 	relaxation 2) If there are containers in the argument list, collect the superclasses
   			for each of them, find the first abstract or trait and use it
-     relaxation 4) Change containers to Any
-     relaxation 5) If there are scalars, broaden their width
-     relaxation 6) Make all arguments &quot;Any&quot;
+     relaxation 3) Change containers to Any
+     relaxation 4) If there are scalars, broaden their width
+     relaxation 5) Make all arguments &quot;Any&quot;
 </p></div><dl class="paramcmts block"><dt class="param">fcnName</dt><dd class="cmt"><p>the function' name</p></dd><dt class="param">argTypes</dt><dd class="cmt"><p>the function's argument type info</p></dd><dt class="param">returnTypes</dt><dd class="cmt"><p>if there are any valid type string(s) in it, use them to substitute for the member type(s).  These &quot;return types&quot;
  	are extracted from an argument that uses a map (or similar) function in it that changes the types of the receiver array.  The
   	'map' function is common as it is used to operate on the receiver array content (e.g., summing a number of fields in an array
