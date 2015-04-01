@@ -86,7 +86,7 @@ class APIService {
       logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
       // We will allow access to this web service from all the servers on the PORT # defined in the config file 
-      val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("0.0.0.0")
+      val serviceHost = "0.0.0.0"
       val servicePort = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_PORT").toInt
 
       // create and start our service actor
