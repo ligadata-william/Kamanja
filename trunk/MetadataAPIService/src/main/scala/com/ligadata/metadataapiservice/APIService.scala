@@ -56,67 +56,63 @@ class APIService {
     try{
       var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.error("Config File defaults to " + configFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
-      }
-      else{
-	val options = nextOption(Map(), args.toList)
-	val cfgfile = options.getOrElse('config, null)
-	if (cfgfile == null) {
-	  logger.error("Need configuration file as parameter")
-	  throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
-	}
-	configFile = cfgfile.asInstanceOf[String]
+        logger.error("Config File defaults to " + configFile)
+        logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+        logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+      } else {
+        val options = nextOption(Map(), args.toList)
+        val cfgfile = options.getOrElse('config, null)
+        if (cfgfile == null) {
+          logger.error("Need configuration file as parameter")
+          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.properties")
+        }
+        configFile = cfgfile.asInstanceOf[String]
       }
 
       val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
-	logger.error(failStr)
-	Shutdown(1)
-	return
+        logger.error(failStr)
+        Shutdown(1)
+        return
       }
+      
       if (loadConfigs == null) {
-	Shutdown(1)
-	return
+        Shutdown(1)
+        return
       }
 
       APIInit.SetConfigFile(configFile.toString)
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
       logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
-      // Identify the host and port the service is listening on
-      val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_HOST")
+      // We will allow access to this web service from all the servers on the PORT # defined in the config file 
+      val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("0.0.0.0")
       val servicePort = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_PORT").toInt
 
       // create and start our service actor
       val callbackActor = actor(new Act {
-	become {
-	  case b @ Bound(connection) => logger.info(b.toString)
-	  case cf @ CommandFailed(command) => logger.error(cf.toString)
-	  case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
-	}
+        become {
+         case b @ Bound(connection) => logger.info(b.toString)
+         case cf @ CommandFailed(command) => logger.error(cf.toString)
+         case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
+        }
       })
       val service = system.actorOf(Props[MetadataAPIServiceActor], "metadata-api-service")
 
-      // start a new HTTP server on port 8080 with our service actor as the handler
+      // start a new HTTP server with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
-      logger.trace("Started the service")
+      logger.info("Started the service")
 
       sys.addShutdownHook({
-	logger.trace("ShutdownHook called")
-	Shutdown(0)
+        logger.trace("ShutdownHook called")
+        Shutdown(0)
       })
 
       Thread.sleep(365*24*60*60*1000L)
     } catch {
-      case e: InterruptedException => {
-	  logger.trace("Unexpected Interrupt")
-      }
-      case e: Exception => {
-	e.printStackTrace()
-      }
+      case e: InterruptedException => { logger.info("Unexpected Interrupt") }
+      case e: Exception => { e.printStackTrace() }
     } finally {
       Shutdown(0)
     }
