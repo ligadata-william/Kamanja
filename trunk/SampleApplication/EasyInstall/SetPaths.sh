@@ -43,12 +43,23 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application1/template/script/StartMetadataAPI_Template.sh > $install_dir/input/application1/bin/ApplicationMetadata.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application1/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/application1/bin/PushSampleDataToKafka.sh
 
+# application-1-HelloWorld
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/script/StartMetadataAPI_Template.sh > $install_dir/input/application-1-HelloWorld/bin/ApplicationMetadata.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/application-1-HelloWorld/bin/PushSampleDataToKafka.sh
+# application-1-HelloWorld
+
+
 # changing path in config files
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/ClusterCfgMetadataAPIConfig_Template.properties > $install_dir/config/ClusterCfgMetadataAPIConfig.properties
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/ClusterConfig_Template.json > $install_dir/config/ClusterConfig.json
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/EngineConfig_Template.properties > $install_dir/config/Engine1Config.properties
 
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application1/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/application1/metadata/config/MetadataAPIConfig.properties
+
+# application-1-HelloWorld
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/application-1-HelloWorld/metadata/config/MetadataAPIConfig.properties
+
+# application-1-HelloWorld
 
 # Expecting 1st Parameter as Kafka Install directory
 if [ "$#" -ne 1 ] || ! [ -d "$KafkaRootDir" ]; then
