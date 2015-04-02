@@ -2,7 +2,9 @@
 Install the FataFatClusterInstall installer 
 *******************************************
 
-The current trunk/SampleApplication/ClusterInstall scripts should be copied to a directory on your PATH.  Verify they are executable and if not perform the appropriate 'chmod' command on them.
+The current trunk/SampleApplication/ClusterInstall scripts should be copied to a directory on your PATH.  Verify they are executable and if not perform the appropriate 'chmod' command on them.  
+
+The NodeInfoExtract-1.0 application, used by the FataFatClusterInstall.sh script, also mus be on your PATH.  It can be found in the trunk/Utils/NodeInfoExtract/target/scala-2.10 directory.
 
 *******************************************
 Pre-requisites before using the installer 
@@ -137,3 +139,5 @@ What can go wrong?
 8) The NodeConfigPath is both your friend and your enemy.  If you supply one, it had better NOT be defined in your metadata cache already.  This is principally a problem only when metadata is maintained in Cassandra or HBase.  There will be errors and the installation will fail.  It is intended principally for testing builds and doing development work (typically with a TreeMap or HashMap metadata store... see <some wiki page> for more information about that).  A mature Fatafat installation will likely already have the cluster declaration installed in the cache before the cluster installation takes place, making the NodeConfigPath unnecessary.
 
 9) This list will be augmented with additional issues as this software is experienced by others and they report them.
+
+10) The script can't find NodeInfoExtract-1.0.  What should I do?  Be sure that this application is on your PATH.  See the "Install the FataFatClusterInstall installer" section above for more details.
