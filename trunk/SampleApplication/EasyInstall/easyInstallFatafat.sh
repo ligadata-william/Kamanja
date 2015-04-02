@@ -309,4 +309,6 @@ cp SetPaths.sh $installPath/bin/
 
 bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
-echo "installOnLEP complete..."
+chmod 0700 $installPath/input/application1/bin/*sh
+
+echo "FataFat install complete..."
