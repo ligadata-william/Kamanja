@@ -70,6 +70,21 @@ mkdir -p $installPath/input/application1/metadata/script
 mkdir -p $installPath/input/application1/metadata/type
 mkdir -p $installPath/input/application1/template
 
+# application-1-HelloWorld
+mkdir -p $installPath/input/application-1-HelloWorld
+mkdir -p $installPath/input/application-1-HelloWorld/bin
+mkdir -p $installPath/input/application-1-HelloWorld/data
+mkdir -p $installPath/input/application-1-HelloWorld/metadata
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/config
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/container
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/function
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/message
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/model
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/script
+mkdir -p $installPath/input/application-1-HelloWorld/metadata/type
+mkdir -p $installPath/input/application-1-HelloWorld/template
+# application-1-HelloWorld
+
 bin=$installPath/bin
 systemlib=$installPath/lib/system
 applib=$installPath/lib/application
@@ -148,7 +163,6 @@ cp $srcPath/Utils/Serialize/target/scala-2.10/serialize_2.10-1.0.jar $systemlib
 
 # env context jars
 echo "env context jars..."
-cp $ivyPath/cache/asm/asm/jars/asm-3.1.jar $systemlib
 cp $ivyPath/cache/com.codahale.metrics/metrics-core/bundles/metrics-core-3.0.2.jar $systemlib
 cp $ivyPath/cache/com.yammer.metrics/metrics-core/jars/metrics-core-2.2.0.jar $systemlib
 cp $ivyPath/cache/com.datastax.cassandra/cassandra-driver-core/bundles/cassandra-driver-core-2.1.2.jar $systemlib
@@ -267,6 +281,11 @@ cp copd_demo.csv.gz $installPath/input/application1/data
 cd $srcPath/SampleApplication/Medical/SampleData
 cp *.csv $installPath/input/application1/data
 
+# application-1-HelloWorld
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/application-1-HelloWorld/data
+# application-1-HelloWorld
+
 # *******************************
 # Copy documentation files
 # *******************************
@@ -286,20 +305,40 @@ cp $srcPath/OnLEPManager/src/main/resources/log4j.properties $installPath/config
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
 cp * $installPath/input/application1/metadata/container
 
+# application-1-HelloWorld
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/application-1-HelloWorld/metadata/container
+# application-1-HelloWorld
+
 cd $srcPath/SampleApplication/Medical/Functions
 cp * $installPath/input/application1/metadata/function
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/application1/metadata/message
 
+# application-1-HelloWorld
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/application-1-HelloWorld/metadata/message
+# application-1-HelloWorld
+
 cd $srcPath/SampleApplication/Medical/Models
 cp *.* $installPath/input/application1/metadata/model
+
+# application-1-HelloWorld
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/application-1-HelloWorld/metadata/model
+# application-1-HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Types
 cp * $installPath/input/application1/metadata/type
 
 cd $srcPath/SampleApplication/Medical/template
 cp -rf * $installPath/input/application1/template
+
+# application-1-HelloWorld
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/application-1-HelloWorld/template
+# application-1-HelloWorld
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
