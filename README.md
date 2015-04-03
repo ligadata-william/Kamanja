@@ -44,7 +44,7 @@ questions and make contributions.
 
 * Scala v2.10.4 ([download] (http://www.scala-lang.org/download/2.10.4.html). Be sure to add scala to $PATH)
 
-* On Linux,  [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and Kafka 2.10-0.8.1.1 [here](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/FatafatDocs/wiki/Appendix-A-SetupGuide)]
+* On Linux [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and [download kafka 2.10-0.8.1.1](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/Fatafat/wiki/Appendix-A-SetupGuide)]
 
 ####Quick Start
 
