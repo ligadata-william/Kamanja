@@ -2091,8 +2091,7 @@ object TestMetadataAPI{
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
       databaseOpen = true
-      //StartTest
-      TestCheckAuth1
+      StartTest
     }catch {
       case e: Exception => {
 	e.printStackTrace()
