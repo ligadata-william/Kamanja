@@ -30,7 +30,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+  //logger.setLevel(Level.TRACE);
 
   def receive = {
     case Process(pmmlStr) =>
@@ -40,7 +40,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
   
   def process(pmmlStr:String) = {
     
-    logger.trace("Requesting AddModel: " + pmmlStr.substring(0,500))
+    logger.debug("Requesting AddModel: " + pmmlStr.substring(0,500))
 
     val objectName = pmmlStr.substring(0,100)
     

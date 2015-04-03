@@ -45,16 +45,16 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 	  	var winningKey : String = simpleKey
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.info(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
 	  	if (macroDef == null) {
 	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 	  		breakable {
 	  		  	simpleKeysToTry.foreach( key => {
-	  		  		logger.info(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+	  		  		logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
 	  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 	  		  		if (macroDef != null) {
-	  		  			logger.trace(s"selectMacro ...found macroDef with $key")
+	  		  			logger.debug(s"selectMacro ...found macroDef with $key")
 	  		  			winningKey = key
 	  		  			break
 	  		  		}
@@ -77,16 +77,16 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, argTypesNoExp.map( argPair => argPair._1))
 		  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, returnTypes)
 		  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-		  	ctx.logger.trace(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
+		  	ctx.logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
 		  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
 		  	if (macroDef == null) {
 		  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
-		  		  		ctx.logger.trace(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+		  		  		ctx.logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
 		  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 		  		  		if (macroDef != null) {
-		  		  			ctx.logger.trace(s"selectMacro ...found macroDef with $key")
+		  		  			ctx.logger.debug(s"selectMacro ...found macroDef with $key")
 		  		  			winningKey = key
 		  		  			break
 		  		  		}
@@ -97,7 +97,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	}
 	  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
 	  	if (macroDef != null) { 
-	  		logger.info(s"selectMacro ...macroDef produced?  $foundDef")
+	  		logger.debug(s"selectMacro ...macroDef produced?  $foundDef")
 	  	} else {
 	  		PmmlError.logError(ctx, s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
 	  	}
@@ -293,7 +293,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val argIdxName = argidx.toString 
   			val argName : String = argval._1
   			val argIdxTypeName = argidx.toString + "_type"
-  			logger.trace(s"%$argIdxName% = $argName, %$argIdxTypeName% = $argtype)")
+  			logger.debug(s"%$argIdxName% = $argName, %$argIdxTypeName% = $argtype)")
   			substitutionMap += s"%$argIdxName%" -> s"$argName"
   			substitutionMap += s"%$argIdxTypeName%" -> s"$argtype"
   		})
@@ -310,8 +310,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val subExpr : String = ctx.fcnSubstitute.makeSubstitutions(mappedBuildsTemplate, substitutionMap)
    			(subExpr,buildsTemplate)
   		}
-		logger.trace("builds class to be queued:")
-		logger.trace(s"\n$substitutedClassExpr")		  
+		logger.debug("builds class to be queued:")
+		logger.debug(s"\n$substitutedClassExpr")		  
 		
 		/** 
 		 *	Create the "does" portion 
@@ -323,8 +323,8 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
 		val doesCmd : String = generateDoes(macroDef, argTypes, fcnArgValues, classUpdateClassName, parametersUsed)
 
-		logger.trace("'does' use of 'builds' class to be used:")
-		logger.trace(s"\n$doesCmd")		  
+		logger.debug("'does' use of 'builds' class to be used:")
+		logger.debug(s"\n$doesCmd")		  
 		
 	  
 	  	(substitutedClassExpr,doesCmd)
@@ -489,7 +489,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val argidx : Int = pair._2 + 1
   			val argIdxName = argidx.toString 
 
-  			ctx.logger.trace(s"%$argIdxName% = $argExpr")
+  			ctx.logger.debug(s"%$argIdxName% = $argExpr")
   			substitutionMap += s"%$argIdxName%" -> s"$argExpr"
   		})
   		

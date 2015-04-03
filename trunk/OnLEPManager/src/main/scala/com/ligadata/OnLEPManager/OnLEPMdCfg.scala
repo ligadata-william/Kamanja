@@ -261,7 +261,7 @@ object OnLEPMdCfg {
           val topMessageNames = OnLEPMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, containerNames, true, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Containers
           envCtxt.AddNewMessageOrContainers(OnLEPMetadata.getMdMgr, OnLEPConfiguration.dataStoreType, OnLEPConfiguration.dataLocation, OnLEPConfiguration.dataSchemaName, topMessageNames, false, OnLEPConfiguration.statusInfoStoreType, OnLEPConfiguration.statusInfoSchemaName, OnLEPConfiguration.statusInfoLocation) // Messages
-          LOG.info("Created EnvironmentContext for Class:" + className)
+          LOG.debug("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
@@ -279,7 +279,7 @@ object OnLEPMdCfg {
   }
 
   def LoadAdapters(loaderInfo: OnLEPLoaderInfo, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: ArrayBuffer[OutputAdapter], statusAdapters: ArrayBuffer[OutputAdapter], validateInputAdapters: ArrayBuffer[InputAdapter]): Boolean = {
-    LOG.info("Loading Adapters started @ " + Utils.GetCurDtTmStr)
+    LOG.debug("Loading Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
 
     val allAdapters = mdMgr.Adapters
@@ -305,31 +305,31 @@ object OnLEPMdCfg {
     })
 
     // Get status adapter
-    LOG.info("Getting Status Adapter")
+    LOG.debug("Getting Status Adapter")
 
     if (LoadOutputAdapsForCfg(statusAdaps, statusAdapters, loaderInfo, false) == false)
       return false
 
     // Get output adapter
-    LOG.info("Getting Output Adapters")
+    LOG.debug("Getting Output Adapters")
 
     if (LoadOutputAdapsForCfg(outputAdaps, outputAdapters, loaderInfo, true) == false)
       return false
 
     // Get input adapter
-    LOG.info("Getting Input Adapters")
+    LOG.debug("Getting Input Adapters")
 
     if (LoadInputAdapsForCfg(inputAdaps, inputAdapters, outputAdapters.toArray, OnLEPMetadata.envCtxt, loaderInfo) == false)
       return false
 
     // Get input adapter
-    LOG.info("Getting Validate Input Adapters")
+    LOG.debug("Getting Validate Input Adapters")
 
     if (LoadValidateInputAdapsFromCfg(validateAdaps, validateInputAdapters, outputAdapters.toArray, OnLEPMetadata.envCtxt, loaderInfo) == false)
       return false
 
     val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
-    LOG.info("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
+    LOG.debug("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
 
     true
   }
@@ -371,7 +371,7 @@ object OnLEPMdCfg {
         if (objinst.isInstanceOf[OutputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[OutputAdapterObj]
           val adapter = adapterObj.CreateOutputAdapter(statusAdapterCfg, SimpleStats)
-          LOG.info("Created Output Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
+          LOG.debug("Created Output Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
           LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -456,7 +456,7 @@ object OnLEPMdCfg {
         if (objinst.isInstanceOf[InputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[InputAdapterObj]
           val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, mkExecCtxt, SimpleStats)
-          LOG.info("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
+          LOG.debug("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)

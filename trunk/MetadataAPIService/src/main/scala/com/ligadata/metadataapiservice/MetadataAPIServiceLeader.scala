@@ -39,10 +39,10 @@ object MetadataAPIServiceLeader {
       isLeader = cs.isLeader
       leaderNode = cs.leader
       val isLeaderStr = if (cs.isLeader) "true" else "false"
-      LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeaderStr, cs.leader, cs.participants.mkString(",")))
+      LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeaderStr, cs.leader, cs.participants.mkString(",")))
     } catch {
       case e: Exception => {
-        LOG.info("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage))
+        LOG.debug("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage))
       }
     }
   }

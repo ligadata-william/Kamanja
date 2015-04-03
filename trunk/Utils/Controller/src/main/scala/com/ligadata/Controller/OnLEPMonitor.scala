@@ -96,7 +96,7 @@ class OnLEPMonitor  {
    */
   private def ActionOnActionChange(receivedString: String): Unit = {
     if (receivedString.size == 1 && receivedString.toInt == 1) {
-      LOG.info("Monitoring turned ON")
+      LOG.debug("Monitoring turned ON")
       if (isStarted) {
         return
       }
@@ -141,13 +141,13 @@ class OnLEPMonitor  {
       if (dataLoadCommand != null) {
         val pb = Process(dataLoadCommand)
         val pio = new ProcessIO(_ => (),
-                                stdout => scala.io.Source.fromInputStream(stdout).getLines.foreach(LOG.info),
+                                stdout => scala.io.Source.fromInputStream(stdout).getLines.foreach(LOG.debug),
                                 err => {scala.io.Source.fromInputStream(err).getLines.foreach(LOG.error)})
 
         prc = pb.run(pio)
       }
     } else {
-      LOG.info("Monitoring turned OFF")
+      LOG.debug("Monitoring turned OFF")
       isStarted = false
 
       // clean up monitor resources here.

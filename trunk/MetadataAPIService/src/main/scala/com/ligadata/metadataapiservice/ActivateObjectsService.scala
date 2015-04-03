@@ -29,7 +29,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "ActivateObjects"
 
@@ -68,7 +68,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) {
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )

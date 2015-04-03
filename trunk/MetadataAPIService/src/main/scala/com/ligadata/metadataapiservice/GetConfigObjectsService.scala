@@ -30,7 +30,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetConfigObjects"
 
@@ -71,7 +71,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
   }
   
   def process(objectType:String) = {
-    log.info("Requesting GetConfigObjects {}",objectType)
+    log.debug("Requesting GetConfigObjects {}",objectType)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
       MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Failed","unknown","READ not allowed for this user")

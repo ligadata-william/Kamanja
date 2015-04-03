@@ -32,7 +32,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+//  logger.setLevel(Level.TRACE);
 
   val APIName = "GetAllObjectKeys"
 
@@ -93,9 +93,9 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
   }
 
   def process(objectType: String) = {
-    logger.trace(APIName + ":" + objectType)
+    logger.debug(APIName + ":" + objectType)
     val objectList = GetAllObjectKeys(objectType)
-    logger.trace(APIName + "(results):" + objectList)
+    logger.debug(APIName + "(results):" + objectList)
     requestContext.complete(objectList)
   }
 }

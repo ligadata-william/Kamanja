@@ -51,16 +51,16 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if (dirName == null) {
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
-        logger.info("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
+        logger.debug("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
       }
       
       if (!IsValidDir(dirName)) {
-        logger.fatal("Invalid Directory " + dirName)
+        logger.error("Invalid Directory " + dirName)
         return
       }
       val typFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if (typFiles.length == 0) {
-        logger.fatal("No json type files exist in the directory " + dirName)
+        logger.error("No json type files exist in the directory " + dirName)
         return
       }
       
@@ -79,15 +79,15 @@ object TestMetadataAPI{
       }
       
       if (choice < 1 || choice > typFiles.length + 1) {
-        logger.fatal("Invalid Choice: " + choice)
+        logger.error("Invalid Choice: " + choice)
         return
       }
       
       val typDefFile = typFiles(choice - 1).toString
       
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
       println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
     }
     catch {
@@ -102,7 +102,7 @@ object TestMetadataAPI{
 
   def GetType {
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
       if( typKeys.length == 0 ){
@@ -156,7 +156,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
     
     try {
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
       if( typKeys.length == 0 ){
@@ -270,13 +270,13 @@ object TestMetadataAPI{
       inStream.close()
     }
     val pmmlStr =  new String(outStream.toByteArray())
-    logger.trace(pmmlStr)
+    logger.debug(pmmlStr)
     pmmlStr
   }
 
   def GetMessage{
     try{
-      logger.setLevel(Level.TRACE);
+  //    logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
@@ -305,7 +305,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
 
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
-      logger.trace("DependentModels => " + depModels)
+      logger.debug("DependentModels => " + depModels)
 	
       val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
 
@@ -321,7 +321,7 @@ object TestMetadataAPI{
 
   def GetMessageFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
@@ -352,7 +352,7 @@ object TestMetadataAPI{
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
       if( depModels.length > 0 ){
 	depModels.foreach(mod => {
-	  logger.trace("DependentModel => " + mod.FullNameWithVer)
+	  logger.debug("DependentModel => " + mod.FullNameWithVer)
 	})
       }
 
@@ -369,7 +369,7 @@ object TestMetadataAPI{
 
   def GetContainerFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
@@ -411,7 +411,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
 
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
@@ -455,7 +455,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
 
     try{
-      logger.setLevel(Level.TRACE);
+  //    logger.setLevel(Level.TRACE); //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
@@ -495,7 +495,7 @@ object TestMetadataAPI{
 
   def RemoveMessageFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
@@ -536,7 +536,7 @@ object TestMetadataAPI{
 
   def RemoveContainer{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE);  //check again
 
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
@@ -580,7 +580,7 @@ object TestMetadataAPI{
 
   def RemoveMessage{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
@@ -621,7 +621,7 @@ object TestMetadataAPI{
 
   def RemoveModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -662,7 +662,7 @@ object TestMetadataAPI{
 
   def DeactivateModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -703,7 +703,7 @@ object TestMetadataAPI{
 
   def ActivateModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(false)
 
@@ -743,7 +743,7 @@ object TestMetadataAPI{
 
   def RemoveModelFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -783,7 +783,7 @@ object TestMetadataAPI{
 
   def GetAllMessagesFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -801,7 +801,7 @@ object TestMetadataAPI{
 
   def GetAllModelsFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -819,7 +819,7 @@ object TestMetadataAPI{
 
   def GetAllMessagesFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages are available in the Metadata")
@@ -837,7 +837,7 @@ object TestMetadataAPI{
 
   def GetAllContainersFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No containers are available in the Metadata")
@@ -855,7 +855,7 @@ object TestMetadataAPI{
 
   def GetAllModelsFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
 	println("Sorry, No models are available in the Metadata")
@@ -876,7 +876,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-        logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+        logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
@@ -884,7 +884,7 @@ object TestMetadataAPI{
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-        logger.fatal("No json container files in the directory " + dirName)
+        logger.error("No json container files in the directory " + dirName)
         return
       }
 
@@ -914,19 +914,19 @@ object TestMetadataAPI{
             return
           }
           if( choice < 1 || choice > contFiles.length + 1 ){
-            logger.fatal("Invalid Choice : " + choice)
+            logger.error("Invalid Choice : " + choice)
             return
           }
 
           val contDefFile = contFiles(choice-1).toString
-          logger.setLevel(Level.TRACE);
+          //logger.setLevel(Level.TRACE);  //check again
           val contStr = Source.fromFile(contDefFile).mkString
-          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+        //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
           val res : String = MetadataAPIImpl.UpdateContainer(contStr,"JSON")
           results += Tuple3(choice.toString, contDefFile, res)
         })
       } else {
-        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
 
@@ -950,7 +950,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-	logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
@@ -958,7 +958,7 @@ object TestMetadataAPI{
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-		logger.fatal("No json container files in the directory " + dirName)
+		logger.error("No json container files in the directory " + dirName)
 		return
       }
 
@@ -988,14 +988,14 @@ object TestMetadataAPI{
 		    	   return
 		       }
 		       if( choice < 1 || choice > contFiles.length + 1 ){
-					logger.fatal("Invalid Choice : " + choice)
+					logger.error("Invalid Choice : " + choice)
 					return
 		       }
   		  
 		       val contDefFile = contFiles(choice-1).toString
-    		   logger.setLevel(Level.TRACE);
+    		   //logger.setLevel(Level.TRACE);  //check again
 		       val contStr = Source.fromFile(contDefFile).mkString
-    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		  // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
     		   val res : String = MetadataAPIImpl.AddContainer(contStr,"JSON")
     		   results += Tuple3(choice.toString, contDefFile, res)
     	  })
@@ -1038,7 +1038,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-        logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+        logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1046,7 +1046,7 @@ object TestMetadataAPI{
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
-        logger.fatal("No json message files in the directory " + dirName)
+        logger.error("No json message files in the directory " + dirName)
         return
       }
       println("\nPick a Message Definition file(s) from below choices\n")
@@ -1076,19 +1076,19 @@ object TestMetadataAPI{
             return
           }
           if( choice < 1 || choice > msgFiles.length + 1 ){
-            logger.fatal("Invalid Choice : " + choice)
+            logger.error("Invalid Choice : " + choice)
             return
           }
 
           val msgDefFile = msgFiles(choice-1).toString
-          logger.setLevel(Level.TRACE);
+          //logger.setLevel(Level.TRACE);  //check again
           val msgStr = Source.fromFile(msgDefFile).mkString
-          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+       //   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
           val res : String = MetadataAPIImpl.UpdateMessage(msgStr,"JSON")
           results += Tuple3(choice.toString, msgDefFile, res)
         })
       } else {
-        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
 
@@ -1109,7 +1109,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-	logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1117,7 +1117,7 @@ object TestMetadataAPI{
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
-	logger.fatal("No json message files in the directory " + dirName)
+	logger.error("No json message files in the directory " + dirName)
 	return
       }
       println("\nPick a Message Definition file(s) from below choices\n")
@@ -1147,19 +1147,19 @@ object TestMetadataAPI{
 		    	   return
 		       }
 		       if( choice < 1 || choice > msgFiles.length + 1 ){
-					logger.fatal("Invalid Choice : " + choice)
+					logger.error("Invalid Choice : " + choice)
 					return
 		       }
   		  
 		       val msgDefFile = msgFiles(choice-1).toString
-    		   logger.setLevel(Level.TRACE);
+    		   //logger.setLevel(Level.TRACE);  //check again
 		       val msgStr = Source.fromFile(msgDefFile).mkString
-    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		//   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
     		   val res : String = MetadataAPIImpl.AddContainer(msgStr,"JSON")
     		   results += Tuple3(choice.toString, msgDefFile, res)
     	  })
       } else {
-          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
       
@@ -1183,7 +1183,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-        logger.info("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
+        logger.debug("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
       }
 
       if(!IsValidDir(dirName))
@@ -1191,7 +1191,7 @@ object TestMetadataAPI{
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if(pmmlFiles.length == 0) {
-        logger.fatal("No model files in the directory " + dirName)
+        logger.error("No model files in the directory " + dirName)
         return
       }
 
@@ -1210,7 +1210,7 @@ object TestMetadataAPI{
         return
 
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-        logger.fatal("Invalid Choice: " + choice)
+        logger.error("Invalid Choice: " + choice)
         return
       }
 
@@ -1218,7 +1218,7 @@ object TestMetadataAPI{
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       println(pmmlStr)
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr))
     } catch {
       case e: Exception => {
@@ -1232,7 +1232,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1240,7 +1240,7 @@ object TestMetadataAPI{
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if ( pmmlFiles.length == 0 ){
-	logger.fatal("No model files in the directory " + dirName)
+	logger.error("No model files in the directory " + dirName)
 	return
       }
 
@@ -1259,14 +1259,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1284,7 +1284,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1292,7 +1292,7 @@ object TestMetadataAPI{
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
+	logger.error("No config files in the directory " + dirName)
 	return
       }
 
@@ -1311,14 +1311,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1336,7 +1336,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1344,7 +1344,7 @@ object TestMetadataAPI{
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
+	logger.error("No config files in the directory " + dirName)
 	return
       }
 
@@ -1363,14 +1363,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1388,7 +1388,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
       if ( dirName == null  ){
 	dirName = "/tmp/OnLEPInstall"
-	logger.info("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1396,7 +1396,7 @@ object TestMetadataAPI{
 
       val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
       if ( jarFiles.length == 0 ){
-	logger.fatal("No jar files in the directory " + dirName)
+	logger.error("No jar files in the directory " + dirName)
 	return
       }
 
@@ -1415,13 +1415,13 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > jarFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       jarFilePath = jarFiles(choice-1).toString
       // Save the jar
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath))
     }catch {
       case e: AlreadyExistsException => {
@@ -1439,7 +1439,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
-	logger.info("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1447,7 +1447,7 @@ object TestMetadataAPI{
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
-	logger.fatal("No function files in the directory " + dirName)
+	logger.error("No function files in the directory " + dirName)
 	return
       }
 
@@ -1466,7 +1466,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > functionFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1507,7 +1507,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
-	logger.info("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1515,7 +1515,7 @@ object TestMetadataAPI{
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
-	logger.fatal("No concept files in the directory " + dirName)
+	logger.error("No concept files in the directory " + dirName)
 	return
       }
 
@@ -1534,7 +1534,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > conceptFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1550,7 +1550,8 @@ object TestMetadataAPI{
 	  logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+	      //check again
+        e.printStackTrace()
       }
     }
   }
@@ -1572,7 +1573,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
-	logger.info("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1580,7 +1581,7 @@ object TestMetadataAPI{
 
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( typeFiles.length == 0 ){
-	logger.fatal("No type files in the directory " + dirName)
+	logger.error("No type files in the directory " + dirName)
 	return
       }
 
@@ -1599,7 +1600,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > typeFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1735,14 +1736,14 @@ object TestMetadataAPI{
   }
 
   def DumpMetadata{
-    MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+  //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     MdMgr.GetMdMgr.dump
-    MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
+  //  MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
   }    
 
   def initModCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
-    logger.setLevel(Level.ERROR);
+   // logger.setLevel(Level.ERROR);
     val mdLoader = new MetadataLoad(MdMgr.GetMdMgr, "","","","")
     mdLoader.initialize
   }
@@ -1750,7 +1751,7 @@ object TestMetadataAPI{
   def TestChill[T <: BaseElemDef](obj: List[T]) {
     val items = obj;
 
-    logger.trace("Serializing " + obj.length + " objects ")
+    logger.debug("Serializing " + obj.length + " objects ")
     val instantiator = new ScalaKryoInstantiator
     instantiator.setRegistrationRequired(false)
  
@@ -1762,7 +1763,7 @@ object TestMetadataAPI{
     val input = new Input(baos.toByteArray)
     val deser = kryo.readObject(input, classOf[List[T]])
 
-    logger.trace("DeSerialized " + deser.length + " objects ")
+    logger.debug("DeSerialized " + deser.length + " objects ")
     assert(deser.length == obj.length)
   }
 
@@ -1771,7 +1772,7 @@ object TestMetadataAPI{
     val msgDefs = MdMgr.GetMdMgr.Types(true,true)
     msgDefs match{
       case None => {
-	logger.trace("No Messages found ")
+	logger.debug("No Messages found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1784,11 +1785,11 @@ object TestMetadataAPI{
   def TestSerialize1(serializeType:String) = {
     //MetadataAPIImpl.InitMdMgrFromBootStrap
     var serializer = SerializerManager.GetSerializer(serializeType)
-    serializer.SetLoggerLevel(Level.TRACE)
+   // serializer.SetLoggerLevel(Level.TRACE)
     val modelDefs = MdMgr.GetMdMgr.Models(true,true)
     modelDefs match{
       case None => {
-	logger.trace("No Models found ")
+	logger.debug("No Models found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1798,11 +1799,11 @@ object TestMetadataAPI{
 	  val m1 = serializer.DeserializeObjectFromByteArray(ba,m.getClass().getName()).asInstanceOf[ModelDef]
 	  val preJson  = JsonSerializer.SerializeObjectToJson(m);
 	  val postJson = JsonSerializer.SerializeObjectToJson(m1);
-	  logger.trace("Length of pre  Json string => " + preJson.length)
-	  logger.trace("Length of post Json string => " + postJson.length)
+	  logger.debug("Length of pre  Json string => " + preJson.length)
+	  logger.debug("Length of post Json string => " + postJson.length)
 
-	  logger.trace("Json Before Any Serialization => " + preJson)
-	  logger.trace("Json After  Serialization/DeSerialization => " + postJson)
+	  logger.debug("Json Before Any Serialization => " + preJson)
+	  logger.debug("Json After  Serialization/DeSerialization => " + postJson)
 	  //assert(preJson == postJson)
 	})
       }
@@ -1811,7 +1812,7 @@ object TestMetadataAPI{
 
   def TestGenericProtobufSerializer = {
     val serializer = new ProtoBufSerializer
-    serializer.SetLoggerLevel(Level.TRACE)
+   // serializer.SetLoggerLevel(Level.TRACE)
     val a = MdMgr.GetMdMgr.MakeConcept("System","concept1","System","Int",1,false)
     //val ba = serializer.SerializeObjectToByteArray1(a)
     //val o = serializer.DeserializeObjectFromByteArray1(ba)
@@ -1840,7 +1841,7 @@ object TestMetadataAPI{
     val modelDefs = MdMgr.GetMdMgr.Models(true,true)
     modelDefs match{
       case None => {
-	logger.trace("No Models found ")
+	logger.debug("No Models found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1858,7 +1859,7 @@ object TestMetadataAPI{
     val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
     msgDefs match{
       case None => {
-	logger.trace("No Msgs found ")
+	logger.debug("No Msgs found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1879,7 +1880,7 @@ object TestMetadataAPI{
     }
     catch{
       case e:Exception => {
-	logger.trace("Failed to save the object : " + e.getMessage())
+	logger.debug("Failed to save the object : " + e.getMessage())
       }
     }
   }
@@ -2066,12 +2067,12 @@ object TestMetadataAPI{
 
   def main(args: Array[String]){
     try{
-      logger.setLevel(Level.TRACE);
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      serializer.SetLoggerLevel(Level.TRACE)
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
-      GetDependentMessages.SetLoggerLevel(Level.TRACE)
+      //logger.setLevel(Level.TRACE);  //check again
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+    //  serializer.SetLoggerLevel(Level.TRACE)
+    //  JsonSerializer.SetLoggerLevel(Level.TRACE)
+    //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {

@@ -29,7 +29,7 @@ class GetModelDefService(requestContext: RequestContext) extends Actor {
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetModelDef"
 
@@ -41,7 +41,7 @@ class GetModelDefService(requestContext: RequestContext) extends Actor {
   
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
@@ -63,13 +63,13 @@ class GetModelDefService(requestContext: RequestContext) extends Actor {
 	    if( arg.Version != null ){
 	      var apiResult = MetadataAPIImpl.GetModelDefFromCache(arg.NameSpace,arg.Name,arg.FormatType,arg.Version)
 	      val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
-	      logger.trace("API Result => " + apiResultStr)
+	      logger.debug("API Result => " + apiResultStr)
 	      resultStr = apiResultStr
 	    }
 	    else{
 	      var apiResult = MetadataAPIImpl.GetModelDef(arg.NameSpace,arg.Name,arg.FormatType)
 	      val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
-	      logger.trace("API Result => " + apiResultStr)
+	      logger.debug("API Result => " + apiResultStr)
 	      resultStr = apiResultStr
 	    }
 	  }

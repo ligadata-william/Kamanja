@@ -32,7 +32,7 @@ class GetAuditLogService(requestContext: RequestContext, userid:Option[String], 
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+//  logger.setLevel(Level.TRACE);
 
   val APIName = "GetAuditLog"
 

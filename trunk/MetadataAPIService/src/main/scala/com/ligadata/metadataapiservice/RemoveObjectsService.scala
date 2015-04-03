@@ -29,7 +29,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+  //logger.setLevel(Level.TRACE);
 
   val APIName = "RemoveObjects"
 
@@ -94,7 +94,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
 
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList

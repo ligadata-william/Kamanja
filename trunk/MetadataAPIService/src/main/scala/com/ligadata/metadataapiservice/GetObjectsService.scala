@@ -28,7 +28,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetObjects"
 
@@ -92,7 +92,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
 
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
@@ -119,7 +119,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
       resultStr = APIName + ":No arguments passed to the API, nothing much to do"
     }
     
-    logger.trace("resultStr => " + resultStr)
+    logger.debug("resultStr => " + resultStr)
     requestContext.complete(resultStr)
   }
 }

@@ -30,7 +30,7 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetAllObjects"
 
@@ -95,7 +95,7 @@ class GetAllObjectsService(requestContext: RequestContext) extends Actor {
   }
   
   def process(objectType:String) = {
-    log.info("Requesting GetAllObjects {}",objectType)
+    log.debug("Requesting GetAllObjects {}",objectType)
     val apiResult = GetAllObjects(objectType)
     requestContext.complete(apiResult)
   }

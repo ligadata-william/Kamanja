@@ -29,7 +29,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
 
     val loggerName = this.getClass.getName
     val log = Logger.getLogger(loggerName)
-    log.setLevel(Level.TRACE);
+   // log.setLevel(Level.TRACE);
     
     val factory = new IniSecurityManagerFactory("classpath:shiro.ini");
     val securityManager = factory.getInstance();
@@ -93,14 +93,14 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     } 
 
     // Authentication is done, if we have passed it, we need to see if Authorization for this function is valid
-    log.trace("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authenticated successfully... checking authorization");
+    log.debug("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authenticated successfully... checking authorization");
 
     //test a role:
     if( role != null ){
       if (currentUser.hasRole(role)) {
-        log.trace("SimpleApacheShiroAdapter: The role " + role + " is authorized !");
+        log.debug("SimpleApacheShiroAdapter: The role " + role + " is authorized !");
       } else {
-        log.trace("SimpleApacheShiroAdapter: The role " + role + " is not authorized !");
+        log.debug("SimpleApacheShiroAdapter: The role " + role + " is not authorized !");
         return false
       }
     }
@@ -108,14 +108,14 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     //test a typed permission (not instance-level)
     if( privilege != null ) {
       if (currentUser.isPermitted(privilege)) {
-        log.trace("SimpleApacheShiroAdapter: The privilege " + privilege + " is authorized ")
+        log.debug("SimpleApacheShiroAdapter: The privilege " + privilege + " is authorized ")
 	    } else {
-        log.trace("SimpleApacheShiroAdapter: The privilege " + privilege + " is not authorized ")
+        log.debug("SimpleApacheShiroAdapter: The privilege " + privilege + " is not authorized ")
         return false
       }
     }
     // if we are here.. Both Auth and Authorization is passed..
-    log.trace("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authorized successfully");
+    log.debug("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authorized successfully");
     return true
   }
 }

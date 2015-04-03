@@ -212,16 +212,16 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             }
             if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(1)) {
               try {
-                LOG.info("====================================> Started Waiting in Step 1")
+                LOG.debug("====================================> Started Waiting in Step 1")
                 Thread.sleep(OnLEPConfiguration.waitProcessingTime)
-                LOG.info("====================================> Done Waiting in Step 1")
+                LOG.debug("====================================> Done Waiting in Step 1")
               } catch {
                 case e: Exception => {}
               }
             }
             if (ignoreOutput == false) {
               if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(2)) {
-                LOG.info("====================================> Sending to Output Adapter")
+                LOG.debug("====================================> Sending to Output Adapter")
               }
               output.foreach(o => {
                 o.send(resStr, cntr.toString)
@@ -229,9 +229,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             }
             if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(2)) {
               try {
-                LOG.info("====================================> Started Waiting in Step 2")
+                LOG.debug("====================================> Started Waiting in Step 2")
                 Thread.sleep(OnLEPConfiguration.waitProcessingTime)
-                LOG.info("====================================> Done Waiting in Step 2")
+                LOG.debug("====================================> Done Waiting in Step 2")
               } catch {
                 case e: Exception => {}
               }
@@ -248,9 +248,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           envContext.saveStatus(tempTransId, "SetData", false)
           if (OnLEPConfiguration.waitProcessingTime > 0 && OnLEPConfiguration.waitProcessingSteps(3)) {
             try {
-              LOG.info("====================================> Started Waiting in Step 3")
+              LOG.debug("====================================> Started Waiting in Step 3")
               Thread.sleep(OnLEPConfiguration.waitProcessingTime)
-              LOG.info("====================================> Done Waiting in Step 3")
+              LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
               case e: Exception => {}
             }

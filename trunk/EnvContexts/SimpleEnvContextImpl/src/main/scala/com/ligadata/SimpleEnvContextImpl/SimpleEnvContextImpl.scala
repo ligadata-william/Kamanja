@@ -216,7 +216,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
     })
-    logger.trace("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
+    logger.debug("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
   }
 
   private def getSerializeInfo(tupleBytes: Value): String = {
@@ -305,7 +305,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           throw new Exception("The database type " + storeType + " is not supported yet ")
         }
       }
-      logger.info("Getting DB Connection: " + connectinfo.mkString(","))
+      logger.debug("Getting DB Connection: " + connectinfo.mkString(","))
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
@@ -437,7 +437,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(msgOrCont.objFullName, key), buildOne)
     } catch {
       case e: Exception => {
-        logger.trace("Data not found for key:" + key)
+        logger.debug("Data not found for key:" + key)
       }
     }
     if (objs(0) != null) {
@@ -506,7 +506,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey("AdapterUniqKvData", key), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.trace("Data not found for key:" + key)
+        logger.debug("Data not found for key:" + key)
       }
     }
     if (objs(0) != null) {
@@ -532,7 +532,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey("ModelResults", key), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.trace("Data not found for key:" + key)
+        logger.debug("Data not found for key:" + key)
       }
     }
     if (objs(0) != null) {
@@ -683,9 +683,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Adding new messages or Containers
   //BUGBUG:: May be we need to lock before we do anything here
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit = {
-    logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
+    logger.debug("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     if (_allDataDataStore == null) {
-      logger.info("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
+      logger.debug("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
       _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation)
     }
     if (_runningTxnsDataStore == null) {
@@ -1017,11 +1017,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key._2, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
-    logger.trace("Loaded %d status informations".format(results.size))
+    logger.debug("Loaded %d status informations".format(results.size))
     results.toArray
   }
 
@@ -1036,11 +1036,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"getIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
-    logger.trace("Loaded %d status informations".format(results.size))
+    logger.debug("Loaded %d status informations".format(results.size))
     results.toArray
   }
 
@@ -1055,11 +1055,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"getAllFinalStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getAllFinalStatusInfo() -- Unable to load Status Info")
         }
       }
     })
-    logger.trace("Loaded %d status informations".format(results.size))
+    logger.debug("Loaded %d status informations".format(results.size))
     results.toArray
   }
 
@@ -1078,7 +1078,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val storeObjects = new Array[IStorage](validateUniqVals.size)
     var cntr = 0
 
-    logger.info(s"PersistValidateAdapterInformation => " + validateUniqVals.mkString(","))
+    logger.debug(s"PersistValidateAdapterInformation => " + validateUniqVals.mkString(","))
 
     validateUniqVals.foreach(kv => {
       object obj extends IStorage {
@@ -1122,15 +1122,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       try {
         val buildAdapOne = (tupleBytes: Value) => { buildValidateAdapInfo(tupleBytes, objs) }
         _checkPointAdapInfoDataStore.get(makeKey(key._1, key._2), buildAdapOne)
-        logger.info(s"GetValidateAdapterInformation -- %s -> %s".format(key._2, objs(0).toString))
+        logger.debug(s"GetValidateAdapterInformation -- %s -> %s".format(key._2, objs(0).toString))
         results += ((key._2, objs(0)))
       } catch {
         case e: Exception => {
-          logger.info(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
+          logger.debug(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
-    logger.trace("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
+    logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
   }
 }
