@@ -2,7 +2,7 @@ Fatafat Home
 ===
 ###What is Fatafat?
 
-Fatafat is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ. [Read more](https://github.com/ligaDATA/FatafatDocs/wiki/FatafatDocs-Introduction)
+Fatafat is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ. [Read more](https://github.com/ligaDATA/Fatafat/wiki/Fatafat-Introduction)
 
 The FatafatTM framework is open source with many features that support use cases for developers:
 
