@@ -2,7 +2,7 @@ Fatafat Home
 ===
 ###What is Fatafat?
 
-Fatafat is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ. [Read more](https://github.com/ligaDATA/Fatafat/wiki/Fatafat-Introduction)
+Fatafat is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
 
 The FatafatTM framework is open source with many features that support use cases for developers:
 
@@ -40,11 +40,11 @@ questions and make contributions.
  
 * Have sudoer access
 
-* JDK 1.7.1 or higher (download [here](http://www.oracle.com/technetwork/java/javase/downloads/index.html))
+* JDK 1.7.1 or higher ([download](http://www.oracle.com/technetwork/java/javase/downloads/index.html))
 
-* Scala v2.10.4 (download [here] (http://www.scala-lang.org/download/2.10.4.html). Be sure to add scala to $PATH)
+* Scala v2.10.4 ([download] (http://www.scala-lang.org/download/2.10.4.html). Be sure to add scala to $PATH)
 
-* On Linux, download sbt [here](http://www.scala-sbt.org/download.html), Zookeeper [here](http://zookeeper.apache.org/releases.html#download), and Kafka 2.10-0.8.1.1 [here](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/FatafatDocs/wiki/Appendix-A-SetupGuide)]
+* On Linux,  [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and Kafka 2.10-0.8.1.1 [here](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/FatafatDocs/wiki/Appendix-A-SetupGuide)]
 
 ####Quick Start
 
@@ -58,7 +58,7 @@ questions and make contributions.
     
     c. On Linux, use 'unzip fatafat_install_v101.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
     
-3. Start with [setup instructions] (https://github.com/ligaDATA/FatafatDocs/wiki/Installing-and-Running-Fatafat-Quickly)
+3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/FatafatDocs/wiki/Installing-and-Running-Fatafat-Quickly)
 
 ###Getting Involved
 
