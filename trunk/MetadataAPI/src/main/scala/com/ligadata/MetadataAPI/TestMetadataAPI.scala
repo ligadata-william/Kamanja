@@ -2039,6 +2039,10 @@ object TestMetadataAPI{
     MetadataAPIImpl.checkAuth(Some("lonestarr"),Some("vespa"),Some("goodguy"),"winnebago:drive:eagle5")
   }
 
+  def TestCheckAuth1: Unit = {
+    MetadataAPIImpl.checkAuth(Some("Pete Minsky"),Some("readwrite"),Some("ReadwriteUsers"),"winnebago:drive:eagle5")
+  }
+
   def TestLogAuditRec: Unit = {
     MetadataAPIImpl.logAuditRec(Some("lonestarr"),Some("write"),"Create Model Started","system.copdriskassessment.100","success","-1","Initiated operation")
   }
@@ -2086,7 +2090,8 @@ object TestMetadataAPI{
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
       databaseOpen = true
-      StartTest
+      //StartTest
+      TestCheckAuth1
     }catch {
       case e: Exception => {
 	e.printStackTrace()

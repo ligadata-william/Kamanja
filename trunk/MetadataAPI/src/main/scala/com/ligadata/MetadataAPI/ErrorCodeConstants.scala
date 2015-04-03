@@ -136,6 +136,7 @@ object ErrorCodeConstants {
    val Get_All_Nodes_Successful = "Successfuly fetched all nodes";
    val Get_All_Nodes_Failed = "Failed to fetch all nodes";
    val Get_All_Nodes_Failed_Not_Available = "Failed to fetch all nodes. No node available.";
+   val Get_Leader_Host_Failed_Not_Available = "Failed to fetch leader host. No node available.";
    
    //Adapter
    val Add_Adapter_Failed = "Failed to Add/Update Adapter";

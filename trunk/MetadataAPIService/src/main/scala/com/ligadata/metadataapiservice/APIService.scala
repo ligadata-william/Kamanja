@@ -81,7 +81,13 @@ class APIService extends LigadataSSLConfiguration {
       }
 
       APIInit.SetConfigFile(configFile.toString)
-      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
+      // Read properties file and Open db connection
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      // APIInit deals with shutdown activity and it needs to know
+      // that database connections were successfully made
+      APIInit.SetDbOpen
+
+      //MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
       logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
       // Identify the host and port the service is listening on
@@ -101,7 +107,7 @@ class APIService extends LigadataSSLConfiguration {
       // start a new HTTP server on a specified port with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
-      logger.trace("Started the service")
+      logger.info("MetadataAPIService started, listening on (%s,%s)".format(serviceHost,servicePort))
 
       sys.addShutdownHook({
         logger.trace("ShutdownHook called")
