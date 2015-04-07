@@ -40,10 +40,10 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",objectName.substring(0,20))
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
-    }    
-    
-    val apiResult = MetadataAPIImpl.AddContainer(containerJson,"JSON")
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",objectName.substring(0,20))
-    requestContext.complete(apiResult)
+    } else { 
+      val apiResult = MetadataAPIImpl.AddContainer(containerJson,"JSON")
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",objectName.substring(0,20))
+      requestContext.complete(apiResult)    
+    }   
   }
 }
