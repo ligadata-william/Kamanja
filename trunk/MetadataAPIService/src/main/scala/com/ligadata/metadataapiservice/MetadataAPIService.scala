@@ -22,6 +22,7 @@ trait MetadataAPIService extends HttpService {
   APIInit.Init
   val KEY_TOKN = "keys"
   val AUDIT_LOG_TOKN = "audit_log"
+  val LEADER_TOKN = "leader"
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -39,6 +40,9 @@ trait MetadataAPIService extends HttpService {
 	      if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
           requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
 	      }
+              else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
+		requestContext => processGetLeaderRequest(null,requestContext,userId,password,role)
+	      }    
 	      else{
           requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
 	      }
@@ -201,6 +205,14 @@ trait MetadataAPIService extends HttpService {
   private def processGetAuditLogRequest(filterParameters: Array[String],rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
     val auditLogService = actorRefFactory.actorOf(Props(new GetAuditLogService(rContext,userid,password,role)))
     auditLogService ! GetAuditLogService.Process(filterParameters)  
+  }
+
+  /**
+   * 
+   */
+  private def processGetLeaderRequest(nodeList: Array[String],rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
+    val auditLogService = actorRefFactory.actorOf(Props(new GetLeaderService(rContext,userid,password,role)))
+    auditLogService ! GetLeaderService.Process(nodeList)
   }
 
   /**

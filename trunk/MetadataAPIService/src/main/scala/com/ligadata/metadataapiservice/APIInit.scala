@@ -36,6 +36,10 @@ object APIInit {
     configFile = cfgFile
   }
 
+  def SetDbOpen : Unit = {
+    databaseOpen = true
+  }
+
   def InitLeaderLatch: Unit = {
       // start Leader detection component
       val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
@@ -50,8 +54,8 @@ object APIInit {
   def Init : Unit = {
     try{
       // Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
-      databaseOpen = true
+      //MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      //databaseOpen = true
 
       // start Leader detection component
       logger.debug("Initialize Leader Latch")

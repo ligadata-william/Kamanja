@@ -5022,6 +5022,28 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def getLeaderHost(leaderNode: String) : String = {
+    val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
+    if ( nodes.length == 0 ){
+      logger.trace("No Nodes found ")
+      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", leaderNode, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available)
+      apiResult.toString()
+    }
+    else{
+      val nhosts = nodes.filter(n => n.nodeId == leaderNode)
+      if ( nhosts.length == 0 ){
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", leaderNode, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available)
+        apiResult.toString()
+      }
+      else{
+	val nhost = nhosts(0)
+	logger.trace("node addr => " + nhost.NodeAddr)
+	nhost.NodeAddr
+      }
+    }
+  }
+    
+
   def getAuditRec(filterParameters: Array[String]) : String = {
     var apiResultStr = ""
     if( auditObj == null ){
@@ -5168,6 +5190,11 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.error("Node %s not found in metadata".format(nodeId))
       return false
     }
+
+    metadataAPIConfig.setProperty("SERVICE_HOST", nd.nodeIpAddr)
+    logger.trace("NodeIpAddr Based on node(%s) => %s".format(nodeId,nd.nodeIpAddr))
+    metadataAPIConfig.setProperty("SERVICE_PORT", nd.nodePort.toString)
+    logger.trace("NodeIpAddr Based on node(%s) => %d".format(nodeId,nd.nodePort))
 
     val clusterId = nd.ClusterId
 

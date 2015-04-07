@@ -695,6 +695,7 @@ class NodeInfo {
   def Power: Int = power
   def Roles: Int = roles
   def Description: String = description
+  def NodeAddr: String = nodeIpAddr + ":" + nodePort.toString
 }
 
 class ClusterInfo {
