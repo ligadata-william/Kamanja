@@ -45,12 +45,12 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
     val objectName = pmmlStr.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",objectName.substring(0,20))    
-	      requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",objectName.substring(0,20))    
+	    requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectName.substring(0,20))   
+      requestContext.complete(apiResult)      
     }
-    
-    val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectName.substring(0,20))   
-    requestContext.complete(apiResult)
   }
 }

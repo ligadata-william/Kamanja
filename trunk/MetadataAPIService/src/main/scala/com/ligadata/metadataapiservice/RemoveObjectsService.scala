@@ -59,9 +59,8 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",objectName.substring(0,20))
-        requestContext.complete(new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString )
+        return new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString
     }
-
 
     arg.ObjectType match {
       case "model" => {

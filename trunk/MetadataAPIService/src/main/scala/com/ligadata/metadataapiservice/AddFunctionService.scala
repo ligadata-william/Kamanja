@@ -40,10 +40,10 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","function"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",objectName.substring(0,20))
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))       
+      requestContext.complete(apiResult)     
     }
-    
-    val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))       
-    requestContext.complete(apiResult)
   }
 }

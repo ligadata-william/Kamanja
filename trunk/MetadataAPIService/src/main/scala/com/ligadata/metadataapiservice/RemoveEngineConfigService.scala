@@ -38,10 +38,10 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
     if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectName.substring(0,20)) 
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectName.substring(0,20))    
+      requestContext.complete(apiResult)     
     }
-    
-    val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectName.substring(0,20))    
-    requestContext.complete(apiResult)
   }
 }

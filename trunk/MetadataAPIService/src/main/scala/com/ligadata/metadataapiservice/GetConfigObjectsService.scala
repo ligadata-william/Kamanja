@@ -40,22 +40,22 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 
     objectType match {
       case "node" => {
-	apiResult = MetadataAPIImpl.GetAllNodes("JSON")
+        apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
       case "cluster" => {
-	apiResult = MetadataAPIImpl.GetAllClusters("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusters("JSON")
       }
       case "adapter" => {
-	apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
+        apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
       }
       case "clustercfg" => {
-	apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
       }
       case "all" => {
-	apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
+        apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
       }
       case _ => {
-	apiResult = "The " + objectType + " is not supported yet "
+        apiResult = "The " + objectType + " is not supported yet "
       }
     }
     apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -76,11 +76,11 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType.substring(0,20))
       requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
+    } else {
+      val apiResult = GetConfigObjects(objectType)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType.substring(0,20))
+      requestContext.complete(apiResult)      
     }
-    
-    val apiResult = GetConfigObjects(objectType)
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType.substring(0,20))
-    requestContext.complete(apiResult)
   }
 }
 

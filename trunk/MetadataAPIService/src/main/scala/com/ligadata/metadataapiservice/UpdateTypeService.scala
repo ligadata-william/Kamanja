@@ -38,10 +38,10 @@ class UpdateTypeService(requestContext: RequestContext, userid:Option[String], p
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","type"))) {
        MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.TYPE,AuditConstants.FAIL,"",objectName.substring(0,20)) 
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.UpdateType(typeJson,formatType)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
+      requestContext.complete(apiResult)     
     }
-    
-    val apiResult = MetadataAPIImpl.UpdateType(typeJson,formatType)
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
-    requestContext.complete(apiResult)
   }
 }
