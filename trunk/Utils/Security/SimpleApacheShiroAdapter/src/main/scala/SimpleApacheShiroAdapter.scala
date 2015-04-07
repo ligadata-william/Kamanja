@@ -71,7 +71,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     // let's login the current user so we can check against roles and permissions:
     if (!currentUser.isAuthenticated()) {
       val token = new UsernamePasswordToken(username,password);
-      token.setRememberMe(true);
+     //token.setRememberMe(true);
       try {
         currentUser.login(token);
       } catch {
@@ -126,6 +126,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     }
     // if we are here.. Both Auth and Authorization is passed..
     log.debug("SimpleApacheShiroAdapter: User [" + currentUser.getPrincipal() + "] authorized successfully");
+    currentUser.logout
     return true
   }
 }

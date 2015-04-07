@@ -233,9 +233,7 @@ object MetadataAPIImpl extends MetadataAPI {
     
     // All is good, create the new class 
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.AuditAdapter]]
-    logger.debug("Created class "+ className.getName)  
     auditObj = className.newInstance
-    logger.debug("Created class "+ className.getName)  
     auditObj.init
     logger.debug("Created class "+ className.getName)    
   }
