@@ -37,28 +37,27 @@ trait MetadataAPIService extends HttpService {
             val toknRoute = str.split("/") 
             logger.debug("GET reqeust : api/"+str)
             if (toknRoute.size == 1) {
-	      if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-          requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
-	      }
+              if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
+                requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
+              }
               else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
-		requestContext => processGetLeaderRequest(null,requestContext,userId,password,role)
-	      }    
-	      else{
-          requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
-	      }
-	    }
+                requestContext => processGetLeaderRequest(null,requestContext,userId,password,role)
+              }    
+              else{
+                requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
+	            }
+            }
             else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-	      requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,role)
-	    }  
+              requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,role)
+            }  
             else if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-	      // strip the first token and send the rest
-	      val filterParameters = toknRoute.slice(1,toknRoute.size)
-	      requestContext => processGetAuditLogRequest(filterParameters,requestContext,userId,password,role)
-	    }    
+              // strip the first token and send the rest
+              val filterParameters = toknRoute.slice(1,toknRoute.size)
+              requestContext => processGetAuditLogRequest(filterParameters,requestContext,userId,password,role)
+            }    
             else {
-	      requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, 
-							requestContext,userId,password,role)
-	    }           
+              requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, userId, password, role)
+            }           
           } 
         } 
       } ~
