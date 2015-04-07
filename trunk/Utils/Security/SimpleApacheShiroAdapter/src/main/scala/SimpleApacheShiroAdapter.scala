@@ -70,6 +70,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
 
     // let's login the current user so we can check against roles and permissions:
     if (!currentUser.isAuthenticated()) {
+      log.debug("SimpleApacheShiroAdapter: running authentication again")
       val token = new UsernamePasswordToken(username,password);
      //token.setRememberMe(true);
       try {
@@ -108,9 +109,10 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
     //test a role:
     if( role != null ){
       if (currentUser.hasRole(role)) {
-        log.debug("SimpleApacheShiroAdapter: The role " + role + " is authorized !");
+        log.debug("SimpleApacheShiroAdapter: The role " + role + " is authorized !")
       } else {
-        log.debug("SimpleApacheShiroAdapter: The role " + role + " is not authorized !");
+        log.debug("SimpleApacheShiroAdapter: The role " + role + " is not authorized !")
+        currentUser.logout
         return false
       }
     }
@@ -121,6 +123,7 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
         log.debug("SimpleApacheShiroAdapter: The privilege " + privilege + " is authorized ")
 	    } else {
         log.debug("SimpleApacheShiroAdapter: The privilege " + privilege + " is not authorized ")
+        currentUser.logout
         return false
       }
     }
