@@ -7,6 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
+import com.ligadata.olep.metadata._
 
 import scala.util.{ Success, Failure }
 
@@ -37,12 +38,12 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
 	  val objectName = conceptJson.substring(0,100)
 
 	  if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
-	    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddConcept",objectName,"Failed","unknown","UPDATE not allowed for this user")
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.FAIL,"",objectName.substring(0,20))
 	    requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
 	  }
 		
 	  val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
-	  MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddConcept",objectName,"Finished","unknown",apiResult)
+	  MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",objectName.substring(0,20))
 	  requestContext.complete(apiResult)
 	}
 }

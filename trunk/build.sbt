@@ -81,4 +81,6 @@ lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperCl
 
 lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata)
 
+lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage)
+
 

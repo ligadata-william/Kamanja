@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-
+import com.ligadata.olep.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
@@ -38,12 +38,12 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
     val objectName = functionJson.substring(0,100)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","function"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddFunction",objectName,"Failed","unknown","UPDATE not allowed for this user")
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",objectName.substring(0,20))
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddFunction",objectName,"Finished","unknown",apiResult)        
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))       
     requestContext.complete(apiResult)
   }
 }

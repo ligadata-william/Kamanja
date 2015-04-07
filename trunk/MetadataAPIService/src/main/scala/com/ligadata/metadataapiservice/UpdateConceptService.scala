@@ -8,6 +8,7 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
+import com.ligadata.olep.metadata._
 
 object UpdateConceptService {
   case class Process(conceptJson:String)
@@ -33,12 +34,12 @@ class UpdateConceptService(requestContext: RequestContext, userid:Option[String]
     log.info("Requesting UpdateConcept {}",conceptJson)
     val objectName = conceptJson.substring(0,100)        
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","concept"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateConcept",objectName,"Failed","unknown","UPDATE not allowed for this user") 
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.FAIL,"",objectName.substring(0,20)) 
       requestContext.complete(new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString )
     }
     
     val apiResult = MetadataAPIImpl.UpdateConcepts(conceptJson,"JSON")
-    MetadataAPIImpl.logAuditRec(userid,Some("update"),"UpdateConcept",objectName,"Finished","unknown",apiResult)            
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",objectName.substring(0,20))            
     requestContext.complete(apiResult)
   }
 }

@@ -143,6 +143,7 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val metadataAPIConfig = new Properties()
   var zkc: CuratorFramework = null
   var authObj: SecurityAdapter = null
+  var auditObj: AuditAdapter = null
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
   
@@ -175,25 +176,74 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   /**
-   * InitSecImpl  - Create the Security Adapter class.  The class name and jar name containing 
+   * InitSecImpl  - 1. Create the Security Adapter class.  The class name and jar name containing 
+   *                the implementation of that class are specified in the CONFIG FILE.
+   *                2. Create the Audit Adapter class, The class name and jar name containing 
    *                the implementation of that class are specified in the CONFIG FILE.
    */
   def InitSecImpl: Unit = {
     logger.debug("Establishing connection to domain security server..")
     val classLoader: MetadataLoader = new MetadataLoader
     // If already have one, use that!
-    if (authObj != null) {
-      return
+    if (authObj == null) {
+      createAuthObj(classLoader)
     } 
-    
+    if (auditObj == null) {
+      createAuditObj(classLoader)
+    }
+  }
+  
+  /**
+   * private method to instantiate an authObj
+   */
+  private def createAuthObj(classLoader : MetadataLoader): Unit = {
     // Load the location and name of the implementing class from the 
     val implJarName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_JAR").trim
     val implClassName = metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS").trim 
+    logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
     if (implClassName == null) {
       logger.error("Security Adapter Class is not specified")
       return
     }
+
+    // Add the Jarfile to the class loader
+    loadJar(classLoader,implJarName)
     
+    // All is good, create the new class 
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.SecurityAdapter]]
+    authObj = className.newInstance
+    logger.debug("Created class "+ className.getName)    
+  }
+  
+   /**
+   * private method to instantiate an authObj
+   */
+  private def createAuditObj (classLoader : MetadataLoader): Unit = {
+    // Load the location and name of the implementing class froms the 
+    val implJarName = if (metadataAPIConfig.getProperty("AUDIT_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("AUDIT_IMPL_JAR").trim
+    val implClassName = metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim 
+    logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
+    if (implClassName == null) {
+      logger.error("Audit Adapter Class is not specified")
+      return
+    }
+    
+    // Add the Jarfile to the class loader
+    loadJar(classLoader,implJarName)
+    
+    // All is good, create the new class 
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.AuditAdapter]]
+    logger.debug("Created class "+ className.getName)  
+    auditObj = className.newInstance
+    logger.debug("Created class "+ className.getName)  
+    auditObj.init
+    logger.debug("Created class "+ className.getName)    
+  }
+ 
+  /**
+   * loadJar - load the specified jar into the classLoader
+   */
+  private def loadJar (classLoader : MetadataLoader, implJarName: String): Unit = {
     // Add the Jarfile to the class loader
     val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
     val jarName = JarPathsUtils.GetValidJarFile(jarPaths, implJarName)
@@ -212,13 +262,7 @@ object MetadataAPIImpl extends MetadataAPI {
     } else {
       logger.error("Unable to locate Jar '"+implJarName+"'")
       return 
-    }
-    
-    // All is good, create the new class 
-    var blah = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.SecurityAdapter]]
-    authObj = blah.newInstance
-    logger.debug("Created class "+ blah.getName)    
-    return
+    }   
   }
   
   /**
@@ -306,7 +350,6 @@ object MetadataAPIImpl extends MetadataAPI {
   private var otherStore: DataStore = _
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
-  private var auditStore: AuditStore = _
 
   def oStore = otherStore
 
@@ -1448,7 +1491,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
 
-  @throws(classOf[CreateStoreFailedException])
+ /* @throws(classOf[CreateStoreFailedException])
   def GetAuditStoreHandle(storeType: String, storeName: String, tableName: String): AuditStore = {
     var as:AuditStore = null
     try {
@@ -1456,11 +1499,11 @@ object MetadataAPIImpl extends MetadataAPI {
       AuditStoreManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-	logger.warn("Unable to create database store connection for auditing: " + e.getMessage())
+        logger.warn("Unable to create database store connection for auditing: " + e.getMessage())
         as
       }
     }
-  }
+  }*/
 
   @throws(classOf[CreateStoreFailedException])
   def OpenDbStore(storeType: String) {
@@ -1470,7 +1513,6 @@ object MetadataAPIImpl extends MetadataAPI {
       configStore = GetDataStoreHandle(storeType, "config_store", "config_objects")
       jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store")
       transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id")
-      auditStore = GetAuditStoreHandle(storeType, "metadata_audit", "metadata_audit")
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -1523,11 +1565,11 @@ object MetadataAPIImpl extends MetadataAPI {
         configStore = null
         logger.debug("configStore closed")
       }
-      if (auditStore != null) {
-        auditStore.Shutdown()
-        auditStore = null
-        logger.debug("auditStore closed")
-      }
+     // if (auditStore != null) {
+     //   auditStore.Shutdown()
+    //    auditStore = null
+    //    logger.debug("auditStore closed")
+    //  }
     } catch {
       case e: Exception => {
         throw e;
@@ -4889,60 +4931,69 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  /**
+   * getCurrentTime - Return string representation of the current Date/Time
+   */
   def getCurrentTime: String = {
-    //val today = Calendar.getInstance().getTime()
     new Date().getTime().toString()
-    //today.toString()
-    //val tformat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
-    //tformat.format(today)
   }
 
-  def logAuditRec(userOrRole:Option[String],userPrivilege:Option[String],action:String,objectAccessed:String,success:String,transactionId:String, notes:String) = {
-    if( auditStore != null ){
-      val a = new AuditRecord()
-      var u = "any user"
+  /**
+   * logAuditRec - Record an Audit event using the audit adapter.
+   */
+  def logAuditRec(userOrRole:Option[String], userPrivilege:Option[String], action:String, objectAccessed:String, success:String, transactionId:String, notes:String) = {
+    logger.info("AUDIT SHIT GOING ON")
+    if( auditObj != null ){
+      logger.info("AUDIT SHIT GOING ON 2")
+      val aRec = new AuditRecord
+      
+      // If no userName is provided here, that means that somehow we are not running with Security but with Audit ON.
+      var userName = "undefined"
       if( userOrRole != None ){
-	u = userOrRole.get
+        userName = userOrRole.get
       }
-      var p = "any privilege"
+      
+      // If no priv is provided here, that means that somehow we are not running with Security but with Audit ON.
+      var priv = "undefined"
       if( userPrivilege != None ){
-	p = userPrivilege.get
+        priv = userPrivilege.get
       }
 
-      a.userOrRole = u
-      a.userPrivilege = p
-      a.actionTime = getCurrentTime
-      a.action = action
-      a.objectAccessed = objectAccessed
-      a.success = success
-      a.transactionId = transactionId
-      a.notes = notes
+      aRec.userOrRole = userName
+      aRec.userPrivilege = priv
+      aRec.actionTime = getCurrentTime
+      aRec.action = action
+      aRec.objectAccessed = objectAccessed
+      aRec.success = success
+      aRec.transactionId = transactionId
+      aRec.notes  = notes
       try{
-	auditStore.add(a)
+        auditObj.addAuditRecord(aRec)
       } catch {
-	case e: Exception => {
-          throw new UpdateStoreFailedException("Failed to save audit record" + a.toString + ":" + e.getMessage())
-	}
+        case e: Exception => {
+          throw new UpdateStoreFailedException("Failed to save audit record" + aRec.toString + ":" + e.getMessage())
+	      }
       }
     }
   }
 
-  def getAuditRec(startTime: Date, endTime: Date, userOrRole:String,action:String,objectAccessed:String) : String = {
+  
+   /**
+   * getAuditRec - Get an audit record from the audit adapter.
+   */
+  def getAuditRec(startTime: Date, endTime: Date, userOrRole:String, action:String, objectAccessed:String) : String = {
     var apiResultStr = ""
-    if( auditStore == null ){
+    if( auditObj == null ){
       apiResultStr = "no audit records found "
       return apiResultStr
     }
     try{
-      val recs = auditStore.get(startTime,endTime,userOrRole,action,objectAccessed)
+      val recs = auditObj.get(startTime,endTime,userOrRole,action,objectAccessed)
       if( recs.length > 0 ){
-	apiResultStr = JsonSerializer.SerializeAuditRecordsToJson(recs)
-	//recs.foreach( rec => {
-	//  apiResultStr = apiResultStr + rec.toString + "\n"
-	//})
+        apiResultStr = JsonSerializer.SerializeAuditRecordsToJson(recs)
       }
       else{
-	apiResultStr = "no audit records found "
+        apiResultStr = "no audit records found "
       }
     } catch {
       case e: Exception => {
@@ -4953,7 +5004,10 @@ object MetadataAPIImpl extends MetadataAPI {
     logger.debug(apiResultStr)
     apiResultStr
   }
-
+  
+  /**
+   * parseDateStr
+   */
   def parseDateStr(dateStr: String) : Date = {
     try{
       val format = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
@@ -4970,7 +5024,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def getAuditRec(filterParameters: Array[String]) : String = {
     var apiResultStr = ""
-    if( auditStore == null ){
+    if( auditObj == null ){
       apiResultStr = "no audit records found "
       return apiResultStr
     }

@@ -15,8 +15,10 @@ import com.ligadata.olep.metadata.SecurityAdapter
 import java.util.Properties
 
 class SimpleApacheShiroAdapter extends SecurityAdapter{
-  
-  // Simple thing for here.....  This impl treats all request as READ/WRITE
+
+  /**
+   * Simple thing for here.....  This impl treats all request as READ/WRITE
+   */
   override def getPrivilegeName (op: String, objectName: String): String = {
     if (op.equalsIgnoreCase("get")) {
       return "read" 
@@ -24,7 +26,15 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
       return "write"
     }
   }
+  
+  /**
+   * 
+   */
+  def init: Unit = {}
 
+  /**
+   * 
+   */
   override def performAuth(secParams: java.util.Properties): Boolean = {
 
     val loggerName = this.getClass.getName

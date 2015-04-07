@@ -7,6 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
+import com.ligadata.olep.metadata._
 
 import scala.util.{ Success, Failure }
 
@@ -38,12 +39,12 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
     val objectName = messageJson.substring(0,100)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","message"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddMessage",objectName,"Failed","unknown","UPDATE not allowed for this user")
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",objectName.substring(0,20))   
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )      
     }
     
     val apiResult = MetadataAPIImpl.AddMessage(messageJson)
-    MetadataAPIImpl.logAuditRec(userid,Some("insert"),"AddMessage",objectName,"Finished","unknown",apiResult)    
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",objectName.substring(0,20))   
     requestContext.complete(apiResult)
   }
 }

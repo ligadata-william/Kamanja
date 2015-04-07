@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
+import com.ligadata.olep.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -57,34 +58,34 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     
     val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetObjects",objectName,"Failed","unknown","READ not allowed for this user")
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",objectName.substring(0,20))
 	      requestContext.complete(new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString )
     }
 
     arg.ObjectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetModelDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "message" => {
 	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetMessageDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetContainerDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetFunctionDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConceptDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetTypeDef",objectName,"Finished","unknown",apiResult)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
     }
     apiResult

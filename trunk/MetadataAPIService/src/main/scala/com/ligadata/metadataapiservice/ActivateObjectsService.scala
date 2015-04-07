@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
+import com.ligadata.olep.metadata._
 
 import scala.util.control._
 
@@ -71,6 +72,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     logger.debug(APIName + ":" + apiArgListJson)
 
     if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"","")
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     }
 
@@ -99,6 +101,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     else{
       resultStr = new ApiResult(-1, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.SUCCESS,"","")
     requestContext.complete(resultStr)
   }
 }

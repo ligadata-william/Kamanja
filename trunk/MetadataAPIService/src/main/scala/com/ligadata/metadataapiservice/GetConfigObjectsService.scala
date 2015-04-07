@@ -8,7 +8,7 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
-
+import com.ligadata.olep.metadata._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -74,11 +74,12 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     log.debug("Requesting GetConfigObjects {}",objectType)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Failed","unknown","READ not allowed for this user")
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType.substring(0,20))
       requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
     }
     
     val apiResult = GetConfigObjects(objectType)
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType.substring(0,20))
     requestContext.complete(apiResult)
   }
 }

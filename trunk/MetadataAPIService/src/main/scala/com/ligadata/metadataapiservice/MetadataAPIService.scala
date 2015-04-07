@@ -37,10 +37,10 @@ trait MetadataAPIService extends HttpService {
             logger.debug("GET reqeust : api/"+str)
             if (toknRoute.size == 1) {
 	      if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-		requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
+          requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
 	      }
 	      else{
-		requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
+          requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
 	      }
 	    }
             else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
@@ -122,7 +122,6 @@ trait MetadataAPIService extends HttpService {
   private def processPutRequest(objtype:String, body: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
    val action = "Update" + objtype
    val notes = "Invoked " + action + " API "
-    MetadataAPIImpl.logAuditRec(userid,role,action,objtype,"Started","unknown",notes)
     if (objtype.equalsIgnoreCase("Container")) {
         val updateContainerDefsService = actorRefFactory.actorOf(Props(new UpdateContainerService(rContext,userid,password,role)))
         updateContainerDefsService ! UpdateContainerService.Process(body)
@@ -156,7 +155,6 @@ trait MetadataAPIService extends HttpService {
    * Modify Existing objects in the Metadata 
    */
   private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
-    MetadataAPIImpl.logAuditRec(userid,role,action,objKey,"Started","unknown",action + " action is being invoked")
     if (action.equalsIgnoreCase("Activate")) {
         val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext,userid,password,role)))
         activateObjectsService ! ActivateObjectsService.Process(createGetArg(objKey,objtype))
@@ -174,7 +172,6 @@ trait MetadataAPIService extends HttpService {
   private def processPostRequest(objtype:String, body: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
    val action = "Add" + objtype
    val notes = "Invoked " + action + " API "
-   MetadataAPIImpl.logAuditRec(userid,role,action,objtype,"Started","unknown",notes)
    if (objtype.equalsIgnoreCase("Container")) {
         val addContainerDefsService = actorRefFactory.actorOf(Props(new AddContainerService(rContext,userid,password,role)))
         addContainerDefsService ! AddContainerService.Process(body)
@@ -211,7 +208,6 @@ trait MetadataAPIService extends HttpService {
    */
 
   private def processGetKeysRequest(objtype:String,rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
-    MetadataAPIImpl.logAuditRec(userid,role,"GetKeys",objtype,"Started","unknown","GetKeys is being invoked")
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || objtype.equalsIgnoreCase("Function") ||
         objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
       val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext,userid,password,role)))
@@ -227,7 +223,6 @@ trait MetadataAPIService extends HttpService {
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
    val action = "Get" + objtype
    val notes = "Invoked " + action + " API "
-    MetadataAPIImpl.logAuditRec(userid,role,action,objtype,"Started","unknown",notes)
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,role)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
@@ -246,7 +241,6 @@ trait MetadataAPIService extends HttpService {
   private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
    val action = "Remove" + objtype
    val notes = "Invoked " + action + " API "
-    MetadataAPIImpl.logAuditRec(userid,role,action,objKey,"Started","unknown",notes)
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
         objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
       val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext,userid,password,role)))

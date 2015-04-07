@@ -36,7 +36,7 @@ import java.util.Calendar
  *
  */
 
-class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
+class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
 {
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -65,7 +65,7 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
   
   createTable(table)
   var tableHBase = connection.getTable(table);
-
+  
   def createTable(tableName:String) : Unit = {
     val  admin = new HBaseAdmin(config);
     if (! admin.tableExists(tableName)) {
@@ -91,7 +91,7 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
     }
   }
 
-  def add(rec: AuditRecord) = {
+  def addAuditRecord(rec: AuditRecord) = {
     try{
       var at:java.lang.Long = rec.actionTime.toLong
       var p = new Put(Bytes.toBytes(at.toString()))
@@ -203,6 +203,10 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditStore
     }
   }
 
+  def init: Unit = {
+    
+  }
+  
   override def Shutdown() = {
     if(tableHBase != null ){
       tableHBase.close()

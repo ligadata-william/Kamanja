@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
+import com.ligadata.olep.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -46,43 +47,34 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     var apiResult:Array[String] = new Array[String](0)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllObjectKeys","AllObjects","Failed","unknown","READ not allowed for this user")
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,"KEYS",AuditConstants.FAIL,"unknown","")
 	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
     objectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllModelDefs","AllModels","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"","")
       }
       case "message" => {
 	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllMessageDefs","AllMessages","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"","")
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllContainerDefs","AllContainers","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"","")
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllFunctionDefs","AllFunctions","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"","")
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllConceptDefs","AllConcepts","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"","")
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllTypeDefs","AllTypes","Finished","unknown",apiResult.mkString(","))
-      }
-      case "all" => {
-	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
-		      MetadataAPIImpl.GetAllMessagesFromCache(true) ++
-		      MetadataAPIImpl.GetAllContainersFromCache(true) ++
-		      MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
-		      MetadataAPIImpl.GetAllConceptsFromCache(true) ++
-		      MetadataAPIImpl.GetAllTypesFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetAllMdobjDefs","AllMdobjs","Finished","unknown",apiResult.mkString(","))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.TYPE,AuditConstants.SUCCESS,"","")
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
