@@ -827,7 +827,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
 		commentBuffer.append(s"import scala.math._\n")
 		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
-		commentBuffer.append(s"import scala.util.control.Breaks._\n") 		
+		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
+		commentBuffer.append(s"\n")
 		
 		commentBuffer.append(s"/**\n")
 		appName match {
@@ -989,8 +990,18 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
 
-		
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = ctx.containersInScope.filter( _._1 == "msg").head
+		/** plan for the day when there are multiple messages present in the constructor */
+		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
+			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
+			isPrintedInCtor
+		}).toArray
+
+		/** pick the first one (and only one) AFTER the gCtx for now */
+		val msgContainerInfoSize : Int = msgNameContainerInfo.size
+		if (msgContainerInfoSize <= 1) {
+			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+		}
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
 		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
 		val msgTypeStr : String = msgTypedef.typeString
 		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
@@ -1074,10 +1085,24 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		clsBuffer.append(s"    }\n")
 		clsBuffer.append(s"\n")		
 		
-			
+		/** plan for the day when there are multiple messages present in the constructor */
+		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
+			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
+			isPrintedInCtor
+		}).toArray
+
+		/** pick the first one (and only one) AFTER the gCtx for now */
+		val msgContainerInfoSize : Int = msgNameContainerInfo.size
+		if (msgContainerInfoSize <= 1) {
+			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+		}
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
+		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
+
 		clsBuffer.append(s"\n")
 		clsBuffer.append(s"    /***********************************************************************/\n")
 		clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
+		clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
 		clsBuffer.append(s"    ctx.dDict.apply(${'"'}msg${'"'}).Value(new AnyDataValue(msg))\n")
 		clsBuffer.append(s"    /***********************************************************************/\n")
 		/** 
