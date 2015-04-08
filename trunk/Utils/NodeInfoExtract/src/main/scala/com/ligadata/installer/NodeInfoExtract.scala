@@ -6,7 +6,7 @@ import java.io._
 import com.ligadata.MetadataAPI.{ MetadataAPIImpl }
 import com.ligadata.olep.metadata._
 
-class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String) {
+class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String, val clusterId : String, val installDir : String) {
 
 	//MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
 	MetadataAPIImpl.InitMdMgr(metadataAPIConfig)
@@ -37,24 +37,22 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 	}
 	
 	def extract : (Array[String], Array[(String,String,String)],Array[(String,String)]) = {
-		val nodeInfos : Map[String,NodeInfo] = MdMgr.GetMdMgr.Nodes
+		val nodeInfos : Array[NodeInfo] = MdMgr.GetMdMgr.NodesForCluster(clusterId)
 		val ok : Boolean = (nodeInfos != null && nodeInfos.size > 0)
 		if (! ok) {
-			throw new RuntimeException("There are no known nodes in the Metadata... consider using --NodeConfigPath option or choose different MetadataAPI config. ")
+			throw new RuntimeException(s"There are no known nodes in the Metadata for $clusterId... consider using --NodeConfigPath option, check your clusterId value, or choose different MetadataAPI config. ")
 		}
 		/** 
 		 	Since nodes can exist on the same machine, and use the same directory for all node implementations,
 		 	some work must be done to create a concise set of node/install directory pairs... 
-		 	
-		 	Build a Set[String] of (nodeIp,installPath) pairs...
-		 	
 		 */	
-	    val ips : Array[String] = nodeInfos.values.map(info => info.nodeIpAddr).toSet.toSeq.sorted.toArray 
-	    val ipIdTargPaths : Array[(String,String,String)] = nodeInfos.values.map(info => {
-		      	(info.nodeIpAddr, info.nodeId, info.jarPaths.head.toString)}
+		val configDir : String = installDir + "/config"
+	    val ips : Array[String] = nodeInfos.map(info => info.nodeIpAddr).toSet.toSeq.sorted.toArray 
+	    val ipIdTargPaths : Array[(String,String,String)] = nodeInfos.map(info => {
+		      	(info.nodeIpAddr, info.nodeId, configDir)}
 		    ).toSet.toSeq.sorted.toArray 
 	   
-	    val uniqueNodePaths : Set[String] = nodeInfos.values.map(info => info.nodeIpAddr + "~" + info.jarPaths.head).toSet 
+	    val uniqueNodePaths : Set[String] = nodeInfos.map(info => info.nodeIpAddr + "~" + installDir).toSet 
 		val ipPathPairs : Array[(String,String)] = uniqueNodePaths.map(itm => (itm.split('~').head, itm.split('~').last)).toSeq.sorted.toArray
 		(ips, ipIdTargPaths, ipPathPairs)
 	}
@@ -68,13 +66,17 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
                 --NodeConfigPath <OnLEP engine config file path>
                 --ipFileName <file name path for the cluster node ips>
                 --ipPathPairFileName <file name path for the cluster node ip/path name pairs>
-		        [--ClusterConfigurationName <name>  ... not yet... a hint at the future]
+				--installDir <the directory where the cluster is installed>
+		        --clusterId <cluster id name> 
       
-        Note: Current implementation REQUIRES the node config path.  In a future version, the config path
-		will be made an alternative used for building new clusters configurations.  To replace/upgrade an
-		existing configuration, the name of the configuration may be supplied in lieu of the NodeConfigPath.
-        This name must reflect one of the defined cluster configuration in the metadata store defined in
-        the MetadataAPI config file.
+        Note: The metadata api config file is used to obtain the basic information regarding the metadata.
+		The node config path is principally for definining new clusters and is optional if the metadata mentioned
+		in the metadata api config file is proper (has a cluster defined in it).  The ipFileName and ipPathPairFileName
+		are file names to use for the collecting certain information for processing by the cluster installer or one
+		of the cluster start/stop scripts. 
+      
+		The clusterId is the one to be started/stopped or for install, the key to select nodes for
+		the cluster installation.  The system will permit multiple clusters to be defined in the same metadata cache.
       
 """
     }
@@ -92,8 +94,8 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
               nextOption(map ++ Map('MetadataAPIConfig -> value), tail)
             case "--NodeConfigPath" :: value :: tail =>
               nextOption(map ++ Map('NodeConfigPath -> value), tail)
-            case "--ClusterConfigurationName" :: value :: tail =>
-              nextOption(map ++ Map('ClusterConfigurationName -> value), tail)
+            case "--clusterId" :: value :: tail =>
+              nextOption(map ++ Map('clusterId -> value), tail)
             case "--ipFileName" :: value :: tail =>
               nextOption(map ++ Map('ipFileName -> value), tail)
             case "--ipPathPairFileName" :: value :: tail =>
@@ -102,6 +104,8 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
               nextOption(map ++ Map('workDir -> value), tail)  
             case "--ipIdCfgTargPathQuartetFileName" :: value :: tail =>
               nextOption(map ++ Map('ipIdCfgTargPathQuartetFileName -> value), tail)  
+            case "--installDir" :: value :: tail =>
+              nextOption(map ++ Map('installDir -> value), tail)  
             case option :: tail =>
               println("Unknown option " + option)
               println(usage)
@@ -113,26 +117,27 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
         
         val metadataAPIConfig = if (options.contains('MetadataAPIConfig)) options.apply('MetadataAPIConfig) else null
         val nodeConfigPath = if (options.contains('NodeConfigPath)) options.apply('NodeConfigPath) else null
-        val clusterConfigurationName = if (options.contains('ClusterConfigurationName)) options.apply('ClusterConfigurationName) else null
+        val clusterId = if (options.contains('clusterId)) options.apply('clusterId) else null
         val ipFileName = if (options.contains('ipFileName)) options.apply('ipFileName) else null
         val ipPathPairFileName = if (options.contains('ipPathPairFileName)) options.apply('ipPathPairFileName) else null
         val workDir = if (options.contains('workDir)) options.apply('workDir) else null
         val ipIdCfgTargPathQuartetFileName = if (options.contains('ipIdCfgTargPathQuartetFileName)) options.apply('ipIdCfgTargPathQuartetFileName) else null
+        val installDir = if (options.contains('installDir)) options.apply('installDir) else null
         
         val reasonableArguments : Boolean = (metadataAPIConfig != null && metadataAPIConfig.size > 0 
-            							//&& nodeConfigPath != null && nodeConfigPath.size > 0 /** it doesn't have to be present , but if there is used */
+            							&& installDir != null && installDir.size > 0 
             							&& ipFileName != null && ipFileName.size > 0 
             							&& ipPathPairFileName != null && ipPathPairFileName.size > 0 
             							&& workDir != null && workDir.size > 0 
             							&& ipIdCfgTargPathQuartetFileName != null && ipIdCfgTargPathQuartetFileName.size > 0 
-            							&& clusterConfigurationName == null)
+            							&& clusterId != null)
         if (! reasonableArguments) {
             println("Your arguments are not satisfactory...Usage:")
             println(usage)
             throw new RuntimeException("Your arguments are not satisfactory")
         }
                     
-   		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath)
+   		val extractor : NodeInfoExtract = new NodeInfoExtract(metadataAPIConfig, nodeConfigPath, clusterId, installDir)
    		if (nodeConfigPath != null) {
    			extractor.initializeEngineConfig
    		}
