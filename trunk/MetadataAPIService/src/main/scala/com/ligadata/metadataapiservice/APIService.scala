@@ -6,7 +6,7 @@ import akka.event.Logging
 import akka.io.IO
 import akka.io.Tcp._
 import spray.can.Http
-
+import org.json4s.jackson.JsonMethods._
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadataload.MetadataLoad
@@ -132,5 +132,21 @@ object APIService {
   def main(args: Array[String]): Unit = {
     val mgr = new APIService
     mgr.StartService(args)
+  }
+  
+  /**
+   * extractNameFromJson - applies to a simple Fatafat object
+   */
+  def extractNameFromJson (jsonObj: String): String = {
+    var inParm: Map[String,Any] = parse(jsonObj).values.asInstanceOf[Map[String,Any]]   
+    var vals: Map[String,String] = inParm.getOrElse("Type",null).asInstanceOf[Map[String,String]]
+    return vals.getOrElse("NameSpace","system")+"."+vals.getOrElse("Name","")+"."+vals.getOrElse("Version","-1")
+  }
+  
+  /**
+   * 
+   */
+  def extractNameFromPMML (pmmlObj: String): String = {
+    return "test.MODEL.test"
   }
 }

@@ -31,18 +31,24 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
       context.stop(self)
   }
   
-  def process(functionJson:String, formatType:String) = {
+  def process(functionJson:String, formatType:String): Unit = {
     
     log.info("Requesting AddFunction {},{}",functionJson,formatType)
     
-    val objectName = functionJson.substring(0,100)
+    var nameVal: String = null
+    if (formatType.equalsIgnoreCase("json")) {
+      nameVal = APIService.extractNameFromJson(functionJson) 
+    } else {
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      return
+    }
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","function"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",objectName.substring(0,20))
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))       
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameVal)       
       requestContext.complete(apiResult)     
     }
   }

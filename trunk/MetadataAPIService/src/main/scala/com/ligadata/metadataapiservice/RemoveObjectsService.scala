@@ -45,6 +45,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     var version = "-1"
     var formatType = "JSON"
     var apiResult:String = ""
+    var objType = ""
 
     if( arg.NameSpace != null ){
       nameSpace = arg.NameSpace
@@ -55,39 +56,38 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     if( arg.FormatType != null ){
       formatType = arg.FormatType
     }
+    if (arg.ObjectType != null) {
+      objType = arg.ObjectType
+    }
+      
     
-    val objectName = (nameSpace + arg.Name + version).toLowerCase
+    val objectName = (nameSpace + "."+ arg.Name +"."+ version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",objectName.substring(0,20))
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,objType,AuditConstants.FAIL,"",objectName)
         return new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString
     }
 
     arg.ObjectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectName.substring(0,20))
      }
       case "message" => {
 	      apiResult = MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",objectName.substring(0,20))
       }
     }
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",objectName)
     apiResult
   }
 

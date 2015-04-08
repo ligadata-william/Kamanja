@@ -136,7 +136,7 @@ trait MetadataAPIService extends HttpService {
         updateMessageDefsService ! UpdateMessageService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Type")) {
         val updateTypeDefsService = actorRefFactory.actorOf(Props(new UpdateTypeService(rContext,userid,password,role)))
-        updateTypeDefsService ! AddTypeService.Process(body,"JSON")
+        updateTypeDefsService ! UpdateTypeService.Process(body,"JSON")
     } else if (objtype.equalsIgnoreCase("Concept")) {
         val updateConceptDefsService = actorRefFactory.actorOf(Props(new UpdateConceptService(rContext,userid,password,role)))
         updateConceptDefsService ! UpdateConceptService.Process(body)

@@ -31,18 +31,24 @@ class UpdateMessageService(requestContext: RequestContext, userid:Option[String]
       context.stop(self)
   }
   
-  def process(messageJson:String, formatType:String) = {
+  def process(messageJson:String, formatType:String): Unit = {
     
     log.info("Requesting Update {},{}",messageJson,formatType)
 
-    val objectName = messageJson.substring(0,100)
+    var nameVal: String = null
+    if (formatType.equalsIgnoreCase("json")) {
+      nameVal = APIService.extractNameFromJson(messageJson)    
+    } else {
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      return
+    }
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","message"))) {
-       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",objectName.substring(0,20)) 
+       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",nameVal) 
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UpdateMessage(messageJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",objectName.substring(0,20))        
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameVal)        
       requestContext.complete(apiResult)     
     }
   }

@@ -31,17 +31,23 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
       context.stop(self)
   }
   
-  def process(typeJson:String, formatType:String) = {
+  def process(typeJson:String, formatType:String): Unit = {
     
     log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
-    val objectName = typeJson.substring(0,100)
+    var nameVal: String = null
+    if (formatType.equalsIgnoreCase("json")) {
+      nameVal = APIService.extractNameFromJson(typeJson) 
+    } else {
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      return
+    }
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","type"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.TYPE,AuditConstants.FAIL,"",objectName.substring(0,20))
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.TYPE,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",objectName.substring(0,20))       
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",nameVal)       
       requestContext.complete(apiResult)      
     }
   }

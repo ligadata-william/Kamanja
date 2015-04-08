@@ -40,50 +40,64 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
       context.stop(self)
   }
 
-  def ActivateObjectDef(arg: MetadataApiArg): String = {
+  def ActivateObjectDef(nameSpace: String, name: String, version: String, objectType: String ): String = {
     var resultStr:String = ""
-    var nameSpace = "str"
-    var version = "-1"
-    var formatType = "JSON"
     var apiResult:String = ""
 
-    if( arg.NameSpace != null ){
-      nameSpace = arg.NameSpace
-    }
-    if( arg.Version != null ){
-      version = arg.Version
-    }
-    if( arg.FormatType != null ){
-      formatType = arg.FormatType
-    }
-
-    arg.ObjectType match {
+    objectType match {
       case "model" => {
-	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt).toString
+	      MetadataAPIImpl.ActivateModel(nameSpace,name,version.toInt).toString
       }
       case _ => {
-	      new ApiResult(-1, APIName, null,  "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 
+	      new ApiResult(-1, APIName, null,  "Deactivate/Activate on " + objectType + " is not supported yet").toString 
       }
     }
   }
 
-  def process(apiArgListJson: String) = {
+   /**
+   * process - perform the activation process on the list of objects in the parameter var.
+   */
+  def process(apiArgListJson: String):Unit = {
     
-    logger.debug(APIName + ":" + apiArgListJson)
-
-    if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"","")
-      requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
-    }
-
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
+    var nameSpace = "str"
+    var version = "-1"
+    var name = ""
+    var authDone = false
+    var objectList: List[String]  = List[String]()
+    
+    logger.debug(APIName + ":" + apiArgListJson)
+    
     var resultStr:String = ""
 
     if ( arguments.length > 0 ){
       var loop = new Breaks
       loop.breakable{
 	      arguments.foreach(arg => {
+          
+          // Extract the object name from the ARGS
+          if( arg.NameSpace != null ){
+            nameSpace = arg.NameSpace
+          }
+          if( arg.Version != null ){
+            version = arg.Version
+          }
+          if( arg.Name != null ){
+            name = arg.Name
+          }
+          
+          // Do it here so that we know which OBJECT is being activated for the Audit purposes.
+          if ((!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) && !authDone) {
+            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
+            requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+            return
+          }
+          
+          // Make sure that we do not perform another AUTH check, and add this object name to the list of objects processed in this call.
+          authDone = true
+          objectList :::= List(nameSpace+"."+name+"."+version)
+          
 	        if(arg.ObjectType == null ){
 	          resultStr =  new ApiResult(-1, APIName, null,"Error: The value of object type can't be null").toString
 	          loop.break
@@ -93,7 +107,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 	          loop.break
 	        }
 	        else {
-	          resultStr = resultStr + ActivateObjectDef(arg)
+	          resultStr = resultStr + ActivateObjectDef(nameSpace,name,version, arg.ObjectType)
 	        }
 	      })
       }
@@ -101,7 +115,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     else{
       resultStr = new ApiResult(-1, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.SUCCESS,"","")
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }

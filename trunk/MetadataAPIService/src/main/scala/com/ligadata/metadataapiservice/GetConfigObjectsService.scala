@@ -36,7 +36,6 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 
   def GetConfigObjects(objectType:String): String = {
     var apiResult:String = ""
-    var apiResultStr:String = ""
 
     objectType match {
       case "node" => {
@@ -58,9 +57,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
         apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
-    MetadataAPIImpl.logAuditRec(userid,Some("get"),"GetConfigObjects",objectType,"Finished","unknown",apiResultStr)
-    apiResultStr
+    MetadataAPIImpl.getApiResult(apiResult)
   }
 
   
@@ -74,11 +71,11 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     log.debug("Requesting GetConfigObjects {}",objectType)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType.substring(0,20))
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType)
       requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
     } else {
       val apiResult = GetConfigObjects(objectType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType.substring(0,20))
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType)
       requestContext.complete(apiResult)      
     }
   }

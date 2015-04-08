@@ -47,40 +47,35 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     var apiResult:Array[String] = new Array[String](0)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,"KEYS",AuditConstants.FAIL,"unknown","")
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,"KEYS",AuditConstants.FAIL,"",objectType)
 	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
     objectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"","")
       }
       case "message" => {
 	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"","")
       }
       case "container" => {
 	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"","")
       }
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"","")
       }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"","")
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.TYPE,AuditConstants.SUCCESS,"","")
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
          return new ApiResult(-1, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
       }
     }
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.SUCCESS,"",objectType)
     new ApiResult(0,  APIName, null,  "Object Keys:" + apiResult.mkString(",")).toString
   }
 

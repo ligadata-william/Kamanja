@@ -34,14 +34,14 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
   def process(containerJson:String) = {
     log.info("Requesting UpdateContainer {}",containerJson)
     
-    val objectName = containerJson.substring(0,100)
+    var nameVal = APIService.extractNameFromJson(containerJson) 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","container"))) {
-       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",objectName.substring(0,20)) 
+       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",nameVal) 
        requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UpdateContainer(containerJson,"JSON")
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",objectName.substring(0,20))
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",nameVal)
       requestContext.complete(apiResult)     
     }
   }
