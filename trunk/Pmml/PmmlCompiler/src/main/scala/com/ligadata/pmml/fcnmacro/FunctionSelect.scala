@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.fcnmacro
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
@@ -6,45 +6,13 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
+import java.io.{ File }
 import org.apache.log4j.Logger
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.syntaxtree.cooked._
+import com.ligadata.pmml.support._
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadataload.MetadataLoad
-import java.net.URL
-import java.net.URLClassLoader
-import scala.reflect.runtime.{ universe => ru }
-//import java.nio.file.{ Paths, Files }
-import java.io.{ File }
-
-class PMMLClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  override def addURL(url: URL) {
-    super.addURL(url)
-  }
-}
-
-class PMMLLoaderInfo {
-  // class loader
-  val loader: PMMLClassLoader = new PMMLClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-
-  // Loaded jars
-  val loadedJars: TreeSet[String] = new TreeSet[String];
-
-  // Get a mirror for reflection
-  val mirror: reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
-}
-
-object PMMLConfiguration {
-  var jarPaths: collection.immutable.Set[String] = _
-  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
-}
 
 /** 
  *  1) Build a function typestring from the apply node and its children (function arguments) to locate the appropriate
@@ -81,7 +49,7 @@ object PMMLConfiguration {
  *		c) When the function is not iterable all arguments are treated as arguments to the named apply function 
  */
 
-class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) extends LogTrait {
+class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) extends com.ligadata.pmml.compiler.LogTrait {
 
 	/** Assess whether function has the ITERABLE feature.  The rule here is that if any function with this
 	 *  name has the ITERABLE feature, they ALL MUST HAVE it.   */

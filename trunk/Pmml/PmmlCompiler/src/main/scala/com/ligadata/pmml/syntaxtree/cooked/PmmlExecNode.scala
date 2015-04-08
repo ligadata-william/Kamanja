@@ -1,15 +1,19 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.syntaxtree.cooked
 
 import scala.collection.mutable._
 import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.syntaxtree.raw._
+import com.ligadata.pmml.node.print._
 import com.ligadata.Pmml.Runtime._
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
 
 
-class PmmlExecNode (val qName : String) extends LogTrait  { 
+class PmmlExecNode (val qName : String) extends com.ligadata.pmml.compiler.LogTrait  { 
 	var children : Queue[PmmlExecNode] = new Queue[PmmlExecNode]()
 	
 	def addChild(child : PmmlExecNode) = {
@@ -1479,7 +1483,7 @@ class xValue(val value : String, val property : String) extends PmmlExecNode("Va
 
 
 
-object PmmlExecNode extends LogTrait {
+object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 
  
 

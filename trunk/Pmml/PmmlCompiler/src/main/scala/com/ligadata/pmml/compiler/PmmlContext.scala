@@ -1,14 +1,19 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.compiler
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
+import scala.util.control.Breaks._
 import org.xml.sax.Attributes
 import com.ligadata.olep.metadata._
 import com.ligadata.Pmml.Runtime._
 import com.ligadata.OnLEPBase._
 import org.apache.log4j.Logger
+import com.ligadata.pmml.syntaxtree.raw._
+import com.ligadata.pmml.syntaxtree.cooked._
+import com.ligadata.pmml.support._
 import com.ligadata.olep.metadata._
-import scala.util.control.Breaks._
+import com.ligadata.pmml.support.FcnSubstitution
+import com.ligadata.pmml.support.MetadataInterpreter
 
 /** 
 3) PmmlContext is a global container for the application.  It has a number of key containers and variables:
@@ -43,7 +48,7 @@ import scala.util.control.Breaks._
 
 */
 
-class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrait {	
+class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends com.ligadata.pmml.compiler.LogTrait {	
 	/** used to generate a unique number for fcn names in same scope during scala code generation */
 	var counter : Int = 0
 	def Counter() : Int = { 
@@ -672,77 +677,6 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		}
 	}
 		
-	
-	/** Dispatcher for semantic analysis */
-	def dispatchPmmlToPmmlExecXform(xformer : PmmlXform, qName : String, currentNode : PmmlNode) {
-
-		var node : Option[PmmlExecNode] = qName match {
-			case "Constant" => PmmlExecNode.mkPmmlExecConstant(this, currentNode.asInstanceOf[PmmlConstant])
-			case "Header" => PmmlExecNode.mkPmmlExecHeader(this, currentNode.asInstanceOf[PmmlHeader])
-			case "Application" => PmmlExecNode.mkPmmlExecApplication(this, currentNode.asInstanceOf[PmmlApplication])
-			case "DataDictionary" => PmmlExecNode.mkPmmlExecDataDictionary(this, currentNode.asInstanceOf[PmmlDataDictionary])
-			case "DataField" => PmmlExecNode.mkPmmlExecDataField(this, currentNode.asInstanceOf[PmmlDataField])
-			case "Value" => PmmlExecNode.mkPmmlExecValue(this, currentNode.asInstanceOf[PmmlValue])
-			case "Interval" => PmmlExecNode.mkPmmlExecInterval(this, currentNode.asInstanceOf[PmmlInterval])
-			case "TransformationDictionary" => PmmlExecNode.mkPmmlExecTransformationDictionary(this, currentNode.asInstanceOf[PmmlTransformationDictionary])
-			case "DerivedField" => PmmlExecNode.mkPmmlExecDerivedField(this, currentNode.asInstanceOf[PmmlDerivedField])
-			case "DefineFunction" => PmmlExecNode.mkPmmlExecDefineFunction(this, currentNode.asInstanceOf[PmmlDefineFunction])
-			case "ParameterField" => PmmlExecNode.mkPmmlExecParameterField(this, currentNode.asInstanceOf[PmmlParameterField])
-			case "Apply" => PmmlExecNode.mkPmmlExecApply(this, currentNode.asInstanceOf[PmmlApply])
-			case "FieldRef" => PmmlExecNode.mkPmmlExecFieldRef(this, currentNode.asInstanceOf[PmmlFieldRef])
-			case "MapValues" => PmmlExecNode.mkPmmlExecMapValues(this, currentNode.asInstanceOf[PmmlMapValues])
-			case "FieldColumnPair" => PmmlExecNode.mkPmmlExecFieldColumnPair(this, currentNode.asInstanceOf[PmmlFieldColumnPair])
-			case "row" => PmmlExecNode.mkPmmlExecrow(this, currentNode.asInstanceOf[Pmmlrow])
-			case "TableLocator" => PmmlExecNode.mkPmmlExecTableLocator(this, currentNode.asInstanceOf[PmmlTableLocator])
-			case "InlineTable" => PmmlExecNode.mkPmmlExecInlineTable(this, currentNode.asInstanceOf[PmmlInlineTable])
-			case "RuleSetModel" => PmmlExecNode.mkPmmlExecRuleSetModel(this, currentNode.asInstanceOf[PmmlRuleSetModel])
-			case "MiningSchema" => PmmlExecNode.mkPmmlExecMiningSchema(this, currentNode.asInstanceOf[PmmlMiningSchema])
-			case "MiningField" => PmmlExecNode.mkPmmlExecMiningField(this, currentNode.asInstanceOf[PmmlMiningField])
-			case "SimpleRule" => PmmlExecNode.mkPmmlExecSimpleRule(this, currentNode.asInstanceOf[PmmlSimpleRule])
-			case "ScoreDistribution" => PmmlExecNode.mkPmmlExecScoreDistribution(this, currentNode.asInstanceOf[PmmlScoreDistribution])
-			case "RuleSet" => PmmlExecNode.mkPmmlExecRuleSet(this, currentNode.asInstanceOf[PmmlRuleSet])
-			case "RuleSelectionMethod" => PmmlExecNode.mkPmmlExecRuleSelectionMethod(this, currentNode.asInstanceOf[PmmlRuleSelectionMethod])
-			case "Array" => PmmlExecNode.mkPmmlExecArray(this, currentNode.asInstanceOf[PmmlArray])
-			case "SimplePredicate" => PmmlExecNode.mkPmmlExecSimplePredicate(this, currentNode.asInstanceOf[PmmlSimplePredicate])
-			case "CompoundPredicate" => PmmlExecNode.mkPmmlExecCompoundPredicate(this, currentNode.asInstanceOf[PmmlCompoundPredicate])
-			case _ => None
-		}
-
-		node match {
-			case Some(node) => {		  
-				/** update the parent on the stack if appropriate */
-				if (! pmmlExecNodeStack.isEmpty) {				  
-					val top : Option[PmmlExecNode] = pmmlExecNodeStack.top
-					top match {
-					  	case Some(top) => {
-						  	var parent : PmmlExecNode = top.asInstanceOf[PmmlExecNode]
-							parent.addChild(node)
-					  	}
-					  	case _ => logger.error("Fantastic... there are None elements on the stack!")
-					}
-				}
-				pmmlExecNodeStack.push(Some(node))
-				val aNewNode : PmmlExecNode = node
-				currentNode.Children.foreach((child) => {
-					xformer.transform1(child.asInstanceOf[PmmlNode])
-				})
-				val completedXformNode : Option[PmmlExecNode] = pmmlExecNodeStack.pop().asInstanceOf[Option[PmmlExecNode]]
-				completedXformNode match {
-					case Some(completedXformNode) => {
-						if (topLevelContainers.contains(completedXformNode.qName)) {
-							pmmlExecNodeMap(completedXformNode.qName) = Some(completedXformNode)
-						}
-					}
-					case _ => { /** comment out this case once tested */
-						 logger.trace(s"node $currentNode.qName does not have children or had children subsumed by the parent")
-					}
-				}
-			}
-			case _ => {
-				logger.debug(s"node $currentNode make did not produce a PmmlExecNode derivative")
-			}
-		}
-	}
 	
 	/** Collect the udf function and indirectly their ParameterFields from the TransformationDictionary.
 	 *  Note: we may want to go through all of the nodes to collect these ...for now just the TransformationDictionary.

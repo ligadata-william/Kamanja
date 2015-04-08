@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
@@ -7,6 +7,7 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
+import com.ligadata.pmml.syntaxtree.cooked._
 import com.ligadata.olep.metadata._
 
 /**

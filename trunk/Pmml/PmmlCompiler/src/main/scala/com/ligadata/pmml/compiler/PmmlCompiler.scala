@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.compiler
 
 import scala.collection.mutable._
 import scala.io.Source
@@ -19,6 +19,9 @@ import org.apache.log4j.Logger
 import com.ligadata.olep.metadata.MdMgr._
 import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.pmml.xmlxform._
+import com.ligadata.pmml.node.print._
+import com.ligadata.pmml.support._
 
 
 /** 
@@ -213,7 +216,7 @@ object PmmlCompiler extends App with LogTrait {
 
 	def usage : String = {
 """	
-Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --javaHome <jhome> 
+Usage: scala com.ligadata.pmml.compiler.PmmlCompiler --pmml <pmml path> --scalaHome <shome> --javaHome <jhome> 
 	  --scriptOut <scriptfile> --cp <classpath> --jarpath <jar path> --manifestpath <manifest path> 
 	  [--instrumentWithLogInfo {true|false}]
 	  [--client <clientname>] [--srcOut <output path>] [--skipjar {true|false}]
@@ -231,7 +234,7 @@ Usage: scala com.ligadata.Compiler --pmml <pmml path> --scalaHome <shome> --java
 					logging	messages.  By default, no logging instrumentation
 
 Note that the sources will be included in the jar produced.  The optional scala source described by <output path> is for immediate
-inspection in addition to the jar version.  Note that the clientName value supplied is used for scala package name generation, et al.
+inspection in addition to the jar version.  Note that the clientName value supplied is used for scala package com.ligadata.pmml.compiler generation, et al.
 As such, it must be simple name with alphanumerics and ideally all lower case.
 """
 	}

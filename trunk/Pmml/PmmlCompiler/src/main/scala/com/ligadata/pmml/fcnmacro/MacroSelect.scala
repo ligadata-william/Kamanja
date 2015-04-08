@@ -1,10 +1,13 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.fcnmacro
 
 import scala.collection.mutable._
 import scala.math._
-import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
-import org.apache.log4j.Logger
+import scala.Array.canBuildFrom
+import com.ligadata.pmml.syntaxtree.cooked._
+import com.ligadata.pmml.node.print._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
 import com.ligadata.olep.metadata._
 
 /**
@@ -12,7 +15,7 @@ import com.ligadata.olep.metadata._
  * Since the Macro is so similar to the function, a FunctionSelect is supplied to service
  * key formation and relaxation.
  */
-class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,generator : PmmlModelGenerator, val fcnSelector : FunctionSelect)  extends LogTrait {
+class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,generator : PmmlModelGenerator, val fcnSelector : FunctionSelect)  extends com.ligadata.pmml.compiler.LogTrait {
 							    
   
 	def selectMacro : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = {

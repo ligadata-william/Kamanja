@@ -1,12 +1,13 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
 import scala.math._
-import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
-import org.apache.log4j.Logger
+import com.ligadata.pmml.syntaxtree.cooked._
 import com.ligadata.olep.metadata._
+import com.ligadata.pmml.compiler.LogTrait
+import com.ligadata.pmml.compiler.PmmlContext
 
 
 class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {

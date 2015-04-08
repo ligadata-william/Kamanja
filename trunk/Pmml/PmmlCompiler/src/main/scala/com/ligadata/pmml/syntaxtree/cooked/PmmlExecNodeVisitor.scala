@@ -1,7 +1,8 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.syntaxtree.cooked
 
 import org.apache.log4j.Logger
 import com.ligadata.olep.metadata._
+import com.ligadata.pmml.compiler._
 
 
 trait PmmlExecVisitor {

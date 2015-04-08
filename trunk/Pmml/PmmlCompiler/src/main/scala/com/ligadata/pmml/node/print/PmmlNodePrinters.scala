@@ -1,19 +1,29 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.node.print
 
 import scala.collection.mutable._
 import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.syntaxtree.cooked._
 import com.ligadata.olep.metadata._
+import com.ligadata.pmml.fcnmacro._
 
 //import com.ligadata.Pmml.Runtime._
 
 
-object NodePrinterHelpers extends LogTrait {
+object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 
-	/** used by data dictionary and transform dictionary */
-	def valuesHlp(vals : ArrayBuffer[(String,String)], valNm : String, pad : String) = {
+	/**
+	 *  Generate enumerated value representation for data and derived fields.  Scala dictionary expressions returned for
+	 *  each value/property pair in the supplied array
+	 *  
+	 *  @param vals an ArrayBuffer of value/property pairs
+	 *  @return a string
+	 */
+	def valuesHlp(vals : ArrayBuffer[(String,String)], valNm : String, pad : String) : String = {
 		val valuBuf : StringBuilder = new StringBuilder()
 		valuBuf.append(s" new ArrayBuffer[(String,String)]()")
 		var i : Int = 0
@@ -29,19 +39,16 @@ object NodePrinterHelpers extends LogTrait {
 		valuBuf.toString
 	}
 	
-	def categoryCaseFragment(prefixStr : String, key : Int, catConst : xConstant) : String = {
-		val caseBuf : StringBuilder = new StringBuilder()
-		var quotes : String = ""
-		val catStr : String = catConst.Value.toString()
-		if (catConst.dataType == "string") {
-			quotes = s"${'"'}"
-		}
-		caseBuf.append(s"$prefixStr case $key => $quotes$catStr$quotes ==> ")
-		caseBuf.toString
-	}
-	
 	/** 
-	 *  NOTE: When the return value of the xApply has "categorical" results
+	 *  Manage the Scala generation for <Apply> elements.
+	 *  
+	 *  @param node an xApply to be printed
+	 *  @param ctx the global PmmlContext
+	 *  @param ctx the controlling model printer generator used when recursion needed
+	 *  @param fragment kind an enumerated type describing the sort of fragment to be generated... one of 
+	 *  	{VARDECL, VALDECL, FUNCCALL, DERIVEDCLASS, RULECLASS, RULESETCLASS , MININGFIELD, MAPVALUE, AGGREGATE, USERFUNCTION}
+	 *  @param order the traversal order of this xApply tree... one of {INORDER, PREORDER, POSTORDER}
+	 *  @return string representation for this tree and its children 
 	 */
 
 	def applyHelper(node : xApply, ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
@@ -1361,50 +1368,6 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(prepResultBuffer.toString)
 	}
 	
-	
-	def modelClass(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder = {
-		val clsBuffer : StringBuilder = new StringBuilder()
-			
-		clsBuffer.append(modelClassComment(ctx, generator))
-		clsBuffer.append(objBody(ctx, generator))
-		clsBuffer.append(modelClassBody(ctx, generator))
-		/** 
-		 *  End of Application Class generation
-		 */
-		clsBuffer.append(s"}\n")
- 		
-		clsBuffer
- 	}
-	
-	
-	/**
-	 *      Declare the Transformation classes that compute the derived fields.  These classes are named 
-	 *      after their variable name and are all kinds of DerivedField instances.  They are executed
-	 *      by map dispatch table available in the context and filled in by the main ModelNameClass initialization
-	 *      
-	 *      Declare the Rule classes.  These are all dispatched from the map in the RuleSet object. This could
-	 *      be parallelized later if desired when more than one rule is competing with its brothers and a 
-	 *      mitigation function is used to pick the winner.
-	 *      
-	 *      Declare the RuleSetModel class.
-	 */
-
-	def classDecls(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder =  {
-		val classBuffer: StringBuilder = new StringBuilder
-		classBuffer.append(s"\n")
-		classBuffer.append(s"/*************** Derived Field Class Definitions ***************/\n\n")
-		val xDictNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary")
-		generator.generateCode1(xDictNode, classBuffer, generator, CodeFragment.DERIVEDCLASS)
-		classBuffer.append(s"\n")
-		classBuffer.append(s"/*************** SimpleRule Class Definitions ***************/\n\n")
-		val ruleSetModelNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel")
-		generator.generateCode1(ruleSetModelNode, classBuffer, generator, CodeFragment.RULECLASS)
-		classBuffer.append(s"\n")
-		classBuffer.append(s"/*************** RuleSetModel Class Definition ***************/\n\n")
-		generator.generateCode1(ruleSetModelNode, classBuffer, generator, CodeFragment.RULESETCLASS)
-		
-		classBuffer
-	}
 	
 	
 }

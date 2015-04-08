@@ -16,7 +16,7 @@ import org.apache.log4j._
 import com.ligadata.olep.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
-import com.ligadata.Compiler._
+import com.ligadata.pmml.compiler._
 import com.ligadata.olep.metadata.ObjFormatType._
 import com.ligadata.Serialize._
 

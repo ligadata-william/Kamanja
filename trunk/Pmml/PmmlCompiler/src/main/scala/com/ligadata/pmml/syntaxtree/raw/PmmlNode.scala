@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.syntaxtree.raw
 
 import scala.collection.immutable.{List}
 import scala.collection.mutable._

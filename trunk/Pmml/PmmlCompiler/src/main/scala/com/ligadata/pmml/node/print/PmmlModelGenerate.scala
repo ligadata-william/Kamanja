@@ -1,245 +1,16 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.node.print
 
 import org.apache.log4j.Logger
+import com.ligadata.pmml.syntaxtree.cooked._
+import com.ligadata.pmml.node.print._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
 
 class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 
-	/** Dump out the print elements for the syntax trees in the after transformation... before code generation */
-	def generateDiagnostics() {
-		val gBuffer : StringBuilder = new StringBuilder()
-		
-		val nodes : List[Option[PmmlExecNode]] = for (rootNodeName <- ctx.topLevelContainers) yield { ctx.pmmlExecNodeMap.apply(rootNodeName) }
-		for (node <- nodes) {
-			val fullclsName : String = node.getClass().getName()
-			val clsparts : Array[String] = fullclsName.split('.')
-			val clsName : String = clsparts.last
-			clsName  match {
-				  	case "xConstant" => {
-				  			val constStr : String = node.asInstanceOf[xConstant].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(constStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xHeader" => {
-				  			val hdStr : String = node.asInstanceOf[xHeader].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(hdStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xDataField" => {
-				  			val dStr : String = node.asInstanceOf[xDataField].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(dStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xDataDictionary" => {
-				  			val dStr : String = node.asInstanceOf[xDataDictionary].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(dStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xDerivedField" => {
-				  			val dStr : String = node.asInstanceOf[xDerivedField].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(dStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xTransformationDictionary" => {
-				  			val xStr : String = node.asInstanceOf[xTransformationDictionary].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(xStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xDefineFunction" => {
-				  			val xStr : String = node.asInstanceOf[xDefineFunction].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(xStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xParameterField" => {
-				  			val xStr : String = node.asInstanceOf[xParameterField].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(xStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xApply" => {
-				  			val aStr : String = node.asInstanceOf[xApply].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(aStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xFieldRef" => {
-				  			val fStr : String = node.asInstanceOf[xFieldRef].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(fStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xExtension" => {
-				  			val eStr : String = node.asInstanceOf[xExtension].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(eStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesMap" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMap].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesMapInline" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMapInline].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesMapExternal" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesMapExternal].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesArray" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArray].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesArrayExternal" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArrayExternal].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMapValuesArrayInline" => {
-				  			val mStr : String = node.asInstanceOf[xMapValuesArrayInline].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xFieldColumnPair" => {
-				  			val fStr : String = node.asInstanceOf[xFieldColumnPair].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(fStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xMiningField" => {
-				  			val mStr : String = node.asInstanceOf[xMiningField].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(mStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xRuleSelectionMethod" => {
-				  			val rStr : String = node.asInstanceOf[xRuleSelectionMethod].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(rStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xRuleSetModel" => {
-				  			val rStr : String = node.asInstanceOf[xRuleSetModel].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(rStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xSimpleRule" => {
-				  			val rStr : String = node.asInstanceOf[xSimpleRule].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(rStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xScoreDistribution" => {
-				  			val sStr : String = node.asInstanceOf[xScoreDistribution].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(sStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xCompoundPredicate" => {
-				  			val cStr : String = node.asInstanceOf[xCompoundPredicate].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(cStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xSimplePredicate" => {
-				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(cStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xSimpleSetPredicate" => {
-				  			val cStr : String = node.asInstanceOf[xSimplePredicate].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(cStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xArray" => {
-				  			val aStr : String = node.asInstanceOf[xArray].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(aStr)
-				  			gBuffer.append("\n")
-				  	}
-					case "xValue" => {
-				  			val vStr : String = node.asInstanceOf[xValue].asString(ctx)
-				  			gBuffer.append("\n")
-				  			gBuffer.append(vStr)
-				  			gBuffer.append("\n")
-				  	}
-			  
-			  
-			}
-		  
-		  
-		}
-	  
-	}
-
-
-
-	def generateCode() {
-	  
-		val gBuffer : StringBuilder = new StringBuilder()
-		
-		val nodes : List[Option[PmmlExecNode]] = for (rootNodeName <- ctx.topLevelContainers) yield { ctx.pmmlExecNodeMap.apply(rootNodeName) }
-
-		for (node <- nodes) {
-			node match {
-			  	case Some(node) => generateCode(Some(node), gBuffer)
-				case _ => logger.error("One of the PMML root nodes is missing" )
-			}			  
-		}
-	}
-	
-	
-	def generateCode (node : Option[PmmlExecNode], gBuffer : StringBuilder) {
-	  
-		val nodeName : String = node match {
-			case Some(node) => node.qName
-			case _ => "UnknownNode"
-		}
-		nodeName   match {
-			case "Header" => {
-				gBuffer.append("Header code:\n")
-				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
-			} 
-			case "DataDictionary" => {
-				gBuffer.append("DataDictionary code:\n")
-				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
-			} 
-			case "TransformationDictionary" => {
-				gBuffer.append("TransformationDictionary code:\n")
-				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
-				generateCode1(node, gBuffer, this, CodeFragment.DERIVEDCLASS)
-			} 
-			case "RuleSetModel" => {
-				gBuffer.append("\nRule code:\n\n")
-				generateCode1(node, gBuffer, this, CodeFragment.RULECLASS)
-				gBuffer.append("\nRuleSetModel code:\n\n")
-				generateCode1(node, gBuffer, this, CodeFragment.RULESETCLASS)
-			} 
-		  
-		}
-	}
-	
 	/** 
-	 *  
+	 *  Create the Scala source file from the parsed and transformed pmml nodes.  Currently only RuleSetModel is supported.
+	 *  @return scala source string
 	 */
 	def ComposePmmlModelSource : String = {
 		/** fix upd the ctx before proceeding */
@@ -273,8 +44,7 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 		/** collect the input field and output fields for model definition generation */
 		ctx.collectModelInputVars
 		ctx.collectModelOutputVars
-
-		
+	
 		/** 
 		 *  Build the source code returning StringBuilders for the pieces.  The
 		 *  classDecls for the RuleSetModel, Rule and Derived fields are processed
@@ -285,15 +55,63 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 		 */
 		val codeBuffer : StringBuilder = new StringBuilder()
 
-		val classDeclsBuffer : StringBuilder = NodePrinterHelpers.classDecls(ctx, this)
-		val modelClassBuffer : StringBuilder = NodePrinterHelpers.modelClass(ctx, this)
+		val classDeclsBuffer : StringBuilder = classDecls
+		val modelClassBuffer : StringBuilder = modelClass
 		
 		codeBuffer.append(modelClassBuffer.toString)
 		codeBuffer.append(classDeclsBuffer.toString)
 		codeBuffer.toString
-}
+	}
+	
+	/**
+	 * 	Answer a StringBuilder filled with the PmmlModel's Scala class representation.
+	 *  @return a StringBuilder
+	 */
+	def modelClass : StringBuilder = {
+		val clsBuffer : StringBuilder = new StringBuilder()
+			
+		clsBuffer.append(NodePrinterHelpers.modelClassComment(ctx, this))
+		clsBuffer.append(NodePrinterHelpers.objBody(ctx, this))
+		clsBuffer.append(NodePrinterHelpers.modelClassBody(ctx, this))
+		/** 
+		 *  End of Application Class generation
+		 */
+		clsBuffer.append(s"}\n")
+ 		
+		clsBuffer
+ 	}
 	
 	
+	/**
+	 *      Answer a StringBuilder containing Scala representations for the derived fields
+	 *      in the TransformationDictionary, the SimpleRule classes, and the RuleSetModel 
+	 *      class.
+	 *      
+	 *      @return a StringBuilder
+	 */
+
+	def classDecls : StringBuilder =  {
+		val classBuffer: StringBuilder = new StringBuilder
+		classBuffer.append(s"\n")
+		classBuffer.append(s"/*************** Derived Field Class Definitions ***************/\n\n")
+		val xDictNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary")
+		generateCode1(xDictNode, classBuffer, this, CodeFragment.DERIVEDCLASS)
+		classBuffer.append(s"\n")
+		classBuffer.append(s"/*************** SimpleRule Class Definitions ***************/\n\n")
+		val ruleSetModelNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel")
+		generateCode1(ruleSetModelNode, classBuffer, this, CodeFragment.RULECLASS)
+		classBuffer.append(s"\n")
+		classBuffer.append(s"/*************** RuleSetModel Class Definition ***************/\n\n")
+		generateCode1(ruleSetModelNode, classBuffer, this, CodeFragment.RULESETCLASS)
+		
+		classBuffer
+	}
+	
+
+	
+	/**
+	 *  Generate Scala code from the supplied node, appending the result to the supplied StringBuilder instance.
+	 */
 	def generateCode1(node : Option[PmmlExecNode], gBuffer: StringBuilder, generator : PmmlModelGenerator, kind : CodeFragment.Kind) {
 		node match {
 			case Some(node) => {
@@ -425,4 +243,47 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 			case _ => PmmlError.logError(ctx, s"pmml model generate ... UnknownNode ... name = $node.qName")
 		}
 	}
+	
+	
+	/** 
+	 *  For diagnostic purposes... generate aspects of the pmml transformation including
+	 *  <ul>
+	 *  <li>Header</li>
+	 *  <li>DataDictionary</li>
+	 *  <li>TransformationDictionary</li>
+	 *  <li>RuleSetModel</li>
+	 *  </ul>
+	 *  
+	 */
+	def generateCode (node : Option[PmmlExecNode], gBuffer : StringBuilder) {
+	  
+		val nodeName : String = node match {
+			case Some(node) => node.qName
+			case _ => "UnknownNode"
+		}
+		nodeName   match {
+			case "Header" => {
+				gBuffer.append("Header code:\n")
+				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
+			} 
+			case "DataDictionary" => {
+				gBuffer.append("DataDictionary code:\n")
+				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
+			} 
+			case "TransformationDictionary" => {
+				gBuffer.append("TransformationDictionary code:\n")
+				generateCode1(node, gBuffer, this, CodeFragment.VARDECL)
+				generateCode1(node, gBuffer, this, CodeFragment.DERIVEDCLASS)
+			} 
+			case "RuleSetModel" => {
+				gBuffer.append("\nRule code:\n\n")
+				generateCode1(node, gBuffer, this, CodeFragment.RULECLASS)
+				gBuffer.append("\nRuleSetModel code:\n\n")
+				generateCode1(node, gBuffer, this, CodeFragment.RULESETCLASS)
+			} 
+		  
+		}
+	}
+	
+
 }
