@@ -47,7 +47,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     var apiResult:Array[String] = new Array[String](0)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,"KEYS",AuditConstants.FAIL,"",objectType)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.FAIL,"",objectType)
 	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
