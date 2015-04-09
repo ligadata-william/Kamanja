@@ -165,6 +165,18 @@ object APIService {
     return vals.getOrElse("NameSpace","system")+"."+vals.getOrElse("Name","")+"."+vals.getOrElse("Version","-1")
   }
   
+    /**
+   * extractNameFromJson - applies to a simple Fatafat object
+   */
+  def extractNameFromJson (jsonObj: String): String = {
+    println("*************")
+    println(jsonObj)
+    println("*************")
+    var inParm: Map[String,Any] = parse(jsonObj).values.asInstanceOf[Map[String,Any]]   
+    var vals: Map[String,String] = inParm.getOrElse("Type",null).asInstanceOf[Map[String,String]]
+    return vals.getOrElse("NameSpace","system")+"."+vals.getOrElse("Name","")+"."+vals.getOrElse("Version","-1")
+  }
+  
   /**
    * 
    */
