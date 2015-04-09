@@ -34,17 +34,17 @@ object TestMetadataAPI{
     var hostnames = "localhost"
     var keyspace = "default"
     var table = "default"
-  
+
     var clusterBuilder = Cluster.builder()
-	
+
     clusterBuilder.addContactPoints(hostnames)
-	
+
     val cluster = clusterBuilder.build()
     val session = cluster.connect(keyspace);
   }
 
   // Type defs
-  
+
   def AddType {
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
@@ -52,7 +52,7 @@ object TestMetadataAPI{
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
         logger.info("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
       }
-      
+
       if (!IsValidDir(dirName)) {
         logger.fatal("Invalid Directory " + dirName)
         return
@@ -62,28 +62,28 @@ object TestMetadataAPI{
         logger.fatal("No json type files exist in the directory " + dirName)
         return
       }
-      
+
       println("\nSelect a Type Definition file:\n")
-      
+
       var seq = 0
       typFiles.foreach(key => { seq += 1; println("[" + seq + "]" + key)})
       seq += 1
       println("[" + seq + "] Main Menu")
-      
+
       print("\nEnter your choice: ")
       val choice:Int = readInt()
-      
+
       if (choice == typFiles.length +1) {
         return
       }
-      
+
       if (choice < 1 || choice > typFiles.length + 1) {
         logger.fatal("Invalid Choice: " + choice)
         return
       }
-      
+
       val typDefFile = typFiles(choice - 1).toString
-      
+
       logger.setLevel(Level.TRACE);
       val typStr = Source.fromFile(typDefFile).mkString
       MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
@@ -128,10 +128,10 @@ object TestMetadataAPI{
       val typName = typKeyTokens(1)
       val typVersion = typKeyTokens(2)
       val typOpt = MetadataAPIImpl.GetType(typNameSpace,typName,typVersion,"JSON")
-      
+
       typOpt match {
         case None => None
-        case Some(ts) => 
+        case Some(ts) =>
           val apiResult = new ApiResult(0,"Successfully fetched typeDef",JsonSerializer.SerializeObjectToJson(ts)).toString()
           val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
           println("Result as Json String => \n" + resultData)
@@ -142,18 +142,18 @@ object TestMetadataAPI{
       }
     }
   }
-  
+
   def GetAllTypes{
     val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
     val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + resultData)
-    
+
   }
 
   def RemoveType {
     val loggerName = this.getClass.getName
     lazy val logger = Logger.getLogger(loggerName)
-    
+
     try {
       logger.setLevel(Level.TRACE);
 
@@ -184,7 +184,7 @@ object TestMetadataAPI{
 
       val (statusCode1,resultData1) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }
     catch {
       case e: Exception => {
@@ -192,9 +192,9 @@ object TestMetadataAPI{
       }
     }
   }
-  
+
   // End Type defs
-  
+
   // TODO: Rewrite Update Type to allow a user to pick the file they wish to update a type from.
   def UpdateType = {
     val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
@@ -203,16 +203,149 @@ object TestMetadataAPI{
   }
 
 
-  def AddFunction = {
-    var apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+  def AddFunction: Unit = {
+    try {
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
+      if (dirName == null) {
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+        logger.info("The environment variable FUNCTION_FILES_DIR is undefined. Setting to default " + dirName)
+      }
+
+      if (!IsValidDir(dirName)) {
+        logger.fatal("Invalid Directory " + dirName)
+        return
+      }
+      val fcnFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (fcnFiles.length == 0) {
+        logger.fatal("No json function files exist in the directory " + dirName)
+        return
+      }
+      println("\nSelect a Function Definition file:\n")
+
+      var seq = 0
+      fcnFiles.foreach(key => {
+        seq += 1;
+        println("[" + seq + "]" + key)
+      })
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice == fcnFiles.length + 1) {
+        return
+      }
+
+      if (choice < 1 || choice > fcnFiles.length + 1) {
+        logger.fatal("Invalid Choice: " + choice)
+        return
+      }
+
+      val fcnDefFile = fcnFiles(choice - 1).toString
+
+      logger.setLevel(Level.TRACE);
+      val fcnStr = Source.fromFile(fcnDefFile).mkString
+      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON"))
+    }
+    catch {
+      case e: AlreadyExistsException => {
+        logger.error("Container already exists in metadata...")
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
   }
 
-  def RemoveFunction = {
-    val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min",100)
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+  def RemoveFunction: Unit = {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+
+    try {
+      logger.setLevel(Level.TRACE);
+
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+      if (fcnKeys.length == 0) {
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+      println("\nPick the Function to be deleted from the following list: ")
+      var seq = 0
+      fcnKeys.foreach(key => {
+        seq += 1;
+        println("[" + seq + "] " + key)
+      })
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > fcnKeys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
+      }
+
+      val fcnKey = fcnKeys(choice - 1)
+      val fcnKeyTokens = fcnKey.split("\\.")
+      val fcnNameSpace = fcnKeyTokens(0)
+      val fcnName = fcnKeyTokens(1)
+      val fcnVersion = fcnKeyTokens(2)
+      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toInt)
+
+      val (statusCode1, resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
+    }
+    catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+
+  def GetFunction: Unit = {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+
+    try{
+      logger.setLevel(Level.TRACE)
+
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+      if( fcnKeys.length == 0 ){
+        println("Sorry, No functions available in the Metadata")
+        return
+      }
+
+      println("\nPick the Function to be presented from the following list: ")
+      var seq = 0
+      fcnKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if ( choice < 1 || choice > fcnKeys.length ){
+        println("Invalid choice " + choice + ", start with main menu...")
+        return
+      }
+
+      val fcnKey = fcnKeys(choice-1)
+
+      val fcnKeyTokens = fcnKey.split("\\.")
+      println("FUNCTION KEY: " + fcnKey)
+      val fcnNameSpace = fcnKeyTokens(0)
+      val fcnName= fcnKeyTokens(1)
+      //val fcnVersion = fcnKeyTokens(2)
+      val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace,fcnName,"JSON")
+
+      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + resultData)
+
+    }catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
   }
 
   def UpdateFunction = {
@@ -305,12 +438,12 @@ object TestMetadataAPI{
 
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
       logger.trace("DependentModels => " + depModels)
-	
+
       val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -359,7 +492,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -400,7 +533,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + resultData)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -529,7 +662,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -570,7 +703,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -611,7 +744,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -651,7 +784,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -692,7 +825,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -733,7 +866,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -773,7 +906,7 @@ object TestMetadataAPI{
 
       val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
-      
+
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -981,7 +1114,7 @@ object TestMetadataAPI{
       } catch {
         case _:Throwable => valid = false
       }
-      
+
       if (valid) {
     	  choices.foreach(choice => {
 		       if( choice == contFiles.length + 1){
@@ -991,7 +1124,7 @@ object TestMetadataAPI{
 					logger.fatal("Invalid Choice : " + choice)
 					return
 		       }
-  		  
+
 		       val contDefFile = contFiles(choice-1).toString
     		   logger.setLevel(Level.TRACE);
 		       val contStr = Source.fromFile(contDefFile).mkString
@@ -1003,7 +1136,7 @@ object TestMetadataAPI{
           logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
-      
+
       results.foreach(triple => {
     	  val (choice,filePath,result) : (String,String,String) = triple
     	  println(s"Results for container [$choice] $filePath => \n$result")
@@ -1139,7 +1272,7 @@ object TestMetadataAPI{
       } catch {
         case _:Throwable => valid = false
       }
-      
+
       if (valid) {
 
     	  choices.foreach(choice => {
@@ -1150,7 +1283,7 @@ object TestMetadataAPI{
 					logger.fatal("Invalid Choice : " + choice)
 					return
 		       }
-  		  
+
 		       val msgDefFile = msgFiles(choice-1).toString
     		   logger.setLevel(Level.TRACE);
 		       val msgStr = Source.fromFile(msgDefFile).mkString
@@ -1162,12 +1295,12 @@ object TestMetadataAPI{
           logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
-      
+
       results.foreach(triple => {
     	  val (choice,filePath,result) : (String,String,String) = triple
     	  println(s"Results for message [$choice] $filePath => \n$result")
       })
-      
+
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Message Already in the metadata....")
@@ -1738,7 +1871,7 @@ object TestMetadataAPI{
     MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     MdMgr.GetMdMgr.dump
     MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
-  }    
+  }
 
   def initModCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
@@ -1753,12 +1886,12 @@ object TestMetadataAPI{
     logger.trace("Serializing " + obj.length + " objects ")
     val instantiator = new ScalaKryoInstantiator
     instantiator.setRegistrationRequired(false)
- 
+
     val kryo = instantiator.newKryo()
     val baos = new ByteArrayOutputStream
     val output = new Output(baos, 4096)
     kryo.writeObject(output, items)
- 
+
     val input = new Input(baos.toByteArray)
     val deser = kryo.readObject(input, classOf[List[T]])
 
@@ -1931,6 +2064,7 @@ object TestMetadataAPI{
       val getAllTypes     = ()            => { GetAllTypes }
       val removeType      = ()            => { RemoveType }
       val addFunction         = ()        => { AddFunction }
+      val getFunction     =()             => { GetFunction }
       val removeFunction      = ()        => { RemoveFunction }
       val updateFunction         = ()     => { UpdateFunction }
       val addConcept         = ()         => { AddConcept }
@@ -1973,6 +2107,7 @@ object TestMetadataAPI{
 			      ("Get All Types",getAllTypes),
 			      ("Remove Type",removeType),
 			      ("Add Function",addFunction),
+            ("Get Function", getFunction),
 			      ("Remove Function",removeFunction),
 			      ("Update Function",updateFunction),
 			      ("Add Concept",addConcept),
@@ -2016,7 +2151,7 @@ object TestMetadataAPI{
 	e.printStackTrace()
       }
     }
-  }    
+  }
 
   private def PrintUsage(): Unit = {
     logger.warn("    --config <configfilename>")

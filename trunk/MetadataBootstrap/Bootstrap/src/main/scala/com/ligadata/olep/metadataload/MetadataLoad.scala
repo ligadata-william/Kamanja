@@ -1055,6 +1055,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny2")), null)
 
  		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny2")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny2")), null)
  		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny2")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny2")), null)
 
@@ -1068,6 +1069,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny3")), null)
 
  		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny3")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny3")), null)
  		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny3")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny3")), null)
 
@@ -1081,6 +1083,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny4")), null)
 
  		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny4")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny4")), null)
  		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny4")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny4")), null)
 
@@ -1094,6 +1097,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
 
  		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny5")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny5")), null)
  		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny5")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny5")), null)
 
@@ -1107,9 +1111,26 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "SumToArrayOfDouble", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfDouble", ("System", "ArrayOfDouble"), List(("tup", "System", "ArrayOfTupleOfAny6")), null)
 
  		mgr.AddFunc("Pmml", "ToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "TupleOfAny6")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny6")), null)
  		mgr.AddFunc("Pmml", "SumToInt", "com.ligadata.pmml.udfs.Udfs.SumToInt", ("System", "Int"), List(("tup", "System", "TupleOfAny6")), null)
  		mgr.AddFunc("Pmml", "SumToArrayOfInt", "com.ligadata.pmml.udfs.Udfs.SumToArrayOfInt", ("System", "ArrayOfInt"), List(("tup", "System", "ArrayOfTupleOfAny6")), null)
 
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny7")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny8")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny9")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny10")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny11")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny12")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny13")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny14")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny15")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny16")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny17")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny18")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny19")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny20")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny21")), null)
+ 		mgr.AddFunc("Pmml", "ToArrayOfBoolean", "com.ligadata.pmml.udfs.Udfs.ToArrayOfInt", ("System", "ArrayOfBoolean"), List(("tup", "System", "TupleOfAny22")), null)
 
  	
  		//SumToArrayOfFloat(tuples: Array[Tuple5[Any,Any,Any,Any,Any]]): Float
@@ -1279,9 +1300,9 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
-		mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
-					, ("System", "MessageContainerBase")
-					, List(("fqclassname", MdMgr.sysNS, "String")), null)
+		//mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
+		//			, ("System", "MessageContainerBase")
+		//			, List(("fqclassname", MdMgr.sysNS, "String")), null)
 					
 					
 		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
@@ -1536,7 +1557,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroStringMapped : String =  """
 	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%(%2%) = %3%; true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1620,7 +1641,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroContainerStringMapped : String =  """
 	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%(%2%) = %3%(%4%); true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%")); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1680,7 +1701,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val incrementByMacroStringMapped : String =  """
 	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def incrementBy  : Boolean = { %1%(%2%) = %1%(%2%) + %3%; true }
+	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%") + %3%)); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1715,7 +1736,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val putGlobalContainerMappedMacroTemplate : String =  """
 	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get(%4%).asInstanceOf[%4_type%].toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get("%4%").asInstanceOf[%4_type%].toString, %5%); true }
 	} """
 		
 		/**	EnvContext write access methods:

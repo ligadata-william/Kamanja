@@ -10,7 +10,7 @@ import scala.reflect.runtime.universe._
  * @see UdfExtract for how function information is extracted from an object. 
  */
 
-abstract class UdfBase {
+trait UdfBase {
 	val typeMirror = runtimeMirror(this.getClass.getClassLoader)
 	val instanceMirror = typeMirror.reflect(this)
 	val members = instanceMirror.symbol.typeSignature.members
