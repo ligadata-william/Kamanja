@@ -38,9 +38,9 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
     var objectList: List[String] = List[String]()
 
     var inParm: Map[String,Any] = parse(cfgJson).values.asInstanceOf[Map[String,Any]]   
-    var args: List[Map[String,String]] = inParm.getOrElse("ArgList",null).asInstanceOf[List[Map[String,String]]]   //.asInstanceOf[List[Map[String,String]]
+    var args: List[Map[String,String]] = inParm.getOrElse("Clusters",null).asInstanceOf[List[Map[String,String]]]   //.asInstanceOf[List[Map[String,String]]
     args.foreach(elem => {
-      objectList :::= List(elem.getOrElse("NameSpace","system")+"."+elem.getOrElse("Name","")+"."+elem.getOrElse("Version","-1"))
+      objectList :::= List(elem.getOrElse("ClulsterId",""))
     })
    
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
