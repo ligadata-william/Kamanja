@@ -15,9 +15,10 @@ import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 
-class APIService extends LigadataSSLConfiguration {
+class APIService extends LigadataSSLConfiguration with Runnable{
 
   private type OptionMap = Map[Symbol, Any]
+  var inArgs: Array[String] = null
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("metadata-api-service")
@@ -29,7 +30,23 @@ class APIService extends LigadataSSLConfiguration {
  // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
   //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
+  
+  /**
+   * 
+   */
+  def this(args: Array[String]) = {
+    this
+    inArgs = args  
+  }
 
+  /**
+   * 
+   */
+  def run() {
+    StartService(inArgs) 
+  }
+  
+  
   private def PrintUsage(): Unit = {
     logger.warn("    --config <configfilename>")
   }
@@ -129,10 +146,12 @@ class APIService extends LigadataSSLConfiguration {
 }
  
 object APIService {
+
   def main(args: Array[String]): Unit = {
     val mgr = new APIService
-    mgr.StartService(args)
+    mgr.StartService(args) 
   }
+  
   
   /**
    * extractNameFromJson - applies to a simple Fatafat object
