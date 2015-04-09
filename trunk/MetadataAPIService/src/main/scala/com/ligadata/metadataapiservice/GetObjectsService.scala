@@ -63,7 +63,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     
     val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
 	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString
     }
 
