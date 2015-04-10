@@ -59,14 +59,14 @@ object AuditConstants {
   val INSERTJAR = "uploadJar"
   
   // Objects
-  val MESSAGE = "Message"
-  val MODEL = "Model"
-  val CONTAINER = "Container"
-  val FUNCTION = "Function"
-  val CONCEPT = "Concept"
-  val TYPE = "Type"
+  val MESSAGE = "message"
+  val MODEL = "model"
+  val CONTAINER = "container"
+  val FUNCTION = "function"
+  val CONCEPT = "concept"
+  val TYPE = "type"
   val OBJECT = "object"
-  val CLUSTERID = "ClusterId"
+  val CLUSTERID = "clusterId"
   val CONFIG = "clusterConfiguration"
   val JAR = "jarFile"
   

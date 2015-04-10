@@ -157,8 +157,14 @@ object APIService {
    * extractNameFromJson - applies to a simple Fatafat object
    */
   def extractNameFromJson (jsonObj: String, objType: String): String = {
-    println (objType +" ->"+ jsonObj)
-    var inParm: Map[String,Any] = parse(jsonObj).values.asInstanceOf[Map[String,Any]]   
+    var inParm: Map[String,Any] = null
+    try {
+      inParm = parse(jsonObj).values.asInstanceOf[Map[String,Any]] 
+    } catch {
+      case e: com.fasterxml.jackson.databind.JsonMappingException => {
+        return "Unknown:NameParsingError"
+      }
+    }
     var vals: Map[String,String] = inParm.getOrElse(objType,null).asInstanceOf[Map[String,String]]
     if (vals == null) {
       return "unknown "+ objType
