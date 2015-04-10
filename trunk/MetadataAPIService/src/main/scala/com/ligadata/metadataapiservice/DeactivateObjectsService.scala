@@ -58,6 +58,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
     
     logger.debug(APIName + ":" + apiArgListJson)
     
+    var activatedType = "unkown"
     var nameSpace = "str"
     var version = "-1"
     var name = ""
@@ -79,13 +80,13 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
           if( arg.Version != null ){
             version = arg.Version
           }
-          if( arg.FormatType != null ){
-            name = arg.FormatType
+          if( arg.Name != null ){
+            name = arg.Name
           }
           
            // Do it here so that we know which OBJECT is being activated for the Audit purposes.
           if ((!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("deactivate","model"))) && !authDone) {
-            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"unknown",nameSpace+"."+name+"."+version)
+            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT,arg.ObjectType,AuditConstants.FAIL,"unknown",nameSpace+"."+name+"."+version)
             requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
             return
           }
@@ -104,6 +105,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
 	        }
 	        else {
 	         resultStr = resultStr + DeactivateObjectDef(nameSpace,name,version, arg.ObjectType)
+           activatedType = arg.ObjectType
 	        }
 	      })
       }
@@ -111,7 +113,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
     else{
       resultStr = new ApiResult(-1, APIName, null, "No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.SUCCESS,"",objectList.mkString(","))
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, activatedType, AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }

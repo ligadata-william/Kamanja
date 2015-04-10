@@ -89,7 +89,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
           
           // Do it here so that we know which OBJECT is being activated for the Audit purposes.
           if ((!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) && !authDone) {
-            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
+            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
             requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
             return
           }
@@ -115,7 +115,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     else{
       resultStr = new ApiResult(-1, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.OBJECT,AuditConstants.SUCCESS,"",objectList.mkString(","))
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }
