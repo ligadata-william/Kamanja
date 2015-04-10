@@ -161,7 +161,7 @@ object APIService {
     try {
       inParm = parse(jsonObj).values.asInstanceOf[Map[String,Any]] 
     } catch {
-      case e: com.fasterxml.jackson.databind.JsonMappingException => {
+      case e: Exception => {
         return "Unknown:NameParsingError"
       }
     }
