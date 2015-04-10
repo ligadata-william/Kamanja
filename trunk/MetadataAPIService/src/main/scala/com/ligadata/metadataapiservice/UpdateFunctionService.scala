@@ -33,7 +33,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
     
     log.info("Requesting UpdateFunction {}",functionJson)
 
-    var nameVal = APIService.extractNameFromJson(functionJson) 
+    var nameVal = APIService.extractNameFromJson(functionJson, AuditConstants.FUNCTION) 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","function"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",nameVal) 

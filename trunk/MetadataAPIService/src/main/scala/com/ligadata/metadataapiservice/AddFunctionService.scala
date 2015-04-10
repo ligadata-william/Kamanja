@@ -37,7 +37,7 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
     
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
-      nameVal = APIService.extractNameFromJson(functionJson) 
+      nameVal = APIService.extractNameFromJson(functionJson,AuditConstants.FUNCTION) 
     } else {
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return

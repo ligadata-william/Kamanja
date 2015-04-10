@@ -37,7 +37,7 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
     
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
-      nameVal = APIService.extractNameFromJson(conceptJson) 
+      nameVal = APIService.extractNameFromJson(conceptJson,AuditConstants.CONCEPT) 
     } else {
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return

@@ -35,7 +35,7 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
   def process(containerJson:String) = {
     log.info("Requesting AddContainer {}",containerJson)
 
-    var nameVal = APIService.extractNameFromJson(containerJson,"Container") 
+    var nameVal = APIService.extractNameFromJson(containerJson,AuditConstants.CONTAINER) 
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",nameVal)

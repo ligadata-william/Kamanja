@@ -36,7 +36,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
     
     log.info("Requesting AddMessage {}",messageJson)
 
-    var nameVal = APIService.extractNameFromJson(messageJson)
+    var nameVal = APIService.extractNameFromJson(messageJson,AuditConstants.MESSAGE)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","message"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",nameVal)   

@@ -34,7 +34,7 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
   def process(containerJson:String) = {
     log.info("Requesting UpdateContainer {}",containerJson)
     
-    var nameVal = APIService.extractNameFromJson(containerJson) 
+    var nameVal = APIService.extractNameFromJson(containerJson, AuditConstants.CONTAINER) 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","container"))) {
        MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",nameVal) 

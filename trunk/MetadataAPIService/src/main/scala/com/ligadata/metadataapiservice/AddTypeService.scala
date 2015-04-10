@@ -36,7 +36,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
     log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
-      nameVal = APIService.extractNameFromJson(typeJson) 
+      nameVal = APIService.extractNameFromJson(typeJson, AuditConstants.TYPE) 
     } else {
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return

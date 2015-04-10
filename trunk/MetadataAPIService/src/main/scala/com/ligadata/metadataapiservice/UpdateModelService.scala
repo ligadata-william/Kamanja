@@ -33,7 +33,7 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
     
     log.info("Requesting UpdateModel {}",pmmlStr)
 
-    var nameVal = APIService.extractNameFromJson(pmmlStr) 
+    var nameVal = APIService.extractNameFromPMML(pmmlStr) 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
        MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameVal)

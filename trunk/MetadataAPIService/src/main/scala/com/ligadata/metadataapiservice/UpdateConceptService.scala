@@ -32,7 +32,7 @@ class UpdateConceptService(requestContext: RequestContext, userid:Option[String]
   def process(conceptJson:String) = {
     
     log.info("Requesting UpdateConcept {}",conceptJson)
-    var nameVal = APIService.extractNameFromJson(conceptJson) 
+    var nameVal = APIService.extractNameFromJson(conceptJson, AuditConstants.CONCEPT) 
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","concept"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.FAIL,"",nameVal) 

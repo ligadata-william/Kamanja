@@ -35,7 +35,7 @@ class UpdateTypeService(requestContext: RequestContext, userid:Option[String], p
     log.info("Requesting Update {},{}",typeJson,formatType)
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
-      nameVal = APIService.extractNameFromJson(typeJson) 
+      nameVal = APIService.extractNameFromJson(typeJson, AuditConstants.TYPE) 
     } else {
       requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return
