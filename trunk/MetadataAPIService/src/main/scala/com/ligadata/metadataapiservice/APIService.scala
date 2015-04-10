@@ -168,9 +168,18 @@ object APIService {
 
   
   /**
-   * 
+   * extractNameFromPMML - pull the Application name="xxx" version="xxx.xx.xx" from the PMML doc and construct
+   *                       a name  string from it
    */
   def extractNameFromPMML (pmmlObj: String): String = {
-    return "test.MODEL.test"
+    var firstOccurence: String = "unknownModel"
+    val pattern = """Application[ ]*name="([^ ]*)"[ ]*version="([^ ]*)"""".r
+    val allMatches = pattern.findAllMatchIn(pmmlObj)
+    allMatches.foreach( m => {
+      if (firstOccurence.equalsIgnoreCase("unknownModel")) {
+      firstOccurence = (m.group(1)+"."+m.group(2))
+      }
+    })
+    return firstOccurence
   }
 }
