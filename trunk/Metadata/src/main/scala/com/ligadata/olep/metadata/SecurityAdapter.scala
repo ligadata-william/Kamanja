@@ -59,13 +59,14 @@ object AuditConstants {
   val INSERTJAR = "uploadJar"
   
   // Objects
-  val MESSAGE = "message"
-  val MODEL = "model"
-  val CONTAINER = "container"
-  val FUNCTION = "function"
-  val CONCEPT = "concept"
-  val TYPE = "type"
+  val MESSAGE = "Message"
+  val MODEL = "Model"
+  val CONTAINER = "Container"
+  val FUNCTION = "Function"
+  val CONCEPT = "Concept"
+  val TYPE = "Type"
   val OBJECT = "object"
+  val CLUSTERID = "ClusterId"
   val CONFIG = "clusterConfiguration"
   val JAR = "jarFile"
   
@@ -74,7 +75,8 @@ object AuditConstants {
   val WRITE = "write"
   
   // Results
-    val FAIL = "Access Denied"
-    val SUCCESS = "Access Granted"
+  val FAIL = "Access Denied"
+  val SUCCESS = "Access Granted"
+      
 }
 
