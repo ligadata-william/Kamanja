@@ -148,7 +148,7 @@ class MdMgr {
     adapters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
   }
 
-  private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Int): Option[T] = {
+  private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Long): Option[T] = {
     // get exact match
     elems match {
       case None => None
@@ -181,7 +181,7 @@ class MdMgr {
       case None => None
       case Some(es) => {
         var elm: Option[T] = None
-        var maxVer: Int = -1
+        var maxVer: Long = -1
         try {
           breakable {
             es.foreach(e => {
@@ -203,7 +203,7 @@ class MdMgr {
   }
 
   /** Get Matched Value */
-  private def GetReqValue[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Int): Option[T] = {
+  private def GetReqValue[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Long): Option[T] = {
     if (ver <= 0) GetLatestVersion(elems) else GetExactVersion(elems, ver)
   }
 
@@ -263,7 +263,7 @@ class MdMgr {
    *  @param depJars -
    */
 
-  private def SetBaseElem(be: BaseElemDef, nameSpace: String, name: String, ver: Int, jarNm: String, depJars: Array[String]): Unit = {
+  private def SetBaseElem(be: BaseElemDef, nameSpace: String, name: String, ver: Long, jarNm: String, depJars: Array[String]): Unit = {
     be.name = name.trim.toLowerCase
     be.nameSpace = nameSpace.trim.toLowerCase
     be.ver = ver
@@ -288,7 +288,7 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  private def MakeAttribDef(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Int, findInGlobal: Boolean, collectionType: String): BaseAttributeDef = {
+  private def MakeAttribDef(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Long, findInGlobal: Boolean, collectionType: String): BaseAttributeDef = {
     if (findInGlobal) {
       val atr = GetElem(Attribute(nameSpace, name, -1, false), s"Attribute $nameSpace.$name does not exist")
       if (atr == null) { throw new NoSuchElementException(s"Attribute $nameSpace.$name does not exist") }
@@ -369,7 +369,7 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MappedMsgTypeDef = {
+  private def MakeContainerTypeMap(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): MappedMsgTypeDef = {
     val st = new MappedMsgTypeDef
     val depJarSet = scala.collection.mutable.Set[String]()
 
@@ -409,7 +409,7 @@ class MdMgr {
    *  @return the constructed StructTypeDef
    */
 
-  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): StructTypeDef = {
+  def MakeStructDef(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): StructTypeDef = {
     var sd = new StructTypeDef
 
     val msgNm = MdMgr.MkFullName(nameSpace, name)
@@ -470,7 +470,7 @@ class MdMgr {
   def Types(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseTypeDef]] = Types(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the BaseTypeDef with the supplied namespace and name  */
-  def Type(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = Type(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Type(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[BaseTypeDef] = Type(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
 
   /** Answer the Active AND Current BaseTypeDef with the supplied namespace and name  */
   def ActiveType(nameSpace: String, name: String): BaseTypeDef = {
@@ -483,7 +483,7 @@ class MdMgr {
   }
 
   /** Answer the BaseTypeDef with the supplied key  */
-  def Type(key: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
+  def Type(key: String, ver: Long, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
 
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
@@ -503,7 +503,7 @@ class MdMgr {
   def Messages(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = Messages(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the MessageDef with the supplied namespace and name  */
-  def Message(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Message(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
   /** Answer the ACTIVE and CURRENT MessageDef with the supplied namespace and name  */
   def ActiveMessage(nameSpace: String, name: String): MessageDef = {
     val optMsg: Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), -1, true)
@@ -515,7 +515,7 @@ class MdMgr {
   }
 
   /** Answer the MessageDef with the supplied key. */
-  def Message(key: String, ver: Int, onlyActive: Boolean): Option[MessageDef] = GetReqValue(Messages(key, onlyActive, false), ver)
+  def Message(key: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = GetReqValue(Messages(key, onlyActive, false), ver)
 
   /** Get All Versions of Containers for Key */
   def Containers(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ContainerDef]] = { GetImmutableSet(Some(containerDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
@@ -525,7 +525,7 @@ class MdMgr {
   def Containers(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ContainerDef]] = Containers(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the ContainerDef with the supplied namespace and name  */
-  def Container(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[ContainerDef] = Container(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Container(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[ContainerDef] = Container(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
 
   /** Answer the Active AND Current ContainerDef with the supplied namespace and name  */
   def ActiveContainer(nameSpace: String, name: String): ContainerDef = {
@@ -538,7 +538,7 @@ class MdMgr {
   }
 
   /** Answer the ContainerDef with the supplied key.  Use one of the helper functions described here to form a proper search key.  */
-  def Container(key: String, ver: Int, onlyActive: Boolean): Option[ContainerDef] = GetReqValue(Containers(key, onlyActive, false), ver)
+  def Container(key: String, ver: Long, onlyActive: Boolean): Option[ContainerDef] = GetReqValue(Containers(key, onlyActive, false), ver)
 
   /** Get All Versions of Functions */
   def Functions(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[FunctionDef]] = { GetImmutableSet(Some(funcDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
@@ -586,7 +586,7 @@ class MdMgr {
   }
 
   /* full key name and full arguments names */
-  def Function(key: String, args: List[String], ver: Int, onlyActive: Boolean): Option[FunctionDef] = {
+  def Function(key: String, args: List[String], ver: Long, onlyActive: Boolean): Option[FunctionDef] = {
     // get functions which match to key & arguments
     val fnMatches =
       funcDefs.get(key) match {
@@ -606,10 +606,10 @@ class MdMgr {
   }
 
   /* namespace & name for key and fullname for each arg */
-  // def Function(nameSpace: String, name: String, args: List[String], ver: Int): Option[FunctionDef] = Function(MkFullName(nameSpace, name), args, ver)
+  // def Function(nameSpace: String, name: String, args: List[String], ver: Long): Option[FunctionDef] = Function(MkFullName(nameSpace, name), args, ver)
 
   /* namespace & name for key and namespace & name for each arg */
-  def Function(nameSpace: String, name: String, args: List[(String, String)], ver: Int, onlyActive: Boolean): Option[FunctionDef] = Function(MdMgr.MkFullName(nameSpace, name), args.map(a => MdMgr.MkFullName(a._1, a._2)), ver, onlyActive)
+  def Function(nameSpace: String, name: String, args: List[(String, String)], ver: Long, onlyActive: Boolean): Option[FunctionDef] = Function(MdMgr.MkFullName(nameSpace, name), args.map(a => MdMgr.MkFullName(a._1, a._2)), ver, onlyActive)
 
   /**
    *  Principally used by the Pmml Compiler, answer the FunctionDef with the supplied type signature.
@@ -655,8 +655,8 @@ class MdMgr {
   def Attributes(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[BaseAttributeDef]] = Attributes(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the BaseAttributeDef with the supplied namespace and name  */
-  def Attribute(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[BaseAttributeDef] = Attribute(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
-  def Attribute(key: String, ver: Int, onlyActive: Boolean): Option[BaseAttributeDef] = GetReqValue(Attributes(key, onlyActive, false), ver)
+  def Attribute(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[BaseAttributeDef] = Attribute(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Attribute(key: String, ver: Long, onlyActive: Boolean): Option[BaseAttributeDef] = GetReqValue(Attributes(key, onlyActive, false), ver)
   /** Answer the Active AND Current ContainerDef with the supplied namespace and name  */
   def ActiveAttribute(nameSpace: String, name: String): BaseAttributeDef = {
     val optAttr: Option[BaseAttributeDef] = Attribute(MdMgr.MkFullName(nameSpace, name), -1, true)
@@ -675,11 +675,11 @@ class MdMgr {
   def Models(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ModelDef]] = Models(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
 
   /** Answer the ModelDef with the supplied namespace and name  */
-  def Model(nameSpace: String, name: String, ver: Int, onlyActive: Boolean): Option[ModelDef] = Model(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
-  def Model(key: String, ver: Int, onlyActive: Boolean): Option[ModelDef] = GetReqValue(Models(key, onlyActive, false), ver)
+  def Model(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[ModelDef] = Model(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Model(key: String, ver: Long, onlyActive: Boolean): Option[ModelDef] = GetReqValue(Models(key, onlyActive, false), ver)
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyModel(nameSpace: String, name: String, ver: Int, operation: String): ModelDef = {
+  def ModifyModel(nameSpace: String, name: String, ver: Long, operation: String): ModelDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val model = modelDefs.getOrElse(key, null)
     if (model == null) {
@@ -711,7 +711,7 @@ class MdMgr {
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyMessage(nameSpace: String, name: String, ver: Int, operation: String): MessageDef = {
+  def ModifyMessage(nameSpace: String, name: String, ver: Long, operation: String): MessageDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val message = msgDefs.getOrElse(key, null)
     if (message == null) {
@@ -743,7 +743,7 @@ class MdMgr {
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyContainer(nameSpace: String, name: String, ver: Int, operation: String): ContainerDef = {
+  def ModifyContainer(nameSpace: String, name: String, ver: Long, operation: String): ContainerDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val container = containerDefs.getOrElse(key, null)
     if (container == null) {
@@ -775,7 +775,7 @@ class MdMgr {
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyFunction(nameSpace: String, name: String, ver: Int, operation: String): FunctionDef = {
+  def ModifyFunction(nameSpace: String, name: String, ver: Long, operation: String): FunctionDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val function = funcDefs.getOrElse(key, null)
     if (function == null) {
@@ -807,7 +807,7 @@ class MdMgr {
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyAttribute(nameSpace: String, name: String, ver: Int, operation: String): BaseAttributeDef = {
+  def ModifyAttribute(nameSpace: String, name: String, ver: Long, operation: String): BaseAttributeDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val attribute = attrbDefs.getOrElse(key, null)
     if (attribute == null) {
@@ -839,7 +839,7 @@ class MdMgr {
   }
 
   @throws(classOf[ObjectNolongerExistsException])
-  def ModifyType(nameSpace: String, name: String, ver: Int, operation: String): BaseTypeDef = {
+  def ModifyType(nameSpace: String, name: String, ver: Long, operation: String): BaseTypeDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
     val typ = typeDefs.getOrElse(key, null)
     if (typ == null) {
@@ -870,63 +870,63 @@ class MdMgr {
     }
   }
 
-  def RemoveMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def RemoveMessage(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyMessage(nameSpace, name, ver, "Remove")
   }
 
-  def DeactivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def DeactivateMessage(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyMessage(nameSpace, name, ver, "Deactivate")
   }
 
-  def ActivateMessage(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def ActivateMessage(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyMessage(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def RemoveContainer(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Remove")
   }
 
-  def DeactivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def DeactivateContainer(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Deactivate")
   }
 
-  def ActivateContainer(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def ActivateContainer(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def RemoveFunction(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyFunction(nameSpace, name, ver, "Remove")
   }
 
-  def DeactivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def DeactivateFunction(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyFunction(nameSpace, name, ver, "Deactivate")
   }
 
-  def ActivateFunction(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def ActivateFunction(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def RemoveAttribute(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyAttribute(nameSpace, name, ver, "Remove")
   }
 
-  def DeactivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def DeactivateAttribute(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyAttribute(nameSpace, name, ver, "Deactivate")
   }
 
-  def ActivateAttribute(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def ActivateAttribute(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
-  def RemoveType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def RemoveType(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyType(nameSpace, name, ver, "Remove")
   }
 
-  def DeactivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def DeactivateType(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyType(nameSpace, name, ver, "Deactivate")
   }
 
-  def ActivateType(nameSpace: String, name: String, ver: Int): BaseElemDef = {
+  def ActivateType(nameSpace: String, name: String, ver: Long): BaseElemDef = {
     ModifyContainer(nameSpace, name, ver, "Activate")
   }
 
@@ -941,7 +941,7 @@ class MdMgr {
 
   @throws(classOf[IllegalArgumentException])
   @throws(classOf[AlreadyExistsException])
-  def MakeScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = "SomeImplementation"): ScalarTypeDef = {
+  def MakeScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Long = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = "SomeImplementation"): ScalarTypeDef = {
     if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Scalar $nameSpace.$name already exists.")
     }
@@ -967,7 +967,7 @@ class MdMgr {
   /*
   // physicalName may be null
   @throws(classOf[AlreadyExistsException])
-  def MakeTypeDef(nameSpace: String, name: String, typeType: BaseTypeDef, physicalName: String, ver: Int, jarNm: String, depJars: Array[String]): BaseTypeDef = {
+  def MakeTypeDef(nameSpace: String, name: String, typeType: BaseTypeDef, physicalName: String, ver: Long, jarNm: String, depJars: Array[String]): BaseTypeDef = {
     if (Type(nameSpace, name, -1) != None) {
       throw new AlreadyExistsException(s"TypeDef $nameSpace.$name already exists.")
     }
@@ -991,7 +991,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int, recompile: Boolean = false): ArrayTypeDef = {
+  def MakeArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Long, recompile: Boolean = false): ArrayTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1037,7 +1037,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int, recompile: Boolean = false): ArrayBufTypeDef = {
+  def MakeArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Long, recompile: Boolean = false): ArrayBufTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1083,7 +1083,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): ListTypeDef = {
+  def MakeList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): ListTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (typ.get.ver >= ver)
@@ -1117,7 +1117,7 @@ class MdMgr {
    */
 
   @throws(classOf[NoSuchElementException])
-  def MakeQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int) = {
+  def MakeQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long) = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (typ.get.ver >= ver)
@@ -1153,7 +1153,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): SetTypeDef = {
+  def MakeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long, recompile: Boolean = false): SetTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1199,7 +1199,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): ImmutableSetTypeDef = {
+  def MakeImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): ImmutableSetTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (typ.get.ver >= ver)
@@ -1236,7 +1236,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): TreeSetTypeDef = {
+  def MakeTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long, recompile: Boolean = false): TreeSetTypeDef = {
 
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
@@ -1282,7 +1282,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): SortedSetTypeDef = {
+  def MakeSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long, recompile: Boolean = false): SortedSetTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1328,7 +1328,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int, recompile: Boolean = false): MapTypeDef = {
+  def MakeMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long, recompile: Boolean = false): MapTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1383,7 +1383,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int, recompile: Boolean = false): ImmutableMapTypeDef = {
+  def MakeImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long, recompile: Boolean = false): ImmutableMapTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (recompile) {
@@ -1433,7 +1433,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): HashMapTypeDef = {
+  def MakeHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long): HashMapTypeDef = {
 
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
@@ -1480,7 +1480,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Int): TupleTypeDef = {
+  def MakeTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Long): TupleTypeDef = {
     val typ = Type(nameSpace, name, -1, false)
     if (typ != None) {
       if (typ.get.ver >= ver)
@@ -1545,7 +1545,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null): FunctionDef = {
+  def MakeFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Long = 1, jarNm: String = null, depJars: Array[String] = null): FunctionDef = {
 
     if (Function(nameSpace, name, args.map(a => (a._2, a._3)), -1, false) != None) {
       throw new AlreadyExistsException(s"Function $nameSpace.$name already exists.")
@@ -1595,7 +1595,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int, jarNm: String, depJars: Array[String]): List[FunctionDef] = {
+  def MakeFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Long, jarNm: String, depJars: Array[String]): List[FunctionDef] = {
     val funcs = names.map(name => {
       val (logicalNm, physicalName) = name
       MakeFunc(nameSpace, logicalNm, physicalName, retTypeNsName, args, fmfeatures, ver, jarNm, depJars)
@@ -1629,7 +1629,7 @@ class MdMgr {
    *
    */
   @throws(classOf[NoSuchElementException])
-  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: (String, String), ver: Int = 1): MacroDef = {
+  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: (String, String), ver: Long = 1): MacroDef = {
 
     val aMacro: MacroDef = new MacroDef
     SetBaseElem(aMacro, nameSpace, name, ver, null, null)
@@ -1664,7 +1664,7 @@ class MdMgr {
    *  @return a MacroDef
    */
   @throws(classOf[NoSuchElementException])
-  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Int): MacroDef = {
+  def MakeMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Long): MacroDef = {
     MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, (macroTemplateStr, macroTemplateStr), ver)
   }
 
@@ -1680,7 +1680,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): MessageDef = {
+  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): MessageDef = {
 
     val latestActiveMessage = Message(nameSpace, name, -1, false)
     if (latestActiveMessage != None) {
@@ -1711,7 +1711,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): ContainerDef = {
+  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): ContainerDef = {
 
     val latestActiveContainer = Container(nameSpace, name, -1, false)
     if (latestActiveContainer != None) {
@@ -1753,7 +1753,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
 
     val latestActiveMessage = Message(nameSpace, name, -1, false)
     if (latestActiveMessage != None) {
@@ -1783,7 +1783,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean = false): ContainerDef = {
+  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean = false): ContainerDef = {
 
     val latestActiveContainer = Container(nameSpace, name, -1, false)
     if (latestActiveContainer != None) {
@@ -1823,7 +1823,7 @@ class MdMgr {
    */
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
 
     val latestActiveMessage = Message(nameSpace, name, -1, false)
     if (latestActiveMessage != None) {
@@ -1874,7 +1874,7 @@ class MdMgr {
    *
    */
 
-  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, recompile: Boolean = false): ModelDef = {
+  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = null, recompile: Boolean = false): ModelDef = {
 
     var modelExists: Boolean = false
     val existingModel = Model(nameSpace, name, -1, false)
@@ -1941,7 +1941,7 @@ class MdMgr {
    */
 
   @throws(classOf[AlreadyExistsException])
-  def AddScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = null): Unit = {
+  def AddScalar(nameSpace: String, name: String, tp: Type, physicalName: String, ver: Long = 1, jarNm: String = null, depJars: Array[String] = null, implementationName: String = null): Unit = {
     AddScalar(MakeScalar(nameSpace, name, tp, physicalName, ver, jarNm, depJars, implementationName))
   }
 
@@ -1967,7 +1967,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): Unit = {
+  def AddArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Long): Unit = {
     AddArray(MakeArray(nameSpace, name, tpNameSp, tpName, numDims, ver))
   }
 
@@ -1993,7 +1993,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): Unit = {
+  def AddArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Long): Unit = {
     AddArrayBuffer(MakeArrayBuffer(nameSpace, name, tpNameSp, tpName, numDims, ver))
   }
 
@@ -2018,7 +2018,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddList(MakeList(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2043,7 +2043,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddQueue(MakeQueue(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2068,7 +2068,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddSet(MakeSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2093,7 +2093,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddImmutableSet(MakeImmutableSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2118,7 +2118,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddTreeSet(MakeTreeSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2143,7 +2143,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): Unit = {
+  def AddSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Long): Unit = {
     AddSortedSet(MakeSortedSet(nameSpace, name, tpNameSp, tpName, ver))
   }
 
@@ -2168,7 +2168,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
+  def AddMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long): Unit = {
     AddMap(MakeMap(nameSpace, name, key, value, ver))
   }
 
@@ -2193,7 +2193,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
+  def AddImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long): Unit = {
     AddImmutableMap(MakeImmutableMap(nameSpace, name, key, value, ver))
   }
 
@@ -2218,7 +2218,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): Unit = {
+  def AddHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Long): Unit = {
     AddHashMap(MakeHashMap(nameSpace, name, key, value, ver))
   }
 
@@ -2244,7 +2244,7 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Int): Unit = {
+  def AddTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Long): Unit = {
     AddTupleType(MakeTupleType(nameSpace, name, tuples, ver))
   }
 
@@ -2274,7 +2274,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
+  def AddFunc(nameSpace: String, name: String, physicalName: String, retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
     AddFunc(MakeFunc(nameSpace, name, physicalName, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
   }
 
@@ -2321,7 +2321,7 @@ class MdMgr {
   }
 
   @throws(classOf[AlreadyExistsException])
-  def MakeConcept(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Int = 1, isGlobal: Boolean): BaseAttributeDef = {
+  def MakeConcept(nameSpace: String, name: String, typeNameNs: String, typeName: String, ver: Long = 1, isGlobal: Boolean): BaseAttributeDef = {
     val attr = MakeAttribDef(nameSpace, name, typeNameNs, typeName, ver, isGlobal, null) // BUGBUG:: Considering no CollectionType for Concecept
     attr
   }
@@ -2343,7 +2343,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Int, jarNm: String, depJars: Array[String]): Unit = {
+  def AddFuncs(nameSpace: String, names: List[(String, String)], retTypeNsName: (String, String), args: List[(String, String, String)], fmfeatures: Set[FcnMacroAttr.Feature], ver: Long, jarNm: String, depJars: Array[String]): Unit = {
     AddFuncs(MakeFuncs(nameSpace, names, retTypeNsName, args, fmfeatures, ver, jarNm, depJars))
   }
 
@@ -2398,7 +2398,7 @@ class MdMgr {
    *
    */
 
-  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStrs: (String, String), ver: Int = 1): Unit = {
+  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStrs: (String, String), ver: Long = 1): Unit = {
     AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStrs, ver))
   }
 
@@ -2419,7 +2419,7 @@ class MdMgr {
    *
    */
 
-  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Int): Unit = {
+  def AddMacro(nameSpace: String, name: String, retTypeNsName: (String, String), args: List[(String, String, String)], macrofeatures: Set[FcnMacroAttr.Feature], macroTemplateStr: String, ver: Long): Unit = {
     AddMacro(MakeMacro(nameSpace, name, retTypeNsName, args, macrofeatures, macroTemplateStr, ver))
   }
 
@@ -2457,7 +2457,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+  def AddFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
     AddMsg(MakeFixedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
@@ -2472,7 +2472,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
     AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey, false))
   }
 
@@ -2486,7 +2486,7 @@ class MdMgr {
    */
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): Unit = {
+  def AddMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Long, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): Unit = {
     AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey, false))
   }
 
@@ -2519,7 +2519,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+  def AddFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
     AddContainer(MakeFixedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
@@ -2534,7 +2534,7 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def AddMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
+  def AddMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
     AddContainer(MakeMappedContainer(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey))
   }
 
@@ -2579,7 +2579,7 @@ class MdMgr {
    *  @return the ModelDef instance as a measure of convenience
    *
    */
-  def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
+  def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
     AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
   }
 
@@ -2609,7 +2609,7 @@ class MdMgr {
     version: String): JarDef = {
     val jd = new JarDef
     var depJars = new Array[String](0)
-    SetBaseElem(jd, nameSpace, name, version.toInt, name, depJars)
+    SetBaseElem(jd, nameSpace, name, version.toLong, name, depJars)
     jd
   }
 
@@ -2799,11 +2799,11 @@ object MdMgr extends LogTrait {
   /** Helper function to form a proper search key */
   def MkFullNameWithVersion(nameSpace: String, name: String): String = MkFullNameWithVersion(nameSpace, name, -1)
   /** Helper function to form a proper search key */
-  def MkFullNameWithVersion(nameSpace: String, name: String, ver: Int): String = (nameSpace.trim + "." + name.trim + "." + ver).toLowerCase // Ignoring version for now
+  def MkFullNameWithVersion(nameSpace: String, name: String, ver: Long): String = (nameSpace.trim + "." + name.trim + "." + ver).toLowerCase // Ignoring version for now
 
   private def CheckVerDigits(value: Int, orgVerInfo: String): Unit = {
-    if (value < 0 || value > 99)
-      throw new Exception("Expecting only 0 to 99 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
+    if (value < 0 || value > 999999)
+      throw new Exception("Expecting only 0 to 999999 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
   }
 
   // Make sure the version is in the format of nn.nn.nn
@@ -2822,15 +2822,26 @@ object MdMgr extends LogTrait {
     CheckVerDigits(mini, verInfo)
     CheckVerDigits(micro, verInfo)
 
-    val retVerInfo = "%02d.%02d.%02d".format(major, mini, micro)
+    val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
     retVerInfo
   }
 
   // Expecting Formatted version as input
-  def ConvertVersionToInt(verInfo: String): Int = {
-    verInfo.replaceAll("[.]", "").toInt
+  def ConvertVersionToLong(verInfo: String): Long = {
+    FormatVersion(verInfo).replaceAll("[.]", "").toLong
   }
 
+  def ConvertLongVersionToString(verInfo: Long): String = {
+    var remVer = verInfo
+   
+    var major = remVer / 1000000000000L  // Not expecting more than 6 digits here. Do we need to add check for that?????
+    remVer = remVer % 1000000000000L
+    var mini = remVer / 1000000L
+    var micro = remVer % 1000000L
+
+    val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
+    retVerInfo
+  }
 }
 
 
