@@ -62,6 +62,5 @@ questions and make contributions.
 
 ###Getting Involved
 
-Ask questions, explore, and help improve Fatafat community [here](https://groups.google.com/a/ligadata.com/forum/?hl=en#!forum/fatafat_userforum). (You may need to ask to join the group if you’re not already a member)
      
 ###[Documentation](https://github.com/ligaDATA/Fatafat/wiki/Documentation)
