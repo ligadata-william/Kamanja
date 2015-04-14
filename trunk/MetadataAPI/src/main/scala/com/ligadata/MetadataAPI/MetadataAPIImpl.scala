@@ -4986,7 +4986,7 @@ object MetadataAPIImpl extends MetadataAPI {
       return apiResultStr
     }
     try{
-      val recs = auditObj.get(startTime,endTime,userOrRole,action,objectAccessed)
+      val recs = auditObj.getAuditRecord(startTime,endTime,userOrRole,action,objectAccessed)
       if( recs.length > 0 ){
         apiResultStr = JsonSerializer.SerializeAuditRecordsToJson(recs)
       }
