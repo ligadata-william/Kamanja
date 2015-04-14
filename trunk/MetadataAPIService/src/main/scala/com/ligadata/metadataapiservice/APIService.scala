@@ -92,6 +92,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         Shutdown(1)
         return
       }
+      
       if (loadConfigs == null) {
         Shutdown(1)
         return
@@ -107,8 +108,8 @@ class APIService extends LigadataSSLConfiguration with Runnable{
 
       logger.debug("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
-      // Identify the host and port the service is listening on
-      val serviceHost = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_HOST")
+      // We will allow access to this web service from all the servers on the PORT # defined in the config file 
+      val serviceHost = "0.0.0.0"
       val servicePort = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SERVICE_PORT").toInt
 
       // create and start our service actor

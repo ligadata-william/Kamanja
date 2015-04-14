@@ -27,7 +27,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr:Long)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -57,7 +57,7 @@ class MessageDefImpl {
 
   //creates the class string
 
-  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname:String ): (StringBuilder) = {
+  private def createObj(msg: Message, partitionPos: Array[Int], primaryPos: Array[Int], clsname: String): (StringBuilder) = {
     var cobj: StringBuilder = new StringBuilder
     var tdataexists: String = ""
     var tattribs: String = ""
@@ -284,54 +284,58 @@ class MessageDefImpl {
     }
     getMessageFunc
   }
-  private def assignJsonForArray(fname: String, typeImpl: String, msg: Message): String = {
+  private def assignJsonForArray(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
 
     val funcName = "fields(\"" + fname + "\")";
     if (msg.Fixed.toLowerCase().equals("true")) {
       funcStr = """
 			if (map.contains("""" + fname + """")){
-				arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
+				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				""" + fname + """  = arr.map(v => """ + typeImpl + """(v)).toArray
-			}
+				val arrFld = CollectionAsArrString(arr)
+				""" + fname + """  = arrFld.map(v => """ + typeImpl + """(v.toString)).toArray
+			} else """+ fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
       funcStr = """
 			if (map.contains("""" + fname + """" )){
-				arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
+				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				""" + funcName + """   = arr.map(v => """ + typeImpl + """(v)).toArray
+				val arrFld = CollectionAsArrString(arr)
+				""" + funcName + """   = (-1, arrFld.map(v =>  {""" + typeImpl + """(v.toString) } ).toArray)
 			}else 
-				""" + funcName + """   = null
+				""" + funcName + """   = (-1, new """ + typ + """(0))
 	    }
 	      """
     }
     funcStr
   }
 
-  private def assignJsonForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message): String = {
+  private def assignJsonForPrimArrayBuffer(fname: String, typeImpl: String, msg: Message, typ: String): String = {
     var funcStr: String = ""
 
     val funcName = "fields(\"" + fname + "\")";
     if (msg.Fixed.toLowerCase().equals("true")) {
       funcStr = """
 			if (map.contains("""" + fname + """")){
-				arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
+				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				 arr.map(v => {""" + fname + """  :+=""" + typeImpl + """(v)})
-			}
+				val arrFld = CollectionAsArrString(arr)
+				 arrFld.map(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
+			}else """+ fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
       funcStr = """
 			if (map.contains("""" + fname + """" )){
-				arr = map.getOrElse("""" + fname + """", null).asInstanceOf[List[String]]
+				val arr = map.getOrElse("""" + fname + """", null)
 			if (arr != null) {
-				" arr.map(v => {""" + fname + """  :+=""" + typeImpl + """(v)})
+				val arrFld = CollectionAsArrString(arr)
+				""" + funcName + """   = (-1, arrFld.map(v => { {""" + fname + """  :+=""" + typeImpl + """(v.toString)}))
 			}else 
-				""" + funcName + """   = null
+				""" + funcName + """   = (-1, new """ + typ + """(0))
 	    }
 	      """
     }
@@ -390,7 +394,7 @@ class MessageDefImpl {
     }
   }
 
-  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String) = {
+  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String, ArrayBuffer[String], String, String, String, ArrayBuffer[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -405,12 +409,18 @@ class MessageDefImpl {
     val pad4 = "\t\t\t\t"
     val newline = "\n"
     var keysStr = new StringBuilder(8 * 1024)
+    var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
     var typeImpl = new StringBuilder(8 * 1024)
     var fname: String = ""
     var serializedBuf = new StringBuilder(8 * 1024)
     var deserializedBuf = new StringBuilder(8 * 1024)
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
+    var mappedPrevTypNotMatchkeys = new StringBuilder(8 * 1024)
+    var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
+    var prevVerMsgBaseTypesIdxArry1 : ArrayBuffer[String] = new  ArrayBuffer[String]
+
+    var mapBaseTypesSetRet: Set[Int] = Set()
     try {
 
       if (typ.get.implementationName.isEmpty())
@@ -419,14 +429,13 @@ class MessageDefImpl {
       if (typ.getOrElse("None").equals("None"))
         throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + msgVersion + " , Type : " + f.Ttype)
 
-      // if (!typ.get.physicalName.equals("String")){
-      //  argsList = (f.NameSpace, f.Name, f.NameSpace, typ.get.physicalName.substring(6, typ.get.physicalName.length()), false) :: argsList
       if (typ.get.typeString.isEmpty())
         throw new Exception("Type not found in metadata for namespace %s" + f.Ttype)
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
       fname = typ.get.implementationName + ".Input"
+
       if ((typ.get.dependencyJarNames != null) && (typ.get.JarName != null))
         jarset = jarset + typ.get.JarName ++ typ.get.dependencyJarNames
       else if (typ.get.JarName != null)
@@ -434,42 +443,16 @@ class MessageDefImpl {
       else if (typ.get.dependencyJarNames != null)
         jarset = jarset ++ typ.get.dependencyJarNames
 
-      val dval: String = getDefVal(f.Ttype)
+      val dval: String = getDefVal(typ.get.typeString.toLowerCase())
       list = (f.Name, f.Ttype) :: list
+
+      var baseTypId = -1
 
       if (fixed.toLowerCase().equals("true")) {
         scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
         assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
         assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
         assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
-
-        if (typ.get.physicalName != null && typ.get.physicalName.trim() != "") {
-          val serType = typ.get.implementationName + ".SerializeIntoDataOutputStream"
-          //val serType = getSerializedType(typ.get.physicalName)
-          if (serType != null && serType.trim() != "") {
-            serializedBuf = serializedBuf.append("%s%s(%s,%s);%s".format(pad1, serType, "dos", f.Name, newline))
-          }
-          val deserType = typ.get.implementationName + ".DeserializeFromDataInputStream"
-          val dis = "dis"
-          //val deserType = getDeserializedType(typ.get.physicalName)
-          if (deserType != null && deserType.trim() != "") {
-            deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
-            var memberExists: Boolean = false
-            if (childs != null) {
-              var value = childs.getOrElse(f.Name, null)
-              if (childs.contains(f.Name)) {
-                value = childs.getOrElse(f.Name, null)
-                if (value != null && value.trim() != "" && value.equals(typ.get.FullName)) {
-                  memberExists = true
-                }
-              }
-            }
-            if (memberExists) {
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
-              convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
-            }
-          }
-        }
 
       } else if (fixed.toLowerCase().equals("false")) {
 
@@ -478,10 +461,28 @@ class MessageDefImpl {
             if (f.Name.toLowerCase().equals(key.toLowerCase()))
               scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
           }
+        var typstring = typ.get.implementationName
+        if (mappedTypesABuf.contains(typstring)) {
+          if (mappedTypesABuf.size == 1 && firstTimeBaseType)
+            baseTypId = mappedTypesABuf.indexOf(typstring)
+        } else {
 
-        keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
+          mappedTypesABuf += typstring
+          baseTypId = mappedTypesABuf.indexOf(typstring)
+        }
+
+        keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
+
       }
-
+      serializedBuf = serializedBuf.append(BaseTypesHandler.serializeMsgContainer(typ, fixed, f, baseTypId))
+      deserializedBuf = deserializedBuf.append(BaseTypesHandler.deSerializeMsgContainer(typ, fixed, f, baseTypId))
+      val (prevObjDeserialized, convertOldObjtoNewObj, mappedPrevVerMatch, mappedPrevTypNotMatchkey, prevObjTypNotMatchDeserialized, prevVerMsgBaseTypesIdxArryBuf) = BaseTypesHandler.prevObjDeserializeMsgContainer(typ, fixed, f, childs, baseTypId, prevVerMsgBaseTypesIdxArry)
+      prevObjDeserializedBuf = prevObjDeserializedBuf.append(prevObjDeserialized)
+      convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(convertOldObjtoNewObj)
+      mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
+      mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(mappedPrevTypNotMatchkey)
+      prevObjTypNotMatchDeserializedBuf = prevObjTypNotMatchDeserializedBuf.append(prevObjTypNotMatchDeserialized)
+      prevVerMsgBaseTypesIdxArry1 = prevVerMsgBaseTypesIdxArryBuf
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -489,68 +490,12 @@ class MessageDefImpl {
       }
     }
 
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, keysStr.toString, typeImpl.toString, jarset, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, keysStr.toString, typeImpl.toString, jarset, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedTypesABuf, mappedPrevVerMatchkeys.toString, mappedPrevTypNotMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry1)
   }
 
   ///serialize deserialize primative types
-  private def getSerDeserPrimitives(typeString: String, typFullName: String, fieldName: String, implName: String, childs: Map[String, String], isArayBuf: Boolean, recompile:Boolean): (String, String, String, String) = {
-    var serializedBuf = new StringBuilder(8 * 1024)
-    var deserializedBuf = new StringBuilder(8 * 1024)
-    var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
-    var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
-    val pad1 = "\t"
-    val pad2 = "\t\t"
-    val pad3 = "\t\t\t"
-    val pad4 = "\t\t\t\t"
-    val newline = "\n"
 
-    if (implName == null || implName.trim() == "")
-      throw new Exception("Check Type Implementation Name")
-
-    val serType = implName + ".SerializeIntoDataOutputStream"
-
-    serializedBuf.append("%sif (%s==null || %s.size == 0) com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,0);%s".format(pad2, fieldName, fieldName, newline))
-    serializedBuf.append("%selse {%s%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,%s.size);%s".format(pad2, newline, pad2, fieldName, newline))
-    serializedBuf.append("%s%s.foreach(v => {%s".format(pad2, fieldName, newline))
-    serializedBuf.append("%s%s(%s, v);%s".format(pad1, serType, "dos", newline))
-    serializedBuf.append("%s})}%s".format(pad2, newline))
-
-    var memberExists: Boolean = false
-    if (childs != null) {
-      var value = childs.getOrElse(fieldName, null)
-      if (childs.contains(fieldName)) {
-        value = childs.getOrElse(fieldName, null)
-        if (value != null && value.trim() != "" && value.equals(typFullName)) {
-          memberExists = true
-        }
-      }
-    }
-    //prevVerObj.icd9_dgns_cds.foreach(v => icd9_dgns_cds :+= v);)
-    // prevVerObj.inpaticonvertOldObjtoNewObjBufent_claims.foreach(ip => inpatient_claims += ip)
-    //typ.get.typeString.toString().split("\\[")(1)
-    if (memberExists) {
-      //prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(v => %s :+= v);%s".format(pad1, fieldName, fieldName, newline))
-      prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, fieldName, fieldName, newline))
-      convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, fieldName, fieldName, newline))
-    }
-
-    val deserType = implName + ".DeserializeFromDataInputStream"
-    val dis = "dis"
-
-    deserializedBuf.append("%s{%s%s%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis);%s".format(pad1, newline, pad1, pad2, newline))
-    deserializedBuf.append("%sval i:Int = 0;%s".format(pad2, newline))
-    deserializedBuf.append("%s if(arraySize > 0){ %s = new Array[%s](arraySize)%s%s for (i <- 0 until arraySize) {%s".format(pad2, fieldName, typeString, newline, pad2, newline))
-    deserializedBuf.append("%sval inst = %s(%s);%s".format(pad1, deserType, dis, newline))
-    if (isArayBuf)
-      deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    else{
-     // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
-      deserializedBuf.append("%s%s(i) = inst;%s%s}%s%s%s}}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
-    }
-    (serializedBuf.toString, prevObjDeserializedBuf.toString, deserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
-  }
-
-  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String) = {
+  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -572,6 +517,11 @@ class MessageDefImpl {
     var deserializedBuf = new StringBuilder(8 * 1024)
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
+    var collections = new StringBuilder(8 * 1024)
+    var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
+    var mappedMsgFieldsArry = new StringBuilder(8 * 1024)
+    var msgAndCntnrsStr = new StringBuilder(8 * 1024)
+    var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
 
     try {
       arrayType = typ.get.asInstanceOf[ArrayTypeDef]
@@ -589,26 +539,31 @@ class MessageDefImpl {
             assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
-            val (serStr, prevDeserStr, deserStr, converToNewObj) = getSerDeserPrimitives(arrayType.elemDef.physicalName, typ.get.FullName, f.Name, arrayType.elemDef.implementationName, childs, false, recompile)
-            serializedBuf.append(serStr)
-            deserializedBuf.append(deserStr)
-            prevObjDeserializedBuf.append(prevDeserStr)
-            convertOldObjtoNewObjBuf.append(converToNewObj)
-
           } else if (msg.Fixed.toLowerCase().equals("false")) {
 
-            scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
+            //scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
+            collections.append("\"" + f.Name + "\",")
+
+            mappedMsgFieldsArry = mappedMsgFieldsArry.append("%s fields(\"%s\") = (-1, new %s(0));%s".format(pad1, f.Name, typ.get.typeString, newline))
 
             assignCsvdata.append(" ")
           }
+          val (serStr, prevDeserStr, deserStr, converToNewObj, mappedPrevVerMatch, mappedPrevVerTypNotMatchKys) = ArrayTypeHandler.getSerDeserPrimitives(typ.get.typeString, typ.get.FullName, f.Name, arrayType.elemDef.implementationName, childs, false, recompile, msg.Fixed.toLowerCase())
+          // println("serStr   " + serStr)
+          serializedBuf.append(serStr)
+          deserializedBuf.append(deserStr)
+          prevObjDeserializedBuf.append(prevDeserStr)
+          convertOldObjtoNewObjBuf.append(converToNewObj)
+          mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
+          mappedPrevTypNotrMatchkeys.append(mappedPrevVerTypNotMatchKys)
         }
-        assignJsondata.append(assignJsonForArray(f.Name, fname, msg))
+        assignJsondata.append(assignJsonForArray(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tcontainer")) {
           assignCsvdata.append(newline + getArrayStr(f.Name, arrayType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
           assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, arrayType.elemDef.physicalName))
-          keysStr.append("(\"" + f.Name + "\",")
+          keysStr.append("\"" + f.Name + "\",")
         }
         if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage"))
           if (typ.get.typeString.toString().split("\\[").size == 2) {
@@ -619,6 +574,16 @@ class MessageDefImpl {
               getMsg.append("%s%s.foreach(o => {%s%sif(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s)}%s%s}".format(pad3, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2))
             }
           }
+
+        serializedBuf = serializedBuf.append(ArrayTypeHandler.serializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        deserializedBuf = deserializedBuf.append(ArrayTypeHandler.deSerializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        val (prevObjDeserialized, convertOldObjtoNewObj, mappedPrevVerMatch, mappedPrevTypNotMatchKys) = ArrayTypeHandler.prevObjDeserializeMsgContainer(typ, msg.Fixed.toLowerCase(), f, childs)
+        prevObjDeserializedBuf = prevObjDeserializedBuf.append(prevObjDeserialized)
+        convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(convertOldObjtoNewObj)
+        msgAndCntnrsStr.append("\"" + f.Name + "\",")
+        mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
+        mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
+
         //assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
       }
@@ -639,10 +604,10 @@ class MessageDefImpl {
       }
     }
 
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, collections.toString, mappedPrevVerMatchkeys.toString, mappedMsgFieldsArry.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
-  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
+  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -666,7 +631,10 @@ class MessageDefImpl {
     var deserializedBuf = new StringBuilder(8 * 1024)
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
-
+    var collections = new StringBuilder(8 * 1024)
+    var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
+    var mappedMsgFieldsVar = new StringBuilder(8 * 1024)
+    var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
     try {
       arrayBufType = typ.get.asInstanceOf[ArrayBufTypeDef]
       if (arrayBufType == null) throw new Exception("Array Byffer of " + f.Ttype + " do not exists throwing Null Pointer")
@@ -681,29 +649,35 @@ class MessageDefImpl {
           if (msg.Fixed.toLowerCase().equals("true")) {
             //  list(inputdata.curPos).split(arrvaldelim, -1).map(v => { xyz :+= com.ligadata.BaseTypes.IntImpl.Input(v)});
             assignCsvdata.append("%slist(inputdata.curPos).split(arrvaldelim, -1).map(v => {%s :+= %s(v)});\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-            // scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
-            val (serStr, prevDeserStr, deserStr, converToNewObj) = getSerDeserPrimitives(arrayBufType.elemDef.physicalName, typ.get.FullName, f.Name, arrayBufType.elemDef.implementationName, childs, true, recompile)
+            val (serStr, prevDeserStr, deserStr, converToNewObj, mappedPrevVerMatch, mappedPrevVerTypNotMatchKys) = ArrayTypeHandler.getSerDeserPrimitives(typ.get.typeString, typ.get.FullName, f.Name, arrayBufType.elemDef.implementationName, childs, true, recompile, msg.Fixed.toLowerCase())
             serializedBuf.append(serStr)
             deserializedBuf.append(deserStr)
             prevObjDeserializedBuf.append(prevDeserStr)
             convertOldObjtoNewObjBuf.append(converToNewObj)
+            mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
+            mappedPrevTypNotrMatchkeys.append(mappedPrevVerTypNotMatchKys)
 
           } else if (msg.Fixed.toLowerCase().equals("false")) {
+            //scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
+
             assignCsvdata.append(" ")
             //Adding fields to keys Map
             // keysStr.append("(\"" + f.Name + "\"," + typ.get.implementationName + "),")
+
+            collections.append("\"" + f.Name + "\",")
+
           }
         }
-        assignJsondata.append(assignJsonForPrimArrayBuffer(f.Name, fname, msg))
+        assignJsondata.append(assignJsonForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
 
       } else {
         if (msg.NameSpace != null)
           msgNameSpace = msg.NameSpace
         argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
         val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.OnLEPBase.BaseMsg]"
-        if (msg.Fixed.toLowerCase().equals("true"))
+        if (msg.Fixed.toLowerCase().equals("true")) //--- --- commented to declare the arraybuffer of messages in memeber variables section for both fixed adn mapped messages
           scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
         if (f.ElemType.toLowerCase().equals("container")) {
@@ -713,7 +687,7 @@ class MessageDefImpl {
             assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, typ.get.typeString.toString().split("\\[")(1).split("\\]")(0)))
           }
           if (msg.Fixed.toLowerCase().equals("false")) {
-            keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
+            //    keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
           }
           // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
           // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
@@ -730,11 +704,13 @@ class MessageDefImpl {
 
               addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
               addMsg.append(newline + pad3 + "val x = getOrElse(\"" + f.Name + "\", null)" + newline + pad3)
-              addMsg.append("var " + f.Name + ": " + typ.get.typeString + " = null " + newline)
+              addMsg.append("var " + f.Name + ": " + typ.get.typeString + " = null " + newline) //--- commented to declare the arraybuffer of messages in memeber variables section
               addMsg.append(pad3 + "if (x == null) {" + newline + pad3 + f.Name + " = new " + typ.get.typeString + newline + pad3 + "} else {" + newline)
-              addMsg.append(pad3 + f.Name + "= x.asInstanceOf[" + typ.get.typeString + newline + pad3 + "}" + newline)
+              addMsg.append(pad3 + f.Name + "= x.asInstanceOf[" + typ.get.typeString + "]" + newline + pad3 + "}" + newline)
               addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline)
-              addMsg.append(pad3 + "fields(\"" + f.Name + "\") = " + f.Name + newline + pad2 + newline + pad2 + "} else ")
+              addMsg.append(pad3 + "fields(\"" + f.Name + "\") = (-1, " + f.Name + ")" + newline + pad2 + newline + pad2 + "} else ")
+
+              mappedMsgFieldsVar.append("%s fields(\"%s\") = (-1, new %s )%s".format(pad2, f.Name, typ.get.typeString, newline))
 
               //adding Array of Messages to Map
               // keysStr.append("(\"" + f.Name + "\"," + arrayBuf + "[" + msgType + "),")
@@ -752,54 +728,18 @@ class MessageDefImpl {
                 getMsg.append("%s%s.foreach(o => {%s%s if(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s})%s%s}else ".format(pad2, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2, newline, pad2))
               }
             }
-
-            serializedBuf.append("%sif ((%s==null) ||(%s.size == 0)) com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,0);%s".format(pad2, f.Name, f.Name, newline))
-            serializedBuf.append("%selse {%s%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,%s.size);%s".format(pad2, newline, pad2, f.Name, newline))
-            serializedBuf.append("%s%s.foreach(obj => {%s".format(pad2, f.Name, newline))
-            serializedBuf.append("%sval bytes = SerializeDeserialize.Serialize(obj)%s".format(pad2, newline))
-            serializedBuf.append("%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,bytes.length)%s".format(pad2, newline))
-            serializedBuf.append("%sdos.write(bytes)})}%s".format(pad2, newline))
-
-            // if (deserType != null && deserType.trim() != "") {
-            //  deserializedBuf = deserializedBuf.append("%s%s = %s(%s);%s".format(pad1, f.Name, deserType, dis, newline))
-
-            var memberExists: Boolean = false
-            if (childs != null) {
-              var value = childs.getOrElse(f.Name, null)
-              if (childs.contains(f.Name)) {
-                value = childs.getOrElse(f.Name, null)
-                if (value != null && value.trim() != "" && value.equals(typ.get.FullName)) {
-                  memberExists = true
-                }
-              }
-            }
-
-            val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
-
-            // prevVerObj.inpatient_claims.foreach(ip => inpatient_claims += ip)
-            if (memberExists) {
-              // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s  = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, childType, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
-
-            }
-
-            // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(obj => %s += obj);%s".format(pad1, f.Name, f.Name, newline))
-
-            deserializedBuf.append("%s{%s%s%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis);%s".format(pad1, newline, pad1, pad2, newline))
-            deserializedBuf.append("%sval i:Int = 0;%s".format(pad2, newline))
-            deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
-            deserializedBuf.append("%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline))
-            deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-            deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format( pad2, childType,newline ))
-            deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
-
           }
         }
+        serializedBuf = serializedBuf.append(ArrayTypeHandler.serializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        deserializedBuf = deserializedBuf.append(ArrayTypeHandler.deSerializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
+        val (prevObjDeserialized, convertOldObjtoNewObj, mappedPrevVerMatch, mappedPrevTypNotMatchKys) = ArrayTypeHandler.prevObjDeserializeMsgContainer(typ, msg.Fixed.toLowerCase(), f, childs)
+        prevObjDeserializedBuf = prevObjDeserializedBuf.append(prevObjDeserialized)
+        convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(convertOldObjtoNewObj)
+        msgAndCntnrsStr.append("\"" + f.Name + "\",")
+        mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
+        mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
       }
-      msgAndCntnrsStr.append("\"" + f.Name + "\",")
+
       if ((arrayBufType.dependencyJarNames != null) && (arrayBufType.JarName != null))
         jarset = jarset + arrayBufType.JarName ++ arrayBufType.dependencyJarNames
       else if (arrayBufType.JarName != null)
@@ -813,10 +753,10 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, msgAndCntnrsStr.toString, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, msgAndCntnrsStr.toString, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, collections.toString, mappedPrevVerMatchkeys.toString, mappedMsgFieldsVar.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
-  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element, recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
+  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element, recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -850,7 +790,7 @@ class MessageDefImpl {
         jarset = jarset ++ ctrDef.dependencyJarNames
       // val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true)
       argsList = (f.NameSpace, f.Name, ctrDef.NameSpace, ctrDef.Name, false, null) :: argsList
-      keysStr.append("(\"" + f.Name + "\",")
+      //   keysStr.append("\"" + f.Name + "\",")
       // argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
 
     } catch {
@@ -862,7 +802,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString)
   }
 
-  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element, msg: Message, childs: Map[String, String], recompile:Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String) = {
+  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -883,6 +823,9 @@ class MessageDefImpl {
     var deserializedBuf = new StringBuilder(8 * 1024)
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
+    var mappedMsgFieldsVar = new StringBuilder(8 * 1024)
+    var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
+    var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
 
     try {
 
@@ -914,45 +857,99 @@ class MessageDefImpl {
         getMsg.append("%sreturn %s %s%s}%s%s}else".format(pad3, f.Name, newline, pad3, newline, pad3))
       }
 
-      //  val bytes = SerializeDeserialize.Serialize(obj)
-      //  com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos, bytes.length);
-      //  dos.write(bytes);
+      if (msg.Fixed.toLowerCase().equals("false")) {
+        mappedMsgFieldsVar.append("%s fields(\"%s\") = (-1, new %s )%s".format(pad2, f.Name, msgDef.typeString, newline))
 
-      serializedBuf.append("%sval bytes = SerializeDeserialize.Serialize(%s)%s".format(pad2, f.Name, newline))
-      serializedBuf.append("%scom.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,bytes.length);%s".format(pad2, newline))
-      serializedBuf.append("%sdos.write(bytes);%s".format(pad2, newline))
+      }
+
+      if (msg.Fixed.toLowerCase().equals("true")) {
+        serializedBuf.append("%s {if (%s == null)  com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,0);%s".format(pad2, f.Name, newline))
+
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
+        serializedBuf.append("%s { val (idx, %s) = getOrElse(\"%s\", null);%s".format(pad2, f.Name, f.Name, newline))
+        serializedBuf.append("%s if (%s == null) com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos, 0) %s".format(pad2, f.Name, newline))
+      }
+      serializedBuf.append("%s else { val bytes = SerializeDeserialize.Serialize(%s.asInstanceOf[%s])%s".format(pad2, f.Name, msgDef.typeString, newline))
+      serializedBuf.append("%s com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos,bytes.length);%s".format(pad2, newline))
+      serializedBuf.append("%s dos.write(bytes);%s} %s }%s".format(pad2, newline, newline, newline))
+
+      val curObjtype = msgDef.physicalName
 
       var memberExists: Boolean = false
+      var membrMatchTypeNotMatch = false
+      var sameType: Boolean = false
       if (childs != null) {
-        var value = childs.getOrElse(f.Name, null)
         if (childs.contains(f.Name)) {
-          value = childs.getOrElse(f.Name, null)
-          if (value != null && value.trim() != "" && value.equals(msgDef.FullName)) {
-            memberExists = true
+          var child = childs.getOrElse(f.Name, null)
+          if (child != null) {
+            val fullname = child.asInstanceOf[AttributeDef].aType.FullName
+            if (fullname != null && fullname.trim() != "" && fullname.equals(msgDef.FullName)) {
+              memberExists = true
+              val childPhysicalName = child.asInstanceOf[AttributeDef].aType.typeString
+              if (childPhysicalName != null && childPhysicalName.trim() != "") {
+                if (childPhysicalName.equals(curObjtype))
+                  sameType = true
+              }
+            } else {
+              membrMatchTypeNotMatch = true
+            }
           }
         }
       }
+
+      /*  case "inpatient" => {
+                val curVerObj = new com.ligadata.messagescontainers.System_InpatientClaim_100_1427140791051()
+                curVerObj.ConvertPrevToNewVerObj(prevObjfield._2._2)
+                fields("inpatient") = (-1, curVerObj)
+              }
+              * 
+              */
+
       if (memberExists) {
         // convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
+        if (msg.Fixed.toLowerCase().equals("true")) {
+          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s{%s%sval curVerObj = new %s()%s".format(pad2, newline, pad2, msgDef.typeString, newline))
+          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevVerObj.%s)%s".format(pad2, f.Name, newline))
+          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = curVerObj}%s".format(pad2, f.Name, newline))
+        }
+        if (msg.Fixed.toLowerCase().equals("false")) {
+          mappedPrevVerMatchkeys.append("\"" + f.Name + "\",")
+          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s case \"%s\" => { %s".format(pad2, f.Name, newline))
+          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s if(prevObjfield._2._2 != null){ fields(\"%s\") = (prevObjfield._2._1,prevObjfield._2._2) }}%s".format(pad2, f.Name, newline))
+          if (sameType) {
 
-        prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s{%s%sval curVerObj = new %s()%s".format(pad2, newline, pad2, msgDef.typeString, newline))
-        prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevVerObj.%s)%s".format(pad2, f.Name, newline))
-        prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = curVerObj}%s".format(pad2, f.Name, newline))
+          } else {
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s{%s%sval curVerObj = new %s()%s".format(pad2, newline, pad2, msgDef.typeString, newline))
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(prevObjfield._2._2)%s".format(pad2, f.Name, newline))
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s fields(\"%s\") = (prevObjfield._2._1,curVerObj) }%s".format(pad2, f.Name, newline))
+          }
+        }
       }
-    //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
 
-      deserializedBuf.append("%s{%s%svar bytes = new Array[Byte](dis.readInt);%s".format(pad2, newline, pad2, newline))
+      //  val childType = typ.get.typeString.toString().split("\\[")(1).substring(0, typ.get.typeString.toString().split("\\[")(1).length() - 1)
+
+      deserializedBuf.append("%s{ %s val length = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis) %s".format(pad2, newline, newline))
+      deserializedBuf.append("%s if (length > 0) { %s%svar bytes = new Array[Byte](length);%s".format(pad2, newline, pad2, newline))
       deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
-      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2,  msgDef.PhysicalName , newline))
-      deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s}%s".format(pad2, f.Name, newline, pad2, newline))
+      deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, msgDef.PhysicalName, newline))
 
+      if (msg.Fixed.toLowerCase().equals("true")) {
+        deserializedBuf.append("%s%s = inst.asInstanceOf[BaseMsg];%s%s} }%s".format(pad2, f.Name, newline, pad2, newline))
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
+        deserializedBuf.append("%s fields(\"%s\") = (-1, inst.asInstanceOf[%s]);%s%s}%s".format(pad2, f.Name, msgDef.typeString, newline, pad2, newline))
+        deserializedBuf.append("%s else fields(\"%s\") = (-1, new %s()) } %s".format(pad2, f.Name, msgDef.typeString, newline, pad2, newline))
+        if (membrMatchTypeNotMatch) {
+          mappedPrevTypNotrMatchkeys.append("\"" + f.Name + "\",")
+
+        }
+      }
     } catch {
       case e: Exception => {
         e.printStackTrace()
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
   private def handleConcept(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
@@ -986,7 +983,7 @@ class MessageDefImpl {
 
         if (f.Name.split("\\.").size == 2) {
 
-          val dval: String = getDefVal("system." + attribute.typeString.toLowerCase())
+          val dval: String = getDefVal("system." + attribute.typeString.toString().toLowerCase())
 
           scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name.split("\\.")(1), attribute.typeString, newline))
           assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name.split("\\.")(1), fname, pad2))
@@ -1023,7 +1020,7 @@ class MessageDefImpl {
   //get the childs from previous existing message or container
 
   //generates the variables string and assign string
-  private def classStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, Array[Int], Array[Int], String, String, String, String, String) = {
+  private def classStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, Array[Int], Array[Int], String, String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -1039,9 +1036,20 @@ class MessageDefImpl {
     var typeImplStr: String = ""
     var serializedBuf = new StringBuilder(8 * 1024)
     var deserializedBuf = new StringBuilder(8 * 1024)
+    var mappedSerBaseTypesBuf = new StringBuilder(8 * 1024)
+    var mappedDeserBaseTypesBuf = new StringBuilder(8 * 1024)
+    var mappedBaseTypesSet: Set[Int] = Set()
+
     var prevDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
-
+    var collections = new StringBuilder(8 * 1024)
+    var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
+    var mappedMsgFieldsVar = new StringBuilder(8 * 1024)
+    var mappedMsgConstructor: String = ""
+    var mappedMsgFieldsArry = new StringBuilder(8 * 1024)
+    var mappedPrevTypNotMatchkeys = new StringBuilder(8 * 1024)
+    var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
+   
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
     val pad1 = "\t"
@@ -1064,16 +1072,26 @@ class MessageDefImpl {
     var partitionPos = Array[Int]()
     var primaryPos = Array[Int]()
     var prevVerMsgObjstr: String = ""
-    var childs: Map[String, String] = Map[String, String]()
+    var childs: Map[String, Any] = Map[String, Any]()
+    var prevVerMsgBaseTypesIdxArry = new ArrayBuffer[String]
     try {
 
+      //Mapped Messages - Add String as first element to Array Buffer for typs variable
+      var mappedTypesABuf = new scala.collection.mutable.ArrayBuffer[String]
+      val stringType = MdMgr.GetMdMgr.Type("System.String", -1, true)
+      if (stringType.getOrElse("None").equals("None"))
+        throw new Exception("Type not found in metadata for String ")
+      mappedTypesABuf += stringType.get.implementationName
+      var firstTimeBaseType: Boolean = true
       //Get the previous added Message or Container from Metadata and get all the childs from the Previous message/Container for Deserialize purpose
 
       val (ismsg, pMsgdef, pMsgObjstr) = getPrevVersionMsgContainer(message: Message, mdMgr: MdMgr)
       prevVerMsgObjstr = pMsgObjstr
       val isMsg = ismsg
       if (pMsgdef != null) {
-        childs = getPrevVerMsgChilds(pMsgdef, isMsg, message.Fixed)
+        val (childAttrs, prevVerMsgBaseTypesIdxArray) = getPrevVerMsgChilds(pMsgdef, isMsg, message.Fixed)
+        childs = childAttrs
+        
         if ((pMsgdef.dependencyJarNames != null) && (pMsgdef.JarName != null))
           jarset = jarset + pMsgdef.JarName ++ pMsgdef.dependencyJarNames
         else if (pMsgdef.JarName != null)
@@ -1129,7 +1147,7 @@ class MessageDefImpl {
 
             if (typ.get.tType.toString().equals("tArray")) {
 
-              val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8, arr_9, arr_10, arr_11, arr_12, arr_13, arr_14) = handleArrayType(keys, typ, f, message, childs, recompile)
+              val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8, arr_9, arr_10, arr_11, arr_12, arr_13, arr_14, arr_15, arr_16, arr_17, arr_18) = handleArrayType(keys, typ, f, message, childs, prevVerMsgBaseTypesIdxArry, recompile)
 
               scalaclass = scalaclass.append(arr_1)
               assignCsvdata = assignCsvdata.append(arr_2)
@@ -1144,12 +1162,17 @@ class MessageDefImpl {
               getMsg = getMsg.append(arr_10)
               serializedBuf = serializedBuf.append(arr_11)
               deserializedBuf = deserializedBuf.append(arr_12)
+
               prevDeserializedBuf = prevDeserializedBuf.append(arr_13)
               convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(arr_14)
+              collections = collections.append(arr_15)
+              mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(arr_16)
+              mappedMsgFieldsArry = mappedMsgFieldsArry.append(arr_17)
+              mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(arr_18)
 
               //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
             } else if (typ.get.tType.toString().equals("tArrayBuf")) {
-              val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8, arrayBuf_9, arrayBuf_10, arrayBuf_11, arrayBuf_12, arrayBuf_13, arrayBuf_14, arrayBuf_15) = handleArrayBuffer(keys, message, typ, f, childs, recompile)
+              val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8, arrayBuf_9, arrayBuf_10, arrayBuf_11, arrayBuf_12, arrayBuf_13, arrayBuf_14, arrayBuf_15, arrayBuf_16, arrayBuf_17, arrayBuf_18, arrayBuf_19) = handleArrayBuffer(keys, message, typ, f, childs, prevVerMsgBaseTypesIdxArry, recompile)
               scalaclass = scalaclass.append(arrayBuf_1)
               assignCsvdata = assignCsvdata.append(arrayBuf_2)
               assignJsondata = assignJsondata.append(arrayBuf_3)
@@ -1165,6 +1188,10 @@ class MessageDefImpl {
               deserializedBuf = deserializedBuf.append(arrayBuf_13)
               prevDeserializedBuf = prevDeserializedBuf.append(arrayBuf_14)
               convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(arrayBuf_15)
+              collections = collections.append(arrayBuf_16)
+              mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(arrayBuf_17)
+              mappedMsgFieldsVar = mappedMsgFieldsVar.append(arrayBuf_18)
+              mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(arrayBuf_19)
 
             } else if (typ.get.tType.toString().equals("tHashMap")) {
 
@@ -1175,8 +1202,7 @@ class MessageDefImpl {
               assignCsvdata.append(newline + "//Tree Set not handled at this momemt" + newline)
               assignJsondata.append(newline + "//Tree Set not handled at this momemt" + newline)
             } else {
-
-              val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10, baseTyp_11, baseTyp_12, baseTyp_13, baseTyp_14) = handleBaseTypes(keys, message.Fixed, typ, f, message.Version, childs, recompile)
+              val (baseTyp_1, baseTyp_2, baseTyp_3, baseTyp_4, baseTyp_5, baseTyp_6, baseTyp_7, baseTyp_8, baseTyp_9, baseTyp_10, baseTyp_11, baseTyp_12, baseTyp_13, baseTyp_14, baseTyp_15, baseTyp_16, baseTyp_17, baseTyp_18, baseTyp_19) = handleBaseTypes(keys, message.Fixed, typ, f, message.Version, childs, prevVerMsgBaseTypesIdxArry, recompile, mappedTypesABuf, firstTimeBaseType)
               scalaclass = scalaclass.append(baseTyp_1)
               assignCsvdata = assignCsvdata.append(baseTyp_2)
               assignJsondata = assignJsondata.append(baseTyp_3)
@@ -1187,10 +1213,21 @@ class MessageDefImpl {
               keysStr = keysStr.append(baseTyp_8)
               typeImpl = typeImpl.append(baseTyp_9)
               jarset = jarset ++ baseTyp_10
-              serializedBuf = serializedBuf.append(baseTyp_11)
-              deserializedBuf = deserializedBuf.append(baseTyp_12)
+              if (message.Fixed.toLowerCase().equals("true")) {
+                serializedBuf = serializedBuf.append(baseTyp_11)
+                deserializedBuf = deserializedBuf.append(baseTyp_12)
+              } else if (message.Fixed.toLowerCase().equals("false")) {
+                mappedSerBaseTypesBuf = mappedSerBaseTypesBuf.append(baseTyp_11)
+                mappedDeserBaseTypesBuf = mappedDeserBaseTypesBuf.append(baseTyp_12)
+              }
+
               prevDeserializedBuf = prevDeserializedBuf.append(baseTyp_13)
               convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(baseTyp_14)
+              mappedTypesABuf = baseTyp_15
+              mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(baseTyp_16)
+              mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(baseTyp_17)
+              prevObjTypNotMatchDeserializedBuf = prevObjTypNotMatchDeserializedBuf.append(baseTyp_18)
+              prevVerMsgBaseTypesIdxArry = baseTyp_19
 
               if (paritionkeys != null && paritionkeys.size > 0) {
                 if (paritionkeys.contains(f.Name)) {
@@ -1202,7 +1239,7 @@ class MessageDefImpl {
                   primaryPos = primaryPos :+ count
                 }
               }
-
+              firstTimeBaseType = false
             }
             count = count + 1
 
@@ -1216,7 +1253,7 @@ class MessageDefImpl {
 
             if (typ.getOrElse(null) != null) {
               if (typ.get.tType.toString().equals("tArrayBuf")) {
-                val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8, arrayBuf_9, arrayBuf_10, arrayBuf_11, arrayBuf_12, arrayBuf_13, arrayBuf_14, arrayBuf_15) = handleArrayBuffer(keys, message, typ, f, childs, recompile)
+                val (arrayBuf_1, arrayBuf_2, arrayBuf_3, arrayBuf_4, arrayBuf_5, arrayBuf_6, arrayBuf_7, arrayBuf_8, arrayBuf_9, arrayBuf_10, arrayBuf_11, arrayBuf_12, arrayBuf_13, arrayBuf_14, arrayBuf_15, arrayBuf_16, arrayBuf_17, arrayBuf_18, arrayBuf_19) = handleArrayBuffer(keys, message, typ, f, childs, prevVerMsgBaseTypesIdxArry, recompile)
                 scalaclass = scalaclass.append(arrayBuf_1)
                 assignCsvdata = assignCsvdata.append(arrayBuf_2)
                 assignJsondata = assignJsondata.append(arrayBuf_3)
@@ -1232,6 +1269,11 @@ class MessageDefImpl {
                 deserializedBuf = deserializedBuf.append(arrayBuf_13)
                 prevDeserializedBuf = prevDeserializedBuf.append(arrayBuf_14)
                 convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(arrayBuf_15)
+                collections = collections.append(arrayBuf_16)
+                mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(arrayBuf_17)
+                mappedMsgFieldsVar = mappedMsgFieldsVar.append(arrayBuf_18)
+                mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(arrayBuf_19)
+                arrayBuf_19
 
               } else {
 
@@ -1247,9 +1289,10 @@ class MessageDefImpl {
                   addMsg = addMsg.append(cntnr_7)
                   jarset = jarset ++ cntnr_8
                   msgAndCntnrsStr = msgAndCntnrsStr.append(cntnr_9)
+                  //   mappedPrevVerMatchkeys
 
                 } else if (f.ElemType.equals("Message")) {
-                  val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8, msg_9, msg_10, msg_11, msg_12, msg_13) = handleMessage(mdMgr, ftypeVersion, f, message, childs, recompile)
+                  val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8, msg_9, msg_10, msg_11, msg_12, msg_13, msg_14, msg_15) = handleMessage(mdMgr, ftypeVersion, f, message, childs, recompile)
                   scalaclass = scalaclass.append(msg_1)
                   assignCsvdata = assignCsvdata.append(msg_2)
                   assignJsondata = assignJsondata.append(msg_3)
@@ -1263,6 +1306,10 @@ class MessageDefImpl {
                   deserializedBuf = deserializedBuf.append(msg_11)
                   prevDeserializedBuf = prevDeserializedBuf.append(msg_12)
                   convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append(msg_13)
+                  mappedPrevVerMatchkeys = mappedPrevVerMatchkeys.append(msg_14)
+                  mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(msg_15)
+
+                  // mappedPrevVerMatchkeys
 
                 }
               }
@@ -1284,13 +1331,26 @@ class MessageDefImpl {
 
       }
 
+      var partitionKeys: String = ""
+      var prmryKeys: String = ""
       if (message.Fixed.toLowerCase().equals("false")) {
+
         if (keysStr != null && keysStr.toString.trim != "")
           keysVarStr = getKeysStr(keysStr.toString)
         MsgsAndCntrsVarStr = getMsgAndCntnrs(msgAndCntnrsStr.toString)
         //typeImplStr = getTypeImplStr(typeImpl.toString)
-        scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr)
+        // mappedMsgConstructor = getAddMappedMsgsInConstructor(mappedMsgFieldsVar.toString)
 
+        scalaclass.append(keysVarStr + newline + pad1 + typeImplStr + newline + pad1 + MsgsAndCntrsVarStr + newline + pad1 + getMappedBaseTypesArray(mappedTypesABuf) + newline)
+        scalaclass.append(getAddMappedMsgsInConstructor(mappedMsgFieldsVar.toString) + getAddMappedArraysInConstructor(mappedMsgFieldsArry.toString) + getMappedMsgPrevVerMatchKeys(mappedPrevVerMatchkeys.toString) + mappedToStringForKeys)
+        scalaclass.append(getMappedMsgPrevVerTypeNotMatchKeys(mappedPrevTypNotMatchkeys.toString) + mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf.toString))
+
+        partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
+        prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
+
+      } else if (message.Fixed.toLowerCase().equals("true")) {
+        partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
+        prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
       }
       /*
       var partitionKeyStr = new StringBuilder(8 * 1024)
@@ -1302,8 +1362,6 @@ class MessageDefImpl {
       if (partitionKeyStr != null && partitionKeyStr.toString.trim() != "")
         partitionKeys = "scala.Array(" + partitionKeyStr.substring(0, partitionKeyStr.toString.length() - 1) + ")"
 */
-      val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
-      val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
 
       scalaclass = scalaclass.append(partitionkeyStr(partitionKeys) + newline + primarykeyStr(prmryKeys) + newline + getsetMethods(message.Fixed))
 
@@ -1322,10 +1380,112 @@ class MessageDefImpl {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage, getmessage, partitionPos, primaryPos, serializedBuf.toString, deserializedBuf.toString, prevDeserializedBuf.toString, prevVerMsgObjstr, convertOldObjtoNewObjBuf.toString)
+
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage, getmessage, partitionPos, primaryPos, serializedBuf.toString, deserializedBuf.toString, prevDeserializedBuf.toString, prevVerMsgObjstr, convertOldObjtoNewObjBuf.toString, collections.toString, mappedSerBaseTypesBuf.toString, mappedDeserBaseTypesBuf.toString)
 
   }
 
+  //Mapped Messages For primary key adn parition key - value to String to avoid null pointer exception 
+
+  private def mappedToStringForKeys() = {
+
+    """
+    private def toStringForKey(key: String): String = {
+	  val field = fields.getOrElse(key, (-1, null))
+	  if (field._2 == null) return ""
+	  field._2.toString
+	}
+    """
+  }
+  // Default Array Buffer of message values in Mapped Messages
+  private def getAddMappedMsgsInConstructor(mappedMsgFieldsVar: String): String = {
+    if (mappedMsgFieldsVar == null || mappedMsgFieldsVar.trim() == "") return ""
+    else return """
+      AddMsgsInConstructor
+
+    private def AddMsgsInConstructor: Unit = {
+      """ + mappedMsgFieldsVar + """
+    }
+      """
+
+  }
+  // Default Array Buffer of primitive values in Mapped Messages
+
+  private def getAddMappedArraysInConstructor(mappedArrayFieldsVar: String): String = {
+    if (mappedArrayFieldsVar == null || mappedArrayFieldsVar.trim() == "") return ""
+    else return """
+    AddArraysInConstructor
+
+    private def AddArraysInConstructor: Unit = {
+      """ + mappedArrayFieldsVar + """
+    }
+      """
+
+  }
+
+  //Get the actve Message or container from Metadata 
+  private def getRecompiledMsgContainerVersion(messagetype: String, namespace: String, name: String, mdMgr: MdMgr): String = {
+    var msgdef: Option[ContainerDef] = null
+
+    if (namespace == null || namespace.trim() == "")
+      throw new Exception("Proper Namespace do not exists in message/container definition")
+    if (name == null || name.trim() == "")
+      throw new Exception("Proper Name do not exists in message")
+    if (messagetype == null || messagetype.trim() == "")
+      throw new Exception("Proper Version do not exists in message/container definition")
+
+    try {
+
+      if (messagetype.toLowerCase().equals("message")) {
+        msgdef = mdMgr.Message(namespace, name, -1, false)
+        val isMsg = true
+      } else if (messagetype.toLowerCase().equals("container")) {
+        msgdef = mdMgr.Container(namespace, name, -1, false)
+      }
+
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+    log.trace("version from metadata " + msgdef.get.Version)
+
+    formatNewVersionToStr(msgdef.get.Version.toString)
+  }
+
+  private def formatNewVersionToStr(version: String): String = {
+    var versionStr: String = ""
+    var major = 0
+    var minor = 0
+    var micro = 0
+    if (version.length() == 1 || version.length() == 2) {
+      micro = version.toInt
+      micro = micro + 1
+    }
+
+    if (version.length() >= 3) {
+      micro = version.substring(version.length() - 2, version.length()).toInt
+      micro = micro + 1
+      if (version.length() == 3)
+        minor = version.substring(0, 1).toInt
+      else if (version.length() == 4)
+        minor = version.substring(0, 2).toInt
+    }
+
+    if (version.length() >= 5) {
+      minor = version.substring(version.length() - 4, version.length() - 2).toInt
+
+      if (version.length() == 5)
+        major = version.substring(0, 1).toInt
+      else if (version.length() == 6)
+        major = version.substring(0, 2).toInt
+
+    }
+
+    versionStr = "%02d.%02d.%02d".format(major, minor, micro)
+    log.trace("formatted version " + versionStr)
+    versionStr
+  }
   //Get the previous Existing Message/continer from metadata for deserialize function purpose
 
   private def getPrevVersionMsgContainer(message: Message, mdMgr: MdMgr): (Boolean, ContainerDef, String) = {
@@ -1374,45 +1534,106 @@ class MessageDefImpl {
         e.printStackTrace()
       }
     }
+
     (isMsg, msgdef, prevVerMsgObjstr)
 
   }
 
-  private def getPrevVerMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): Map[String, String] = {
+  private def getPrevVerMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): (Map[String, Any], ArrayBuffer[String]) = {
     var prevVerCtrdef: ContainerDef = new ContainerDef()
     var prevVerMsgdef: MessageDef = new MessageDef()
-    var childs: Map[String, String] = Map[String, String]()
+    var childs: Map[String, Any] = Map[String, Any]()
+    var prevVerMsgBaseTypesIdxArry = new ArrayBuffer[String]
 
     if (pMsgdef != null) {
+
+      if (isMsg) {
+        prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
+      } else {
+        prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
+      }
       if (fixed.toLowerCase().equals("true")) {
-        if (isMsg) {
-          prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
-        } else {
-          prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
-        }
         val memberDefs = prevVerCtrdef.containerType.asInstanceOf[StructTypeDef].memberDefs
         if (memberDefs != null) {
-          childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a.asInstanceOf[AttributeDef].aType.FullName))
+          childs ++= memberDefs.filter(a => (a.isInstanceOf[AttributeDef])).map(a => (a.Name, a))
+        }
+      } else if (fixed.toLowerCase().equals("false")) {
+        val attrMap = prevVerCtrdef.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
+        if (attrMap != null) {
+
+          attrMap.foreach(a => {
+            val attributes = a._2.asInstanceOf[AttributeDef].aType
+            if (attributes != null)
+              if (attributes.implementationName != null && attributes.tTypeType.toString().toLowerCase().equals("tscalar") && !prevVerMsgBaseTypesIdxArry.contains(a._2.asInstanceOf[AttributeDef].aType.implementationName))
+                prevVerMsgBaseTypesIdxArry += a._2.asInstanceOf[AttributeDef].aType.implementationName;
+          })
+          childs ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef])).map(a => (a._2.Name, a._2))
+        }
+      }
+    }
+    (childs, prevVerMsgBaseTypesIdxArry)
+  }
+
+  /* private def getPrevVerMappedMsgChilds(pMsgdef: ContainerDef, isMsg: Boolean, fixed: String): Map[String, Any] = {
+    var prevVerCtrdef: ContainerDef = new ContainerDef()
+    var prevVerMsgdef: MessageDef = new MessageDef()
+    var childs: Map[String, Any] = Map[String, Any]()
+
+    if (pMsgdef != null) {
+
+      if (isMsg) {
+        prevVerCtrdef = pMsgdef.asInstanceOf[MessageDef]
+      } else {
+        prevVerCtrdef = pMsgdef.asInstanceOf[ContainerDef]
+      }
+      if (fixed.toLowerCase().equals("false")) {
+        val memberDefs = prevVerCtrdef.containerType.asInstanceOf[MappedMsgTypeDef].attrMap
+        children ++= attrMap.filter(a => (a._2.isInstanceOf[AttributeDef] && (a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[MappedMsgTypeDef] || a._2.asInstanceOf[AttributeDef].aType.isInstanceOf[StructTypeDef]))).map(a => (a._2.Name, a._2.asInstanceOf[AttributeDef]))
+
+        if (memberDefs != null) {
+          //    childs ++= memberDefs.filter(a => (a.isInstanceOf[MappedMsgTypeDef])).map(a => (a.Name, a))
         }
       }
     }
     childs
   }
+  * 
+  */
+
+  /**
+   * For Mapped messages - converversion to Current obj
+   *
+   */
+
+  private def getConvertOldVertoNewVer() = {
+    """
+     oldObj.fields.foreach(field => {
+         if(field._2._1 >= 0)
+       
+    	   fields(field._1) = (field._2._1, field._2._2);
+     })
+    
+    """
+
+  }
 
   /*
    * function to convert the old version to new version in desrializarion of messages especially when ArrayBuffer/Array of child messages or Child Message occurs
    */
-  private def getConvertOldVertoNewVer(convertStr: String, oldObj: Any, newObj: Any): String = {
+  private def getConvertOldVertoNewVer(convertStr: String, oldObj: String, newObj: Any): String = {
     var convertFuncStr: String = ""
     // if (prevObjExists) {
-    if (convertStr != null && convertStr.trim() != "") {
-      convertFuncStr = """
+    if (oldObj != null && oldObj.toString.trim() != "") {
+      if (convertStr != null && convertStr.trim() != "") {
+
+        convertFuncStr = """
      def ConvertPrevToNewVerObj(oldObj : """ + oldObj + """) : Unit = {    
          if( oldObj != null){
            """ + convertStr + """
          }  
        }"""
-      //    }
+        //    }
+      }
     } else {
       convertFuncStr = """
    def ConvertPrevToNewVerObj(obj : Any) : Unit = { }
@@ -1422,12 +1643,32 @@ class MessageDefImpl {
     convertFuncStr
   }
 
+  //this method is particulraly for Mapped Messages - a variable in mapped message with key name match and types not match 
+  private def getMappedMsgPrevVerTypeNotMatchKeys(typeNotMatchKeys: String): String = {
+
+    if (typeNotMatchKeys != null && typeNotMatchKeys.trim != "")
+      " val prevVerTypesNotMatch = Array(" + typeNotMatchKeys.toString.substring(0, typeNotMatchKeys.toString.length - 1) + ") \n "
+    else
+      " val prevVerTypesNotMatch = Array(\"\") \n "
+  }
+
+  //this method is particulraly for Mapped Messages - a variable in mapped message with key name and types also match 
+
+  private def getMappedMsgPrevVerMatchKeys(matchKeys: String): String = {
+
+    if (matchKeys != null && matchKeys.trim != "")
+      " val prevVerMatchKeys = Array(" + matchKeys.toString.substring(0, matchKeys.toString.length - 1) + ") \n "
+    else
+      " val prevVerMatchKeys = Array(\"\") \n "
+  }
+
   private def getKeysStr(keysStr: String) = {
     """    var keys = Map(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
       """
-  	var fields: Map[String, Any] = new HashMap[String, Any];
+   var fields: scala.collection.mutable.Map[String, (Int, Any)] = new scala.collection.mutable.HashMap[String, (Int, Any)];
 	"""
   }
+  //Messages and containers in Set for mapped messages to poplulate the data
 
   private def getMsgAndCntnrs(msgsAndCntnrs: String): String = {
     var str = ""
@@ -1435,6 +1676,18 @@ class MessageDefImpl {
       str = "val messagesAndContainers = Set(" + msgsAndCntnrs.toString.substring(0, msgsAndCntnrs.toString.length - 1) + ") \n "
     else
       str = "val messagesAndContainers = Set(\"\") \n "
+
+    str
+  }
+
+  //Messages and containers in Set for mapped messages to poplulate the data
+
+  private def getCollectionsMapped(collections: String): String = {
+    var str = ""
+    if (collections != null && collections.toString.trim != "")
+      str = "val collectionTypes = Set(" + collections.toString.substring(0, collections.toString.length - 1) + ") \n "
+    else
+      str = "val collectionTypes = Set(\"\") \n "
 
     str
   }
@@ -1489,15 +1742,14 @@ import scala.xml.XML
 import scala.xml.Elem
 import com.ligadata.OnLEPBase.{InputData, DelimitedData, JsonData, XmlData}
 import com.ligadata.BaseTypes._
-import scala.collection.mutable.{ Map, HashMap }
 import com.ligadata.OnLEPBase.SerializeDeserialize
-import java.io.{ DataInputStream, DataOutputStream }
+import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 
 """ + imprt
 
   }
 
-  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String ) = {
+  private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String) = {
     var sname: String = ""
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
@@ -1515,7 +1767,7 @@ import java.io.{ DataInputStream, DataOutputStream }
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
-     val clsname =  msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
+    val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
     val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + sname
     val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
 
@@ -1642,14 +1894,24 @@ class XmlData(var dataInput: String) extends InputData(){ }
       getsetters = getsetters.append("""
     override def set(key: String, value: Any): Unit = {
 	  if (key == null) throw new Exception(" key should not be null in set method")
-	  fields.put(key, value)
+	  fields.put(key, (-1, value))
     }
     override def get(key: String): Any = {
-      fields.get(key)
+      fields.get(key) match {
+    	 case Some(f) => {
+    		  //println("Key : "+ key + " Idx " + f._1 +" Value" + f._2 )
+    		  return f._2
+    	}
+    	case None => {
+    		  //println("Key - value null : "+ key )
+    		  return null
+    	  }
+    	}
+     // fields.get(key).get._2
     }
 
     override def getOrElse(key: String, default: Any): Any = {
-      fields.getOrElse(key, default)
+      fields.getOrElse(key, (-1, default))._2
     }
     """)
 
@@ -1679,10 +1941,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		return partKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (map == null) {
+    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
     			return partKeyPos.map(pos => "")
     		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
     		return partitionKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -1712,10 +1976,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		return prmryKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (map == null) {
+    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
     			return prmryKeyPos.map(pos => "")
     		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
     		return primaryKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -1727,16 +1994,51 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
     getPrimaryKeyData.toString
   }
+
+  // For Mapped messages to track the type of field assign specific value for each type
+
+  private def getBaseTypeID(valType: String): Int = {
+    valType match {
+      case "string" => 0
+      case "int" => 1
+      case "float" => 2
+      case "boolean" => 3
+      case "double" => 4
+      case "long" => 5
+      case "char" => 6
+      case _ => -1
+
+    }
+  }
+
+  private def getMappedBaseTypesArray(arrayBuf: ArrayBuffer[String]): String = {
+    var string = arrayBuf.toString
+    var mappedBaseTypes = new StringBuilder(8 * 1024)
+    var mappedBaseTypes1 = new StringBuilder(8 * 1024)
+
+    if (arrayBuf.size > 0) {
+      arrayBuf.foreach(t => {
+        mappedBaseTypes = mappedBaseTypes.append(t + ",")
+        mappedBaseTypes1 = mappedBaseTypes1.append("\"" + t + "\",")
+      })
+
+      return "val typs = Array(" + mappedBaseTypes.toString.substring(0, mappedBaseTypes.toString.length() - 1) + "); \n\t val typsStr = Array(" + mappedBaseTypes1.toString.substring(0, mappedBaseTypes1.toString.length() - 1) + "); "
+
+    } else {
+      return ""
+    }
+  }
+
   //input function conversion
   private def getDefVal(valType: String): String = {
     valType match {
-      case "system.int" => "0"
-      case "system.float" => "0"
-      case "system.boolean" => "false"
-      case "system.double" => "0.0"
-      case "system.long" => "0"
-      case "system.char" => "\' \'"
-      case "system.string" => "\"\""
+      case "int" => "0"
+      case "float" => "0"
+      case "boolean" => "false"
+      case "double" => "0.0"
+      case "long" => "0"
+      case "char" => "\' \'"
+      case "string" => "\"\""
       case _ => ""
     }
   }
@@ -1849,19 +2151,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  """
   }
 
-  private def assignJsonData(assignJsonData: String) = {
+  private def collectionsStr = {
     """
-  private def assignJsonData(json: JsonData) : Unit =  {
+    def CollectionAsArrString(v: Any): Array[String] = {
+	  if (v.isInstanceOf[Set[_]]) {
+	  	return v.asInstanceOf[Set[String]].toArray
+	  }
+	  if (v.isInstanceOf[List[_]]) {
+	  	return v.asInstanceOf[List[String]].toArray
+	  }
+	  if (v.isInstanceOf[Array[_]]) {
+     	return v.asInstanceOf[Array[String]].toArray
+	  }
+	  throw new Exception("Unhandled Collection")
+	 }
+    """
+    
+  }
+  private def assignJsonData(assignJsonData: String) = {
+    collectionsStr +
+    """
+    private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
-	var arr: List[String] = null
-    var list : List[Map[String, Any]] = null 
+	var list : List[Map[String, Any]] = null 
 	try{ 
-	  	
-	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	if (map == null)
+	  	val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+       	if (mapOriginal == null)
         	throw new Exception("Invalid json data")
-""" + assignJsonData +
+       
+       	val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
+       	mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+    
+	  """ + assignJsonData +
       """
 	  }catch{
   			case e:Exception =>{
@@ -1873,40 +2195,58 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	"""
   }
   private def assignMappedJsonData(assignJsonData: String) = {
+   collectionsStr +
     """
-  private def assignJsonData(json: JsonData) : Unit =  {
+   	def ValueToString(v: Any): String = {
+		if (v.isInstanceOf[Set[_]]) {
+      		return v.asInstanceOf[Set[_]].mkString(",")
+	  	}
+	  	if (v.isInstanceOf[List[_]]) {
+      		return v.asInstanceOf[List[_]].mkString(",")
+	  	}
+	  	if (v.isInstanceOf[Array[_]]) {
+      		return v.asInstanceOf[Array[_]].mkString(",")
+	  	}
+	  	v.toString
+	}
+    
+   private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
-	var arr: List[String] = null
-    var list : List[Map[String, Any]] = null 
+	var list : List[Map[String, Any]] = null 
     var keySet: Set[Any] = Set();
 	try{
-	  
-	 	val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
-	  	if (map == null)
-        	throw new Exception("Invalid json data")
+	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+       if (mapOriginal == null)
+         throw new Exception("Invalid json data")
+       
+       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
+       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+    
 	  	val msgsAndCntrs : scala.collection.mutable.Map[String, Any] = null
     
 	  	// Traverse through whole map and make KEYS are lowercase and populate
 	  	map.foreach(kv => {
-	  		val key = kv._1.toLowerCase
-	  		val typConv = keys.getOrElse(key, null)
-	  		if (typConv != null && kv._2 != null) {
-                // Cast to correct type
-            	val v1 = typConv.Input(kv._2.toString)
-            	fields.put(key, v1)
-	  		}
-	  		else {	 // Is this key is a message or container???
-	  		if (messagesAndContainers(key))  
-	  		   msgsAndCntrs.put(key, kv._2)
-	  		else
-            	fields.put(key, kv._2)
-	  		}
-	  	})
-	 
+        	val key = kv._1.toLowerCase
+        	val typConvidx = keys.getOrElse(key, -1)
+        	if (typConvidx > 0) {
+          	// Cast to correct type
+          	val v1 = typs(typConvidx).Input(kv._2.toString)
+	  		// println("==========v1"+v1)
+          	fields.put(key, (typConvidx, v1))
+        } else { // Is this key is a message or container???
+          if (messagesAndContainers(key))
+            msgsAndCntrs.put(key, kv._2)
+          else if (collectionTypes(key)) {
+            // BUGBUG:: what to dfo?
+          } else
+            fields.put(key, (0, ValueToString(kv._2)))
+        }
+      })
     """ + assignJsonData +
       """
-    
+     // fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
+   
 	  } catch {
       	case e: Exception => {
         e.printStackTrace()
@@ -1981,7 +2321,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   //creates the message class file
- /* private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
     try {
       val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
       writer.write(scalaClass.toString)
@@ -1993,9 +2333,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
   }
-*/
-  
-  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+
+  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var classname: String = null
     var ver: String = null
     var classstr_1: String = null
@@ -2005,15 +2344,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw new Exception("MdMgr is not found")
       if (msgDfType.equals("JSON")) {
         var message: Message = null
-        message = processJson(jsonstr, mdMgr).asInstanceOf[Message]
+        message = processJson(jsonstr, mdMgr, recompile).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
-          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr,recompile)
+          val (classStrVal, containerDefVal) = createFixedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
 
         } else if (message.Fixed.equals("false")) {
-          val (classStrVal, containerDefVal) = createNonFixedMsgClass(message, mdMgr,recompile)
+          val (classStrVal, containerDefVal) = createMappedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
           containerDef = containerDefVal
         }
@@ -2028,20 +2367,20 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
 
     try {
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-    //  createScalaFile(classstr, ver, classname)
+      //createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createFixedMsgDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createFixedMsgDef(message, list, mdMgr, argsList, recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createFixedContainerDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createFixedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2051,19 +2390,19 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createNonFixedMsgClass(message: Message, mdMgr: MdMgr,recompile: Boolean = false): (String, ContainerDef) = {
+  private def createMappedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     try {
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
-     // createScalaFile(classstr, ver, classname)
+      // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
 
       if (message.msgtype.equals("Message"))
-        containerDef = createMappedMsgDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createMappedMsgDef(message, list, mdMgr, argsList, recompile)
       else if (message.msgtype.equals("Container"))
-        containerDef = createMappedContainerDef(message, list, mdMgr, argsList,recompile)
+        containerDef = createMappedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2073,7 +2412,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (classstr_1, containerDef)
   }
 
-  private def createClassStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -2083,21 +2422,20 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var argsList_msg = List[(String, String, String, String, Boolean, String)]()
 
     try {
-      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partkeyPos, primarykeyPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr) = classStr(message, mdMgr, recompile)
+      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partkeyPos, primarykeyPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, "", "") = classStr(message, mdMgr, recompile)
       val getSerializedFuncStr = getSerializedFunction(serializedBuf)
 
-      val getDeserializedFuncStr = getDeserializedFunction(deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
+      val getDeserializedFuncStr = getDeserializedFunction(true, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, recompile)
       val convertOldObjtoNewObj = getConvertOldVertoNewVer(convertOldObjtoNewObjStr, prevVerMsgObjstr, message.PhysicalName)
-      println("convertOldObjtoNewObj " + convertOldObjtoNewObj)
       list_msg = list
       argsList_msg = argsList
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
       val (btrait, striat, csetters) = getBaseTrait(message)
-       val (clsstr, objstr, clasname) = classname(message, recompile)
+      val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partkeyPos, primarykeyPos, clasname)
       val isFixed = getIsFixed(message)
-     
+
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
       scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
@@ -2109,7 +2447,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg)
   }
 
-  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile:Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
+  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = message.Version.replaceAll("[.]", "").toInt.toString
     val newline = "\n"
@@ -2118,19 +2456,26 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var list_msg = List[(String, String)]()
     var argsList_msg = List[(String, String, String, String, Boolean, String)]()
     try {
-      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partitionPos, primaryPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr) = classStr(message, mdMgr, recompile)
+      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partitionPos, primaryPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, mappedSerBaseTypesBuf, mappedDeserBaseTypesBuf) = classStr(message, mdMgr, recompile)
       list_msg = list
       argsList_msg = argsList
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
+
+      val getSerializedFuncStr = getSerializedFunction(serializedBuf)
+      //println(deserializedBuf)
+      mappedMsgPrevVerDeser
+      val mapBaseDeser = MappedMsgDeserBaseTypes(mappedDeserBaseTypesBuf)
+      val getDeserializedFuncStr = getDeserializedFunction(true, mapBaseDeser + deserializedBuf, prevVerLessThanCurVerCheck(prevDeserializedBuf), prevVerMsgObjstr, recompile)
+      val convertOldObjtoNewObj = getConvertOldVertoNewVer(getConvertOldVertoNewVer, prevVerMsgObjstr, message.PhysicalName)
+
       val (btrait, striat, csetters) = getBaseTrait(message)
       val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partitionPos, primaryPos, clasname)
       val isFixed = getIsFixed(message)
-      val getSerializedFuncStr = getSerializedFunction(serializedBuf)
-      
+
       scalaclass = scalaclass.append(importStmts(message.msgtype) + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + SerDeserStr + " \n}")
+      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + " \n}")
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2147,21 +2492,22 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	override def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = { }
     """
   }
-  private def getFields = {
+
+  /*private def getFields = {
     """
    var fields: Map[String, Any] = new HashMap[String, Any];
     """
-  }
+  }*/
 
-  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
+  private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
 
     try {
 
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2171,13 +2517,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
+  private def createMappedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
     try {
+
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2187,13 +2534,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msgDef
   }
 
-  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): ContainerDef = {
+  private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     try {
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null,recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2203,18 +2550,18 @@ class XmlData(var dataInput: String) extends InputData(){ }
     containerDef
   }
 
-  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)],recompile: Boolean = false): MessageDef = {
+  private def createFixedMsgDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): MessageDef = {
     var msgDef: MessageDef = new MessageDef()
 
     try {
       var version = msg.Version.replaceAll("[.]", "").toInt
       //if(recompile) 
-    //	  version = version+1
-      
+      //	  version = version+1
+
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null,recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2226,7 +2573,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the serialized function in generated scala class 
   private def getSerializedFunction(serStr: String): String = {
-    var getSerFunc: String = "" 
+    var getSerFunc: String = ""
 
     if (serStr != null && serStr.trim() != "") {
       getSerFunc = """
@@ -2251,11 +2598,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   //create the deserialized function in generated scala class 
 
-  private def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile:Boolean): String = {
+  private def getPrevDeserStr(prevVerMsgObjstr: String, prevObjDeserStr: String, recompile: Boolean): String = {
     var preVerDeserStr: String = ""
     // if (recompile == false && prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
-   
-      if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
+
+    if (prevVerMsgObjstr != null && prevVerMsgObjstr.trim() != "") {
       val prevVerObjStr = "val prevVerObj = new %s()".format(prevVerMsgObjstr)
       preVerDeserStr = """
         if (prevVer < currentVer) {
@@ -2269,7 +2616,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     preVerDeserStr
   }
 
-  private def getDeserStr(deserStr: String): String = {
+  private def getDeserStr(deserStr: String, fixed: Boolean): String = {
     var deSer: String = ""
 
     if (deserStr != null && deserStr.trim() != "") {
@@ -2303,18 +2650,174 @@ class XmlData(var dataInput: String) extends InputData(){ }
      """
   }
 
-  private def getDeserializedFunction(deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile:Boolean): String = {
+  private def getDeserializedFunction(fixed: Boolean, deserStr: String, prevObjDeserStr: String, prevVerMsgObjstr: String, recompile: Boolean): String = {
 
     var getDeserFunc: String = ""
     var preVerDeserStr: String = ""
     var deSer: String = ""
     preVerDeserStr = getPrevDeserStr(prevVerMsgObjstr, prevObjDeserStr, recompile)
-    deSer = getDeserStr(deserStr)
+    deSer = getDeserStr(deserStr, fixed)
 
     if (deserStr != null && deserStr.trim() != "")
       getDeserFunc = deSerializeStr(preVerDeserStr, deSer)
 
     getDeserFunc
+  }
+  /// DeSerialize Base Msg Types for mapped Mapped 
+
+  private def MappedMsgDeserBaseTypes(baseTypesDeserialize: String) = {
+    """
+	  val desBaseTypes = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis)
+	  //println("desBaseTypes "+desBaseTypes)
+        for (i <- 0 until desBaseTypes) {
+          val key = com.ligadata.BaseTypes.StringImpl.DeserializeFromDataInputStream(dis)
+          val typIdx = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis)
+          
+	  	  typIdx match {
+          	""" + baseTypesDeserialize + """
+          	case _ => { throw new Exception("Bad TypeIndex found") } // should not come here
+          }
+         
+       }
+
+   """
+  }
+
+  /// Serialize Base Msg Types for mapped Mapped 
+
+  private def MappedMsgSerializeBaseTypes(baseTypesSerialize: String) = {
+    """
+    private def SerializeBaseTypes(dos: DataOutputStream): Unit = {
+  
+    var cntCanSerialize: Int = 0
+    fields.foreach(field => {
+      if (field._2._1 >= 0)
+        cntCanSerialize += 1
+    })
+    com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos, cntCanSerialize)
+
+    // Note:: fields has all base and other stuff
+    fields.foreach(field => {
+	  if (field._2._1 >= 0) {
+      	val key = field._1.toLowerCase
+      	com.ligadata.BaseTypes.StringImpl.SerializeIntoDataOutputStream(dos, key)
+      	com.ligadata.BaseTypes.IntImpl.SerializeIntoDataOutputStream(dos, field._2._1)
+      	field._2._1 match {
+      	""" + baseTypesSerialize + """
+   
+      		case _ => {} // could be -1
+      	}
+      }
+    })
+   }
+  """
+  }
+
+  //Serialize function of mapped maeesge
+
+  private def MappedMsgSerialize() = {
+    """
+    override def Serialize(dos: DataOutputStream): Unit = {
+    try {
+      // Base Stuff
+      SerializeBaseTypes(dos)
+       // Non Base Types
+     SerializeNonBaseTypes(dos)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+  """
+  }
+
+  // Mapped Messages Serialization for Array of primitives
+  private def MappedMsgSerializeArrays(mappedMsgSerializeArray: String) = {
+    """
+    private def SerializeNonBaseTypes(dos: DataOutputStream): Unit = {
+    """ + mappedMsgSerializeArray + """
+    }
+    """
+  }
+
+  private def mappedMsgPrevVerDeser(): String = {
+
+    """ 
+    prevVerObj.fields.foreach(field => {
+
+          if (prevVerMatchKeys.contains(field)) {
+            fields(field._1.toLowerCase) = (field._2._1, field._2._2)
+          } else {
+            fields(field._1.toLowerCase) =  (0, ValueToString(field._2._2))
+          }
+
+        })
+      
+    """
+  }
+
+  private def mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf: String) = {
+    """
+    private def getStringIdxFromPrevFldValue(oldTypName: Any, value: Any): (String, Int) = {
+	  	var data: String = null    
+	  	oldTypName match {
+	  		""" + prevObjTypNotMatchDeserializedBuf + """
+	  		case _ => { throw new Exception("Bad TypeIndex found") } // should not come here
+	    }
+	    return (data, typsStr.indexOf(oldTypName))
+	  }
+    """
+  }
+
+  //mapped messages - block of prevObj version < current Obj version check 
+
+  private def prevVerLessThanCurVerCheck(caseStmsts: String) = {
+    var caseStr: String = ""
+    if (caseStmsts != null && caseStmsts.trim() != "") {
+      caseStr = """prevObjfield._1 match{
+      		""" + caseStmsts + """
+  			case _ => {
+  				fields(prevObjfield._1) = (prevObjfield._2._1, prevObjfield._2._2)
+  			}
+  		  }
+      	"""
+    } else caseStr = "fields(prevObjfield._1) = (prevObjfield._2._1, prevObjfield._2._2)"
+
+    """
+      val prevTyps = prevVerObj.typsStr
+      prevVerObj.fields.foreach(prevObjfield => {
+
+      //Name and Base Types Match
+
+      if (prevVerMatchKeys.contains(prevObjfield._1)) {
+      	if(prevObjfield._2._1 >= 0){
+           fields(prevObjfield._1) = (typsStr.indexOf(prevTyps(prevObjfield._2._1)), prevObjfield._2._2);
+	  	}else {
+           """ + caseStr + """
+      	}
+        } else if (prevVerTypesNotMatch.contains(prevObjfield._1)) { //Name Match and Base Types Not Match
+            if (prevObjfield._2._1 >= 0) {
+              val oldTypName = prevTyps(prevObjfield._2._1)
+              val (data, newTypeIdx) = getStringIdxFromPrevFldValue(oldTypName, prevObjfield._2._2)
+              val v1 = typs(newTypeIdx).Input(data)
+              fields.put(prevObjfield._1, (newTypeIdx, v1))
+            }
+
+        } else if (!(prevVerMatchKeys.contains(prevObjfield._1) && prevVerTypesNotMatch.contains(prevObjfield._1))) { //////Extra Fields in Prev Ver Obj
+            if (prevObjfield._2._1 >= 0) {
+              val oldTypName = prevTyps(prevObjfield._2._1)
+              val (data, index) = getStringIdxFromPrevFldValue(oldTypName, prevObjfield._2._2)
+
+              val v1 = typs(0).Input(data)
+              fields.put(prevObjfield._1, (0, v1))
+            }
+            else {
+               fields.put(prevObjfield._1, (0, typs(0).Input(prevObjfield._2._2.asInstanceOf[String])))
+            }
+         }
+       })
+	 """
   }
 
   /*
@@ -2355,7 +2858,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 */
-  private def processJson(json: String, mdMgr: MdMgr): Message = {
+  private def processJson(json: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var message: Message = null
     var jtype: String = null
     //val parsed = JSON.parseFull(json)
@@ -2365,7 +2868,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var key: String = ""
     try {
       jtype = geJsonType(map)
-      message = processJsonMap(jtype, map).asInstanceOf[Message]
+      message = processJsonMap(jtype, map, mdMgr, recompile).asInstanceOf[Message]
 
     } catch {
       case e: Exception => {
@@ -2394,7 +2897,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     jtype
   }
 
-  private def processJsonMap(key: String, map: Map[String, Any]): Message = {
+  private def processJsonMap(key: String, map: Map[String, Any], mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var msg1: Message = null
     type messageMap = Map[String, Any]
     try {
@@ -2402,7 +2905,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         if (map.get(key).get.isInstanceOf[messageMap]) {
           val message = map.get(key).get.asInstanceOf[Map[String, Any]]
           // if (message.get("Fixed").get.equals("true")) {
-          msg1 = getMsgorCntrObj(message, key).asInstanceOf[Message]
+          msg1 = getMsgorCntrObj(message, key, mdMgr, recompile).asInstanceOf[Message]
           //  } else if (message.get("Fixed").get.equals("false")) {
           //    msg1 = geKVMsgorCntrObj(message, key).asInstanceOf[Message]
           //  } else throw new Exception("Message in json is not Map")
@@ -2419,7 +2922,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     msg1
   }
 
- /* private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+  /* private def geKVMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
     var pkg: String = "com.ligadata.messagescontainers"
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString
     var tdata: TransformData = null
@@ -2451,7 +2954,33 @@ class XmlData(var dataInput: String) extends InputData(){ }
     MdMgr.FormatVersion(message.getOrElse("Version", "0").toString)
   }
 
-  private def getMsgorCntrObj(message: Map[String, Any], mtype: String): Message = {
+  private def CheckVerDigits(value: Int, orgVerInfo: String): Unit = {
+    if (value < 0 || value > 99)
+      throw new Exception("Expecting only 0 to 99 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
+  }
+
+  private def formatRecompileVersion(verInfo: String): String = {
+
+    val verParts = verInfo.split("\\.")
+    var major = (if (verParts.size > 0) verParts(0).toInt else 0)
+    var mini = (if (verParts.size > 1) verParts(1).toInt else 0)
+    var micro = (if (verParts.size > 2) verParts(2).toInt else 0)
+    micro = micro + 1
+    CheckVerDigits(major, verInfo)
+    CheckVerDigits(mini, verInfo)
+    CheckVerDigits(micro, verInfo)
+
+    val retVerInfo = "%02d.%02d.%02d".format(major, mini, micro)
+    retVerInfo
+  }
+
+  private def extractRecompiledMsgVer(message: Map[String, Any]): String = {
+
+    formatRecompileVersion(message.getOrElse("Version", "0").toString)
+
+  }
+
+  private def getMsgorCntrObj(message: Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var ele: List[Element] = null
     var tdata: TransformData = null
     var tdataexists: Boolean = false
@@ -2463,6 +2992,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var partitionKeysList: List[String] = null
     var primaryKeysList: List[String] = null
     var conceptsList: List[String] = null
+    var msgVersion: String = ""
     try {
       if (message != null) {
         for (key: String <- message.keys) {
@@ -2505,6 +3035,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
         }
         if (ele == null)
           throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (recompile) {
+          msgVersion = getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
+        } else {
+          msgVersion = extractVersion(message)
+        }
+
       }
     } catch {
       case e: Exception => {
@@ -2513,8 +3050,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val cur_time = System.currentTimeMillis
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(extractVersion(message)).toString +"_"+cur_time
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, extractVersion(message), message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(msgVersion).toString + "_" + cur_time
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {

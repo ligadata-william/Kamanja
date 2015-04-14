@@ -175,7 +175,7 @@ class AuditCassandraAdapter extends AuditAdapter {
    *                       - objectAccessed
    *                       
    */
-  def getAuditRecords(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
+  def getAuditRecord(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
     var auditRecords = new Array[AuditRecord](0)
     try{
       var selectSql = "SELECT actiontime, action, userorrole, objectAccessed, success, userprivilege, notes, transactionid from " + table + " where "

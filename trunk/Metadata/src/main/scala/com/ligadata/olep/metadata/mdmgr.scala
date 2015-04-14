@@ -190,7 +190,7 @@ class MdMgr {
                 if (elm == None || maxVer < e.Version) {
                   elm = Some(e)
                   maxVer = e.Version
-                }                
+                }
               }
             })
           }
@@ -213,7 +213,7 @@ class MdMgr {
       elems match {
         case None => None
         case Some(es) => {
-          if (onlyActive) Some(es.filter(e => {e.IsActive && !e.IsDeleted}).toSet) else Some(es.filter(e => !e.IsDeleted).toSet)
+          if (onlyActive) Some(es.filter(e => { e.IsActive && !e.IsDeleted }).toSet) else Some(es.filter(e => !e.IsDeleted).toSet)
         }
       }
     } else {
@@ -225,8 +225,8 @@ class MdMgr {
             var newElems = new scala.collection.mutable.ArrayBuffer[T]()
             var newBaseElemsIdxs = scala.collection.mutable.Map[String, Int]()
             es.foreach(e => {
-              if (!e.IsDeleted && 
-                  (onlyActive == false || (onlyActive && e.IsActive))) {
+              if (!e.IsDeleted &&
+                (onlyActive == false || (onlyActive && e.IsActive))) {
                 val fnm = if (e.isInstanceOf[FunctionDef]) e.asInstanceOf[FunctionDef].typeString else e.FullName
                 val existingIdx = newBaseElemsIdxs.getOrElse(fnm, -1)
                 if (existingIdx < 0) {
@@ -484,8 +484,7 @@ class MdMgr {
 
   /** Answer the BaseTypeDef with the supplied key  */
   def Type(key: String, ver: Int, onlyActive: Boolean): Option[BaseTypeDef] = GetReqValue(Types(key, onlyActive, false), ver)
-  
-  
+
   /** Answer the BaseTypeDef with the supplied key  */
   def ActiveType(key: String): BaseTypeDef = {
     val typ: Option[BaseTypeDef] = GetReqValue(Types(key.toLowerCase(), true, false), -1)
@@ -561,8 +560,8 @@ class MdMgr {
         case Some(fs) => {
           var newFns = scala.collection.mutable.Map[String, FunctionDef]()
           fs.foreach(f => {
-            if ( !f.IsDeleted &&
-                (onlyActive == false || (onlyActive && f.IsActive))) {
+            if (!f.IsDeleted &&
+              (onlyActive == false || (onlyActive && f.IsActive))) {
               val fnm = f.FullName // this returns like system.fn1(int, int)
               val existingFn = newFns.getOrElse(fnm, null)
               if (existingFn == null || existingFn.Version < f.Version)
@@ -585,7 +584,7 @@ class MdMgr {
     }
     fcns
   }
-  
+
   /* full key name and full arguments names */
   def Function(key: String, args: List[String], ver: Int, onlyActive: Boolean): Option[FunctionDef] = {
     // get functions which match to key & arguments
@@ -992,10 +991,25 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): ArrayTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
-      throw new AlreadyExistsException(s"Array $nameSpace.$name already exists.")
+  def MakeArray(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int, recompile: Boolean = false): ArrayTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Array $nameSpace.$name already exists.")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Array $nameSpace.$name already exists.")
+        }
+      }
     }
+
+    //if (Type(nameSpace, name, -1, false) != None) {
+    //   throw new AlreadyExistsException(s"Array $nameSpace.$name already exists.")
+    //  }
     val elemDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The array's item type $tpNameSp.$tpName does not exist")
     if (elemDef == null) { throw new NoSuchElementException(s"The array's item type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1023,10 +1037,27 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int): ArrayBufTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+  def MakeArrayBuffer(nameSpace: String, name: String, tpNameSp: String, tpName: String, numDims: Int, ver: Int, recompile: Boolean = false): ArrayBufTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of ArrayBuffer $nameSpace.$name already exists.")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of ArrayBuffer $nameSpace.$name already exists.")
+        }
+      }
+    }
+
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"ArrayBuffer $nameSpace.$name already exists.")
     }
+    * 
+    */
     val elemDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The array buffer's item type $tpNameSp.$tpName does not exist")
     if (elemDef == null) { throw new NoSuchElementException(s"The array buffer's item type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1053,9 +1084,16 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeList(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): ListTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (typ.get.ver >= ver)
+        throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
+    }
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
     }
+    * 
+    */
     val valDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The list's item type $tpNameSp.$tpName does not exist")
     if (valDef == null) { throw new NoSuchElementException(s"The list's item type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1080,9 +1118,16 @@ class MdMgr {
 
   @throws(classOf[NoSuchElementException])
   def MakeQueue(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int) = {
-    if (Type(nameSpace, name, -1, false) != None) {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (typ.get.ver >= ver)
+        throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
+    }
+    /* if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"List $nameSpace.$name already exists.")
     }
+    * 
+    */
     val valDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The queue's item type $tpNameSp.$tpName does not exist")
     if (valDef == null) { throw new NoSuchElementException(s"The queue's item type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1108,10 +1153,27 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): SetTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+  def MakeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): SetTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Set $nameSpace.$name already exists.")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Set $nameSpace.$name already exists.")
+        }
+      }
+    }
+
+    /* if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Set $nameSpace.$name already exists.")
     }
+    * 
+    */
     val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The set's key type $tpNameSp.$tpName does not exist")
     if (keyDef == null) { throw new NoSuchElementException(s"The set's key type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1138,9 +1200,17 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeImmutableSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): ImmutableSetTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (typ.get.ver >= ver)
+        throw new AlreadyExistsException(s"Set $nameSpace.$name already exists.")
+    }
+
+    /* if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Set $nameSpace.$name already exists.")
     }
+    * 
+    */
     val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The set's key type $tpNameSp.$tpName does not exist")
     if (keyDef == null) { throw new NoSuchElementException(s"The set's key type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1166,10 +1236,28 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): TreeSetTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+  def MakeTreeSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): TreeSetTypeDef = {
+
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of TreeSet $nameSpace.$name already exists.")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of TreeSet $nameSpace.$name already exists.")
+        }
+      }
+    }
+
+    /* if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"TreeSet $nameSpace.$name already exists.")
     }
+    * 
+    */
     val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The tree set's key type $tpNameSp.$tpName does not exist")
     if (keyDef == null) { throw new NoSuchElementException(s"The tree set's key type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1194,10 +1282,27 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int): SortedSetTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+  def MakeSortedSet(nameSpace: String, name: String, tpNameSp: String, tpName: String, ver: Int, recompile: Boolean = false): SortedSetTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Type $nameSpace.$name already exists... unable to add SortedSet with this name.")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Type $nameSpace.$name already exists... unable to add SortedSet with this name.")
+        }
+      }
+    }
+
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Type $nameSpace.$name already exists... unable to add SortedSet with this name.")
     }
+    * 
+    */
     val keyDef = GetElem(Type(tpNameSp, tpName, -1, false), s"The tree set's key type $tpNameSp.$tpName does not exist")
     if (keyDef == null) { throw new NoSuchElementException(s"The tree set's key type $tpNameSp.$tpName does not exist") }
     val depJarSet = scala.collection.mutable.Set[String]()
@@ -1223,10 +1328,27 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): MapTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+  def MakeMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int, recompile: Boolean = false): MapTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Map $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Map $nameSpace.$name already exists in the system")
+        }
+      }
+    }
+
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Map $nameSpace.$name already exists.")
     }
+    * 
+    */
 
     val (keyNmSp, keyTypeNm) = key
     val (valNmSp, valTypeNm) = value
@@ -1261,10 +1383,25 @@ class MdMgr {
   // We should not have physicalName. This container type has type inside, which has PhysicalName
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): ImmutableMapTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
-      throw new AlreadyExistsException(s"Map $nameSpace.$name already exists.")
+  def MakeImmutableMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int, recompile: Boolean = false): ImmutableMapTypeDef = {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (typ.get.ver > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Map $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (typ.get.ver >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Map $nameSpace.$name already exists in the system")
+        }
+      }
     }
+
+    /* if (Type(nameSpace, name, -1, false) != None) {
+      throw new AlreadyExistsException(s"Map $nameSpace.$name already exists.")
+    }*/
     val (keyNmSp, keyTypeNm) = key
     val (valNmSp, valTypeNm) = value
     val keyDef = GetElem(Type(keyNmSp, keyTypeNm, -1, false), s"Key type $keyNmSp.$keyTypeNm does not exist")
@@ -1297,9 +1434,17 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeHashMap(nameSpace: String, name: String, key: (String, String), value: (String, String), ver: Int): HashMapTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (typ.get.ver >= ver)
+        throw new AlreadyExistsException(s"HashMap $nameSpace.$name already exists.")
+    }
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"HashMap $nameSpace.$name already exists.")
     }
+    * 
+    */
 
     val (keyNmSp, keyTypeNm) = key
     val (valNmSp, valTypeNm) = value
@@ -1336,9 +1481,16 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def MakeTupleType(nameSpace: String, name: String, tuples: Array[(String, String)], ver: Int): TupleTypeDef = {
-    if (Type(nameSpace, name, -1, false) != None) {
+    val typ = Type(nameSpace, name, -1, false)
+    if (typ != None) {
+      if (typ.get.ver >= ver)
+        throw new AlreadyExistsException(s"Tuple $nameSpace.$name already exists.")
+    }
+    /*if (Type(nameSpace, name, -1, false) != None) {
       throw new AlreadyExistsException(s"Typle $nameSpace.$name already exists.")
     }
+    * 
+    */
 
     val depJarSet = scala.collection.mutable.Set[String]()
 
@@ -1528,24 +1680,23 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null,recompile: Boolean = false): MessageDef = {
+  def MakeFixedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): MessageDef = {
 
-    val latestActiveMessage = Message(nameSpace, name, -1, false)  
+    val latestActiveMessage = Message(nameSpace, name, -1, false)
     if (latestActiveMessage != None) {
-      if( recompile ){
-	//Only make a message if the version is greater then the last known version already in the system.
-	if (latestActiveMessage.get.Version > ver) {
-          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
-	}
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveMessage.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
       }
-      else{
-	//Only make a message if the version is greater or equal then the last known version already in the system.
-	if (latestActiveMessage.get.Version >= ver) {
-          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")  
-	}
-      } 
     }
-    
+
     var msg: MessageDef = new MessageDef
     msg.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1560,24 +1711,23 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null,recompile: Boolean = false): ContainerDef = {
-  
-    val latestActiveContainer = Container(nameSpace, name, -1, false)  
+  def MakeFixedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null, recompile: Boolean = false): ContainerDef = {
+
+    val latestActiveContainer = Container(nameSpace, name, -1, false)
     if (latestActiveContainer != None) {
-      if( recompile ){
-	//Only make a message if the version is greater then the last known version already in the system.
-	if (latestActiveContainer.get.Version > ver) {
-          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
-	}
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveContainer.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveContainer.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+        }
       }
-      else{
-	//Only make a message if the version is greater then the last known version already in the system.
-	if (latestActiveContainer.get.Version >= ver) {
-          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")  
-	}
-      }	
     }
-    
+
     var container = new ContainerDef
     container.containerType = MakeStructDef(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1603,11 +1753,19 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean): MessageDef = {
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
 
-    if( ! recompile ){
-      if (Message(nameSpace, name, -1, false) != None) {
-	throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+    val latestActiveMessage = Message(nameSpace, name, -1, false)
+    if (latestActiveMessage != None) {
+      if (recompile) {
+        if (latestActiveMessage.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
       }
     }
 
@@ -1625,12 +1783,23 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean = false): ContainerDef = {
-    if( ! recompile ){
-      if (Container(nameSpace, name, -1, false) != None) {
-	throw new AlreadyExistsException(s"Container$nameSpace.$name already exists.")
+  def MakeMappedContainer(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean = false): ContainerDef = {
+
+    val latestActiveContainer = Container(nameSpace, name, -1, false)
+    if (latestActiveContainer != None) {
+      if (recompile) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveContainer.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveContainer.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Container $nameSpace.$name already exists in the system")
+        }
       }
     }
+
     var container = new ContainerDef
     container.containerType = MakeContainerTypeMap(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey)
 
@@ -1654,10 +1823,19 @@ class MdMgr {
    */
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
-  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String],recompile:Boolean): MessageDef = {
-    if( ! recompile ){
-      if (Message(nameSpace, name, -1, false) != None) {
-	throw new AlreadyExistsException(s"Message $nameSpace.$name already exists.")
+  def MakeMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String], recompile: Boolean): MessageDef = {
+
+    val latestActiveMessage = Message(nameSpace, name, -1, false)
+    if (latestActiveMessage != None) {
+      if (recompile) {
+        if (latestActiveMessage.get.Version > ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
+      } else {
+        //Only make a message if the version is greater or equal then the last known version already in the system.
+        if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Message $nameSpace.$name already exists in the system")
+        }
       }
     }
 
@@ -1696,21 +1874,20 @@ class MdMgr {
    *
    */
 
-  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null,recompile:Boolean = false): ModelDef = {
+  def MakeModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = null, recompile: Boolean = false): ModelDef = {
 
     var modelExists: Boolean = false
     val existingModel = Model(nameSpace, name, -1, false)
     if (existingModel != None) {
       val latestmodel = existingModel.get.asInstanceOf[ModelDef]
-      if( recompile == true ){ // version equality is OK, if we are recompiling
-	if ( ver < latestmodel.Version) {
-	  modelExists = true
-	}
-      }
-      else{
-	if (ver <= latestmodel.Version) {
+      if (recompile == true) { // version equality is OK, if we are recompiling
+        if (ver < latestmodel.Version) {
           modelExists = true
-	}
+        }
+      } else {
+        if (ver <= latestmodel.Version) {
+          modelExists = true
+        }
       }
     }
     if (modelExists) {
@@ -2296,7 +2473,7 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddMappedMsg(nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)], ver: Int = 1, jarNm: String = null, depJars: Array[String] = Array[String](), primaryKeys: List[(String, List[String])] = null, foreignKeys: List[(String, List[String], String, List[String])] = null, partitionKey: Array[String] = null): Unit = {
-    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey,false))
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, args, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey, false))
   }
 
   /**
@@ -2310,7 +2487,7 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddMappedMsg(nameSpace: String, name: String, physicalName: String, argTypNmSpName: (String, String), argNames: List[String], ver: Int, jarNm: String, depJars: Array[String], primaryKeys: List[(String, List[String])], foreignKeys: List[(String, List[String], String, List[String])], partitionKey: Array[String]): Unit = {
-    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey,false))
+    AddMsg(MakeMappedMsg(nameSpace, name, physicalName, argTypNmSpName, argNames, ver, jarNm, depJars, primaryKeys, foreignKeys, partitionKey, false))
   }
 
   @throws(classOf[AlreadyExistsException])
@@ -2546,6 +2723,20 @@ class MdMgr {
 
   def Nodes: scala.collection.immutable.Map[String, NodeInfo] = {
     nodes.toMap
+  }
+
+  def NodesForCluster(clusterId : String): Array[NodeInfo] = {
+    val id : String = if (clusterId != null) clusterId.toLowerCase else null 
+    val nodesForThisCluster : Array[NodeInfo] = if (id != null) {
+    	val cNodes : ArrayBuffer[NodeInfo] = ArrayBuffer[NodeInfo]()
+	    nodes.values.foreach( node => {
+	    	if (id == node.ClusterId.toLowerCase) cNodes += node
+	    })
+	    cNodes.toArray
+    } else {
+    	Array[NodeInfo]()
+    }
+    nodesForThisCluster
   }
 
   def Adapters: scala.collection.immutable.Map[String, AdapterInfo] = {
