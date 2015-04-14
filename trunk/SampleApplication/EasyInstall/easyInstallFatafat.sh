@@ -141,6 +141,13 @@ cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $syste
 #echo "copy sample configs..."
 cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 
+# Generate keystore file
+keytool -genkey -keyalg RSA -alias selfsigned -keystore $installPath/config/keystore.jks -storepass password -validity 360 -keysize 2048
+
+# Copy security and audit jars
+cp $srcPath/Utils/Audit/target/scala-2.10/auditadapters_2.10-1.0.jar $systemlib
+cp $srcPath/Utils/Security/SimpleApacheShiroAdapter/target/scala-2.10/simpleapacheshiroadapter_2.10-1.0.jar $systemlib
+
 # other jars 
 echo "copy other jars..."
 cp $srcPath/../externals/log4j/log4j-1.2.17.jar $systemlib
