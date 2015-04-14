@@ -60,8 +60,7 @@ questions and make contributions.
     
 3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/FatafatDocs/wiki/Installing-and-Running-Fatafat-Quickly)
 
-###Getting Involved
+###[Getting Involved](https://github.com/ligaDATA/Fatafat/wiki/Getting-Involved)
 
-Ask questions, explore, and help improve Fatafat community [here](https://groups.google.com/a/ligadata.com/forum/?hl=en#!forum/fatafat_userforum). (You may need to ask to join the group if you’re not already a member)
      
 ###[Documentation](https://github.com/ligaDATA/Fatafat/wiki/Documentation)

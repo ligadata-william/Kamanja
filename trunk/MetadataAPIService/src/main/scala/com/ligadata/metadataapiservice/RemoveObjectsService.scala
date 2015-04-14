@@ -58,22 +58,22 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
 
     arg.ObjectType match {
       case "model" => {
-	      return MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toLong)
       }
       case "message" => {
-	      return MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toLong)
       }
       case "container" => {
-	      return MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toLong)
       }
       case "function" => {
-	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toLong)
       }
       case "concept" => {
-	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toLong)
       }
       case "type" => {
-	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toLong)
       }
     }
   }

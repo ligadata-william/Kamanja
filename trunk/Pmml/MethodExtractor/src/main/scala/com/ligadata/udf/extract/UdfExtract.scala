@@ -114,11 +114,11 @@ object MethodExtract extends App with LogTrait{
 		val excludeListStr = if (options.contains('excludeList)) options.apply('excludeList) else null
 		var excludeList : Array[String] = null
 		val versionNumberStr = if (options.contains('versionNumber)) options.apply('versionNumber) else null
-		var versionNumber : Int = 100
+		var versionNumber : Long = 1000000
 		try {
-			if (versionNumberStr != null) versionNumber = versionNumberStr.toInt
+			if (versionNumberStr != null) versionNumber = versionNumberStr.toLong
 		} catch {
-		  case _:Throwable => versionNumber = 100
+		  case _:Throwable => versionNumber = 1000000
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
 		val typedefPath = if (options.contains('typeDefsPath)) options.apply('typeDefsPath) else null
@@ -299,7 +299,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 	 *  @return nearly empty MdMgr... seeded with essential scalars
 	 */
 	def InitializeMdMgr : MdMgr = {
-		val versionNumber : Int = 1
+		val versionNumber : Long = 1
 		val mgr : MdMgr = MdMgr.GetMdMgr
 
 		/** seed essential types */

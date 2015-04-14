@@ -58,9 +58,9 @@ case class FunctionList(Functions: List[Function])
 case class Concept(NameSpace: String, Name: String, TypeNameSpace: String, TypeName: String, Version: String)
 case class ConceptList(Concepts: List[Concept])
 
-case class Attr(NameSpace: String, Name: String, Version: Int, Type: TypeDef)
+// case class Attr(NameSpace: String, Name: String, Version: Long, Type: TypeDef)
 
-case class MessageStruct(NameSpace: String, Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
+// case class MessageStruct(NameSpace: String, Name: String, FullName: String, Version: Long, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
@@ -1444,7 +1444,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove type for given TypeName and Version
-  def RemoveType(typeNameSpace: String, typeName: String, version: Int): String = {
+  def RemoveType(typeNameSpace: String, typeName: String, version: Long): String = {
     val key = typeNameSpace + "." + typeName + "." + version
     try {
       val typ = MdMgr.GetMdMgr.Type(typeNameSpace, typeName, version, true)
@@ -1476,7 +1476,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       implicit val jsonFormats: Formats = DefaultFormats
       val typeDef = JsonSerializer.parseType(typeJson, "JSON")
-      val key = typeDef.nameSpace + "." + typeDef.name + "." + typeDef.ver
+      val key = typeDef.nameSpace + "." + typeDef.name + "." + typeDef.Version
       val fName = MdMgr.MkFullName(typeDef.nameSpace, typeDef.name)
       val latestType = MdMgr.GetMdMgr.Types(typeDef.nameSpace, typeDef.name, true, true)
       latestType match {
@@ -1605,7 +1605,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveConcept(nameSpace:String, name:String, version:Int): String = {
+  def RemoveConcept(nameSpace:String, name:String, version:Long): String = {
     try {
       val c = MdMgr.GetMdMgr.Attribute(nameSpace,name,version, true)
       c match {
@@ -1660,7 +1660,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveFunction(nameSpace: String, functionName: String, version: Int): String = {
+  def RemoveFunction(nameSpace: String, functionName: String, version: Long): String = {
     try {
       var key = functionName + ":" + version
       DeleteObject(key, functionStore)
@@ -2247,7 +2247,7 @@ object MetadataAPIImpl extends MetadataAPI {
     resultStr = resultStr + RecompileMessage(msg)
         })
       }
-      val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toInt)
+      val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
       if( depModels.length > 0 ){
         depModels.foreach(mod => {
     logger.trace("DependentModel => " + mod.FullNameWithVer)
@@ -2278,7 +2278,7 @@ object MetadataAPIImpl extends MetadataAPI {
     resultStr = resultStr + RecompileMessage(msg)
         })
       }
-      val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toInt)
+      val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
       if( depModels.length > 0 ){
         depModels.foreach(mod => {
     logger.trace("DependentModel => " + mod.FullNameWithVer)
@@ -2355,7 +2355,7 @@ object MetadataAPIImpl extends MetadataAPI {
   
 
   // Remove container with Container Name and Version Number
-  def RemoveContainer(nameSpace: String, name: String, version: Int, zkNotify:Boolean = true): String = {
+  def RemoveContainer(nameSpace: String, name: String, version: Long, zkNotify:Boolean = true): String = {
     try {
       var key = nameSpace + "." + name + "." + version
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2398,7 +2398,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove message with Message Name and Version Number
-  def RemoveMessage(nameSpace: String, name: String, version: Int, zkNotify:Boolean = true): String = {
+  def RemoveMessage(nameSpace: String, name: String, version: Long, zkNotify:Boolean = true): String = {
     try {
       var key = nameSpace + "." + name + "." + version
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2525,7 +2525,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveMessageFromCache(zkMessage: ZooKeeperNotification) = {
     try {
       var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      val o = MdMgr.GetMdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+      val o = MdMgr.GetMdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
       o match {
         case None =>
           None
@@ -2536,14 +2536,14 @@ object MetadataAPIImpl extends MetadataAPI {
           val types = GetAdditionalTypesAdded(msgDef, MdMgr.GetMdMgr)
 
           var typeName = zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "arrayof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "sortedsetof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "arraybufferof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
+          MdMgr.GetMdMgr.RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong)
       }
     } catch {
       case e: Exception => {
@@ -2555,7 +2555,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveContainerFromCache(zkMessage: ZooKeeperNotification) = {
     try {
       var key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      val o = MdMgr.GetMdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+      val o = MdMgr.GetMdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
       o match {
         case None =>
           None
@@ -2564,14 +2564,14 @@ object MetadataAPIImpl extends MetadataAPI {
           val msgDef = m.asInstanceOf[MessageDef]
           logger.trace("message found => " + msgDef.FullNameWithVer)
           var typeName = zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "arrayof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "sortedsetof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
           typeName = "arraybufferof" + zkMessage.Name
-          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toInt)
-          MdMgr.GetMdMgr.RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt)
+          MdMgr.GetMdMgr.RemoveType(zkMessage.NameSpace, typeName, zkMessage.Version.toLong)
+          MdMgr.GetMdMgr.RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong)
       }
     } catch {
       case e: Exception => {
@@ -2581,18 +2581,18 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove message with Message Name and Version Number
-  def RemoveMessage(messageName: String, version: Int): String = {
+  def RemoveMessage(messageName: String, version: Long): String = {
     RemoveMessage(sysNS, messageName, version)
   }
 
 
   // Remove container with Container Name and Version Number
-  def RemoveContainer(containerName: String, version: Int): String = {
+  def RemoveContainer(containerName: String, version: Long): String = {
     RemoveContainer(sysNS, containerName, version)
   }
 
   // Remove model with Model Name and Version Number
-  def DeactivateModel(nameSpace: String, name: String, version: Int): String = {
+  def DeactivateModel(nameSpace: String, name: String, version: Long): String = {
     try {
       var key = nameSpace + "." + name + "." + version
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2620,7 +2620,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def ActivateModel(nameSpace: String, name: String, version: Int): String = {
+  def ActivateModel(nameSpace: String, name: String, version: Long): String = {
     try {
       var key = nameSpace + "." + name + "." + version
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, false)
@@ -2649,7 +2649,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove model with Model Name and Version Number
-  def RemoveModel(nameSpace: String, name: String, version: Int): String = {
+  def RemoveModel(nameSpace: String, name: String, version: Long): String = {
     try {
       var key = nameSpace + "." + name + "." + version
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2678,7 +2678,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Remove model with Model Name and Version Number
-  def RemoveModel(modelName: String, version: Int): String = {
+  def RemoveModel(modelName: String, version: Long): String = {
     RemoveModel(sysNS, modelName, version)
   }
 
@@ -2821,7 +2821,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Int): Array[ModelDef] = {
+  def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Long): Array[ModelDef] = {
     try {
       val msgObj = Array(msgNameSpace, msgName, msgVer).mkString(".").toLowerCase
       val msgObjName = (msgNameSpace + "." + msgName).toLowerCase
@@ -3120,7 +3120,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetModelDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
     try {
       var key = nameSpace + "." + name + "." + version
-      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version.toInt, true)
+      val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
         case None =>
           None
@@ -3149,7 +3149,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
     try {
       var key = nameSpace + "." + name + "." + version
-      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toInt, true)
+      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
         case None =>
           None
@@ -3173,7 +3173,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetContainerDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
     try {
       var key = nameSpace + "." + name + "." + version
-      val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version.toInt, true)
+      val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
         case None =>
           None
@@ -3198,7 +3198,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetMessageDefInstanceFromCache(nameSpace: String, name: String, formatType: String, version: String): MessageDef = {
     var key = nameSpace + "." + name + "." + version
     try {
-      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toInt, true)
+      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
         case None =>
           None
@@ -3273,8 +3273,8 @@ object MetadataAPIImpl extends MetadataAPI {
   //Get the Higher Version Model from the Set of Models
   def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
     var model: ModelDef = null
-    var verList: List[Int] = List[Int]()
-    var modelmap: scala.collection.mutable.Map[Int, ModelDef] = scala.collection.mutable.Map()
+    var verList: List[Long] = List[Long]()
+    var modelmap: scala.collection.mutable.Map[Long, ModelDef] = scala.collection.mutable.Map()
     try {
       modelSet.foreach(m => {
         modelmap.put(m.Version, m)
@@ -3842,7 +3842,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Remove" | "Activate" | "Deactivate" => {
                 try {
-                  MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3861,7 +3861,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Remove" => {
                 try {
-                  RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt,false)
+                  RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3870,7 +3870,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Activate" | "Deactivate" => {
                 try {
-                  MdMgr.GetMdMgr.ModifyMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3889,7 +3889,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Remove" => {
                 try {
-                  RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt,false)
+                  RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3898,7 +3898,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Activate" | "Deactivate" => {
                 try {
-                  MdMgr.GetMdMgr.ModifyContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3917,7 +3917,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Remove" | "Activate" | "Deactivate" => {
                 try {
-                  MdMgr.GetMdMgr.ModifyFunction(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyFunction(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3936,7 +3936,7 @@ object MetadataAPIImpl extends MetadataAPI {
               }
               case "Remove" | "Activate" | "Deactivate" => {
                 try {
-                  MdMgr.GetMdMgr.ModifyAttribute(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyAttribute(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -3966,7 +3966,7 @@ object MetadataAPIImpl extends MetadataAPI {
               case "Remove" | "Activate" | "Deactivate" => {
                 try {
                   logger.trace("Remove the type " + key + " from cache ")
-                  MdMgr.GetMdMgr.ModifyType(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, zkMessage.Operation)
+                  MdMgr.GetMdMgr.ModifyType(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
                 } catch {
                   case e: ObjectNolongerExistsException => {
                     logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
@@ -4154,7 +4154,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // A single concept as a string using name and version as the key
   def GetConcept(nameSpace:String, objectName: String, version: String, formatType: String): String = {
     try {
-      val concept = MdMgr.GetMdMgr.Attribute(nameSpace, objectName, version.toInt, false)
+      val concept = MdMgr.GetMdMgr.Attribute(nameSpace, objectName, version.toLong, false)
       concept match {
         case None =>
           None
@@ -4266,7 +4266,7 @@ object MetadataAPIImpl extends MetadataAPI {
   // A derived concept(format JSON or XML) as a string using name and version as the key
   def GetDerivedConcept(objectName: String, version: String, formatType: String): String = {
     try {
-      val concept = MdMgr.GetMdMgr.Attribute(MdMgr.sysNS, objectName, version.toInt, false)
+      val concept = MdMgr.GetMdMgr.Attribute(MdMgr.sysNS, objectName, version.toLong, false)
       concept match {
         case None =>
           None
@@ -4399,7 +4399,7 @@ object MetadataAPIImpl extends MetadataAPI {
       typeDefs match {
         case None => None
         case Some(ts) =>
-          val tsa = ts.toArray.filter(t => { t.ver == version.toInt })
+          val tsa = ts.toArray.filter(t => { t.ver == version.toLong })
           tsa.length match {
             case 0 => None
             case 1 => Some(tsa(0))

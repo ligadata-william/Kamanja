@@ -37,17 +37,17 @@ object TestMessageDefImpl extends LogTrait {
 
     val (classStr: String, msgDef: ContainerDef) = msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
      MdMgr.GetMdMgr.AddContainer(msgDef)
-    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 100)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 1000000)
 
     val inpjson: String = Source.fromFile("/tmp/Mapped/Messages/inpatientclaim.json").getLines.mkString
     val (classStrIn: String, msgDefIn: ContainerDef) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDefIn)
-    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "inpatientclaim", 1, 100)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "inpatientclaim", 1, 1000000)
 
     val idjson: String = Source.fromFile("/tmp/Mapped/Messages/outpatientclaim.json").getLines.mkString
     val (classStrOut1: String, msgDefOut1: ContainerDef) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDefOut1)
-    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 100)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 1000000)
 
     val benjson: String = Source.fromFile("/tmp/Mapped/Messages/beneficiary.json").getLines.mkString
     val (classStrBen: String, msgDefBen: ContainerDef) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
@@ -60,7 +60,7 @@ object TestMessageDefImpl extends LogTrait {
 
     val (classStrOutI: String, msgDefOutI: ContainerDef) = msg.processMsgDef(outpjsonI.toString(), "JSON", MdMgr.GetMdMgr)
    MdMgr.GetMdMgr.AddContainer(msgDefOutI)
-    MdMgr.GetMdMgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 100)
+    MdMgr.GetMdMgr.AddArray(MdMgr.sysNS, "ArrayOfIdCodeDim", MdMgr.sysNS, "IdCodeDim", 1, 1000000)
 
     val outpjson: String = Source.fromFile("/tmp/Mapped/Containers/hcpcsCodes.json").getLines.mkString
 
@@ -75,7 +75,7 @@ object TestMessageDefImpl extends LogTrait {
     // val json: String = Source.fromFile("heirachial1.json").getLines.mkString
     // val json1: String = Source.fromFile("heirarchialstruct.json").getLines.mkString
 
-    // var ctrDef: ContainerDef = MdMgr.GetMdMgr.Container("System.LineItmsInfo", 100, true).get
+    // var ctrDef: ContainerDef = MdMgr.GetMdMgr.Container("System.LineItmsInfo", 1000000, true).get
 
     //  println("44444444" +ctrDef.PhysicalName)
     //  val (classStr1: String, msgDef1: MessageDef) = msg.processMsgDef(json1.toString(), "JSON", MdMgr.GetMdMgr)
