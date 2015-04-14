@@ -2606,8 +2606,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       	if (savedDataVersion == null || savedDataVersion.trim() == "")
         	throw new Exception("Please provide Data Version")
     
-      	val prevVer = MdMgr.ConvertVersionToLong(savedDataVersion)
-      	val currentVer = MdMgr.ConvertVersionToLong(Version)
+      	val prevVer = savedDataVersion.replaceAll("[.]", "").toLong
+      	val currentVer = Version.replaceAll("[.]", "").toLong
       	""" + preVerDeserStr + """ 
       	""" + deSer + """ 
       	} catch {
