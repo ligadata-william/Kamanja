@@ -66,6 +66,10 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
   createTable(table)
   var tableHBase = connection.getTable(table);
   
+  def init: Unit = {
+    
+  }
+  
   def createTable(tableName:String) : Unit = {
     val  admin = new HBaseAdmin(config);
     if (! admin.tableExists(tableName)) {
@@ -111,7 +115,7 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
     }
   }
 
-  def get(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
+  def getAuditRecord(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
     var auditRecords = new Array[AuditRecord](0)
     try{
       var stime = (new Date().getTime() - 10 * 60 * 1000L)
@@ -201,10 +205,6 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
 	throw new Exception("Failed to fetch audit records: " + e.getMessage())
       }
     }
-  }
-
-  def init: Unit = {
-    
   }
   
   override def Shutdown() = {

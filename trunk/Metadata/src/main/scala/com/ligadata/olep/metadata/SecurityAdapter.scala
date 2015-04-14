@@ -37,7 +37,7 @@ trait AuditAdapter {
   def addAuditRecord(rec: AuditRecord)
   
   // Get an audit record from an appropriate system.
-  def get(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord]
+  def getAuditRecord(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord]
   
   // Set the desired properties for this adapter
   def init: Unit

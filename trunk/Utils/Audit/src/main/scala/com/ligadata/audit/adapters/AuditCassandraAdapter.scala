@@ -135,7 +135,7 @@ class AuditCassandraAdapter extends AuditAdapter {
   }    
 
   /**
-   * add
+   * addAuditRecord - adds the auditRecord to the audit table.
    */
   def addAuditRecord(rec: AuditRecord) = {
     try{
@@ -166,12 +166,21 @@ class AuditCassandraAdapter extends AuditAdapter {
   }
   
   /**
-   * 
+   * getAuditRecords - gets the array of Audit Records that exist in the Cassandra audit tables.
+   *                   Filters:
+   *                       - startTime (if none specified, defaults to 10 minutes prior to the call
+   *                       - endTime (if none specified, current time is sued
+   *                       - user
+   *                       - action
+   *                       - objectAccessed
+   *                       
    */
-  def get(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
+  def getAuditRecords(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord] = {
     var auditRecords = new Array[AuditRecord](0)
     try{
-      var selectSql = "SELECT actiontime,action,userorrole,objectAccessed,success,userprivilege,notes,transactionid from " + table + " where "
+      var selectSql = "SELECT actiontime, action, userorrole, objectAccessed, success, userprivilege, notes, transactionid from " + table + " where "
+      
+      // Set up the SELECT PREDICATE.  will always have start and end times.
       var stime = (new Date().getTime() - 10 * 60 * 1000L)
       if( startTime != null ){
         stime = startTime.getTime()
@@ -198,9 +207,11 @@ class AuditCassandraAdapter extends AuditAdapter {
         selectSql = selectSql + " and objectAccessed = '" + objectAccessed + "'"
       }
       
+      // Execute the selelct
       logger.debug(selectSql)
       val rs = session.execute(selectSql)
 
+      // Process the results
       var i = 0
       val rowList = rs.all()
       var rowCount = rowList.size()
