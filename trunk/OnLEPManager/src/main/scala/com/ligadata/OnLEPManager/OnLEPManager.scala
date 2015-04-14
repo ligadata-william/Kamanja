@@ -415,6 +415,7 @@ class OnLEPManager {
 
     scheduledThreadPool.scheduleWithFixedDelay(statusPrint_PD, 0, 1000, TimeUnit.MILLISECONDS);
 
+/**
     print("=> ")
     breakable {
       for (ln <- io.Source.stdin.getLines) {
@@ -424,6 +425,18 @@ class OnLEPManager {
         print("=> ")
       }
     }
+**/
+
+    print("Waiting till user kills the process")
+    while (true) { // Infinite wait for now
+      try {
+        Thread.sleep(500) // Waiting for 500 milli secs
+      } catch {
+        case e: Exception => {
+        }
+      }
+    }
+
     scheduledThreadPool.shutdownNow()
     Shutdown(0)
   }
