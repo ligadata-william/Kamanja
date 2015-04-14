@@ -44,7 +44,7 @@ message MetadataType {
 
      required string NameSpace = 1;
      required string Name = 2;
-     required int32  Ver = 3;
+     required int64  Ver = 3;
      optional int64  UniqID = 4;
      optional int64  CreationTime = 5;
      optional int64  ModTime = 6;
@@ -74,7 +74,7 @@ message MetadataType {
    message ProtoBaseTypeKey{
      required string NameSpace = 1;
      required string Name = 2;
-     required int32  Ver = 3;
+     required int64  Ver = 3;
    }
 
    message Attribute {

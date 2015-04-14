@@ -134,7 +134,7 @@ trait BaseElem {
   def Author: String
   def NameSpace: String
   def Name: String
-  def Version: Int
+  def Version: Long
   def JarName: String
   def DependencyJarNames: Array[String]
   def MdElemStructVer: Int // Metadata Element Structure version. By default whole metadata will have same number
@@ -155,7 +155,7 @@ trait BaseElem {
 class BaseElemDef extends BaseElem {
   override def UniqID: Long = uniqueId
   override def FullName: String = nameSpace + "." + name // Logical Name
-  override def FullNameWithVer: String = nameSpace + "." + name + "." + ver
+  override def FullNameWithVer: String = nameSpace + "." + name + "." + Version
   override def CreationTime: Long = creationTime // Time in milliseconds from 1970-01-01T00:00:00
   override def ModTime: Long = modTime // Time in milliseconds from 1970-01-01T00:00:00
   override def OrigDef: String = origDef
@@ -163,7 +163,7 @@ class BaseElemDef extends BaseElem {
   override def Author: String = author
   override def NameSpace: String = nameSpace // Part of Logical Name
   override def Name: String = name // Part of Logical Name
-  override def Version: Int = ver
+  override def Version: Long = ver
   override def JarName: String = jarName
   override def DependencyJarNames: Array[String] = dependencyJarNames
   override def MdElemStructVer: Int = mdElemStructVer // Metadata Element version. By default whole metadata will have same number
@@ -198,7 +198,7 @@ class BaseElemDef extends BaseElem {
   var author: String = _
   var nameSpace: String = _ //
   var name: String = _ // simple name - may not be unique across all name spaces (coupled with mNameSpace, it will be unique)
-  var ver: Int = _ // version number - nn.nn.nn form (without decimal)
+  var ver: Long = _ // version number - nnnnnn.nnnnnn.nnnnnn form (without decimal)
   var jarName: String = _ // JAR file name in which the generated metadata info is placed (classes, functions, etc.,)
   var dependencyJarNames: Array[String] = _ // These are the dependency jars for this
   var mdElemStructVer: Int = DefaultMdElemStructVer.Version // Metadata Element Structure version. By default whole metadata will have same number

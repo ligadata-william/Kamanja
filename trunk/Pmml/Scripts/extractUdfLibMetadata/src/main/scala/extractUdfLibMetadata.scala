@@ -99,11 +99,11 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
             println(usage)
             sys.exit(1)
         }
-        var versionNo : Int = 1
+        var versionNo : Long = 1
         try {
-        	versionNo = versionNumber.toInt
+        	versionNo = versionNumber.toLong
         } catch {
-        	case _ : Throwable => versionNo = 100
+        	case _ : Throwable => versionNo = 1000000
         }
         val versionNoArg : String = versionNo.toString
 

@@ -30,7 +30,7 @@ class RemoveModelService(requestContext: RequestContext) extends Actor {
   def process(modelName:String, version: String) = {
     log.info("Requesting RemoveModel {},{}", modelName, version)
     if (MetadataAPIServiceLeader.IsLeader == true) {
-      val apiResult = MetadataAPIImpl.RemoveModel(modelName, Integer.parseInt(version))
+      val apiResult = MetadataAPIImpl.RemoveModel(modelName, version.toLong)
       requestContext.complete(apiResult)
     } else {
       val apiResult = new ApiResult(-1, "Failed to execute the request, I am not the leader node",

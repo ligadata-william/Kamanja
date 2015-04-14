@@ -58,7 +58,7 @@ class ActivateObjectsService(requestContext: RequestContext) extends Actor {
 
     arg.ObjectType match {
       case "model" => {
-	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toInt).toString
+	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toLong).toString
       }
       case _ => {
 	      new ApiResult(-1, APIName, "Deactivate/Activate on " + arg.ObjectType + " is not supported yet").toString 

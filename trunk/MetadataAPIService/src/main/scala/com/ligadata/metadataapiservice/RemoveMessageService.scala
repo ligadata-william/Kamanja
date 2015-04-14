@@ -33,7 +33,7 @@ class RemoveMessageService(requestContext: RequestContext) extends Actor {
   def process(messageName: String, version: String) = {
     log.info("Requesting GetMessage {},{}", messageName, version)
     if (MetadataAPIServiceLeader.IsLeader == true) {
-      val apiResult = MetadataAPIImpl.RemoveMessage(messageName, Integer.parseInt(version))
+      val apiResult = MetadataAPIImpl.RemoveMessage(messageName, version.toLong)
       requestContext.complete(apiResult)
     } else {
       val apiResult = new ApiResult(-1, "Failed to execute the request, I am not the leader node",

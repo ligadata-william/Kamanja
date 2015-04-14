@@ -579,13 +579,13 @@ public final class MetadataObjects {
           getNameBytes();
 
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
       boolean hasVer();
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
-      int getVer();
+      long getVer();
 
       /**
        * <code>optional int64 UniqID = 4;</code>
@@ -996,17 +996,17 @@ public final class MetadataObjects {
       }
 
       public static final int VER_FIELD_NUMBER = 3;
-      private int ver_;
+      private long ver_;
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
       public boolean hasVer() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
-      public int getVer() {
+      public long getVer() {
         return ver_;
       }
 
@@ -1388,7 +1388,7 @@ public final class MetadataObjects {
           output.writeBytes(2, getNameBytes());
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
-          output.writeInt32(3, ver_);
+          output.writeInt64(3, ver_);
         }
         if (((bitField0_ & 0x00000008) == 0x00000008)) {
           output.writeInt64(4, uniqID_);
@@ -1445,7 +1445,7 @@ public final class MetadataObjects {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
-            .computeInt32Size(3, ver_);
+            .computeInt64Size(3, ver_);
         }
         if (((bitField0_ & 0x00000008) == 0x00000008)) {
           size += com.google.protobuf.CodedOutputStream
@@ -2009,30 +2009,30 @@ public final class MetadataObjects {
           return this;
         }
 
-        private int ver_ ;
+        private long ver_ ;
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
         public boolean hasVer() {
           return ((bitField0_ & 0x00000004) == 0x00000004);
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
-        public int getVer() {
+        public long getVer() {
           return ver_;
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
-        public Builder setVer(int value) {
+        public Builder setVer(long value) {
           bitField0_ |= 0x00000004;
           ver_ = value;
           onChanged();
           return this;
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
         public Builder clearVer() {
           bitField0_ = (bitField0_ & ~0x00000004);
@@ -4474,13 +4474,13 @@ public final class MetadataObjects {
           getNameBytes();
 
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
       boolean hasVer();
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
-      int getVer();
+      long getVer();
     }
     /**
      * Protobuf type {@code MetadataType.ProtoBaseTypeKey}
@@ -4676,17 +4676,17 @@ public final class MetadataObjects {
       }
 
       public static final int VER_FIELD_NUMBER = 3;
-      private int ver_;
+      private long ver_;
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
       public boolean hasVer() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>required int32 Ver = 3;</code>
+       * <code>required int64 Ver = 3;</code>
        */
-      public int getVer() {
+      public long getVer() {
         return ver_;
       }
 
@@ -4727,7 +4727,7 @@ public final class MetadataObjects {
           output.writeBytes(2, getNameBytes());
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
-          output.writeInt32(3, ver_);
+          output.writeInt64(3, ver_);
         }
         getUnknownFields().writeTo(output);
       }
@@ -4748,7 +4748,7 @@ public final class MetadataObjects {
         }
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           size += com.google.protobuf.CodedOutputStream
-            .computeInt32Size(3, ver_);
+            .computeInt64Size(3, ver_);
         }
         size += getUnknownFields().getSerializedSize();
         memoizedSerializedSize = size;
@@ -5133,30 +5133,30 @@ public final class MetadataObjects {
           return this;
         }
 
-        private int ver_ ;
+        private long ver_ ;
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
         public boolean hasVer() {
           return ((bitField0_ & 0x00000004) == 0x00000004);
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
-        public int getVer() {
+        public long getVer() {
           return ver_;
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
-        public Builder setVer(int value) {
+        public Builder setVer(long value) {
           bitField0_ |= 0x00000004;
           ver_ = value;
           onChanged();
           return this;
         }
         /**
-         * <code>required int32 Ver = 3;</code>
+         * <code>required int64 Ver = 3;</code>
          */
         public Builder clearVer() {
           bitField0_ = (bitField0_ & ~0x00000004);
