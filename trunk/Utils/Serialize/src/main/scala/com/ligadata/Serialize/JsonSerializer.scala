@@ -25,10 +25,10 @@ case class FunctionList(Functions: List[Function])
 case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String)
 case class ConceptList(Concepts: List[Concept])
 
-case class Attr(NameSpace: String,Name: String, Version: Int,CollectionType: Option[String],Type: TypeDef)
+case class Attr(NameSpace: String,Name: String, Version: Long,CollectionType: Option[String],Type: TypeDef)
 case class DerivedConcept(FunctionDefinition: Function, Attributes: List[Attr])
 
-case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Int, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
+case class MessageStruct(NameSpace: String,Name: String, FullName: String, Version: Long, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
 case class MessageDefinition(Message: MessageStruct)
 case class ContainerDefinition(Container: MessageStruct)
 
@@ -108,7 +108,7 @@ object JsonSerializer {
 	  val func = MdMgr.GetMdMgr.MakeFunc(fn.NameSpace,fn.Name,fn.PhysicalName,
 					   (fn.ReturnTypeNameSpace,fn.ReturnTypeName),
 					   argList,featureSet,
-					   fn.Version.toInt,
+					   fn.Version.toLong,
 					   fn.JarName,
 					   fn.DependantJars.toArray)
 	  funcDefList += func
@@ -140,66 +140,66 @@ object JsonSerializer {
       typ.MetadataType match {
 	case "ScalarTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeScalar(typ.NameSpace,typ.Name,ObjType.fromString(typ.TypeName),
-				    typ.PhysicalName,typ.Version.toInt,typ.JarName,
+				    typ.PhysicalName,typ.Version.toLong,typ.JarName,
 				    typ.DependencyJars.toArray,typ.Implementation)
 	}
 	case "ArrayTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeArray(typ.NameSpace,typ.Name,typ.TypeNameSpace,
 				   typ.TypeName,typ.NumberOfDimensions.get,
-				   typ.Version.toInt)
+				   typ.Version.toLong)
 	}
 	case "ArrayBufTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeArrayBuffer(typ.NameSpace,typ.Name,typ.TypeNameSpace,
 					 typ.TypeName,typ.NumberOfDimensions.get,
-					 typ.Version.toInt)
+					 typ.Version.toLong)
 	}
 	case "ListTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeList(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				  typ.TypeName,typ.Version.toInt)
+				  typ.TypeName,typ.Version.toLong)
 	}
 	case "QueueTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeQueue(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				   typ.TypeName,typ.Version.toInt)
+				   typ.TypeName,typ.Version.toLong)
 	}
 	case "SetTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				 typ.TypeName,typ.Version.toInt)
+				 typ.TypeName,typ.Version.toLong)
 	}
 	case "ImmutableSetTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeImmutableSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				 typ.TypeName,typ.Version.toInt)
+				 typ.TypeName,typ.Version.toLong)
 	}
 	case "TreeSetTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeTreeSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				     typ.TypeName,typ.Version.toInt)
+				     typ.TypeName,typ.Version.toLong)
 	}
 	case "SortedSetTypeDef" => {
 	  typeDef = MdMgr.GetMdMgr.MakeSortedSet(typ.NameSpace,typ.Name,typ.TypeNameSpace,
-				       typ.TypeName,typ.Version.toInt)
+				       typ.TypeName,typ.Version.toLong)
 	}
 	case "MapTypeDef" => {
 	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
 	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
-	  typeDef = MdMgr.GetMdMgr.MakeMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
+	  typeDef = MdMgr.GetMdMgr.MakeMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toLong)
 	}
 	case "ImmutableMapTypeDef" => {
 	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
 	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
-	  typeDef = MdMgr.GetMdMgr.MakeImmutableMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
+	  typeDef = MdMgr.GetMdMgr.MakeImmutableMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toLong)
 	}
 	case "HashMapTypeDef" => {
 	  val mapKeyType = (typ.KeyTypeNameSpace.get,typ.KeyTypeName.get)
 	  val mapValueType = (typ.ValueTypeNameSpace.get,typ.ValueTypeName.get)
-	  typeDef = MdMgr.GetMdMgr.MakeHashMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toInt)
+	  typeDef = MdMgr.GetMdMgr.MakeHashMap(typ.NameSpace,typ.Name,mapKeyType,mapValueType,typ.Version.toLong)
 	}
 	case "TupleTypeDef" => {
 	  val tuples = typ.TupleDefinitions.get.map(arg => (arg.NameSpace,arg.Name)).toArray
-	  typeDef = MdMgr.GetMdMgr.MakeTupleType(typ.NameSpace,typ.Name,tuples,typ.Version.toInt)
+	  typeDef = MdMgr.GetMdMgr.MakeTupleType(typ.NameSpace,typ.Name,tuples,typ.Version.toLong)
 	}
 	case "ContainerTypeDef" => {
 	  if (typ.TypeName == "Struct" ){
 	    typeDef = MdMgr.GetMdMgr.MakeStructDef(typ.NameSpace,typ.Name,typ.PhysicalName,
-					 null,typ.Version.toInt,typ.JarName,
+					 null,typ.Version.toLong,typ.JarName,
 					 typ.DependencyJars.toArray, null, null, null) //BUGBUG:: Handle Primary Key, Foreign Keys & Partition Key here
 	  }
 	}
@@ -286,7 +286,7 @@ object JsonSerializer {
 						o.Name,
 						o.TypeNameSpace,
 						o.TypeName,
-						o.Version.toInt,
+						o.Version.toLong,
 						false)
 	  logger.trace("Created AttributeDef for " + o.NameSpace + "." + o.Name)
 	  attrDefList(i) =  attr
@@ -360,7 +360,7 @@ object JsonSerializer {
 					  concept.FunctionDefinition.ReturnTypeName),
 					 argList,
 					 featureSet,
-					 concept.FunctionDefinition.Version.toInt,
+					 concept.FunctionDefinition.Version.toLong,
 					 concept.FunctionDefinition.JarName,
 					 concept.FunctionDefinition.DependantJars.toArray)
 
@@ -395,7 +395,7 @@ object JsonSerializer {
 						      ContDefInst.Container.Name,
 						      ContDefInst.Container.PhysicalName,
 						      attrList.toList,
-						      ContDefInst.Container.Version.toInt,
+						      ContDefInst.Container.Version.toLong,
 						      ContDefInst.Container.JarName,
 						      ContDefInst.Container.DependencyJars.toArray)
       contDef
@@ -454,7 +454,7 @@ object JsonSerializer {
 					       conceptInst.Name,
 					       conceptInst.TypeNameSpace,
 					       conceptInst.TypeName,
-					       conceptInst.Version.toInt,
+					       conceptInst.Version.toLong,
 					       false)
       concept
     } catch {
@@ -492,7 +492,7 @@ object JsonSerializer {
 					     (functionInst.ReturnTypeNameSpace,functionInst.ReturnTypeName),
 					     argList,
 					     featureSet,
-					     functionInst.Version.toInt,
+					     functionInst.Version.toLong,
 					     functionInst.JarName,
 					     functionInst.DependantJars.toArray)
       function
@@ -528,7 +528,7 @@ object JsonSerializer {
 					       MsgDefInst.Message.Name,
 					       MsgDefInst.Message.PhysicalName,
 					       attrList1.toList,
-					       MsgDefInst.Message.Version.toInt,
+					       MsgDefInst.Message.Version.toLong,
 					       MsgDefInst.Message.JarName,
 					       MsgDefInst.Message.DependencyJars.toArray)
       msgDef
@@ -577,7 +577,7 @@ object JsonSerializer {
 					       ModDefInst.Model.ModelType,
 					       inputAttrList1,
 					       outputAttrList1,
-					       ModDefInst.Model.Version.toInt,
+					       ModDefInst.Model.Version.toLong,
 					       ModDefInst.Model.JarName,
 					       ModDefInst.Model.DependencyJars.toArray)
 
@@ -647,7 +647,7 @@ object JsonSerializer {
 		      ("Operation"       -> n.Operation) ~
 		      ("NameSpace"       -> n.NameSpace) ~
 		      ("Name"            -> n.Name) ~
-		      ("Version"         -> n.Version.toInt) ~
+		      ("Version"         -> n.Version.toLong) ~
 		      ("PhysicalName"    -> n.PhysicalName) ~
 		      ("JarName"         -> n.JarName) ~
 		      ("DependantJars"   -> n.DependantJars.toList)

@@ -402,8 +402,8 @@ object OnLEPMetadata extends MdBaseResolveInfo {
   //LOG.setLevel(Level.TRACE)
 
   private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
-    removedContainers: ArrayBuffer[(String, String, Int)]): Unit = {
+    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+    removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
 
     var exp: Exception = null
 
@@ -420,8 +420,8 @@ object OnLEPMetadata extends MdBaseResolveInfo {
   }
 
   private def localUpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
-    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Int)], removedMessages: ArrayBuffer[(String, String, Int)],
-    removedContainers: ArrayBuffer[(String, String, Int)]): Unit = {
+    mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
+    removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
 
     // First removing the objects
@@ -591,9 +591,9 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
     // BUGBUG:: Not expecting added element & Removed element will happen in same transaction at this moment
     // First we are adding what ever we need to add, then we are removing. So, we are locking before we append to global array and remove what ever is gone.
-    val removedModels = new ArrayBuffer[(String, String, Int)]
-    val removedMessages = new ArrayBuffer[(String, String, Int)]
-    val removedContainers = new ArrayBuffer[(String, String, Int)]
+    val removedModels = new ArrayBuffer[(String, String, Long)]
+    val removedMessages = new ArrayBuffer[(String, String, Long)]
+    val removedContainers = new ArrayBuffer[(String, String, Long)]
 
     //// Check for Jars -- Begin
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
@@ -606,7 +606,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
                   allJarsToBeValidated ++= obj.GetAllJarsFromElem(mdl.get)
                 }
@@ -621,7 +621,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (msg != None) {
                   allJarsToBeValidated ++= obj.GetAllJarsFromElem(msg.get)
                 }
@@ -636,7 +636,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (container != None) {
                   allJarsToBeValidated ++= obj.GetAllJarsFromElem(container.get)
                 }
@@ -667,7 +667,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
                   obj.PrepareModel(loadedJars, loader, mirror, mdl.get, true)
                 } else {
@@ -681,7 +681,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
             }
             case "Remove" => {
               try {
-                removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt))
+                removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
                   LOG.error("Failed to Remove Model:" + key)
@@ -697,7 +697,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val msg = mdMgr.Message(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (msg != None) {
                   obj.PrepareMessage(loadedJars, loader, mirror, msg.get, true)
                 } else {
@@ -711,7 +711,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
             }
             case "Remove" => {
               try {
-                removedMessages += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt))
+                removedMessages += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
                   LOG.error("Failed to Remove Message:" + key)
@@ -727,7 +727,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
           zkMessage.Operation match {
             case "Add" => {
               try {
-                val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt, true)
+                val container = mdMgr.Container(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (container != None) {
                   obj.PrepareContainer(loadedJars, loader, mirror, container.get, true, false)
                 } else {
@@ -741,7 +741,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
             }
             case "Remove" => {
               try {
-                removedContainers += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toInt))
+                removedContainers += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
                   LOG.error("Failed to Remove Container:" + key)

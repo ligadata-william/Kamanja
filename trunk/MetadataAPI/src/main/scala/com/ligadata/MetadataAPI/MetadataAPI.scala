@@ -113,7 +113,7 @@ trait MetadataAPI {
    * }}}
    * 
    */
-  def RemoveType(typeNameSpace:String, typeName:String, version:Int): String
+  def RemoveType(typeNameSpace:String, typeName:String, version:Long): String
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -217,7 +217,7 @@ trait MetadataAPI {
    *}}}
    * 
    */
-  def RemoveFunction(nameSpace:String, functionName:String, version:Int): String
+  def RemoveFunction(nameSpace:String, functionName:String, version:Long): String
 
   /** Add new concepts 
    * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
@@ -326,7 +326,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveMessage(messageName:String, version:Int): String
+  def RemoveMessage(messageName:String, version:Long): String
 
   /** Add model given pmmlText in XML
    * 
@@ -373,7 +373,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveContainer(containerName:String, version:Int): String
+  def RemoveContainer(containerName:String, version:Long): String
 
   /** Add model given pmmlText in XML
    * 
@@ -402,7 +402,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveModel(modelName:String, version:Int): String
+  def RemoveModel(modelName:String, version:Long): String
 
   /** Retrieve All available ModelDefs from Metadata Store
    *

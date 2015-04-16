@@ -516,9 +516,9 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		})
 		
 		val modelVer : Option[String] = ctx.pmmlTerms.apply("VersionNumber")
-		val modelVersion : Int = modelVer match {
-		  case Some(modelVer) => modelVer.toInt
-		  case _ => 100
+		val modelVersion : Long = modelVer match {
+		  case Some(modelVer) => modelVer.toLong
+		  case _ => 1000000
 		}
 		
 		ctx.pmmlTerms("PMML") = Some(pmmlFilePath)  /** to document/identify originating file in source to be generated */
@@ -861,7 +861,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		writeSrcFile(scalaGeneratedCode, scalaTargetPath)
 	}
 	
-	private def deriveClassNameAndModelVersion(ctx : PmmlContext, client : String) : (String, Int) = {
+	private def deriveClassNameAndModelVersion(ctx : PmmlContext, client : String) : (String, Long) = {
 	  
 	  	/** 
 		 *  Generate a name for the class based upon the id info found in the Header 
@@ -884,15 +884,15 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val numPattern = "[0-9]+".r
 		var versionString : String = modelVersion match {
 		  case Some(modelVersion) => modelVersion
-		  case _ => "101"
+		  case _ => "1000001"
 		}
 		val numPieces = numPattern.findAllIn(versionString)
 		for (piece <- numPieces) versionBuffer.append(piece)
-		var numVersion : Int = 0
+		var numVersion : Long = 0
 		try {
-			numVersion = versionBuffer.toInt
+			numVersion = versionBuffer.toLong
 		} catch {
-		  case t : Throwable => numVersion = 101
+		  case t : Throwable => numVersion = 1000001
 		}
 		(s"$pkgName.$className", numVersion)
 		

@@ -887,7 +887,7 @@ object NodePrinterHelpers extends LogTrait {
 
 		for (piece <- numVersionPieces) numBuffer.append(piece)
 		if (numBuffer.length == 0) {
-			numBuffer.append("101")
+			numBuffer.append("1000001")
 		}
 		/** 
 		 *  No longer is the version number appended to the model name... the model name is 
@@ -907,7 +907,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		/** Cache the class name in the ctx dictionary of useful terms */
 		ctx.pmmlTerms("ClassName") = Some(classname)
-		val vnum : Int = numBuffer.toString.toInt
+		val vnum : Long = numBuffer.toString.toLong
 		ctx.pmmlTerms("VersionNumber") = Some(vnum.toString)
 		
 		classname

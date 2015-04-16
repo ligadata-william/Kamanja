@@ -48,7 +48,7 @@ object MetadataLoad {
 }
 
 class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : String, val attrPath : String, msgCtnPath : String) extends LogTrait {
-	val baseTypesVer = 100 // Which is 00.01.00
+	val baseTypesVer : Long = 1000000 // Which is 00.01.000000
   
 	/** construct the loader and call this to complete the cache initialization */
 	def initialize { 

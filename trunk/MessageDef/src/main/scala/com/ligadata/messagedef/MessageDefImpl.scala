@@ -756,7 +756,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, msgAndCntnrsStr.toString, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, collections.toString, mappedPrevVerMatchkeys.toString, mappedMsgFieldsVar.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
-  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Int, f: Element, recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
+  private def handleContainer(mdMgr: MdMgr, ftypeVersion: Long, f: Element, recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -802,7 +802,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString)
   }
 
-  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Int, f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
+  private def handleMessage(mdMgr: MdMgr, ftypeVersion: Long, f: Element, msg: Message, childs: Map[String, Any], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -952,7 +952,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
-  private def handleConcept(mdMgr: MdMgr, ftypeVersion: Int, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
+  private def handleConcept(mdMgr: MdMgr, ftypeVersion: Long, f: Element): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String]) = {
 
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -1066,7 +1066,7 @@ class MessageDefImpl {
     var keysSet: Set[String] = Set()
     var keys: Set[String] = Set()
 
-    var ftypeVersion: Int = -1
+    var ftypeVersion: Long = -1
     var addMessage: String = ""
 
     var partitionPos = Array[Int]()
@@ -1133,12 +1133,13 @@ class MessageDefImpl {
           keysSet = keysSet + f.Name
 
           if (f.FieldtypeVer != null)
-            ftypeVersion = message.Version.replaceAll("[.]", "").toInt
+            ftypeVersion = MdMgr.ConvertVersionToLong(message.Version)
 
           if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
-            log.debug("message.Version " + message.Version.replaceAll("[.]", "").toInt)
 
-            val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
+            log.trace("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
+
+            val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
 
             if (typ.getOrElse("None").equals("None"))
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
@@ -1245,8 +1246,8 @@ class MessageDefImpl {
 
           } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
 
-            //val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toInt
-            val typ = MdMgr.GetMdMgr.Type(f.Ttype, -1, true) // message.Version.toInt
+            //val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
+            val typ = MdMgr.GetMdMgr.Type(f.Ttype, -1, true) // message.Version.toLong
 
             if (typ.getOrElse("None").equals("None"))
               throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Version: " + message.Version + " , Type : " + f.Ttype)
@@ -1449,43 +1450,12 @@ class MessageDefImpl {
       }
     }
     log.trace("version from metadata " + msgdef.get.Version)
+    
+    var newver = msgdef.get.Version + 1
 
-    formatNewVersionToStr(msgdef.get.Version.toString)
+    MdMgr.ConvertLongVersionToString(newver)
   }
 
-  private def formatNewVersionToStr(version: String): String = {
-    var versionStr: String = ""
-    var major = 0
-    var minor = 0
-    var micro = 0
-    if (version.length() == 1 || version.length() == 2) {
-      micro = version.toInt
-      micro = micro + 1
-    }
-
-    if (version.length() >= 3) {
-      micro = version.substring(version.length() - 2, version.length()).toInt
-      micro = micro + 1
-      if (version.length() == 3)
-        minor = version.substring(0, 1).toInt
-      else if (version.length() == 4)
-        minor = version.substring(0, 2).toInt
-    }
-
-    if (version.length() >= 5) {
-      minor = version.substring(version.length() - 4, version.length() - 2).toInt
-
-      if (version.length() == 5)
-        major = version.substring(0, 1).toInt
-      else if (version.length() == 6)
-        major = version.substring(0, 2).toInt
-
-    }
-
-    versionStr = "%02d.%02d.%02d".format(major, minor, micro)
-    log.trace("formatted version " + versionStr)
-    versionStr
-  }
   //Get the previous Existing Message/continer from metadata for deserialize function purpose
 
   private def getPrevVersionMsgContainer(message: Message, mdMgr: MdMgr): (Boolean, ContainerDef, String) = {
@@ -1754,7 +1724,7 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     var oname: String = ""
     var clssb: StringBuilder = new StringBuilder()
     var objsb: StringBuilder = new StringBuilder()
-    val ver = msg.Version.replaceAll("[.]", "").toInt.toString
+    val ver = MdMgr.ConvertVersionToLong(msg.Version).toString
     val xtends: String = "extends"
     val space = " "
     val uscore = "_"
@@ -2375,7 +2345,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val (classname, ver, classstr, list, argsList) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
       //createScalaFile(classstr, ver, classname)
-      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
+      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
       if (message.msgtype.equals("Message"))
         containerDef = createFixedMsgDef(message, list, mdMgr, argsList, recompile)
@@ -2397,7 +2367,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val (classname, ver, classstr, list, argsList) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
       // createScalaFile(classstr, ver, classname)
-      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + message.Version.replaceAll("[.]", "").toInt.toString
+      val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
       if (message.msgtype.equals("Message"))
         containerDef = createMappedMsgDef(message, list, mdMgr, argsList, recompile)
@@ -2414,7 +2384,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def createClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
-    val ver = message.Version.replaceAll("[.]", "").toInt.toString
+    val ver = MdMgr.ConvertVersionToLong(message.Version).toString
     val newline = "\n"
     var addMsgStr: String = ""
     var getMsgStr: String = ""
@@ -2449,7 +2419,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)]) = {
     var scalaclass = new StringBuilder(8 * 1024)
-    val ver = message.Version.replaceAll("[.]", "").toInt.toString
+    val ver = MdMgr.ConvertVersionToLong(message.Version).toString
     val newline = "\n"
     var addMsgStr: String = ""
     var getMsgStr: String = ""
@@ -2505,9 +2475,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
 
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2522,9 +2492,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
     try {
 
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2538,9 +2508,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var containerDef: ContainerDef = new ContainerDef()
     try {
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
       else
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, msg.Version.replaceAll("[.]", "").toInt, null, msg.jarset.toArray, null, null, null, recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2554,7 +2524,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var msgDef: MessageDef = new MessageDef()
 
     try {
-      var version = msg.Version.replaceAll("[.]", "").toInt
+      var version = MdMgr.ConvertVersionToLong(msg.Version)
       //if(recompile) 
       //	  version = version+1
 
@@ -2637,8 +2607,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
       	if (savedDataVersion == null || savedDataVersion.trim() == "")
         	throw new Exception("Please provide Data Version")
     
-      	val prevVer = savedDataVersion.replaceAll("[.]", "").toInt
-      	val currentVer = Version.replaceAll("[.]", "").toInt
+      	val prevVer = savedDataVersion.replaceAll("[.]", "").toLong
+      	val currentVer = Version.replaceAll("[.]", "").toLong
       	""" + preVerDeserStr + """ 
       	""" + deSer + """ 
       	} catch {
@@ -2954,32 +2924,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
     MdMgr.FormatVersion(message.getOrElse("Version", "0").toString)
   }
 
-  private def CheckVerDigits(value: Int, orgVerInfo: String): Unit = {
-    if (value < 0 || value > 99)
-      throw new Exception("Expecting only 0 to 99 in major, minor & micro versions, but got %d from %s".format(value, orgVerInfo))
-  }
-
-  private def formatRecompileVersion(verInfo: String): String = {
-
-    val verParts = verInfo.split("\\.")
-    var major = (if (verParts.size > 0) verParts(0).toInt else 0)
-    var mini = (if (verParts.size > 1) verParts(1).toInt else 0)
-    var micro = (if (verParts.size > 2) verParts(2).toInt else 0)
-    micro = micro + 1
-    CheckVerDigits(major, verInfo)
-    CheckVerDigits(mini, verInfo)
-    CheckVerDigits(micro, verInfo)
-
-    val retVerInfo = "%02d.%02d.%02d".format(major, mini, micro)
-    retVerInfo
-  }
-
-  private def extractRecompiledMsgVer(message: Map[String, Any]): String = {
-
-    formatRecompileVersion(message.getOrElse("Version", "0").toString)
-
-  }
-
   private def getMsgorCntrObj(message: Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var ele: List[Element] = null
     var tdata: TransformData = null
@@ -3050,7 +2994,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       }
     }
     val cur_time = System.currentTimeMillis
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToInt(msgVersion).toString + "_" + cur_time
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 

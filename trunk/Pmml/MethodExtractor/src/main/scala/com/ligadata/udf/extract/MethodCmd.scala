@@ -70,12 +70,12 @@ class FuncDefArgs (val namespace : String
 				, val returnNmSpc : String
 				, val returnTypeName : String
 				, val argTriples : Array[(String,String,String)] 
-				, val versionNo : Int
+				, val versionNo : Long
 				, val hasIndefiniteArity : Boolean)
 {}
 
 class MethodCmd(  val mgr : MdMgr
-				, val initialVersion : Int
+				, val initialVersion : Long
 				, val namespace : String
 			    , var typeMap : Map[String, BaseElemDef]
 			    , var typeArray : ArrayBuffer[BaseElemDef]

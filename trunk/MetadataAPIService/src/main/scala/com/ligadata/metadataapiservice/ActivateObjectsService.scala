@@ -46,7 +46,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 
     objectType match {
       case "model" => {
-	      MetadataAPIImpl.ActivateModel(nameSpace,name,version.toInt).toString
+	      MetadataAPIImpl.ActivateModel(nameSpace,arg.Name,version.toLong).toString
       }
       case _ => {
 	      new ApiResult(-1, APIName, null,  "Deactivate/Activate on " + objectType + " is not supported yet").toString 

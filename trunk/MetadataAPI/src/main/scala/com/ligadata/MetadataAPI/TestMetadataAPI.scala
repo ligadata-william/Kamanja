@@ -179,7 +179,7 @@ object TestMetadataAPI{
       val typNameSpace = typKeyTokens(0)
       val typName = typKeyTokens(1)
       val typVersion = typKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toLong)
 
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -207,10 +207,49 @@ object TestMetadataAPI{
     println("Result as Json String => \n" + apiResult)
   }
 
-  def RemoveFunction = {
-    val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min",100)
- //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + apiResult)
+  def RemoveFunction: Unit = {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+
+    try {
+      logger.setLevel(Level.TRACE);
+
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+      if (fcnKeys.length == 0) {
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+      println("\nPick the Function to be deleted from the following list: ")
+      var seq = 0
+      fcnKeys.foreach(key => {
+        seq += 1;
+        println("[" + seq + "] " + key)
+      })
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > fcnKeys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
+      }
+
+      val fcnKey = fcnKeys(choice - 1)
+      val fcnKeyTokens = fcnKey.split("\\.")
+      val fcnNameSpace = fcnKeyTokens(0)
+      val fcnName = fcnKeyTokens(1)
+      val fcnVersion = fcnKeyTokens(2)
+      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong)
+
+      val (statusCode1, resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
+    }
+    catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
   }
 
     def GetFunction: Unit = {
@@ -345,7 +384,8 @@ object TestMetadataAPI{
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
 
-      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
+      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
+      logger.trace("DependentModels => " + depModels)
 
       logger.debug("DependentModels => " + depModels)
 	
@@ -390,7 +430,7 @@ object TestMetadataAPI{
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
 
-      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toInt)
+      val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
       if( depModels.length > 0 ){
 	depModels.foreach(mod => {
 	  logger.debug("DependentModel => " + mod.FullNameWithVer)
@@ -563,7 +603,7 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
 
       //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -604,7 +644,7 @@ object TestMetadataAPI{
       val contNameSpace = contKeyTokens(0)
       val contName = contKeyTokens(1)
       val contVersion = contKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toLong)
 
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -648,7 +688,7 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
 
     //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -688,7 +728,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -729,7 +769,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toInt)
+      val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toLong)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -770,7 +810,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toInt)
+      val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toLong)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -810,7 +850,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toInt)
+      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
 
   //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)

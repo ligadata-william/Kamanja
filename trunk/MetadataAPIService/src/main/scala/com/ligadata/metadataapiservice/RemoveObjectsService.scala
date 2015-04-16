@@ -69,22 +69,22 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
 
     arg.ObjectType match {
       case "model" => {
-	      apiResult = MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toInt)
-     }
+	      return MetadataAPIImpl.RemoveModel(nameSpace,arg.Name,version.toLong)
+      }
       case "message" => {
-	      apiResult = MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveMessage(nameSpace,arg.Name,version.toLong)
       }
       case "container" => {
-	      apiResult = MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveContainer(nameSpace,arg.Name,version.toLong)
       }
       case "function" => {
-	      apiResult = MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toLong)
       }
       case "concept" => {
-	      apiResult = MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toLong)
       }
       case "type" => {
-	      apiResult = MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toInt)
+	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toLong)
       }
     }
     MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",objectName)
