@@ -320,9 +320,7 @@ object MetadataAPIImpl extends MetadataAPI {
    * logAuditRec - Record an Audit event using the audit adapter.
    */
   def logAuditRec(userOrRole:Option[String], userPrivilege:Option[String], action:String, objectAccessed:String, success:String, transactionId:String, notes:String) = {
-    logger.info("AUDIT SHIT GOING ON")
     if( auditObj != null ){
-      logger.info("AUDIT SHIT GOING ON 2")
       val aRec = new AuditRecord
 
       // If no userName is provided here, that means that somehow we are not running with Security but with Audit ON.
