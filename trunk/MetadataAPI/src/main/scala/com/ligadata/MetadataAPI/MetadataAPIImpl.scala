@@ -5524,6 +5524,7 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
+    MetadataAPIImpl.InitSecImpl
   }
 
   def InitMdMgrFromBootStrap(configFile: String) {
@@ -5538,6 +5539,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
+    MetadataAPIImpl.InitSecImpl
   }
 
   def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String) {
