@@ -202,17 +202,18 @@ object CustomUdfs extends UdfBase with LogTrait {
     /**
      * getTokenizedCounts - Method will analyze a given string for the presence of specified tokens and return the Array of integers where
      *                      each element corresponds to the number of times a token in that position of the context array appears in the 
-     *                      inputString
+     *                      inputString.  This method is CASE INSENSITIVE 
      *                      
      *  @param String: String to analyze
      *  @param Array[String]: The list of tokens to compare the inputString to
      *  @return Array[Integer]
      */
-    def getTokenizedCounts (inputString: String, context: Array[String]): Array[Integer] = {     
+    def getTokenizedCounts (inputString: String, context: Array[String]): Array[Integer] = {           
       var pos = 0
+      var lcIS = inputString.toLowerCase
       var outArray: Array[Integer] = new Array[Integer](context.size) 
       context.foreach(word => {       
-        outArray(pos) =  word.r.findAllIn(inputString).length   
+        outArray(pos) =  word.toLowerCase.r.findAllIn(lcIS).length   
         pos = pos + 1
       })
       outArray
@@ -220,7 +221,7 @@ object CustomUdfs extends UdfBase with LogTrait {
   
     /**
      * getTokenizedBoolean - Method will analyze a given string for the presence of tokens specified in the context parameters.  If the number of
-     *                      present tokens exceeds the degree parameter, return TRUE, else return FALSE
+     *                      present tokens exceeds the degree parameter, return TRUE, else return FALSE.  This method is CASE INSENSITIVE 
      *                        
      *                      
      *  @param String: String to analyze
@@ -229,9 +230,8 @@ object CustomUdfs extends UdfBase with LogTrait {
      *  @return Boolean
      */
     def getTokenizedBoolean (inputString: String, context: Array[String], degree: Integer): Boolean = {
-      var tArray = getTokenizedCounts(inputString, context)
       var total: Int = 0
-      tArray.foreach(v => {total = total + v})
+      getTokenizedCounts(inputString, context).foreach(v => {total = total + v})
       if (total >= degree) true else false
     }
 }
