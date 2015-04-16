@@ -43,7 +43,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
 
     objectType match {
       case "model" => {
- 	      MetadataAPIImpl.DeactivateModel(nameSpace,arg.Name,version.toLong).toString
+ 	      MetadataAPIImpl.DeactivateModel(nameSpace,name,version.toLong).toString
       }
       case _ => {
 	      new ApiResult(-1, APIName, null, "Deactivate/Activate on " + objectType + " is not supported yet").toString 

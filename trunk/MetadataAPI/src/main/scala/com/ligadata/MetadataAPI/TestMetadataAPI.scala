@@ -242,7 +242,7 @@ object TestMetadataAPI{
       val fcnVersion = fcnKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong)
 
-      val (statusCode1, resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+      val resultData = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }
     catch {
