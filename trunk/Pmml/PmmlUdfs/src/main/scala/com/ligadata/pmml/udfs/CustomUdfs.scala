@@ -202,7 +202,7 @@ object CustomUdfs extends UdfBase with LogTrait {
     /**
      * getTokenizedCounts - Method will analyze a given string for the presence of specified tokens and return the Array of integers where
      *                      each element corresponds to the number of times a token in that position of the context array appears in the 
-     *                      inputString
+     *                      inputString.  This method is CASE INSENSITIVE 
      *                      
      *  @param String: String to analyze
      *  @param Array[String]: The list of tokens to compare the inputString to
@@ -221,7 +221,7 @@ object CustomUdfs extends UdfBase with LogTrait {
   
     /**
      * getTokenizedBoolean - Method will analyze a given string for the presence of tokens specified in the context parameters.  If the number of
-     *                      present tokens exceeds the degree parameter, return TRUE, else return FALSE
+     *                      present tokens exceeds the degree parameter, return TRUE, else return FALSE.  This method is CASE INSENSITIVE 
      *                        
      *                      
      *  @param String: String to analyze
