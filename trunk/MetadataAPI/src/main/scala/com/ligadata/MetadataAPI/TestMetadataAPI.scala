@@ -2145,7 +2145,14 @@ object TestMetadataAPI{
       if( databaseOpen ){
 	MetadataAPIImpl.CloseDbStore
       }
+      logger.info("closing zookeeper session, if any ...") 
       MetadataAPIImpl.CloseZKSession
+      logger.info("closed zookeeper session...") 
+      logger.info("closing auditObj , if any ...") 
+      if( MetadataAPIImpl.auditObj != null ){
+	MetadataAPIImpl.auditObj.Shutdown()
+      }
+      logger.info("closed auditObj...") 
     }
   }
 }
