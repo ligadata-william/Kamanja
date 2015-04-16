@@ -208,11 +208,12 @@ object CustomUdfs extends UdfBase with LogTrait {
      *  @param Array[String]: The list of tokens to compare the inputString to
      *  @return Array[Integer]
      */
-    def getTokenizedCounts (inputString: String, context: Array[String]): Array[Integer] = {     
+    def getTokenizedCounts (inputString: String, context: Array[String]): Array[Integer] = {           
       var pos = 0
+      var lcIS = inputString.toLowerCase
       var outArray: Array[Integer] = new Array[Integer](context.size) 
       context.foreach(word => {       
-        outArray(pos) =  word.r.findAllIn(inputString).length   
+        outArray(pos) =  word.toLowerCase.r.findAllIn(lcIS).length   
         pos = pos + 1
       })
       outArray
@@ -229,9 +230,8 @@ object CustomUdfs extends UdfBase with LogTrait {
      *  @return Boolean
      */
     def getTokenizedBoolean (inputString: String, context: Array[String], degree: Integer): Boolean = {
-      var tArray = getTokenizedCounts(inputString, context)
       var total: Int = 0
-      tArray.foreach(v => {total = total + v})
+      getTokenizedCounts(inputString, context).foreach(v => {total = total + v})
       if (total >= degree) true else false
     }
 }
