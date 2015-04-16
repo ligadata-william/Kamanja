@@ -349,10 +349,10 @@ As such, it must be simple name with alphanumerics and ideally all lower case.
 				("jar generation was suppressed by command option --skipjar", null)
 			}
 		
-			logger.trace(s"jar path returned from createJar = $jarPath")
+			logger.debug(s"jar path returned from createJar = $jarPath")
 			val buffer : StringBuilder = new StringBuilder
 			depJars.addString(buffer, ":")
-			logger.trace(s"depJars returned from createJar = ${buffer.toString}")
+			logger.debug(s"depJars returned from createJar = ${buffer.toString}")
 			logger.debug("PmmlCompiler.main ends")
 		}
 	}    
@@ -366,7 +366,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	else
 		PMMLConfiguration.jarPaths = jaPaths.toSet
   
-	logger.trace("PmmlCompiler ctor ... begins")
+	logger.debug("PmmlCompiler ctor ... begins")
 
 	var pmmlFilePath : String = "NOTSET"
 
@@ -391,7 +391,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	 *  collected in a set and returned. */
 	def compileFile(pmmlPath : String) : (String, ModelDef) = {
 	  
-		logger.trace("compile begins")
+		logger.debug("compile begins")
 		pmmlFilePath = pmmlPath
 
 		ctx.pmmlTerms("PMML") = Some(pmmlFilePath)  /** to document/identify originating file in source to be generated */
@@ -412,10 +412,10 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		xformObject(ctx)
 		val srcCode : String = generateCode(ctx)
 		
-		logger.trace("compile ends")
+		logger.debug("compile ends")
 
 		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
-		logger.trace("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
+		logger.debug("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
 		
 		val modelDef : ModelDef = constructModelDef(ctx)
 		(srcCode, modelDef)
@@ -427,7 +427,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	 *  collected in a set and returned. */
 	def compile(pmmlString : String,workDir: String,recompile: Boolean = false)  : (String, ModelDef) = {
 	  
-		logger.trace("compile begins")
+		logger.debug("compile begins")
 		
 		ctx.pmmlTerms("PMML") = Some("Pmml source supplied as string") 
 		ctx.ClientName(clientName)
@@ -446,7 +446,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		xformObject(ctx)
 		val srcCode : String = generateCode(ctx)
 		
-		logger.trace("compile ends")
+		logger.debug("compile ends")
 		
 		if (srcCode != null) {
 			/** save a copy of the original xml that was sent as a string to this function.  It is to be included
@@ -463,7 +463,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		}
 
 		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
-		logger.trace("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
+		logger.debug("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
 		
 		val modelDef : ModelDef = constructModelDef(ctx,recompile)
 		(srcCode, modelDef)
@@ -503,16 +503,16 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
 		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
-		logger.trace(s"\n\ndump of the inputVars for the model metadata construction:")
+		logger.debug(s"\n\ndump of the inputVars for the model metadata construction:")
 		inputVars.foreach(aVar => {
 			val (modelNmSpc, varnm, typeNmspc, typeNm, isGlobal, collectionType) : (String,String,String,String,Boolean,String) = aVar
-			logger.trace(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal, $collectionType)")
+			logger.debug(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal, $collectionType)")
 		})
 		val outputVars : List[(String,String,String)] = ctx.modelOutputs.values.toList
-		logger.trace(s"\n\ndump of the outputVars for the model metadata construction:")
+		logger.debug(s"\n\ndump of the outputVars for the model metadata construction:")
 		outputVars.foreach(aVar => {
 			val (varnm, typeNmspc, typeNm) : (String,String,String) = aVar
-			logger.trace(s"(${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'})")
+			logger.debug(s"(${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'})")
 		})
 		
 		val modelVer : Option[String] = ctx.pmmlTerms.apply("VersionNumber")
@@ -555,10 +555,10 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 				, skipJar : Boolean
 			        , workDir: String) : (String,Array[String]) = {
 	  
-		logger.trace("createJar begins")
+		logger.debug("createJar begins")
 
 		if (scalaSrcTargetPath != null) {
-			logger.trace(s"write a copy of the generated source to $scalaSrcTargetPath")
+			logger.debug(s"write a copy of the generated source to $scalaSrcTargetPath")
 			writeSrcFile(srcCode, scalaSrcTargetPath)
 		}
 		
@@ -587,7 +587,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		logger.debug(s"jarPath=$jarPath");
 		logger.debug(s"clientName=$clientName");
 		
-		logger.trace("createJar ends")
+		logger.debug("createJar ends")
 		
 		val depJars: Array[String] = classpath.split(':').toSet.toArray
 		(jarPath,depJars)
@@ -715,16 +715,16 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			return (cpRc, "")
 		}
 
-		logger.trace(s"compile $moduleName")
+		logger.debug(s"compile $moduleName")
 		/** compile the generated code */
 		val rc : Int = compile(ctx, s"$workDir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
 		if (rc != 0) {
 			return (rc, "")
 		}
-		logger.trace(s"compile or $moduleName ends...rc = $rc")
+		logger.debug(s"compile or $moduleName ends...rc = $rc")
 		
 		/** build the manifest */
-		//logger.trace(s"create the manifest")
+		//logger.debug(s"create the manifest")
 		//val manifestFileName : String =  s"manifest.mf"
 		//createManifest(ctx, s"$workDir/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
 
@@ -737,26 +737,26 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val jar_tokens = moduleNameJar.split("\\.")
 	        moduleNameJar = jar_tokens(0) + "_" + epochTime + ".jar"
 		
-		logger.trace(s"create the jar $workDir/$moduleNameJar")
+		logger.debug(s"create the jar $workDir/$moduleNameJar")
 		val jarCmd : String = s"$javahome/bin/jar cvf $workDir/$moduleNameJar -C $workDir/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")
-		logger.info(s"Jar $moduleNameJar produced.  Its contents:")
+		logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
 		val jarRc : Int = Process(jarCmd).!
 		if (jarRc != 0) {
 			logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
 			return (jarRc, "")
 		}
-		logger.trace(s"jar of $moduleNameJar complete ... $jarRc")
+		logger.debug(s"jar of $moduleNameJar complete ... $jarRc")
 		
 		/** move the new jar to the target dir where it is to live */
-		logger.trace(s"move the jar $workDir/$moduleNameJar to the target $jarTargetDir")
+		logger.debug(s"move the jar $workDir/$moduleNameJar to the target $jarTargetDir")
 		val mvCmd : String = s"mv $workDir/$moduleNameJar $jarTargetDir/"
 		val mvCmdRc : Int = Process(mvCmd).!
 		if (mvCmdRc != 0) {
 			logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
 			logger.error(s"cmd used : $mvCmd")
 		}
-		logger.trace(s"move of jar $workDir/$moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
+		logger.debug(s"move of jar $workDir/$moduleNameJar to the target $jarTargetDir ends... rc = $mvCmdRc")
 		
 		(jarRc, s"$moduleNameJar")
 	}
@@ -828,7 +828,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val registrationModuleName : String = "RegistrationInfo.scala"
 		val registrationTemplatePath : String = s"$pwdStr/resources/RegistrationInfoTemplate.scala"
 		val registrationSrc : String = ctx.fcnSubstitute.makeFileSubstitutions(registrationTemplatePath, substitutionMap)
-		logger.info(s"registration source with substitutions made:\n\n$registrationSrc\n")
+		logger.debug(s"registration source with substitutions made:\n\n$registrationSrc\n")
 		val regSrcSlash = if (jarBuildDir.last != '/') "/" else "" 
 		val regSrcFilePath = s"$jarBuildDir$regSrcSlash$registrationModuleName" 
 		val file = new File(regSrcFilePath);
@@ -839,7 +839,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		/** compile it */
 	  
 		val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$registrationModuleName")
-		logger.info(s"scalac reg compile cmd used: $scalacCmd")
+		logger.debug(s"scalac reg compile cmd used: $scalacCmd")
 		val scalaCompileRc = Process(scalacCmd).!
 		if (scalaCompileRc != 0) {
 			logger.error(s"Compile for $registrationModuleName has failed...rc = $scalaCompileRc")

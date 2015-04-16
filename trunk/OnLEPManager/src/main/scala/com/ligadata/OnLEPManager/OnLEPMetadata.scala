@@ -75,9 +75,9 @@ class OnLEPMetadata {
     PrepareContainers(loadedJars, loader, mirror, tmpContainerDefs)
     PrepareModels(loadedJars, loader, mirror, tmpModelDefs)
 
-    LOG.info("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
-    LOG.info("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
-    LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
+    LOG.debug("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
+    LOG.debug("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
+    LOG.debug("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
   def PrepareMessage(loadedJars: TreeSet[String], loader: OnLEPClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
@@ -143,7 +143,7 @@ class OnLEPMetadata {
           GetChildsFromEntity(msg.containerType, mgsObj.childs)
           messageObjects(msgName) = mgsObj
 
-          LOG.info("Created Message:" + msgName)
+          LOG.debug("Created Message:" + msgName)
         } else {
           LOG.error("Failed to instantiate message object :" + clsName)
         }
@@ -167,7 +167,7 @@ class OnLEPMetadata {
       val containerObj = new MsgContainerObjAndTransformInfo(null, null)
       GetChildsFromEntity(container.containerType, containerObj.childs)
       containerObjects(contName) = containerObj
-      LOG.info("Added Base Container:" + contName)
+      LOG.debug("Added Base Container:" + contName)
       return
     }
 
@@ -208,7 +208,7 @@ class OnLEPMetadata {
           GetChildsFromEntity(container.containerType, contObj.childs)
           containerObjects(contName) = contObj
 
-          LOG.info("Created Container:" + contName)
+          LOG.debug("Created Container:" + contName)
         } else {
           LOG.error("Failed to instantiate container object :" + clsName)
         }
@@ -265,10 +265,10 @@ class OnLEPMetadata {
           val modelobj = objinst.asInstanceOf[ModelBaseObj]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
           modelObjects(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
-          LOG.info("Created Model:" + mdlName)
+          LOG.debug("Created Model:" + mdlName)
         } else {
           LOG.error("Failed to instantiate model object :" + clsName)
-          LOG.info("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
+          LOG.debug("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
         }
       } catch {
         case e: Exception => LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
@@ -399,7 +399,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
 
-  LOG.setLevel(Level.TRACE)
+  //LOG.setLevel(Level.TRACE)
 
   private def UpdateOnLepMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
@@ -567,7 +567,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
   def UpdateMetadata(receivedJsonStr: String): Unit = {
 
-    LOG.trace("Process ZooKeeper notification " + receivedJsonStr)
+    LOG.debug("Process ZooKeeper notification " + receivedJsonStr)
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
@@ -600,7 +600,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      LOG.trace("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
+      LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
@@ -661,7 +661,7 @@ object OnLEPMetadata extends MdBaseResolveInfo {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
-      LOG.trace("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
+      LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {

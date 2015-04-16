@@ -37,7 +37,7 @@ lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/Fi
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(OnLEPBase, Storage, Serialize)
 
-lazy val Storage = project.in(file("Storage"))
+lazy val Storage = project.in(file("Storage")) dependsOn("Metadata")
 
 lazy val Metadata = project.in(file("Metadata")) 
 
@@ -78,5 +78,9 @@ lazy val JsonDataGen = project.in(file("Utils/JsonDataGen"))
 lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI)
 
 lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters)
+
+lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata)
+
+lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage)
 
 

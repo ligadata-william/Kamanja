@@ -122,7 +122,7 @@ class MessageDefImpl {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.trace("primaryPos " + primaryPos.length)
+    log.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -589,7 +589,7 @@ class MessageDefImpl {
       }
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-      log.trace("typ.get.typeString " + typ.get.typeString)
+      log.debug("typ.get.typeString " + typ.get.typeString)
 
       if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
         jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
@@ -1136,6 +1136,7 @@ class MessageDefImpl {
             ftypeVersion = MdMgr.ConvertVersionToLong(message.Version)
 
           if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+
             log.trace("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
 
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
@@ -1370,7 +1371,7 @@ class MessageDefImpl {
       if (addMsg != null && addMsg.toString.trim() != "" && addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
 
-      log.trace("final arglist " + argsList)
+      log.debug("final arglist " + argsList)
       if (jarset != null)
         message.jarset = jarset
 
@@ -1822,7 +1823,7 @@ trait BaseContainer {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.trace("primaryPos " + primaryPos.length)
+    log.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -3285,10 +3286,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     implicit val jsonFormats: Formats = DefaultFormats
     val ConceptList = json.extract[ConceptList]
     ConceptList.Concepts.foreach { concept =>
-      log.info("NameSpace => " + concept.NameSpace.getOrElse(null));
-      log.info("Name => " + concept.Name.getOrElse(None));
-      log.info("Type => " + concept.Type.getOrElse(None));
-      log.info("=========>");
+      log.debug("NameSpace => " + concept.NameSpace.getOrElse(null));
+      log.debug("Name => " + concept.Name.getOrElse(None));
+      log.debug("Type => " + concept.Type.getOrElse(None));
+      log.debug("=========>");
     }
 
   }

@@ -695,6 +695,7 @@ class NodeInfo {
   def Power: Int = power
   def Roles: Int = roles
   def Description: String = description
+  def NodeAddr: String = nodeIpAddr + ":" + nodePort.toString
 }
 
 class ClusterInfo {
@@ -747,4 +748,19 @@ class AdapterInfo {
   def DependencyJars: Array[String] = dependencyJars
   def AdapterSpecificCfg: String = adapterSpecificCfg
   def InputAdapterToVerify: String  = inputAdapterToVerify
+}
+
+class AuditRecord
+{
+  var actionTime: String = _
+  var action: String = _
+  var notes : String = _
+  var objectAccessed : String = _
+  var success: String = _
+  var transactionId: String = _
+  var userOrRole : String = _
+  var userPrivilege: String = _
+
+  override def toString : String = 
+    "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
 }

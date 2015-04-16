@@ -4,7 +4,6 @@ import com.ligadata.olep.metadata._
 import com.ligadata.olep.metadata.ObjType._
 import com.ligadata.olep.metadata.MdMgr._
 import scala.collection.mutable.{ArrayBuffer}
-
 import org.apache.log4j._
 
 import org.json4s._
@@ -1377,4 +1376,29 @@ object JsonSerializer {
       }
     }
   }
+
+
+  def SerializeAuditRecordsToJson(ar: Array[AuditRecord]): String = {
+    val ft = new java.text.SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    try{
+      val json = (ar.toList.map{ a => 
+		    val at = new java.util.Date(java.lang.Long.valueOf(a.actionTime))
+		    (
+		      ("ActionTime"       -> ft.format(at)) ~
+		      ("Action"          -> a.action) ~
+		      ("UserOrRole"      -> a.userOrRole) ~
+		      ("Status"          -> a.success) ~
+		      ("ObjectAccessed"  -> a.objectAccessed) ~
+		      ("ActionResult"    -> a.notes)
+		    )
+		  })
+      pretty(render(json))
+    } catch {
+      case e:Exception =>{
+	e.printStackTrace()
+	throw Json4sSerializationException(e.getMessage())
+      }
+    }
+  }
+
 }

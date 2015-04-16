@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
+import com.ligadata.olep.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -22,7 +23,7 @@ object GetAllObjectKeysService {
   case class Process(formatType:String)
 }
 
-class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
+class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import GetAllObjectKeysService._
   
@@ -32,7 +33,7 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+//  logger.setLevel(Level.TRACE);
 
   val APIName = "GetAllObjectKeys"
 
@@ -44,6 +45,11 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
 
   def GetAllObjectKeys(objectType:String): String = {
     var apiResult:Array[String] = new Array[String](0)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.FAIL,"",objectType)
+	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
+    }
 
     objectType match {
       case "model" => {
@@ -64,26 +70,19 @@ class GetAllObjectKeysService(requestContext: RequestContext) extends Actor {
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
       }
-      case "all" => {
-	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(true) ++
-		      MetadataAPIImpl.GetAllMessagesFromCache(true) ++
-		      MetadataAPIImpl.GetAllContainersFromCache(true) ++
-		      MetadataAPIImpl.GetAllFunctionsFromCache(true) ++
-		      MetadataAPIImpl.GetAllConceptsFromCache(true) ++
-		      MetadataAPIImpl.GetAllTypesFromCache(true)
-      }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
-         return new ApiResult(-1,"Invalid URL",apiResult.mkString).toString
+         return new ApiResult(-1, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
       }
     }
-    new ApiResult(0, "Object Keys", apiResult.mkString(",")).toString
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.SUCCESS,"",objectType)
+    new ApiResult(0,  APIName, null,  "Object Keys:" + apiResult.mkString(",")).toString
   }
 
   def process(objectType: String) = {
-    logger.trace(APIName + ":" + objectType)
+    logger.debug(APIName + ":" + objectType)
     val objectList = GetAllObjectKeys(objectType)
-    logger.trace(APIName + "(results):" + objectList)
+    logger.debug(APIName + "(results):" + objectList)
     requestContext.complete(objectList)
   }
 }

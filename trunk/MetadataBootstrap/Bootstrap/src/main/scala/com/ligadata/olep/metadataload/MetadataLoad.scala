@@ -53,23 +53,23 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	/** construct the loader and call this to complete the cache initialization */
 	def initialize { 
 
-		logger.trace("MetadataLoad...loading typedefs")
+		logger.debug("MetadataLoad...loading typedefs")
 		InitTypeDefs
 
-		logger.trace("MetadataLoad...loading BaseContainers definitions")
+		logger.debug("MetadataLoad...loading BaseContainers definitions")
 		InitBaseContainers
 	    
-		logger.trace("MetadataLoad...loading Pmml types")
+		logger.debug("MetadataLoad...loading Pmml types")
 		initTypesFor_com_ligadata_pmml_udfs_Udfs
 
-		logger.trace("MetadataLoad...loading Pmml udfs")
+		logger.debug("MetadataLoad...loading Pmml udfs")
 		init_com_ligadata_pmml_udfs_Udfs
 		init_com_ligadata_pmml_udfs_Udfs1
 		
-		logger.trace("MetadataLoad...loading Iterable functions")
+		logger.debug("MetadataLoad...loading Iterable functions")
 		InitFcns
 			
-		logger.trace("MetadataLoad...loading function macro definitions")
+		logger.debug("MetadataLoad...loading function macro definitions")
 		initMacroDefs
 	    
 	}
@@ -78,7 +78,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 	def InitBaseContainers: Unit = {
 		val baseContainerInfo = MetadataLoad.BaseContainersInfo
 		baseContainerInfo.foreach(bc => {
-			logger.trace("MetadataLoad...loading " + bc._2)
+			logger.debug("MetadataLoad...loading " + bc._2)
 			mgr.AddFixedContainer(bc._1, bc._2, bc._3, bc._4)
 		})
 	}
@@ -1353,7 +1353,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		 */
 		var fcnMacrofeatures : Set[FcnMacroAttr.Feature] = Set[FcnMacroAttr.Feature]()
 		fcnMacrofeatures += FcnMacroAttr.ITERABLE
-		logger.trace("MetadataLoad...loading container filter functions")
+		logger.debug("MetadataLoad...loading container filter functions")
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerFilter"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerFilter"
@@ -1404,7 +1404,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures)	  
 
 
-		logger.trace("MetadataLoad...loading container map functions")
+		logger.debug("MetadataLoad...loading container map functions")
 		mgr.AddFunc(MdMgr.sysNS
 					, "ContainerMap"
 					, "com.ligadata.pmml.udfs.Udfs.ContainerMap"
@@ -1455,7 +1455,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures)	  
 					
 		
-		logger.trace("MetadataLoad...loading container groupBy functions")
+		logger.debug("MetadataLoad...loading container groupBy functions")
 		mgr.AddFunc(MdMgr.sysNS
 					, "GroupBy"
 					, "com.ligadata.pmml.udfs.Udfs.GroupBy"
@@ -1511,7 +1511,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 	def initMacroDefs {
 
-		logger.trace("MetadataLoad...loading Macro functions")
+		logger.debug("MetadataLoad...loading Macro functions")
 
 		
 		/** **************************************************************************************************************/

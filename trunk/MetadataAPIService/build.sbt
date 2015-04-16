@@ -73,6 +73,7 @@ libraryDependencies ++= {
   "io.spray" %%  "spray-json" % "1.2.5",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.0.12"
+  "ch.qos.logback" % "logback-classic" % "1.0.12",
+  "org.apache.camel" % "camel-core" % "2.9.2"
   )
 }

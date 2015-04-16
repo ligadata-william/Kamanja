@@ -133,7 +133,7 @@ object GetDependentMessages {
     var depObjects = new Array[String](0)
     buildMsgHierarchy(cont)
     
-    logger.trace("Built " + messageContainerObjects.size + " objects ")
+    logger.debug("Built " + messageContainerObjects.size + " objects ")
     
     val contName = cont.FullName.toLowerCase
 
@@ -143,7 +143,7 @@ object GetDependentMessages {
 	depObjects = depObjects :+ p._1
       })
     }
-    logger.trace("Found " + depObjects.length + " dependant objects ")
+    logger.debug("Found " + depObjects.length + " dependant objects ")
     depObjects
   }
 }

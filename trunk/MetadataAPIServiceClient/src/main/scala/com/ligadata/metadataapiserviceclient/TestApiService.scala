@@ -112,14 +112,14 @@ object TestApiService {
       while (eProps1.hasMoreElements()) {
         val key = eProps1.nextElement().asInstanceOf[String]
         val value = prop.getProperty(key);
-        logger.trace("The key=" + key + "; value=" + value);
+        logger.debug("The key=" + key + "; value=" + value);
 
         if (key.equalsIgnoreCase("ROOT_DIR")) {
           root_dir = value
-          logger.trace("ROOT_DIR => " + root_dir)
+          logger.debug("ROOT_DIR => " + root_dir)
         } else if (key.equalsIgnoreCase("GIT_ROOT")) {
           git_root = value
-          logger.trace("GIT_ROOT => " + git_root)
+          logger.debug("GIT_ROOT => " + git_root)
         }
       }
 
@@ -155,88 +155,88 @@ object TestApiService {
       while (eProps2.hasMoreElements()) {
         val key = eProps2.nextElement().asInstanceOf[String]
         val value = prop.getProperty(key);
-        logger.trace("The key=" + key + "; value=" + value);
+        logger.debug("The key=" + key + "; value=" + value);
         if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
           database = value
-          logger.trace("database => " + database)
+          logger.debug("database => " + database)
         } else if (key.equalsIgnoreCase("DATABASE_HOST") || key.equalsIgnoreCase("MetadataLocation")) {
           database_host = value
-          logger.trace("database_host => " + database_host)
+          logger.debug("database_host => " + database_host)
         } else if (key.equalsIgnoreCase("DATABASE_SCHEMA") || key.equalsIgnoreCase("MetadataSchemaName")) {
           database_schema = value
-          logger.trace("database_schema(applicable to cassandra only) => " + database_schema)
+          logger.debug("database_schema(applicable to cassandra only) => " + database_schema)
         } else if (key.equalsIgnoreCase("DATABASE_LOCATION") || key.equalsIgnoreCase("MetadataLocation")) {
           database_location = value
-          logger.trace("database_location(applicable to treemap or hashmap only) => " + database_location)
+          logger.debug("database_location(applicable to treemap or hashmap only) => " + database_location)
         } else if (key.equalsIgnoreCase("JAR_TARGET_DIR")) {
           jar_target_dir = value
-          logger.trace("JAR_TARGET_DIR => " + jar_target_dir)
+          logger.debug("JAR_TARGET_DIR => " + jar_target_dir)
         } else if (key.equalsIgnoreCase("SCALA_HOME")) {
           scala_home = value
-          logger.trace("SCALA_HOME => " + scala_home)
+          logger.debug("SCALA_HOME => " + scala_home)
         } else if (key.equalsIgnoreCase("JAVA_HOME")) {
           java_home = value
-          logger.trace("JAVA_HOME => " + java_home)
+          logger.debug("JAVA_HOME => " + java_home)
         } else if (key.equalsIgnoreCase("MANIFEST_PATH")) {
           manifest_path = value
-          logger.trace("MANIFEST_PATH => " + manifest_path)
+          logger.debug("MANIFEST_PATH => " + manifest_path)
         } else if (key.equalsIgnoreCase("CLASSPATH")) {
           classpath = value
-          logger.trace("CLASSPATH => " + classpath)
+          logger.debug("CLASSPATH => " + classpath)
         } else if (key.equalsIgnoreCase("NOTIFY_ENGINE")) {
           notify_engine = value
-          logger.trace("NOTIFY_ENGINE => " + notify_engine)
+          logger.debug("NOTIFY_ENGINE => " + notify_engine)
         } else if (key.equalsIgnoreCase("ZNODE_PATH")) {
           znode_path = value
-          logger.trace("ZNODE_PATH => " + znode_path)
+          logger.debug("ZNODE_PATH => " + znode_path)
         } else if (key.equalsIgnoreCase("ZOOKEEPER_CONNECT_STRING")) {
           zookeeper_connect_string = value
-          logger.trace("ZOOKEEPER_CONNECT_STRING => " + zookeeper_connect_string)
+          logger.debug("ZOOKEEPER_CONNECT_STRING => " + zookeeper_connect_string)
         } else if (key.equalsIgnoreCase("NODE_ID")) {
           node_id = value
-          logger.trace("NODE_ID => " + node_id)
+          logger.debug("NODE_ID => " + node_id)
         } else if (key.equalsIgnoreCase("SERVICE_HOST")) {
           service_host = value
-          logger.trace("SERVICE_HOST => " + service_host)
+          logger.debug("SERVICE_HOST => " + service_host)
         } else if (key.equalsIgnoreCase("SERVICE_PORT")) {
           service_port = value
-          logger.trace("SERVICE_PORT => " + service_port)
+          logger.debug("SERVICE_PORT => " + service_port)
         } else if (key.equalsIgnoreCase("API_LEADER_SELECTION_ZK_NODE")) {
           api_leader_selection_zk_node = value
-          logger.trace("API_LEADER_SELECTION_ZK_NODE => " + api_leader_selection_zk_node)
+          logger.debug("API_LEADER_SELECTION_ZK_NODE => " + api_leader_selection_zk_node)
         } else if (key.equalsIgnoreCase("ZK_SESSION_TIMEOUT_MS")) {
           zk_session_timeout_ms = value
-          logger.trace("ZK_SESSION_TIMEOUT_MS => " + zk_session_timeout_ms)
+          logger.debug("ZK_SESSION_TIMEOUT_MS => " + zk_session_timeout_ms)
         } else if (key.equalsIgnoreCase("ZK_CONNECTION_TIMEOUT_MS")) {
           zk_connection_timeout_ms = value
-          logger.trace("ZK_CONNECTION_TIMEOUT_MS => " + zk_connection_timeout_ms)
+          logger.debug("ZK_CONNECTION_TIMEOUT_MS => " + zk_connection_timeout_ms)
         } else if (key.equalsIgnoreCase("MODEL_FILES_DIR")) {
           model_files_dir = value
-          logger.trace("MODEL_FILES_DIR => " + model_files_dir)
+          logger.debug("MODEL_FILES_DIR => " + model_files_dir)
         } else if (key.equalsIgnoreCase("CONFIG_FILES_DIR")) {
           config_files_dir = value
-          logger.trace("CONFIG_FILES_DIR => " + config_files_dir)
+          logger.debug("CONFIG_FILES_DIR => " + config_files_dir)
         } else if (key.equalsIgnoreCase("MESSAGE_FILES_DIR")) {
           message_files_dir = value
-          logger.trace("MESSAGE_FILES_DIR => " + message_files_dir)
+          logger.debug("MESSAGE_FILES_DIR => " + message_files_dir)
         } else if (key.equalsIgnoreCase("CONTAINER_FILES_DIR")) {
           container_files_dir = value
-          logger.trace("CONTAINER_FILES_DIR => " + container_files_dir)
+          logger.debug("CONTAINER_FILES_DIR => " + container_files_dir)
         } else if (key.equalsIgnoreCase("CONCEPT_FILES_DIR")) {
           concept_files_dir = value
-          logger.trace("CONCEPT_FILES_DIR => " + concept_files_dir)
+          logger.debug("CONCEPT_FILES_DIR => " + concept_files_dir)
         } else if (key.equalsIgnoreCase("FUNCTION_FILES_DIR")) {
           function_files_dir = value
-          logger.trace("FUNCTION_FILES_DIR => " + function_files_dir)
+          logger.debug("FUNCTION_FILES_DIR => " + function_files_dir)
         } else if (key.equalsIgnoreCase("TYPE_FILES_DIR")) {
           type_files_dir = value
-          logger.trace("TYPE_FILES_DIR => " + type_files_dir)
+          logger.debug("TYPE_FILES_DIR => " + type_files_dir)
         } else if (key.equalsIgnoreCase("COMPILER_WORK_DIR")) {
           compiler_work_dir = value
-          logger.trace("COMPILER_WORK_DIR => " + compiler_work_dir)
+          logger.debug("COMPILER_WORK_DIR => " + compiler_work_dir)
         } else if (key.equalsIgnoreCase("MODEL_EXEC_LOG")) {
           model_exec_log = value
-          logger.trace("MODEL_EXEC_LOG => " + model_exec_log)
+          logger.debug("MODEL_EXEC_LOG => " + model_exec_log)
         }
       }
 
@@ -315,7 +315,7 @@ object TestApiService {
     try{
       val httpClient = new HttpClient(config)
       if( body == None){
-        logger.trace(reqType+":URL => " + url)
+        logger.debug(reqType+":URL => " + url)
         if (reqType.equalsIgnoreCase("get")) {
 	  val request = Request.get(new URL(url))
 	  response = httpClient.makeRequest(request)
@@ -330,7 +330,7 @@ object TestApiService {
 	}
       }
       else{
-	      logger.trace(reqType+"URL => " + url + ", parameter => " + body.get)
+	      logger.debug(reqType+"URL => " + url + ", parameter => " + body.get)
 	      bodyType match {
 	         case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
              if (reqType.equalsIgnoreCase("put")) {
@@ -364,7 +364,7 @@ object TestApiService {
   def MakeHttpRequest(reqType: String, host_url:String, apiFunctionName: String, parameterType:String, parameterValue:String) :String = {
     try{
       var url = host_url + "/api/" + apiFunctionName
-      logger.info(url+"   "+parameterType+ " "+parameterValue)
+      logger.debug(url+"   "+parameterType+ " "+parameterValue)
       var bodyType:MediaType = TEXT_PLAIN
       parameterType match {
 	      case "STR"  => bodyType = TEXT_PLAIN
@@ -405,7 +405,7 @@ object TestApiService {
      // val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR",objectType)
       val objKeysJson = MakeHttpRequest("get",host_url,"keys/"+objectType,"STR",null)
       implicit val jsonFormats: Formats = DefaultFormats
-      logger.trace("result => " + objKeysJson)
+      logger.debug("result => " + objKeysJson)
       val json1 = parse(objKeysJson).values.asInstanceOf[Map[String,Any]]
       val allValues = json1.getOrElse("APIResults",null).asInstanceOf[Map[String,Any]]
       if (allValues == null) {
@@ -415,7 +415,7 @@ object TestApiService {
       
       val resultsValues = allValues.getOrElse("resultData",null).asInstanceOf[String]
       if (resultsValues == null) {
-        logger.info("No Objects Found")
+        logger.debug("No Objects Found")
         return new Array[String](0)
       }
         
@@ -450,7 +450,7 @@ object TestApiService {
     try{
       println("---->"+objectType+"<---------")
       val objJson = MakeHttpRequest("get",host_url,"Config/"+objectType,"STR",null)
-      logger.trace(objJson)
+      logger.debug(objJson)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -775,7 +775,7 @@ object TestApiService {
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if ( pmmlFiles.length == 0 ){
-	logger.fatal("No model files in the directory " + dirName)
+	logger.error("No model files in the directory " + dirName)
 	return
       }
 
@@ -794,7 +794,7 @@ object TestApiService {
 	       return
       }
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -802,7 +802,7 @@ object TestApiService {
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
       var res = MakeHttpRequest("post",host_url, "Model","XML",pmmlStr)
-      logger.trace("Results of AddModel Operation => " + res)
+      logger.debug("Results of AddModel Operation => " + res)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -818,7 +818,7 @@ object TestApiService {
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-	logger.fatal("No json container files in the directory " + dirName)
+	logger.error("No json container files in the directory " + dirName)
 	return
       }
 
@@ -848,18 +848,18 @@ object TestApiService {
 	    return
 	  }
 	  if( choice < 1 || choice > contFiles.length + 1 ){
-	    logger.fatal("Invalid Choice : " + choice)
+	    logger.error("Invalid Choice : " + choice)
 	    return
 	  }
 	  val contDefFile = contFiles(choice-1).toString
-    	  logger.setLevel(Level.TRACE);
+    	//  logger.setLevel(Level.TRACE);
 	  val contStr = Source.fromFile(contDefFile).mkString
     	  //val res : String =  MakeHttpRequest("put",host_url, "AddContainerDef","JSON",contStr)
         val res : String =  MakeHttpRequest("post",host_url, "Container","JSON",contStr)
     	  results += Tuple3(choice.toString, contDefFile, res)
     	})
       } else {
-          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
       
@@ -885,7 +885,7 @@ object TestApiService {
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
-	logger.fatal("No json message files in the directory " + dirName)
+	logger.error("No json message files in the directory " + dirName)
 	return
       }
       println("\nPick a Message Definition file(s) from below choices\n")
@@ -914,7 +914,7 @@ object TestApiService {
 	    return
 	  }
 	  if( choice < 1 || choice > msgFiles.length + 1 ){
-	    logger.fatal("Invalid Choice : " + choice)
+	    logger.error("Invalid Choice : " + choice)
 	    return
 	  }
 	  val msgDefFile = msgFiles(choice-1).toString
@@ -923,7 +923,7 @@ object TestApiService {
     	  results += Tuple3(choice.toString, msgDefFile, res)
     	})
       } else {
-        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
       
@@ -950,7 +950,7 @@ object TestApiService {
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
+	logger.error("No config files in the directory " + dirName)
 	return
       }
 
@@ -969,7 +969,7 @@ object TestApiService {
 	return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	logger.fatal("Invalid Choice : " + choice)
+	logger.error("Invalid Choice : " + choice)
 	return
       }
 
@@ -996,7 +996,7 @@ object TestApiService {
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	      logger.fatal("No config files in the directory " + dirName)
+	      logger.error("No config files in the directory " + dirName)
 	      return
       }
 
@@ -1015,7 +1015,7 @@ object TestApiService {
 	      return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	      logger.fatal("Invalid Choice : " + choice)
+	      logger.error("Invalid Choice : " + choice)
 	      return
       }
 
@@ -1040,7 +1040,7 @@ object TestApiService {
 
       val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
       if ( jarFiles.length == 0 ){
-	logger.fatal("No jar files in the directory " + dirName)
+	logger.error("No jar files in the directory " + dirName)
 	return
       }
 
@@ -1059,7 +1059,7 @@ object TestApiService {
 	return
       }
       if( choice < 1 || choice > jarFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1086,7 +1086,7 @@ object TestApiService {
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
-	logger.fatal("No function files in the directory " + dirName)
+	logger.error("No function files in the directory " + dirName)
 	return
       }
 
@@ -1105,7 +1105,7 @@ object TestApiService {
 	return
       }
       if( choice < 1 || choice > functionFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1133,7 +1133,7 @@ object TestApiService {
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
-	      logger.fatal("No function files in the directory " + dirName)
+	      logger.error("No function files in the directory " + dirName)
 	      return
       }
 
@@ -1152,7 +1152,7 @@ object TestApiService {
 	      return
       }
       if( choice < 1 || choice > functionFiles.length + 1 ){
-	      logger.fatal("Invalid Choice : " + choice)
+	      logger.error("Invalid Choice : " + choice)
 	      return
       }
 
@@ -1180,7 +1180,7 @@ object TestApiService {
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
-	logger.fatal("No concept files in the directory " + dirName)
+	logger.error("No concept files in the directory " + dirName)
 	return
       }
 
@@ -1199,7 +1199,7 @@ object TestApiService {
 	return
       }
       if( choice < 1 || choice > conceptFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1232,7 +1232,7 @@ object TestApiService {
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
-	      logger.fatal("No concept files in the directory " + dirName)
+	      logger.error("No concept files in the directory " + dirName)
 	      return
       }
 
@@ -1251,7 +1251,7 @@ object TestApiService {
 	      return
       }
       if( choice < 1 || choice > conceptFiles.length + 1 ){
-	       logger.fatal("Invalid Choice : " + choice)
+	       logger.error("Invalid Choice : " + choice)
 	       return
       }
 
@@ -1279,7 +1279,7 @@ object TestApiService {
 
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( typeFiles.length == 0 ){
-	logger.fatal("No type files in the directory " + dirName)
+	logger.error("No type files in the directory " + dirName)
 	return
       }
 
@@ -1298,7 +1298,7 @@ object TestApiService {
 	return
       }
       if( choice < 1 || choice > typeFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1476,7 +1476,7 @@ object TestApiService {
   }    
 
   def main(args: Array[String]) {
-    logger.setLevel(Level.TRACE);
+   // logger.setLevel(Level.TRACE);
     val httpClient = new HttpClient
 
     try{
@@ -1507,7 +1507,7 @@ object TestApiService {
     }
     finally{
       // Cleanup and exit
-      logger.trace("Done");
+      logger.debug("Done");
     }
   }
 }

@@ -8,18 +8,20 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
+import com.ligadata.olep.metadata._
 
 object UpdateModelService {
   case class Process(pmmlStr:String)
 }
 
-class UpdateModelService(requestContext: RequestContext) extends Actor {
+class UpdateModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import UpdateModelService._
   
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "UpdateModelService"
   
   def receive = {
     case Process(pmmlStr) =>
@@ -30,9 +32,16 @@ class UpdateModelService(requestContext: RequestContext) extends Actor {
   def process(pmmlStr:String) = {
     
     log.info("Requesting UpdateModel {}",pmmlStr)
-    
-    val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
-    
-    requestContext.complete(apiResult)
+
+    var nameVal = APIService.extractNameFromPMML(pmmlStr) 
+
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","model"))) {
+       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameVal)
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameVal)    
+      requestContext.complete(apiResult)      
+    }
   }
 }

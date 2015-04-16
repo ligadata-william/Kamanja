@@ -617,7 +617,7 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		
 		if (ctx.injectLogging) {
-			clsBuffer.append(s"        logger.info(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
+			clsBuffer.append(s"        logger.debug(${'"'}Derive${'_'}${node.name} entered...${'"'})\n")
 		}
 		clsBuffer.append(s"        val $fldName = ")
 		val ifActionElems : Option[ArrayBuffer[PmmlExecNode]] = IfActionElementsFromTopLevelChild(node)
@@ -661,13 +661,13 @@ object NodePrinterHelpers extends LogTrait {
  		if (ifActionElemsLen == 2) {
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.info(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"\n        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType($fldName))\n")
 			clsBuffer.append(s"        new $returnDataValueType($fldName)\n")
@@ -903,7 +903,7 @@ object NodePrinterHelpers extends LogTrait {
 		val classNameFixer = "[-. ]+".r
 		val classname : String = classNameFixer.replaceAllIn(classname1,"_")
 		
-		logger.info(s"Class Name to be created: $classname")
+		logger.debug(s"Class Name to be created: $classname")
 		
 		/** Cache the class name in the ctx dictionary of useful terms */
 		ctx.pmmlTerms("ClassName") = Some(classname)

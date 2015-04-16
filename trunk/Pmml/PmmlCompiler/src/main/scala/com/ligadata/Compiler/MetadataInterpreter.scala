@@ -104,8 +104,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 								if (! conceptCollected) {
 									val (typestring,typedef) : (String,BaseTypeDef) = getDDictFieldType(name)
 									if (typedef == null) {
-										logger.trace(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
-										logger.trace("Either correct the spelling or add a type with this name to the metadata")
+										logger.debug(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
+										logger.debug("Either correct the spelling or add a type with this name to the metadata")
 									} else {
 										baseTypeTriples += Tuple3(typestring, (containerType != null), typedef)
 									}
@@ -140,8 +140,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 									if (! conceptCollected) {
 										val (typestring,typedef) : (String,BaseTypeDef) = getXDictFieldType(name)
 										if (typedef == null) {
-											logger.trace(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
-											logger.trace("Either correct the spelling or add a type with this name to the metadata")
+											logger.debug(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
+											logger.debug("Either correct the spelling or add a type with this name to the metadata")
 										} else {
 											baseTypeTriples += Tuple3(typestring, (containerType == null), typedef)
 										}
@@ -327,7 +327,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			baseTypeTriples += Tuple3(conceptType.typeString, isContainerWithNamedFields, conceptType)
 			true
 		} else {
-			//logger.trace(s"The name '$name' in field reference value is not a valid concept. ")
+			//logger.debug(s"The name '$name' in field reference value is not a valid concept. ")
 			false
 		}
 		gotOne

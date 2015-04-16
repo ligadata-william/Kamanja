@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-
+import com.ligadata.olep.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
@@ -19,17 +19,18 @@ object AddModelService {
   case class Process(pmmlStr:String)
 }
 
-class AddModelService(requestContext: RequestContext) extends Actor {
+class AddModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import AddModelService._
   
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
+  val APIName = "AddModelService"
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+  //logger.setLevel(Level.TRACE);
 
   def receive = {
     case Process(pmmlStr) =>
@@ -39,10 +40,17 @@ class AddModelService(requestContext: RequestContext) extends Actor {
   
   def process(pmmlStr:String) = {
     
-    logger.trace("Requesting AddModel: " + pmmlStr.substring(0,500))
+    logger.debug("Requesting AddModel: " + pmmlStr.substring(0,500))
+
+    var nameVal = APIService.extractNameFromPMML(pmmlStr) 
     
-    val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
-    
-    requestContext.complete(apiResult)
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameVal)    
+	    requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+    } else {
+      val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameVal)   
+      requestContext.complete(apiResult)      
+    }
   }
 }

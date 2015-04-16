@@ -8,7 +8,7 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
-
+import com.ligadata.olep.metadata._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -20,7 +20,7 @@ object GetConfigObjectsService {
   case class Process(formatType:String)
 }
 
-class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
+class GetConfigObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import GetConfigObjectsService._
   
@@ -30,7 +30,7 @@ class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetConfigObjects"
 
@@ -39,26 +39,25 @@ class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
 
     objectType match {
       case "node" => {
-	apiResult = MetadataAPIImpl.GetAllNodes("JSON")
+        apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
       case "cluster" => {
-	apiResult = MetadataAPIImpl.GetAllClusters("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusters("JSON")
       }
       case "adapter" => {
-	apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
+        apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
       }
       case "clustercfg" => {
-	apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
       }
       case "all" => {
-	apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
+        apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
       }
       case _ => {
-	apiResult = "The " + objectType + " is not supported yet "
+        apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    resultData
+    MetadataAPIImpl.getApiResult(apiResult)
   }
 
   
@@ -69,9 +68,16 @@ class GetConfigObjectsService(requestContext: RequestContext) extends Actor {
   }
   
   def process(objectType:String) = {
-    log.info("Requesting GetConfigObjects {}",objectType)
-    val apiResult = GetConfigObjects(objectType)
-    requestContext.complete(apiResult)
+    log.debug("Requesting GetConfigObjects {}",objectType)
+    
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType)
+      requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
+    } else {
+      val apiResult = GetConfigObjects(objectType)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType)
+      requestContext.complete(apiResult)      
+    }
   }
 }
 

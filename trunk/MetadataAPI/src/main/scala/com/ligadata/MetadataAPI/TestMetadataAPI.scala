@@ -16,6 +16,7 @@ import org.scalatest.Assertions._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io._
+import java.util.Date
 
 case class MissingArgumentException(e: String) extends Throwable(e)
 
@@ -50,16 +51,16 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if (dirName == null) {
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
-        logger.info("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
+        logger.debug("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
       }
 
       if (!IsValidDir(dirName)) {
-        logger.fatal("Invalid Directory " + dirName)
+        logger.error("Invalid Directory " + dirName)
         return
       }
       val typFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if (typFiles.length == 0) {
-        logger.fatal("No json type files exist in the directory " + dirName)
+        logger.error("No json type files exist in the directory " + dirName)
         return
       }
 
@@ -78,15 +79,14 @@ object TestMetadataAPI{
       }
 
       if (choice < 1 || choice > typFiles.length + 1) {
-        logger.fatal("Invalid Choice: " + choice)
+        logger.error("Invalid Choice: " + choice)
         return
       }
 
       val typDefFile = typFiles(choice - 1).toString
-
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
       println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
     }
     catch {
@@ -101,7 +101,7 @@ object TestMetadataAPI{
 
   def GetType {
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
       if( typKeys.length == 0 ){
@@ -131,10 +131,10 @@ object TestMetadataAPI{
 
       typOpt match {
         case None => None
-        case Some(ts) =>
-          val apiResult = new ApiResult(0,"Successfully fetched typeDef",JsonSerializer.SerializeObjectToJson(ts)).toString()
-          val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-          println("Result as Json String => \n" + resultData)
+        case Some(ts) => 
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+         // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+          println("Result as Json String => \n" + apiResult)
       }
     }catch {
       case e: Exception => {
@@ -145,9 +145,8 @@ object TestMetadataAPI{
 
   def GetAllTypes{
     val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
-
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveType {
@@ -155,7 +154,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
 
     try {
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
       if( typKeys.length == 0 ){
@@ -182,7 +181,7 @@ object TestMetadataAPI{
       val typVersion = typKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toLong)
 
-      val (statusCode1,resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }
@@ -198,65 +197,14 @@ object TestMetadataAPI{
   // TODO: Rewrite Update Type to allow a user to pick the file they wish to update a type from.
   def UpdateType = {
     val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
-
-  def AddFunction: Unit = {
-    try {
-      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
-      if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
-        logger.info("The environment variable FUNCTION_FILES_DIR is undefined. Setting to default " + dirName)
-      }
-
-      if (!IsValidDir(dirName)) {
-        logger.fatal("Invalid Directory " + dirName)
-        return
-      }
-      val fcnFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if (fcnFiles.length == 0) {
-        logger.fatal("No json function files exist in the directory " + dirName)
-        return
-      }
-      println("\nSelect a Function Definition file:\n")
-
-      var seq = 0
-      fcnFiles.foreach(key => {
-        seq += 1;
-        println("[" + seq + "]" + key)
-      })
-      seq += 1
-      println("[" + seq + "] Main Menu")
-
-      print("\nEnter your choice: ")
-      val choice: Int = readInt()
-
-      if (choice == fcnFiles.length + 1) {
-        return
-      }
-
-      if (choice < 1 || choice > fcnFiles.length + 1) {
-        logger.fatal("Invalid Choice: " + choice)
-        return
-      }
-
-      val fcnDefFile = fcnFiles(choice - 1).toString
-
-      logger.setLevel(Level.TRACE);
-      val fcnStr = Source.fromFile(fcnDefFile).mkString
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON"))
-    }
-    catch {
-      case e: AlreadyExistsException => {
-        logger.error("Container already exists in metadata...")
-      }
-      case e: Exception => {
-        e.printStackTrace()
-      }
-    }
+  def AddFunction = {
+    val apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
+   // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveFunction: Unit = {
@@ -294,7 +242,7 @@ object TestMetadataAPI{
       val fcnVersion = fcnKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong)
 
-      val (statusCode1, resultData1) = MetadataAPIImpl.getApiResult(apiResult)
+      val resultData = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }
     catch {
@@ -304,7 +252,7 @@ object TestMetadataAPI{
     }
   }
 
-  def GetFunction: Unit = {
+    def GetFunction: Unit = {
     val loggerName = this.getClass.getName
     lazy val logger = Logger.getLogger(loggerName)
 
@@ -338,8 +286,8 @@ object TestMetadataAPI{
       //val fcnVersion = fcnKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace,fcnName,"JSON")
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+   //   val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -347,41 +295,41 @@ object TestMetadataAPI{
       }
     }
   }
-
+  
   def UpdateFunction = {
     val apiResult = MetadataAPIImpl.UpdateFunctions(SampleData.sampleFunctionStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def AddConcept = {
-    var apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+    val apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
+ //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcept = {
     val apiResult = MetadataAPIImpl.RemoveConcept("Ligadata.ProviderId.100")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+ //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcepts = {
     val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"))
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+    //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def UpdateConcept = {
     val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON")
-    val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + resultData)
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def AddDerivedConcept = {
-    var apiResult = MetadataAPIImpl.AddDerivedConcept(SampleData.sampleDerivedConceptStr,"JSON")
-    var result = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + result._2)
+    val apiResult = MetadataAPIImpl.AddDerivedConcept(SampleData.sampleDerivedConceptStr,"JSON")
+  //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+    println("Result as Json String => \n" + apiResult)
   }
 
   def fileToString(filePath: String) :String = {
@@ -402,13 +350,13 @@ object TestMetadataAPI{
       inStream.close()
     }
     val pmmlStr =  new String(outStream.toByteArray())
-    logger.trace(pmmlStr)
+    logger.debug(pmmlStr)
     pmmlStr
   }
 
   def GetMessage{
     try{
-      logger.setLevel(Level.TRACE);
+  //    logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
@@ -439,11 +387,12 @@ object TestMetadataAPI{
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
       logger.trace("DependentModels => " + depModels)
 
+      logger.debug("DependentModels => " + depModels)
+	
       val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
-
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -453,7 +402,7 @@ object TestMetadataAPI{
 
   def GetMessageFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
@@ -484,15 +433,13 @@ object TestMetadataAPI{
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
       if( depModels.length > 0 ){
 	depModels.foreach(mod => {
-	  logger.trace("DependentModel => " + mod.FullNameWithVer)
+	  logger.debug("DependentModel => " + mod.FullNameWithVer)
 	})
       }
 
       val apiResult = MetadataAPIImpl.GetMessageDefFromCache(msgNameSpace,msgName,"JSON",msgVersion)
-
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
-
+      println("Result as Json String => \n" + apiResult)
+      
     }catch {
       case e: Exception => {
 	e.printStackTrace()
@@ -502,13 +449,13 @@ object TestMetadataAPI{
 
   def GetContainerFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
       if( contKeys.length == 0 ){
-	println("Sorry, No containers available in the Metadata")
-	return
+	          println("Sorry, No containers available in the Metadata")
+	          return
       }
 
       println("\nPick the container to be presented from the following list: ")
@@ -530,13 +477,11 @@ object TestMetadataAPI{
       val contName = contKeyTokens(1)
       val contVersion = contKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace,contName,"JSON",contVersion)
-
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
-	e.printStackTrace()
+	          e.printStackTrace()
       }
     }
   }
@@ -547,7 +492,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
 
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
@@ -575,8 +520,8 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace,modName,"JSON",modVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -591,7 +536,7 @@ object TestMetadataAPI{
     lazy val logger = Logger.getLogger(loggerName)
 
     try{
-      logger.setLevel(Level.TRACE);
+  //    logger.setLevel(Level.TRACE); //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
@@ -619,8 +564,8 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace,modName,"JSON",modVersion)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+ //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
 
     }catch {
       case e: Exception => {
@@ -631,7 +576,7 @@ object TestMetadataAPI{
 
   def RemoveMessageFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+     // logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
 
@@ -660,7 +605,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+      //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -672,7 +617,7 @@ object TestMetadataAPI{
 
   def RemoveContainer{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE);  //check again
 
       val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
 
@@ -701,19 +646,22 @@ object TestMetadataAPI{
       val contVersion = contKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
+      case e: NumberFormatException => {
+        print("\n Entry not in desired format. Please enter only one choice correctly")
+      }
       case e: Exception => {
-	e.printStackTrace()
+	        logger.error(e.toString)
       }
     }
   }
 
   def RemoveMessage{
     try{
-      logger.setLevel(Level.TRACE);
+    //  logger.setLevel(Level.TRACE); //check again
 
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
 
@@ -742,7 +690,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -754,7 +702,7 @@ object TestMetadataAPI{
 
   def RemoveModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -782,7 +730,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -795,7 +743,7 @@ object TestMetadataAPI{
 
   def DeactivateModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -823,7 +771,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -836,7 +784,7 @@ object TestMetadataAPI{
 
   def ActivateModel{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(false)
 
@@ -864,7 +812,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -876,7 +824,7 @@ object TestMetadataAPI{
 
   def RemoveModelFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
 
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
 
@@ -904,7 +852,7 @@ object TestMetadataAPI{
       val modVersion = modKeyTokens(2)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
 
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -916,7 +864,7 @@ object TestMetadataAPI{
 
   def GetAllMessagesFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -934,7 +882,7 @@ object TestMetadataAPI{
 
   def GetAllModelsFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -952,7 +900,7 @@ object TestMetadataAPI{
 
   def GetAllMessagesFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages are available in the Metadata")
@@ -970,7 +918,7 @@ object TestMetadataAPI{
 
   def GetAllContainersFromCache{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val msgKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
       if( msgKeys.length == 0 ){
 	println("Sorry, No containers are available in the Metadata")
@@ -988,7 +936,7 @@ object TestMetadataAPI{
 
   def GetAllModelsFromStore{
     try{
-      logger.setLevel(Level.TRACE);
+      //logger.setLevel(Level.TRACE);  //check again
       val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
       if( modKeys.length == 0 ){
 	println("Sorry, No models are available in the Metadata")
@@ -1009,7 +957,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-        logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+        logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
@@ -1017,7 +965,7 @@ object TestMetadataAPI{
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-        logger.fatal("No json container files in the directory " + dirName)
+        logger.error("No json container files in the directory " + dirName)
         return
       }
 
@@ -1047,19 +995,19 @@ object TestMetadataAPI{
             return
           }
           if( choice < 1 || choice > contFiles.length + 1 ){
-            logger.fatal("Invalid Choice : " + choice)
+            logger.error("Invalid Choice : " + choice)
             return
           }
 
           val contDefFile = contFiles(choice-1).toString
-          logger.setLevel(Level.TRACE);
+          //logger.setLevel(Level.TRACE);  //check again
           val contStr = Source.fromFile(contDefFile).mkString
-          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+        //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
           val res : String = MetadataAPIImpl.UpdateContainer(contStr,"JSON")
           results += Tuple3(choice.toString, contDefFile, res)
         })
       } else {
-        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
 
@@ -1083,7 +1031,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-	logger.info("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if ( ! IsValidDir(dirName) ){
@@ -1091,7 +1039,7 @@ object TestMetadataAPI{
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( contFiles.length == 0 ){
-		logger.fatal("No json container files in the directory " + dirName)
+		logger.error("No json container files in the directory " + dirName)
 		return
       }
 
@@ -1121,19 +1069,19 @@ object TestMetadataAPI{
 		    	   return
 		       }
 		       if( choice < 1 || choice > contFiles.length + 1 ){
-					logger.fatal("Invalid Choice : " + choice)
+					logger.error("Invalid Choice : " + choice)
 					return
 		       }
 
 		       val contDefFile = contFiles(choice-1).toString
-    		   logger.setLevel(Level.TRACE);
+    		   //logger.setLevel(Level.TRACE);  //check again
 		       val contStr = Source.fromFile(contDefFile).mkString
-    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		  // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
     		   val res : String = MetadataAPIImpl.AddContainer(contStr,"JSON")
     		   results += Tuple3(choice.toString, contDefFile, res)
     	  })
       } else {
-          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
 
@@ -1171,7 +1119,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-        logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+        logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1179,7 +1127,7 @@ object TestMetadataAPI{
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
-        logger.fatal("No json message files in the directory " + dirName)
+        logger.error("No json message files in the directory " + dirName)
         return
       }
       println("\nPick a Message Definition file(s) from below choices\n")
@@ -1209,19 +1157,19 @@ object TestMetadataAPI{
             return
           }
           if( choice < 1 || choice > msgFiles.length + 1 ){
-            logger.fatal("Invalid Choice : " + choice)
+            logger.error("Invalid Choice : " + choice)
             return
           }
 
           val msgDefFile = msgFiles(choice-1).toString
-          logger.setLevel(Level.TRACE);
+          //logger.setLevel(Level.TRACE);  //check again
           val msgStr = Source.fromFile(msgDefFile).mkString
-          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+       //   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
           val res : String = MetadataAPIImpl.UpdateMessage(msgStr,"JSON")
           results += Tuple3(choice.toString, msgDefFile, res)
         })
       } else {
-        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
 
@@ -1242,7 +1190,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-	logger.info("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1250,7 +1198,7 @@ object TestMetadataAPI{
 
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( msgFiles.length == 0 ){
-	logger.fatal("No json message files in the directory " + dirName)
+	logger.error("No json message files in the directory " + dirName)
 	return
       }
       println("\nPick a Message Definition file(s) from below choices\n")
@@ -1280,19 +1228,19 @@ object TestMetadataAPI{
 		    	   return
 		       }
 		       if( choice < 1 || choice > msgFiles.length + 1 ){
-					logger.fatal("Invalid Choice : " + choice)
+					logger.error("Invalid Choice : " + choice)
 					return
 		       }
 
 		       val msgDefFile = msgFiles(choice-1).toString
-    		   logger.setLevel(Level.TRACE);
+    		   //logger.setLevel(Level.TRACE);  //check again
 		       val msgStr = Source.fromFile(msgDefFile).mkString
-    		   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    		//   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
     		   val res : String = MetadataAPIImpl.AddContainer(msgStr,"JSON")
     		   results += Tuple3(choice.toString, msgDefFile, res)
     	  })
       } else {
-          logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
           return
       }
 
@@ -1316,7 +1264,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-        logger.info("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
+        logger.debug("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
       }
 
       if(!IsValidDir(dirName))
@@ -1324,7 +1272,7 @@ object TestMetadataAPI{
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if(pmmlFiles.length == 0) {
-        logger.fatal("No model files in the directory " + dirName)
+        logger.error("No model files in the directory " + dirName)
         return
       }
 
@@ -1343,14 +1291,15 @@ object TestMetadataAPI{
         return
 
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-        logger.fatal("Invalid Choice: " + choice)
+        logger.error("Invalid Choice: " + choice)
         return
       }
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      println(pmmlStr)
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr))
     } catch {
       case e: Exception => {
@@ -1364,7 +1313,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1372,7 +1321,7 @@ object TestMetadataAPI{
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       if ( pmmlFiles.length == 0 ){
-	logger.fatal("No model files in the directory " + dirName)
+	logger.error("No model files in the directory " + dirName)
 	return
       }
 
@@ -1391,14 +1340,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1416,7 +1365,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1424,7 +1373,7 @@ object TestMetadataAPI{
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
+	logger.error("No config files in the directory " + dirName)
 	return
       }
 
@@ -1443,14 +1392,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1468,7 +1417,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
-	logger.info("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1476,7 +1425,7 @@ object TestMetadataAPI{
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( cfgFiles.length == 0 ){
-	logger.fatal("No config files in the directory " + dirName)
+	logger.error("No config files in the directory " + dirName)
 	return
       }
 
@@ -1495,14 +1444,14 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > cfgFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       cfgFilePath = cfgFiles(choice-1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr))
     }catch {
       case e: AlreadyExistsException => {
@@ -1520,7 +1469,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
       if ( dirName == null  ){
 	dirName = "/tmp/OnLEPInstall"
-	logger.info("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1528,7 +1477,7 @@ object TestMetadataAPI{
 
       val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
       if ( jarFiles.length == 0 ){
-	logger.fatal("No jar files in the directory " + dirName)
+	logger.error("No jar files in the directory " + dirName)
 	return
       }
 
@@ -1547,13 +1496,13 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > jarFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
       jarFilePath = jarFiles(choice-1).toString
       // Save the jar
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath))
     }catch {
       case e: AlreadyExistsException => {
@@ -1571,7 +1520,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
-	logger.info("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1579,7 +1528,7 @@ object TestMetadataAPI{
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( functionFiles.length == 0 ){
-	logger.fatal("No function files in the directory " + dirName)
+	logger.error("No function files in the directory " + dirName)
 	return
       }
 
@@ -1598,7 +1547,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > functionFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1607,8 +1556,8 @@ object TestMetadataAPI{
       val functionStr = Source.fromFile(functionFilePath).mkString
       //MdMgr.GetMdMgr.truncate("FunctionDef")
       val apiResult = MetadataAPIImpl.AddFunctions(functionStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Function Already in the metadata....")
@@ -1621,10 +1570,9 @@ object TestMetadataAPI{
 
   def DumpAllFunctionsAsJson{
     try{
-      val (fcnCount, apiResult) : (Int, String) = MetadataAPIImpl.GetAllFunctionDefs("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println(s"$fcnCount Functions are available => \n$resultData")
-      println(s"Functions available = $fcnCount")
+      val apiResult = MetadataAPIImpl.GetAllFunctionDefs("JSON")
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1640,7 +1588,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
-	logger.info("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1648,7 +1596,7 @@ object TestMetadataAPI{
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( conceptFiles.length == 0 ){
-	logger.fatal("No concept files in the directory " + dirName)
+	logger.error("No concept files in the directory " + dirName)
 	return
       }
 
@@ -1667,7 +1615,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > conceptFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1676,14 +1624,15 @@ object TestMetadataAPI{
       val conceptStr = Source.fromFile(conceptFilePath).mkString
       MdMgr.GetMdMgr.truncate("ConceptDef")
       val apiResult = MetadataAPIImpl.AddConcepts(conceptStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+	      //check again
+        e.printStackTrace()
       }
     }
   }
@@ -1691,8 +1640,8 @@ object TestMetadataAPI{
   def DumpAllConceptsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1705,7 +1654,7 @@ object TestMetadataAPI{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if ( dirName == null  ){
 	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
-	logger.info("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	logger.debug("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
@@ -1713,7 +1662,7 @@ object TestMetadataAPI{
 
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       if ( typeFiles.length == 0 ){
-	logger.fatal("No type files in the directory " + dirName)
+	logger.error("No type files in the directory " + dirName)
 	return
       }
 
@@ -1732,7 +1681,7 @@ object TestMetadataAPI{
 	return
       }
       if( choice < 1 || choice > typeFiles.length + 1 ){
-	  logger.fatal("Invalid Choice : " + choice)
+	  logger.error("Invalid Choice : " + choice)
 	  return
       }
 
@@ -1741,8 +1690,8 @@ object TestMetadataAPI{
       val typeStr = Source.fromFile(typeFilePath).mkString
       //MdMgr.GetMdMgr.truncate("TypeDef")
       val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println(s"Status Code = $statusCode \nResult as Json String => \n$resultData")
+   //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Type Already in the metadata....")
@@ -1792,8 +1741,8 @@ object TestMetadataAPI{
       }
 
       val apiResult = MetadataAPIImpl.GetAllTypesByObjType("JSON",selectedType)
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => " + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => " + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1804,8 +1753,8 @@ object TestMetadataAPI{
   def DumpAllNodesAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllNodes("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1816,8 +1765,8 @@ object TestMetadataAPI{
   def DumpAllClusterCfgsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1828,8 +1777,8 @@ object TestMetadataAPI{
   def DumpAllClustersAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllClusters("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+     // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1840,8 +1789,8 @@ object TestMetadataAPI{
   def DumpAllAdaptersAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+    //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1852,8 +1801,8 @@ object TestMetadataAPI{
   def DumpAllCfgObjectsAsJson{
     try{
       val apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
-      val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
-      println("Result as Json String => \n" + resultData)
+  //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+      println("Result as Json String => \n" + apiResult)
     } catch{
       case e: Exception => {
 	e.printStackTrace()
@@ -1868,14 +1817,14 @@ object TestMetadataAPI{
   }
 
   def DumpMetadata{
-    MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+  //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     MdMgr.GetMdMgr.dump
-    MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
-  }
+  //  MdMgr.GetMdMgr.SetLoggerLevel(Level.ERROR)
+  }    
 
   def initModCompilerBootstrap{
     MdMgr.GetMdMgr.truncate
-    logger.setLevel(Level.ERROR);
+   // logger.setLevel(Level.ERROR);
     val mdLoader = new MetadataLoad(MdMgr.GetMdMgr, "","","","")
     mdLoader.initialize
   }
@@ -1883,7 +1832,7 @@ object TestMetadataAPI{
   def TestChill[T <: BaseElemDef](obj: List[T]) {
     val items = obj;
 
-    logger.trace("Serializing " + obj.length + " objects ")
+    logger.debug("Serializing " + obj.length + " objects ")
     val instantiator = new ScalaKryoInstantiator
     instantiator.setRegistrationRequired(false)
 
@@ -1895,7 +1844,7 @@ object TestMetadataAPI{
     val input = new Input(baos.toByteArray)
     val deser = kryo.readObject(input, classOf[List[T]])
 
-    logger.trace("DeSerialized " + deser.length + " objects ")
+    logger.debug("DeSerialized " + deser.length + " objects ")
     assert(deser.length == obj.length)
   }
 
@@ -1904,7 +1853,7 @@ object TestMetadataAPI{
     val msgDefs = MdMgr.GetMdMgr.Types(true,true)
     msgDefs match{
       case None => {
-	logger.trace("No Messages found ")
+	logger.debug("No Messages found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1917,11 +1866,11 @@ object TestMetadataAPI{
   def TestSerialize1(serializeType:String) = {
     //MetadataAPIImpl.InitMdMgrFromBootStrap
     var serializer = SerializerManager.GetSerializer(serializeType)
-    serializer.SetLoggerLevel(Level.TRACE)
+   // serializer.SetLoggerLevel(Level.TRACE)
     val modelDefs = MdMgr.GetMdMgr.Models(true,true)
     modelDefs match{
       case None => {
-	logger.trace("No Models found ")
+	logger.debug("No Models found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1931,11 +1880,11 @@ object TestMetadataAPI{
 	  val m1 = serializer.DeserializeObjectFromByteArray(ba,m.getClass().getName()).asInstanceOf[ModelDef]
 	  val preJson  = JsonSerializer.SerializeObjectToJson(m);
 	  val postJson = JsonSerializer.SerializeObjectToJson(m1);
-	  logger.trace("Length of pre  Json string => " + preJson.length)
-	  logger.trace("Length of post Json string => " + postJson.length)
+	  logger.debug("Length of pre  Json string => " + preJson.length)
+	  logger.debug("Length of post Json string => " + postJson.length)
 
-	  logger.trace("Json Before Any Serialization => " + preJson)
-	  logger.trace("Json After  Serialization/DeSerialization => " + postJson)
+	  logger.debug("Json Before Any Serialization => " + preJson)
+	  logger.debug("Json After  Serialization/DeSerialization => " + postJson)
 	  //assert(preJson == postJson)
 	})
       }
@@ -1944,7 +1893,7 @@ object TestMetadataAPI{
 
   def TestGenericProtobufSerializer = {
     val serializer = new ProtoBufSerializer
-    serializer.SetLoggerLevel(Level.TRACE)
+   // serializer.SetLoggerLevel(Level.TRACE)
     val a = MdMgr.GetMdMgr.MakeConcept("System","concept1","System","Int",1,false)
     //val ba = serializer.SerializeObjectToByteArray1(a)
     //val o = serializer.DeserializeObjectFromByteArray1(ba)
@@ -1973,7 +1922,7 @@ object TestMetadataAPI{
     val modelDefs = MdMgr.GetMdMgr.Models(true,true)
     modelDefs match{
       case None => {
-	logger.trace("No Models found ")
+	logger.debug("No Models found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -1991,7 +1940,7 @@ object TestMetadataAPI{
     val msgDefs = MdMgr.GetMdMgr.Messages(true,true)
     msgDefs match{
       case None => {
-	logger.trace("No Msgs found ")
+	logger.debug("No Msgs found ")
       }
       case Some(ms) => {
 	val msa = ms.toArray
@@ -2012,7 +1961,7 @@ object TestMetadataAPI{
     }
     catch{
       case e:Exception => {
-	logger.trace("Failed to save the object : " + e.getMessage())
+	logger.debug("Failed to save the object : " + e.getMessage())
       }
     }
   }
@@ -2170,14 +2119,43 @@ object TestMetadataAPI{
     }
   }
 
+  def TestCheckAuth: Unit = {
+    MetadataAPIImpl.checkAuth(Some("lonestarr"),Some("vespa"),Some("goodguy"),"winnebago:drive:eagle5")
+  }
+
+  def TestCheckAuth1: Unit = {
+    MetadataAPIImpl.checkAuth(Some("Pete Minsky"),Some("readwrite"),Some("ReadwriteUsers"),"winnebago:drive:eagle5")
+  }
+
+  def TestLogAuditRec: Unit = {
+    MetadataAPIImpl.logAuditRec(Some("lonestarr"),Some("write"),"Create Model Started","system.copdriskassessment.100","success","-1","Initiated operation")
+  }
+
+  def TestGetAuditRec: Unit = {
+    MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
+  }
+
+  def TestGetAuditRec1: Unit = {
+    val filterParameters = new Array[String](1)
+    filterParameters(0) = "20150320000000"
+    MetadataAPIImpl.getAuditRec(filterParameters)
+  }
+
+  def TestGetAuditRec2: Unit = {
+    val filterParameters = new Array[String](2)
+    filterParameters(0) = "20150320000000"
+    filterParameters(1) = "20150323000000"
+    MetadataAPIImpl.getAuditRec(filterParameters)
+  }
+
   def main(args: Array[String]){
     try{
-      logger.setLevel(Level.TRACE);
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      serializer.SetLoggerLevel(Level.TRACE)
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
-      GetDependentMessages.SetLoggerLevel(Level.TRACE)
+      //logger.setLevel(Level.TRACE);  //check again
+    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+    //  serializer.SetLoggerLevel(Level.TRACE)
+    //  JsonSerializer.SetLoggerLevel(Level.TRACE)
+    //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {

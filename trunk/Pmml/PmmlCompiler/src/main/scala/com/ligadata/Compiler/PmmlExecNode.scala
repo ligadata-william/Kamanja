@@ -620,7 +620,7 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 
 				if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN && ctx.fcnTypeInfoStack.nonEmpty) {
 					val fcnTypeInfo : FcnTypeInfo = ctx.fcnTypeInfoStack.top
-					logger.trace(s"finished printing apply function $function... popping FcnTypeInfo : \n${fcnTypeInfo.toString}")
+					logger.debug(s"finished printing apply function $function... popping FcnTypeInfo : \n${fcnTypeInfo.toString}")
 					ctx.fcnTypeInfoStack.pop
 				} 
 				

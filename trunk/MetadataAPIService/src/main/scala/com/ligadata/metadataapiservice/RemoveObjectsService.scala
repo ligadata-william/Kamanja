@@ -9,7 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
-
+import com.ligadata.olep.metadata._
 import scala.util.control._
 
 import org.apache.log4j._
@@ -18,7 +18,7 @@ object RemoveObjectsService {
 	case class Process(apiArgListJson: String)
 }
 
-class RemoveObjectsService(requestContext: RequestContext) extends Actor {
+class RemoveObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import RemoveObjectsService._
   
@@ -29,7 +29,7 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+  //logger.setLevel(Level.TRACE);
 
   val APIName = "RemoveObjects"
 
@@ -45,6 +45,7 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
     var version = "-1"
     var formatType = "JSON"
     var apiResult:String = ""
+    var objType = ""
 
     if( arg.NameSpace != null ){
       nameSpace = arg.NameSpace
@@ -54,6 +55,16 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
     }
     if( arg.FormatType != null ){
       formatType = arg.FormatType
+    }
+    if (arg.ObjectType != null) {
+      objType = arg.ObjectType
+    }
+      
+    
+    val objectName = (nameSpace + "."+ arg.Name +"."+ version).toLowerCase
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,objType,AuditConstants.FAIL,"",objectName)
+        return new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString
     }
 
     arg.ObjectType match {
@@ -76,11 +87,13 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
 	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toLong)
       }
     }
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",objectName)
+    apiResult
   }
 
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
@@ -94,24 +107,25 @@ class RemoveObjectsService(requestContext: RequestContext) extends Actor {
       loop.breakable{
         arguments.foreach(arg => {
           if(arg.ObjectType == null ) {
-            deletedObjects +:= APIName + ":Error: The value of object type can't be null"
+            deletedObjects +:= ":Error: The value of object type can't be null"
             finalRC = -1 
+            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else if(arg.Name == null ) {
-            deletedObjects +:= APIName + ":Error: The value of object name can't be null"
+            deletedObjects +:= ":Error: The value of object name can't be null"
             finalRC = -1
+            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else {
             val iResult = RemoveObjectDef(arg)
-            val (iStatusCode,iResultData) = MetadataAPIImpl.getApiResult(iResult)
-            if (iStatusCode == 0)  deletedObjects +:= iResultData else finalRC = -1
+            val apiResultStr = MetadataAPIImpl.getApiResult(iResult)
+            finalAPIResult = apiResultStr
           }
         })
       }
-      finalAPIResult = (new ApiResult(finalRC, "Deleted Objects", deletedObjects.mkString(","))).toString
     }
     else{
-      finalAPIResult = (new ApiResult(-1, "Deleted Objects", APIName + ":No arguments passed to the API, nothing much to do")).toString
+      finalAPIResult = (new ApiResult(-1, APIName, null, "Error:No arguments passed to the API, nothing much to do")).toString
     }
     requestContext.complete(finalAPIResult)
   }

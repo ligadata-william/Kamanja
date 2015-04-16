@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+# This utility is written in python (tested under centos 6.x, python 2.6.6)
+# mcurl takes an additional argument as compared to curl command
+# The additional argument is "-n list-of-nodes", see the example below
+# This utility need to be improved to check for many possible errors
+# The OptionParser in Python is very complex library and please review
+# python documentation for extensive details
+# 
+# Usage: mcurl -n <nodelist> -k -X <hhtp_req_type> -H "Content-Type: aplication/json" -H "userid: <userid>" -H "password: <password>" -H "role: <role>" -n <node_list> <url>
+# Example: mcurl -k -X GET -H "Content-Type: aplication/json" -H "userid: lonestarr" -H "password: password" -H "role: goodguy" -n localhost:6541,localhost:6542 https://localhost:6541/api/audit_log/20150323
+
+import sys
+from optparse import OptionParser
+
+from subprocess import Popen, PIPE
+
+def main():
+   parser = OptionParser()
+   parser.add_option("-k",nargs=0)
+   parser.add_option('-X',nargs=1)
+   parser.add_option('-H',action='append')
+   parser.add_option('-d',nargs=1)
+   parser.add_option('-n',nargs=1)
+
+   (options,args) = parser.parse_args()
+
+   d = vars(options)
+   http_req = d['X']
+   headers = d['H']
+   infile = d['d']
+   userid = d['H'][1].split(':')[1]
+   password = d['H'][2].split(':')[1]
+   role = d['H'][3].split(':')[1]
+   nodelist = d['n']
+
+   url = args[0]
+
+   if nodelist != None:
+      cmd = 'getLeader -n %s -u %s -p %s -r %s' % (nodelist,userid,password,role)
+      print cmd
+      p = Popen(cmd , shell=True, stdout=PIPE, stderr=PIPE)
+      out, err = p.communicate()
+      if p.returncode == 0:
+         url_tokens = url.split('/')
+         apiFunc = '/'.join(url_tokens[3:])
+         cmd1 = 'curl -k -X %s -H "Content-Type: application/json" -H "userid: %s" -H "password: %s" -H "role: %s" https://%s/%s' % (http_req,userid,password,role,out.rstrip(),apiFunc)
+         print cmd1
+         p = Popen(cmd1 , shell=True, stdout=PIPE, stderr=PIPE)
+         out, err = p.communicate()
+         if p.returncode == 0:
+            print out.rstrip()
+
+if __name__ == "__main__":
+   rc = main()

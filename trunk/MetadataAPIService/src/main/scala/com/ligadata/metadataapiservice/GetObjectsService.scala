@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
+import com.ligadata.olep.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -17,7 +18,7 @@ object GetObjectsService {
 	case class Process(apiArgListJson: String)
 }
 
-class GetObjectsService(requestContext: RequestContext) extends Actor {
+class GetObjectsService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
   import GetObjectsService._
   
@@ -28,7 +29,7 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
   
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
+ // logger.setLevel(Level.TRACE);
 
   val APIName = "GetObjects"
 
@@ -40,19 +41,30 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
 
   def GetObjectDef(arg: MetadataApiArg): String = {
     var resultStr:String = ""
-    var nameSpace = "str"
+    var nameSpace = "system"
     var version = "-1"
+    var name = ""
     var formatType = "JSON"
     var apiResult:String = ""
 
+    // Extract the object name from the args var
     if( arg.NameSpace != null ){
       nameSpace = arg.NameSpace
     }
     if( arg.Version != null ){
       version = arg.Version
     }
+    if (arg.Name != null) {
+      name = arg.Name
+    }
     if( arg.FormatType != null ){
       formatType = arg.FormatType
+    }
+    
+    val objectName = (nameSpace + arg.Name + version).toLowerCase
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
+	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
+	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString
     }
 
     arg.ObjectType match {
@@ -75,12 +87,13 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
       }
     }
+    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",nameSpace+"."+name+"."+version)
     apiResult
   }
 
   def process(apiArgListJson: String) = {
     
-    logger.trace(APIName + ":" + apiArgListJson)
+    logger.debug(APIName + ":" + apiArgListJson)
 
     val apiArgList = JsonSerializer.parseApiArgList(apiArgListJson)
     val arguments = apiArgList.ArgList
@@ -88,26 +101,26 @@ class GetObjectsService(requestContext: RequestContext) extends Actor {
 
     if ( arguments.length > 0 ){
       var loop = new Breaks
-      loop.breakable{
-	arguments.foreach(arg => {
-	  if(arg.ObjectType == null ){
-	    resultStr = APIName + ":Error: The value of object type can't be null"
-	    loop.break
-	  }
-	  if(arg.Name == null ){
-	    resultStr = APIName + ":Error: The value of object name can't be null"
-	    loop.break
-	  }
-	  else {
-	    resultStr = resultStr + GetObjectDef(arg)
-	  }
-	})
+      loop.breakable {
+	      arguments.foreach(arg => {
+	        if (arg.ObjectType == null ) {
+	          resultStr = APIName + ":Error: The value of object type can't be null"
+	          loop.break
+	        } 
+          
+          if (arg.Name == null ) {
+	          resultStr = APIName + ":Error: The value of object name can't be null"
+	          loop.break
+	        } else {
+	          resultStr = resultStr + GetObjectDef(arg)
+	        }
+	      })
       }
-    }
-    else{
+    } else {
       resultStr = APIName + ":No arguments passed to the API, nothing much to do"
     }
-    logger.trace("resultStr => " + resultStr)
+    
+    logger.debug("resultStr => " + resultStr)
     requestContext.complete(resultStr)
   }
 }
