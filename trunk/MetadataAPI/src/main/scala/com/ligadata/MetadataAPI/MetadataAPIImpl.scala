@@ -145,6 +145,7 @@ object MetadataAPIImpl extends MetadataAPI {
   var auditObj: AuditAdapter = null
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
+  var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
@@ -5537,10 +5538,12 @@ object MetadataAPIImpl extends MetadataAPI {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
 
+    initZkListener
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
-    initZkListener
+    isInitilized = true
+    logger.info("Metadata synching is now available.")
     
   }
   
@@ -5571,7 +5574,10 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def shutdownZkListener: Unit = {
     try {
-      zkListener.Shutdown  
+      CloseZKSession
+      if (zkListener != null) {
+        zkListener.Shutdown
+      }
     } catch {
         case e: Exception => {
           logger.error("Error trying to shutdown zookeeper listener.  ")
@@ -5587,9 +5593,9 @@ object MetadataAPIImpl extends MetadataAPI {
   def UpdateMetadata(receivedJsonStr: String): Unit = {
     logger.debug("Process ZooKeeper notification " + receivedJsonStr)
 
-    if (receivedJsonStr == null || receivedJsonStr.size == 0) {
+    if (receivedJsonStr == null || receivedJsonStr.size == 0 || !isInitilized) {
       // nothing to do
-      logger.info("Unexpected null message from zookeeper")
+      logger.info("Metadata synching is not available.")
       return
     }
 
