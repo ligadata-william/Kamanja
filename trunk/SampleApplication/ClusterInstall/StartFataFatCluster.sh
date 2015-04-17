@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# StartOnLEPCluster.sh
+# StartFataFatCluster.sh
 #
-#	NOTE: This script must currently be run from a trunk directory that contains the build installed on the cluster to be run.
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StartOnLEPCluster.sh --ClusterId <cluster name identifer> "
-    echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
+    echo "      StartFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "                           --MetadataAPIConfig  <metadataAPICfgPath> "
     echo 
     echo "  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
     echo "         the appropriate metadata store.  For "
@@ -62,7 +61,7 @@ workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
 
 echo "...extract node information for the cluster to be started from the Metadata configuration information supplied"
 
@@ -92,18 +91,24 @@ while read LINE; do
     targetPath=$LINE
     echo "quartet = $machine, $id, $cfgFile, $targetPath"
     echo "...On machine $machine, starting FataFat node with configuration $cfgFile for nodeId $id to $machine:$targetPath"
-    #scp "$cfgFile" "$machine:$targetPath/"
-	ssh -T $machine  <<-EOF
+    nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+    pidfile=node$id.pid
+     #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
+	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
 	        cd $targetPath
-	        nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g'`
-	        java -jar "$installDir/lib/system/OnLEPManager-1.0" --config "./$nodeCfg" & 
-            sleep 5
-            fatafatpid = $!
+	        echo "nodeCfg=$nodeCfg"
+#		echo "<PASSWD>" | kinit <USERID>
+	        java -jar "$installDir/bin/OnLEPManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
             if [ ! -d "$installDir/run" ]; then
                 mkdir "$installDir/run"
             fi
-            echo "$fatafatpid" > "$installDir/run/node$id.pid"
+                ps aux | grep "OnLEPManager-1.0" | grep -v "grep" | tr -s " " | cut -d " " -f2 > "$installDir/run/$pidfile"
+#            sleep 5
 EOF
+
+#ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "OnLEPManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
+# scp  -o StrictHostKeyChecking=no   $workDir/temppid.pid "$machine:$installDir/run/node$id.pid"
+
 done
 exec 0<&12 12<&-
 

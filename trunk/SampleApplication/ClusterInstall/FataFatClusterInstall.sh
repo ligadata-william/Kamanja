@@ -46,23 +46,25 @@ name1=$1
 
 Usage()
 {
-    echo 
+    echo
+    echo "Install a Fatafat cluster from source or tarball."
+    echo
     echo "Usage if building from source:"
     echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
     echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --KafkaInstallPath <kafka location>"
-    echo "                               [ --NodeConfigPath <engine config path> ]"
+    echo "                               --NodeConfigPath <engine config path> "
     echo "                               [ --WorkingDir <alt working dir>  ]"
     echo "Usage if deploying tarball:"
     echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
     echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --TarballPath <tarball path>"
-    echo "                               [ --NodeConfigPath <engine config path> ]"
+    echo "                               --NodeConfigPath <engine config path> "
     echo "                               [ --WorkingDir <alt working dir>  ]"
     echo 
     echo "  NOTES: Only tar'd gzip files are supported for the tarballs at the moment."
-    echo "         If the NodeConfigPath is not supplied, the MetadataAPIConfig will be assumed to already have the cluster information"
-    echo "         in it.  The working directory, by default, is /tmp.  If such a public location is abhorrent, chose a private one.  It"
+    echo "         NodeConfigPath must be supplied always"
+    echo "         The working directory, by default, is /tmp.  If such a public location is abhorrent, chose a private one.  It"
     echo "         must be an existing directory and readable by this script, however"
     echo "         If both the KafkaInstallPath and the TarballPath are specified, the script fails."
     echo "         If neither the KafkaInstallPath or TarballPath  is supplied, the script will fail. "
@@ -136,16 +138,16 @@ done
 # Check 3: Is this even close to reasonable?
 currDirPath=`pwd`
 currDir=`echo "$currDirPath" | sed 's/.*\/\(.*\)/\1/g'`
-if [ "$currDir" != "trunk" -a "$tarballPath" ]; then
-    echo 
-    echo "Problem: Currently if building installation from source, this script must be run from the trunk directory of the "
-    echo "valid local git repo containing the desired software version."
-    echo
-    echo "This is the current directory : $currDir"
-    echo
-    Usage
-    exit 1
-fi
+#if [ "$currDir" != "trunk" -a "$tarballPath" != "" ]; then
+#	echo 
+#	echo "Problem: Currently if building installation from source, this script must be run from the trunk directory of the "
+#	echo "valid local git repo containing the desired software version."
+#	echo
+#	echo "This is the current directory : $currDir"
+#	echo
+#	Usage
+#	exit 1
+#fi
 
 
 
@@ -176,6 +178,9 @@ if [ -z "$workDirHasLeadSlash" ]; then
     Usage
     exit 1
 fi
+
+# Creating working directory
+mkdir -p $workDir
 
 # Check 7: working directory must exist
 if [ ! -d "$workDir" ]; then
@@ -232,10 +237,15 @@ fi
 if [ -n "$nodeConfigPath" ]; then
     if [ ! -f "$nodeConfigPath" ]; then
         echo 
-        echo "Problem: The supplied (optional) NodeConfigPath $nodeConfigPath doesn't exist... please refer to a valid node configuration file"
+        echo "Problem: The supplied NodeConfigPath $nodeConfigPath doesn't exist... please refer to a valid node configuration file"
         Usage
         exit 1
     fi
+else
+        echo 
+        echo "Problem: NodeConfigPath was not supplied. Please refer to a valid node configuration file"
+        Usage
+        exit 1
 fi
 
 # Check 14: There must be a clusterId, and if a nodeConfigPath is specified, it must be the same value as the ClusterId value found there
@@ -275,13 +285,13 @@ dtPrefix="FataFat`date +"%Y%b%d"`"
 tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
-installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+installDirName=`echo $installDir | sed 's/.*\/\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
 if [ -z "$tarballPath" ]; then
-    # 1 build the installation in the staging directory
-    stagingDir="$workDir/$installDirName"
-    mkdir -p "$stagingDir"
-    echo "...build the FataFat installation directory in $stagingDir"
+	# 1 build the installation in the staging directory
+	stagingDir="$workDir/$installDirName"
+	mkdir -p "$stagingDir"
+	echo "...build the FataFat installation directory in $stagingDir"
 
     # use the install directory given in the metadataAPI config file's ROOT_DIR's value
     # we will use assume the current user's .ivy2 directory for the deps and the `pwd` for the build directory.
@@ -309,26 +319,47 @@ ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
 
 echo "...extract node information for the cluster to be installed from the Metadata configuration and optional node information supplied"
 if  [ -n "$nodeCfgGiven" ]; then
-    echo "...Command = NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-    NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --NodeConfigPath $nodeConfigPath --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
-    # Check 15: Bad NodeInfoExtract-1.0 arguments
-    if [ "$?" -ne 0 ]; then
-        echo
-        echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
-        Usage
-        exit 1
-    fi
+	echo "metadataAPIConfig = $metadataAPIConfig"
+	echo "nodeConfigPath = $nodeConfigPath"
+	echo "workDir = $workDir"
+	echo "ipFile = $ipFile"
+	echo "ipPathPairFile = $ipPathPairFile"
+	echo "ipIdCfgTargPathQuartetFileName = $ipIdCfgTargPathQuartetFileName"
+	echo "installDir = $installDir"
+	echo "clusterId = $clusterId"
+	echo "...Command = NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --NodeConfigPath \"$nodeConfigPath\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
+	NodeInfoExtract-1.0 --MetadataAPIConfig "$metadataAPIConfig" --NodeConfigPath "$nodeConfigPath" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"  --installDir "$installDir" --clusterId "$clusterId"
+	# Check 15: Bad NodeInfoExtract-1.0 arguments
+	if [ "$?" -ne 0 ]; then
+		echo
+		echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
+		Usage
+		exit 1
+	fi
 else # info is assumed to be present in the supplied metadata store... see trunk/utils/NodeInfoExtract for details 
-    echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
-        NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
-    # Check 15: Bad NodeInfoExtract-1.0 arguments
-    if [ "$?" -ne 0 ]; then
-        echo
-        echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
-        Usage
-        exit 1
-    fi
+	echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 --MetadataAPIConfig \"$metadataAPIConfig\" --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\" --installDir \"$installDir\" --clusterId \"$clusterId\""
+		NodeInfoExtract-1.0 --MetadataAPIConfig $metadataAPIConfig --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName" --installDir "$installDir" --clusterId "$clusterId"
+	# Check 15: Bad NodeInfoExtract-1.0 arguments
+	if [ "$?" -ne 0 ]; then
+		echo
+		echo "Problem: Invalid arguments supplied to the NodeInfoExtract-1.0 application... unable to obtain node configuration... exiting."
+		Usage
+		exit 1
+	fi
 fi
+
+echo "...creating directories to copy the tarball to the machines in this cluster"
+exec 12<&0 # save current stdin
+exec < "$workDir/$ipFile"
+while read LINE; do
+    machine=$LINE
+    echo "...creating directory $machine:$workDir"
+    ssh -o StrictHostKeyChecking=no -T $machine <<-EOF
+        mkdir -p $workDir
+EOF
+ done
+exec 0<&12 12<&-
+
 
 # 4) Push the tarballs to each machine defined in the supplied configuration
 echo "...copy the tarball to the machines in this cluster"
@@ -336,11 +367,12 @@ exec 12<&0 # save current stdin
 exec < "$workDir/$ipFile"
 while read LINE; do
     machine=$LINE
-    echo "...copying $tarName to $machine"
-    ssh $machine "mkdir -p $workDir"
-    scp "$tarballPath" "$machine:$workDir/$tarName"
+    echo "...copying $tarName to $machine:$workDir/$tarName"
+    scp -o StrictHostKeyChecking=no "$tarballPath" "$machine:$workDir/$tarName"
 done
 exec 0<&12 12<&-
+
+echo "...copy is done"
 
 echo
 
@@ -353,7 +385,7 @@ while read LINE; do
     read LINE
     targetPath=$LINE
     echo "Extract the tarball $tarName and copy it to $targetPath iff $workDir/$installDirName != $targetPath"
-	ssh -T $machine  <<-EOF
+	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
 	        cd $workDir
             rm -Rf $targetPath
 	        tar xzf $tarName
@@ -381,12 +413,29 @@ while read LINE; do
     targetPath=$LINE
     echo "quartet = $machine, $id, $cfgFile, $targetPath"
     echo "...copying $cfgFile for nodeId $id to $machine:$targetPath"
-    scp "$cfgFile" "$machine:$targetPath/"
+    scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 done
 exec 0<&12 12<&-
 
 echo
 
+# 7) Run SetPaths.sh & Copy given Node Config File (Ex: ClusterConfig.json)
+echo "...for each machine set new paths"
+exec 12<&0 # save current stdin
+exec < "$workDir/$ipPathPairFile"
+while read LINE; do
+    machine=$LINE
+    read LINE
+    targetPath=$LINE
+    echo "Running $machine:$targetPath/SetPaths.sh"
+	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
+	        bash $targetPath/bin/SetPaths.sh
+EOF
+    scp -o StrictHostKeyChecking=no "$nodeConfigPath" "$machine:$targetPath/config/ClusterConfig.json"
+done
+exec 0<&12 12<&-
+
+echo
 
 # 8) clean up
 # echo "...clean up "
@@ -396,7 +445,7 @@ echo
 #     machine=$LINE
 #     read LINE
 #     targetPath=$LINE
-# 	ssh -T $machine  <<-EOF
+# 	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
 #			rm -f "$workDir/$tarName"
 # EOF
 # done

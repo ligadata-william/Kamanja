@@ -1,18 +1,17 @@
 #!/bin/bash
 
-# StopFataFatCluster.sh
+# StatusFataFatCluster.sh
 #
-#	NOTE: This script must currently be run from a trunk directory that contains the build installed on the cluster to be run.
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StopFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "      StatusFataFatCluster.sh --ClusterId <cluster name identifer> "
     echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo 
-    echo "  NOTES: Stop the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
-    echo "         the appropriate metadata store.  "
+    echo "  NOTES: Get status on the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to "
+    echo "         locate the appropriate metadata store.   "
     echo 
 }
 
@@ -79,7 +78,7 @@ fi
 # Start the cluster nodes using the information extracted from the metadata and supplied config.  Remember the jvm's pid in the $installDir/run
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
 # config directory where the FataFat engine config file is located.
-echo "...stopping the FataFat cluster $clusterName"
+echo "...get stuatus for the FataFat cluster $clusterName"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -91,24 +90,43 @@ while read LINE; do
     read LINE
     targetPath=$LINE
     echo "quartet = $machine, $id, $cfgFile, $targetPath"
-    echo "...On machine $machine, stopping FataFat node with configuration $cfgFile for nodeId $id to $machine:$targetPath"
     #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
     # 
     # FIXME: something more graceful than killing the jvm is desirable.
     #
     pidfile=node$id.pid
+    statusfile=ndstatus$id.txt
     scp -o StrictHostKeyChecking=no "$machine:$installDir/run/$pidfile" "$workDir/$pidfile"
     pidval=`head -1 "$workDir/$pidfile"`
 
+    statuspidcnt=0
+
+    # FIXME: We can check whether we really have pidval or not and do ssh
+
+    # Checking whether the PID is valid & our service
     if [ ! -z "$pidval" ]; then
        if [ -n "$pidval" ]; then
-            echo "Killing Pid:$pidval on $machine"
-           # FIXME: We can check whether we really have pidval or not and do ssh
-           ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-              kill -9 $pidval
+          ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
+             if [ ! -d "$installDir/run" ]; then
+                mkdir "$installDir/run"
+             fi
+             ps u -p $pidval | grep "OnLEPManager-1.0" | grep -v "grep" | wc -l > "$installDir/run/$statusfile"
+
 EOF
 
-       fi
+          scp -o StrictHostKeyChecking=no "$machine:$installDir/run/$statusfile" "$workDir/$statusfile"
+          statuspidcnt=`head -1 "$workDir/$statusfile"`
+        fi
+    fi
+
+    if [ ! -z "$statuspidcnt" ]; then
+        if [[ -n "$statuspidcnt" ]] && [[ "$statuspidcnt" -gt 0 ]]; then
+            echo "Status:UP, Node:$machine, Service:OnLEPManager"
+        else
+            echo "Status:DOWN, Node:$machine, Service:OnLEPManager"
+         fi
+    else
+         echo "Status:DOWN, Node:$machine, Service:OnLEPManager"
     fi
 
 done
