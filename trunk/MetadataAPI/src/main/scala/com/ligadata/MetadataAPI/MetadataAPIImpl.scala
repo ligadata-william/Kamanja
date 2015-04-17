@@ -184,10 +184,10 @@ object MetadataAPIImpl extends MetadataAPI {
     logger.debug("Establishing connection to domain security server..")
     val classLoader: MetadataLoader = new MetadataLoader
     // If already have one, use that!
-    if (authObj == null && (metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
+    if (authObj == null && (metadataAPIConfig.getProperty("DO_AUTH") != null) && (metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
       createAuthObj(classLoader)
     }
-    if (auditObj == null && (metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES"))) {
+    if (auditObj == null && (metadataAPIConfig.getProperty("DO_AUDIT") != null) && (metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES"))) {
       createAuditObj(classLoader)
     }
   }
