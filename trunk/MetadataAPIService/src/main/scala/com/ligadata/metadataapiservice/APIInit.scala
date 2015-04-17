@@ -30,6 +30,7 @@ object APIInit {
       databaseOpen = false;
     }
     MetadataAPIServiceLeader.Shutdown
+    MetadataAPIServiceListener.Shutdown
   }
 
   def SetConfigFile(cfgFile:String): Unit = {
@@ -41,22 +42,21 @@ object APIInit {
   }
 
   def InitLeaderLatch: Unit = {
-      // start Leader detection component
-      val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
-      val zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("API_LEADER_SELECTION_ZK_NODE")  + "/metadataleader"
-      val zkConnStr  = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
-      val sesTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_SESSION_TIMEOUT_MS").toInt
-      val conTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_CONNECTION_TIMEOUT_MS").toInt
+    // start Leader detection component
+    val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
+    var zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("API_LEADER_SELECTION_ZK_NODE")  + "/metadataleader"
+    val zkConnStr  = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
+    val sesTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_SESSION_TIMEOUT_MS").toInt
+    val conTimeOut = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZK_CONNECTION_TIMEOUT_MS").toInt
+    MetadataAPIServiceLeader.Init(nodeId,zkConnStr,zkNode,sesTimeOut,conTimeOut)
 
-      MetadataAPIServiceLeader.Init(nodeId,zkConnStr,zkNode,sesTimeOut,conTimeOut)
+    // Start Listener for metadata updates
+    zkNode     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ZNODE_PATH")  + "/metadataupdate"
+    MetadataAPIServiceListener.Init(nodeId,zkConnStr,zkNode,sesTimeOut,conTimeOut)
   }
 
   def Init : Unit = {
     try{
-      // Open db connection
-      //MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
-      //databaseOpen = true
-
       // start Leader detection component
       logger.debug("Initialize Leader Latch")
       InitLeaderLatch
