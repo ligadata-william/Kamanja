@@ -3061,6 +3061,44 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  private def getBaseType(typ: BaseTypeDef): BaseTypeDef = {
+    if (typ.tType == tMap) {
+      throw new Exception("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+    }
+    if (typ.tType == tHashMap) {
+      throw new Exception("HashMapTypeDef is not yet handled")
+    }
+    if (typ.tType == tSet) {
+      val typ1 = typ.asInstanceOf[SetTypeDef].keyDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tTreeSet) {
+      val typ1 = typ.asInstanceOf[TreeSetTypeDef].keyDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tSortedSet) {
+      val typ1 = typ.asInstanceOf[SortedSetTypeDef].keyDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tList) {
+      val typ1 = typ.asInstanceOf[ListTypeDef].valDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tQueue) {
+      val typ1 = typ.asInstanceOf[QueueTypeDef].valDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tArray) {
+      val typ1 = typ.asInstanceOf[ArrayTypeDef].elemDef
+      return getBaseType(typ1)
+    }
+    if (typ.tType == tArrayBuf) {
+      val typ1 = typ.asInstanceOf[ArrayBufTypeDef].elemDef
+      return getBaseType(typ1)
+    }
+    return typ
+  }
+
   def GetDependentModels(msgNameSpace: String, msgName: String, msgVer: Long): Array[ModelDef] = {
     try {
       val msgObj = Array(msgNameSpace, msgName, msgVer).mkString(".").toLowerCase
@@ -3076,14 +3114,16 @@ object MetadataAPIImpl extends MetadataAPI {
             logger.debug("Checking model " + mod.FullNameWithVer)
             breakable {
               mod.inputVars.foreach(ivar => {
-                if (ivar.asInstanceOf[AttributeDef].typeDef.FullName.toLowerCase == msgObjName) {
+                val baseTyp = getBaseType(ivar.asInstanceOf[AttributeDef].typeDef)
+                if (baseTyp.FullName.toLowerCase == msgObjName) {
                   logger.debug("The model " + mod.FullNameWithVer + " is  dependent on the message " + msgObj)
                   depModels = depModels :+ mod
                   break
                 }
               })
-              mod.outputVars.foreach(ivar => {
-                if (ivar.asInstanceOf[AttributeDef].typeDef.FullName.toLowerCase == msgObjName) {
+              mod.outputVars.foreach(ovar => {
+                val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
+                if (baseTyp.FullName.toLowerCase == msgObjName) {
                   logger.debug("The model " + mod.FullNameWithVer + " is a dependent on the message " + msgObj)
                   depModels = depModels :+ mod
                   break
