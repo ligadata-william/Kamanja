@@ -5566,6 +5566,20 @@ object MetadataAPIImpl extends MetadataAPI {
     }   
   }
   
+  /**
+   * shutdownZkListener - should be called by application using MetadataAPIImpl directly to disable synching of Metadata cache.
+   */
+  def shutdownZkListener: Unit = {
+    try {
+      zkListener.Shutdown  
+    } catch {
+        case e: Exception => {
+          logger.error("Error trying to shutdown zookeeper listener.  ")
+          throw e
+        }
+      }
+  }
+  
  /**
   * UpdateMetadata - This is a callback function for the Zookeeper Listener.  It will get called when we detect Metadata being updated from
   *                  a different metadataImpl service.
