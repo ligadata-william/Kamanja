@@ -5524,28 +5524,7 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
-    
-    // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
-    var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH").trim + "/metadataupdate"
-    var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING").trim
-    
-    logger.info("-----------------")
-    logger.info("-------"+zkConnectString+"----------"+zkConnectString)
-    logger.info("-----------------")
-    
-    if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
-      try {
-        CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
-        zkListener = new ZooKeeperListener
-        zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
-      } catch {
-        case e: Exception => {
-          logger.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          throw e
-        }
-      }
-    } 
-    
+    initZkListener   
   }
 
   def InitMdMgrFromBootStrap(configFile: String) {
@@ -5561,14 +5540,17 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
+    initZkListener
     
-    // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
+  }
+  
+  /**
+   * Create a listener to monitor Meatadata Cache
+   */
+  private def initZkListener: Unit = {
+     // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH").trim + "/metadataupdate"
     var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING").trim
-    
-    logger.info("*-----------------")
-    logger.info("*-------"+zkConnectString+"----------"+znodePath)
-    logger.info("*-----------------")
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
@@ -5581,12 +5563,11 @@ object MetadataAPIImpl extends MetadataAPI {
           throw e
         }
       }
-    }
-    
+    }   
   }
   
  /**
-  * UpdateMetadata - This is a callback funtion for the Zookeeper Listerner.  It will get called when we detect Metadata being updated from
+  * UpdateMetadata - This is a callback function for the Zookeeper Listener.  It will get called when we detect Metadata being updated from
   *                  a different metadataImpl service.
   */
   def UpdateMetadata(receivedJsonStr: String): Unit = {
@@ -5594,6 +5575,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
+      logger.info("Unexpected null message from zookeeper")
       return
     }
 
@@ -5601,6 +5583,9 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.UpdateMdMgr(zkTransaction)        
   }
 
+  /**
+   *  InitMdMgr - 
+   */
   def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String) {
 
     SetLoggerLevel(Level.TRACE)
