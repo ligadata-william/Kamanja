@@ -25,7 +25,7 @@ lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata)
 
 lazy val ZooKeeperClient   = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize)
 
-lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener")) dependsOn(MetadataAPI, Serialize)
+lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener")) dependsOn(ZooKeeperClient,Serialize)
 
 lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
 
@@ -61,7 +61,7 @@ lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(Pm
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener)
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(OnLEPBase,MetadataAPI,ZooKeeperLeaderLatch)
 
