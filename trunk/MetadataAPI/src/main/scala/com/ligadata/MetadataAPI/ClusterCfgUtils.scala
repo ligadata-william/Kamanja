@@ -53,7 +53,7 @@ object ClusterCfgUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 

@@ -153,7 +153,7 @@ object ModelUtils {
   }
 
   // Add Model (model def)
-  def AddModel(model: ModelDef): String = {
+  private def AddModel(model: ModelDef): String = {
     var key = model.FullNameWithVer
     try {
       DAOUtils.SaveObject(model, MdMgr.GetMdMgr)
@@ -478,34 +478,6 @@ object ModelUtils {
     GetModelDefFromCache(nameSpace,objectName,formatType,version)
   }
 
-  // check whether model already exists in metadata manager. Ideally,
-  // we should never add the model into metadata manager more than once
-  // and there is no need to use this function in main code flow
-  // This is just a utility function being during these initial phases
-  def IsModelAlreadyExists(modDef: ModelDef): Boolean = {
-    try {
-      var key = modDef.nameSpace + "." + modDef.name + "." + modDef.ver
-      val o = MdMgr.GetMdMgr.Model(modDef.nameSpace.toLowerCase,
-        modDef.name.toLowerCase,
-        modDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("model not in the cache => " + key)
-          return false;
-        case Some(m) =>
-          logger.debug("model found => " + m.asInstanceOf[ModelDef].FullNameWithVer)
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
-
   // Get the latest model for a given FullName
   def GetLatestModel(modDef: ModelDef): Option[ModelDef] = {
     try {
@@ -536,7 +508,7 @@ object ModelUtils {
   }
 
   //Get the Higher Version Model from the Set of Models
-  def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
+  private def GetLatestModelFromModels(modelSet: Set[ModelDef]): ModelDef = {
     var model: ModelDef = null
     var verList: List[Long] = List[Long]()
     var modelmap: scala.collection.mutable.Map[Long, ModelDef] = scala.collection.mutable.Map()
@@ -580,25 +552,6 @@ object ModelUtils {
       DAOUtils.DownloadJarFromDB(modDef)
       logger.debug("Add the object " + key + " to the cache ")
       Utils.AddObjectToCache(modDef, MdMgr.GetMdMgr)
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-      }
-    }
-  }
-
-  def LoadAllModelsIntoCache {
-    try {
-      val modKeys = Utils.GetAllKeys("ModelDef")
-      if (modKeys.length == 0) {
-        logger.debug("No models available in the Database")
-        return
-      }
-      modKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.modelStore)
-        val modDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        Utils.AddObjectToCache(modDef.asInstanceOf[ModelDef], MdMgr.GetMdMgr)
-      })
     } catch {
       case e: Exception => {
         e.printStackTrace()

@@ -59,7 +59,7 @@ object Utils {
   private[this] val lock = new Object
   var zkc: CuratorFramework = null
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -88,7 +88,7 @@ object Utils {
   /**
    * InitZooKeeper - Establish a connection to zookeeper
    */
-  def InitZooKeeper: Unit = {
+  private def InitZooKeeper: Unit = {
     logger.debug("Connect to zookeeper..")
     if (zkc != null) {
       // Zookeeper is already connected
@@ -108,41 +108,13 @@ object Utils {
     }
   }
 
-  // If tables are different, an internal utility function
-  def getTable(obj: BaseElemDef): String = {
-    obj match {
-      case o: ModelDef => {
-        "models"
-      }
-      case o: MessageDef => {
-        "messages"
-      }
-      case o: ContainerDef => {
-        "containers"
-      }
-      case o: FunctionDef => {
-        "functions"
-      }
-      case o: AttributeDef => {
-        "concepts"
-      }
-      case o: BaseTypeDef => {
-        "types"
-      }
-      case _ => {
-        logger.error("getTable is not implemented for objects of type " + obj.getClass.getName)
-        throw new InternalErrorException("getTable is not implemented for objects of type " + obj.getClass.getName)
-      }
-    }
-  }
-
   def getObjectType(obj: BaseElemDef): String = {
     val className = obj.getClass().getName();
     className.split("\\.").last
   }
 
 
-  def ZooKeeperMessage(objList: Array[BaseElemDef], operations: Array[String]): Array[Byte] = {
+  private def ZooKeeperMessage(objList: Array[BaseElemDef], operations: Array[String]): Array[Byte] = {
     try {
       val notification = JsonSerializer.zkSerializeObjectListToJson("Notifications", objList, operations)
       notification.getBytes

@@ -80,7 +80,7 @@ object GetDependentMessages {
     }
   }
   
-  def buildMsgHierarchy(contMsgEntity: ContainerDef) {
+  private def buildMsgHierarchy(contMsgEntity: ContainerDef) {
     val tmpMsgDefs = mdMgr.Messages(true, true)
     val tmpContainerDefs = mdMgr.Containers(true, true)
 

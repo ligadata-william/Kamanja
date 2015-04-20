@@ -53,7 +53,7 @@ object MessageUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -61,7 +61,7 @@ object MessageUtils {
     logger.setLevel(level);
   }
 
-  def AddMessageDef(msgDef: MessageDef): String = {
+  private def AddMessageDef(msgDef: MessageDef): String = {
     try {
       Utils.AddObjectToCache(msgDef, MdMgr.GetMdMgr)
       DAOUtils.UploadJarsToDB(msgDef)
@@ -227,7 +227,7 @@ object MessageUtils {
     AddMessage(messageText, "JSON")
   }
 
-  def RecompileMessage(msgFullName: String): String = {
+  private def RecompileMessage(msgFullName: String): String = {
     var resultStr:String = ""
     try {
       var messageText:String = null
@@ -473,29 +473,9 @@ object MessageUtils {
     }
   }
 
-  // Return Specific messageDef object using messageName(with version) as the key
-  @throws(classOf[ObjectNotFoundException])
-  def GetMessageDefInstanceFromCache(nameSpace: String, name: String, formatType: String, version: String): MessageDef = {
-    var key = nameSpace + "." + name + "." + version
-    try {
-      val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toInt, true)
-      o match {
-        case None =>
-          None
-          logger.debug("message not found => " + key)
-          throw new ObjectNotFoundException("Failed to Fetch the message:" + key)
-        case Some(m) =>
-          m.asInstanceOf[MessageDef]
-      }
-    } catch {
-      case e: Exception => {
-        throw new ObjectNotFoundException("Failed to Fetch the message:" + key + ":" + e.getMessage())
-      }
-    }
-  }
 
   // Get the latest message for a given FullName
-  def GetLatestMessage(msgDef: MessageDef): Option[MessageDef] = {
+  private def GetLatestMessage(msgDef: MessageDef): Option[MessageDef] = {
     try {
       var key = msgDef.nameSpace + "." + msgDef.name + "." + msgDef.ver
       val o = MdMgr.GetMdMgr.Messages(msgDef.nameSpace.toLowerCase,
@@ -519,34 +499,6 @@ object MessageUtils {
     }
   }
 
-  // check whether message already exists in metadata manager. Ideally,
-  // we should never add the message into metadata manager more than once
-  // and there is no need to use this function in main code flow
-  // This is just a utility function being during these initial phases
-  def IsMessageAlreadyExists(msgDef: MessageDef): Boolean = {
-    try {
-      var key = msgDef.nameSpace + "." + msgDef.name + "." + msgDef.ver
-      val o = MdMgr.GetMdMgr.Message(msgDef.nameSpace.toLowerCase,
-        msgDef.name.toLowerCase,
-        msgDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("message not in the cache => " + key)
-          return false;
-        case Some(m) =>
-          logger.debug("message found => " + m.asInstanceOf[MessageDef].FullNameWithVer)
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
-
   def LoadMessageIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
@@ -561,25 +513,6 @@ object MessageUtils {
     } catch {
       case e: Exception => {
 	logger.debug("Failed to load message into cache " + key + ":" + e.getMessage())
-      }
-    }
-  }
-
-  def LoadAllMessagesIntoCache {
-    try {
-      val msgKeys = Utils.GetAllKeys("MessageDef")
-      if (msgKeys.length == 0) {
-        logger.debug("No messages available in the Database")
-        return
-      }
-      msgKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.messageStore)
-        val msg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        Utils.AddObjectToCache(msg.asInstanceOf[MessageDef], MdMgr.GetMdMgr)
-      })
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
       }
     }
   }

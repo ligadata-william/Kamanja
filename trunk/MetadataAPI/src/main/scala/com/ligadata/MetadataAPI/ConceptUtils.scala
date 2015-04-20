@@ -45,7 +45,11 @@ import util.control.Breaks._
 
 import java.util.Date
 
-// The implementation class
+/*
+ * The implementation class for metadata object Concept
+ * The word Concept actually synonymous with an Attribute within a message or container
+ * The metdata class AttributeDef is used to represent a "Concept"
+ */
 object ConceptUtils {
 
   lazy val sysNS = "System" // system name space
@@ -53,7 +57,7 @@ object ConceptUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -61,13 +65,13 @@ object ConceptUtils {
     logger.setLevel(level);
   }
 
-  def DumpAttributeDef(attrDef: AttributeDef) {
+  private def DumpAttributeDef(attrDef: AttributeDef) {
     logger.debug("NameSpace => " + attrDef.nameSpace)
     logger.debug("Name => " + attrDef.name)
     logger.debug("Type => " + attrDef.typeString)
   }
 
-  def AddConcept(attributeDef: BaseAttributeDef): String = {
+  private def AddConcept(attributeDef: BaseAttributeDef): String = {
     val key = attributeDef.FullNameWithVer
     try {
       DAOUtils.SaveObject(attributeDef, MdMgr.GetMdMgr)
@@ -81,7 +85,7 @@ object ConceptUtils {
     }
   }
 
-  def RemoveConcept(concept: AttributeDef): String = {
+  private def RemoveConcept(concept: AttributeDef): String = {
     var key = concept.nameSpace + ":" + concept.name
     try {
       DAOUtils.DeleteObject(concept)
@@ -181,7 +185,7 @@ object ConceptUtils {
     }
   }
 
-  def UpdateConcept(concept: BaseAttributeDef): String = {
+  private def UpdateConcept(concept: BaseAttributeDef): String = {
     val key = concept.FullNameWithVer
     try {
       if (IsConceptAlreadyExists(concept)) {
@@ -204,6 +208,10 @@ object ConceptUtils {
     }
   }
 
+  /*
+   * conceptsText: A JSON representation of list of concepts,
+   * format: JSON ( the only format supported right now)
+   */
   def UpdateConcepts(conceptsText: String, format: String): String = {
     try {
       if (format != "JSON") {
@@ -267,7 +275,7 @@ object ConceptUtils {
     }
   }
 
-  def IsConceptAlreadyExists(attrDef: BaseAttributeDef): Boolean = {
+  private def IsConceptAlreadyExists(attrDef: BaseAttributeDef): Boolean = {
     try {
       var key = attrDef.nameSpace + "." + attrDef.name + "." + attrDef.ver
       val o = MdMgr.GetMdMgr.Attribute(attrDef.nameSpace,
@@ -296,25 +304,6 @@ object ConceptUtils {
       val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.conceptStore)
       val cont = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
       Utils.AddObjectToCache(cont.asInstanceOf[AttributeDef], MdMgr.GetMdMgr)
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-      }
-    }
-  }
-
-  def LoadAllConceptsIntoCache {
-    try {
-      val conceptKeys = Utils.GetAllKeys("Concept")
-      if (conceptKeys.length == 0) {
-        logger.debug("No concepts available in the Database")
-        return
-      }
-      conceptKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.conceptStore)
-        val concept = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        Utils.AddObjectToCache(concept.asInstanceOf[AttributeDef], MdMgr.GetMdMgr)
-      })
     } catch {
       case e: Exception => {
         e.printStackTrace()

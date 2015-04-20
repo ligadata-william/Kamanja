@@ -53,7 +53,7 @@ object FunctionUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -61,7 +61,7 @@ object FunctionUtils {
     logger.setLevel(level);
   }
 
-  def AddFunction(functionDef: FunctionDef): String = {
+  private def AddFunction(functionDef: FunctionDef): String = {
      val key = functionDef.FullNameWithVer
     try {
       val value = JsonSerializer.SerializeObjectToJson(functionDef)
@@ -79,7 +79,7 @@ object FunctionUtils {
     }
   }
 
-  def RemoveFunction(functionDef: FunctionDef): String = {
+  private def RemoveFunction(functionDef: FunctionDef): String = {
     var key = functionDef.typeString
     try {
       DAOUtils.DeleteObject(functionDef)
@@ -117,7 +117,7 @@ object FunctionUtils {
   }
 
 
-  def UpdateFunction(functionDef: FunctionDef): String = {
+  private def UpdateFunction(functionDef: FunctionDef): String = {
     val key = functionDef.typeString
     try {
       if (IsFunctionAlreadyExists(functionDef)) {
@@ -270,25 +270,6 @@ object FunctionUtils {
       case e: Exception => {
         e.printStackTrace()
         throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
-
-  def LoadAllFunctionsIntoCache {
-    try {
-      val functionKeys = Utils.GetAllKeys("FunctionDef")
-      if (functionKeys.length == 0) {
-        logger.debug("No functions available in the Database")
-        return
-      }
-      functionKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.functionStore)
-        val function = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        Utils.AddObjectToCache(function.asInstanceOf[FunctionDef], MdMgr.GetMdMgr)
-      })
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
       }
     }
   }

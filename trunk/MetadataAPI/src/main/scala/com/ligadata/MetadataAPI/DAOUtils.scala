@@ -53,7 +53,7 @@ object DAOUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -230,7 +230,7 @@ object DAOUtils {
   }
 
   // If tables are different for each object, an internal utility function
-  def getTable(obj: BaseElemDef): String = {
+  private def getTable(obj: BaseElemDef): String = {
     obj match {
       case o: ModelDef => {
         "models"
@@ -334,7 +334,7 @@ object DAOUtils {
     SaveObject(key, value, store)
   }
 
-  def GetNewTranId: Long = {
+  private def GetNewTranId: Long = {
     try {
       val key = "transaction_id"
       val obj = GetObject(key, MetadataAPIImpl.transStore)

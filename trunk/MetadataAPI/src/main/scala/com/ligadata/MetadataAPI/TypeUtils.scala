@@ -53,7 +53,7 @@ object TypeUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -81,7 +81,7 @@ object TypeUtils {
     }
   }
 
-  def DumpTypeDef(typeDef: ScalarTypeDef) {
+  private def DumpTypeDef(typeDef: ScalarTypeDef) {
     logger.debug("NameSpace => " + typeDef.nameSpace)
     logger.debug("Name => " + typeDef.name)
     logger.debug("Version => " + typeDef.ver)
@@ -90,7 +90,7 @@ object TypeUtils {
     logger.debug("Implementation jar name => " + typeDef.jarName)
   }
 
-  def AddType(typeDef: BaseTypeDef): String = {
+  private def AddType(typeDef: BaseTypeDef): String = {
     try {
       var key = typeDef.FullNameWithVer
       var value = JsonSerializer.SerializeObjectToJson(typeDef);
@@ -239,29 +239,6 @@ object TypeUtils {
     }
   }
 
-  def IsTypeAlreadyExists(typeDef: BaseTypeDef): Boolean = {
-    try {
-      var key = typeDef.nameSpace + "." + typeDef.name + "." + typeDef.ver
-      val o = MdMgr.GetMdMgr.Type(typeDef.nameSpace,
-        typeDef.name,
-        typeDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("Type not in the cache => " + key)
-          return false;
-        case Some(m) =>
-          logger.debug("Type found => " + m.asInstanceOf[BaseTypeDef].FullNameWithVer)
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
 
   def IsTypeObject(typeName: String): Boolean = {
     typeName match {
@@ -291,26 +268,6 @@ object TypeUtils {
     }
   }
 
-  def LoadAllTypesIntoCache {
-    try {
-      val typeKeys = Utils.GetAllKeys("TypeDef")
-      if (typeKeys.length == 0) {
-        logger.debug("No types available in the Database")
-        return
-      }
-      typeKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.typeStore)
-        val typ = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        if (typ != null) {
-          Utils.AddObjectToCache(typ, MdMgr.GetMdMgr)
-        }
-      })
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-      }
-    }
-  }
 
   // All available types(format JSON or XML) as a String
   def GetAllTypes(formatType: String): String = {
@@ -436,5 +393,4 @@ object TypeUtils {
       }
     }
   }
-
 }

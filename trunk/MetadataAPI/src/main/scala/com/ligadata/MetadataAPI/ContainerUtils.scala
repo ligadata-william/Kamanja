@@ -53,7 +53,7 @@ object ContainerUtils {
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
 
-  def GetMetadataAPIConfig: Properties = {
+  private def GetMetadataAPIConfig: Properties = {
     MetadataAPIImpl.metadataAPIConfig
   }
 
@@ -244,29 +244,6 @@ object ContainerUtils {
       }
     }
   }
-  def IsContainerAlreadyExists(contDef: ContainerDef): Boolean = {
-    try {
-      var key = contDef.nameSpace + "." + contDef.name + "." + contDef.ver
-      val o = MdMgr.GetMdMgr.Container(contDef.nameSpace.toLowerCase,
-        contDef.name.toLowerCase,
-        contDef.ver,
-        false)
-      o match {
-        case None =>
-          None
-          logger.debug("container not in the cache => " + key)
-          return false;
-        case Some(m) =>
-          logger.debug("container found => " + m.asInstanceOf[ContainerDef].FullNameWithVer)
-          return true
-      }
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new UnexpectedMetadataAPIException(e.getMessage())
-      }
-    }
-  }
 
   def LoadContainerIntoCache(key: String) {
     try {
@@ -276,25 +253,6 @@ object ContainerUtils {
       val contDef = cont.asInstanceOf[ContainerDef]
       DAOUtils.DownloadJarFromDB(contDef)
       Utils.AddObjectToCache(contDef, MdMgr.GetMdMgr)
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-      }
-    }
-  }
-
-  def LoadAllContainersIntoCache {
-    try {
-      val contKeys = Utils.GetAllKeys("ContainerDef")
-      if (contKeys.length == 0) {
-        logger.debug("No containers available in the Database")
-        return
-      }
-      contKeys.foreach(key => {
-        val obj = DAOUtils.GetObject(key.toLowerCase, MetadataAPIImpl.containerStore)
-        val contDef = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-        Utils.AddObjectToCache(contDef.asInstanceOf[ContainerDef], MdMgr.GetMdMgr)
-      })
     } catch {
       case e: Exception => {
         e.printStackTrace()

@@ -53,21 +53,21 @@ class CompilerProxy{
     logger.setLevel(level);
   }
 
-  def dumpStrTextToFile(strText : String, filePath : String) {
+  private def dumpStrTextToFile(strText : String, filePath : String) {
     val file = new File(filePath);
     val bufferedWriter = new BufferedWriter(new FileWriter(file))
     bufferedWriter.write(strText)
     bufferedWriter.close
   }
 
-  def writeSrcFile(scalaGeneratedCode : String, scalaSrcTargetPath : String) {
+  private def writeSrcFile(scalaGeneratedCode : String, scalaSrcTargetPath : String) {
     val file = new File(scalaSrcTargetPath);
     val bufferedWriter = new BufferedWriter(new FileWriter(file))
     bufferedWriter.write(scalaGeneratedCode)
     bufferedWriter.close
   }
 
-  def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
+  private def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
     val scalaTargetPath = s"$targPath/$moduleSrcName"
     writeSrcFile(scalaGeneratedCode, scalaTargetPath)
   }

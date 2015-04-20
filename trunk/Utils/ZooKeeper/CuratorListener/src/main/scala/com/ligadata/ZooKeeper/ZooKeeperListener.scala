@@ -151,15 +151,12 @@ object ZooKeeperListenerTest {
     }
   }
 
-/*
-  private def UpdateMetadata(receivedJsonStr: String): Unit = {
+ /* private def UpdateMetadata(receivedJsonStr: String): Unit = {
     val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
     MetadataAPIImpl.UpdateMdMgr(zkMessage)
-  }
-*/
+  }*/
 
-/*
-  def StartLocalListener = {
+  /* def StartLocalListener = {
     val zkListener = new ZooKeeperListener
     try {
       val znodePath = "/ligadata/metadata/metadataupdate"
@@ -185,8 +182,8 @@ object ZooKeeperListenerTest {
     } finally {
       zkListener.Shutdown
     }
-  }
-*/
+  }*/
+
   private def PrintUsage(): Unit = {
     logger.warn("    --config <configfilename>")
   }
@@ -204,8 +201,7 @@ object ZooKeeperListenerTest {
     }
   }
 
-/*
-  def main(args: Array[String]) = {
+/*  def main(args: Array[String]) = {
     var databaseOpen = false
     firstTime = true
     var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
@@ -238,6 +234,5 @@ object ZooKeeperListenerTest {
         MetadataAPIImpl.CloseDbStore
       }
     }
-  }
-*/
+  } */
 }
