@@ -400,7 +400,7 @@ exec 0<&12 12<&-
 echo
 
 # 6) Push the node$nodeId.cfg file to each cluster node's working directory.
-echo "...copy the node$nodeId.cfg files to the machines' ($workDir/$installDirName) for this cluster "
+echo "...copy the node$nodeId.cfg & log files to the machines' ($workDir/$installDirName) for this cluster "
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -414,6 +414,12 @@ while read LINE; do
     echo "quartet = $machine, $id, $cfgFile, $targetPath"
     echo "...copying $cfgFile for nodeId $id to $machine:$targetPath"
     scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
+
+    # Engine Logfile. For now all nodes log files are same. May be later we can change.
+    sed "s/{InstallPath}/$installDirName/g" ./engine_log4j_template.properties > $workDir/engine_log4j.properties
+    scp -o StrictHostKeyChecking=no "$workDir/engine_log4j.properties" "$machine:$targetPath/"
+
+
 done
 exec 0<&12 12<&-
 
@@ -424,12 +430,13 @@ echo "...for each machine set new paths"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipPathPairFile"
 while read LINE; do
-    machine=$LINE
-    read LINE
-    targetPath=$LINE
-    echo "Running $machine:$targetPath/SetPaths.sh"
+	machine=$LINE
+	read LINE
+	targetPath=$LINE
+	echo "Running $machine:$targetPath/SetPaths.sh"
 	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-	        bash $targetPath/bin/SetPaths.sh
+	# source ~/.bash_profile
+	bash $targetPath/bin/SetPaths.sh
 EOF
     scp -o StrictHostKeyChecking=no "$nodeConfigPath" "$machine:$targetPath/config/ClusterConfig.json"
 done

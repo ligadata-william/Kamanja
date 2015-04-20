@@ -95,18 +95,18 @@ while read LINE; do
     pidfile=node$id.pid
      #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
 	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-	        cd $targetPath
-	        echo "nodeCfg=$nodeCfg"
+		cd $targetPath
+		echo "nodeCfg=$nodeCfg"
 #		echo "<PASSWD>" | kinit <USERID>
-	        java -jar "$installDir/bin/OnLEPManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
-            if [ ! -d "$installDir/run" ]; then
-                mkdir "$installDir/run"
-            fi
-                ps aux | grep "OnLEPManager-1.0" | grep -v "grep" | tr -s " " | cut -d " " -f2 > "$installDir/run/$pidfile"
-#            sleep 5
+		java -Dlog4j.configuration=file:$targetPath/engine_log4j.properties -jar "$installDir/bin/OnLEPManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
+		if [ ! -d "$installDir/run" ]; then
+			mkdir "$installDir/run"
+		fi
+			ps aux | grep "OnLEPManager-1.0" | grep -v "grep" | tr -s " " | cut -d " " -f2 > "$installDir/run/$pidfile"
+#		sleep 5
 EOF
 
-#ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "OnLEPManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
+# ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "OnLEPManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
 # scp  -o StrictHostKeyChecking=no   $workDir/temppid.pid "$machine:$installDir/run/node$id.pid"
 
 done
