@@ -183,6 +183,19 @@ object MetadataAPIImpl extends MetadataAPI {
   def InitSecImpl: Unit = {
     logger.debug("Establishing connection to domain security server..")
     val classLoader: MetadataLoader = new MetadataLoader
+    
+    // Validate the Auth/Audit flags for valid input.
+    if ((metadataAPIConfig.getProperty("DO_AUTH") != null) &&
+        (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES") ||
+         !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("NO"))) {
+      throw new Exception("Invalid value for DO_AUTH detected.  Correct it and restart")
+    }    
+    if ((metadataAPIConfig.getProperty("DO_AUDIT") != null) &&
+        (!metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES") ||
+         !metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("NO"))) {
+      throw new Exception("Invalid value for DO_AUDIT detected.  Correct it and restart")
+    } 
+    
     // If already have one, use that!
     if (authObj == null && (metadataAPIConfig.getProperty("DO_AUTH") != null) && (metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
       createAuthObj(classLoader)
@@ -198,7 +211,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def createAuthObj(classLoader : MetadataLoader): Unit = {
     // Load the location and name of the implementing class from the
     val implJarName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_JAR").trim
-    val implClassName = metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS").trim
+    val implClassName = if (metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS") == null) "" else metadataAPIConfig.getProperty("SECURITY_IMPL_CLASS").trim
     logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
     if (implClassName == null) {
       logger.error("Security Adapter Class is not specified")
@@ -221,7 +234,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def createAuditObj (classLoader : MetadataLoader): Unit = {
     // Load the location and name of the implementing class froms the
     val implJarName = if (metadataAPIConfig.getProperty("AUDIT_IMPL_JAR") == null) "" else metadataAPIConfig.getProperty("AUDIT_IMPL_JAR").trim
-    val implClassName = metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
+    val implClassName = if (metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS") == null) "" else metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     logger.debug("Using "+implClassName+", from the "+implJarName+" jar file")
     if (implClassName == null) {
       logger.error("Audit Adapter Class is not specified")
@@ -272,7 +285,10 @@ object MetadataAPIImpl extends MetadataAPI {
  
      var authParms: java.util.Properties = new Properties
      // Do we want to run AUTH?
-     if (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES")) return true
+     if ((metadataAPIConfig.getProperty("DO_AUTH") == null) ||
+         (metadataAPIConfig.getProperty("DO_AUTH") != null && !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
+       return true
+     }
  
      // check if the Auth object exists
      if (authObj == null) return false
