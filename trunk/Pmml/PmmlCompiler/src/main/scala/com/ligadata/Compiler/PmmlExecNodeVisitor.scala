@@ -27,19 +27,28 @@ class ContainerFieldRefCollector(ctx : PmmlContext) extends PmmlExecVisitor {
 		node match {
 		  case x : xFieldRef => {
 			  val fldRef : xFieldRef = node.asInstanceOf[xFieldRef]
-			  if (fldRef.field.contains('.')) {
-				  val names : Array[String] = fldRef.field.split('.')
-				  /** FIXME: there could be multiple nodes here */
-				  val containerName : String = names(0)
-				  val fieldName : String = names(1)
-				  val aContainerInScope = ctx.containersInScope.filter(_._1 == containerName)
-				  if (aContainerInScope.size > 0) {
-					  val containerInfo = aContainerInScope.head
-					  val (cName, inCtor, baseType, varName) : (String, Boolean, BaseTypeDef, String) = containerInfo
-					  val (typeStr, isCntr, typedef) : (String,Boolean,BaseTypeDef) = ctx.getFieldType(fldRef.field, ! expandCompoundFieldTypes).head
-					  val isGlobal : Boolean = (ctx.mgr.Attribute(containerName, fieldName, -1, true) != None)
-					  ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal, null) // BUGBUG:: We need to fill collectionType properly instead of null
-				  }
+			  val fieldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(fldRef.field, expandCompoundFieldTypes)
+			  if (fieldTypeInfo != null) {
+				  fieldTypeInfo.foreach(triple => {
+					  val (typeStr, isContainer, typedef) : (String,Boolean,BaseTypeDef) = triple
+					  val isAnyKindOfContainer : Boolean = (typedef != null && typedef.isInstanceOf[ContainerTypeDef])
+					  val isStructOrMappedType : Boolean = ctx.mdHelper.isContainerWithFieldOrKeyNames(typedef)
+					  if (isStructOrMappedType) {
+						  val key = fldRef.field.toLowerCase + "." + typeStr
+						  ctx.modelInputs(key) = (fldRef.field, typeStr, typedef.NameSpace, typedef.Name, false, null)
+					  } else {
+						  val containerOrMessageMemberTypes : Array[BaseTypeDef] = ctx.mdHelper.collectMemberContainerTypes(typedef)
+						  if (containerOrMessageMemberTypes.size > 0) {
+							  containerOrMessageMemberTypes.foreach(typ => {
+								  val key = fldRef.field.toLowerCase + "." + typ.typeString
+								  ctx.modelInputs(key) = (fldRef.field, typ.typeString, typ.NameSpace, typ.Name, false, null)
+							  })
+							  
+						  }
+					  }
+
+				  })
+
 			  }
 		  }
 		  case _ => None

@@ -618,6 +618,38 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	  	(typedef != null && (typedef.isInstanceOf[StructTypeDef] || typedef.isInstanceOf[MappedMsgTypeDef]))
 	}
 
+	/** 
+	 *  Answer whether this type is a ContainerTypeDef that has member types that are container types.
+	 *  Nested collections are supported.
+	 *  @param typedef A BaseTypeDef
+	 *  @return true if this a collection with member types in {StructTypeDef, MappedMsgTypeDef}
+	 */
+	def collectMemberContainerTypes(typedef : BaseTypeDef) : Array[BaseTypeDef] = {
+	  	var baseTypes : ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
+	  	if (typedef != null && typedef.isInstanceOf[ContainerTypeDef]) {
+	  		val container : ContainerTypeDef = typedef.asInstanceOf[ContainerTypeDef]
+	  		val mbrTypes : Array[BaseTypeDef] = container.ElementTypes
+	  		if (mbrTypes != null && mbrTypes.size > 0) {
+	  			mbrTypes.foreach(typ => {
+	  				val hasContainerType : Boolean = isContainerWithFieldOrKeyNames(typ)
+	  				if (! hasContainerType && typ.isInstanceOf[ContainerTypeDef]) {
+	  					val subTypes : Array[BaseTypeDef] = collectMemberContainerTypes(typ)  /** recurse here to look at the subtypes */
+	  					if (subTypes.size > 0) {
+	  						baseTypes ++= subTypes
+	  					}
+	  				} else {
+	  					if (hasContainerType) {
+	  						baseTypes += typ
+	  					}
+	  				}
+	  			})
+	  		}
+	  	}
+	  	baseTypes.toArray
+	}
+
 }
+
+
 
 
