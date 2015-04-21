@@ -186,12 +186,12 @@ object MetadataAPIImpl extends MetadataAPI {
     
     // Validate the Auth/Audit flags for valid input.
     if ((metadataAPIConfig.getProperty("DO_AUTH") != null) &&
-        (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES") ||
+        (!metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES") &&
          !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("NO"))) {
       throw new Exception("Invalid value for DO_AUTH detected.  Correct it and restart")
     }    
     if ((metadataAPIConfig.getProperty("DO_AUDIT") != null) &&
-        (!metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES") ||
+        (!metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("YES") &&
          !metadataAPIConfig.getProperty("DO_AUDIT").equalsIgnoreCase("NO"))) {
       throw new Exception("Invalid value for DO_AUDIT detected.  Correct it and restart")
     } 
@@ -224,6 +224,7 @@ object MetadataAPIImpl extends MetadataAPI {
     // All is good, create the new class
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.olep.metadata.SecurityAdapter]]
     authObj = className.newInstance
+    authObj.init
     logger.debug("Created class "+ className.getName)
   }
   
@@ -289,7 +290,7 @@ object MetadataAPIImpl extends MetadataAPI {
          (metadataAPIConfig.getProperty("DO_AUTH") != null && !metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
        return true
      }
- 
+     
      // check if the Auth object exists
      if (authObj == null) return false
  

@@ -5,48 +5,85 @@ import com.sun.security.auth.callback.TextCallbackHandler
 import javax.security.auth.login._
 import javax.security.auth.Subject;
 import java.security._
-import javax.security.auth.callback._;
+import javax.security.auth.callback._
 import javax.security.auth.kerberos._
+import org.apache.log4j._
 
-object SimpleKerberosAdapter {
-    def main(args: Array[String]): Unit = {
-    val ka = new SimpleKerberosAdapter
-    var secParms: java.util.Properties = new java.util.Properties()
+class SampleKerberosActions(inPriv: String) extends java.security.PrivilegedAction[String] {
+  private def priv = inPriv
+  val loggerName = this.getClass.getName
+  val log = Logger.getLogger(loggerName)
+  
+  def run: String = {
+    // if write is requested, see if we are allowed to access FATAFAT_OBJECT_WRITE System property
+    // A security exception will be thrown
+    if (priv.equalsIgnoreCase("write")) {
+      log.info("user authorized to WRITE")        
+    }
     
-    secParms.setProperty("userid", "test2/ligadata.com@LIGADATA.COM")
-    secParms.setProperty("password", "ligadata123")
-    ka.performAuth(secParms) 
-  }
+    if (priv.equalsIgnoreCase("read")) {
+      log.info("user authorized to READ")
+    }
+    
+    return null
+  } 
+  
 }
 
-
 class SimpleKerberosAdapter extends SecurityAdapter {
+  var username: String = _
+  var password: String = _
+  var priv: String = _
   
   /**
    * 
    */
-  def performAuth(secParams: java.util.Properties): Boolean = {
+  override def performAuth(secParams: java.util.Properties): Boolean = {
     
+    val loggerName = this.getClass.getName
+    val log = Logger.getLogger(loggerName)  
     var mysubject: Subject = new Subject
     var lc: LoginContext = null
     
-    val username = secParams.getProperty("userid")
-    val password = secParams.getProperty("password")
-
+    username = secParams.getProperty("userid")
+    password = secParams.getProperty("password")
+    priv = secParams.getProperty("privilige")
+ 
+    // Create a login context based on what "LOGIN" name is configured as.  For this plugin
+    // it better be a KERBEROS login manager
     try {
-       lc = new LoginContext("ligadataLoginContext", mysubject, new MyCallbackHandler);
+       lc = new LoginContext("Login", mysubject, new MyCallbackHandler);
+       log.info ("kerberor LoginManager found")
     } catch {
         case uae: Exception => {
+          log.error (uae.printStackTrace())
           return false
         }
     }
     
+    // Do Login.  If we dont get an exception here, the subject is authenticated.
     try {
        lc.login();
+       log.info ("User "+username+" authenticated")
     } catch{
-      case e: LoginException => {return false}
+      case le: LoginException => {
+        log.error (le.printStackTrace())
+        return false
+      }
     } 
     
+    // Now see if this subject has the priv.
+    try {
+      mysubject = lc.getSubject();
+      var action: java.security.PrivilegedAction[String] = new SampleKerberosActions(priv);
+      Subject.doAsPrivileged(mysubject, action, null);
+    } catch {
+      case se: SecurityException => {
+        log.error(se.printStackTrace())
+        return false
+      }
+    } 
+    log.info("User "+username+" authorized")
     return true
   }
   
@@ -62,20 +99,25 @@ class SimpleKerberosAdapter extends SecurityAdapter {
   }
   
   /**
-   * 
+   * init - Initialize some information needed for thie plugin.  
+   *        1. FATAFAT_OBJECT_READ is created in SYSTEM
+   *        2. FATAFAT_OBJECT_WRITE is created in SYSTEM
    */
-  def init:Unit = {
-    
+  override def init:Unit = {
+    System.setProperty("FATAFAT_OBJECT_READ", "REQUIRED")
+    System.setProperty("FATAFAT_OBJECT_WRITE", "REQUIRED")
   }
+  
+  // this is a callback that will be used by Kerberos server to collect a username and password
   class MyCallbackHandler extends CallbackHandler {
    def handle(callbacks: Array[Callback]): Unit = {
       callbacks.foreach(callback => {
         callback match {
           case nc:NameCallback => {
-            nc.setName("name")
+            nc.setName(username)
           }
           case pc:PasswordCallback => {
-            pc.setPassword("blah".toCharArray())
+            pc.setPassword(password.toCharArray())
           }
         }
       })   
