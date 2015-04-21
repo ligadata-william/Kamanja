@@ -48,7 +48,7 @@ questions and make contributions.
 
 ####Quick Start
 
-1. [DOWNLOAD](http://www.ligadata.com/releases/bin/fatafat_install_v101.zip) latest Fatafat binaries
+1. [DOWNLOAD](http://goo.gl/forms/IOpB8qMU9n) latest Fatafat binaries
 
 2. Unzip the downloaded file
 
