@@ -242,7 +242,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val fcnStr = Source.fromFile(fcnDefFile).mkString
       //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddFunction(fcnStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON"))
     }
     catch {
       case e: AlreadyExistsException => {
