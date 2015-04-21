@@ -5592,8 +5592,10 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   private def initZkListener: Unit = {
      // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
-    var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH").trim + "/metadataupdate"
-    var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING").trim
+    var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
+    if (znodePath != null) znodePath = znodePath.trim + "/metadataupdate" else return
+    var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
+    if (zkConnectString != null) zkConnectString = zkConnectString.trim else return
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
