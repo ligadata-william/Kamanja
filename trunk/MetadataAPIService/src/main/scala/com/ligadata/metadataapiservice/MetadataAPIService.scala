@@ -158,19 +158,8 @@ trait MetadataAPIService extends HttpService {
    * Modify Existing objects in the Metadata 
    */
   private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
-    
-    var argParm: String = ""
-   
-    // Verify that the a 3 part name is the key, an Out Of Bounds exception will be thrown if name is not XXX.XXX.XXX
-    try {
-      argParm = createGetArg(objKey,objtype) 
-    } catch {
-      case e: ArrayIndexOutOfBoundsException => {
-        logger.debug("METADATASERVICE: Invalid key "+ objKey)
-        rContext.complete((new ApiResult(-1, "Invalid object name: MetadataAPIService", null, objKey)).toString)
-        return
-      } 
-    }
+    var argParm: String = verifyInput(objKey,objtype,rContext)
+    if (argParm == null) return
     
     if (action.equalsIgnoreCase("Activate")) {
         val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext,userid,password,role)))
@@ -248,18 +237,8 @@ trait MetadataAPIService extends HttpService {
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
     val action = "Get" + objtype
     val notes = "Invoked " + action + " API "
-    var argParm: String = ""
-   
-    // Verify that the a 3 part name is the key, an Out Of Bounds exception will be thrown if name is not XXX.XXX.XXX
-    try {
-      argParm = createGetArg(objKey,objtype) 
-    } catch {
-      case e: ArrayIndexOutOfBoundsException => {
-        logger.debug("METADATASERVICE: Invalid key "+ objKey)
-        rContext.complete((new ApiResult(-1, "Invalid object name: MetadataAPIService", null, objKey)).toString)
-        return
-      } 
-    }
+    var argParm: String = verifyInput(objKey,objtype,rContext)
+    if (argParm == null) return
     
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,role)))
@@ -279,18 +258,8 @@ trait MetadataAPIService extends HttpService {
   private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
     val action = "Remove" + objtype
     val notes = "Invoked " + action + " API "
-    var argParm: String = ""
-   
-    // Verify that the a 3 part name is the key, an Out Of Bounds exception will be thrown if name is not XXX.XXX.XXX
-    try {
-      argParm = createGetArg(objKey,objtype) 
-    } catch {
-      case e: ArrayIndexOutOfBoundsException => {
-        logger.debug("METADATASERVICE: Invalid key "+ objKey)
-        rContext.complete((new ApiResult(-1, "Invalid object name: MetadataAPIService", null, objKey)).toString)
-        return
-      } 
-    }
+    var argParm: String = verifyInput(objKey,objtype,rContext)
+    if (argParm == null) return
     
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
         objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
@@ -304,6 +273,20 @@ trait MetadataAPIService extends HttpService {
     }
   }
   
+  
+  private def verifyInput(objKey: String, objType: String, rContext: RequestContext): String = {
+    // Verify that the a 3 part name is the key, an Out Of Bounds exception will be thrown if name is not XXX.XXX.XXX
+    try {
+      return createGetArg(objKey, objType) 
+    } catch {
+      case e: ArrayIndexOutOfBoundsException => {
+        logger.debug("METADATASERVICE: Invalid key "+ objKey)
+        rContext.complete((new ApiResult(-1, "Invalid object name: MetadataAPIService", null, objKey)).toString)
+        return null
+      } 
+    }  
+  }   
+
   /**
    * MakeJsonStrForArgList
    */
