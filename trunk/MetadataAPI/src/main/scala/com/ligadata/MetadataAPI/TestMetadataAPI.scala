@@ -91,7 +91,7 @@ object TestMetadataAPI{
     }
     catch {
       case e: AlreadyExistsException => {
-        logger.error("Container already exists in metadata...")
+        logger.error("Type already exists in metadata...")
       }
       case e: Exception => {
         e.printStackTrace()
@@ -201,10 +201,57 @@ object TestMetadataAPI{
     println("Result as Json String => \n" + apiResult)
   }
 
-  def AddFunction = {
-    val apiResult = MetadataAPIImpl.AddFunction(SampleData.sampleFunctionStr,"JSON")
-   // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
-    println("Result as Json String => \n" + apiResult)
+  def AddFunction {
+    try {
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
+      if (dirName == null) {
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        logger.debug("The environment variable FUNCTION_FILES_DIR is undefined. Setting to default " + dirName)
+      }
+
+      if (!IsValidDir(dirName)) {
+        logger.error("Invalid Directory " + dirName)
+        return
+      }
+      val fcnFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (fcnFiles.length == 0) {
+        logger.error("No json type files exist in the directory " + dirName)
+        return
+      }
+
+      println("\nSelect a Function Definition file:\n")
+
+      var seq = 0
+      fcnFiles.foreach(key => { seq += 1; println("[" + seq + "]" + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if (choice == fcnFiles.length +1) {
+        return
+      }
+
+      if (choice < 1 || choice > fcnFiles.length + 1) {
+        logger.error("Invalid Choice: " + choice)
+        return
+      }
+
+      val fcnDefFile = fcnFiles(choice - 1).toString
+      //logger.setLevel(Level.DEBUG); //check again
+      val fcnStr = Source.fromFile(fcnDefFile).mkString
+      //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
+      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON"))
+    }
+    catch {
+      case e: AlreadyExistsException => {
+        logger.error("Function already exists in metadata...")
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
   }
 
   def RemoveFunction: Unit = {
@@ -2185,6 +2232,7 @@ object TestMetadataAPI{
       if( databaseOpen ){
 	MetadataAPIImpl.CloseDbStore
       }
+      MetadataAPIImpl.shutdownZkListener
       MetadataAPIImpl.CloseZKSession
     }
   }
