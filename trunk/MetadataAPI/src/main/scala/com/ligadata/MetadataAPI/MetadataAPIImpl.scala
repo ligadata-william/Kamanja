@@ -198,6 +198,7 @@ object MetadataAPIImpl extends MetadataAPI {
       throw new Exception("Invalid value for DO_AUDIT detected.  Correct it and restart")
     } 
     
+    
     // If already have one, use that!
     if (authObj == null && (metadataAPIConfig.getProperty("DO_AUTH") != null) && (metadataAPIConfig.getProperty("DO_AUTH").equalsIgnoreCase("YES"))) {
       createAuthObj(classLoader)
