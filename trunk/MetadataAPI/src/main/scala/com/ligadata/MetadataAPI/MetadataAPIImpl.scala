@@ -3064,11 +3064,14 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   private def getBaseType(typ: BaseTypeDef): BaseTypeDef = {
+    // Just return the "typ" if "typ" is not supported yet
     if (typ.tType == tMap) {
-      throw new Exception("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+      logger.info("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+      return typ
     }
     if (typ.tType == tHashMap) {
-      throw new Exception("HashMapTypeDef is not yet handled")
+      logger.info("HashMapTypeDef is not yet handled")
+      return typ
     }
     if (typ.tType == tSet) {
       val typ1 = typ.asInstanceOf[SetTypeDef].keyDef
@@ -3123,6 +3126,9 @@ object MetadataAPIImpl extends MetadataAPI {
                   break
                 }
               })
+	      //Output vars don't determine dependant models at this time, comment out the following code
+	      // which is causing the Issue 355...
+	      /*
               mod.outputVars.foreach(ovar => {
                 val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
                 if (baseTyp.FullName.toLowerCase == msgObjName) {
@@ -3131,6 +3137,7 @@ object MetadataAPIImpl extends MetadataAPI {
                   break
                 }
               })
+	      */
             }
           })
       }
