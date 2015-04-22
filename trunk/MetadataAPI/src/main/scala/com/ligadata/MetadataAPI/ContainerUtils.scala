@@ -61,12 +61,12 @@ object ContainerUtils {
     logger.setLevel(level);
   }
 
-  def AddContainerDef(contDef: ContainerDef): String = {
+  def AddContainerDef(contDef: ContainerDef, recompile:Boolean = false): String = {
     var key = contDef.FullNameWithVer
     try {
       Utils.AddObjectToCache(contDef, MdMgr.GetMdMgr)
       DAOUtils.UploadJarsToDB(contDef)
-      var objectsAdded = MessageUtils.AddMessageTypes(contDef, MdMgr.GetMdMgr)
+      var objectsAdded = MessageUtils.AddMessageTypes(contDef, MdMgr.GetMdMgr, recompile)
       objectsAdded = objectsAdded :+ contDef
       DAOUtils.SaveObjectList(objectsAdded, MetadataAPIImpl.metadataStore)
       val operations = for (op <- objectsAdded) yield "Add"
@@ -80,6 +80,7 @@ object ContainerUtils {
       }
     }
   }
+
 
   def AddContainer(containerText: String, format: String): String = {
     MessageUtils.AddContainerOrMessage(containerText, format)

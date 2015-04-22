@@ -61,16 +61,15 @@ object MessageUtils {
     logger.setLevel(level);
   }
 
-  private def AddMessageDef(msgDef: MessageDef): String = {
+  def AddMessageDef(msgDef: MessageDef, recompile:Boolean = false): String = {
     try {
       Utils.AddObjectToCache(msgDef, MdMgr.GetMdMgr)
       DAOUtils.UploadJarsToDB(msgDef)
-      var objectsAdded = AddMessageTypes(msgDef, MdMgr.GetMdMgr)
+      var objectsAdded = AddMessageTypes(msgDef, MdMgr.GetMdMgr, recompile)
       objectsAdded = objectsAdded :+ msgDef
       DAOUtils.SaveObjectList(objectsAdded, MetadataAPIImpl.metadataStore)
       val operations = for (op <- objectsAdded) yield "Add"
       Utils.NotifyEngine(objectsAdded, operations)
-      //check again
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddMessageDef", null,ErrorCodeConstants.Add_Message_Successful + ":" + msgDef.FullNameWithVer)
       apiResult.toString()
     } catch {
@@ -81,9 +80,9 @@ object MessageUtils {
     }
   }
 
-  // As per Model Compiler requirement, Add array/arraybuf/sortedset types for this messageDef
+  // As per Rich's requirement, Add array/arraybuf/sortedset types for this messageDef
   // along with the messageDef.  
-  def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr): Array[BaseElemDef] = {
+  def AddMessageTypes(msgDef: BaseElemDef, mdMgr: MdMgr, recompile:Boolean = false): Array[BaseElemDef] = {
     logger.debug("The class name => " + msgDef.getClass().getName())
     try {
       var types = new Array[BaseElemDef](0)
@@ -93,52 +92,52 @@ object MessageUtils {
       msgType match {
         case "MessageDef" | "ContainerDef" => {
           // ArrayOf<TypeName>
-          var obj: BaseElemDef = mdMgr.MakeArray(msgDef.nameSpace, "arrayof" + msgDef.name, msgDef.nameSpace, msgDef.name, 1, msgDef.ver)
+          var obj: BaseElemDef = mdMgr.MakeArray(msgDef.nameSpace, "arrayof" + msgDef.name, msgDef.nameSpace, msgDef.name, 1, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ArrayBufferOf<TypeName>
-          obj = mdMgr.MakeArrayBuffer(msgDef.nameSpace, "arraybufferof" + msgDef.name, msgDef.nameSpace, msgDef.name, 1, msgDef.ver)
+          obj = mdMgr.MakeArrayBuffer(msgDef.nameSpace, "arraybufferof" + msgDef.name, msgDef.nameSpace, msgDef.name, 1, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // SortedSetOf<TypeName>
-          obj = mdMgr.MakeSortedSet(msgDef.nameSpace, "sortedsetof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver)
+          obj = mdMgr.MakeSortedSet(msgDef.nameSpace, "sortedsetof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, ("System", "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, ("System", "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfString<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, ("System", "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, ("System", "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ArrayOfArrayOf<TypeName>
-          obj = mdMgr.MakeArray(msgDef.nameSpace, "arrayofarrayof" + msgDef.name, msgDef.nameSpace, "arrayof" + msgDef.name, 1, msgDef.ver)
+          obj = mdMgr.MakeArray(msgDef.nameSpace, "arrayofarrayof" + msgDef.name, msgDef.nameSpace, "arrayof" + msgDef.name, 1, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfStringArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, ("System", "String"), ("System", "arrayof" + msgDef.name), msgDef.ver)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, ("System", "String"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, ("System", "Int"), ("System", "arrayof" + msgDef.name), msgDef.ver)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, ("System", "Int"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // SetOf<TypeName>
-          obj = mdMgr.MakeSet(msgDef.nameSpace, "setof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver)
+          obj = mdMgr.MakeSet(msgDef.nameSpace, "setof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // TreeSetOf<TypeName>
-          obj = mdMgr.MakeTreeSet(msgDef.nameSpace, "treesetof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver)
+          obj = mdMgr.MakeTreeSet(msgDef.nameSpace, "treesetof" + msgDef.name, msgDef.nameSpace, msgDef.name, msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           Utils.AddObjectToCache(obj, mdMgr)
           types = types :+ obj
@@ -155,49 +154,56 @@ object MessageUtils {
     }
   }
 
+
   def AddContainerOrMessage(contOrMsgText: String, format: String, recompile:Boolean = false): String = {
     var resultStr:String = ""
     try {
       var compProxy = new CompilerProxy
-     // compProxy.setLoggerLevel(Level.TRACE)
+      compProxy.setLoggerLevel(Level.TRACE)
       val (classStr, cntOrMsgDef) = compProxy.compileMessageDef(contOrMsgText,recompile)
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
 	  if( recompile ){
-            RemoveMessage(msg.nameSpace, msg.name, msg.ver)
-            resultStr = AddMessageDef(msg)
+	    // Incase of recompile, Message Compiler is automatically incrementing the previous version
+	    // by 1. Before Updating the metadata with the new version, remove the old version
+            val latestVersion = GetLatestMessage(msg)
+            RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+            resultStr = AddMessageDef(msg, recompile)
 	  }
 	  else{
-            resultStr = AddMessageDef(msg)
+            resultStr = AddMessageDef(msg, recompile)
 	  }
 	  if( recompile ){
 	    val depModels = ModelUtils.GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
 	    if( depModels.length > 0 ){
-	      depModels.foreach(mod => {
+              depModels.foreach(mod => {
 		logger.debug("DependentModel => " + mod.FullNameWithVer)
 		resultStr = resultStr + ModelUtils.RecompileModel(mod)
-	      })
+              })
 	    }
 	  }
 	  resultStr
 	}
         case cont: ContainerDef => {
 	  if( recompile ){
-            ContainerUtils.RemoveContainer(cont.nameSpace, cont.name, cont.ver)
-            resultStr = ContainerUtils.AddContainerDef(cont)
+	    // Incase of recompile, Message Compiler is automatically incrementing the previous version
+	    // by 1. Before Updating the metadata with the new version, remove the old version
+            val latestVersion = ContainerUtils.GetLatestContainer(cont)
+            ContainerUtils.RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+            resultStr = ContainerUtils.AddContainerDef(cont, recompile)
 	  }
 	  else{
-            resultStr = ContainerUtils.AddContainerDef(cont)
+            resultStr = ContainerUtils.AddContainerDef(cont, recompile)
 	  }
 
 	  if( recompile ){
 	    val depModels = ModelUtils.GetDependentModels(cont.NameSpace,cont.Name,cont.ver)
 	    if( depModels.length > 0 ){
-	      depModels.foreach(mod => {
+              depModels.foreach(mod => {
 		logger.debug("DependentModel => " + mod.FullNameWithVer)
 		resultStr = resultStr + ModelUtils.RecompileModel(mod)
-	      })
+              })
 	    }
 	  }
 	  resultStr
@@ -218,6 +224,7 @@ object MessageUtils {
       }
     }
   }
+
 
   def AddMessage(messageText: String, format: String): String = {
     AddContainerOrMessage(messageText, format)
