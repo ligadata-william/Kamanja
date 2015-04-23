@@ -1641,7 +1641,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroContainerStringMapped : String =  """
 	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%")); true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%").asInstanceOf[%4_type%]); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
@@ -1701,7 +1701,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val incrementByMacroStringMapped : String =  """
 	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%") + %3%)); true }
+	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%").asInstanceOf[%2_type%] + %3%)); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
