@@ -3,11 +3,11 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._

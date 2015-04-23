@@ -5,7 +5,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 /**
  * class MacroSelect retrieves a MacroDef from the mdmgr based upon the function signature.

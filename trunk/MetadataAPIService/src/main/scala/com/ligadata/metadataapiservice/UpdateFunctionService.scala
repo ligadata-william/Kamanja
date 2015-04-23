@@ -8,7 +8,7 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 object UpdateFunctionService {
   case class Process(functionJson:String)

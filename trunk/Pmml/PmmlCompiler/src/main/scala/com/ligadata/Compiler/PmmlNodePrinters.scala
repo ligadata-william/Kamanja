@@ -5,7 +5,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 //import com.ligadata.Pmml.Runtime._
 
@@ -813,7 +813,7 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		/** Give the rest... */
 		commentBuffer.append(s"/** Other Packages... */\n")
-		commentBuffer.append(s"import com.ligadata.OnLEPBase._\n")
+		commentBuffer.append(s"import com.ligadata.FatafatBase._\n")
 		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")

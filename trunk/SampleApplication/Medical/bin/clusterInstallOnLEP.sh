@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# clusterInstallOnLEP.sh
+# clusterInstallFatafat.sh
 #
 #	Run this script from the trunk directory that contains the release source:
 
 #	Examples: 
-#       clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
-#       clusterInstallOnLEP.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#       clusterInstallFatafat.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
+#       clusterInstallFatafat.sh --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #
 #   In the first example, a cluster configuration is presumably presented in the NodeConfigPath file (i.e, the cluster decl
 #   is new).  In the second example, the cluster config info is retrieved from the metadata store.
@@ -26,14 +26,14 @@ if [[ "$#" -eq 2 || "$#" -eq 4 ]]; then
 else 
     echo "Incorrect number of arguments"
     echo "usage:"
-    echo "  $0 --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+    echo "  $0 --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <fatafatCfgPath> ]"
     exit 1
 fi
 
 if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--NodeConfigPath" ]]; then
 	echo "Bad arguments"
 	echo "usage:"
-	echo "	$0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+	echo "	$0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <fatafatCfgPath> ]"
 	exit 1
 fi
 
@@ -44,7 +44,7 @@ if [ "$currDir" != "trunk" ]; then
     echo "This application extracts the node information from the metadata and/or engine node config supplied here. "
     echo "currDir = $currDir"
     echo "usage:"
-    echo "  $0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <onlepCfgPath> ]"
+    echo "  $0  --MetadataAPIConfig  <metadataAPICfgPath> [--NodeConfigPath <fatafatCfgPath> ]"
     exit 1
 fi
 
@@ -53,14 +53,14 @@ fi
 # 1 build the installation in the staging directory
 workDir="/tmp" 
 workDirSansSlash="tmp" #tar will trunc the leading slash when building its archive
-dirName="OnLEPClusterInstall" 
+dirName="FatafatClusterInstall" 
 stagingDir="$workDir/$dirName"
 mkdir -p "$stagingDir"
-echo "...build the OnLEP installation directory in $stagingDir"
-installOnLEP_Medical.sh "$stagingDir" `pwd`
+echo "...build the Fatafat installation directory in $stagingDir"
+installFatafat_Medical.sh "$stagingDir" `pwd`
 
 
-# 2) determine which machines and installation directories are to get the build from the metadata and OnLEP config
+# 2) determine which machines and installation directories are to get the build from the metadata and Fatafat config
 # A number of files are produced, all in the working dir.
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
@@ -68,7 +68,7 @@ ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
 
 trunkDir=`pwd`
 nodeInfoExtractDir="$trunkDir/Utils/NodeInfoExtract/target/scala-2.10"
-echo "...extract node information for the cluster to be installed from the Metadata and OnLEP config supplied"
+echo "...extract node information for the cluster to be installed from the Metadata and Fatafat config supplied"
 if  [ "$#" -eq 4 ]; then
     echo "...Command = $nodeInfoExtractDir/NodeInfoExtract-1.0 $name1 \"$val1\" $name2 \"$val2\"  --workDir \"$workDir\" --ipFileName \"$ipFile\" --ipPathPairFileName \"$ipPathPairFile\" --ipIdCfgTargPathQuartetFileName \"$ipIdCfgTargPathQuartetFileName\""
     "$nodeInfoExtractDir"/NodeInfoExtract-1.0 "$name1" "$val1" "$name2" "$val2" --workDir "$workDir" --ipFileName "$ipFile" --ipPathPairFileName "$ipPathPairFile" --ipIdCfgTargPathQuartetFileName "$ipIdCfgTargPathQuartetFileName"
@@ -78,7 +78,7 @@ else # -eq 2
 fi
 
 # 3) compress staging dir and tar it
-dtPrefix="OnLEP`date +"%Y%b%d"`"
+dtPrefix="Fatafat`date +"%Y%b%d"`"
 tarName="$dtPrefix.$dirName.bz2"
 echo "...compress and tar the installation directory $stagingDir to $tarName"
 tar cjf "$workDir/$tarName" "$stagingDir"

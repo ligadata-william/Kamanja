@@ -5,7 +5,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 /** 
  *	Print an iterable function.  General print form is 

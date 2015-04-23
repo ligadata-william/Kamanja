@@ -100,7 +100,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package OnLEPManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly
+sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -113,7 +113,7 @@ echo "copy the fat jars to $installPath ..."
 cd $srcPath
 cp Utils/KVInit/target/scala-2.10/KVInit* $bin
 cp MetadataAPI/target/scala-2.10/MetadataAPI* $bin
-cp OnLEPManager/target/scala-2.10/OnLEPManager* $bin
+cp FatafatManager/target/scala-2.10/FatafatManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
 
@@ -141,10 +141,10 @@ cp $srcPath/MessageDef/target/scala-2.10/messagedef_2.10-1.0.jar $systemlib
 cp $srcPath/MetadataAPI/target/scala-2.10/metadataapi_2.10-1.0.jar $systemlib
 cp $srcPath/Pmml/MethodExtractor/target/scala-2.10/methodextractor_2.10-1.0.jar $systemlib
 
-# OnLEP jars
-echo "copy OnLEP jars..."
-cp $srcPath/OnLEPBase/target/scala-2.10/onlepbase_2.10-1.0.jar $systemlib
-cp $srcPath/OnLEPManager/target/scala-2.10/onlepmanager_2.10-1.0.jar $systemlib
+# Fatafat jars
+echo "copy Fatafat jars..."
+cp $srcPath/FatafatBase/target/scala-2.10/fatafatbase_2.10-1.0.jar $systemlib
+cp $srcPath/FatafatManager/target/scala-2.10/fatafatmanager_2.10-1.0.jar $systemlib
 
 # Pmml compile and runtime jars
 echo "copy Pmml compile and runtime jars..."
@@ -305,7 +305,7 @@ cp -rf * $installPath/documentation
 # copy models, messages, containers, config, scripts, types  messages data prep
 # *******************************
 
-cp $srcPath/OnLEPManager/src/main/resources/log4j.properties $installPath/config
+cp $srcPath/FatafatManager/src/main/resources/log4j.properties $installPath/config
 
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs

@@ -1,6 +1,6 @@
 package com.ligadata.Security
 
-import com.ligadata.olep.metadata.SecurityAdapter
+import com.ligadata.fatafat.metadata.SecurityAdapter
 import com.sun.security.auth.callback.TextCallbackHandler
 import javax.security.auth.login._
 import javax.security.auth.Subject;

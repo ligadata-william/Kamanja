@@ -1,7 +1,7 @@
 package com.ligadata.Compiler
 
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 
 trait PmmlExecVisitor {

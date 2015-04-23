@@ -16,13 +16,13 @@ import java.nio.charset.StandardCharsets
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.OnLEPBase._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.FatafatBase._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import java.util.Properties
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import com.ligadata.olep.metadata.MdMgr._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.fatafat.metadata._
 import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
@@ -59,7 +59,7 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/OnLEPInstall/EngineConfig.cfg --csvpath /tmp/OnLEPInstall/sampledata/TestContainer.csv --keyfieldname Id
+      java -jar /tmp/FatafatInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/FatafatInstall/EngineConfig.cfg --csvpath /tmp/FatafatInstall/sampledata/TestContainer.csv --keyfieldname Id
 
 """
   }
@@ -317,7 +317,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
+          isContainer = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
@@ -337,7 +337,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
+          isMsg = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
