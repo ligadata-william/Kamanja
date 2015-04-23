@@ -226,12 +226,11 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = tripleM
   				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed)
   			}).size > 0)
-  			if (fixedArgTypes && mappedArgTypes) {
-  				PmmlError.logError(ctx, s"generateClassBuildsAndDoes... not supporting both fixed and mapped containers in same macro expr.")
-  				true
-  			} else {
-  				fixedArgTypes
-  			}
+			if (mappedArgTypes && fixedArgTypes) {
+				false  /** bias toward the mapped in this case... */
+			} else {
+				fixedArgTypes
+			}
   		} else {
  	  		PmmlError.logError(ctx, s"generateClassBuildsAndDoes... macro without arguments... not supported.")
  	  		true
