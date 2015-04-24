@@ -4,7 +4,7 @@ import scala.collection.mutable._
 import util.control.Breaks._
 import scala.util.matching.Regex
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 
 /** 

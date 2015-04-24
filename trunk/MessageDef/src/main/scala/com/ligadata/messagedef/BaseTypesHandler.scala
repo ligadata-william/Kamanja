@@ -1,6 +1,6 @@
 package com.ligadata.messagedef
 
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 
@@ -12,19 +12,19 @@ object BaseTypesHandler {
   private val pad4 = "\t\t\t\t"
   private val newline = "\n"
 
-  def serializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
+  def serializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
     serialize(typ, fixed, f, mappedMsgBaseTypeIdx)
   }
 
-  def deSerializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
+  def deSerializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
     deSerialize(typ, fixed, f, mappedMsgBaseTypeIdx)
   }
 
-  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], baseTypIdx: Int, prevVerMsgBaseTypesIdxArry: ArrayBuffer[String]): (String, String, String, String, String, ArrayBuffer[String]) = {
+  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], baseTypIdx: Int, prevVerMsgBaseTypesIdxArry: ArrayBuffer[String]): (String, String, String, String, String, ArrayBuffer[String]) = {
     prevObjDeserialize(typ, fixed, f, childs, baseTypIdx, prevVerMsgBaseTypesIdxArry)
   }
 
-  private def serialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
+  private def serialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
     var serializedBuf = new StringBuilder(8 * 1024)
     try {
       if (typ.getOrElse("None").equals("None"))
@@ -48,7 +48,7 @@ object BaseTypesHandler {
     serializedBuf.toString
   }
 
-  private def deSerialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
+  private def deSerialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
     var deserializedBuf = new StringBuilder(8 * 1024)
 
     try {
@@ -81,7 +81,7 @@ object BaseTypesHandler {
     deserializedBuf.toString
   }
 
-  private def prevObjDeserialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], baseTypIdx: Int, prevVerMsgBaseTypesIdxArry: ArrayBuffer[String]): (String, String, String, String, String, ArrayBuffer[String]) = {
+  private def prevObjDeserialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], baseTypIdx: Int, prevVerMsgBaseTypesIdxArry: ArrayBuffer[String]): (String, String, String, String, String, ArrayBuffer[String]) = {
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
     var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)

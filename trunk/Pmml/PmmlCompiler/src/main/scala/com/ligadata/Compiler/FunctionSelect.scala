@@ -7,8 +7,8 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
@@ -102,7 +102,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  
 	  	/** create a search key from the function name and its children (the arguments). */
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
-	  	logger.trace(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
+	  	logger.debug(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	
 	  	if (scalaFcnName == "MapKeys") {
 	  		val stop : Int = 0
@@ -120,7 +120,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val memberTypes : Array[Array[BaseTypeDef]] = argTypesExpanded.map( tuple => tuple._4)
 	  	val returnTypes : Array[String] = argTypesExpanded.map( tuple => tuple._5)  	
 	  	
-	  	logger.trace(s"selectSimpleFcn ... fcn = $scalaFcnName")
+	  	logger.debug(s"selectSimpleFcn ... fcn = $scalaFcnName")
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = if (argTypesExp != null && argTypesExp.size > 0) 
 	  		{ 
 	  			argTypesExp.map( arg => if (arg != null) arg.last else (null,false,null)) 
@@ -143,7 +143,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  		  		logger.info(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
 		  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
 		  		  		if (funcDef != null) {
-		  		  			logger.trace(s"selectSimpleFcn ...found funcDef with $key")
+		  		  			logger.debug(s"selectSimpleFcn ...found funcDef with $key")
 		  		  			winningKey = key
 		  		  			break
 		  		  		}
@@ -263,7 +263,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  		}
 	  		  	})
 	  		  	if (addlElemKeys.size == 0){
-	  		  		logger.trace("selectIterableFcn ...there were no keys to search for mbr function... must be fIdent-less mbr to be mapped/tupled")
+	  		  		logger.debug("selectIterableFcn ...there were no keys to search for mbr function... must be fIdent-less mbr to be mapped/tupled")
 	  		  	}
 	  		}
 	  		val foundMbrDef : String = if (winningMbrKey != null)  s"YES ...mbr key $winningMbrKey found ${node.function}" else s"NO mbr function $elemFcnName for ${node.function}!!"
@@ -496,7 +496,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  				}
 		  				buffer.append("]")
 		  				val collectionElementsTypeStr : String = buffer.toString
-		  				logger.trace(s"Container ${containerType.FullName} (a $containerTypeTypeStr) has element types: $collectionElementsTypeStr")
+		  				logger.debug(s"Container ${containerType.FullName} (a $containerTypeTypeStr) has element types: $collectionElementsTypeStr")
 		  			}
 	  				  			
 	  				val returnStuff = (iterArgs,mbrArgs,containerType,collectionsElementTypes,retTypStr)
@@ -791,8 +791,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	})
 	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes5)
 	  	
-	  	logger.trace("...relaxed keys:")
-	  	relaxedKeys.foreach( key => logger.trace(s"\t$key"))
+	  	logger.debug("...relaxed keys:")
+	  	relaxedKeys.foreach( key => logger.debug(s"\t$key"))
 	  
 	  	relaxedKeys.toArray
 	}
@@ -1042,7 +1042,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  			val hasTuple : Boolean = (mbrType.contains("("))
 	  			val hasNestedColl : Boolean = (mbrType.contains("["))
 	  			if (hasTuple || hasNestedColl) {
-	  				logger.trace(s"For function ${node.function}, nested collections and/or collections with tuple members detected.")
+	  				logger.debug(s"For function ${node.function}, nested collections and/or collections with tuple members detected.")
 	  				newArg
 	  			} else {	  			
 		  			if (mbrType != null && mbrType.size > 0) {	
@@ -1136,15 +1136,15 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
     // Loading all jars
     for (j <- jars) {
-      logger.trace("Processing Jar " + j.trim)
+      logger.debug("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
           if (loadedJars(fl.getPath())) {
-            logger.trace("Jar " + j.trim + " already loaded to class path.")
+            logger.debug("Jar " + j.trim + " already loaded to class path.")
           } else {
             loader.addURL(fl.toURI().toURL())
-            logger.trace("Jar " + j.trim + " added to class path.")
+            logger.debug("Jar " + j.trim + " added to class path.")
             loadedJars += fl.getPath()
           }
         } catch {
@@ -1362,7 +1362,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	containersWithSuperClasses.foreach( pair => {
 	  		val arg : String = pair._1
 	  		val containerTypeSuperClasses : Array[(String, ClassSymbol, Type)] = pair._2
-	  		logger.trace(s"processing $arg of function ${node.function}")
+	  		logger.debug(s"processing $arg of function ${node.function}")
 	  		map += (arg -> containerTypeSuperClasses)
 	  	})
 	  	map
@@ -1451,13 +1451,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			}
 			case "fident" => {
 				val fcnName : String = constNode.Value.toString
-				logger.trace(s"constantKeyForSimpleNode - fIdent value : $fcnName ... fident usage for simple fcn case must be the mbr fcn of an iterable function")
+				logger.debug(s"constantKeyForSimpleNode - fIdent value : $fcnName ... fident usage for simple fcn case must be the mbr fcn of an iterable function")
 				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
 
 			}
 			case "typename" => {
 				val typenameStr : String = constNode.asString(ctx)
-				logger.trace(s"constantKeyForSimpleNode - typename value : $typenameStr ... typename string argument to function ${node.function}")
+				logger.debug(s"constantKeyForSimpleNode - typename value : $typenameStr ... typename string argument to function ${node.function}")
 				Array[(String,Boolean,BaseTypeDef)](("String",false,null))
 
 			}
@@ -1920,7 +1920,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				if (fcnName == "Sum") {
 					val stophere : Int = 0
 				}
-				logger.trace(s"constantArgForIterableFcn - fIdent value : $fcnName")
+				logger.debug(s"constantArgForIterableFcn - fIdent value : $fcnName")
 				Array[(String,Boolean,BaseTypeDef)]((fcnName,false,null))
 			}
 			case _ => { /** ordinary constant.. use its dataType to build information */

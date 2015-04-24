@@ -16,13 +16,13 @@ import java.nio.charset.StandardCharsets
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.OnLEPBase._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.FatafatBase._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import java.util.Properties
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import com.ligadata.olep.metadata.MdMgr._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.fatafat.metadata._
 import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
@@ -59,7 +59,7 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      java -jar /tmp/OnLEPInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/OnLEPInstall/EngineConfig.cfg --csvpath /tmp/OnLEPInstall/sampledata/TestContainer.csv --keyfieldname Id
+      java -jar /tmp/FatafatInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/FatafatInstall/EngineConfig.cfg --csvpath /tmp/FatafatInstall/sampledata/TestContainer.csv --keyfieldname Id
 
 """
   }
@@ -317,7 +317,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseContainerObj")
+          isContainer = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
@@ -337,7 +337,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.OnLEPBase.BaseMsgObj")
+          isMsg = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
@@ -356,10 +356,10 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         val objinst = obj.instance
         if (objinst.isInstanceOf[BaseMsgObj]) {
           messageObj = objinst.asInstanceOf[BaseMsgObj]
-          logger.info("Created Message Object")
+          logger.debug("Created Message Object")
         } else if (objinst.isInstanceOf[BaseContainerObj]) {
           containerObj = objinst.asInstanceOf[BaseContainerObj]
-          logger.info("Created Container Object")
+          logger.debug("Created Container Object")
         } else {
           logger.error("Failed to instantiate message or conatiner object :" + clsName)
           isOk = false
@@ -405,15 +405,15 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     // Loading all jars
     for (j <- jars) {
-      logger.info("Processing Jar " + j.trim)
+      logger.debug("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
           if (loadedJars(fl.getPath())) {
-            logger.info("Jar " + j.trim + " already loaded to class path.")
+            logger.debug("Jar " + j.trim + " already loaded to class path.")
           } else {
             loader.addURL(fl.toURI().toURL())
-            logger.info("Jar " + j.trim + " added to class path.")
+            logger.debug("Jar " + j.trim + " added to class path.")
             loadedJars += fl.getPath()
           }
         } catch {
@@ -462,7 +462,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           throw new Exception("The database type " + storeType + " is not supported yet ")
         }
       }
-      logger.info("Getting DB Connection: " + connectinfo.mkString(","))
+      logger.debug("Getting DB Connection: " + connectinfo.mkString(","))
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
@@ -490,11 +490,11 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     var isIt: Boolean = false
 
     val interfecs = clz.getInterfaces()
-    logger.info("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
+    logger.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
 
     breakable {
       for (intf <- interfecs) {
-        logger.info("Interface:" + intf.getName())
+        logger.debug("Interface:" + intf.getName())
         if (intf.getName().equals(clsName)) {
           isIt = true
           break
@@ -551,7 +551,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       }
     })
 
-    logger.info("Inserted %d values in KVName %s".format(processedRows, kvname))
+    logger.debug("Inserted %d values in KVName %s".format(processedRows, kvname))
 
     kvstore
   }
@@ -561,16 +561,16 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     val tuplesAsString: String = tupleBytes.toString
     tupleBytes.foreach(c => buffer.append(c.toChar))
     val tuples: String = buffer.toString
-    //logger.info(tuples)
+    //logger.debug(tuples)
 
     val inputData = new DelimitedData(tuples, ",")
     inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
     inputData.curPos = 0
-    logger.info(s"\n$kvname")
+    logger.debug(s"\n$kvname")
   }
 
   def dump(datastore: DataStore): Unit = {
-    logger.info(s"\nDump of data store $kvname")
+    logger.debug(s"\nDump of data store $kvname")
 
     locateKeyPos
     /** locate key idx */

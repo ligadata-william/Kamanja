@@ -7,9 +7,9 @@ import akka.io.IO
 import akka.io.Tcp._
 import spray.can.Http
 
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadata.ObjType._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
 import org.apache.log4j._
 import com.ligadata.Utils._
@@ -17,9 +17,9 @@ import com.ligadata.Utils._
 object APIInit {
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
-  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
+ // logger.setLevel(Level.TRACE);
+  //MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
   var configFile:String = _
   private[this] val lock = new Object()
@@ -36,6 +36,10 @@ object APIInit {
     configFile = cfgFile
   }
 
+  def SetDbOpen : Unit = {
+    databaseOpen = true
+  }
+
   def InitLeaderLatch: Unit = {
       // start Leader detection component
       val nodeId     = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("NODE_ID")
@@ -50,11 +54,11 @@ object APIInit {
   def Init : Unit = {
     try{
       // Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
-      databaseOpen = true
+      //MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      //databaseOpen = true
 
       // start Leader detection component
-      logger.trace("Initialize Leader Latch")
+      logger.debug("Initialize Leader Latch")
       InitLeaderLatch
     } catch {
       case e: Exception => {

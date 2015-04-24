@@ -3,11 +3,11 @@ package com.ligadata.Compiler
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
 import org.xml.sax.Attributes
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import com.ligadata.Pmml.Runtime._
-import com.ligadata.OnLEPBase._
+import com.ligadata.FatafatBase._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.control.Breaks._
 
 /** 
@@ -244,7 +244,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				  		Array[(String,Boolean,BaseTypeDef)]((containerTypeString,true,containerTypedef), (memberType,false,attrDef.typeDef))
 				  	} else {
 				  		val containerTypeStr : String = containerTypedef.typeString
-				  		logger.trace(s"... container found memberType = $memberType, containerTypedef = $containerTypeStr")
+				  		logger.debug(s"... container found memberType = $memberType, containerTypedef = $containerTypeStr")
 				  		Array[(String,Boolean,BaseTypeDef)]((memberType, true, containerTypedef))
 				  	}
 				} else {
@@ -545,7 +545,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
 				  			true
 				  		}
-			  case _ => { 	//logger.trace(s"Unecessary to register this dataType ... $dataType")
+			  case _ => { 	//logger.debug(s"Unecessary to register this dataType ... $dataType")
 				  			false
 			    		}
 			} 
@@ -734,7 +734,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 						}
 					}
 					case _ => { /** comment out this case once tested */
-						 logger.trace(s"node $currentNode.qName does not have children or had children subsumed by the parent")
+						 logger.debug(s"node $currentNode.qName does not have children or had children subsumed by the parent")
 					}
 				}
 			}

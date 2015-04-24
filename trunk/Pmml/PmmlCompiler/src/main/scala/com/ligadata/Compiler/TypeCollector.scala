@@ -7,7 +7,7 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 /**
  * TypeCollector's focus is to reason about the type system present and implied by the Pmml being processed.

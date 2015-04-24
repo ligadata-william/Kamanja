@@ -6,7 +6,7 @@ import scala.Enumeration
 import scala.io.Source._
 import org.apache.log4j._
 
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import com.twitter.chill.ScalaKryoInstantiator
 import com.esotericsoftware.kryo.io.{Input, Output}
@@ -39,7 +39,7 @@ class KryoSerializer extends Serializer{
       kryo.writeClassAndObject(output,obj)
       output.close()
       val ba = baos.toByteArray()
-      logger.trace("Serialized data contains " + ba.length + " bytes ")
+      logger.debug("Serialized data contains " + ba.length + " bytes ")
       ba
     }catch{
       case e:Exception => {
@@ -57,7 +57,7 @@ class KryoSerializer extends Serializer{
       if (classLoader != null)
         kryo.setClassLoader(classLoader)
       val m = kryo.readClassAndObject(inp)
-      logger.trace("DeSerialized object => " + m.getClass().getName())
+      logger.debug("DeSerialized object => " + m.getClass().getName())
       inp.close()
       m
     }catch{

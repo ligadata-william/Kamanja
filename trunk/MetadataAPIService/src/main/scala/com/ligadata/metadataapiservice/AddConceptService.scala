@@ -7,6 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
+import com.ligadata.fatafat.metadata._
 
 import scala.util.{ Success, Failure }
 
@@ -16,26 +17,39 @@ object AddConceptService {
 	case class Process(conceptJson:String, formatType:String)
 }
 
-class AddConceptService(requestContext: RequestContext) extends Actor {
+class AddConceptService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
 
 	import AddConceptService._
 	
 	implicit val system = context.system
 	import system.dispatcher
 	val log = Logging(system, getClass)
+  val APIName = "AddConceptService"
 	
 	def receive = {
-		case Process(conceptJson, formatType) =>
-			process(conceptJson, formatType)
-			context.stop(self)
+	  case Process(conceptJson, formatType) =>
+	    process(conceptJson, formatType)
+	    context.stop(self)
 	}
 	
-	def process(conceptJson:String, formatType:String) = {
-	  
-		log.info("Requesting AddConcept {},{}",conceptJson,formatType)
-		
-		val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
-		
-		requestContext.complete(apiResult)
+	def process(conceptJson:String, formatType:String): Unit = {
+	  log.info("Requesting AddConcept {},{}",conceptJson,formatType)
+    
+    var nameVal: String = null
+    if (formatType.equalsIgnoreCase("json")) {
+      nameVal = APIService.extractNameFromJson(conceptJson,AuditConstants.CONCEPT) 
+    } else {
+      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      return
+    }
+
+	  if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.FAIL,"",nameVal)
+	    requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+	  } else {
+	    val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",nameVal)
+	    requestContext.complete(apiResult)
+    }
 	}
 }

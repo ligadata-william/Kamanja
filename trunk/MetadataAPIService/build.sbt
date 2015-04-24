@@ -21,8 +21,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x endsWith "google/common/annotations/GwtCompatible.class" => MergeStrategy.first
     case x if x endsWith "google/common/annotations/GwtIncompatible.class" => MergeStrategy.first
     case x if x endsWith "/apache/commons/beanutils/BasicDynaBean.class" => MergeStrategy.first
-    case x if x endsWith "com\\ligadata\\olep\\metadataload\\MetadataLoad.class" => MergeStrategy.first
-    case x if x endsWith "com/ligadata/olep/metadataload/MetadataLoad.class" => MergeStrategy.first
+    case x if x endsWith "com\\ligadata\\fatafat\\metadataload\\MetadataLoad.class" => MergeStrategy.first
+    case x if x endsWith "com/ligadata/fatafat/metadataload/MetadataLoad.class" => MergeStrategy.first
     case x if x endsWith "org/apache/commons/beanutils/BasicDynaBean.class" => MergeStrategy.last
     case x if x endsWith "com\\esotericsoftware\\minlog\\Log.class" => MergeStrategy.first
     case x if x endsWith "com\\esotericsoftware\\minlog\\Log$Logger.class" => MergeStrategy.first
@@ -73,6 +73,7 @@ libraryDependencies ++= {
   "io.spray" %%  "spray-json" % "1.2.5",
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.0.12"
+  "ch.qos.logback" % "logback-classic" % "1.0.12",
+  "org.apache.camel" % "camel-core" % "2.9.2"
   )
 }

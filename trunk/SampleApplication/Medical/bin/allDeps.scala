@@ -94,7 +94,7 @@ allDeps.scala
         })
 
         println(s"Dependency jars for repo found at $pwd")
-        allDepJars.foreach(jarPath => println("cp " + jarPath + " $ONLEPLIBPATH"))
+        allDepJars.foreach(jarPath => println("cp " + jarPath + " $FATAFATLIBPATH"))
 	}
 }
 

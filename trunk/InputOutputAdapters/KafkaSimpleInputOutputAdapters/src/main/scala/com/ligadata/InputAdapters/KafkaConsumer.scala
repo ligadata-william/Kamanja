@@ -6,7 +6,7 @@ import java.util.Properties
 import kafka.consumer.{ ConsumerConfig, Consumer, ConsumerConnector }
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.FatafatBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ KafkaQueueAdapterConfiguration, KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 import org.apache.zookeeper.data.Stat
@@ -61,7 +61,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   override def StopProcessing: Unit = lock.synchronized {
-    LOG.info("===============> Called StopProcessing")
+    LOG.debug("===============> Called StopProcessing")
     //BUGBUG:: Make sure we finish processing the current running messages.
     if (consumerConnector != null)
       consumerConnector.shutdown
@@ -78,7 +78,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
   override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
-    LOG.info("===============> Called StartProcessing")
+    LOG.debug("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
 
@@ -105,31 +105,31 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
     // create the consumer streams
     val topicMessageStreams = consumerConnector.createMessageStreams(Predef.Map(qc.topic -> threads))
-    LOG.info("All Message Streams")
+    LOG.debug("All Message Streams")
 
     executor = Executors.newFixedThreadPool(threads)
 
     kvs.clear
 
-    LOG.info("Creating KV Map")
+    LOG.debug("Creating KV Map")
 
     partInfo.foreach(quad => {
       kvs(quad._1.PartitionId) = quad
     })
 
-    LOG.info("KV Map =>")
+    LOG.debug("KV Map =>")
     kvs.foreach(kv => {
-      LOG.info("Key:%s => Val:%s".format(kv._2._1.Serialize, kv._2._2.Serialize))
+      LOG.debug("Key:%s => Val:%s".format(kv._2._1.Serialize, kv._2._2.Serialize))
     })
 
     try {
-      LOG.info("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
+      LOG.debug("Trying to Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
       // get the streams for the topic
       val testTopicStreams = topicMessageStreams.get(qc.topic).get
-      LOG.info("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
+      LOG.debug("Prepare Streams => Topic:%s, TotalPartitions:%d, Partitions:%s".format(qc.topic, maxParts, qc.instancePartitions.mkString(",")))
 
       for (stream <- testTopicStreams) {
-        // LOG.info("Streams Creating => ")
+        // LOG.debug("Streams Creating => ")
         executor.execute(new Runnable() {
           override def run() {
             val topicMessageStrmsPtr = topicMessageStreams
@@ -153,7 +153,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             try {
               breakable {
                 for (message <- stream) {
-                  // LOG.info("Partition:%d Message:%s".format(message.partition, new String(message.message)))
+                  // LOG.debug("Partition:%d Message:%s".format(message.partition, new String(message.message)))
                   if (qc.instancePartitions(message.partition)) {
                     if (message.offset > currentOffset) {
                       currentOffset = message.offset
@@ -169,9 +169,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           if (p == curPartitionId)
                             isValid = true
                         })
-                        LOG.info("Name:%s, Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, qc.topic, curPartitionId, isValid.toString))
+                        LOG.debug("Name:%s, Topic:%s, PartitionId:%d, isValid:%s".format(qc.Name, qc.topic, curPartitionId, isValid.toString))
                         if (isValid == false) {
-                          LOG.info("Returning from stream of Partitionid : " + curPartitionId)
+                          LOG.debug("Returning from stream of Partitionid : " + curPartitionId)
                           return ;
                         }
                         checkForPartition = false
@@ -215,14 +215,14 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                         }
                       } else {
-                        LOG.info("Ignoring Message:%s".format(new String(message.message)))
+                        LOG.debug("Ignoring Message:%s".format(new String(message.message)))
                       }
                     } else {
-                      LOG.info("Ignoring Message:%s".format(new String(message.message)))
+                      LOG.debug("Ignoring Message:%s".format(new String(message.message)))
                     }
                   }
                   if (executor.isShutdown) {
-                    LOG.info("Executor is shutting down for partitionId: " + curPartitionId)
+                    LOG.debug("Executor is shutting down for partitionId: " + curPartitionId)
                     break
                   }
                 }
@@ -232,7 +232,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                 LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
               }
             }
-            LOG.info("===========================> Exiting Thread for Partition:" + curPartitionId)
+            LOG.debug("===========================> Exiting Thread for Partition:" + curPartitionId)
           }
         });
       }
@@ -277,7 +277,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       return null
     }
 
-    LOG.info("JSON Partitions:%s".format(jsonPartitionMapOpt.get))
+    LOG.debug("JSON Partitions:%s".format(jsonPartitionMapOpt.get))
 
     val json = parse(jsonPartitionMapOpt.get)
     if (json == null || json.values == null) // Not doing anything
@@ -309,7 +309,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
     val key = new KafkaPartitionUniqueRecordKey
     try {
-      LOG.info("Deserializing Key:" + k)
+      LOG.debug("Deserializing Key:" + k)
       key.Deserialize(k)
     } catch {
       case e: Exception => {
@@ -324,7 +324,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     val vl = new KafkaPartitionUniqueRecordValue
     if (v != null) {
       try {
-        LOG.info("Deserializing Value:" + v)
+        LOG.debug("Deserializing Value:" + v)
         vl.Deserialize(v)
       } catch {
         case e: Exception => {

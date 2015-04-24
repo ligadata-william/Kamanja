@@ -119,7 +119,7 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBase.EnvContext",
+  "PhysicalName" : "com.ligadata.FatafatBase.EnvContext",
   "Version" : 1,
   "JarName" : null,
   "DependencyJars" : [ ],
@@ -201,10 +201,10 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBankPoc.BankPocMsg_100",
+  "PhysicalName" : "com.ligadata.FatafatBankPoc.BankPocMsg_100",
   "Version" : 100,
   "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "fatafatbase_2.10-1.0.jar" ],
   "Implementation" : null
 },
 {
@@ -227,7 +227,7 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBase.BaseMsg",
+  "PhysicalName" : "com.ligadata.FatafatBase.BaseMsg",
   "Version" : 1,
   "JarName" : null,
   "DependencyJars" : [ ],
@@ -370,10 +370,10 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBankPoc.CustomerPreferences_100",
+  "PhysicalName" : "com.ligadata.FatafatBankPoc.CustomerPreferences_100",
   "Version" : 100,
   "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "fatafatbase_2.10-1.0.jar" ],
   "Implementation" : null
 },
 {
@@ -383,7 +383,7 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBase.BaseContainer",
+  "PhysicalName" : "com.ligadata.FatafatBase.BaseContainer",
   "Version" : 1,
   "JarName" : null,
   "DependencyJars" : [ ],
@@ -456,10 +456,10 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBankPoc.AlertParameters_100",
+  "PhysicalName" : "com.ligadata.FatafatBankPoc.AlertParameters_100",
   "Version" : 100,
   "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "fatafatbase_2.10-1.0.jar" ],
   "Implementation" : null
 },
 {
@@ -547,10 +547,10 @@
   "TypeTypeName" : "tContainer",
   "TypeNameSpace" : "System",
   "TypeName" : "Struct",
-  "PhysicalName" : "com.ligadata.OnLEPBankPoc.AlertHistory_100",
+  "PhysicalName" : "com.ligadata.FatafatBankPoc.AlertHistory_100",
   "Version" : 100,
   "JarName" : "bankmsgsandcontainers_2.10-1.0.jar",
-  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "onlepbase_2.10-1.0.jar" ],
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar", "fatafatbase_2.10-1.0.jar" ],
   "Implementation" : null
 },
 {

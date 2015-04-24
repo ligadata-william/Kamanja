@@ -1,8 +1,8 @@
 package com.ligadata.ZooKeeper
 
 import com.ligadata.Serialize._
-import com.ligadata.MetadataAPI._
-import com.ligadata.olep.metadata._
+//import com.ligadata.MetadataAPI._
+import com.ligadata.fatafat.metadata._
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
 import org.apache.curator.framework.recipes.cache._
@@ -151,17 +151,17 @@ object ZooKeeperListenerTest {
     }
   }
 
-  private def UpdateMetadata(receivedJsonStr: String): Unit = {
+ /* private def UpdateMetadata(receivedJsonStr: String): Unit = {
     val zkMessage = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
     MetadataAPIImpl.UpdateMdMgr(zkMessage)
-  }
+  }*/
 
-  def StartLocalListener = {
+  /* def StartLocalListener = {
     val zkListener = new ZooKeeperListener
     try {
       val znodePath = "/ligadata/metadata/metadataupdate"
       val zkcConnectString = "localhost:2181"
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
+    //  JsonSerializer.SetLoggerLevel(Level.TRACE)
       CreateClient.CreateNodeIfNotExists(zkcConnectString, znodePath)
       zkListener.CreateListener(zkcConnectString, znodePath, UpdateMetadata, 250, 30000)
       if( firstTime == true ){
@@ -182,7 +182,7 @@ object ZooKeeperListenerTest {
     } finally {
       zkListener.Shutdown
     }
-  }
+  }*/
 
   private def PrintUsage(): Unit = {
     logger.warn("    --config <configfilename>")
@@ -201,14 +201,14 @@ object ZooKeeperListenerTest {
     }
   }
 
-  def main(args: Array[String]) = {
+/*  def main(args: Array[String]) = {
     var databaseOpen = false
     firstTime = true
     var configFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
     if (args.length == 0) {
       logger.error("Config File defaults to " + configFile)
       logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
     } else {
       val options = nextOption(Map(), args.toList)
       val cfgfile = options.getOrElse('config, null)
@@ -219,9 +219,9 @@ object ZooKeeperListenerTest {
       configFile = cfgfile.asInstanceOf[String]
     }
     try {
-      MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      JsonSerializer.SetLoggerLevel(Level.TRACE)
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+     // MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
+      //JsonSerializer.SetLoggerLevel(Level.TRACE)
       MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
       databaseOpen = true
       StartLocalListener
@@ -234,5 +234,5 @@ object ZooKeeperListenerTest {
         MetadataAPIImpl.CloseDbStore
       }
     }
-  }
+  } */
 }

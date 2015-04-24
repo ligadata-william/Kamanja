@@ -8,7 +8,7 @@ import org.apache.log4j._
 
 import scala.collection.JavaConversions._
 
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.ExtensionRegistry;
@@ -30,7 +30,7 @@ class ProtoBufSerializer extends Serializer{
   }
 
   def buildProtoBaseElem(o: BaseElemDef) : ProtoBaseElem = {
-    logger.trace("Build ProtoBaseElem from " + o.getClass().getName())
+    logger.debug("Build ProtoBaseElem from " + o.getClass().getName())
     val pbe = ProtoBaseElem.newBuilder()
       .setNameSpace(o.NameSpace)
       .setName(o.Name)
@@ -48,7 +48,7 @@ class ProtoBufSerializer extends Serializer{
   }
 
   def buildProtoBaseType(o: BaseTypeDef) : ProtoBaseType = {
-    logger.trace("Build ProtoBaseType from " + o.getClass().getName())
+    logger.debug("Build ProtoBaseType from " + o.getClass().getName())
     val pbt = ProtoBaseType.newBuilder()
       .setPbe(buildProtoBaseElem(o))
    //   .setTypeType(ObjTypeType.asString(o.tTypeType))
@@ -61,7 +61,7 @@ class ProtoBufSerializer extends Serializer{
   }
 
   def buildProtoBaseTypeKey(o: BaseTypeDef) : ProtoBaseTypeKey = {
-    logger.trace("Build ProtoBaseTypekey from " + o.getClass().getName())
+    logger.debug("Build ProtoBaseTypekey from " + o.getClass().getName())
     val pbtk = ProtoBaseTypeKey.newBuilder()
       .setNameSpace(o.NameSpace)
       .setName(o.Name)
@@ -97,7 +97,7 @@ class ProtoBufSerializer extends Serializer{
     try{
       val inputAttrList = o.getInputVarsList()
 
-      logger.trace("Prepping InputVarList...")
+      logger.debug("Prepping InputVarList...")
 
       var inputAttrList1 = List[(String, String, String,String,Boolean,String)]()
       for (attr <- inputAttrList) {
@@ -113,7 +113,7 @@ class ProtoBufSerializer extends Serializer{
 			    collType)
       }
 
-      logger.trace("Prepping OutputVarList...")
+      logger.debug("Prepping OutputVarList...")
 
       val outputAttrList = o.getOutputVarsList()
       var outputAttrList1 = List[(String, String, String)]()
@@ -124,7 +124,7 @@ class ProtoBufSerializer extends Serializer{
       }
 
 
-      logger.trace("Prepping DependencyJars...")
+      logger.debug("Prepping DependencyJars...")
       // Couldn't use toArray on List[java.lang.String], need to make it better
       val depJarsList = o.getPbe().getDependencyJarNamesList()
       val depJars1 = new Array[String](depJarsList.length)
@@ -134,10 +134,10 @@ class ProtoBufSerializer extends Serializer{
 	i += 1
       }
 
-      //logger.trace("depJars contain " + depJars1.length + " entries ")
-      //depJars1.foreach(s => { logger.trace(s) })
+      //logger.debug("depJars contain " + depJars1.length + " entries ")
+      //depJars1.foreach(s => { logger.debug(s) })
 
-      logger.trace("Create the ModelDef object...")
+      logger.debug("Create the ModelDef object...")
       val m = MdMgr.GetMdMgr.MakeModelDef(o.getPbe().getNameSpace(),
 					  o.getPbe().getName(),
 					  o.getPbe().getPhysicalName(),
@@ -164,13 +164,13 @@ class ProtoBufSerializer extends Serializer{
 	case o:AttributeDef => {
 	  val ae = buildAttribute(o)
 	  val ba = ae.toByteArray();
-	  logger.trace("Serialized data contains " + ba.length + " bytes ")
+	  logger.debug("Serialized data contains " + ba.length + " bytes ")
 	  ba
 	}
 	case o:ModelDef => {
 	  val m = buildModel(o)
 	  val ba = m.toByteArray();
-	  logger.trace("Serialized data contains " + ba.length + " bytes ")
+	  logger.debug("Serialized data contains " + ba.length + " bytes ")
 	  ba
 	}
       }
@@ -183,17 +183,17 @@ class ProtoBufSerializer extends Serializer{
 
 
   override def DeserializeObjectFromByteArray(ba: Array[Byte], objectType:String) : Object = {
-    logger.trace("Parse " + ba.length + " bytes to create a " + objectType + " object ")
+    logger.debug("Parse " + ba.length + " bytes to create a " + objectType + " object ")
     try{
       objectType match{
-	case "com.ligadata.olep.metadata.AttributeDef" => {
+	case "com.ligadata.fatafat.metadata.AttributeDef" => {
 	  val a = Attribute.parseFrom(ba);
-	  logger.trace("Attribute => " + a)
+	  logger.debug("Attribute => " + a)
 	  a
 	}
-	case "com.ligadata.olep.metadata.ModelDef" => {
+	case "com.ligadata.fatafat.metadata.ModelDef" => {
 	  val m = Model.parseFrom(ba);
-	  logger.trace("Deserialized Model as protobuf object => " + m)
+	  logger.debug("Deserialized Model as protobuf object => " + m)
 	  val mDef = buildModel(m)
 	  mDef
 	}

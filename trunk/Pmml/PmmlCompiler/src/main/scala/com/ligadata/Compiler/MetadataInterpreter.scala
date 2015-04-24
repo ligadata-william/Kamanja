@@ -6,7 +6,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 
 class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
@@ -104,8 +104,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 								if (! conceptCollected) {
 									val (typestring,typedef) : (String,BaseTypeDef) = getDDictFieldType(name)
 									if (typedef == null) {
-										logger.trace(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
-										logger.trace("Either correct the spelling or add a type with this name to the metadata")
+										logger.debug(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
+										logger.debug("Either correct the spelling or add a type with this name to the metadata")
 									} else {
 										baseTypeTriples += Tuple3(typestring, (containerType != null), typedef)
 									}
@@ -140,8 +140,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 									if (! conceptCollected) {
 										val (typestring,typedef) : (String,BaseTypeDef) = getXDictFieldType(name)
 										if (typedef == null) {
-											logger.trace(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
-											logger.trace("Either correct the spelling or add a type with this name to the metadata")
+											logger.debug(s"The field type, '${fld.dataType} for data dictionary field '$name' is not found")
+											logger.debug("Either correct the spelling or add a type with this name to the metadata")
 										} else {
 											baseTypeTriples += Tuple3(typestring, (containerType == null), typedef)
 										}
@@ -327,7 +327,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			baseTypeTriples += Tuple3(conceptType.typeString, isContainerWithNamedFields, conceptType)
 			true
 		} else {
-			//logger.trace(s"The name '$name' in field reference value is not a valid concept. ")
+			//logger.debug(s"The name '$name' in field reference value is not a valid concept. ")
 			false
 		}
 		gotOne
@@ -618,6 +618,38 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	  	(typedef != null && (typedef.isInstanceOf[StructTypeDef] || typedef.isInstanceOf[MappedMsgTypeDef]))
 	}
 
+	/** 
+	 *  Answer whether this type is a ContainerTypeDef that has member types that are container types.
+	 *  Nested collections are supported.
+	 *  @param typedef A BaseTypeDef
+	 *  @return true if this a collection with member types in {StructTypeDef, MappedMsgTypeDef}
+	 */
+	def collectMemberContainerTypes(typedef : BaseTypeDef) : Array[BaseTypeDef] = {
+	  	var baseTypes : ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
+	  	if (typedef != null && typedef.isInstanceOf[ContainerTypeDef]) {
+	  		val container : ContainerTypeDef = typedef.asInstanceOf[ContainerTypeDef]
+	  		val mbrTypes : Array[BaseTypeDef] = container.ElementTypes
+	  		if (mbrTypes != null && mbrTypes.size > 0) {
+	  			mbrTypes.foreach(typ => {
+	  				val hasContainerType : Boolean = isContainerWithFieldOrKeyNames(typ)
+	  				if (! hasContainerType && typ.isInstanceOf[ContainerTypeDef]) {
+	  					val subTypes : Array[BaseTypeDef] = collectMemberContainerTypes(typ)  /** recurse here to look at the subtypes */
+	  					if (subTypes.size > 0) {
+	  						baseTypes ++= subTypes
+	  					}
+	  				} else {
+	  					if (hasContainerType) {
+	  						baseTypes += typ
+	  					}
+	  				}
+	  			})
+	  		}
+	  	}
+	  	baseTypes.toArray
+	}
+
 }
+
+
 
 

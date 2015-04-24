@@ -2,7 +2,7 @@ Fatafat Home
 ===
 ###What is Fatafat?
 
-Fatafat is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
+Fatafat is a real-time processing and decisioning (Fatafat) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
 
 The FatafatTM framework is open source with many features that support use cases for developers:
 
@@ -48,7 +48,7 @@ questions and make contributions.
 
 ####Quick Start
 
-1. [DOWNLOAD](http://www.ligadata.com/releases/bin/fatafat_install_v101.zip) latest Fatafat binaries
+1. [DOWNLOAD](http://goo.gl/forms/IOpB8qMU9n) latest Fatafat binaries
 
 2. Unzip the downloaded file
 
@@ -56,9 +56,9 @@ questions and make contributions.
     
     b. On Windows, use ‘winrar’ or ‘winzip’ to unzip it 
     
-    c. On Linux, use 'unzip fatafat_install_v101.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
+    c. On Linux, use 'unzip fatafat_install_v103.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
     
-3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/FatafatDocs/wiki/Installing-and-Running-Fatafat-Quickly)
+3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/Fatafat/wiki/Installing-and-Running-Fatafat)
 
 ###[Getting Involved](https://github.com/ligaDATA/Fatafat/wiki/Getting-Involved)
 

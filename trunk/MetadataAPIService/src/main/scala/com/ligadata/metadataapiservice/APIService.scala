@@ -6,18 +6,19 @@ import akka.event.Logging
 import akka.io.IO
 import akka.io.Tcp._
 import spray.can.Http
-
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import org.json4s.jackson.JsonMethods._
+import com.ligadata.fatafat.metadata.ObjType._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
 import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 
-class APIService {
+class APIService extends LigadataSSLConfiguration with Runnable{
 
   private type OptionMap = Map[Symbol, Any]
+  var inArgs: Array[String] = null
 
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("metadata-api-service")
@@ -25,11 +26,27 @@ class APIService {
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-  logger.setLevel(Level.TRACE);
-  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-  MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
+  //logger.setLevel(Level.TRACE);
+ // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+  //MdMgr.GetMdMgr.SetLoggerLevel(Level.INFO)
   var databaseOpen = false
+  
+  /**
+   * 
+   */
+  def this(args: Array[String]) = {
+    this
+    inArgs = args  
+  }
 
+  /**
+   * 
+   */
+  def run() {
+    StartService(inArgs) 
+  }
+  
+  
   private def PrintUsage(): Unit = {
     logger.warn("    --config <configfilename>")
   }
@@ -58,7 +75,7 @@ class APIService {
       if (args.length == 0) {
         logger.error("Config File defaults to " + configFile)
         logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-        logger.error("The config file supplied is a complete path name of a  json file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+        logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       } else {
         val options = nextOption(Map(), args.toList)
         val cfgfile = options.getOrElse('config, null)
@@ -82,8 +99,14 @@ class APIService {
       }
 
       APIInit.SetConfigFile(configFile.toString)
-      MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
-      logger.trace("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
+
+      // Read properties file and Open db connection
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      // APIInit deals with shutdown activity and it needs to know
+      // that database connections were successfully made
+      APIInit.SetDbOpen
+
+      logger.debug("API Properties => " + MetadataAPIImpl.GetMetadataAPIConfig)
 
       // We will allow access to this web service from all the servers on the PORT # defined in the config file 
       val serviceHost = "0.0.0.0"
@@ -92,27 +115,31 @@ class APIService {
       // create and start our service actor
       val callbackActor = actor(new Act {
         become {
-         case b @ Bound(connection) => logger.info(b.toString)
-         case cf @ CommandFailed(command) => logger.error(cf.toString)
-         case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
+          case b @ Bound(connection) => logger.debug(b.toString)
+          case cf @ CommandFailed(command) => logger.error(cf.toString)
+          case all => logger.debug("ApiService Received a message from Akka.IO: " + all.toString)
         }
       })
       val service = system.actorOf(Props[MetadataAPIServiceActor], "metadata-api-service")
 
-      // start a new HTTP server with our service actor as the handler
+      // start a new HTTP server on a specified port with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
-      logger.info("Started the service")
+      logger.info("MetadataAPIService started, listening on (%s,%s)".format(serviceHost,servicePort))
 
       sys.addShutdownHook({
-        logger.trace("ShutdownHook called")
+        logger.debug("ShutdownHook called")
         Shutdown(0)
       })
 
       Thread.sleep(365*24*60*60*1000L)
     } catch {
-      case e: InterruptedException => { logger.info("Unexpected Interrupt") }
-      case e: Exception => { e.printStackTrace() }
+      case e: InterruptedException => {
+        logger.debug("Unexpected Interrupt")
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
     } finally {
       Shutdown(0)
     }
@@ -120,8 +147,46 @@ class APIService {
 }
  
 object APIService {
+
   def main(args: Array[String]): Unit = {
     val mgr = new APIService
-    mgr.StartService(args)
+    mgr.StartService(args) 
+  }
+  
+  
+  /**
+   * extractNameFromJson - applies to a simple Fatafat object
+   */
+  def extractNameFromJson (jsonObj: String, objType: String): String = {
+    var inParm: Map[String,Any] = null
+    try {
+      inParm = parse(jsonObj).values.asInstanceOf[Map[String,Any]] 
+    } catch {
+      case e: Exception => {
+        return "Unknown:NameParsingError"
+      }
+    }
+    var vals: Map[String,String] = inParm.getOrElse(objType,null).asInstanceOf[Map[String,String]]
+    if (vals == null) {
+      return "unknown "+ objType
+    }
+    return vals.getOrElse("NameSpace","system")+"."+vals.getOrElse("Name","")+"."+vals.getOrElse("Version","-1")
+  }
+
+  
+  /**
+   * extractNameFromPMML - pull the Application name="xxx" version="xxx.xx.xx" from the PMML doc and construct
+   *                       a name  string from it
+   */
+  def extractNameFromPMML (pmmlObj: String): String = {
+    var firstOccurence: String = "unknownModel"
+    val pattern = """Application[ ]*name="([^ ]*)"[ ]*version="([^ ]*)"""".r
+    val allMatches = pattern.findAllMatchIn(pmmlObj)
+    allMatches.foreach( m => {
+      if (firstOccurence.equalsIgnoreCase("unknownModel")) {
+      firstOccurence = (m.group(1)+"."+m.group(2))
+      }
+    })
+    return firstOccurence
   }
 }

@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.OnLEPBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.FatafatBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 
@@ -41,7 +41,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
   private def ProcessFile(sFileName: String, format: String, msg: String, st: Stats, ignorelines: Int, AddTS2MsgFlag: Boolean, isGz: Boolean): Unit = {
     var is: InputStream = null
 
-    LOG.info("FileConsumer Processing File:" + sFileName)
+    LOG.debug("FileConsumer Processing File:" + sFileName)
 
     try {
       if (isGz)
@@ -121,7 +121,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                 val curTm = System.nanoTime
                 if ((curTm - tm) > 1000000000L) {
                   tm = curTm
-                  LOG.info("Time:%10dms, Lns:%8d, Sent:%15d".format(curTm / 1000000, st.totalLines, st.totalSent))
+                  LOG.debug("Time:%10dms, Lns:%8d, Sent:%15d".format(curTm / 1000000, st.totalLines, st.totalSent))
                 }
               } else {
                 isrn = false
@@ -167,7 +167,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     }
 
     val curTm = System.nanoTime
-    LOG.info("Time:%10dms, Lns:%8d, Sent:%15d, Last, file:%s".format(curTm / 1000000, st.totalLines, st.totalSent, sFileName))
+    LOG.debug("Time:%10dms, Lns:%8d, Sent:%15d, Last, file:%s".format(curTm / 1000000, st.totalLines, st.totalSent, sFileName))
     is.close();
   }
 
@@ -229,10 +229,10 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
             throw new Exception("Not yet handled other than text & GZ files")
           }
           if (executor.isShutdown) {
-            LOG.info("Stop processing File:%s in the middle ElapsedTime:%.02fms".format(fl, tm / 1000000.0))
+            LOG.debug("Stop processing File:%s in the middle ElapsedTime:%.02fms".format(fl, tm / 1000000.0))
             break
           } else {
-            LOG.info("File:%s ElapsedTime:%.02fms".format(fl, tm / 1000000.0))
+            LOG.debug("File:%s ElapsedTime:%.02fms".format(fl, tm / 1000000.0))
           }
         })
         /*
@@ -245,7 +245,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         }
       }
 */
-        LOG.info("Done. ElapsedTime:%.02fms".format((System.nanoTime - s) / 1000000.0))
+        LOG.debug("Done. ElapsedTime:%.02fms".format((System.nanoTime - s) / 1000000.0))
       }
     });
 
@@ -261,7 +261,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
   override def DeserializeKey(k: String): PartitionUniqueRecordKey = {
     val key = new FilePartitionUniqueRecordKey
     try {
-      LOG.info("Deserializing Key:" + k)
+      LOG.debug("Deserializing Key:" + k)
       key.Deserialize(k)
     } catch {
       case e: Exception => {
@@ -276,7 +276,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     val vl = new FilePartitionUniqueRecordValue
     if (v != null) {
       try {
-        LOG.info("Deserializing Value:" + v)
+        LOG.debug("Deserializing Value:" + v)
         vl.Deserialize(v)
       } catch {
         case e: Exception => {

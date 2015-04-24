@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StartOnLEPCluster.sh
+# StartFatafatCluster.sh
 #
 #	NOTE: This script must currently be run from a trunk directory that contains the build installed on the cluster to be run.
 
@@ -8,7 +8,7 @@ Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StartOnLEPCluster.sh --ClusterId <cluster name identifer> "
+    echo "      StartFatafatCluster.sh --ClusterId <cluster name identifer> "
     echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo 
     echo "  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"

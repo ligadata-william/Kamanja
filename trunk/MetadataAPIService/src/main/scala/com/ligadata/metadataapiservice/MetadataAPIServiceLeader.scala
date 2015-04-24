@@ -1,11 +1,11 @@
 package com.ligadata.metadataapiservice
 
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadata.ObjType._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadata.MdMgr._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadata.MdMgr._
 
 import org.apache.log4j.Logger
 import com.ligadata.Serialize._
@@ -39,10 +39,10 @@ object MetadataAPIServiceLeader {
       isLeader = cs.isLeader
       leaderNode = cs.leader
       val isLeaderStr = if (cs.isLeader) "true" else "false"
-      LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeaderStr, cs.leader, cs.participants.mkString(",")))
+      LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeaderStr, cs.leader, cs.participants.mkString(",")))
     } catch {
       case e: Exception => {
-        LOG.info("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage))
+        LOG.debug("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage))
       }
     }
   }

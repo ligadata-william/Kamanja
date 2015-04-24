@@ -138,7 +138,7 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 
   override def Shutdown() = {
     if( db != null && db.isClosed() == false ){
-      logger.info("Trying to shutdown hashmap db")
+      logger.debug("Trying to shutdown hashmap db")
       try{
 	db.commit(); //persist changes into disk
 	db = null

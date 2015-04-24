@@ -3,21 +3,23 @@ package com.ligadata.MetadataAPI
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.fasterxml.jackson.annotation.JsonFormat
 
 /** A class that defines the result any of the API function uniformly
- * @constructor creates a new ApiResult with a statusCode,statusDescription,resultData
+ * @constructor creates a new ApiResult with a statusCode,functionName,statusDescription,resultData
  * @param statusCode status of the API call, 0 => success, non-zero => failure.
  * @param statusDescription relevant in case of non-zero status code
  * @param resultData A string value representing string, either XML or JSON format
  */
-class ApiResult(var statusCode:Int, var statusDescription: String, var resultData: String){
+class ApiResult(var statusCode:Int, var functionName: String, var resultData: String, var description: String){
 /**
  * Override toString to return ApiResult as a String
  */
   override def toString: String = {
-    val json = ("APIResults" -> ("statusCode" -> statusCode) ~
-		  ("statusDescription"  -> statusDescription) ~
-		  ("resultData"  -> resultData))
+    val json = ("APIResults" -> ("statusCode" -> statusCode) ~ 
+        ("functionName" -> functionName) ~ 
+        ("resultData"  -> resultData) ~ 
+        ("status/error Description" -> description))
     pretty(render(json))
   }
 }

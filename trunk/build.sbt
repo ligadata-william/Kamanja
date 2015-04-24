@@ -25,19 +25,19 @@ lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata)
 
 lazy val ZooKeeperClient   = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize)
 
-lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener")) dependsOn(MetadataAPI, Serialize)
+lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener")) dependsOn(ZooKeeperClient, Serialize)
 
-lazy val OnLEPBase = project.in(file("OnLEPBase")) dependsOn(Metadata)
+lazy val FatafatBase = project.in(file("FatafatBase")) dependsOn(Metadata)
 
-lazy val OnLEPManager = project.in(file("OnLEPManager")) dependsOn(Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch)
+lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch)
 
-lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
+lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
-lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/FileSimpleInputOutputAdapters")) dependsOn(OnLEPBase)
+lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/FileSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
-lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(OnLEPBase, Storage, Serialize)
+lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(FatafatBase, Storage, Serialize)
 
-lazy val Storage = project.in(file("Storage"))
+lazy val Storage = project.in(file("Storage")) dependsOn("Metadata")
 
 lazy val Metadata = project.in(file("Metadata")) 
 
@@ -51,25 +51,25 @@ lazy val LoadtestMaster = project.in(file("Tools/LoadtestMaster")) dependsOn(Loa
 
 lazy val Loadtest = project.in(file("Tools/Loadtest")) dependsOn(Storage)
 
-lazy val PmmlRuntime = project.in(file("Pmml/PmmlRuntime")) dependsOn(Metadata, OnLEPBase) 
+lazy val PmmlRuntime = project.in(file("Pmml/PmmlRuntime")) dependsOn(Metadata, FatafatBase) 
 
-lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, OnLEPBase, MetadataBootstrap)
+lazy val PmmlCompiler = project.in(file("Pmml/PmmlCompiler")) dependsOn(PmmlRuntime, PmmlUdfs, Metadata, FatafatBase, MetadataBootstrap)
 
-lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRuntime, OnLEPBase)
+lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRuntime, FatafatBase)
 
-lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, OnLEPBase, Serialize)
+lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, FatafatBase, Serialize)
 
-lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, OnLEPBase, BaseTypes)
+lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, FatafatBase, BaseTypes)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener)
 
-lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(OnLEPBase,MetadataAPI,ZooKeeperLeaderLatch)
+lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(FatafatBase,MetadataAPI,ZooKeeperLeaderLatch)
 
 lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient")) dependsOn(Serialize)
 
-lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, OnLEPBase)
+lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, FatafatBase)
 
-lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, OnLEPBase, MetadataBootstrap, MetadataAPI, Storage)
+lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, FatafatBase, MetadataBootstrap, MetadataAPI, Storage)
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient)
 
@@ -78,5 +78,9 @@ lazy val JsonDataGen = project.in(file("Utils/JsonDataGen"))
 lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI)
 
 lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters)
+
+lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata)
+
+lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage)
 
 

@@ -12,14 +12,14 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata.MdMgr
-import com.ligadata.olep.metadata.EntityType
-import com.ligadata.olep.metadata.MessageDef
-import com.ligadata.olep.metadata.BaseAttributeDef
-import com.ligadata.olep.metadata.ContainerDef
-import com.ligadata.olep.metadata.ArrayTypeDef
-import com.ligadata.olep.metadata.ArrayBufTypeDef
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata.MdMgr
+import com.ligadata.fatafat.metadata.EntityType
+import com.ligadata.fatafat.metadata.MessageDef
+import com.ligadata.fatafat.metadata.BaseAttributeDef
+import com.ligadata.fatafat.metadata.ContainerDef
+import com.ligadata.fatafat.metadata.ArrayTypeDef
+import com.ligadata.fatafat.metadata.ArrayBufTypeDef
+import com.ligadata.fatafat.metadata._
 
 trait Attrib {
   var NameSpace: String
@@ -122,7 +122,7 @@ class MessageDefImpl {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.trace("primaryPos " + primaryPos.length)
+    log.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -259,7 +259,7 @@ class MessageDefImpl {
     if (getMsg != null && getMsg.trim() != "") {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.FatafatBase.BaseMsg = {
 	    if (childPath == null || childPath.size == 0 || primaryKey == null || primaryKey.size == 0) { // Invalid case
     		return null
 	    }
@@ -276,7 +276,7 @@ class MessageDefImpl {
     } else {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.OnLEPBase.BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.FatafatBase.BaseMsg = {
        return null
     } 
      
@@ -394,7 +394,7 @@ class MessageDefImpl {
     }
   }
 
-  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String, ArrayBuffer[String], String, String, String, ArrayBuffer[String]) = {
+  private def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, String, Set[String], String, String, String, String, ArrayBuffer[String], String, String, String, ArrayBuffer[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -495,7 +495,7 @@ class MessageDefImpl {
 
   ///serialize deserialize primative types
 
-  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String) = {
+  private def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -589,7 +589,7 @@ class MessageDefImpl {
       }
 
       argsList = (f.NameSpace, f.Name, typ.get.NameSpace, typ.get.Name, false, null) :: argsList
-      log.trace("typ.get.typeString " + typ.get.typeString)
+      log.debug("typ.get.typeString " + typ.get.typeString)
 
       if ((arrayType.dependencyJarNames != null) && (arrayType.JarName != null))
         jarset = jarset + arrayType.JarName ++ arrayType.dependencyJarNames
@@ -607,7 +607,7 @@ class MessageDefImpl {
     (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, getMsg.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, collections.toString, mappedPrevVerMatchkeys.toString, mappedMsgFieldsArry.toString, mappedPrevTypNotrMatchkeys.toString)
   }
 
-  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.olep.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String, String) = {
+  private def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (String, String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, Set[String], String, String, String, String, String, String, String, String, String, String, String) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -676,7 +676,7 @@ class MessageDefImpl {
         if (msg.NameSpace != null)
           msgNameSpace = msg.NameSpace
         argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
-        val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.OnLEPBase.BaseMsg]"
+        val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.FatafatBase.BaseMsg]"
         if (msg.Fixed.toLowerCase().equals("true")) //--- --- commented to declare the arraybuffer of messages in memeber variables section for both fixed adn mapped messages
           scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
@@ -831,7 +831,7 @@ class MessageDefImpl {
 
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
       if (msgDef == null) throw new Exception(f.Ttype + " do not exists throwing null pointer")
-      val msgDefobj = "com.ligadata.OnLEPBase.BaseMsg"
+      val msgDefobj = "com.ligadata.FatafatBase.BaseMsg"
       scalaclass = scalaclass.append("%svar %s:%s = _;%s".format(pad1, f.Name, msgDefobj, newline))
       assignCsvdata.append("%s//Not Handling CSV Populate for member type Message".format(pad2))
       assignJsondata.append("%s//Not Handling JSON Populate for member type Message".format(pad2))
@@ -1136,6 +1136,7 @@ class MessageDefImpl {
             ftypeVersion = MdMgr.ConvertVersionToLong(message.Version)
 
           if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+
             log.trace("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
 
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
@@ -1370,7 +1371,7 @@ class MessageDefImpl {
       if (addMsg != null && addMsg.toString.trim() != "" && addMsg.size > 5)
         addMessage = addMsg.toString.substring(0, addMsg.length - 5)
 
-      log.trace("final arglist " + argsList)
+      log.debug("final arglist " + argsList)
       if (jarset != null)
         message.jarset = jarset
 
@@ -1697,9 +1698,9 @@ class MessageDefImpl {
   private def importStmts(msgtype: String): String = {
     var imprt: String = ""
     if (msgtype.equals("Message"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase}"
+      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase}"
     else if (msgtype.equals("Container"))
-      imprt = "import com.ligadata.OnLEPBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase}"
+      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase}"
 
     """
 package com.ligadata.messagescontainers
@@ -1709,9 +1710,9 @@ import org.json4s.DefaultFormats
 import org.json4s.Formats
 import scala.xml.XML
 import scala.xml.Elem
-import com.ligadata.OnLEPBase.{InputData, DelimitedData, JsonData, XmlData}
+import com.ligadata.FatafatBase.{InputData, DelimitedData, JsonData, XmlData}
 import com.ligadata.BaseTypes._
-import com.ligadata.OnLEPBase.SerializeDeserialize
+import com.ligadata.FatafatBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 
 """ + imprt
@@ -1822,7 +1823,7 @@ trait BaseContainer {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.trace("primaryPos " + primaryPos.length)
+    log.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -3285,10 +3286,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     implicit val jsonFormats: Formats = DefaultFormats
     val ConceptList = json.extract[ConceptList]
     ConceptList.Concepts.foreach { concept =>
-      log.info("NameSpace => " + concept.NameSpace.getOrElse(null));
-      log.info("Name => " + concept.Name.getOrElse(None));
-      log.info("Type => " + concept.Type.getOrElse(None));
-      log.info("=========>");
+      log.debug("NameSpace => " + concept.NameSpace.getOrElse(null));
+      log.debug("Name => " + concept.Name.getOrElse(None));
+      log.debug("Type => " + concept.Type.getOrElse(None));
+      log.debug("=========>");
     }
 
   }
