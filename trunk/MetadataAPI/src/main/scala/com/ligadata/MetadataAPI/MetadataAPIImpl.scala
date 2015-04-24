@@ -147,6 +147,7 @@ object MetadataAPIImpl extends MetadataAPI {
   var propertiesAlreadyLoaded = false
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
+  private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = null
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -824,6 +825,17 @@ object MetadataAPIImpl extends MetadataAPI {
         PutTranId(objList(0).tranId)
         return
       }
+      
+      // Set up the cache of CACHES!!!! Since we are listening for changes to Metadata, we will be notified by Zookeeper
+      // of this change that we are making.  This cache of Caches will tell us to ignore this.
+      var corrId: Int = 0
+      objList.foreach ( elem => {
+        cacheOfOwnChanges.add((operations(corrId)+"."+elem.NameSpace+"."+elem.Name+"."+elem.Version).toLowerCase)
+        corrId = corrId + 1
+      }) 
+      
+      
+      
       val data = ZooKeeperMessage(objList, operations)
       InitZooKeeper
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
@@ -3064,11 +3076,14 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   private def getBaseType(typ: BaseTypeDef): BaseTypeDef = {
+    // Just return the "typ" if "typ" is not supported yet
     if (typ.tType == tMap) {
-      throw new Exception("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+      logger.info("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+      return typ
     }
     if (typ.tType == tHashMap) {
-      throw new Exception("HashMapTypeDef is not yet handled")
+      logger.info("HashMapTypeDef is not yet handled")
+      return typ
     }
     if (typ.tType == tSet) {
       val typ1 = typ.asInstanceOf[SetTypeDef].keyDef
@@ -3123,6 +3138,9 @@ object MetadataAPIImpl extends MetadataAPI {
                   break
                 }
               })
+	      //Output vars don't determine dependant models at this time, comment out the following code
+	      // which is causing the Issue 355...
+	      /*
               mod.outputVars.foreach(ovar => {
                 val baseTyp = getBaseType(ovar.asInstanceOf[AttributeDef].typeDef)
                 if (baseTyp.FullName.toLowerCase == msgObjName) {
@@ -3131,6 +3149,7 @@ object MetadataAPIImpl extends MetadataAPI {
                   break
                 }
               })
+	      */
             }
           })
       }
@@ -4110,159 +4129,155 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  private def updateThisKey(zkMessage: ZooKeeperNotification) {
+    
+    var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
+    zkMessage.ObjectType match {
+      case "ModelDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadModelIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "MessageDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadMessageIntoCache(key)
+          }
+          case "Remove" => {
+            try {
+              RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "ContainerDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadContainerIntoCache(key)
+          }
+          case "Remove" => {
+            try {
+              RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "FunctionDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadFunctionIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyFunction(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "AttributeDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadAttributeIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              MdMgr.GetMdMgr.ModifyAttribute(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "JarDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            DownloadJarFromDB(MdMgr.GetMdMgr.MakeJarDef(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version))
+          }
+          case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
+        zkMessage.Operation match {
+          case "Add" => {
+            LoadTypeIntoCache(key)
+          }
+          case "Remove" | "Activate" | "Deactivate" => {
+            try {
+              logger.debug("Remove the type " + key + " from cache ")
+              MdMgr.GetMdMgr.ModifyType(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+            } catch {
+              case e: ObjectNolongerExistsException => {
+                logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
+      case _ => { logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..") }
+    }  
+  }
 
   def UpdateMdMgr(zkTransaction: ZooKeeperTransaction) = {
     var key: String = null
     try {
       zkTransaction.Notifications.foreach(zkMessage => {
-        key = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
-        zkMessage.ObjectType match {
-          case "ModelDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadModelIntoCache(key)
-              }
-              case "Remove" | "Activate" | "Deactivate" => {
-                try {
-                  MdMgr.GetMdMgr.ModifyModel(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "MessageDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadMessageIntoCache(key)
-              }
-              case "Remove" => {
-                try {
-                  RemoveMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case "Activate" | "Deactivate" => {
-                try {
-                  MdMgr.GetMdMgr.ModifyMessage(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "ContainerDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadContainerIntoCache(key)
-              }
-              case "Remove" => {
-                try {
-                  RemoveContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong,false)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case "Activate" | "Deactivate" => {
-                try {
-                  MdMgr.GetMdMgr.ModifyContainer(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "FunctionDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadFunctionIntoCache(key)
-              }
-              case "Remove" | "Activate" | "Deactivate" => {
-                try {
-                  MdMgr.GetMdMgr.ModifyFunction(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "AttributeDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadAttributeIntoCache(key)
-              }
-              case "Remove" | "Activate" | "Deactivate" => {
-                try {
-                  MdMgr.GetMdMgr.ModifyAttribute(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "JarDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                DownloadJarFromDB(MdMgr.GetMdMgr.MakeJarDef(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version))
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
-            zkMessage.Operation match {
-              case "Add" => {
-                LoadTypeIntoCache(key)
-              }
-              case "Remove" | "Activate" | "Deactivate" => {
-                try {
-                  logger.debug("Remove the type " + key + " from cache ")
-                  MdMgr.GetMdMgr.ModifyType(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
-                } catch {
-                  case e: ObjectNolongerExistsException => {
-                    logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
-                  }
-                }
-              }
-              case _ => {
-                logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
-              }
-            }
-          }
-          case _ => {
-            logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
-          }
+        key = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
+        if (!cacheOfOwnChanges.contains(key)) {
+          // Proceed with update.
+          updateThisKey(zkMessage)
+        } else {
+          // Ignore the update, remove the element from set.
+          cacheOfOwnChanges.remove(key)
         }
       })
     } catch {
@@ -4274,6 +4289,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
 
   def LoadAllContainersIntoCache {
     try {
@@ -5599,6 +5615,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
+        cacheOfOwnChanges = scala.collection.mutable.Set[String]()
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
