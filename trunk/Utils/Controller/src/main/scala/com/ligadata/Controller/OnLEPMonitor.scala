@@ -4,7 +4,7 @@ import java.io.File
 
 import com.ligadata.AdaptersConfiguration.KafkaPartitionUniqueRecordValue
 import com.ligadata.InputAdapters.KafkaSimpleConsumer
-import com.ligadata.OnLEPBase._
+import com.ligadata.FatafatBase._
 import com.ligadata.ZooKeeper.{ZooKeeperListener, CreateClient}
 import org.apache.curator.framework.CuratorFramework
 import org.apache.log4j.Logger
@@ -23,7 +23,7 @@ object SimpleStats extends CountersAdapter {
   override def copyMap: scala.collection.immutable.Map[String, Long] = null
 }
 
-object OnLEPMonitorConfig {
+object FatafatMonitorConfig {
   var modelsData: List[Map[String, Any]] = null
 }
 
@@ -36,7 +36,7 @@ object MakeExecContextImpl extends MakeExecContext {
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
   val agg = SampleAggregator.getNewSampleAggregator
-  initializeModelsToMonitor(OnLEPMonitorConfig.modelsData,agg)
+  initializeModelsToMonitor(FatafatMonitorConfig.modelsData,agg)
   agg.setIsLookingForSeed(true)
 
   private def initializeModelsToMonitor(modelsToMonitorInfo: List[Map[String,Any]], agg: SampleAggregator): Unit = {
@@ -67,7 +67,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
   }
 }
 
-class OnLEPMonitor  {
+class FatafatMonitor  {
   private val LOG = Logger.getLogger(getClass)
   type OptionMap = Map[Symbol, Any]
   var isStarted: Boolean = false
@@ -136,7 +136,7 @@ class OnLEPMonitor  {
       // data to zookeeper (or another destination when we allow for it)
       isStarted = true
 
-      // If it is required start loading input data into the OnLEP engine by executing a separate script.
+      // If it is required start loading input data into the Fatafat engine by executing a separate script.
       // for example: "java -jar /mnt/d3/demo_20150115/engine/SimpleKafkaProducer-0.1.0 --gz true --topics \"testin_1\" --threads 1 --topicpartitions 8 --brokerlist \"localhost:9092\" --files \"/mnt/d3/demo_20150115/demodata/msgdata/copdv1_eval_combined_25000.csv.gz\" --partitionkeyidxs \"1\"  --sleep 10 --format CSV"
       if (dataLoadCommand != null) {
         val pb = Process(dataLoadCommand)
@@ -243,7 +243,7 @@ class OnLEPMonitor  {
       LOG.warn("WARN: NOTHING TO MONITOR  - no models specified")
       return
     }
-    OnLEPMonitorConfig.modelsData = modelsData
+    FatafatMonitorConfig.modelsData = modelsData
 
 
     // Establish a listener for the action field.  If that value changes, "ActinOnActionChange" callback function will be
@@ -345,7 +345,7 @@ class OnLEPMonitor  {
 object Monitor {
   def main (args: Array[String]): Unit = {
 
-    val monitor: OnLEPMonitor = new OnLEPMonitor()
+    val monitor: FatafatMonitor = new FatafatMonitor()
     monitor.start(args)
 
   }

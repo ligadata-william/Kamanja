@@ -2,7 +2,7 @@
 package com.ligadata.InputAdapters
 
 import com.ligadata.AdaptersConfiguration.{ KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaQueueAdapterConfiguration }
-import com.ligadata.OnLEPBase._
+import com.ligadata.FatafatBase._
 import kafka.api._
 import kafka.common.TopicAndPartition
 import scala.actors.threadpool.{ TimeUnit, ExecutorService, Executors }
@@ -150,7 +150,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           // Figure out which of the hosts is the leader for the given partition
           val leadBroker: String = getKafkaConfigId(findLeader(qc.hosts, partitionId))
 
-          // Start processing from either a beginning or a number specified by the OnLEPMananger
+          // Start processing from either a beginning or a number specified by the FatafatMananger
           readOffset = getKeyValueForPartition(leadBroker, partitionId, kafka.api.OffsetRequest.EarliestTime)
           if (partition._2.Offset > readOffset) {
             readOffset = partition._2.Offset

@@ -1,8 +1,8 @@
 package com.ligadata.Serialize
 
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata.MdMgr._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadata.ObjType._
+import com.ligadata.fatafat.metadata.MdMgr._
 import scala.collection.mutable.{ArrayBuffer}
 import org.apache.log4j._
 

@@ -5,7 +5,7 @@ import org.apache.log4j.Logger
 import java.io.{ OutputStream, FileOutputStream, File, BufferedWriter, Writer, PrintWriter }
 import java.util.zip.GZIPOutputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.OnLEPBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
+import com.ligadata.FatafatBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.FileAdapterConfiguration
 
 object FileProducer extends OutputAdapterObj {

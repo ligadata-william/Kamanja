@@ -16,9 +16,9 @@ import javax.xml.parsers.SAXParserFactory
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata.MdMgr._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 
 
 /** 
@@ -308,7 +308,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.
 			val msgCtnPath : String = ""
 			val mgr : MdMgr = MdMgr.GetMdMgr
 			
-			val mdLoader = new com.ligadata.olep.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+			val mdLoader = new com.ligadata.fatafat.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 			
 			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging, Array("."))

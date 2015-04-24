@@ -1,7 +1,7 @@
 package com.ligadata.audit.adapters
 
 import com.ligadata.keyvaluestore._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import org.apache.log4j._
 import java.util.Date
 import java.util.Calendar

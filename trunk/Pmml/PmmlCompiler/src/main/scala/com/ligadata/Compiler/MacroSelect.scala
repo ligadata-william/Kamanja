@@ -5,7 +5,7 @@ import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 /**
  * class MacroSelect retrieves a MacroDef from the mdmgr based upon the function signature.
@@ -37,7 +37,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 	  	
 	  	/** debug helper */
-	  	val ofInterest : Boolean = (node.function == "setField")
+	  	val ofInterest : Boolean = (node.function == "Put")
 	  	if (ofInterest) {
 	  		val stop : Int = 0
 	  	}
@@ -217,13 +217,23 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   		val containerDotAddressingPresent : Boolean = (childCnt < argTypesCnt)
   		
   		/** determine which template should be used... either the "fixed" or the "mapped" */
-  		val isFixed : Boolean = if (containerDotAddressingPresent) {
-  			(argTypes.filter(triple => {
+  		val isFixed : Boolean = if (argTypesCnt > 0) {
+  			val fixedArgTypes : Boolean = (argTypes.filter(triple => {
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = triple
   				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && argElem.asInstanceOf[ContainerTypeDef].IsFixed)
   			}).size > 0)
+  			val mappedArgTypes : Boolean = (argTypes.filter(tripleM => {
+  				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = tripleM
+  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed)
+  			}).size > 0)
+			if (mappedArgTypes && fixedArgTypes) {
+				false  /** bias toward the mapped in this case... */
+			} else {
+				fixedArgTypes
+			}
   		} else {
-  			false
+ 	  		PmmlError.logError(ctx, s"generateClassBuildsAndDoes... macro without arguments... not supported.")
+ 	  		true
   		}
 	  	
 	  	/** Paw through the children and the argTypes supplied (considered together) to find the correct argument names

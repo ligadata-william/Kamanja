@@ -51,7 +51,7 @@ sbt
 
 # Run a project
 #
-project OnLEP
+project Fatafat
 run
 
 # Debugger (windows)
