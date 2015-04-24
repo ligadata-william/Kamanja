@@ -8,9 +8,9 @@ import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.OnLEPBase._
-import com.ligadata.OnLEPBase.{ EnvContext, MessageContainerBase }
-import com.ligadata.olep.metadata._
+import com.ligadata.FatafatBase._
+import com.ligadata.FatafatBase.{ EnvContext, MessageContainerBase }
+import com.ligadata.fatafat.metadata._
 import java.net.URLClassLoader
 import com.ligadata.Serialize._
 import org.json4s._

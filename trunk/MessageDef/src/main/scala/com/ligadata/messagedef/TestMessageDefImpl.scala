@@ -6,11 +6,11 @@ import scala.io.Source
 import java.io.File
 import org.apache.log4j.Logger
 
-import com.ligadata.olep.metadata.MdMgr
-import com.ligadata.olep.metadata.ContainerDef
-import com.ligadata.olep.metadata.MessageDef
+import com.ligadata.fatafat.metadata.MdMgr
+import com.ligadata.fatafat.metadata.ContainerDef
+import com.ligadata.fatafat.metadata.MessageDef
 import scala.collection.mutable.ListBuffer
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadataload.MetadataLoad
 
 trait LogTrait {
   val loggerName = this.getClass.getName()

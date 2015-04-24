@@ -13,11 +13,11 @@ import java.io.FileWriter
 import sys.process._
 import java.io.PrintWriter
 import org.apache.log4j._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
 import com.ligadata.Compiler._
-import com.ligadata.olep.metadata.ObjFormatType._
+import com.ligadata.fatafat.metadata.ObjFormatType._
 import com.ligadata.Serialize._
 
 case class MsgCompilationFailedException(e: String) extends Exception(e)

@@ -1,7 +1,7 @@
 This project contains a scala script that will accept a project name, full package qualified object, a namespace, a version number and file paths for the types and function defs that are to be produced.  These files are sent to the MetadataAPI to be cataloged for use in the PMML models.
 
 This script should be placed in the executable path (i.e., PATH).  When executing the script, it is expected that the
-current working directory is the top level sbt project directory (e.g., ~/github/RTD/trunk).
+current working directory is the top level sbt project directory (e.g., ~/github/Fatafat/trunk).
 
 Here is a more complete explanation of the command semantics:
 
@@ -19,7 +19,7 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
                  being collected
               fcnDefsPath is the file path that will receive the function definitions
       
-        Notes: This script must run from the top level sbt project directory (e.g., ~/github/RTD/trunk)
+        Notes: This script must run from the top level sbt project directory (e.g., ~/github/Fatafat/trunk)
         The object argument supplied must inherit from com.ligadata.pmml.udfs.UdfBase for extraction to be successful.
         Obviously it is helpful if the project actually builds.  This script executes the fat jar version of the 
         MethodExtractor (<sbtRoot>/trunk/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0)

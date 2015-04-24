@@ -3,8 +3,8 @@ package com.ligadata.Pmml.Runtime
 import scala.collection.mutable._
 import scala.language.implicitConversions
 import org.joda.time._
-import com.ligadata.olep.metadata._
-import com.ligadata.OnLEPBase._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.FatafatBase._
 import org.apache.log4j.Logger
 
 trait LogTrait {

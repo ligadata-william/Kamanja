@@ -1,6 +1,6 @@
 package com.ligadata.messagedef
 
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 object ArrayTypeHandler {
 
@@ -10,20 +10,20 @@ object ArrayTypeHandler {
   private val pad4 = "\t\t\t\t"
   private val newline = "\n"
 
-  def serializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  def serializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     serialize(typ, fixed, f)
   }
 
-  def deSerializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  def deSerializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     deSerialize(typ, fixed, f)
   }
 
-  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
+  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
     prevObjDeserialize(typ, fixed, f, childs)
   }
 
   //serialize String for array of messages or containers
-  private def serialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  private def serialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     var serializedBuf = new StringBuilder(8 * 1024)
     try {
       if (f.Name == null || f.Name.trim() == "")
@@ -55,7 +55,7 @@ object ArrayTypeHandler {
   }
 
   //Deserialize String for array of messages or containers
-  private def deSerialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  private def deSerialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     var deserializedBuf = new StringBuilder(8 * 1024)
 
     try {
@@ -104,7 +104,7 @@ object ArrayTypeHandler {
   }
 
   //Previous object Deserialize String and Convert Old object to new Object for array of messages or containers
-  private def prevObjDeserialize(typ: Option[com.ligadata.olep.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
+  private def prevObjDeserialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
     var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)

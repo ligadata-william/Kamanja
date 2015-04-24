@@ -3,11 +3,11 @@ package com.ligadata.Compiler
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
 import org.xml.sax.Attributes
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import com.ligadata.Pmml.Runtime._
-import com.ligadata.OnLEPBase._
+import com.ligadata.FatafatBase._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.control.Breaks._
 
 /** 

@@ -6,7 +6,7 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import com.ligadata.Pmml.Runtime._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 
 class PmmlExecNode (val qName : String) extends LogTrait  { 
