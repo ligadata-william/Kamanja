@@ -404,13 +404,13 @@ object MetadataAPIImpl extends MetadataAPI {
     val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
     if ( nodes.length == 0 ){
       logger.trace("No Nodes found ")
-      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", leaderNode, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available)
+      var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available +" :" + leaderNode)
       apiResult.toString()
     }
     else{
       val nhosts = nodes.filter(n => n.nodeId == leaderNode)
       if ( nhosts.length == 0 ){
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", leaderNode, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available +" :" + leaderNode)
         apiResult.toString()
       }
       else{
@@ -5161,7 +5161,7 @@ object MetadataAPIImpl extends MetadataAPI {
           apiResult.toString()
       }
       else{
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllCfgObjects", null, ErrorCodeConstants.Get_All_Configs_Successful)
+        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetAllCfgObjects", jsonStr, ErrorCodeConstants.Get_All_Configs_Successful)
         apiResult.toString()
       }
     } catch {

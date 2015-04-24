@@ -132,7 +132,7 @@ object TestMetadataAPI{
       typOpt match {
         case None => None
         case Some(ts) => 
-          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", JsonSerializer.SerializeObjectToJson(ts), ErrorCodeConstants.Get_Type_Successful).toString()
          // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
           println("Result as Json String => \n" + apiResult)
       }

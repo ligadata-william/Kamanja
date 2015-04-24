@@ -45,7 +45,7 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
    
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectList.mkString(","))
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UploadConfig(cfgJson)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectList.mkString(","))            

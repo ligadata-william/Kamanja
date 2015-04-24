@@ -72,7 +72,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","config"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectType)
-      requestContext.complete(new ApiResult(-1,APIName, null, "Error: READ not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Error: READ not allowed for this user").toString )
     } else {
       val apiResult = GetConfigObjects(objectType)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType)
