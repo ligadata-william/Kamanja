@@ -58,7 +58,7 @@ questions and make contributions.
     
     c. On Linux, use 'unzip fatafat_install_v103.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
     
-3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/FatafatDocs/wiki/Installing-and-Running-Fatafat-Quickly)
+3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/Fatafat/wiki/Installing-and-Running-Fatafat)
 
 ###[Getting Involved](https://github.com/ligaDATA/Fatafat/wiki/Getting-Involved)
 
