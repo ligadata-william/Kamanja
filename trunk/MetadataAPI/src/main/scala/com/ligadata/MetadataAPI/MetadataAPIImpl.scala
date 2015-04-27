@@ -505,6 +505,10 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  private def shutdownAuditAdapter(): Unit = {
+    if (auditObj != null) auditObj.Shutdown
+  }
 
   def GetMetadataAPIConfig: Properties = {
     metadataAPIConfig
@@ -5631,7 +5635,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * shutdownZkListener - should be called by application using MetadataAPIImpl directly to disable synching of Metadata cache.
    */
-  def shutdownZkListener: Unit = {
+  private def shutdownZkListener: Unit = {
     try {
       CloseZKSession
       if (zkListener != null) {
@@ -5643,6 +5647,16 @@ object MetadataAPIImpl extends MetadataAPI {
           throw e
         }
       }
+  }
+  
+  
+  /**
+   * shutdown - call this method to release various resources held by 
+   */
+  def shutdown: Unit = {
+    CloseDbStore
+    shutdownZkListener
+    shutdownAuditAdapter
   }
   
  /**

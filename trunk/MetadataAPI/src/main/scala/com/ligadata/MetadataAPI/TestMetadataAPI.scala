@@ -27,8 +27,6 @@ object TestMetadataAPI{
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
-  var databaseOpen = false
-
   var serializer = SerializerManager.GetSerializer("kryo")
 
   def testDbConn{
@@ -2220,7 +2218,6 @@ object TestMetadataAPI{
 	myConfigFile = cfgfile.asInstanceOf[String]
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
-      databaseOpen = true
       StartTest
     }catch {
       case e: Exception => {
@@ -2228,12 +2225,7 @@ object TestMetadataAPI{
       }
     }
     finally{
-      // CloseDbStore Must be called for a clean exit
-      if( databaseOpen ){
-	MetadataAPIImpl.CloseDbStore
-      }
-      MetadataAPIImpl.shutdownZkListener
-      MetadataAPIImpl.CloseZKSession
+      MetadataAPIImpl.shutdown
     }
   }
 }
