@@ -132,7 +132,7 @@ object TestMetadataAPI{
       typOpt match {
         case None => None
         case Some(ts) => 
-          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", JsonSerializer.SerializeObjectToJson(ts), ErrorCodeConstants.Get_Type_Successful).toString()
          // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
           println("Result as Json String => \n" + apiResult)
       }
@@ -2206,9 +2206,9 @@ object TestMetadataAPI{
 
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.error("Config File defaults to " + myConfigFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+	logger.warn("Config File defaults to " + myConfigFile)
+	logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+	logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       }
       else{
 	val options = nextOption(Map(), args.toList)

@@ -46,7 +46,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
  	      MetadataAPIImpl.DeactivateModel(nameSpace,name,version.toLong).toString
       }
       case _ => {
-	      new ApiResult(-1, APIName, null, "Deactivate/Activate on " + objectType + " is not supported yet").toString 
+	      new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Deactivate/Activate on " + objectType + " is not supported yet").toString 
       }
     }
   }
@@ -96,11 +96,11 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
           objectList :::= List(nameSpace+"."+name+"."+version)
           
 	        if(arg.ObjectType == null ){
-	          resultStr = new ApiResult(-1, APIName, null, "Error: The value of object type can't be null").toString
+	          resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error: The value of object type can't be null").toString
 	          loop.break
 	        }
 	        if(arg.Name == null ){
-	          resultStr = new ApiResult(-1, APIName, null, "Error: The value of object name can't be null").toString
+	          resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error: The value of object name can't be null").toString
 	          loop.break
 	        }
 	        else {
@@ -111,7 +111,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
       }
     }
     else{
-      resultStr = new ApiResult(-1, APIName, null, "No arguments passed to the API, nothing much to do").toString 
+      resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "No arguments passed to the API, nothing much to do").toString 
     }
     MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, activatedType, AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
