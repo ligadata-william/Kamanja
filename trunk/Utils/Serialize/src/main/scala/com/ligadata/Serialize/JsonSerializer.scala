@@ -685,7 +685,6 @@ object JsonSerializer {
                       ("NameSpace"       -> o.nameSpace) ~
                       ("Name"            -> o.name) ~
                       ("Version"         -> o.ver) ~
-                      ("Persist"         -> o.containerType.persist) ~
                       ("PhysicalName"    -> o.physicalName) ~
                       ("JarName"         -> o.jarName) ~
                       ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
@@ -719,7 +718,6 @@ object JsonSerializer {
                       ("NameSpace"       -> o.nameSpace) ~
                       ("Name"            -> o.name) ~
                       ("Version"         -> o.ver) ~
-                      ("Persist"         -> o.containerType.persist) ~
                       ("PhysicalName"    -> o.physicalName) ~
                       ("JarName"         -> o.jarName) ~
                       ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
