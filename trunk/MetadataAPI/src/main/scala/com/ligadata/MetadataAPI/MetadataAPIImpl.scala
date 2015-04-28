@@ -2495,22 +2495,22 @@ object MetadataAPIImpl extends MetadataAPI {
             RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
             resultStr = AddMessageDef(msg)
 
-      logger.debug("Check for dependent messages ...")
-      val depMessages = GetDependentMessages.getDependentObjects(msg)
-      if( depMessages.length > 0 ){
-        depMessages.foreach(msg => {
-    logger.debug("DependentMessage => " + msg)
-    resultStr = resultStr + RecompileMessage(msg)
-        })
-      }
-      val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
-      if( depModels.length > 0 ){
-        depModels.foreach(mod => {
-    logger.debug("DependentModel => " + mod.FullNameWithVer)
-    resultStr = resultStr + RecompileModel(mod)
-        })
-      }
-      resultStr
+            logger.debug("Check for dependent messages ...")
+            val depMessages = GetDependentMessages.getDependentObjects(msg)
+            if( depMessages.length > 0 ){
+              depMessages.foreach(msg => {
+                logger.debug("DependentMessage => " + msg)
+                resultStr = resultStr + RecompileMessage(msg)
+              })
+            }  
+            val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
+            if( depModels.length > 0 ){
+              depModels.foreach(mod => {
+                logger.debug("DependentModel => " + mod.FullNameWithVer)
+                resultStr = resultStr + RecompileModel(mod)
+              })
+            }
+            resultStr
           } else {
             var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
             apiResult.toString()
@@ -2677,7 +2677,7 @@ object MetadataAPIImpl extends MetadataAPI {
           
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
-          } 
+          }
           
           objectsToBeRemoved.foreach(typ => {           
             RemoveType(typ.nameSpace, typ.name, typ.ver)
@@ -4142,6 +4142,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def updateThisKey(zkMessage: ZooKeeperNotification) {
     
     var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
+ 
     zkMessage.ObjectType match {
       case "ModelDef" => {
         zkMessage.Operation match {
@@ -4254,7 +4255,7 @@ object MetadataAPIImpl extends MetadataAPI {
           case _ => {logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
         }
       }
-      case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
+      case "ScalarTypeDef" | "ArrayTypeDef" | "ArrayBufTypeDef" | "ListTypeDef" | "MappedMsgTypeDef" | "SetTypeDef" | "TreeSetTypeDef" | "QueueTypeDef" | "MapTypeDef" | "ImmutableMapTypeDef" | "HashMapTypeDef" | "TupleTypeDef" | "StructTypeDef" | "SortedSetTypeDef" => {
         zkMessage.Operation match {
           case "Add" => {
             LoadTypeIntoCache(key)
