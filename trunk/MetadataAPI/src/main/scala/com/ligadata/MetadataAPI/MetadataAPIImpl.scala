@@ -839,7 +839,6 @@ object MetadataAPIImpl extends MetadataAPI {
       }) 
       
       
-      
       val data = ZooKeeperMessage(objList, operations)
       InitZooKeeper
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
@@ -2366,49 +2365,50 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
-    if( recompile ){
-      // Incase of recompile, Message Compiler is automatically incrementing the previous version
-      // by 1. Before Updating the metadata with the new version, remove the old version
+          if( recompile ) {
+            // Incase of recompile, Message Compiler is automatically incrementing the previous version
+            // by 1. Before Updating the metadata with the new version, remove the old version
             val latestVersion = GetLatestMessage(msg)
             RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
             resultStr = AddMessageDef(msg, recompile)
-    }
-    else{
+          }
+          else{
             resultStr = AddMessageDef(msg, recompile)
-    }
-    if( recompile ){
-      val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
-      if( depModels.length > 0 ){
-        depModels.foreach(mod => {
-    logger.debug("DependentModel => " + mod.FullNameWithVer)
-    resultStr = resultStr + RecompileModel(mod)
-        })
-      }
-    }
-    resultStr
-  }
+          }
+          
+          if( recompile ) {
+            val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
+            if( depModels.length > 0 ){
+              depModels.foreach(mod => {
+          logger.debug("DependentModel => " + mod.FullNameWithVer)
+          resultStr = resultStr + RecompileModel(mod)
+              })
+            }
+          }
+          resultStr
+        }
         case cont: ContainerDef => {
-    if( recompile ){
-      // Incase of recompile, Message Compiler is automatically incrementing the previous version
-      // by 1. Before Updating the metadata with the new version, remove the old version
-            val latestVersion = GetLatestContainer(cont)
-            RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
-            resultStr = AddContainerDef(cont, recompile)
-    }
-    else{
-            resultStr = AddContainerDef(cont, recompile)
-    }
-
-    if( recompile ){
-      val depModels = GetDependentModels(cont.NameSpace,cont.Name,cont.ver)
-      if( depModels.length > 0 ){
-        depModels.foreach(mod => {
-    logger.debug("DependentModel => " + mod.FullNameWithVer)
-    resultStr = resultStr + RecompileModel(mod)
-        })
-      }
-    }
-    resultStr
+          if( recompile ){
+            // Incase of recompile, Message Compiler is automatically incrementing the previous version
+            // by 1. Before Updating the metadata with the new version, remove the old version
+                  val latestVersion = GetLatestContainer(cont)
+                  RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+                  resultStr = AddContainerDef(cont, recompile)
+          }
+          else{
+                  resultStr = AddContainerDef(cont, recompile)
+          }
+      
+          if( recompile ){
+            val depModels = GetDependentModels(cont.NameSpace,cont.Name,cont.ver)
+            if( depModels.length > 0 ){
+              depModels.foreach(mod => {
+                logger.debug("DependentModel => " + mod.FullNameWithVer)
+                resultStr = resultStr + RecompileModel(mod)
+              })
+            }
+          }
+          resultStr
         }
       }
     } catch {
@@ -2638,11 +2638,11 @@ object MetadataAPIImpl extends MetadataAPI {
           })
           // ContainerDef itself
           DeleteObject(contDef)
-          objectsToBeRemoved :+ contDef
+          var allObjectsArray =  objectsToBeRemoved :+ contDef
 
           if( zkNotify ){
-            val operations = for (op <- objectsToBeRemoved) yield "Remove"
-            NotifyEngine(objectsToBeRemoved, operations)
+            val operations = for (op <- allObjectsArray) yield "Remove"
+            NotifyEngine(allObjectsArray, operations)
           }
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Successful + ":" + key)
           apiResult.toString()
@@ -2670,22 +2670,27 @@ object MetadataAPIImpl extends MetadataAPI {
           val msgDef = m.asInstanceOf[MessageDef]
           logger.debug("message found => " + msgDef.FullNameWithVer)
           var objectsToBeRemoved = GetAdditionalTypesAdded(msgDef, MdMgr.GetMdMgr)
+
           // Also remove a type with same name as messageDef
           var typeName = name
           var typeDef = GetType(nameSpace, typeName, version.toString, "JSON")
+          
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
-          }
-          objectsToBeRemoved.foreach(typ => {
+          } 
+          
+          objectsToBeRemoved.foreach(typ => {           
             RemoveType(typ.nameSpace, typ.name, typ.ver)
           })
-          // MessageDef itself
+          
+          // MessageDef itself - add it to the list of other objects to be passed to the zookeeper
+          // to notify other instnances
           DeleteObject(msgDef)
-          objectsToBeRemoved :+ msgDef
+          var allObjectsArray = objectsToBeRemoved :+ msgDef
         
         if( zkNotify ){
-          val operations = for (op <- objectsToBeRemoved) yield "Remove"
-          NotifyEngine(objectsToBeRemoved, operations)
+          val operations = for (op <- allObjectsArray) yield "Remove"
+          NotifyEngine(allObjectsArray, operations)
         }
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Successful + ":" + key)
           apiResult.toString()
@@ -2705,6 +2710,7 @@ object MetadataAPIImpl extends MetadataAPI {
       val msgType = getObjectType(msgDef)
       msgType match {
         case "MessageDef" | "ContainerDef" => {
+    println("OH YEAH..THATS THE SPOT ="+ msgDef.name)
           // ArrayOf<TypeName>
           var typeName = "arrayof" + msgDef.name
           var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
@@ -4697,6 +4703,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case None => None
         case Some(ts) =>
           val tsa = ts.toArray.filter(t => { t.ver == version.toLong })
+   println("OHHHH YEAH.. got this many back from TYPES call "+ts.toArray.size)
           tsa.length match {
             case 0 => None
             case 1 => Some(tsa(0))
