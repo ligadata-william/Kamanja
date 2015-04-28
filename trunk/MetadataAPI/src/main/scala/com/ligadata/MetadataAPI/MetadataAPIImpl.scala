@@ -141,8 +141,8 @@ object MetadataAPIImpl extends MetadataAPI {
   lazy val serializer = SerializerManager.GetSerializer("kryo")
   lazy val metadataAPIConfig = new Properties()
   var zkc: CuratorFramework = null
-  var authObj: SecurityAdapter = null
-  var auditObj: AuditAdapter = null
+  private var authObj: SecurityAdapter = null
+  private var auditObj: AuditAdapter = null
   val configFile = System.getenv("HOME") + "/MetadataAPIConfig.json"
   var propertiesAlreadyLoaded = false
   var isInitilized: Boolean = false
