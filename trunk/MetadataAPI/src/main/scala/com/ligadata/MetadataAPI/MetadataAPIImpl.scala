@@ -2710,7 +2710,6 @@ object MetadataAPIImpl extends MetadataAPI {
       val msgType = getObjectType(msgDef)
       msgType match {
         case "MessageDef" | "ContainerDef" => {
-    println("OH YEAH..THATS THE SPOT ="+ msgDef.name)
           // ArrayOf<TypeName>
           var typeName = "arrayof" + msgDef.name
           var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
@@ -4703,7 +4702,6 @@ object MetadataAPIImpl extends MetadataAPI {
         case None => None
         case Some(ts) =>
           val tsa = ts.toArray.filter(t => { t.ver == version.toLong })
-   println("OHHHH YEAH.. got this many back from TYPES call "+ts.toArray.size)
           tsa.length match {
             case 0 => None
             case 1 => Some(tsa(0))
