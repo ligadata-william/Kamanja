@@ -87,7 +87,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
     //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddTypes(typStr, "JSON"))
     }
     catch {
       case e: AlreadyExistsException => {
