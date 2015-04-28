@@ -473,9 +473,11 @@ class ForeignKey extends RelationKeyBase {
 trait EntityType {
   var keys: Array[RelationKeyBase] = _ // Keys (primary & foreign keys) for this container. For now we are consider them for MAP based and STRUCT based containers.
   var partitionKey: Array[String] = _ // Partition Key (attribute names)
+  var persist: Boolean = false
   def NumMems
   def Keys = keys
   def PartitionKey = partitionKey
+  def Persist = persist
 }
 
 class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
