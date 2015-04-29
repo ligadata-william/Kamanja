@@ -5413,7 +5413,7 @@ object MetadataAPIImpl extends MetadataAPI {
         val value = prop.getProperty(key);
         setPropertyFromConfigFile(key,value)
       }
-      pList.map(v => logger.error(v+" remains unset"))
+      pList.map(v => logger.warn(v+" remains unset"))
       propertiesAlreadyLoaded = true;
 
     } catch {
