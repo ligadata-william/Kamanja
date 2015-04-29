@@ -38,7 +38,7 @@ class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTr
   			logger.debug(s"endElement... pmmlNodeStack is empty ... qName = $qName")
   		} else {
 
-			val buf : String = buffer.toString().trim
+			val buf : String = buffer.toString()
 			val len = buf.length()
 			if (buf.length() > 0) {
 				logger.debug(s"the following string was collected for $qName (length = $len) : $buf")
