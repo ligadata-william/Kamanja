@@ -9,6 +9,7 @@ trait MessageContainerBase {
   def isContainer: Boolean
   def IsFixed: Boolean
   def IsKv: Boolean
+  def CanPersist: Boolean
   def populate(inputdata: InputData): Unit
   def set(key: String, value: Any): Unit
   def get(key: String): Any
@@ -30,6 +31,7 @@ trait MessageContainerObjBase {
   def isContainer: Boolean
   def IsFixed: Boolean
   def IsKv: Boolean
+  def CanPersist: Boolean
   def FullName: String // Message or Container FullName
   def NameSpace: String // Message or Container NameSpace
   def Name: String // Message or Container Name
