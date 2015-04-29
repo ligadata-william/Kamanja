@@ -124,15 +124,23 @@ object NodePrinterHelpers extends LogTrait {
 				val macroSelector : MacroSelect = new MacroSelect(ctx, ctx.mgr, node, generator, functionSelector)
 				val (macroDef,macroArgTypes) : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = macroSelector.selectMacro
 				if (macroDef != null) {	  
-					val (builds, does) : (String,String) = macroSelector.generateCode(macroDef, macroArgTypes)
-					if (builds != null && builds.size > 0) {
-						/** push this to the context's update class queue.  The PmmlNodePrinter's 
+					val (buildsClassName, builds, does) : (String,String,String) = macroSelector.generateCode(macroDef, macroArgTypes)
+					if (buildsClassName != null && buildsClassName.size > 0 && builds != null && builds.size > 0) {
+
+					    /** Push the builds class to the context's update class queue.  The PmmlNodePrinter's 
 						 *  method, derivedFieldFcnHelper, will pull them from the queue and print them just before
 						 *  the end of the derived field class generation emits the closed '}'
 						 *  
-						 *  In other words, these classes will be scoped to the derived field class that is generated.
+						 *  The builds classes have unique names but it is possible to generate the same class ... from 
+						 *  a second reference to something like setField that is trying to modify the same field.  
+						 *  To avoid name duplicate conflict at Scala compile time, we track the class 
+						 *  names that are generated.  If one already exists, we use it and discard the builds string 
+						 *  just produced.
 						 */
-						ctx.UpdateClassQueue.enqueue(builds)
+						if (! ctx.GeneratedClasses.contains(buildsClassName)){
+							ctx.UpdateClassQueue.enqueue(builds)
+							ctx.GeneratedClasses(buildsClassName) = builds
+						}
 					}
 					/** as to the does part, this is inserted directly into the function string builder */
 					fcnBuffer.append(does)
