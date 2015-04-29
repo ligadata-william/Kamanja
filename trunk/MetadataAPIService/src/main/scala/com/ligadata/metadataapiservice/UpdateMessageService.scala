@@ -39,13 +39,13 @@ class UpdateMessageService(requestContext: RequestContext, userid:Option[String]
     if (formatType.equalsIgnoreCase("json")) {
       nameVal = APIService.extractNameFromJson(messageJson, AuditConstants.MESSAGE)    
     } else {
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return
     }
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","message"))) {
        MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",nameVal) 
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UpdateMessage(messageJson,formatType)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameVal)        

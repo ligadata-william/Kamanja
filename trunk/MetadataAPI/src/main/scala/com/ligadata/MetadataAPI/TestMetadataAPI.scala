@@ -27,8 +27,6 @@ object TestMetadataAPI{
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
 
-  var databaseOpen = false
-
   var serializer = SerializerManager.GetSerializer("kryo")
 
   def testDbConn{
@@ -87,7 +85,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
     //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddTypes(typStr, "JSON"))
     }
     catch {
       case e: AlreadyExistsException => {
@@ -132,7 +130,7 @@ object TestMetadataAPI{
       typOpt match {
         case None => None
         case Some(ts) => 
-          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", JsonSerializer.SerializeObjectToJson(ts), ErrorCodeConstants.Get_Type_Successful).toString()
          // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
           println("Result as Json String => \n" + apiResult)
       }
@@ -2204,11 +2202,10 @@ object TestMetadataAPI{
     //  JsonSerializer.SetLoggerLevel(Level.TRACE)
     //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
-      var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
+      var myConfigFile:String = null
       if (args.length == 0) {
-	logger.error("Config File defaults to " + myConfigFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+	logger.error("Config File must be supplied, pass a config file as a command line argument:  --config /your-install-path/MetadataAPIConfig.properties")
+	return
       }
       else{
 	val options = nextOption(Map(), args.toList)
@@ -2220,7 +2217,6 @@ object TestMetadataAPI{
 	myConfigFile = cfgfile.asInstanceOf[String]
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
-      databaseOpen = true
       StartTest
     }catch {
       case e: Exception => {
@@ -2228,12 +2224,7 @@ object TestMetadataAPI{
       }
     }
     finally{
-      // CloseDbStore Must be called for a clean exit
-      if( databaseOpen ){
-	MetadataAPIImpl.CloseDbStore
-      }
-      MetadataAPIImpl.shutdownZkListener
-      MetadataAPIImpl.CloseZKSession
+      MetadataAPIImpl.shutdown
     }
   }
 }

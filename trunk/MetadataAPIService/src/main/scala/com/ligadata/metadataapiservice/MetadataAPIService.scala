@@ -99,7 +99,7 @@ trait MetadataAPIService extends HttpService {
               val toknRoute = str.split("/") 
               logger.debug("POST reqeust : api/"+str)          
               if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }}}
-              else { requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString) }
+              else { requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString) }
             }
           }
         }
@@ -111,7 +111,7 @@ trait MetadataAPIService extends HttpService {
               val toknRoute = str.split("/")
               logger.debug("DELETE reqeust : api/"+str)
               if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,role) }  
-              else {  requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString) }
+              else {  requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString) }
             }
           }
         }
@@ -150,7 +150,7 @@ trait MetadataAPIService extends HttpService {
         val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext,userid,password,role)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)
     }
   }
   
@@ -165,7 +165,7 @@ trait MetadataAPIService extends HttpService {
        val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext,userid,password,role)))
        deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)     
     } 
   }
   
@@ -194,7 +194,7 @@ trait MetadataAPIService extends HttpService {
         val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext,userid,password,role)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString)     
     } 
   }
   
@@ -224,7 +224,7 @@ trait MetadataAPIService extends HttpService {
       val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext,userid,password,role)))
       allObjectKeysService ! GetAllObjectKeysService.Process(objtype)  
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
     }
   }
   
@@ -242,7 +242,7 @@ trait MetadataAPIService extends HttpService {
         val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext,userid,password,role)))
         getObjectsService ! GetObjectsService.Process(createGetArg(objKey,objtype))  
     } else {
-        rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
     }
   }
   
@@ -260,7 +260,7 @@ trait MetadataAPIService extends HttpService {
       val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext,userid,password,role)))
       removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString)     
     }
   }
   
