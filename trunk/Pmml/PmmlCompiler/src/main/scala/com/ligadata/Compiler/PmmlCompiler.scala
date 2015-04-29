@@ -518,7 +518,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val modelVer : Option[String] = ctx.pmmlTerms.apply("VersionNumber")
 		val modelVersion : Long = modelVer match {
 		  case Some(modelVer) => modelVer.toLong
-		  case _ => 1000000
+		  case _ => 1000001
 		}
 		
 		ctx.pmmlTerms("PMML") = Some(pmmlFilePath)  /** to document/identify originating file in source to be generated */
@@ -881,6 +881,10 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 
 		val versionBuffer : StringBuilder = new StringBuilder()
 		val modelVersion : Option[String] = ctx.pmmlTerms.apply("Version")
+		
+		val numVersion = if (modelVersion == None) 1000001 else MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion.get))
+	  
+/*		
 		val numPattern = "[0-9]+".r
 		var versionString : String = modelVersion match {
 		  case Some(modelVersion) => modelVersion
@@ -894,6 +898,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		} catch {
 		  case t : Throwable => numVersion = 1000001
 		}
+*/
 		(s"$pkgName.$className", numVersion)
 		
 	}
