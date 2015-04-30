@@ -7,8 +7,8 @@ import com.esotericsoftware.kryo.io.{Input, Output}
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.keyvaluestore._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.twitter.chill.ScalaKryoInstantiator
 import org.apache.log4j._
 import org.apache.zookeeper.CreateMode
@@ -26,8 +26,6 @@ object TestMetadataAPI{
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-
-  var databaseOpen = false
 
   var serializer = SerializerManager.GetSerializer("kryo")
 
@@ -50,7 +48,7 @@ object TestMetadataAPI{
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
         logger.debug("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
       }
 
@@ -87,7 +85,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
     //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddType(typStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddTypes(typStr, "JSON"))
     }
     catch {
       case e: AlreadyExistsException => {
@@ -132,7 +130,7 @@ object TestMetadataAPI{
       typOpt match {
         case None => None
         case Some(ts) => 
-          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", null, ErrorCodeConstants.Get_Type_Successful + ":" + JsonSerializer.SerializeObjectToJson(ts)).toString()
+          val apiResult = new ApiResult(ErrorCodeConstants.Success, "GetType", JsonSerializer.SerializeObjectToJson(ts), ErrorCodeConstants.Get_Type_Successful).toString()
          // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
           println("Result as Json String => \n" + apiResult)
       }
@@ -1077,7 +1075,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
 	logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1236,7 +1234,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
 	logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1359,7 +1357,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
 	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1411,7 +1409,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/SampleApplication/Medical/Configs"
 	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1463,7 +1461,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/SampleApplication/Medical/Configs"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/SampleApplication/Medical/Configs"
 	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1515,7 +1513,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
       if ( dirName == null  ){
-	dirName = "/tmp/OnLEPInstall"
+	dirName = "/tmp/FatafatInstall"
 	logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1566,7 +1564,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
 	logger.debug("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1634,7 +1632,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
 	logger.debug("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1700,7 +1698,7 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
 	logger.debug("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1765,7 +1763,7 @@ object TestMetadataAPI{
 			  11 ->  "ListTypeDef",
 			  12 ->  "QueueTypeDef",
 			  13 ->  "TupleTypeDef")
-      var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
+      var selectedType = "com.ligadata.fatafat.metadata.ScalarTypeDef"
       var done = false
       while ( done == false ){
 	println("\n\nPick a Type ")
@@ -1776,7 +1774,7 @@ object TestMetadataAPI{
 	print("\nEnter your choice: ")
 	val choice:Int = readInt()
 	if( choice <= typeMenu.size ){
-	  selectedType = "com.ligadata.olep.metadata." + typeMenu(choice)
+	  selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
 	  done = true
 	}
 	else if( choice == typeMenu.size + 1 ){
@@ -2204,11 +2202,10 @@ object TestMetadataAPI{
     //  JsonSerializer.SetLoggerLevel(Level.TRACE)
     //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
-      var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
+      var myConfigFile:String = null
       if (args.length == 0) {
-	logger.error("Config File defaults to " + myConfigFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a config file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+	logger.error("Config File must be supplied, pass a config file as a command line argument:  --config /your-install-path/MetadataAPIConfig.properties")
+	return
       }
       else{
 	val options = nextOption(Map(), args.toList)
@@ -2220,7 +2217,6 @@ object TestMetadataAPI{
 	myConfigFile = cfgfile.asInstanceOf[String]
       }
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
-      databaseOpen = true
       StartTest
     }catch {
       case e: Exception => {
@@ -2228,12 +2224,7 @@ object TestMetadataAPI{
       }
     }
     finally{
-      // CloseDbStore Must be called for a clean exit
-      if( databaseOpen ){
-	MetadataAPIImpl.CloseDbStore
-      }
-      MetadataAPIImpl.shutdownZkListener
-      MetadataAPIImpl.CloseZKSession
+      MetadataAPIImpl.shutdown
     }
   }
 }

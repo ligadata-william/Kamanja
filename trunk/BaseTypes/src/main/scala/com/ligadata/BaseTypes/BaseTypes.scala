@@ -3,7 +3,7 @@ package com.ligadata.BaseTypes
 import java.util._
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
-import com.ligadata.olep.metadata.TypeImplementation
+import com.ligadata.fatafat.metadata.TypeImplementation
 import java.io.{ DataOutputStream, DataInputStream }
  
 // helper class that implement TypeImplementation 

@@ -9,7 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -48,7 +48,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.FAIL,"",objectType)
-	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString   
+	      return new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
     objectType match {
@@ -72,11 +72,11 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
-         return new ApiResult(-1, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
+         return new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
       }
     }
     MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.SUCCESS,"",objectType)
-    new ApiResult(0,  APIName, null,  "Object Keys:" + apiResult.mkString(",")).toString
+    new ApiResult(ErrorCodeConstants.Success,  APIName, "Object Keys:" + apiResult.mkString(","), ErrorCodeConstants.Get_All_Object_Keys_Successful).toString
   }
 
   def process(objectType: String) = {

@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
@@ -46,7 +46,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
 	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameVal)    
-	    requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameVal)   

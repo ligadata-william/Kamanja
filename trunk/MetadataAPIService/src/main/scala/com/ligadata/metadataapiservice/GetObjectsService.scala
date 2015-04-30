@@ -9,7 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import scala.util.control._
 import org.apache.log4j._
@@ -64,7 +64,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     val objectName = (nameSpace + arg.Name + version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
-	      return new ApiResult(-1, APIName, null, "Error:READ not allowed for this user").toString
+	      return new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:READ not allowed for this user").toString
     }
 
     arg.ObjectType match {

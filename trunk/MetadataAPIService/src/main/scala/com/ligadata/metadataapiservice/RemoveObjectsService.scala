@@ -9,7 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.control._
 
 import org.apache.log4j._
@@ -64,7 +64,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
     val objectName = (nameSpace + "."+ arg.Name +"."+ version).toLowerCase
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
 	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,objType,AuditConstants.FAIL,"",objectName)
-        return new ApiResult(-1,APIName, null, "Error:UPDATE not allowed for this user").toString
+        return new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Error:UPDATE not allowed for this user").toString
     }
 
     arg.ObjectType match {
@@ -109,12 +109,12 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
           if(arg.ObjectType == null ) {
             deletedObjects +:= ":Error: The value of object type can't be null"
             finalRC = -1 
-            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
+            finalAPIResult = (new ApiResult(ErrorCodeConstants.Failure, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else if(arg.Name == null ) {
             deletedObjects +:= ":Error: The value of object name can't be null"
             finalRC = -1
-            finalAPIResult = (new ApiResult(finalRC, APIName, null, deletedObjects.mkString(","))).toString
+            finalAPIResult = (new ApiResult(ErrorCodeConstants.Failure, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else {
             val iResult = RemoveObjectDef(arg)
@@ -125,7 +125,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
       }
     }
     else{
-      finalAPIResult = (new ApiResult(-1, APIName, null, "Error:No arguments passed to the API, nothing much to do")).toString
+      finalAPIResult = (new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:No arguments passed to the API, nothing much to do")).toString
     }
     requestContext.complete(finalAPIResult)
   }

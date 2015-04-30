@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import scala.util.{ Success, Failure }
 
@@ -39,7 +39,7 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.FAIL,"",nameVal)
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else { 
       val apiResult = MetadataAPIImpl.AddContainer(containerJson,"JSON")
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",nameVal)

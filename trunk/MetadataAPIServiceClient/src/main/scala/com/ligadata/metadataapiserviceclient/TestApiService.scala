@@ -127,11 +127,11 @@ object TestApiService {
       var database_host = "localhost"
       var database_schema = "metadata"
       var database_location = "/tmp"
-      var jar_target_dir = "/tmp/OnLEPInstall"
+      var jar_target_dir = "/tmp/FatafatInstall"
       var scala_home = root_dir + "/scala-2.10.4"
       var java_home = root_dir + "/jdk1.8.0_05"
-      var manifest_path = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
-      var classpath = ".:/tmp/OnLEPInstall/metadata_2.10-1.0.jar:/tmp/OnLEPInstall/basefunctions_2.10-0.1.0.jar:/tmp/OnLEPInstall/messagedef_2.10-1.0.jar:/tmp/OnLEPInstall/methodextractor_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlcompiler_2.10-1.0.jar:/tmp/OnLEPInstall/bankenvcontext_2.10-1.0.jar:/tmp/OnLEPInstall/onlepbase_2.10-1.0.jar:/tmp/OnLEPInstall/bankbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/OnLEPInstall/medicalbootstrap_2.10-1.0.jar:/tmp/OnLEPInstall/joda-time-2.3.jar:/tmp/OnLEPInstall/joda-convert-1.6.jar:/tmp/OnLEPInstall/basetypes_2.10-0.1.0.jar:/tmp/OnLEPInstall/pmmludfs_2.10-1.0.jar:/tmp/OnLEPInstall/pmmlruntime_2.10-1.0.jar:/tmp/OnLEPInstall/json4s-native_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-core_2.10-3.2.9.jar:/tmp/OnLEPInstall/json4s-ast_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-databind-2.3.1.jar:/tmp/OnLEPInstall/jackson-annotations-2.3.0.jar:/tmp/OnLEPInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/OnLEPInstall/jackson-core-2.3.1.jar:/tmp/OnLEPInstall/log4j-1.2.17.jar"
+      var manifest_path = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
+      var classpath = ".:/tmp/FatafatInstall/metadata_2.10-1.0.jar:/tmp/FatafatInstall/basefunctions_2.10-0.1.0.jar:/tmp/FatafatInstall/messagedef_2.10-1.0.jar:/tmp/FatafatInstall/methodextractor_2.10-1.0.jar:/tmp/FatafatInstall/pmmlcompiler_2.10-1.0.jar:/tmp/FatafatInstall/bankenvcontext_2.10-1.0.jar:/tmp/FatafatInstall/fatafatbase_2.10-1.0.jar:/tmp/FatafatInstall/bankbootstrap_2.10-1.0.jar:/tmp/FatafatInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/FatafatInstall/medicalbootstrap_2.10-1.0.jar:/tmp/FatafatInstall/joda-time-2.3.jar:/tmp/FatafatInstall/joda-convert-1.6.jar:/tmp/FatafatInstall/basetypes_2.10-0.1.0.jar:/tmp/FatafatInstall/pmmludfs_2.10-1.0.jar:/tmp/FatafatInstall/pmmlruntime_2.10-1.0.jar:/tmp/FatafatInstall/json4s-native_2.10-3.2.9.jar:/tmp/FatafatInstall/json4s-core_2.10-3.2.9.jar:/tmp/FatafatInstall/json4s-ast_2.10-3.2.9.jar:/tmp/FatafatInstall/jackson-databind-2.3.1.jar:/tmp/FatafatInstall/jackson-annotations-2.3.0.jar:/tmp/FatafatInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/FatafatInstall/jackson-core-2.3.1.jar:/tmp/FatafatInstall/log4j-1.2.17.jar"
       var notify_engine = "NO"
       var znode_path = "/ligadata/metadata"
       var zookeeper_connect_string = "localhost:2181"
@@ -141,13 +141,13 @@ object TestApiService {
       var api_leader_selection_zk_node = "/ligadata/metadata"
       var zk_session_timeout_ms = "4000"
       var zk_connection_timeout_ms = "30000"
-      var config_files_dir = git_root + "/RTD/trunk/SampleApplication/Medical/Configs"
-      var model_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-      var message_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-      var container_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-      var function_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
-      var concept_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
-      var type_files_dir = git_root + "/RTD/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+      var config_files_dir = git_root + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+      var model_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+      var message_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+      var container_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+      var function_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+      var concept_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+      var type_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       var compiler_work_dir = root_dir + "/tmp"
       var model_exec_log = "false"
 
@@ -1333,7 +1333,7 @@ object TestApiService {
 			  11 ->  "ListTypeDef",
 			  12 ->  "QueueTypeDef",
 			  13 ->  "TupleTypeDef")
-      var selectedType = "com.ligadata.olep.metadata.ScalarTypeDef"
+      var selectedType = "com.ligadata.fatafat.metadata.ScalarTypeDef"
       var done = false
       while ( done == false ){
 	println("\n\nPick a Type ")
@@ -1344,7 +1344,7 @@ object TestApiService {
 	print("\nEnter your choice: ")
 	val choice:Int = readInt()
 	if( choice <= typeMenu.size ){
-	  selectedType = "com.ligadata.olep.metadata." + typeMenu(choice)
+	  selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
 	  done = true
 	}
 	else if( choice == typeMenu.size + 1 ){
@@ -1482,9 +1482,9 @@ object TestApiService {
     try{
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.error("Config File defaults to " + myConfigFile)
-	logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.error("The config file supplied is a complete path name of a config file similar to one in github/RTD/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+	logger.warn("Config File defaults to " + myConfigFile)
+	logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+	logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       }
       else{
 	val cfgfile = args(0)

@@ -3,7 +3,7 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
@@ -37,7 +37,7 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","jars"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,AuditConstants.JAR,AuditConstants.FAIL,"",jarName)
-      requestContext.complete(new ApiResult(-1,"Security", null,"UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure,"Security", null,"UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UploadJarToDB(jarName,byteArray)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,AuditConstants.JAR,AuditConstants.FAIL,"",jarName)            

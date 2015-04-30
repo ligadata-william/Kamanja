@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 import scala.util.{ Success, Failure }
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.MetadataAPI._
@@ -45,7 +45,7 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
     val objectName = cfgJson.substring(0,100)        
     if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectList.mkString(",")) 
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.RemoveConfig(cfgJson)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectList.mkString(","))    

@@ -78,8 +78,8 @@ Think of this file as a companion to the devmachine-setup.txt
 
 		[info] MessageDef/*:projectInfo
 		[info] 	ModuleInfo(MessageDf,MessageDf,None,None,List(),messagedf,None,None)
-		[info] OnLEPBase/*:projectInfo
-		[info] 	ModuleInfo(OnLEPBase,OnLEPBase,None,None,List(),onlepbase,None,None)
+		[info] FatafatBase/*:projectInfo
+		[info] 	ModuleInfo(FatafatBase,FatafatBase,None,None,List(),fatafatbase,None,None)
 		[info] LoadtestRunner/*:projectInfo
 		[info] 	ModuleInfo(LoadtestRunner,LoadtestRunner,None,None,List(),loadtestrunner,None,None)
 		[info] Metadata/*:projectInfo

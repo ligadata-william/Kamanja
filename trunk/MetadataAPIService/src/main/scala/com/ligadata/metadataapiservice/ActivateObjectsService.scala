@@ -9,7 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import scala.util.control._
 
@@ -49,7 +49,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 	      MetadataAPIImpl.ActivateModel(nameSpace,name,version.toLong).toString
       }
       case _ => {
-	      new ApiResult(-1, APIName, null,  "Deactivate/Activate on " + objectType + " is not supported yet").toString 
+	      new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Deactivate/Activate on " + objectType + " is not supported yet").toString 
       }
     }
   }
@@ -90,7 +90,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
           // Do it here so that we know which OBJECT is being activated for the Audit purposes.
           if ((!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("activate","model"))) && !authDone) {
             MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
-            requestContext.complete(new ApiResult(-1, APIName, null,  "Error:UPDATE not allowed for this user").toString )
+            requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
             return
           }
           
@@ -99,11 +99,11 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
           objectList :::= List(nameSpace+"."+name+"."+version)
           
 	        if(arg.ObjectType == null ){
-	          resultStr =  new ApiResult(-1, APIName, null,"Error: The value of object type can't be null").toString
+	          resultStr =  new ApiResult(ErrorCodeConstants.Failure, APIName, null,"Error: The value of object type can't be null").toString
 	          loop.break
 	        }
 	        if(arg.Name == null ){
-	          resultStr = new ApiResult(-1, APIName, null, "Error: The value of object name can't be null").toString 
+	          resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error: The value of object name can't be null").toString 
 	          loop.break
 	        }
 	        else {
@@ -113,7 +113,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
       }
     }
     else{
-      resultStr = new ApiResult(-1, APIName, null,"No arguments passed to the API, nothing much to do").toString 
+      resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
     MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)

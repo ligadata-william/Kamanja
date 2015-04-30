@@ -6,7 +6,7 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import com.ligadata.Pmml.Runtime._
 import org.apache.log4j.Logger
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 
 class PmmlExecNode (val qName : String) extends LogTrait  { 
@@ -1500,7 +1500,7 @@ object PmmlExecNode extends LogTrait {
 	def mkPmmlExecApplication(ctx : PmmlContext, headerNode : PmmlApplication) : Option[PmmlExecNode] = {
 		/** Collect the Application name and the version if it is present */
 		ctx.pmmlTerms("ApplicationName") = Some(headerNode.name)
-		ctx.pmmlTerms("Version") = Some(headerNode.version)
+		ctx.pmmlTerms("Version") = Some(MdMgr.FormatVersion(if (headerNode.version == null || headerNode.version.trim.isEmpty) "1.1" else headerNode.version))
 
 		/** update the header parent node with the application name and version, don't create node*/
 		

@@ -171,4 +171,7 @@ object ErrorCodeConstants {
    val Get_All_Configs_Failed = "Failed to fetch all configs";
    val Get_All_Configs_Failed_Not_Available = "Failed to fetch all configs. No configs available.";
    val Get_All_Configs_Successful = "Successfully fetched all configs";
+   
+   //Object
+   val Get_All_Object_Keys_Successful = "Successfully fetched all object keys";
 }

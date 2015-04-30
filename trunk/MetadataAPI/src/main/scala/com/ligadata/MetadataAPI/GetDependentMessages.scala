@@ -5,11 +5,11 @@ import java.io._
 import scala.Enumeration
 import scala.io._
 
-import com.ligadata.olep.metadata.ObjType._
-import com.ligadata.olep.metadata._
-import com.ligadata.olep.metadata.MdMgr._
+import com.ligadata.fatafat.metadata.ObjType._
+import com.ligadata.fatafat.metadata._
+import com.ligadata.fatafat.metadata.MdMgr._
 
-import com.ligadata.olep.metadataload.MetadataLoad
+import com.ligadata.fatafat.metadataload.MetadataLoad
 
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session

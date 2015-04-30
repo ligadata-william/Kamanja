@@ -6,7 +6,7 @@ import scala.Enumeration
 import scala.io.Source._
 import org.apache.log4j._
 
-import com.ligadata.olep.metadata._
+import com.ligadata.fatafat.metadata._
 
 import com.twitter.chill.ScalaKryoInstantiator
 import com.esotericsoftware.kryo.io.{Input, Output}
