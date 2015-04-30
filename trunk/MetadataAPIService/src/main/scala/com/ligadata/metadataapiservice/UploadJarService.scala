@@ -36,11 +36,11 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
     log.info("Requesting UploadJar {}",jarName)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","jars"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,AuditConstants.JAR,AuditConstants.FAIL,"",jarName)
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,jarName,AuditConstants.FAIL,"",jarName)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure,"Security", null,"UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UploadJarToDB(jarName,byteArray)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,AuditConstants.JAR,AuditConstants.FAIL,"",jarName)            
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,jarName,AuditConstants.FAIL,"",jarName)            
       requestContext.complete(apiResult.toString)     
     }
   }

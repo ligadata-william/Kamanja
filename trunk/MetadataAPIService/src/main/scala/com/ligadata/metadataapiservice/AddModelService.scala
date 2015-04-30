@@ -45,11 +45,11 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
     var nameVal = APIService.extractNameFromPMML(pmmlStr) 
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
-	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.FAIL,"",nameVal)    
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,pmmlStr,AuditConstants.FAIL,"",nameVal)    
 	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameVal)   
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,pmmlStr,AuditConstants.SUCCESS,"",nameVal)   
       requestContext.complete(apiResult)      
     }
   }
