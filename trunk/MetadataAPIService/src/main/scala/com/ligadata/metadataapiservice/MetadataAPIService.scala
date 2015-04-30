@@ -282,7 +282,7 @@ trait MetadataAPIService extends HttpService {
     } catch {
       case e: ArrayIndexOutOfBoundsException => {
         logger.debug("METADATASERVICE: Invalid key "+ objKey)
-        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, objKey)).toString)
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid key: "+objKey)).toString)
         return null
       } 
     }  
