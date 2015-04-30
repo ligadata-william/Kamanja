@@ -280,11 +280,16 @@ trait MetadataAPIService extends HttpService {
     try {
       return createGetArg(objKey, objType) 
     } catch {
-      case e: ArrayIndexOutOfBoundsException => {
+      case aobe: ArrayIndexOutOfBoundsException => {
         logger.debug("METADATASERVICE: Invalid key "+ objKey)
         rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid key: "+objKey)).toString)
         return null
       } 
+      case nfe: java.lang.NumberFormatException => { 
+        logger.debug("METADATASERVICE: Invalid key "+ objKey)
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid key: "+objKey)).toString)
+        return null
+      }
     }  
   }   
 
@@ -296,6 +301,7 @@ trait MetadataAPIService extends HttpService {
     val nameSpace = keyTokens(0)
     val name = keyTokens(1)
     val version = keyTokens(2)
+    val lVersion = version.toLong
     val mdArg = new MetadataApiArg(objectType,nameSpace,name,version,"JSON")
     val argList = new Array[MetadataApiArg](1)
     argList(0) = mdArg
