@@ -101,6 +101,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
   var insertStmt = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?);")
   var insertStmt1 = session.prepare("INSERT INTO " + table + " (key, value) values(?, ?) IF NOT EXISTS;")
   var selectStmt = session.prepare("SELECT value FROM " + table + " WHERE key = ?;")
+  var selectAllKeysStmt = session.prepare("SELECT key FROM " + table + ";")
   var deleteStmt = session.prepare("DELETE from " + table + " WHERE Key=?;")
   var updateStmt = session.prepare("UPDATE " + table + " SET value = ? WHERE Key=?;")
 
@@ -216,8 +217,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
 
   def getAllKeys(handler: (Key) => Unit) =
     {
-      var stmt = session.prepare("SELECT key FROM " + table + ";")
-      val rs = session.execute(stmt.bind().setConsistencyLevel(consistencylevelRead))
+      val rs = session.execute(selectAllKeysStmt.bind().setConsistencyLevel(consistencylevelRead))
 
       val iter = rs.iterator();
       while (iter.hasNext()) {
