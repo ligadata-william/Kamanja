@@ -507,6 +507,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def InitZooKeeper: Unit = {
     logger.debug("Connect to zookeeper..")
     if (zkc != null) {
+      logger.debug("Already connected to zookeeper")
       // Zookeeper is already connected
       return
     }
@@ -730,6 +731,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def SaveObjectList(objList: Array[BaseElemDef], store: DataStore) {
     logger.debug("Save " + objList.length + " objects in a single transaction ")
     val tranId = GetNewTranId
+    logger.debug("tranId => " + tranId)
     var keyList = new Array[String](objList.length)
     var valueList = new Array[Array[Byte]](objList.length)
     try {
@@ -858,7 +860,9 @@ object MetadataAPIImpl extends MetadataAPI {
       
       
       val data = ZooKeeperMessage(objList, operations)
+
       InitZooKeeper
+      
       val znodePath = GetMetadataAPIConfig.getProperty("ZNODE_PATH") + "/metadataupdate"
       logger.debug("Set the data on the zookeeper node " + znodePath)
       zkc.setData().forPath(znodePath, data)
@@ -1713,6 +1717,11 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def GetMetadataStore: DataStore = metadataStore
+  def GetConfigStore: DataStore = configStore
+  def GetJarStore: DataStore = jarStore
+  def GetTransStore: DataStore = transStore
+
   def CloseDbStore: Unit = lock.synchronized {
     try {
       logger.debug("Closing datastore")
@@ -2394,7 +2403,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var resultStr:String = ""
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      // compProxy.setLoggerLevel(Level.TRACE)
       val (classStr, cntOrMsgDef) = compProxy.compileMessageDef(contOrMsgText,recompile)
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
@@ -2515,7 +2524,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var resultStr:String = ""
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       val (classStr, msgDef) = compProxy.compileMessageDef(messageText)
       val key = msgDef.FullNameWithVer
       msgDef match {
@@ -3006,7 +3015,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def AddModel(pmmlText: String): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
 
       // Make sure the version of the model is greater than any of previous models with same FullName
@@ -3050,7 +3059,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def RecompileModel(mod : ModelDef): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       val pmmlText = mod.ObjectDefinition
       var (classStr, modDef) = compProxy.compilePmml(pmmlText,true)
       val latestVersion = GetLatestModel(modDef)
@@ -3090,7 +3099,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def UpdateModel(pmmlText: String): String = {
     try {
       var compProxy = new CompilerProxy
-      compProxy.setLoggerLevel(Level.TRACE)
+      //compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
       val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
       val latestVersion = GetLatestModel(modDef)
