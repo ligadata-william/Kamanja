@@ -1514,7 +1514,15 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		logger.debug("MetadataLoad...loading Macro functions")
 
 		
-		/** **************************************************************************************************************/
+		/** ************************************************************
+		 *  
+		 *  NOTE: For the Builds portion of the Builds/Does macros that 
+		 *  do the class update contexts... make sure the class name is
+		 *  unique.  Do this by qualifying the name with all of the arguments
+		 *  s.t. there is no confusion between 3 and 4 argument macros that
+		 *  have the same class base name.  
+		 *  
+		 ***************************************************************/
 		
 		/** catalog the CLASSUPDATE oriented macros: 
 		 
@@ -1549,13 +1557,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	  		
 		 */
 		val SetFieldMacroStringFixed : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.%2% = %3%; true }
 	} """
 		
 		val SetFieldMacroStringMapped : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.set("%2%", %3%); true }
 	} """
@@ -1633,13 +1641,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 
 
 		val SetFieldMacroContainerStringFixed : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_%4%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.%2% = %3%.%4%; true }
 	} """
 		
 		val SetFieldMacroContainerStringMapped : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_%4%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%").asInstanceOf[%4_type%]); true }
 	} """
@@ -1693,13 +1701,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	  		
 		 */
 		val incrementByMacroStringFixed : String =  """
-	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%.%2% += %3%; true }
 	} """
 		
 		val incrementByMacroStringMapped : String =  """
-	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%").asInstanceOf[%2_type%] + %3%)); true }
 	} """
@@ -1728,13 +1736,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		/** **************************************************************************************************************/
 					
 		val putGlobalContainerFixedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_%5%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
 	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.%4%.toString, %5%); true }
 	} """
 		
 		val putGlobalContainerMappedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_%5%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
 	{
 	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get("%4%").asInstanceOf[%4_type%].toString, %5%); true }
 	} """

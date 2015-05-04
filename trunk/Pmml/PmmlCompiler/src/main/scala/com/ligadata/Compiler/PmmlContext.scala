@@ -81,6 +81,14 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	var updateClassQueue = new Queue[String]()
 	def UpdateClassQueue : Queue[String] = updateClassQueue
 	
+	/**
+	 * Collect generated "Builds" classes here.  The key contains "class someIdentifer" that reflects the variables and macros in use.
+	 * The value contains the generated class string itself.  This is currently limited to tracking the "Builds" classes from
+	 * the "Builds/Does" macros.
+	 */
+	var generatedClasses : Map[String,String] = Map[String,String]()
+	def GeneratedClasses : Map[String,String] = generatedClasses
+	
 	/** Make refs to the DataDictionary and TransformationDictionary in those respective containers for convenience */
 	var dDict : HashMap[String,xDataField] = HashMap[String,xDataField]()
 	def DataDict : HashMap[String,xDataField] = dDict
