@@ -340,7 +340,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * logAuditRec - Record an Audit event using the audit adapter.
    */
-  def logAuditRec(userOrRole:Option[String], userPrivilege:Option[String], action:String, objectAccessed:String, success:String, transactionId:String, notes:String) = {
+  def logAuditRec(userOrRole:Option[String], userPrivilege:Option[String], action:String, objectText:String, success:String, transactionId:String, objName:String) = {
     if( auditObj != null ){
       val aRec = new AuditRecord
 
@@ -360,10 +360,10 @@ object MetadataAPIImpl extends MetadataAPI {
       aRec.userPrivilege = priv
       aRec.actionTime = getCurrentTime
       aRec.action = action
-      aRec.objectAccessed = objectAccessed
+      aRec.objectAccessed = objName
       aRec.success = success
       aRec.transactionId = transactionId
-      aRec.notes  = notes
+      aRec.notes  = objectText
       try{
         auditObj.addAuditRecord(aRec)
       } catch {
@@ -374,6 +374,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
  
+  
   /**
    * getAuditRec - Get an audit record from the audit adapter.
    */

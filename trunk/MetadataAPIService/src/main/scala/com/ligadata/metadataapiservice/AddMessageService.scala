@@ -24,7 +24,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
   implicit val system = context.system
   import system.dispatcher
   val log = Logging(system, getClass)
-  val APIName = "AddMEssageService"
+  val APIName = "AddMessageService"
   
   def receive = {
     case Process(messageJson) =>
@@ -39,11 +39,11 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
     var nameVal = APIService.extractNameFromJson(messageJson,AuditConstants.MESSAGE)
     
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","message"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",nameVal)   
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,messageJson,AuditConstants.FAIL,"",nameVal)   
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )      
     } else {
       val apiResult = MetadataAPIImpl.AddMessage(messageJson)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameVal)   
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,messageJson,AuditConstants.SUCCESS,"",nameVal)   
       requestContext.complete(apiResult)
     }
   }
