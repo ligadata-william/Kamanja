@@ -43,9 +43,9 @@ class GetLeaderService(requestContext: RequestContext, userid:Option[String], pa
   }
 
   def process(nodeList: Array[String]) = {
-    val leaderHost = MetadataAPIImpl.getLeaderHost(MetadataAPIServiceLeader.LeaderNode)
-    logger.info("leader host => " + leaderHost)
-    requestContext.complete(leaderHost)
+    
+    val leaderHost = MetadataAPIServiceLeader.IsLeader
+    requestContext.complete(leaderHost.toString())
   }
 }
 

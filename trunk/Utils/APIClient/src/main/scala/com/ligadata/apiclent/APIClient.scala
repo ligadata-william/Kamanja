@@ -234,8 +234,6 @@ object APIClient {
       }
     }
 
-
-      
     val nodes = nodeList.split(",")
     var leaderNode:String = null
     breakable{
@@ -243,7 +241,7 @@ object APIClient {
 	val leaderUrl = "https://" + node + "/api/leader"
 	try{
 	  val res = MakeHttpRequest("get",leaderUrl,userId,password,roleName,null,null)
-	  leaderNode = res
+	  leaderNode = node
 	  logger.info("Leader => " + leaderNode)
 	  break
 	} catch {
@@ -256,6 +254,7 @@ object APIClient {
     
     if( leaderNode == null ){
       logger.error("Failed to find the leader node..")
+      return
     }
 
     // verify the input URL
