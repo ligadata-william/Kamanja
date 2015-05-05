@@ -438,7 +438,8 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-   
+
+
    def getAuditRec(filterParameters: Array[String]) : String = {
     var apiResultStr = ""
     if( auditObj == null ){

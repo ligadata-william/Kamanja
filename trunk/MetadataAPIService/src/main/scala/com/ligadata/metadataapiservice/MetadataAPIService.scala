@@ -238,8 +238,12 @@ trait MetadataAPIService extends HttpService {
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
     val action = "Get" + objtype
     val notes = "Invoked " + action + " API "
-    var argParm: String = verifyInput(objKey,objtype,rContext)
-    if (argParm == null) return
+    var argParam: String = null
+
+    if( ! objtype.equalsIgnoreCase("Config")){
+      argParam = verifyInput(objKey,objtype,rContext)
+      if (argParam == null) return
+    }
     
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,role)))
@@ -247,7 +251,7 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || 
                objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type"))  {
         val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext,userid,password,role)))
-        getObjectsService ! GetObjectsService.Process(argParm)  
+        getObjectsService ! GetObjectsService.Process(argParam)  
     } else {
         rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown GET route")).toString) 
     }

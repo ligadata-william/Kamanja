@@ -83,4 +83,4 @@ lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApache
 
 lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage)
 
-
+lazy val APIClient = project.in(file("Utils/APIClient"))

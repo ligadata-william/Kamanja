@@ -118,8 +118,9 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
             loop.break
           } else {
             val iResult = RemoveObjectDef(arg)
-            val apiResultStr = MetadataAPIImpl.getApiResult(iResult)
-            finalAPIResult = apiResultStr
+            //val apiResultStr = MetadataAPIImpl.getApiResult(iResult)
+            //finalAPIResult = apiResultStr
+	    finalAPIResult = iResult
           }
         })
       }

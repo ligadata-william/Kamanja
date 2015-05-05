@@ -37,13 +37,13 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
     var objectList: List[String] = List[String]()
 
     var inParm: Map[String,Any] = parse(cfgJson).values.asInstanceOf[Map[String,Any]]   
-    var args: List[Map[String,String]] = inParm.getOrElse("ArgList",null).asInstanceOf[List[Map[String,String]]]   //.asInstanceOf[List[Map[String,String]]
+    var args: List[Map[String,String]] = inParm.getOrElse("Clusters",null).asInstanceOf[List[Map[String,String]]]   //.asInstanceOf[List[Map[String,String]]
     args.foreach(elem => {
-      objectList :::= List(elem.getOrElse("NameSpace","system")+"."+elem.getOrElse("Name","")+"."+elem.getOrElse("Version","-1"))
+      objectList :::= List(elem.getOrElse("ClusterId",""))
     })
     
     val objectName = cfgJson.substring(0,100)        
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert,"write")) {
+    if (!MetadataAPIImpl.checkAuth(userid,password,cert,MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.REMOVECONFIG,AuditConstants.CONFIG,AuditConstants.FAIL,"",objectList.mkString(",")) 
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {

@@ -38,16 +38,16 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
     var apiResult:String = ""
 
     objectType match {
-      case "node" => {
+      case "nodes" => {
         apiResult = MetadataAPIImpl.GetAllNodes("JSON")
       }
-      case "cluster" => {
+      case "clusters" => {
         apiResult = MetadataAPIImpl.GetAllClusters("JSON")
       }
-      case "adapter" => {
+      case "adapters" => {
         apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
       }
-      case "clustercfg" => {
+      case "clustercfgs" => {
         apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
       }
       case "all" => {
@@ -57,7 +57,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
         apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    MetadataAPIImpl.getApiResult(apiResult)
+    apiResult
   }
 
   
