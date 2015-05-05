@@ -177,9 +177,13 @@ object APIClient {
 	case "WARN"   => SetLoggerLevel(Level.WARN)
 	case "ERROR"  => SetLoggerLevel(Level.ERROR)
 	case _        => logger.error("Unknown value " + logLevel + " for log4j LogLevel, Should be one of DEBUG/TRACE/INFO/WARN/ERROR")
-			 SetLoggerLevel(Level.DEBUG)
+			 SetLoggerLevel(Level.INFO)
       }
     }
+    else{
+      SetLoggerLevel(Level.INFO)
+    }
+      
     
     if( help ){
       die()
@@ -278,6 +282,8 @@ object APIClient {
       newUrl = "https://" + leaderNode + uri.path
       logger.info("Redirecting the request to new leader: New URL =>" + newUrl)
     }
+
+    logger.info(config)
 
     val res = MakeHttpRequest(httpReqType,newUrl,userId,password,roleName,fileName,fileType)
     logger.info("response => " + res)
