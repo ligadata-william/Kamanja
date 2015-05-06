@@ -85,7 +85,7 @@ object TestMessageDefImpl extends LogTrait {
 
     //   msg.processConcept(json, "JSON")
     //   msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
-    println("Done")
+    //   println("Done")
   }
 
 }
