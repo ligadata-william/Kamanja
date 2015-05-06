@@ -22,6 +22,16 @@ import com.netaporter.uri._
 import com.netaporter.uri.dsl._
 import com.netaporter.uri.Uri._
 
+/* This utility depends on two opensource libraries
+ * httpClient from uk.co.bigbeeconsultants
+ * uri parser from com.netaporter.uri
+ * It loops through given list of nodes
+ * until it finds the leader node and redirects the
+ * given api request to leader node
+ * If a nodeList is not supplied, it can make
+ * the request to the given node in the URL
+ */
+
 object APIClient {
 
   val loggerName = this.getClass.getName
@@ -200,7 +210,7 @@ object APIClient {
 
     // Validate arguments
     // Some arguments are required
-    if( userId == null || password == null || httpReqType == null || url == null || nodeList == null ){
+    if( userId == null || password == null || httpReqType == null || url == null ){
       die()
     }
 
@@ -219,7 +229,7 @@ object APIClient {
 	return
       } 
       else{
-	// Make sure the file exists
+	// Make sure the file exists and must be one of *.jar/*.json/*.xml.
 	val fl = new File(fileName)
 	if( fl.exists == false ){
 	  logger.error("File " + fileName + " Couldn't be found")
@@ -238,25 +248,27 @@ object APIClient {
       }
     }
 
-    val nodes = nodeList.split(",")
     var leaderNode:String = null
-    breakable{
-      nodes.foreach( node => {
-	val leaderUrl = "https://" + node + "/api/leader"
-	try{
-	  val res = MakeHttpRequest("get",leaderUrl,userId,password,roleName,null,null)
-	  leaderNode = node
-	  logger.info("Leader => " + leaderNode)
-	  break
-	} catch {
-	  case e: Exception => {
-	    logger.error("Failed to connect to " + leaderUrl)
+    if( nodeList != null ){
+      val nodes = nodeList.split(",")
+      breakable{
+	nodes.foreach( node => {
+	  val leaderUrl = "https://" + node + "/api/leader"
+	  try{
+	    val res = MakeHttpRequest("get",leaderUrl,userId,password,roleName,null,null)
+	    leaderNode = node
+	    logger.info("Leader => " + leaderNode)
+	    break
+	  } catch {
+	    case e: Exception => {
+	      logger.error("Failed to connect to " + leaderUrl)
+	    }
 	  }
-	}
-      })
+	})
+      }
     }
     
-    if( leaderNode == null ){
+    if( nodeList != null && leaderNode == null ){
       logger.error("Failed to find the leader node..")
       return
     }
@@ -278,7 +290,7 @@ object APIClient {
     // construct new url if the leader is different
     val currentNode = uri.host.get + ":" + uri.port.get
     var newUrl = url
-    if( leaderNode != currentNode ){
+    if( leaderNode != null && leaderNode != currentNode ){
       newUrl = "https://" + leaderNode + uri.path
       logger.info("Redirecting the request to new leader: New URL =>" + newUrl)
     }

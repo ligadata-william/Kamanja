@@ -1,3 +1,6 @@
+# A sample shell script used to test scala client. Make changes according to your environment
+# After doing a easyInstall, This script might work fine, if we change the "install" directory
+# from "/media/home2/installFatafat" to whatever your install directory is.
 # Add objects
 # Cluster Config
 APIClient -l DEBUG -t PUT -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/config/ClusterConfig.json -u https://localhost:8081/api/UploadConfig 

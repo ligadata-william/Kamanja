@@ -240,6 +240,7 @@ trait MetadataAPIService extends HttpService {
     val notes = "Invoked " + action + " API "
     var argParam: String = null
 
+    // verifyInput applies to all objecttypes except Config
     if( ! objtype.equalsIgnoreCase("Config")){
       argParam = verifyInput(objKey,objtype,rContext)
       if (argParam == null) return
