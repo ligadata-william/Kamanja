@@ -6021,7 +6021,8 @@ object Udfs extends LogTrait {
 
     /**
        Convert the supplied iso8601 date integer according to these format codes:
-      
+     
+     {{{ 
      Symbol  Meaning                      Presentation  Examples
      ------  -------                      ------------  -------
      G       era                          text          AD
@@ -6055,7 +6056,7 @@ object Udfs extends LogTrait {
      ''      single quote                 literal
 
      example: dateFmt("yyyy-MMM-dd", 20140401) produces 2014-Apr-01
-     
+     }}}
      @param fmtStr: a String specifying the desired format.
      @param yyyymmdds: an Int encoded with iso8601 date...
      @return string rep of this date
