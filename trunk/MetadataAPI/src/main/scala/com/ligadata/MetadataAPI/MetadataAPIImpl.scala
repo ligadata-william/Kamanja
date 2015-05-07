@@ -147,7 +147,7 @@ object MetadataAPIImpl extends MetadataAPI {
   var propertiesAlreadyLoaded = false
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
-  private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = null
+  private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -4198,7 +4198,7 @@ object MetadataAPIImpl extends MetadataAPI {
   
   private def updateThisKey(zkMessage: ZooKeeperNotification) {
     
-    var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
+    var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong).toLowerCase
     val dispkey = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + MdMgr.Pad0s2Version(zkMessage.Version.toLong)).toLowerCase
 
     zkMessage.ObjectType match {
@@ -5688,7 +5688,6 @@ object MetadataAPIImpl extends MetadataAPI {
 
     if (zkConnectString != null && zkConnectString.isEmpty() == false && znodePath != null && znodePath.isEmpty() == false) {
       try {
-        cacheOfOwnChanges = scala.collection.mutable.Set[String]()
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
