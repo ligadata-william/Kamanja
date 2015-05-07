@@ -81,6 +81,7 @@ allDeps.scala
             println(s"processing project $arg...")
 
             val depJarsCmd = s"sbtProjDependencies.scala --sbtDeps ${'"'}`sbt 'show $arg/fullClasspath' | grep 'List(Attributed'`${'"'} --emitCp 1"
+            println(s"...cmd=$depJarsCmd")
             val depJarsCmdSeq : Seq[String] = Seq("bash", "-c", depJarsCmd)
             val depJarsStr : String = Process(depJarsCmdSeq).!!.trim
             if (depJarsStr != null && depJarsStr.size > 0) {
@@ -94,7 +95,7 @@ allDeps.scala
         })
 
         println(s"Dependency jars for repo found at $pwd")
-        allDepJars.foreach(jarPath => println("cp " + jarPath + " $FATAFATLIBPATH"))
+        allDepJars.foreach(jarPath => println("cp " + jarPath + " $systemlib"))
 	}
 }
 

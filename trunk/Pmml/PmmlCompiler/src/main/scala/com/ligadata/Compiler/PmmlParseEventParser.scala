@@ -40,7 +40,7 @@ class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTr
 
 			val buf : String = buffer.toString().trim
 			val len = buf.length()
-			if (buf.length() > 0) {
+			if (buf.length() >= 0) {
 				logger.debug(s"the following string was collected for $qName (length = $len) : $buf")
 				
 				pmmlnode.qName match {

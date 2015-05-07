@@ -495,16 +495,30 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 	def init_com_ligadata_pmml_udfs_Udfs {
 	  
-
 		mgr.AddFunc("Pmml", "MakeStrings", "com.ligadata.pmml.udfs.Udfs.MakeStrings", ("System", "ArrayOfString"), List(("arr", "System", "ArrayOfTupleOfStringString"),("separator", "System", "String")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayBufferOfString")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayOfString")), null)
 		mgr.AddFunc("Pmml", "MakePairs", "com.ligadata.pmml.udfs.Udfs.MakePairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayOfString")), null)
 		
-		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Int"), List(), null)
-		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Int"), List(), null)
-		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "dateDaysSinceYear", "com.ligadata.pmml.udfs.Udfs.dateDaysSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
+	    mgr.AddFunc("Pmml", "idGen", "com.ligadata.pmml.udfs.Udfs.idGen", ("System", "String"), List(), null)
+	    mgr.AddFunc("Pmml", "concat", "com.ligadata.pmml.udfs.Udfs.concat", ("System", "String"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "replace", "com.ligadata.pmml.udfs.Udfs.replace", ("System", "String"), List(("replacewithin", "System", "Any"),("inWord", "System", "Any"),("replacewith", "System", "Any")), null)
+	    mgr.AddFunc("Pmml", "matches", "com.ligadata.pmml.udfs.Udfs.matches", ("System", "Boolean"), List(("matchwithin", "System", "Any"),("matchwith", "System", "Any")), null)
+	    mgr.AddFunc("Pmml", "random", "com.ligadata.pmml.udfs.Udfs.random", ("System", "Double"), List(), null)
+	    mgr.AddFunc("Pmml", "formatNumber", "com.ligadata.pmml.udfs.Udfs.formatNumber", ("System", "String"), List(("num", "System", "Any"),("formatting", "System", "String")), null)
+	    mgr.AddFunc("Pmml", "logMsg", "com.ligadata.pmml.udfs.Udfs.logMsg", ("System", "Boolean"), List(("severity", "System", "String"),("contextMsg", "System", "String"),("eventMsg", "System", "String"),("bool", "System", "Boolean")), null)
+
+
+	    mgr.AddFunc("Pmml", "CompoundStatementBoolean", "com.ligadata.pmml.udfs.Udfs.CompoundStatementBoolean", ("System", "Boolean"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementString", "com.ligadata.pmml.udfs.Udfs.CompoundStatementString", ("System", "String"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementInt", "com.ligadata.pmml.udfs.Udfs.CompoundStatementInt", ("System", "Int"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementLong", "com.ligadata.pmml.udfs.Udfs.CompoundStatementLong", ("System", "Long"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementFloat", "com.ligadata.pmml.udfs.Udfs.CompoundStatementFloat", ("System", "Float"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementDouble", "com.ligadata.pmml.udfs.Udfs.CompoundStatementDouble", ("System", "Double"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatement", "com.ligadata.pmml.udfs.Udfs.CompoundStatement", ("System", "Any"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+
+
+		mgr.AddFunc("Pmml", "length", "com.ligadata.pmml.udfs.Udfs.length", ("System", "String"), List(("str", "System", "String")), null)
 		mgr.AddFunc("Pmml", "trimBlanks", "com.ligadata.pmml.udfs.Udfs.trimBlanks", ("System", "String"), List(("str", "System", "String")), null)
 		mgr.AddFunc("Pmml", "endsWith", "com.ligadata.pmml.udfs.Udfs.endsWith", ("System", "Boolean"), List(("inThis", "System", "String"),("findThis", "System", "String")), null)
 		mgr.AddFunc("Pmml", "startsWith", "com.ligadata.pmml.udfs.Udfs.startsWith", ("System", "Boolean"), List(("inThis", "System", "String"),("findThis", "System", "String")), null)
@@ -544,12 +558,6 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Double"), List(("exprs", "System", "ArrayBufferOfDouble")), null)
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Long"), List(("exprs", "System", "ArrayBufferOfLong")), null)
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Int"), List(("exprs", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Max", "com.ligadata.pmml.udfs.Udfs.Max", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Min", "com.ligadata.pmml.udfs.Udfs.Min", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Avg", "com.ligadata.pmml.udfs.Udfs.Avg", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Sum", "com.ligadata.pmml.udfs.Udfs.Sum", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "MultiSet", "com.ligadata.pmml.udfs.Udfs.MultiSet", ("System", "HashMapOfIntArrayBufferOfInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Float"), List(("exprs", "System", "ListOfFloat")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Double"), List(("exprs", "System", "ListOfDouble")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Long"), List(("exprs", "System", "ListOfLong")), null)
@@ -1267,11 +1275,11 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "MapKeys", "com.ligadata.pmml.udfs.Udfs.MapKeys", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
  		mgr.AddFunc("Pmml", "MapValues", "com.ligadata.pmml.udfs.Udfs.MapValues", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
 
+
  		/** time/date functions */
 		mgr.AddFunc("Pmml", "AgeCalc", "com.ligadata.pmml.udfs.Udfs.AgeCalc", ("System", "Int"), List(("yyyymmdd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2Secs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2Secs", ("System", "Int"), List(("compressedTime", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "AsCompressedDate", "com.ligadata.pmml.udfs.Udfs.AsCompressedDate", ("System", "Int"), List(("milliSecs", "System", "Long")), null)
-		
+		mgr.AddFunc("Pmml", "AsCompressedDate", "com.ligadata.pmml.udfs.Udfs.AsCompressedDate", ("System", "Int"), List(("milliSecs", "System", "Long")), null)	
 		mgr.AddFunc("Pmml", "MonthFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.MonthFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "YearFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.YearFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DayOfMonthFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.DayOfMonthFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
@@ -1289,20 +1297,35 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "WeeksAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("someDate", "System", "Int"),("numWks", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "toDateTime", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "DateTime"), List(("yyyymmdd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "toMillisFromJulian", "com.ligadata.pmml.udfs.Udfs.toMillisFromJulian", ("System", "Long"), List(("yyddd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2MilliSecs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2MilliSecs", ("System", "Long"), List(("compressedTime", "System", "Int")), null)
-
 		mgr.AddFunc("Pmml", "DaysAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.DaysAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "WeeksAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.WeeksAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "MonthsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.MonthsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "YearsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.YearsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
-	
+        mgr.AddFunc("Pmml", "iso8601DateFmt", "com.ligadata.pmml.udfs.Udfs.iso8601DateFmt", ("System", "String"), List(("fmtStr", "System", "String"),("yyyymmdds", "System", "Int")), null)
+        mgr.AddFunc("Pmml", "timestampFmt", "com.ligadata.pmml.udfs.Udfs.timestampFmt", ("System", "String"), List(("fmtStr", "System", "String"),("timestamp", "System", "Long")), null)
+        mgr.AddFunc("Pmml", "timeStampFromStr", "com.ligadata.pmml.udfs.Udfs.timeStampFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "dateFromStr", "com.ligadata.pmml.udfs.Udfs.dateFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "timeFromStr", "com.ligadata.pmml.udfs.Udfs.timeFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Long"), List(("yr", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "dateDaysSinceYear", "com.ligadata.pmml.udfs.Udfs.dateDaysSinceYear", ("System", "Long"), List(("yr", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Long"), List(), null)
+		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(), null)
+        mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(("timestamp", "System", "Long")), null)
+        mgr.AddFunc("Pmml", "millisecsBetween", "com.ligadata.pmml.udfs.Udfs.millisecsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "secondsBetween", "com.ligadata.pmml.udfs.Udfs.secondsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "minutesBetween", "com.ligadata.pmml.udfs.Udfs.minutesBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "hoursBetween", "com.ligadata.pmml.udfs.Udfs.hoursBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "daysBetween", "com.ligadata.pmml.udfs.Udfs.daysBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "weeksBetween", "com.ligadata.pmml.udfs.Udfs.weeksBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "monthsBetween", "com.ligadata.pmml.udfs.Udfs.monthsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "yearsBetween", "com.ligadata.pmml.udfs.Udfs.yearsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+
+  
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
-		//			, ("System", "MessageContainerBase")
-		//			, List(("fqclassname", MdMgr.sysNS, "String")), null)
 					
 					
 		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
@@ -2208,7 +2231,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext")
 					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "String"))
+					    , ("key", MdMgr.sysNS, "ArrayOfString"))
 					, fcnMacrofeatures
 					, (containsAnyMacroTemplate,containsAnyMacroTemplate)
 					,-1)	  
@@ -2220,7 +2243,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext")
 					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "String"))
+					    , ("key", MdMgr.sysNS, "ArrayOfString"))
 					, fcnMacrofeatures
 					, (containsAllMacroTemplate,containsAllMacroTemplate)
 					,-1)	  
