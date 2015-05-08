@@ -250,7 +250,7 @@ AsthmaPMML.xml
 		<DerivedField name="desynpuf_id_hl7s" dataType="ArrayOfHL7" optype="categorical">
 			<Apply function="DownCastArrayMembers">
 				<FieldRef field="desynpuf_id_base_hl7s"/>
-			    <Constant dataType="mbrTypename">HL7</Constant>
+			    <Constant dataType="mbrTypename">desynpuf_id_hl7s</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -327,7 +327,7 @@ AsthmaPMML.xml
 		<DerivedField name="desynpuf_id_inpatient_claims" dataType="ArrayOfInpatientClaim" optype="categorical">
 			<Apply function="DownCastArrayMembers">
 				<FieldRef field="desynpuf_id_base_inpatient_claims"/>
-			    <Constant dataType="mbrTypename">InpatientClaim</Constant>
+			    <Constant dataType="mbrTypename">desynpuf_id_inpatient_claims</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -363,7 +363,7 @@ AsthmaPMML.xml
 		<DerivedField name="desynpuf_id_outpatient_claims" dataType="ArrayOfOutpatientClaim" optype="categorical">
 			<Apply function="DownCastArrayMembers">
 				<FieldRef field="desynpuf_id_base_outpatient_claims"/>
-			    <Constant dataType="mbrTypename">OutpatientClaim</Constant>
+			    <Constant dataType="mbrTypename">desynpuf_id_outpatient_claims</Constant>
 			</Apply>
 		</DerivedField>
 

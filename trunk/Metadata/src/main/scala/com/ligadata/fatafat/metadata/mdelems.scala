@@ -379,7 +379,7 @@ class ListTypeDef extends ContainerTypeDef {
 
   override def IsFixed: Boolean = false
   override def typeString: String = {
-    "scala.collection.mutable.List[" + valDef.typeString + "]"
+    "scala.collection.immutable.List[" + valDef.typeString + "]"
   }
   override def ElementTypes : Array[BaseTypeDef] = {
 	Array(valDef)

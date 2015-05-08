@@ -813,7 +813,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  	val buffer : StringBuilder = new StringBuilder
 		  	val newArgTypes : Array[(String,Boolean,BaseTypeDef)] = argTypes.map( argType => {
 		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argType
-		  		val newMbrTypes : ArrayBuffer[String] = if (isContainer) {
+		  		val newMbrTypes : ArrayBuffer[String] = if (isContainer && collectionMbrTypes.contains(arg)) {
 		  			val argTypeInfo = collectionMbrTypes(arg)
 					var newTypes : ArrayBuffer[String] = new ArrayBuffer[String]()
 			  		breakable {
