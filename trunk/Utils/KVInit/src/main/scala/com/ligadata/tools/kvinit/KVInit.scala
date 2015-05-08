@@ -30,6 +30,7 @@ import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.FatafatData.FatafatData
 
 case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
 
@@ -374,7 +375,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       logger.error("Failed to instantiate message or conatiner object :" + clsName)
       isOk = false
     }
-/*
+    /*
     if (isOk) {
       kryoSer = SerializerManager.GetSerializer("kryo")
       if (kryoSer != null)
@@ -534,12 +535,16 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
         }
 
-        val key: String = inputData.tokens(keyPos)
         if (messageOrContainer != null) {
           messageOrContainer.populate(inputData)
           try {
-            val v = SerializeDeserialize.Serialize(messageOrContainer)
-            SaveObject(objFullName, key, v, kvstore, "manual")
+            val datarec = new FatafatData
+            // var keyData = messageOrContainer.PartitionKeyData
+            val keyData = Array(inputData.tokens(keyPos)) // We should take messageOrContainer.PartitionKeyData instead of this. That way we have proper value convertion before giving keys to us.
+            datarec.SetKey(keyData)
+            datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
+            datarec.AddMessageContainerBase(messageOrContainer)
+            SaveObject(datarec.SerializeKey, datarec.SerializeData, kvstore, "manual")
             processedRows += 1
           } catch {
             case e: Exception => {
@@ -556,16 +561,42 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     kvstore
   }
 
-  def printTuples(tupleBytes: Value) {
-    val buffer: StringBuilder = new StringBuilder
-    val tuplesAsString: String = tupleBytes.toString
-    tupleBytes.foreach(c => buffer.append(c.toChar))
-    val tuples: String = buffer.toString
-    //logger.debug(tuples)
+  private def getSerializeInfo(tupleBytes: Value): String = {
+    if (tupleBytes.size < _serInfoBufBytes) return ""
+    val serInfoBytes = new Array[Byte](_serInfoBufBytes)
+    tupleBytes.copyToArray(serInfoBytes, 0, _serInfoBufBytes)
+    return (new String(serInfoBytes)).trim
+  }
 
-    val inputData = new DelimitedData(tuples, ",")
-    inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
-    inputData.curPos = 0
+  private def getValueInfo(tupleBytes: Value): Array[Byte] = {
+    if (tupleBytes.size < _serInfoBufBytes) return null
+    val valInfoBytes = new Array[Byte](tupleBytes.size - _serInfoBufBytes)
+    Array.copy(tupleBytes.toArray, _serInfoBufBytes, valInfoBytes, 0, tupleBytes.size - _serInfoBufBytes)
+    valInfoBytes
+  }
+
+  def printTuples(tupleBytes: Value) {
+    // Get first _serInfoBufBytes bytes
+    if (tupleBytes.size < _serInfoBufBytes) {
+      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
+      logger.error(errMsg)
+      throw new Exception(errMsg)
+    }
+
+    val serInfo = getSerializeInfo(tupleBytes)
+
+    serInfo.toLowerCase match {
+      case "kryo" => {
+        // BUGBUG:: Yet to handle
+      }
+      case "manual" => {
+        // BUGBUG:: Yet to handle
+      }
+      case _ => {
+        throw new Exception("Found un-handled Serializer Info: " + serInfo)
+      }
+    }
+
     logger.debug(s"\n$kvname")
   }
 
@@ -581,37 +612,33 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       /** if we can make one ... we add the data to the store. This will crash if the data is bad */
 
       val data: Array[String] = tuples.split(",", -1).map(_.trim)
-      val key: String = data(keyPos)
-
-      datastore.get(makeKey(objFullName, key), printOne)
+      val partkey: String = data(keyPos)
+      datastore.get(makeKey(FatafatData.PrepareKey(objFullName, List(partkey), 0, 0)), printOne)
     })
   }
 
-  private def makeKey(objectname: String, key: String): com.ligadata.keyvaluestore.Key = {
+  private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
     var k = new com.ligadata.keyvaluestore.Key
-    val json =
-      ("Obj" -> objectname) ~
-        ("Key" -> key.toLowerCase)
-    val compjson = compact(render(json))
-    k ++= compjson.getBytes("UTF8")
-
+    k ++= key.getBytes("UTF8")
     k
   }
+
+  private[this] var _serInfoBufBytes = 32
 
   private def makeValue(value: String, serializerInfo: String): com.ligadata.keyvaluestore.Value = {
     var v = new com.ligadata.keyvaluestore.Value
     v ++= serializerInfo.getBytes("UTF8")
 
-    // Making sure we write first 32 bytes as serializerInfo. Pad it if it is less than 32 bytes
-    if (v.size < 32) {
+    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
+    if (v.size < _serInfoBufBytes) {
       val spacebyte = ' '.toByte
-      for (c <- v.size to 32)
+      for (c <- v.size to _serInfoBufBytes)
         v += spacebyte
     }
 
-    // Trim if it is more than 32 bytes
-    if (v.size > 32) {
-      v.reduceToSize(32)
+    // Trim if it is more than _serInfoBufBytes bytes
+    if (v.size > _serInfoBufBytes) {
+      v.reduceToSize(_serInfoBufBytes)
     }
 
     // Saving Value
@@ -624,16 +651,16 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     var v = new com.ligadata.keyvaluestore.Value
     v ++= serializerInfo.getBytes("UTF8")
 
-    // Making sure we write first 32 bytes as serializerInfo. Pad it if it is less than 32 bytes
-    if (v.size < 32) {
+    // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
+    if (v.size < _serInfoBufBytes) {
       val spacebyte = ' '.toByte
-      for (c <- v.size to 32)
+      for (c <- v.size to _serInfoBufBytes)
         v += spacebyte
     }
 
-    // Trim if it is more than 32 bytes
-    if (v.size > 32) {
-      v.reduceToSize(32)
+    // Trim if it is more than _serInfoBufBytes bytes
+    if (v.size > _serInfoBufBytes) {
+      v.reduceToSize(_serInfoBufBytes)
     }
 
     // Saving Value
@@ -642,9 +669,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     v
   }
 
-  private def SaveObject(objName: String, key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
+  private def SaveObject(key: String, value: Array[Byte], store: DataStore, serializerInfo: String) {
     object i extends IStorage {
-      var k = makeKey(objName, key)
+      var k = makeKey(key)
       var v = makeValue(value, serializerInfo)
 
       def Key = k

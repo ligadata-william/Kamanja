@@ -78,16 +78,16 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
 
   /** Exists checking implemented in the EnvContext */
 
-  def Contains(xId: Long, gCtx: EnvContext, containerName: String, key: String): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, key) else false
+  def Contains(xId: Long, gCtx: EnvContext, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, partKey, primaryKey) else false
     itExists
   }
-  def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, keys) else false
+  def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, partKeys, primaryKeys) else false
     itExists
   }
-  def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, keys) else false
+  def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, partKeys, primaryKeys) else false
     allExist
   }
 
@@ -167,25 +167,27 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
    * FIXME:  Perhaps we should support the various flavor of keys?
    */
 
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: String): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, partKey, primaryKey)
   }
 
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Int): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+/*
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
 
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Long): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
 
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Double): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
 
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Float): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
+*/
 
   /** 
    *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
@@ -199,8 +201,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
   
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: String): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, partKey, primaryKey)
     if (mc != null) {
     	mc
     } else {
@@ -208,8 +210,9 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     }
   }
 
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Int): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+/*
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Int]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
@@ -217,8 +220,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     }
   }
 
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Long): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Long]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
@@ -226,8 +229,8 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     }
   }
 
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Double): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Double]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
@@ -235,13 +238,22 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
     }
   }
 
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Float): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Float]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
     	gCtx.NewMessageOrContainer(fqClassName)
     }
+  }
+*/
+
+  /**
+   * EnvContext GetArray functions
+   */
+
+  def GetHistory(xId: Long, gCtx: EnvContext, containerId: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
+    gCtx.getHistoryObjects(xId, containerId, partKey, appendCurrentChanges)
   }
 
   /**
@@ -257,30 +269,32 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
    * FIXME:  Perhaps we should support the various flavor of keys?
    */
 
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: String, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key, value)
     true
   }
 
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Int, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
 
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Long, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
 
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Double, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
 
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Float, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
+*/
 
   /** if UDF no longer used... native scala if pred { tAction } else { fAction } generated for short circuit 
 
@@ -4244,4 +4258,15 @@ object Udfs extends com.ligadata.pmml.udfs.UdfBase with LogTrait {
   def CollectionLength[K: ClassTag, V: ClassTag](coll: HashMap[K, V]): Int = {
     coll.size
   }
+
+  // Accept an indefinite number of objects and make them as List of String 
+  def ToStringList(args : Any*) : List[String] = {
+  	val argList : List[Any] = args.toList
+  	argList.map( arg => if (arg != null) arg.toString else "")
+   }
+
+  // convert any type to string 
+  def ToString(arg : Any) : String = {
+  	if (arg != null) arg.toString else ""
+   }
 }
