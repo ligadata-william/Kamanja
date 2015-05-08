@@ -2842,6 +2842,18 @@ object MdMgr extends LogTrait {
     val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
     retVerInfo
   }
+
+  def Pad0s2Version(verInfo: Long): String = {
+    var remVer = verInfo
+   
+    var major = remVer / 1000000000000L  // Not expecting more than 6 digits here. Do we need to add check for that?????
+    remVer = remVer % 1000000000000L
+    var mini = remVer / 1000000L
+    var micro = remVer % 1000000L
+
+    val retVerInfo = "%06d%06d%06d".format(major, mini, micro)
+    retVerInfo
+  }
 }
 
 
