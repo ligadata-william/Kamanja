@@ -489,13 +489,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def loadObjFromDb(tempTransId: Long, msgOrCont: MsgContainerInfo, key: List[String]): FatafatData = {
+    val partKeyStr = FatafatData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
     var objs: Array[FatafatData] = new Array[FatafatData](1)
     val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
     try {
-      _allDataDataStore.get(makeKey(FatafatData.PrepareKey(msgOrCont.objFullName, key, 0, 0)), buildOne)
+      _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + key)
+        logger.debug("1. Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -622,13 +623,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     val v = _adapterUniqKeyValData.getOrElse(key, null)
     if (v != null) return v
+    val partKeyStr = FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
     try {
-      _allDataDataStore.get(makeKey(FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)), buildAdapOne)
+      _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + key)
+        logger.debug("2. Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -651,11 +653,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, ModelResult]](1)
     val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
+    val partKeyStr = FatafatData.PrepareKey("ModelResults", key, 0, 0)
     try {
-      _allDataDataStore.get(makeKey(FatafatData.PrepareKey("ModelResults", key, 0, 0)), buildMdlOne)
+      _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + key)
+        logger.debug("3. Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -956,7 +959,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
 
-    val storeObjects = new Array[IStorage](messagesOrContainers.size + adapterUniqKeyValData.size + modelsResult.size)
+    val storeObjects = ArrayBuffer[IStorage]()
     var cntr = 0
 
     messagesOrContainers.foreach(v => {
@@ -968,13 +971,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           if (kv._2._1 && kv._2._2.DataSize > 0) {
             mc.data(kv._1) = kv._2 // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
             try {
-              /*
-            val ka = KeyFromInMemoryJson(kv._1)
-            val datarec = new FatafatData
-            datarec.SetKey(ka.toArray)
-            datarec.SetTypeName(mc.objFullName)
-            datarec.AddMessageContainerBase(kv._2)
-*/
               val serVal = kv._2._2.SerializeData
               object obj extends IStorage {
                 val k = makeKey(kv._2._2.SerializeKey) // FatafatData.PrepareKey(mc.objFullName, ka, 0, 0)
@@ -983,7 +979,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 def Value = v
                 def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
               }
-              storeObjects(cntr) = obj
+              storeObjects += obj
               cntr += 1
             } catch {
               case e: Exception => {
@@ -1013,7 +1009,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           def Value = v
           def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
         }
-        storeObjects(cntr) = obj
+        storeObjects += obj
         cntr += 1
       } catch {
         case e: Exception => {
@@ -1036,7 +1032,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           def Value = v
           def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
         }
-        storeObjects(cntr) = obj
+        storeObjects += obj
         cntr += 1
       } catch {
         case e: Exception => {
@@ -1049,7 +1045,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     val txn = _allDataDataStore.beginTx()
     try {
-      _allDataDataStore.putBatch(storeObjects)
+      logger.debug("Going to save " + cntr + " objects")
+      storeObjects.foreach(o => {
+        logger.debug("ObjKey:" + new String(o.Key.toArray) + " Value Size: " + o.Value.toArray.size)
+      })
+      _allDataDataStore.putBatch(storeObjects.toArray)
       _allDataDataStore.commitTx(txn)
     } catch {
       case e: Exception => {

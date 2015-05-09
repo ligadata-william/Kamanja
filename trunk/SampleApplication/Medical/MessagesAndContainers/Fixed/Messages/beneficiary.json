@@ -5,6 +5,7 @@
     "Version": "00.01.00",
     "Description": "Beneficiary Data",
     "Fixed": "true",
+    "Persist": "true",
     "Elements": [
       {
         "Field": {
