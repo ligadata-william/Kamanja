@@ -3002,6 +3002,31 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  def AddCustomModel (scalaText: String): String = {
+    var compProxy = new CompilerProxy
+    val modDef : ModelDef =  compProxy.compileScala(scalaText)
+
+    println("modDef Model created  ")
+    var latestVersion = GetLatestModel(modDef)
+    println("Latest Version = " + latestVersion)
+    var isValid = true
+    if (latestVersion != None) {
+      isValid = IsValidVersion(latestVersion.get, modDef)
+    }
+    
+    if (isValid) {
+       // save the jar file first
+       UploadJarsToDB(modDef)  
+       
+       val apiResult = AddModel(modDef)
+       println("Added Model  " + apiResult.toString())
+       
+       
+    }
+    
+    return ""
+  }
 
   // Add Model (format XML)
   def AddModel(pmmlText: String): String = {

@@ -461,15 +461,15 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			writeSrcFile(pmmlString, xmlFileName)
 			pmmlFilePath = xmlFileName
 		}
-
+    
 		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
 		logger.debug("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
 		
 		val modelDef : ModelDef = constructModelDef(ctx,recompile)
 		(srcCode, modelDef)
 	}
-	//
-	
+
+      
 	private def constructModelDef(ctx : PmmlContext,recompile:Boolean = false) : ModelDef = {
 		/**
 			val modelPkg = s"com.$clientName.$classname.pmml"
@@ -562,7 +562,9 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			writeSrcFile(srcCode, scalaSrcTargetPath)
 		}
 		
+ println("====> AHAHAH")
 		val jarPath = if (! skipJar) {
+ println("====> AHAHAH  1a") 
 			val (jarRc, jarpath) = jarCode(ctx, srcCode, classpath, jarTargetDir, manifestpath, clientName, pmmlFilePath, scalahome, javahome,workDir)
 			if (jarRc == 0) {
 				jarpath 
@@ -573,9 +575,15 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		} else {
 			"Not Set"
 		}
-		
-		
-		val (modelClassName, modelVersion) = deriveClassNameAndModelVersion(ctx, clientName)
+ println("====> AHAHAH  2")	
+		var modelClassName: String = "SimpleModel"
+    var modelVersion: Long = 1
+    if (scalaSrcTargetPath != null) {
+		  val (modelClassName1, modelVersion1) = deriveClassNameAndModelVersion(ctx, clientName)
+      modelClassName = modelClassName1
+      modelVersion= modelVersion1
+    } 
+ 
 			
 		logger.debug("#########################################################")
 		logger.debug("Dump model variables for diagnostic purposes:")
@@ -689,12 +697,13 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			    , workDir: String) : (Int, String) =
 	{
 		/** get the class name to create the file, make directories, jar, etc */
-		val appNm : Option[String] = ctx.pmmlTerms.apply("ClassName")
-		val moduleName : String = appNm match {
-		  case Some(appNm) => appNm
-		  case _ => "None"
-		}
-		
+		//val appNm : Option[String] = ctx.pmmlTerms.apply("ClassName")
+		//val moduleName : String = appNm match {
+		//  case Some(appNm) => appNm
+		//  case _ => "None"
+	//	}
+    val moduleName = "SimpleModule"
+println("===> 1")		
 		/** prep the workspace and go there*/
 		val killDir = s"rm -Rf $workDir/$moduleName"
 		val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
@@ -702,19 +711,21 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			logger.error(s"Unable to rm $workDir/$moduleName ... rc = $killDirRc")
 			return (killDirRc, "")
 		}
+println("===> 2")   
 		val buildDir = s"mkdir $workDir/$moduleName"
 		val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
 		if (tmpdirRc != 0) {
 			logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
 			return (tmpdirRc, "")
 		}
+println("===> 3")   
 		/** create a copy of the pmml source in the work directory */
-		val cpRc = Process(s"cp $pmmlFilePath $workDir/$moduleName/").!
-		if (cpRc != 0) {
-			logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
-			return (cpRc, "")
-		}
-
+		//val cpRc = Process(s"cp $pmmlFilePath $workDir/$moduleName/").!
+		//if (cpRc != 0) {
+		//	logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
+		//	return (cpRc, "")
+	//	}
+println("===> 4")   
 		logger.debug(s"compile $moduleName")
 		/** compile the generated code */
 		val rc : Int = compile(ctx, s"$workDir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
@@ -722,6 +733,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			return (rc, "")
 		}
 		logger.debug(s"compile or $moduleName ends...rc = $rc")
+    
+println("===> 5") 
 		
 		/** build the manifest */
 		//logger.debug(s"create the manifest")
@@ -772,8 +785,9 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	{  
 		val scalaSrcFileName : String = s"$moduleName.scala"
 		createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
+    var classpath2 = classpath + ":" + "/tmp/Fatafat/lib/application/system_bankcustomercodes_1000001_1431119629637.jar"
 		
-		val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$scalaSrcFileName")
+		val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath2 $jarBuildDir/$scalaSrcFileName")
 		logger.debug(s"scalac cmd used: $scalacCmd")
 		val scalaCompileRc = Process(scalacCmd).!
 		if (scalaCompileRc != 0) {

@@ -173,6 +173,73 @@ class CompilerProxy{
     (0, s"$moduleNameJar")
   }
 
+  /**
+   * compileScala - same as compilePmml, but we dont need to generate scala code from the PMML xml string
+   * @param String scala source code
+   * @return ModelDef
+   */
+  def compileScala(scalaStr: String) : ModelDef = {
+    try {
+      var injectLoggingStmts : Boolean = false 
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef("System",
+                                                          "SimpleModel",
+                                                          "System.SipmleModel",
+                                                          "RuleSet",
+                                                          List[(String, String, String, String, Boolean, String)](),
+                                                          List[(String, String, String)]() ,
+                                                          1,
+                                                          "simpleModel.jar",
+                                                          Array[String]("fatafatbase_2.10-1.0.jar"),
+                                                          false
+                                                 )
+    
+       // Need to have a java specific compiler ???
+       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
+                                      MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
+       
+       // Get classpath and jarpath ready
+       var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+       if (classPath.size == 0) classPath = "."  
+       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+     
+       if (modDef.DependencyJarNames != null) {
+          val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+          if (classPath != null && classPath.size > 0) {
+            classPath = classPath + ":" + depJars 
+          } else {
+            classPath = depJars 
+          }
+       }
+ println("===>  About to call createJar")   
+       var (jarFile,depJars) = compiler.createJar(scalaStr,
+                    classPath,
+                    null,
+                    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+                    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                    false,
+                    compiler_work_dir)
+
+       /* The following check require cleanup at some point */
+       if (jarFile.compareToIgnoreCase("Not Set") == 0 ){
+         throw new ModelCompilationFailedException("Failed to produce the jar file")
+       }
+       
+       
+       modDef
+     } catch {
+      case e:AlreadyExistsException =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw new ModelCompilationFailedException(e.getMessage())
+      }
+      case e:Exception =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw new ModelCompilationFailedException(e.getMessage())
+      }
+    }  
+  }
+  
   def compilePmml(pmmlStr: String, recompile: Boolean = false) : (String,ModelDef) = {
     try{
       /** Ramana, if you set this to true, you will cause the generation of logger.info (...) stmts in generated model */
@@ -180,7 +247,7 @@ class CompilerProxy{
 
       val model_exec_log = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_EXEC_LOG")
       if(model_exec_log.equalsIgnoreCase("true")){
-	injectLoggingStmts = true
+	      injectLoggingStmts = true
       }
 
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
@@ -191,22 +258,20 @@ class CompilerProxy{
 
       var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
       
-      if (classPath.size == 0)
-	classPath = "."
+      if (classPath.size == 0) classPath = "."
 
       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
 
       if (modDef.DependencyJarNames != null) {
-	val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
-	if (classPath != null && classPath.size > 0) {
+	      val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+	      if (classPath != null && classPath.size > 0) {
           classPath = classPath + ":" + depJars 
-	} else {
+	      } else {
           classPath = depJars 
-	}
+	      }
       }
 
-      var (jarFile,depJars) = 
-	compiler.createJar(classStr,
+      var (jarFile,depJars) = compiler.createJar(classStr,
 			   classPath,
 			   pmmlScalaFile,
 			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
@@ -218,16 +283,16 @@ class CompilerProxy{
 
       /* The following check require cleanup at some point */
       if(jarFile.compareToIgnoreCase("Not Set") == 0 ){
-	throw new ModelCompilationFailedException("Failed to produce the jar file")
+	      throw new ModelCompilationFailedException("Failed to produce the jar file")
       }
 	
       modDef.jarName = jarFile
       modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
       if( modDef.ver == 0 ){
-	modDef.ver     = 1
+	      modDef.ver     = 1
       }
       if( modDef.modelType == null){
-	modDef.modelType = "RuleSet"
+	      modDef.modelType = "RuleSet"
       }
 
       modDef.objectDefinition = pmmlStr

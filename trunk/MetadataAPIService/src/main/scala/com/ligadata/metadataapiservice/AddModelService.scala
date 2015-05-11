@@ -39,8 +39,7 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
   }
   
   def process(pmmlStr:String) = {
-    
-    logger.debug("Requesting AddModel: " + pmmlStr.substring(0,500))
+   
 
     var nameVal = APIService.extractNameFromPMML(pmmlStr) 
     
@@ -48,7 +47,9 @@ class AddModelService(requestContext: RequestContext, userid:Option[String], pas
 	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,pmmlStr,AuditConstants.FAIL,"",nameVal)    
 	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.AddModel(pmmlStr)
+      // val apiResult = MetadataAPIImpl.AddModel(pmmlStr)  AddCustomModel
+      println("CODE ===> "+pmmlStr)
+      val apiResult = MetadataAPIImpl.AddCustomModel(pmmlStr)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,pmmlStr,AuditConstants.SUCCESS,"",nameVal)   
       requestContext.complete(apiResult)      
     }

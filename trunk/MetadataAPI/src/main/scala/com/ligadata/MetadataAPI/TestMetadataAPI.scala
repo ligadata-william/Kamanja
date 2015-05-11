@@ -1364,7 +1364,7 @@ object TestMetadataAPI{
       if( ! IsValidDir(dirName) )
 	return
 
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
       if ( pmmlFiles.length == 0 ){
 	logger.error("No model files in the directory " + dirName)
 	return
@@ -1391,9 +1391,14 @@ object TestMetadataAPI{
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      
+      println()
+      println(pmmlStr)
+      println()
       // Save the model
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
       println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr))
+      println("Results as json string => \n" + MetadataAPIImpl.AddCustomModel(pmmlStr))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
@@ -1513,17 +1518,17 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
       if ( dirName == null  ){
-	dirName = "/tmp/FatafatInstall"
-	logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
+	      dirName = "/tmp/Fatafat"
+	      logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
 
-      if( ! IsValidDir(dirName) )
-	return
-
-      val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
+      if( ! IsValidDir(dirName) ) return
+      
+      val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
+     // val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
       if ( jarFiles.length == 0 ){
-	logger.error("No jar files in the directory " + dirName)
-	return
+        logger.error("No jar files in the directory " + dirName)
+	      return
       }
 
       var jarFilePath = ""
@@ -1538,11 +1543,11 @@ object TestMetadataAPI{
       val choice:Int = readInt()
 
       if( choice == jarFiles.length + 1){
-	return
+	      return
       }
       if( choice < 1 || choice > jarFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+	      logger.error("Invalid Choice : " + choice)
+	      return
       }
 
       jarFilePath = jarFiles(choice-1).toString
