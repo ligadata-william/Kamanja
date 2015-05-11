@@ -1,0 +1,891 @@
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+    <Header copyright="LigaDATA. Copyright 2014" description="Demo">
+            <Application name="dateFcnTests" version="000000.000001.000000"/>
+    </Header>
+	
+	
+    <DataDictionary numberOfFields="3">
+        <DataField name="msg" displayName="msg" optype="categorical" dataType="twittermsg"/>
+        <DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+         <DataField name="parameters" displayName="parameters" dataType="container">
+			<Value value="gCtx" property="valid"/>
+			<Value value="msg" property="valid"/>
+        </DataField>
+
+		<DataField name="valueOfdateDaysSinceYear1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateDaysSinceYear2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateSecondsSinceYear1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateSecondsSinceMidnight1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfTimenow1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfNow1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfYearsAgo1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfYearsAgo2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfYearsAgo3" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfYearsAgo4" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthsAgo1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthsAgo2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthsAgo3" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthsAgo4" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthsAgoAsISO8601_1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfMonthsAgoAsISO8601_2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfWeeksAgo1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfWeeksAgo2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfWeeksAgoAsISO8601_1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfWeeksAgoAsISO8601_2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfDaysAgo1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfDaysAgo2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfDaysAgo3" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfDaysAgo4" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfDaysAgoAsISO8601_1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfDaysAgoAsISO8601_2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOftoMillisFromJulian1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOftoMillisFromJulian2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfCompressedTimeHHMMSSCC2MilliSecs1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfCompressedTimeHHMMSSCC2MilliSecs2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfAsCompressedDate1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfAsCompressedDate2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfMonthFromISO8601Int1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfMonthFromISO8601Int2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfYearFromISO8601Int1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfYearFromISO8601Int2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfYearFromISO8601Int3" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfYearFromISO8601Int4" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfAgeCalc1" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfAgeCalc2" dataType="integer" optype="continuous"/>
+		<DataField name="valueOfiso8601DateFmt1" dataType="string" optype="continuous"/>
+		<DataField name="valueOfiso8601DateFmt2" dataType="string" optype="continuous"/>
+		<DataField name="valueOftimeStampFromStr1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOftimeStampFromStr2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateFromStr1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateFromStr2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOftimeFromStr1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOftimeFromStr2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateSecondsSinceMidnight2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdateSecondsSinceMidnight3" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfmillisecsBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfmillisecsBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfsecondsBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfsecondsBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfminutesBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfminutesBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfhoursBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfhoursBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdaysBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfdaysBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfweeksBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfweeksBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfmonthsBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfmonthsBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfyearsBetween1" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfyearsBetween2" dataType="Long" optype="continuous"/>
+		<DataField name="valueOfexecuteTest" dataType="boolean" optype="predicted"/>
+
+    </DataDictionary>
+
+    <TransformationDictionary>
+			<!-- def dateDaysSinceYear(yr: Int): Int = { -->
+        <DerivedField name="dateDaysSinceYear1" dataType="Long" optype="continuous">
+            <Apply function="dateDaysSinceYear">
+                <Constant dataType="integer">2014</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="dateDaysSinceYear2" dataType="Long" optype="continuous">
+            <Apply function="dateDaysSinceYear">
+                <Constant dataType="integer">2015</Constant>
+            </Apply>
+        </DerivedField>
+
+			<!-- def dateSecondsSinceYear(yr: Int): Int = { -->
+       <DerivedField name="dateSecondsSinceYear1" dataType="Long" optype="continuous">
+            <Apply function="dateSecondsSinceYear">
+                <Constant dataType="integer">2015</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def dateSecondsSinceMidnight(): Int = { -->
+       <DerivedField name="dateSecondsSinceMidnight1" dataType="Long" optype="continuous">
+            <Apply function="dateSecondsSinceMidnight"/>
+        </DerivedField>
+
+		<!-- def Timenow(): Int = { -->
+       <DerivedField name="Timenow1" dataType="Long" optype="continuous">
+            <Apply function="Timenow"/>
+        </DerivedField>
+
+		<!-- def Now(): Long = { -->
+       <DerivedField name="Now1" dataType="Long" optype="continuous">
+            <Apply function="Now"/>
+        </DerivedField>
+
+		<!-- def YearsAgo(numYrs: Int): Long = { -->
+       <DerivedField name="YearsAgo1" dataType="Long" optype="continuous">
+            <Apply function="YearsAgo">
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="YearsAgo2" dataType="Long" optype="continuous">
+            <Apply function="YearsAgo">
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def YearsAgo(someDate: Int, numYrs: Int): Long = { -->
+       <DerivedField name="YearsAgo3" dataType="Long" optype="continuous">
+            <Apply function="YearsAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="YearsAgo4" dataType="Long" optype="continuous">
+            <Apply function="YearsAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def MonthsAgo(numMos: Int): Long = { -->
+       <DerivedField name="MonthsAgo1" dataType="Long" optype="continuous">
+            <Apply function="MonthsAgo">
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="MonthsAgo2" dataType="Long" optype="continuous">
+            <Apply function="MonthsAgo">
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def MonthsAgo(someDate: Int, numMos: Int): Long = { -->
+       <DerivedField name="MonthsAgo3" dataType="Long" optype="continuous">
+            <Apply function="MonthsAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="MonthsAgo4" dataType="Long" optype="continuous">
+            <Apply function="MonthsAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def MonthsAgoAsISO8601(someDate: Int, numMos: Int): Int = { -->
+       <DerivedField name="MonthsAgoAsISO8601_1" dataType="integer" optype="continuous">
+            <Apply function="MonthsAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="MonthsAgoAsISO8601_2" dataType="integer" optype="continuous">
+            <Apply function="MonthsAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+
+		<!-- def WeeksAgo(numWks: Int): Long = { -->
+       <DerivedField name="WeeksAgo1" dataType="Long" optype="continuous">
+            <Apply function="WeeksAgo">
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="WeeksAgo2" dataType="Long" optype="continuous">
+            <Apply function="WeeksAgo">
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def WeeksAgoAsISO8601(someDate: Int, numWks: Int): Int = { -->
+       <DerivedField name="WeeksAgoAsISO8601_1" dataType="integer" optype="continuous">
+            <Apply function="WeeksAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="WeeksAgoAsISO8601_2" dataType="integer" optype="continuous">
+            <Apply function="WeeksAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def DaysAgo(numDays: Int): Long = { -->
+       <DerivedField name="DaysAgo1" dataType="Long" optype="continuous">
+            <Apply function="DaysAgo">
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="DaysAgo2" dataType="Long" optype="continuous">
+            <Apply function="DaysAgo">
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def DaysAgo(someDate: Int, numDays: Int): Long = { -->
+       <DerivedField name="DaysAgo3" dataType="Long" optype="continuous">
+            <Apply function="DaysAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="DaysAgo4" dataType="Long" optype="continuous">
+            <Apply function="DaysAgo">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def DaysAgoAsISO8601(someDate: Int, numDays: Int): Int = { -->
+       <DerivedField name="DaysAgoAsISO8601_1" dataType="integer" optype="continuous">
+            <Apply function="DaysAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">1</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="DaysAgoAsISO8601_2" dataType="integer" optype="continuous">
+            <Apply function="DaysAgoAsISO8601">
+                <Constant dataType="integer">20150101</Constant>
+                <Constant dataType="integer">2</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def toMillisFromJulian(yyddd: Int): Long = { -->
+       <DerivedField name="toMillisFromJulian1" dataType="Long" optype="continuous">
+            <Apply function="toMillisFromJulian">
+                <Constant dataType="integer">15001</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="toMillisFromJulian2" dataType="Long" optype="continuous">
+            <Apply function="toMillisFromJulian">
+                <Constant dataType="integer">16002</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def CompressedTimeHHMMSSCC2MilliSecs(compressedTime: Int): Long = { -->
+       <DerivedField name="CompressedTimeHHMMSSCC2MilliSecs1" dataType="Long" optype="continuous">
+            <Apply function="CompressedTimeHHMMSSCC2MilliSecs">
+                <Constant dataType="integer">20150101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="CompressedTimeHHMMSSCC2MilliSecs2" dataType="Long" optype="continuous">
+            <Apply function="CompressedTimeHHMMSSCC2MilliSecs">
+                <Constant dataType="integer">20150102</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def AsCompressedDate(milliSecs: Long): Int = { -->
+       <DerivedField name="AsCompressedDate1" dataType="Long" optype="continuous">
+            <Apply function="AsCompressedDate">
+                <Constant dataType="Long">0</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="AsCompressedDate2" dataType="Long" optype="continuous">
+            <Apply function="AsCompressedDate">
+                <Constant dataType="Long">60</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def MonthFromISO8601Int(dt: Int): Int = { -->
+       <DerivedField name="MonthFromISO8601Int1" dataType="integer" optype="continuous">
+            <Apply function="MonthFromISO8601Int">
+                <Constant dataType="integer">20150101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="MonthFromISO8601Int2" dataType="integer" optype="continuous">
+            <Apply function="MonthFromISO8601Int">
+                <Constant dataType="integer">20120229</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def YearFromISO8601Int(dt: Int): Int = { -->
+       <DerivedField name="YearFromISO8601Int1" dataType="integer" optype="continuous">
+            <Apply function="YearFromISO8601Int">
+                <Constant dataType="integer">20150101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="YearFromISO8601Int2" dataType="integer" optype="continuous">
+            <Apply function="YearFromISO8601Int">
+                <Constant dataType="integer">20120229</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def DayOfMonthFromISO8601Int(dt: Int): Int = { -->
+       <DerivedField name="YearFromISO8601Int3" dataType="integer" optype="continuous">
+            <Apply function="YearFromISO8601Int">
+                <Constant dataType="integer">20150101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="YearFromISO8601Int4" dataType="integer" optype="continuous">
+            <Apply function="YearFromISO8601Int">
+                <Constant dataType="integer">20120229</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def AgeCalc(yyyymmdd: Int): Int = { -->
+       <DerivedField name="AgeCalc1" dataType="integer" optype="continuous">
+            <Apply function="AgeCalc">
+                <Constant dataType="integer">20000101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="AgeCalc2" dataType="integer" optype="continuous">
+            <Apply function="AgeCalc">
+                <Constant dataType="integer">19740228</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def iso8601DateFmt(fmtStr : String, yyyymmdds : Int): String = { -->
+       <DerivedField name="iso8601DateFmt1" dataType="string" optype="continuous">
+            <Apply function="iso8601DateFmt">
+                <Constant dataType="string">yyyy-MMM-dd</Constant>
+                <Constant dataType="integer">20000101</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="iso8601DateFmt2" dataType="string" optype="continuous">
+            <Apply function="iso8601DateFmt">
+                <Constant dataType="string">MM/dd/yy</Constant>
+                <Constant dataType="integer">19740228</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def timeStampFromStr(fmtStr : String, timestampStr : String): Long = { -->
+       <DerivedField name="timeStampFromStr1" dataType="Long" optype="continuous">
+            <Apply function="timeStampFromStr">
+                <Constant dataType="string">yyyy-MMM-dd</Constant>
+                <Constant dataType="string">2000-Jul-01</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="timeStampFromStr2" dataType="Long" optype="continuous">
+            <Apply function="timeStampFromStr">
+                <Constant dataType="string">yyyyMMddHHmmssSSS</Constant>
+                <Constant dataType="string">19750228120130200</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def dateFromStr(fmtStr : String, timestampStr : String): Long = { -->
+       <DerivedField name="dateFromStr1" dataType="Long" optype="continuous">
+            <Apply function="dateFromStr">
+                <Constant dataType="string">yyyy-MMM-dd</Constant>
+                <Constant dataType="string">2000-Jul-01</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="dateFromStr2" dataType="Long" optype="continuous">
+            <Apply function="dateFromStr">
+                <Constant dataType="string">yyyyMMddHHmmssSSS</Constant>
+                <Constant dataType="string">19740228120130200</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def timeFromStr(fmtStr : String, timestampStr : String): Long = { -->
+       <DerivedField name="timeFromStr1" dataType="Long" optype="continuous">
+            <Apply function="timeFromStr">
+                <Constant dataType="string">yyyy-MMM-dd</Constant>
+                <Constant dataType="string">2000-Jul-01</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="timeFromStr2" dataType="Long" optype="continuous">
+            <Apply function="timeFromStr">
+                <Constant dataType="string">yyyyMMddHHmmssSSS</Constant>
+                <Constant dataType="string">19740228120130200</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def dateSecondsSinceMidnight(fmtStr : String, timestampStr : String): Long = { -->
+       <DerivedField name="dateSecondsSinceMidnight2" dataType="Long" optype="continuous">
+            <Apply function="dateSecondsSinceMidnight">
+                <Constant dataType="string">yyyy-MMM-dd</Constant>
+                <Constant dataType="string">2000-Jul-01</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="dateSecondsSinceMidnight3" dataType="Long" optype="continuous">
+            <Apply function="dateSecondsSinceMidnight">
+                <Constant dataType="string">yyyyMMddHHmmssSSS</Constant>
+                <Constant dataType="string">19740228120130200</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def millisecsBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) --> :     
+       <DerivedField name="millisecsBetween1" dataType="Long" optype="continuous">
+            <Apply function="millisecsBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="millisecsBetween2" dataType="Long" optype="continuous">
+            <Apply function="millisecsBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def secondsBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->			
+       <DerivedField name="secondsBetween1" dataType="Long" optype="continuous">
+            <Apply function="secondsBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="secondsBetween2" dataType="Long" optype="continuous">
+            <Apply function="secondsBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def minutesBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->
+      	<DerivedField name="minutesBetween1" dataType="Long" optype="continuous">
+            <Apply function="minutesBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       <DerivedField name="minutesBetween2" dataType="Long" optype="continuous">
+            <Apply function="minutesBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def hoursBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->
+     	<DerivedField name="hoursBetween1" dataType="Long" optype="continuous">
+            <Apply function="hoursBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       	<DerivedField name="hoursBetween2" dataType="Long" optype="continuous">
+            <Apply function="hoursBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def daysBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long      -->
+     	<DerivedField name="daysBetween1" dataType="Long" optype="continuous">
+            <Apply function="daysBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       	<DerivedField name="daysBetween2" dataType="Long" optype="continuous">
+            <Apply function="daysBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def weeksBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->
+     	<DerivedField name="weeksBetween1" dataType="Long" optype="continuous">
+            <Apply function="weeksBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       	<DerivedField name="weeksBetween2" dataType="Long" optype="continuous">
+            <Apply function="weeksBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def monthsBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->
+     	<DerivedField name="monthsBetween1" dataType="Long" optype="continuous">
+            <Apply function="monthsBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       	<DerivedField name="monthsBetween2" dataType="Long" optype="continuous">
+            <Apply function="monthsBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+		<!-- def yearsBetween(time1 : Long, time2 : Long, inclusive : Boolean = false) : Long = { -->
+     	<DerivedField name="yearsBetween1" dataType="Long" optype="continuous">
+            <Apply function="yearsBetween">
+                <FieldRef field="timeStampFromStr1"/>
+                <FieldRef field="timeStampFromStr2"/>
+                <Constant dataType="boolean">false</Constant>
+            </Apply>
+        </DerivedField>
+       	<DerivedField name="yearsBetween2" dataType="Long" optype="continuous">
+            <Apply function="yearsBetween">
+                <FieldRef field="timeStampFromStr2"/>
+                <FieldRef field="timeStampFromStr1"/>
+                <Constant dataType="boolean">true</Constant>
+            </Apply>
+        </DerivedField>
+
+
+        <DerivedField name="executeTest" dataType="boolean" optype="categorical">
+            <Apply function="and">
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateDaysSinceYear1</Constant>
+                	<FieldRef field="dateDaysSinceYear1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateDaysSinceYear2</Constant>
+                	<FieldRef field="dateDaysSinceYear2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfdateSecondsSinceYear1</Constant>
+            		<FieldRef field="dateSecondsSinceYear1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfdateSecondsSinceMidnight1</Constant>
+	            	<FieldRef field="dateSecondsSinceMidnight1"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfTimenow1</Constant>
+                	<FieldRef field="Timenow1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfNow1</Constant>
+                	<FieldRef field="Now1"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfYearsAgo1</Constant>
+            		<FieldRef field="YearsAgo1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfYearsAgo2</Constant>
+	            	<FieldRef field="YearsAgo2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfYearsAgo3</Constant>
+                	<FieldRef field="YearsAgo3"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfYearsAgo4</Constant>
+                	<FieldRef field="YearsAgo4"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfMonthsAgo1</Constant>
+            		<FieldRef field="MonthsAgo1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfMonthsAgo2</Constant>
+	            	<FieldRef field="MonthsAgo2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfMonthsAgo3</Constant>
+                	<FieldRef field="MonthsAgo3"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfMonthsAgo4</Constant>
+                	<FieldRef field="MonthsAgo4"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfMonthsAgoAsISO8601_1</Constant>
+            		<FieldRef field="MonthsAgoAsISO8601_1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfMonthsAgoAsISO8601_2</Constant>
+	            	<FieldRef field="MonthsAgoAsISO8601_2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfWeeksAgo1</Constant>
+                	<FieldRef field="WeeksAgo1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfWeeksAgo2</Constant>
+                	<FieldRef field="WeeksAgo2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfWeeksAgoAsISO8601_1</Constant>
+            		<FieldRef field="WeeksAgoAsISO8601_1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfWeeksAgoAsISO8601_2</Constant>
+	            	<FieldRef field="WeeksAgoAsISO8601_2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfDaysAgo1</Constant>
+                	<FieldRef field="DaysAgo1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfDaysAgo2</Constant>
+                	<FieldRef field="DaysAgo2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfDaysAgo3</Constant>
+            		<FieldRef field="DaysAgo1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfDaysAgo4</Constant>
+	            	<FieldRef field="DaysAgo2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfDaysAgoAsISO8601_1</Constant>
+                	<FieldRef field="DaysAgoAsISO8601_1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfDaysAgoAsISO8601_2</Constant>
+                	<FieldRef field="DaysAgoAsISO8601_2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOftoMillisFromJulian1</Constant>
+            		<FieldRef field="toMillisFromJulian1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOftoMillisFromJulian2</Constant>
+	            	<FieldRef field="toMillisFromJulian2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfCompressedTimeHHMMSSCC2MilliSecs1</Constant>
+                	<FieldRef field="CompressedTimeHHMMSSCC2MilliSecs1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfCompressedTimeHHMMSSCC2MilliSecs2</Constant>
+                	<FieldRef field="CompressedTimeHHMMSSCC2MilliSecs2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfAsCompressedDate1</Constant>
+            		<FieldRef field="AsCompressedDate1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfAsCompressedDate2</Constant>
+	            	<FieldRef field="AsCompressedDate2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfMonthFromISO8601Int1</Constant>
+                	<FieldRef field="MonthFromISO8601Int1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfMonthFromISO8601Int2</Constant>
+                	<FieldRef field="MonthFromISO8601Int2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfYearFromISO8601Int1</Constant>
+            		<FieldRef field="YearFromISO8601Int1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfYearFromISO8601Int2</Constant>
+	            	<FieldRef field="YearFromISO8601Int2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfYearFromISO8601Int3</Constant>
+                	<FieldRef field="YearFromISO8601Int3"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfYearFromISO8601Int4</Constant>
+                	<FieldRef field="YearFromISO8601Int4"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfAgeCalc1</Constant>
+            		<FieldRef field="AgeCalc1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfAgeCalc2</Constant>
+	            	<FieldRef field="AgeCalc2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfiso8601DateFmt1</Constant>
+                	<FieldRef field="iso8601DateFmt1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfiso8601DateFmt2</Constant>
+                	<FieldRef field="iso8601DateFmt2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOftimeStampFromStr1</Constant>
+            		<FieldRef field="timeStampFromStr1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOftimeStampFromStr2</Constant>
+	            	<FieldRef field="timeStampFromStr2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateFromStr1</Constant>
+                	<FieldRef field="dateFromStr1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateFromStr2</Constant>
+                	<FieldRef field="dateFromStr2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOftimeFromStr1</Constant>
+            		<FieldRef field="timeFromStr1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOftimeFromStr2</Constant>
+	            	<FieldRef field="timeFromStr2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateSecondsSinceMidnight2</Constant>
+                	<FieldRef field="dateSecondsSinceMidnight2"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfdateSecondsSinceMidnight3</Constant>
+                	<FieldRef field="dateSecondsSinceMidnight3"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfmillisecsBetween1</Constant>
+            		<FieldRef field="millisecsBetween1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfmillisecsBetween2</Constant>
+	            	<FieldRef field="millisecsBetween2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfsecondsBetween1</Constant>
+                	<FieldRef field="secondsBetween1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfsecondsBetween2</Constant>
+                	<FieldRef field="secondsBetween2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfminutesBetween1</Constant>
+            		<FieldRef field="minutesBetween1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfminutesBetween2</Constant>
+	            	<FieldRef field="minutesBetween2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfhoursBetween1</Constant>
+                	<FieldRef field="hoursBetween1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfhoursBetween2</Constant>
+                	<FieldRef field="hoursBetween2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfdaysBetween1</Constant>
+            		<FieldRef field="daysBetween1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfdaysBetween2</Constant>
+	            	<FieldRef field="daysBetween2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfweeksBetween1</Constant>
+                	<FieldRef field="weeksBetween1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfweeksBetween2</Constant>
+                	<FieldRef field="weeksBetween2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfmonthsBetween1</Constant>
+            		<FieldRef field="monthsBetween1"/>
+	            </Apply>
+	            <Apply function="Put">
+	            	<Constant dataType="string">valueOfmonthsBetween2</Constant>
+	            	<FieldRef field="monthsBetween2"/>
+	            </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfyearsBetween1</Constant>
+                	<FieldRef field="yearsBetween1"/>
+                </Apply>
+                <Apply function="Put">
+                	<Constant dataType="string">valueOfyearsBetween2</Constant>
+                	<FieldRef field="yearsBetween2"/>
+                </Apply>
+            	<Apply function="Put">
+            		<Constant dataType="string">valueOfexecuteTest</Constant>
+                	<Constant dataType="boolean">true</Constant>
+	            </Apply>
+            </Apply>
+        </DerivedField>
+    </TransformationDictionary>
+
+	<RuleSetModel modelName="DemoModel" functionName="classification" algorithmName="RuleSet">
+
+	    <MiningSchema>
+	        <MiningField name="valueOfdateDaysSinceYear1" usageType="supplementary"/>
+	        <MiningField name="valueOfdateDaysSinceYear2" usageType="supplementary"/>
+	        <MiningField name="valueOfdateSecondsSinceYear1" usageType="supplementary"/>
+	        <MiningField name="valueOfTimenow1" usageType="supplementary"/>
+	        <MiningField name="valueOfNow1" usageType="supplementary"/>
+	        <MiningField name="valueOfYearsAgo1" usageType="supplementary"/>
+	        <MiningField name="valueOfYearsAgo2" usageType="supplementary"/>
+	        <MiningField name="valueOfYearsAgo3" usageType="supplementary"/>
+	        <MiningField name="valueOfYearsAgo4" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgo1" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgo2" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgo3" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgo4" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgoAsISO8601_1" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthsAgoAsISO8601_2" usageType="supplementary"/>
+	        <MiningField name="valueOfWeeksAgo1" usageType="supplementary"/>
+	        <MiningField name="valueOfWeeksAgo2" usageType="supplementary"/>
+	        <MiningField name="valueOfWeeksAgoAsISO8601_1" usageType="supplementary"/>
+	        <MiningField name="valueOfWeeksAgoAsISO8601_2" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgo1" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgo2" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgo3" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgo4" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgoAsISO8601_1" usageType="supplementary"/>
+	        <MiningField name="valueOfDaysAgoAsISO8601_2" usageType="supplementary"/>
+	        <MiningField name="valueOftoMillisFromJulian1" usageType="supplementary"/>
+	        <MiningField name="valueOftoMillisFromJulian2" usageType="supplementary"/>
+	        <MiningField name="valueOfCompressedTimeHHMMSSCC2MilliSecs1" usageType="supplementary"/>
+	        <MiningField name="valueOfCompressedTimeHHMMSSCC2MilliSecs2" usageType="supplementary"/>
+	        <MiningField name="valueOfAsCompressedDate1" usageType="supplementary"/>
+	        <MiningField name="valueOfAsCompressedDate2" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthFromISO8601Int1" usageType="supplementary"/>
+	        <MiningField name="valueOfMonthFromISO8601Int2" usageType="supplementary"/>
+	        <MiningField name="valueOfYearFromISO8601Int1" usageType="supplementary"/>
+	        <MiningField name="valueOfYearFromISO8601Int2" usageType="supplementary"/>
+	        <MiningField name="valueOfYearFromISO8601Int3" usageType="supplementary"/>
+	        <MiningField name="valueOfYearFromISO8601Int4" usageType="supplementary"/>
+	        <MiningField name="valueOfAgeCalc1" usageType="supplementary"/>
+	        <MiningField name="valueOfAgeCalc2" usageType="supplementary"/>
+	        <MiningField name="valueOfiso8601DateFmt1" usageType="supplementary"/>
+	        <MiningField name="valueOfiso8601DateFmt2" usageType="supplementary"/>
+	        <MiningField name="valueOftimeStampFromStr1" usageType="supplementary"/>
+	        <MiningField name="valueOftimeStampFromStr2" usageType="supplementary"/>
+	        <MiningField name="valueOfdateFromStr1" usageType="supplementary"/>
+	        <MiningField name="valueOfdateFromStr2" usageType="supplementary"/>
+	        <MiningField name="valueOftimeFromStr1" usageType="supplementary"/>
+	        <MiningField name="valueOftimeFromStr2" usageType="supplementary"/>
+	        <MiningField name="valueOfdateSecondsSinceMidnight1" usageType="supplementary"/>
+	        <MiningField name="valueOfdateSecondsSinceMidnight2" usageType="supplementary"/>
+	        <MiningField name="valueOfdateSecondsSinceMidnight3" usageType="supplementary"/>
+	        <MiningField name="valueOfmillisecsBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfmillisecsBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfsecondsBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfsecondsBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfminutesBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfminutesBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfhoursBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfhoursBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfdaysBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfdaysBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfweeksBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfweeksBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfmonthsBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfmonthsBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfyearsBetween1" usageType="supplementary"/>
+	        <MiningField name="valueOfyearsBetween2" usageType="supplementary"/>
+	        <MiningField name="valueOfexecuteTest" usageType="predicted"/>
+	    </MiningSchema>
+		
+	    <RuleSet defaultScore="0">
+	        <RuleSelectionMethod criterion="firstHit"/>
+	        <SimpleRule id="test" score="1">
+	            <SimplePredicate field="executeTest" operator="equal" value="true"/>
+	        </SimpleRule>
+	    </RuleSet>
+	</RuleSetModel>
+</PMML>
+
