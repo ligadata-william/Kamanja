@@ -64,5 +64,3 @@ questions and make contributions.
 
      
 ###[Documentation](https://github.com/ligaDATA/Fatafat/wiki/Documentation)
-
-##End
