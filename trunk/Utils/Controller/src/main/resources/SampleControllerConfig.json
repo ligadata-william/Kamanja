@@ -38,7 +38,7 @@
       }
     ]
   },
-  "inputProcessString": "java -jar /mnt/ssd1/Fatafat_20150128/bin/SimpleKafkaProducer-0.1.0 --gz true --topics \"testin_1\" --threads 1 --topicpartitions 8 --brokerlist \"localhost:9092\" --files \"/mnt/ssd1/Fatafat_20150128/input/application1/data/copd_demo.csv.gz\" --partitionkeyidxs \"1\"  --sleep 10 --format CSV",
+  "inputProcessString": "java -jar /mnt/ssd1/Fatafat_20150128/bin/SimpleKafkaProducer-0.1.0 --gz true --topics \"testin_1\" --threads 1 --topicpartitions 8 --brokerlist \"localhost:9092\" --files \"/mnt/ssd1/Fatafat_20150128/input/application-2-Healthcare/data/copd_demo.csv.gz\" --partitionkeyidxs \"1\"  --sleep 10 --format CSV",
   "ModelsToMonitor": {
     "Models": [
       {
