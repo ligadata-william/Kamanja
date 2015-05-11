@@ -10,6 +10,8 @@ assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScr
 
 jarName in assembly := { s"${name.value}-${version.value}" }
 
+test in assembly := {}
+
 // for some reason the merge strategy for non ligadata classes are not working and thus added those conflicting jars in exclusions
 // this may result some run time errors
 

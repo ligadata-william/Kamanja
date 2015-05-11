@@ -164,6 +164,8 @@ class APIInitSpec extends FunSpec with GivenWhenThen {
       And("Initialize everything including related to MetadataAPI execution")
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
 
+      And("Execute shutdown")
+      MetadataAPIImpl.shutdown
     }
   }
 }

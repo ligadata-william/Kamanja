@@ -5,35 +5,53 @@
 # Example: getLeader -n localhost:6541,localhost:6542 -u john -p mypassword -r myrole
 # This function loops through the given list of nodes calling a Rest API "http//..../api/leader" which will respond
 # with ipaddress and port of the leader node for MetadataAPIService
-import sys, getopt
+import sys
+from optparse import OptionParser
 from subprocess import Popen, PIPE
 
 def main(argv):
-   nodelist = ''
-   try:
-      opts, args = getopt.getopt(argv,"hn:u:p:r",["nodelist=","userid=","password=","role="])
-   except getopt.GetoptError:
-      print 'getLeader -n <nodelist> -u userid -p password -r role'
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt == '-h':
-         print 'getLeader.py -n <nodelist> -u userid -p password -r role'
-         sys.exit()
-      elif opt in ("-n", "--nodelist"):
-         nodelist = arg
-      elif opt in ("-u", "--userid"):
-         userid = arg
-      elif opt in ("-p", "--password"):
-         password = arg
-      elif opt in ("-r", "--role"):
-         role = arg
+   usage = "usage example: getLeader -u userid -p password -r role -n localhost:8081,localhost:8082"
+   parser = OptionParser(usage=usage)
+   parser.add_option('-u',nargs=1)
+   parser.add_option('-p',nargs=1)
+   parser.add_option('-r',nargs=1)
+   parser.add_option('-n',nargs=1)
+
+   (options,args) = parser.parse_args()
+
+   d = vars(options)
+   userid = d['u']
+   password = d['p']
+   role = d['r']
+   nodelist = d['n']
+
+   if userid == None:
+      print 'userid must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if password == None:
+      print 'password must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if role == None:
+      print 'role must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if nodelist == None:
+      print 'nodelist must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
    nodes = nodelist.split(",")
    for n in nodes:
        cmd = 'curl -k -X GET -H "Content-Type: aplication/json" -H "userid: %s" -H "password: %s" -H "role: %s"  https://%s/api/leader' % (userid,password,role,n)
        p = Popen(cmd , shell=True, stdout=PIPE, stderr=PIPE)
        out, err = p.communicate()
        if p.returncode == 0:
-           return out.rstrip()
+           return n
    return 'Failed to find the leader node'
 
 if __name__ == "__main__":

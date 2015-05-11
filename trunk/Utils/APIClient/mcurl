@@ -15,7 +15,8 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE
 
 def main():
-   parser = OptionParser()
+   usage = "usage example: mcurl -k -X GET -H \"userid:lonestarr\" -H \"password:vespa\" -H \"role:goodguy\" -n localhost:8081,localhost:8082 https://localhost:8081/api/audit_log/20150502"
+   parser = OptionParser(usage=usage)
    parser.add_option("-k",nargs=0)
    parser.add_option('-X',nargs=1)
    parser.add_option('-H',action='append')
@@ -27,6 +28,13 @@ def main():
    d = vars(options)
    http_req = d['X']
    headers = d['H']
+   
+   print len(headers)
+   if len(headers) < 3:
+      print "We need atleast 4 header arguments and they are usually userid/password/role"
+      parser.print_help()
+      sys.exit(0)
+   
    infile = d['d']
    userid = d['H'][1].split(':')[1]
    password = d['H'][2].split(':')[1]
@@ -35,20 +43,57 @@ def main():
 
    url = args[0]
 
+   if http_req == None:
+      print 'http_req must be supplied, it is one of GET/PUT/POST/DELETE'
+      parser.print_help()
+      sys.exit(0)
+
+   if userid == None:
+      print 'userid must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if password == None:
+      print 'password must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if role == None:
+      print 'role must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if nodelist == None:
+      print 'nodelist must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   http_req = http_req.lower()
+   if http_req != 'put' and http_req != 'post' and http_req != 'get' and http_req != 'delete':
+      print 'http_req must be one of get/put/post/delete'
+      parser.print_help()
+      sys.exit(0)
+
+   if http_req == 'put' and http_req == 'post':
+      if infile == None:
+         print 'infile must be supplied for put/post requests'
+         parser.print_help()
+         sys.exit(0)
+
    if nodelist != None:
       cmd = 'getLeader -n %s -u %s -p %s -r %s' % (nodelist,userid,password,role)
-      print cmd
       p = Popen(cmd , shell=True, stdout=PIPE, stderr=PIPE)
-      out, err = p.communicate()
+      outp1, err = p.communicate()
       if p.returncode == 0:
+         leader = outp1.rstrip()
          url_tokens = url.split('/')
          apiFunc = '/'.join(url_tokens[3:])
-         cmd1 = 'curl -k -X %s -H "Content-Type: application/json" -H "userid: %s" -H "password: %s" -H "role: %s" https://%s/%s' % (http_req,userid,password,role,out.rstrip(),apiFunc)
-         print cmd1
+         cmd1 = 'curl -k -X %s -H "Content-Type: application/json" -H "userid: %s" -H "password: %s" -H "role: %s" https://%s/%s' % (http_req,userid,password,role,leader,apiFunc)
          p = Popen(cmd1 , shell=True, stdout=PIPE, stderr=PIPE)
-         out, err = p.communicate()
+         outp2, err = p.communicate()
          if p.returncode == 0:
-            print out.rstrip()
+            return outp2.rstrip()
 
 if __name__ == "__main__":
    rc = main()
+   print rc
