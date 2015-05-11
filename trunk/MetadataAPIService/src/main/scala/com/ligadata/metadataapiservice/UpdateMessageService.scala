@@ -44,11 +44,11 @@ class UpdateMessageService(requestContext: RequestContext, userid:Option[String]
     }
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","message"))) {
-       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.FAIL,"",nameVal) 
+       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,messageJson,AuditConstants.FAIL,"",nameVal) 
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UpdateMessage(messageJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameVal)        
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,messageJson,AuditConstants.SUCCESS,"",nameVal)        
       requestContext.complete(apiResult)     
     }
   }

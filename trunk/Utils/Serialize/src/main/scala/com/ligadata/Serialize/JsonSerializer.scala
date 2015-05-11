@@ -903,7 +903,7 @@ object JsonSerializer {
 				              )
 				            }) ~
 				        ("Features"   -> o.features.map(_.toString).toList) ~
-		                ("Version"    -> o.ver) ~
+		                ("Version"    -> MdMgr.Pad0s2Version(o.ver)) ~
 		                ("JarName"    -> o.jarName) ~
 		                ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList)~
 		                ("TransactionId" -> o.tranId))
@@ -916,8 +916,8 @@ object JsonSerializer {
 		                  ("NameSpace" -> o.nameSpace) ~
 		                  ("Name"      -> o.name) ~
 		                  ("FullName"  -> o.FullName) ~
-		                  ("Version"   -> o.ver) ~
-			          ("Persist"   -> o.containerType.persist) ~
+		                  ("Version"   -> MdMgr.Pad0s2Version(o.ver)) ~
+                      ("Persist"   -> o.containerType.persist) ~
 		                  ("JarName"      -> o.jarName) ~
 		                  ("PhysicalName" -> o.typeString) ~
 		                  ("ObjectDefinition" -> o.objectDefinition) ~
@@ -954,8 +954,8 @@ object JsonSerializer {
 		                 ("NameSpace" -> o.nameSpace) ~
 		                 ("Name"      -> o.name) ~
 		                 ("FullName"  -> o.FullName) ~
-		                 ("Version"   -> o.ver) ~
-			         ("Persist"   -> o.containerType.persist) ~
+		                 ("Version"   -> MdMgr.Pad0s2Version(o.ver)) ~
+                     ("Persist"   -> o.containerType.persist) ~
 		                 ("JarName"      -> o.jarName) ~
 		                 ("PhysicalName" -> o.typeString) ~
 		                 ("ObjectDefinition" -> o.objectDefinition) ~
@@ -991,7 +991,7 @@ object JsonSerializer {
 	      val json = ( "Model" ->
                      ("NameSpace" -> o.nameSpace) ~
 		                 ("Name" -> o.name) ~
-		                 ("Version" -> o.ver) ~
+		                 ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		                 ("ModelType"  -> o.modelType) ~
 		                 ("JarName" -> o.jarName) ~
 		                 ("PhysicalName" -> o.typeString) ~
@@ -1017,7 +1017,7 @@ object JsonSerializer {
       case o:AttributeDef => {
 	val json = (("NameSpace" -> o.nameSpace) ~
 		    ("Name" -> o.name) ~
-		    ("Version" -> o.ver) ~
+		    ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		    ("CollectionType" -> ObjType.asString(o.collectionType)) ~
 		    ("TransactionId" -> o.tranId))
 	var jsonStr = pretty(render(json))
@@ -1036,7 +1036,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1051,7 +1051,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" ->o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1070,7 +1070,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1089,7 +1089,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1107,7 +1107,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1125,7 +1125,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" ->o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1145,7 +1145,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1165,7 +1165,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1185,7 +1185,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1203,7 +1203,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1221,7 +1221,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.elemDef.nameSpace ) ~
 		     ("TypeName" -> ObjType.asString(o.elemDef.tType) ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1237,7 +1237,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.elemDef.nameSpace ) ~
 		     ("TypeName" -> ObjType.asString(o.elemDef.tType) ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName) ~
@@ -1253,7 +1253,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
@@ -1274,7 +1274,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
@@ -1289,7 +1289,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> MdMgr.sysNS ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
@@ -1304,7 +1304,7 @@ object JsonSerializer {
 		     ("TypeNameSpace" -> o.nameSpace ) ~
 		     ("TypeName" -> o.name ) ~
 		     ("PhysicalName" -> o.physicalName ) ~
-		     ("Version" -> o.ver) ~
+		     ("Version" -> MdMgr.Pad0s2Version(o.ver)) ~
 		     ("JarName" -> o.jarName) ~
 		     ("DependencyJars" -> o.CheckAndGetDependencyJarNames.toList) ~
 		     ("Implementation" -> o.implementationName)~
