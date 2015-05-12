@@ -1,0 +1,254 @@
+#!/usr/bin/env python
+# This utility is written in python (tested only  under centos 6.x, python 2.7)
+# It depends on pycurl library, see pycurl library documentation for details.
+# 
+# Usage examples:
+## Add objects
+# Cluster Config
+#pyclient -l DEBUG -t PUT -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/config/ClusterConfig.json -u https://localhost:8081/api/UploadConfig 
+# Containers
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/container/CoughCodes.json -u https://localhost:8081/api/Container
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/container/DyspnoeaCodes.json -u https://localhost:8081/api/Container
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/container/EnvCodes.json -u https://localhost:8081/api/Container
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/container/SmokeCodes.json -u https://localhost:8081/api/Container
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/container/SputumCodes.json -u https://localhost:8081/api/Container
+# Messages
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/message/inpatientclaim.json -u https://localhost:8081/api/Message
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/message/outpatientclaim.json -u https://localhost:8081/api/Message
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/message/hl7.json -u https://localhost:8081/api/Message
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/message/beneficiary.json -u https://localhost:8081/api/Message
+# Models
+#pyclient -l DEBUG -t POST -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -f /media/home2/installFatafat/input/application1/metadata/model/COPDv1.xml -u https://localhost:8081/api/Model
+#
+# Fetch Objects
+# Leader
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/leader
+# config objects
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/nodes
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/adapters
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/clusters
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/all
+# Container Objects
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.coughcodes.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.dyspnoeacodes.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.envcodes.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.smokecodes.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.sputumcodes..000000000001000000
+# Message Objects
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.inpatientclaim.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.outpatientclaim.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.hl7.000000000001000000
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.beneficiary.000000000001000000
+# Model objects
+#pyclient -l DEBUG -t GET -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/model/system.copdriskassessment.000000000001000000
+# Load a Jar file
+#pyclient -l DEBUG -t PUT -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/UploadJars?name=shire-core -f /media/home2/Downloads/shiro-core-1.1.0.jar
+# Delete Objects
+
+# Model objects
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/model/system.copdriskassessment.000000000001000000
+# Message Objects
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.beneficiary.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.hl7.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.inpatientclaim.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/message/system.outpatientclaim.000000000001000000
+# Container Objects
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.coughcodes.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.dyspnoeacodes.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.envcodes.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.smokecodes.000000000001000000
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/container/system.sputumcodes..000000000001000000
+# config objects
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/nodes
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/adapters
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/clusters
+#pyclient -l DEBUG -t DELETE -i lonestarr -p vespa -r goodguy -n localhost:8081,localhost:8082 -u https://localhost:8081/api/config/all
+#
+
+import sys
+from optparse import OptionParser
+import pycurl
+import cStringIO
+
+import logging
+from urlparse import urlparse
+
+try:
+    # python 3
+    from urllib.parse import urlencode
+except ImportError:
+    # python 2
+    from urllib import urlencode
+
+def getLeader(userid,password,role,nodelist,log_level):
+   logger = logging.getLogger('getLeader')
+   nodes = nodelist.split(",")
+   response = cStringIO.StringIO()
+   for n in nodes:
+      leaderurl = 'https://%s/api/leader' % (n)
+      c = pycurl.Curl()
+      c.setopt(pycurl.SSL_VERIFYPEER, 0)   
+      c.setopt(pycurl.SSL_VERIFYHOST, 0)
+      c.setopt(c.URL,leaderurl)
+      c.setopt(c.HTTPHEADER,['userid: ' + userid , 'password:' + password , 'role:' + role ])
+      c.setopt(c.WRITEFUNCTION,response.write)
+      try:
+         c.perform()
+      except Exception, e:
+         print 'Failed to connect to ' + n + ':' + str(e) + ',Trying another node..'
+         continue
+      if c.getinfo(c.RESPONSE_CODE) == 200:
+         apiresult = response.getvalue()
+      c.close()
+      if apiresult == "true":
+         if log_level == "debug":
+             print n + ' => is a leader node'
+         return n
+      else:
+         print n + ' => not a leader node, try another one '
+   print 'No leader node found'
+   return None
+         
+def main():
+   usage = "usage example: pyclient -l <log4j level> -t <req_type such as GET|PUT|POST|DELETE> -i <userid> -p <password> -r <role> -n <nodelist such as localhost:8081,localhost:8082> -f <json or xml or jar file> -u <url such as https://localhost:8081/api/....>"
+   parser = OptionParser(usage=usage)
+   parser.add_option("-l",nargs=1)
+   parser.add_option("-t",nargs=1)
+   parser.add_option('-i',nargs=1)
+   parser.add_option('-p',nargs=1)
+   parser.add_option('-r',nargs=1)
+   parser.add_option('-n',nargs=1)
+   parser.add_option('-u',nargs=1)
+   parser.add_option('-f',nargs=1)
+
+   (options,args) = parser.parse_args()
+
+   d = vars(options)
+
+   log_level = d['l']
+   http_req = d['t']
+   userid = d['i']
+   password = d['p']
+   role = d['r']
+   nodelist = d['n']
+   url = d['u']
+   infile = d['f']
+
+   if log_level == None:
+       log_level = "info"
+
+   if log_level.lower() == "debug":
+       print "http_req = %s,userid = %s,password = %s,role = %s,nodelist = %s,url = %s,infile = %s" % (http_req,userid,password,role,nodelist,url,infile)
+
+   if http_req == None:
+      print 'http_req must be supplied, it is one of GET/PUT/POST/DELETE'
+      parser.print_help()
+      sys.exit(0)
+
+   if userid == None:
+      print 'userid must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if password == None:
+      print 'password must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if role == None:
+      print 'role must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   if url == None:
+      print 'url must be supplied'
+      parser.print_help()
+      sys.exit(0)
+
+   # verify the url
+   try:
+       o = urlparse(url)
+       netloc = o.netloc
+       path = o.path
+   except Exception, e:
+        print 'unable to parse the url ' + url + ':' + str(e)
+        parser.print_help()
+        sys.exit(0)          
+
+   # if nodelist is not supplied, just check only the given node
+   # If the given node is not the leader, this operation will fail
+   if nodelist == None:
+      nodelist = netloc
+
+   http_req = http_req.lower()
+   if http_req != 'put' and http_req != 'post' and http_req != 'get' and http_req != 'delete':
+      print 'http_req must be one of get/put/post/delete'
+      parser.print_help()
+      sys.exit(0)
+
+   # A file is required only for put/post requests. Verify the file_name and accessibility
+   file_type = ''
+   if http_req == 'put' or http_req == 'post':
+      if infile == None:
+         print 'infile must be supplied for put/post requests'
+         parser.print_help()
+         sys.exit(0)
+      if not infile.endswith(".json") and not infile.endswith(".xml") and not infile.endswith(".jar"):
+         print 'infile must end with .json or .xml or .jar'
+         parser.print_help()
+         sys.exit(0)
+      try:
+          file_type = 'TEXT'
+          if infile.endswith('.jar'):
+              file_type = "BINARY"
+          print 'file_type => ' + file_type
+          fh = open(infile,'r')
+          fh.close()
+      except Exception, e:
+          print 'unable to open the file ' + infile + ':' + str(e)
+          parser.print_help()
+          sys.exit(0)
+
+
+   if nodelist != None:
+      leader = getLeader(userid,password,role,nodelist,log_level)
+      # continue only if leader node is available
+      if leader != None:
+         response = cStringIO.StringIO()
+         c = pycurl.Curl()
+         # ignore SSL verification for now
+         c.setopt(pycurl.SSL_VERIFYPEER, 0)   
+         c.setopt(pycurl.SSL_VERIFYHOST, 0)
+         leaderurl = 'https://%s%s' % (leader,path)
+         c.setopt(c.URL,leaderurl)
+         if http_req == 'post' or http_req == 'put':
+             if file_type == 'TEXT':
+                 with open(infile,"r") as fh:
+                     data = fh.read()
+                 if http_req == 'post':
+                     c.setopt(c.POST,1)
+                     c.setopt(c.POSTFIELDS,data)
+                 else:
+                     c.setopt(c.CUSTOMREQUEST,'PUT')
+                     c.setopt(c.POSTFIELDS,data)
+             else:
+                 with open(infile,'rb') as bfh:
+                     ba = bfh.read()
+                 if http_req == 'post':
+                     c.setopt(c.POST,1)
+                     c.setopt(c.POSTFIELDS,ba)
+                 else:
+                     c.setopt(c.CUSTOMREQUEST,'PUT')
+                     c.setopt(c.POSTFIELDS,ba)
+         if http_req == 'delete':
+             c.setopt(c.CUSTOMREQUEST,'DELETE')
+         c.setopt(c.HTTPHEADER,['userid: ' + userid , 'password:' + password , 'role:' + role ])
+         c.setopt(c.WRITEFUNCTION,response.write)
+         c.perform()
+         apiresult = response.getvalue()
+         c.close()
+         return apiresult
+
+if __name__ == "__main__":
+   rc = main()
+   print rc
