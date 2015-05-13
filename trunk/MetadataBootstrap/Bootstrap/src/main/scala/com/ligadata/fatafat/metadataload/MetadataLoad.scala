@@ -984,9 +984,11 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "IntOr", "com.ligadata.pmml.udfs.Udfs.IntOr", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "BaseContainer")), null)
 
 /*
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
@@ -1033,8 +1035,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Stack[T]")), null)
 		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Vector[T]")), null)
 
-	}
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ArrayofAny"), List(("coll", "System", "ArrayOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ArrayBufferofAny"), List(("coll", "System", "ArrayBufferOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ListofAny"), List(("coll", "System", "ListOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "QueueofAny"), List(("coll", "System", "QueueOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "SortedSetofAny"), List(("coll", "System", "SortedSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "TreeSetofAny"), List(("coll", "System", "TreeSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ImmutableSetOfAny"), List(("coll", "System", "ImmutableSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "SetOfAny"), List(("coll", "System", "SetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 
+  		mgr.AddFunc("Pmml", "GetPartitionKey", "com.ligadata.pmml.udfs.Udfs.GetPartitionKey", ("System", "ListOfString"), List(("msg", "System", "BaseMsg")), null)
+  		mgr.AddFunc("Pmml", "GetPartitionKey", "com.ligadata.pmml.udfs.Udfs.GetPartitionKey", ("System", "ListOfString"), List(("msg", "System", "BaseContainer")), null)
+  		mgr.AddFunc("Pmml", "GetPrimaryKey", "com.ligadata.pmml.udfs.Udfs.GetPrimaryKey", ("System", "ListOfString"), List(("msg", "System", "BaseMsg")), null)
+  		mgr.AddFunc("Pmml", "GetPrimaryKey", "com.ligadata.pmml.udfs.Udfs.GetPrimaryKey", ("System", "ListOfString"), List(("msg", "System", "BaseContainer")), null)
+
+ 	}
 	
 	def init_com_ligadata_pmml_udfs_Udfs1 {
 	  
@@ -1751,21 +1766,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		/** **************************************************************************************************************/
 					
 		val putGlobalContainerFixedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_%5%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %4% : %4_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.%4%.toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%, %4%); true }
 	} """
 		
 		val putGlobalContainerMappedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_%5%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %4% : %4_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get("%4%").asInstanceOf[%4_type%].toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%, %4%); true }
 	} """
 		
 		/**	EnvContext write access methods:
 		 * 	  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
 		 *	  def setObject(tempTransId: Long, containerName: String, key: Any, value: MessageContainerBase): Unit
-		 */
+		 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1773,6 +1788,26 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 						, ("containerName", MdMgr.sysNS, "String")
 						, ("key", MdMgr.sysNS, "ListOfString")
 						, ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+		*/
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "ListOfString")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "ListOfString")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
 

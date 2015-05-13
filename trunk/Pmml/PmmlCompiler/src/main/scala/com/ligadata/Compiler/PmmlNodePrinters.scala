@@ -148,7 +148,7 @@ object NodePrinterHelpers extends LogTrait {
 				} else {  /** assume it is a function and issue some diagnostics */
 			  
 					val fcnName : String = node.function
-					val fcnsThatWouldMatchWithRightTypeSig = functionSelector.FunctionKeysThatWouldMatch(fcnName)
+					val fcnsThatWouldMatchWithRightTypeSig  : Array[String] = functionSelector.FunctionKeysThatWouldMatch(fcnName)
 					if (fcnsThatWouldMatchWithRightTypeSig.size > 0) {
 						val matchFcnBuff : StringBuilder = new StringBuilder()
 						matchFcnBuff.append("Any{")

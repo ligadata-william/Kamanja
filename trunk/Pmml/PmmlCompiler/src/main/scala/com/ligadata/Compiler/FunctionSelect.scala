@@ -104,7 +104,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.debug(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	
-	  	if (scalaFcnName == "MapKeys") {
+	  	if (scalaFcnName == "CollectionLength") {
 	  		val stop : Int = 0
 	  	}
 	  	
@@ -140,7 +140,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  		val simpleKeysToTry : Array[String] = relaxSimpleKey(scalaFcnName, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
-		  		  		logger.info(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
+		  		  		logger.debug(s"selectSimpleFcn ...searching mdmgr with a relaxed key ... $key")
 		  		  		funcDef = ctx.MetadataHelper.FunctionByTypeSig(key)
 		  		  		if (funcDef != null) {
 		  		  			logger.debug(s"selectSimpleFcn ...found funcDef with $key")
@@ -1287,14 +1287,19 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			  		breakable {
 			  			argTypeInfo.foreach( triple => {
 			  				val (clssym, symbol, typ) : (String, ClassSymbol, Type) = triple
-			  				val typName = 
-			  				if (symbol.isAbstractClass || symbol.isTrait) {
+			  				if (symbol != null && (symbol.isAbstractClass || symbol.isTrait)) {
 			  					newType = symbol.fullName
 			  					break
+			  				} else {
+			  					if (symbol == null) {
+				  					newType = clssym
+				  					break
+			  					}
 			  				}	  				  
 			  			})
 			  		}
-		  			(newType, isContainer, elem)
+			  		val typeName : String = if (newType == null) arg else newType
+		  			(typeName, isContainer, elem)
 	  			} else {
 	  				(arg, isContainer, elem)
 	  			}
@@ -1330,7 +1335,18 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		//val clsz1 = ru.newTermName(fqClassname)
 	  		//val cm = mirror.reflectClass(clsz1)
 	  		//val classC = ru.typeOf[clsz1].typeSymbol.asClass
-	  		val useThisName = if (fqClassname.contains("[")) fqClassname.split('[').head else fqClassname
+	  		val useThisName : String = if (fqClassname.contains("[")) fqClassname.split('[').head else fqClassname
+	  		val hasMbrs : Boolean = fqClassname.contains("[")
+	  		val notPromotable : Boolean = if (hasMbrs) {
+	  			/**
+	  				When container class is an scala.Array or is prefixed with scala.collection, we will not bother
+	  				trying to promote the class to a superclass.  That said, we will let the code flow through
+	  				the superclass determination.  We may want to refine this (probably not, but perhaps)
+	  			 */
+	  			(fqClassname.contains("scala.Array") || fqClassname.contains("scala.collection"))
+	  		} else {
+	  			false
+	  		}
 	  		val clz = Class.forName(useThisName, true, pmmlLoader.loader)
 			// Convert class into class symbol
 			val clsSymbol = pmmlLoader.mirror.classSymbol(clz)
@@ -1349,10 +1365,21 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				if (clssym == "scala.Any") {
 					(clssym, null, null)
 				} else {
-					val cls = Class.forName(clssym, true, pmmlLoader.loader)
-					val symbol = pmmlLoader.mirror.classSymbol(cls)
-					val typ = symbol.toType
-					(clssym, symbol, typ)
+					if (notPromotable) {					
+						/** NOTE: When notPromotable, there will be one of the following for each superclass */
+						(fqClassname, null, null)
+					} else {
+						val cls = Class.forName(clssym, true, pmmlLoader.loader)
+						val symbol = pmmlLoader.mirror.classSymbol(cls)
+						val typ = symbol.toType
+						val classsymbol : String = if (hasMbrs) {
+							val mbrTypes : String = encloseElementArgs(fqClassname, '[' , ']')
+							clssym + "[" + mbrTypes + "]"
+						} else {
+							clssym
+						}
+						(classsymbol, symbol, typ)
+					}
 				}
 			}).toArray
 			(nm, containerTypeSuperClasses)
