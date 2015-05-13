@@ -44,6 +44,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   class MsgContainerInfo {
+    var current_msg_cont_data: scala.collection.mutable.ArrayBuffer[MessageContainerBase] = scala.collection.mutable.ArrayBuffer[MessageContainerBase]()
     var data: scala.collection.mutable.Map[String, (Boolean, FatafatData)] = scala.collection.mutable.Map[String, (Boolean, FatafatData)]()
     var containerType: BaseTypeDef = null
     var loadedAll: Boolean = false
@@ -96,13 +97,25 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (null, false)
     }
 
-    def getObjects(containerName: String, partKey: List[String]): (Array[MessageContainerBase], Boolean) = {
+    def getObjects(containerName: String, partKey: List[String], appendCurrentChanges: Boolean): (Array[MessageContainerBase], Boolean) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null) {
         val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
         if (fatafatData != null) {
-          // Search for primary key match
-          return (fatafatData._2.GetAllData, true)
+          if (container.current_msg_cont_data.size > 0) {
+            val allData = ArrayBuffer[MessageContainerBase]()
+            if (appendCurrentChanges) {
+              allData ++= fatafatData._2.GetAllData
+              allData --= container.current_msg_cont_data
+              allData ++= container.current_msg_cont_data // Just to get the current messages to end
+            } else {
+              allData ++= fatafatData._2.GetAllData
+              allData --= container.current_msg_cont_data
+            }
+            return (allData.toArray, true)
+          } else {
+            return (fatafatData._2.GetAllData, true)
+          }
         }
       }
       (Array[MessageContainerBase](), false)
@@ -162,7 +175,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val partKeyStr = InMemoryKeyDataInJson(partKey)
         val fnd = container.data.getOrElse(partKeyStr, null)
         if (fnd != null) {
-          fnd._2.AddMessageContainerBase(value, true) // This will check whether same object (if we get it before) exists or not.
+          fnd._2.AddMessageContainerBase(value, true, true)
           if (fnd._1 == false) {
             container.data(partKeyStr) = (true, fnd._2)
           }
@@ -170,9 +183,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val ffData = new FatafatData
           ffData.SetKey(partKey.toArray)
           ffData.SetTypeName(containerName)
-          ffData.AddMessageContainerBase(value, true) // This will check whether same object (if we get it before) exists or not.
+          ffData.AddMessageContainerBase(value, true, true)
           container.data(partKeyStr) = (true, ffData)
         }
+        container.current_msg_cont_data -= value
+        container.current_msg_cont_data += value // to get the value to end
       }
     }
 
@@ -553,7 +568,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val retVals = ArrayBuffer[MessageContainerBase]()
     val txnCtxt = getTransactionContext(tempTransId, false)
     if (txnCtxt != null) {
-      val (objs, foundPartKey) = txnCtxt.getObjects(containerName, partKey)
+      val (objs, foundPartKey) = txnCtxt.getObjects(containerName, partKey, appendCurrentChanges)
       retVals ++= objs
       if (foundPartKey)
         return retVals.toArray
@@ -969,7 +984,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           mc.reload = true
         v._2.data.foreach(kv => {
           if (kv._2._1 && kv._2._2.DataSize > 0) {
-            mc.data(kv._1) = kv._2 // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
+            mc.data(kv._1) = (false, kv._2._2) // Here it is already converted to proper key type. Because we are copying from somewhere else where we applied function InMemoryKeyDataInJson
             try {
               val serVal = kv._2._2.SerializeData
               object obj extends IStorage {
@@ -990,6 +1005,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             }
           }
         })
+        v._2.current_msg_cont_data.clear
       }
     })
 

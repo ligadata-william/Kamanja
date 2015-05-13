@@ -543,7 +543,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             val keyData = Array(inputData.tokens(keyPos)) // We should take messageOrContainer.PartitionKeyData instead of this. That way we have proper value convertion before giving keys to us.
             datarec.SetKey(keyData)
             datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
-            datarec.AddMessageContainerBase(messageOrContainer)
+            datarec.AddMessageContainerBase(messageOrContainer, true, true)
             SaveObject(datarec.SerializeKey, datarec.SerializeData, kvstore, "manual")
             processedRows += 1
           } catch {
