@@ -175,7 +175,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val partKeyStr = InMemoryKeyDataInJson(partKey)
         val fnd = container.data.getOrElse(partKeyStr, null)
         if (fnd != null) {
-          fnd._2.AddMessageContainerBase(value, true) // This will check whether same object (if we get it before) exists or not.
+          fnd._2.AddMessageContainerBase(value, true, true)
           if (fnd._1 == false) {
             container.data(partKeyStr) = (true, fnd._2)
           }
@@ -183,7 +183,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val ffData = new FatafatData
           ffData.SetKey(partKey.toArray)
           ffData.SetTypeName(containerName)
-          ffData.AddMessageContainerBase(value, true) // This will check whether same object (if we get it before) exists or not.
+          ffData.AddMessageContainerBase(value, true, true)
           container.data(partKeyStr) = (true, ffData)
         }
         container.current_msg_cont_data -= value
