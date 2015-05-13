@@ -143,6 +143,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
         if (isValidPartitionKey) {
+          envContext.setObject(tempTransId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
           allMdlsResults = envContext.getModelsResult(tempTransId, partKeyDataList)
         }
         if (allMdlsResults == null)
@@ -227,10 +228,6 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
         if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
         totalLatencyFromReadToProcess += latencyFromReadToProcess
-        //BUGBUG:: Save the whole message here
-        if (isValidPartitionKey) {
-          envContext.setObject(tempTransId, msgType, partKeyDataList, msg)
-        }
         envContext.saveStatus(tempTransId, "SetData", false)
         if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
           try {

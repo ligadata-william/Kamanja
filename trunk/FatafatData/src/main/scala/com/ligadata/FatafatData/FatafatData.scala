@@ -79,7 +79,6 @@ class FatafatData {
   def DataSize : Int = data.size
 
   // Adding New Message or Container
-  // Not checking for Duplicates
   def AddMessageContainerBase(baseCntMsg: MessageContainerBase, checkForSameObj: Boolean = true): Unit = {
     if (checkForSameObj) {
       data.foreach(d => {
