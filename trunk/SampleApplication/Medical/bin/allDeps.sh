@@ -1,6 +1,8 @@
 #!/bin/bash
 
-echo "count of arguments = $#"
+echo "usage ... allDeps.sh [--excludeProjects \"Loadtest, LoadtestCommon, LoadtestMaster, LoadtestRunner\"]"
+# csplit scrapes off the four lines of text that 'sbt projects' spews
+# grep -v eliminates the trunk project from the consideration
 exclKey=
 exclVal=
 sbt projects | sed 's/.*info.*[\t ][\t ]*\([A-Za-z0-9_][A-Za-z0-9_]*\).*$/\1/g' | grep -v 'trunk' | csplit - 5 >/dev/null
