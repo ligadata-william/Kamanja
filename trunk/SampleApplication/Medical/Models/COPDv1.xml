@@ -241,7 +241,7 @@ COPDv1.xml
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.HL7</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
-				<Constant dataType="boolean">false</Constant> 
+				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 
@@ -318,7 +318,7 @@ COPDv1.xml
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.InpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
-				<Constant dataType="boolean">false</Constant> 
+				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 
@@ -354,7 +354,7 @@ COPDv1.xml
 				<FieldRef field="gCtx"/>
 			    <Constant dataType="string">System.OutpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
-				<Constant dataType="boolean">false</Constant> 
+				<Constant dataType="boolean">true</Constant> 
 			</Apply>
 		</DerivedField>
 
