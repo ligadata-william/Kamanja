@@ -3003,9 +3003,12 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
   
-  def AddCustomModel (scalaText: String): String = {
+  def AddCustomModel (customText: String): String = {
     var compProxy = new CompilerProxy
-    val modDef : ModelDef =  compProxy.compileScala(scalaText)
+    println("-------")
+    println(customText)
+    println("-------")
+    val modDef : ModelDef =  compProxy.compileScala(customText)
 
     println("modDef Model created  ")
     var latestVersion = GetLatestModel(modDef)

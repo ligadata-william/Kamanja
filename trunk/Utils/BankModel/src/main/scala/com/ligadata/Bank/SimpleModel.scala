@@ -7,12 +7,14 @@ import com.ligadata.FatafatBase.{ModelBase,ModelBaseObj,MessageContainerBase,Env
  * 
  */
 object SimpleModel extends ModelBaseObj {
-   val validMessages = Array("com.ligadata.messagescontainers.System_BankCustomerCodes_1000001_1431110308663")
+  
+   val validMessages = Array("System.BankCustomerCodes")
    def IsValidMessage(msg: MessageContainerBase): Boolean = {
-     validMessages.filter( m => m == msg.getClass.getName).size > 0
-   } 
+     validMessages.filter( m => m.toLowerCase == msg.FullName.toLowerCase).size > 0
+   }
+
    def CreateNewModel(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String): ModelBase = {
-     new SimpleModel(gCtx, msg.asInstanceOf[System_BankCustomerCodes_1000001_1431110308663], getModelName, getVersion, tenantId, tempTransId)
+     new SimpleModel(gCtx, msg, getModelName, getVersion, tenantId, tempTransId)
    }   
    def getModelName: String = { "System.SimpleModel"}  
    override def getVersion: String = {"1000011"}
@@ -31,12 +33,13 @@ object SimpleModel extends ModelBaseObj {
 /**
  * 
  */
-class SimpleModel (val gCtx : com.ligadata.FatafatBase.EnvContext, val msg : System_BankCustomerCodes_1000001_1431110308663,
+class SimpleModel (val gCtx : com.ligadata.FatafatBase.EnvContext, val basemsg : MessageContainerBase,
                    val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long) extends ModelBase {
-    override def getModelName : String = SimpleModel.getModelName
+    override def getModelName : String = SimpleModel.getModelName 
     override def getVersion : String = SimpleModel.getVersion
     override def getTenantId : String = tenantId
     override def getTempTransId: Long = tempTransId
+    private val msg = basemsg.asInstanceOf[System_BankCustomerCodes_1000001_1431110308663]
     
     override def execute(emitAllResults : Boolean) : com.ligadata.FatafatBase.ModelResult = {
       doRule

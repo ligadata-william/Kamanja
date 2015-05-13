@@ -553,9 +553,10 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 				, scalahome : String
 				, javahome : String
 				, skipJar : Boolean
-			        , workDir: String) : (String,Array[String]) = {
+			  , workDir: String) : (String,Array[String]) = {
 	  
 		logger.debug("createJar begins")
+    println("javahome is "+javahome)
 
 		if (scalaSrcTargetPath != null) {
 			logger.debug(s"write a copy of the generated source to $scalaSrcTargetPath")
@@ -567,6 +568,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
  println("====> AHAHAH  1a") 
 			val (jarRc, jarpath) = jarCode(ctx, srcCode, classpath, jarTargetDir, manifestpath, clientName, pmmlFilePath, scalahome, javahome,workDir)
 			if (jarRc == 0) {
+ println("====> AHAHAH  1b") 
 				jarpath 
 			} else {
 				logger.error("jarCode has failed... no jar produced")
@@ -702,7 +704,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		//  case Some(appNm) => appNm
 		//  case _ => "None"
 	//	}
-    val moduleName = "SimpleModule"
+    val moduleName = "SimpleModel"
 println("===> 1")		
 		/** prep the workspace and go there*/
 		val killDir = s"rm -Rf $workDir/$moduleName"
@@ -728,7 +730,8 @@ println("===> 3")
 println("===> 4")   
 		logger.debug(s"compile $moduleName")
 		/** compile the generated code */
-		val rc : Int = compile(ctx, s"$workDir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
+		//val rc : Int = compile(ctx, s"$workDir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
+    val rc : Int = compile(ctx, s"$workDir/$moduleName", javahome, moduleName, classpath, scalaGeneratedCode, clientName,workDir)
 		if (rc != 0) {
 			return (rc, "")
 		}
@@ -742,7 +745,8 @@ println("===> 5")
 		//createManifest(ctx, s"$workDir/$moduleName", manifestFileName, manifestpath, moduleName, clientName)
 
 		/** create the jar */
-		var moduleNameJar : String = JarName(ctx)
+		//var moduleNameJar : String = JarName(ctx)
+    var moduleNameJar = "System_SimpleModel_1000000.jar"
 
 		var d = new java.util.Date()
 		var epochTime = d.getTime
@@ -750,6 +754,8 @@ println("===> 5")
 		val jar_tokens = moduleNameJar.split("\\.")
 	        moduleNameJar = jar_tokens(0) + "_" + epochTime + ".jar"
 		
+println("---> "+moduleNameJar)    
+    
 		logger.debug(s"create the jar $workDir/$moduleNameJar")
 		val jarCmd : String = s"$javahome/bin/jar cvf $workDir/$moduleNameJar -C $workDir/$moduleName/ ."
 		logger.debug(s"jar cmd used: $jarCmd")
@@ -781,29 +787,38 @@ println("===> 5")
 				, classpath : String
 				, scalaGeneratedCode : String
 				, clientName : String
-			        , workDir : String) : Int = 
+			  , workDir : String) : Int = 
 	{  
-		val scalaSrcFileName : String = s"$moduleName.scala"
+		val scalaSrcFileName : String = s"$moduleName.java"
 		createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
     var classpath2 = classpath + ":" + "/tmp/Fatafat/lib/application/system_bankcustomercodes_1000001_1431119629637.jar"
+    var classpath3 = classpath2 + ":" + "/tmp/Fatafat/lib/system/scala-library.jar"
+    
+    val pwdCmd: String = "pwd"
+    val mvCmdRc2 : Int = Process(pwdCmd).!
 		
-		val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath2 $jarBuildDir/$scalaSrcFileName")
+		//val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath2 $jarBuildDir/$scalaSrcFileName")
+    val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/javac -verbose -cp $classpath3 $jarBuildDir/$scalaSrcFileName")
 		logger.debug(s"scalac cmd used: $scalacCmd")
 		val scalaCompileRc = Process(scalacCmd).!
 		if (scalaCompileRc != 0) {
 			logger.error(s"Compile for $scalaSrcFileName has failed...rc = $scalaCompileRc")
 			logger.error(s"Command used: $scalacCmd")
-		}
-		
+		} else {
+		  logger.info(s"Compile for $scalaSrcFileName has succeeded, moving Jars ...")
+    }
+    
 		/** The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir*/
 		val mvCmd : String = s"mv com $workDir/$moduleName/"
+    logger.info(mvCmd)
 		val mvCmdRc : Int = Process(mvCmd).!
 		if (mvCmdRc != 0) {
 			logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
 			logger.error(s"cmd used : $mvCmd")
 		}		
 		//(scalaCompileRc | regBldRc | mvCmdRc)
-		(scalaCompileRc | mvCmdRc)
+		//(scalaCompileRc | mvCmdRc)
+    scalaCompileRc
 	}
 	
 	private def createManifest(ctx: PmmlContext, jarBuildDir : String, manifestName : String, manifestpath : String, moduleName : String, clientName : String) {

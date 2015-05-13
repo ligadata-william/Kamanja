@@ -1364,7 +1364,7 @@ object TestMetadataAPI{
       if( ! IsValidDir(dirName) )
 	return
 
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
       if ( pmmlFiles.length == 0 ){
 	logger.error("No model files in the directory " + dirName)
 	return
