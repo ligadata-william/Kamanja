@@ -220,11 +220,15 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   		val isFixed : Boolean = if (argTypesCnt > 0) {
   			val fixedArgTypes : Boolean = (argTypes.filter(triple => {
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = triple
-  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && argElem.asInstanceOf[ContainerTypeDef].IsFixed)
+  				val typStr : String = argElem.typeString
+  				val isCollection : Boolean = typStr.contains("scala.Array") || typStr.contains("scala.collection")
+  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && argElem.asInstanceOf[ContainerTypeDef].IsFixed && ! isCollection)
   			}).size > 0)
   			val mappedArgTypes : Boolean = (argTypes.filter(tripleM => {
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = tripleM
-  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed)
+  				val typStr : String = argElem.typeString
+  				val isCollection : Boolean = typStr.contains("scala.Array") || typStr.contains("scala.collection")
+  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed && ! isCollection)
   			}).size > 0)
 			if (mappedArgTypes && fixedArgTypes) {
 				false  /** bias toward the mapped in this case... */
