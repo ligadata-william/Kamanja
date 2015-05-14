@@ -94,12 +94,13 @@ trait EnvContext {
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
-  def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
-  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
+  def getObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
+  def getHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
+  def setObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit 
 
-  def contains(tempTransId: Long, containerName: String, key: String): Boolean
-  def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
-  def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
+  def contains(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean
+  def containsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size  
+  def containsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
 
   // Adapters Keys & values
   def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
@@ -110,8 +111,8 @@ trait EnvContext {
   def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-  def saveModelsResult(tempTransId: Long, key: String, value: scala.collection.mutable.Map[String, ModelResult]): Unit
-  def getModelsResult(tempTransId: Long, key: String): scala.collection.mutable.Map[String, ModelResult]
+  def saveModelsResult(tempTransId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit
+  def getModelsResult(tempTransId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult]
 
   // Final Commit for the given transaction
   def commitData(tempTransId: Long): Unit
@@ -135,7 +136,7 @@ trait EnvContext {
    *  @param fqclassname : a full package qualifed class name
    *  @return a MesssageContainerBase of that ilk
    */
-  def NewMessageOrContainer(fqclassname : String) : MessageContainerBase
+  def NewMessageOrContainer(fqclassname: String): MessageContainerBase
 
 }
 

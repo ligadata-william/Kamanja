@@ -123,137 +123,119 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     try {
       val (msgInfo, inputdata) = msgInputDataAndMsgInfo(msgType, msgFormat, msgData)
       if (msgInfo != null && inputdata != null) {
-        val partKeyData = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata)
-        val topMsgTypeAndHasParent = GetTopMsgName(msgType)
+        val partKeyData = if (msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CanPersist) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata) else null
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
-        val partitionKeyData = if (isValidPartitionKey) {
-          val key = ("PartKey" -> partKeyData.toList)
-          compact(render(key))
-        } else {
-          ""
+        val partKeyDataList = if (isValidPartitionKey) partKeyData.toList else null
+        val primaryKey = if (isValidPartitionKey) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PrimaryKeyData(inputdata) else null
+        val primaryKeyList = if (primaryKey != null) primaryKey.toList else null
+
+        var msg: BaseMsg = null
+        if (isValidPartitionKey && primaryKeyList != null) {
+          val fndmsg = envContext.getObject(tempTransId, msgType, partKeyDataList, primaryKeyList)
+          if (fndmsg != null)
+            msg = fndmsg.asInstanceOf[BaseMsg]
         }
-        val topObj = if (isValidPartitionKey) envContext.getObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData) else null
-        var handleMsg: Boolean = true
-        if (topMsgTypeAndHasParent._2) {
-          handleMsg = topObj != null
+        var createdNewMsg = false
+        if (msg == null) {
+          createdNewMsg = true
+          msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
         }
-        if (handleMsg) {
-          var msg: BaseMsg = null
-          var commitSameToplvlMsg = false
-          if (topObj != null && topMsgTypeAndHasParent._2) {
-            msg = topObj.GetMessage(topMsgTypeAndHasParent._3.parents.toArray, msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PrimaryKeyData(inputdata))
-          } else if (topObj != null && topMsgTypeAndHasParent._2 == false) { // This is top level node. Just modify it
-            commitSameToplvlMsg = true
-            msg = topObj.asInstanceOf[BaseMsg]
-          }
-          var createdNewMsg = false
-          if (msg == null) {
-            createdNewMsg = true
-            msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
-          }
-          msg.populate(inputdata)
-          val finalTopMsgOrContainer: MessageContainerBase = if (topObj != null) topObj else msg
-          if (topMsgTypeAndHasParent._2 && createdNewMsg)
-            finalTopMsgOrContainer.AddMessage(topMsgTypeAndHasParent._3.parents.toArray, msg)
-          var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
-          if (isValidPartitionKey && finalTopMsgOrContainer != null) {
-            allMdlsResults = envContext.getModelsResult(tempTransId, partitionKeyData)
-          }
-          if (allMdlsResults == null)
-            allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
-          // Run all models
-          val results = RunAllModels(tempTransId, finalTopMsgOrContainer, envContext)
-          if (results.size > 0) {
-            var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
+        msg.populate(inputdata)
+        var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
+        if (isValidPartitionKey) {
+          envContext.setObject(tempTransId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = envContext.getModelsResult(tempTransId, partKeyDataList)
+        }
+        if (allMdlsResults == null)
+          allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
+        // Run all models
+        val results = RunAllModels(tempTransId, msg, envContext)
+        if (results.size > 0) {
+          var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
 
-            if (elapseTmFromRead < 0)
-              elapseTmFromRead = 1
+          if (elapseTmFromRead < 0)
+            elapseTmFromRead = 1
 
+          try {
+            // Prepare final output and update the models persistance map
+            results.foreach(res => {
+              // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
+              res.uniqKey = uk
+              res.uniqVal = uv
+              res.xformedMsgCntr = xformedMsgCntr
+              res.totalXformedMsgs = totalXformedMsgs
+              allMdlsResults(res.mdlName) = res
+            })
+          } catch {
+            case e: Exception =>
+              {
+                LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+                e.printStackTrace
+              }
+          }
+
+          val json =
+            ("ModelsResult" -> results.toList.map(res =>
+              ("EventDate" -> res.eventDate) ~
+                ("ExecutionTime" -> res.executedTime) ~
+                ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
+                ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
+                ("ModelName" -> res.mdlName) ~
+                ("ModelVersion" -> res.mdlVersion) ~
+                ("uniqKey" -> res.uniqKey) ~
+                ("uniqVal" -> res.uniqVal) ~
+                ("xformCntr" -> res.xformedMsgCntr) ~
+                ("xformTotl" -> res.totalXformedMsgs) ~
+                ("TxnId" -> tempTransId) ~
+                ("output" -> res.results.toList.map(r =>
+                  ("Name" -> r.name) ~
+                    ("Type" -> r.usage.toString) ~
+                    ("Value" -> res.ValueString(r.result))))))
+          val resStr = compact(render(json))
+
+          envContext.saveStatus(tempTransId, "Start", true)
+          if (isValidPartitionKey) {
+            envContext.saveModelsResult(tempTransId, partKeyDataList, allMdlsResults)
+          }
+          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
             try {
-              // Prepare final output and update the models persistance map
-              results.foreach(res => {
-                // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
-                res.uniqKey = uk
-                res.uniqVal = uv
-                res.xformedMsgCntr = xformedMsgCntr
-                res.totalXformedMsgs = totalXformedMsgs
-                allMdlsResults(res.mdlName) = res
-              })
-            } catch {
-              case e: Exception =>
-                {
-                  LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-                  e.printStackTrace
-                }
-            }
-
-            val json =
-              ("ModelsResult" -> results.toList.map(res =>
-                ("EventDate" -> res.eventDate) ~
-                  ("ExecutionTime" -> res.executedTime) ~
-                  ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
-                  ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
-                  ("ModelName" -> res.mdlName) ~
-                  ("ModelVersion" -> res.mdlVersion) ~
-                  ("uniqKey" -> res.uniqKey) ~
-                  ("uniqVal" -> res.uniqVal) ~
-                  ("xformCntr" -> res.xformedMsgCntr) ~
-                  ("xformTotl" -> res.totalXformedMsgs) ~
-                  ("TxnId" -> tempTransId) ~
-                  ("output" -> res.results.toList.map(r =>
-                    ("Name" -> r.name) ~
-                      ("Type" -> r.usage.toString) ~
-                      ("Value" -> res.ValueString(r.result))))))
-            val resStr = compact(render(json))
-
-            envContext.saveStatus(tempTransId, "Start", true)
-            if (isValidPartitionKey && finalTopMsgOrContainer != null) {
-              envContext.saveModelsResult(tempTransId, partitionKeyData, allMdlsResults)
-            }
-            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
-              try {
-                LOG.debug("====================================> Started Waiting in Step 1")
-                Thread.sleep(FatafatConfiguration.waitProcessingTime)
-                LOG.debug("====================================> Done Waiting in Step 1")
-              } catch {
-                case e: Exception => {}
-              }
-            }
-            if (ignoreOutput == false) {
-              if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
-                LOG.debug("====================================> Sending to Output Adapter")
-              }
-              output.foreach(o => {
-                o.send(resStr, cntr.toString)
-              })
-            }
-            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
-              try {
-                LOG.debug("====================================> Started Waiting in Step 2")
-                Thread.sleep(FatafatConfiguration.waitProcessingTime)
-                LOG.debug("====================================> Done Waiting in Step 2")
-              } catch {
-                case e: Exception => {}
-              }
-            }
-            envContext.saveStatus(tempTransId, "OutAdap", false)
-          }
-          var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
-          if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
-          totalLatencyFromReadToProcess += latencyFromReadToProcess
-          //BUGBUG:: Save the whole message here
-          if (isValidPartitionKey && (commitSameToplvlMsg || topMsgTypeAndHasParent._2 || topObj == null)) {
-            envContext.setObject(tempTransId, topMsgTypeAndHasParent._1, partitionKeyData, finalTopMsgOrContainer)
-          }
-          envContext.saveStatus(tempTransId, "SetData", false)
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
-            try {
-              LOG.debug("====================================> Started Waiting in Step 3")
+              LOG.debug("====================================> Started Waiting in Step 1")
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 3")
+              LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
               case e: Exception => {}
             }
+          }
+          if (ignoreOutput == false) {
+            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+              LOG.debug("====================================> Sending to Output Adapter")
+            }
+            output.foreach(o => {
+              o.send(resStr, cntr.toString)
+            })
+          }
+          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+            try {
+              LOG.debug("====================================> Started Waiting in Step 2")
+              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              LOG.debug("====================================> Done Waiting in Step 2")
+            } catch {
+              case e: Exception => {}
+            }
+          }
+          envContext.saveStatus(tempTransId, "OutAdap", false)
+        }
+        var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
+        if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
+        totalLatencyFromReadToProcess += latencyFromReadToProcess
+        envContext.saveStatus(tempTransId, "SetData", false)
+        if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
+          try {
+            LOG.debug("====================================> Started Waiting in Step 3")
+            Thread.sleep(FatafatConfiguration.waitProcessingTime)
+            LOG.debug("====================================> Done Waiting in Step 3")
+          } catch {
+            case e: Exception => {}
           }
         }
       } else {
