@@ -32,6 +32,11 @@ public class SimpleModel implements ModelBase {
 	
 
 	@Override
+	@LigadataModelAnnotations(
+			dependencies={"shit1","shit2"},
+			modelFullName="System.SimpleModel",
+			emitResults="true"
+	)
 	public ModelResult execute(boolean emitResults) {	
 		/**************************************************/
 		/**************************************************/
