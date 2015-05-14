@@ -85,3 +85,5 @@ lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage)
 
 lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase)
 
+lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs)
+

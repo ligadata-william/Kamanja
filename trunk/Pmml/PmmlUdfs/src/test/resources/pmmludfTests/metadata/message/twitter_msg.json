@@ -1,0 +1,30 @@
+{
+  "Message": {
+    "NameSpace": "System",
+    "Name": "twittermsg",
+    "Version": "00.01.00",
+    "Description": "twitter msg",
+    "Fixed": "true",
+    "Elements": [
+      {
+        "Field": {
+          "Name": "id",
+          "Type": "System.string"
+        }
+      },
+      {
+        "Field": {
+          "Name": "tweet",
+          "Type": "System.String"
+        }
+      },
+	{
+       	"Field": {
+          "Name": "tweet_date_time",
+          "Type": "System.String"
+        }
+      }
+
+  ]
+  }
+}

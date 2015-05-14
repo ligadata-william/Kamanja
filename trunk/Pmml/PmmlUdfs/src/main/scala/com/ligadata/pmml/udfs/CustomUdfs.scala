@@ -13,14 +13,26 @@ import org.apache.log4j.Logger
 import com.ligadata.Pmml.Runtime._
 
 /**
-  * Sample udfs .. com.ligadata.pmml.udfs.SomeCustomUdfs
+  * Sample udfs .. com.ligadata.pmml.udfs.CustomUdfs
 
-    Add this file to the trunk/Pmml/PmmlUdfs/src/main/scala/com/ligadata/udfs folder 
-    so it is a sibling to the PmmlUdfs.scala file.  It will be built when run
-    the easy installer from source.
+    This is a sample udf library to illustrate how one would add their own library of
+    functions to the Fatafat system such that they could be used in the PMML models run
+    there.
 
-    Notice the full package qualifed name is com.ligadata.pmml.udfs.SomeCustomUdfs
-    This will be needed later when you want to use it in your model.
+    The udfs used in Fatafat must be declared in an object (i.e., they are static methods
+    for those of you familiar with java).
+
+    NOTE: If you want to invoke functions in the core library, make your UDF project that 
+    builds your UDFs dependent on PmmlUdfs:
+
+        lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs)
+    
+    Include the following two lines in your imports:
+
+        import com.ligadata.pmml.udfs._
+        import com.ligadata.pmml.udfs.Udfs._
+
+    The sample udf, ISO8601DateFmt, does use a function from the core udfs, so we include it here.
 
     Once it is built, you can run the extractUDFLibMetadata.scala script on it that
     will produce the metadata from it.
@@ -29,34 +41,43 @@ import com.ligadata.Pmml.Runtime._
     scripts in a folder on your PATH, you can use this command from 'trunk' to compile it:
 
     extractUdfLibMetadata.scala --sbtProject PmmlUdfs 
-                                --fullObjectPath com.ligadata.pmml.udfs.SomeCustomUdfs
+                                --fullObjectPath com.mycompany.pmml.udfs.SomeCustomUdfs
                                 --namespace Pmml
-                                --versionNumber 100
+                                --versionNumber 1000000
                                 --typeDefsPath /tmp/typesforSomeCustomUdfs.json
                                 --fcnDefsPath /tmp/fcnsforSomCustomUdfs.json
+
+    The version number supplied should be greater than any prior version used for the same 
+    Udfs.  This is currently not checked.  It will complain when you try to load the metadata instead.
+    The 1000000 will produce a "000000.000001.000000" version number for each of your udf functions.
 
     The last two arguments are paths to the json that is produced by the script looking
     into the udf jar for PmmlUdfs at the functions on the 'fullObjectPath'.
 
     As written, the types do not really need to be loaded into the MetadataAPI, as they 
-    have all been defined in the bootstrap.  The udfs json file should be loaded however.
+    have all been defined in the Fatafat metadata bootstrap.  The udfs json file must be loaded 
+    however.  The types would be needed if you introduced a type that has not been previously declared
+    in the bootstrap.  If you are not sure there is no harm loading the types file.  If one of 
+    the types is already present, an error will be logged to that effect.  This is probably ok,
+    however, you should inspect the types that are duplicate to verify they reflect what
+    your intention is.
 
     To use this udf library in one of your models, you need to reference it in the model
     itself.  In the DataDictionary section, put the following:
 
         <DataField name="UDFSearchPath" displayName="UDFSearchPath" dataType="container">
-          <Value value="com.ligadata.pmml.udfs.SomeCustomUdfs" property="valid"/>
+          <Value value="com.mycompany.pmml.udfs.CustomUdfs" property="valid"/>
         </DataField>
 
-    That's about it for now.  Eventually we will support udfs in other package spaces and
-    not included in the pmml project.  For now this is what is done so other issues more
-    pressing can be addressed.
+    Important: Don't forget to upload your library to the Fatafat cluster.  There is an upload jar
+    protocol for this purpose.
 
   */
-object CustomUdfs extends UdfBase with LogTrait {
+object CustomUdfs extends LogTrait {
   
     /**
      * Returns a random UUID string
+     * NOTE: idGen() is available in the core udf library now.. this one is deprecated
      */
     def ID_GEN() : String = {
         UUID.randomUUID().toString;
@@ -100,6 +121,9 @@ object CustomUdfs extends UdfBase with LogTrait {
      @param fmtStr: a String specifying the desired format.
      @param yyyymmdds: one or more iso8601 dates... only the last will print
      @return string rep of this date
+
+     NOTE: iso8601DateFmt(String, Int) is available in the core udf library now.. this one is deprecated
+
      */
     def dateBlock(fmtStr : String, yyyymmdds : Any*): String = {
         val dateTime : DateTime = toDateTime(yyyymmdds.toList.last.asInstanceOf[Int])
@@ -117,7 +141,9 @@ object CustomUdfs extends UdfBase with LogTrait {
      *  @param eventMsg a string that describes what has actually happened
      *  @param bool a Boolean that is returned as this function's result (to play into the pmml logic as desired)
      *  @return bool
-     */
+     *
+     *  NOTE: logMsg(String,String,String,Boolean) is available in the core udf library now.. this one is deprecated
+    */
     def LogMsg(severity : String, contextMsg : String, eventMsg : String, bool : Boolean) : Boolean = {
         if (severity != null && contextMsg != null && eventMsg != null) {
             val sev : String = severity.toLowerCase
@@ -139,6 +165,8 @@ object CustomUdfs extends UdfBase with LogTrait {
      *  Accept an indefinite number of objects and concatenate their string representations 
      *  @param args : arguments whose string representations will be concatenated   
      *  @return concatenation of args' string representations
+     *
+     *  NOTE: concat(args : Any*) is available in the core udf library now.. this one is deprecated
      */
     def Concat(args : Any*) : String = {
       val argList : List[Any] = args.toList
@@ -147,57 +175,6 @@ object CustomUdfs extends UdfBase with LogTrait {
       val concatenation : String = buffer.toString
       concatenation
      }
-  
-    /** 
-     *  Accept a parent variable, a child variable and a replacement variable.  Replace all instances of the child  inside the parent with the replacement.  The function will return a string
-     *  @param relacewithin : The parent variable (can be any type) within which the replacement will be searched for
-     *  @param inWord : The child string which will be searched for within the "replacewithin" variable
-     *  @param replacewith : The string with which all instances of the child will be replaced in "replacewithin"
-     *  @return outString : string where all "inwords" have been replaced by "replacewith"
-     */   
-    def replace (replacewithin: Any, inWord: Any, replacewith: Any): String = { 
-      var replacewithinA = replacewithin.toString
-      var inWordA = inWord.toString
-      var replacewithA = replacewith.toString
-      var outString = replacewithinA.replaceAll(inWordA, replacewithA)
-      outString
-    }
-  
-    /** 
-     *  Accept a parent variable and a child variable.  Return a boolean value which is true if an instance of the child lies within the parent and false otherwise
-     *  @param matchwithin : The parent variable (can be any type) within which the matching variable will be searched for
-     *  @param matchwith : The child that will be searched for within "matchwithin"
-     *  @return OutBool : Boolean value evaluating whether an instance of "matchwith" exists within "matchwithin"
-     */
-    def matches (matchwithin: Any, matchwith: Any): Boolean = { 
-      var matchwithinA = matchwithin.toString
-      var matchwithA = matchwith.toString
-      var outString = matchwithinA.replaceAll(matchwithA, matchwithA + matchwithA)
-      var outBool : Boolean = if (outString == matchwithinA) false; else true;
-      outBool
-    }
-
-    /** 
-     *  Generate a random Double between 0 and 1
-     *  @return ranDouble : random Double between 0 and 1
-     */
-
-    def random(): Double = {
-      val r = scala.util.Random
-      var randouble = r.nextDouble
-      randouble
-    }
-
-    /** 
-     *  Accept a number of any type and format it in a specified manner
-     *  @param num : The number which is to be formatted
-     *  @param formatting : The format which the number is to take.  This should be given in standard form, e.g. %.2f for a 2 decimal place float
-     *  @return formattedStr : A string version of the number formatted in the required way
-     */
-    def formatNumber[T]( num : T, formatting : String) : String = {
-      val formattedStr : String = (formatting.format(num)).toString
-      formattedStr
-    }
   
     /**
      * getTokenizedCounts - Method will analyze a given string for the presence of specified tokens and return the Array of integers where
