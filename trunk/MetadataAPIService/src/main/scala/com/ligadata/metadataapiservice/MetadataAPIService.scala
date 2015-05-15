@@ -23,6 +23,7 @@ trait MetadataAPIService extends HttpService {
   val KEY_TOKN = "keys"
   val AUDIT_LOG_TOKN = "audit_log"
   val LEADER_TOKN = "leader"
+  val APIName = "MetadataAPIService"
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -85,7 +86,7 @@ trait MetadataAPIService extends HttpService {
                 entity(as[String]) { reqBody =>  
                   {
                     if (toknRoute.size == 1) {  requestContext => processPutRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }      
-                    else { requestContext => processPutRequest (toknRoute(1).toLowerCase,reqBody,requestContext,userId,password,role) }            
+                    else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Unknown PUT route")).toString) } 
                   }
                 }
               }
@@ -99,7 +100,7 @@ trait MetadataAPIService extends HttpService {
               val toknRoute = str.split("/") 
               logger.debug("POST reqeust : api/"+str)          
               if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }}}
-              else { requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString) }
+              else { requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString) }
             }
           }
         }
@@ -111,7 +112,7 @@ trait MetadataAPIService extends HttpService {
               val toknRoute = str.split("/")
               logger.debug("DELETE reqeust : api/"+str)
               if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,role) }  
-              else {  requestContext =>  requestContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString) }
+              else {  requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown DELETE route")).toString) }
             }
           }
         }
@@ -150,7 +151,7 @@ trait MetadataAPIService extends HttpService {
         val uploadConfigService = actorRefFactory.actorOf(Props(new UploadEngineConfigService(rContext,userid,password,role)))
         uploadConfigService ! UploadEngineConfigService.Process(body)
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString)
     }
   }
   
@@ -158,14 +159,17 @@ trait MetadataAPIService extends HttpService {
    * Modify Existing objects in the Metadata 
    */
   private def processPutRequest(action: String, objtype:String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
+    var argParm: String = verifyInput(objKey,objtype,rContext)
+    if (argParm == null) return
+    
     if (action.equalsIgnoreCase("Activate")) {
         val activateObjectsService = actorRefFactory.actorOf(Props(new ActivateObjectsService(rContext,userid,password,role)))
-        activateObjectsService ! ActivateObjectsService.Process(createGetArg(objKey,objtype))
+        activateObjectsService ! ActivateObjectsService.Process(argParm)
     } else if (action.equalsIgnoreCase("Deactivate")) {
        val deactivateObjectsService = actorRefFactory.actorOf(Props(new DeactivateObjectsService(rContext,userid,password,role)))
-       deactivateObjectsService ! DeactivateObjectsService.Process(createGetArg(objKey,objtype))
+       deactivateObjectsService ! DeactivateObjectsService.Process(argParm)
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown PUT route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString)     
     } 
   }
   
@@ -194,7 +198,7 @@ trait MetadataAPIService extends HttpService {
         val addFunctionDefsService = actorRefFactory.actorOf(Props(new AddFunctionService(rContext,userid,password,role)))
         addFunctionDefsService ! AddFunctionService.Process(body,"JSON")
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown POST route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Unknown POST route")).toString)     
     } 
   }
   
@@ -224,7 +228,7 @@ trait MetadataAPIService extends HttpService {
       val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext,userid,password,role)))
       allObjectKeysService ! GetAllObjectKeysService.Process(objtype)  
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown GET route")).toString) 
     }
   }
   
@@ -232,17 +236,23 @@ trait MetadataAPIService extends HttpService {
    *  
    */
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
-   val action = "Get" + objtype
-   val notes = "Invoked " + action + " API "
+    val action = "Get" + objtype
+    val notes = "Invoked " + action + " API "
+    var argParm: String = null 
+    if (!objtype.equalsIgnoreCase("config")) {
+      argParm = verifyInput(objKey,objtype,rContext)
+      if (argParm == null) return
+    }
+    
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,role)))
         allObjectsService ! GetConfigObjectsService.Process(objKey) 
     } else if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || 
                objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type"))  {
         val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext,userid,password,role)))
-        getObjectsService ! GetObjectsService.Process(createGetArg(objKey,objtype))  
+        getObjectsService ! GetObjectsService.Process(argParm)  
     } else {
-        rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown GET route")).toString) 
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown GET route")).toString) 
     }
   }
   
@@ -250,40 +260,56 @@ trait MetadataAPIService extends HttpService {
    * 
    */
   private def processDeleteRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]):Unit = {
-   val action = "Remove" + objtype
-   val notes = "Invoked " + action + " API "
+    val action = "Remove" + objtype
+    val notes = "Invoked " + action + " API "
+    var argParm: String = verifyInput(objKey,objtype,rContext)
+    if (argParm == null) return
+    
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
         objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type")) {
       val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext,userid,password,role)))
-      removeObjectsService ! RemoveObjectsService.Process(createGetArg(objKey,objtype))
+      removeObjectsService ! RemoveObjectsService.Process(argParm)
     } else if (objtype.equalsIgnoreCase("Config")) {
       val removeConfigService = actorRefFactory.actorOf(Props(new RemoveEngineConfigService(rContext,userid,password,role)))
-      removeConfigService ! RemoveEngineConfigService.Process(createGetArg(objKey,objtype))   
+      removeConfigService ! RemoveEngineConfigService.Process(argParm)   
     } else {
-      rContext.complete((new ApiResult(-1, "Unknown URL: MetadataAPIService", null, "Unknown DELETE route")).toString)     
+      rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown DELETE route")).toString)     
     }
   }
   
+  
+  private def verifyInput(objKey: String, objType: String, rContext: RequestContext): String = {
+    // Verify that the a 3 part name is the key, an Out Of Bounds exception will be thrown if name is not XXX.XXX.XXX
+    try {
+      return createGetArg(objKey, objType) 
+    } catch {
+      case aobe: ArrayIndexOutOfBoundsException => {
+        logger.debug("METADATASERVICE: Invalid key "+ objKey)
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid key: "+objKey)).toString)
+        return null
+      } 
+      case nfe: java.lang.NumberFormatException => { 
+        logger.debug("METADATASERVICE: Invalid key "+ objKey)
+        rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid key: "+objKey)).toString)
+        return null
+      }
+    }  
+  }   
+
   /**
    * MakeJsonStrForArgList
    */
   private def createGetArg(objKey:String,objectType:String): String = {
-    try{
-      val keyTokens = objKey.split("\\.")
-      val nameSpace = keyTokens(0)
-      val name = keyTokens(1)
-      val version = keyTokens(2)
-      val mdArg = new MetadataApiArg(objectType,nameSpace,name,version,"JSON")
-      val argList = new Array[MetadataApiArg](1)
-      argList(0) = mdArg
-      val mdArgList = new MetadataApiArgList(argList.toList)
-      val apiArgJson = JsonSerializer.SerializeApiArgListToJson(mdArgList)
-      apiArgJson
-    }catch {
-      case e: Exception => {
-        e.printStackTrace()
-        throw new Exception("Failed to convert given object key into json string" + e.getMessage())
-      }
-    }
+    val keyTokens = objKey.split("\\.")
+    val nameSpace = keyTokens(0)
+    val name = keyTokens(1)
+    val version = keyTokens(2)
+    val lVersion = version.toLong
+    val mdArg = new MetadataApiArg(objectType,nameSpace,name,version,"JSON")
+    val argList = new Array[MetadataApiArg](1)
+    argList(0) = mdArg
+    val mdArgList = new MetadataApiArgList(argList.toList)
+    val apiArgJson = JsonSerializer.SerializeApiArgListToJson(mdArgList)
+    apiArgJson
   }
 }

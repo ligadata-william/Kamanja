@@ -39,16 +39,16 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
     if (formatType.equalsIgnoreCase("json")) {
       nameVal = APIService.extractNameFromJson(conceptJson,AuditConstants.CONCEPT) 
     } else {
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:Unsupported format: "+formatType).toString ) 
       return
     }
 
 	  if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
-	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.FAIL,"",nameVal)
-	    requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.FAIL,"",nameVal)
+	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
 	  } else {
 	    val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
-	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",nameVal)
+	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.SUCCESS,"",nameVal)
 	    requestContext.complete(apiResult)
     }
 	}

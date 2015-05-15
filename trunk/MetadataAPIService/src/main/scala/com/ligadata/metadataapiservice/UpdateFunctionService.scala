@@ -36,11 +36,11 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
     var nameVal = APIService.extractNameFromJson(functionJson, AuditConstants.FUNCTION) 
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","function"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.FUNCTION,AuditConstants.FAIL,"",nameVal) 
-      requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,functionJson,AuditConstants.FAIL,"",nameVal) 
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON")
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameVal)            
+      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,functionJson,AuditConstants.SUCCESS,"",nameVal)            
       requestContext.complete(apiResult)    
     }
   }

@@ -27,7 +27,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -64,6 +64,7 @@ class MessageDefImpl {
     val newline = "\n"
     val cbrace = "}"
     val isFixed = getIsFixed(msg)
+    val canPersist = getCanPersist(msg)
     var primaryKeyDef: String = ""
     var partitionKeyDef: String = ""
 
@@ -88,13 +89,13 @@ class MessageDefImpl {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + pratitionKeys + primaryKeys + newline + cbrace + newline)
 
     }
     cobj
@@ -295,7 +296,7 @@ class MessageDefImpl {
 			if (arr != null) {
 				val arrFld = CollectionAsArrString(arr)
 				""" + fname + """  = arrFld.map(v => """ + typeImpl + """(v.toString)).toArray
-			} else """+ fname + """  = new """ + typ + """(0)
+			} else """ + fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
@@ -324,7 +325,7 @@ class MessageDefImpl {
 			if (arr != null) {
 				val arrFld = CollectionAsArrString(arr)
 				 arrFld.map(v => {""" + fname + """  :+=""" + typeImpl + """(v.toString)})
-			}else """+ fname + """  = new """ + typ + """(0)
+			}else """ + fname + """  = new """ + typ + """(0)
 	    }
 	      """
     } else if (msg.Fixed.toLowerCase().equals("false")) {
@@ -418,7 +419,7 @@ class MessageDefImpl {
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
     var mappedPrevTypNotMatchkeys = new StringBuilder(8 * 1024)
     var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
-    var prevVerMsgBaseTypesIdxArry1 : ArrayBuffer[String] = new  ArrayBuffer[String]
+    var prevVerMsgBaseTypesIdxArry1: ArrayBuffer[String] = new ArrayBuffer[String]
 
     var mapBaseTypesSetRet: Set[Int] = Set()
     try {
@@ -565,7 +566,9 @@ class MessageDefImpl {
           assignJsondata.append(assignJsonForCntrArrayBuffer(f.Name, arrayType.elemDef.physicalName))
           keysStr.append("\"" + f.Name + "\",")
         }
-        if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage"))
+        if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage")) {
+          throw new Exception("Adding Child Message/Messages are not allowed in Message/Container Definition")
+
           if (typ.get.typeString.toString().split("\\[").size == 2) {
             addMsg.append(pad2 + "if(curVal._2.compareToIgnoreCase(\"" + f.Name + "\") == 0) {" + newline + "\t")
             addMsg.append(pad3 + f.Name + " += msg.asInstanceOf[" + typ.get.typeString.toString().split("\\[")(1) + newline + pad3 + "} else ")
@@ -574,7 +577,7 @@ class MessageDefImpl {
               getMsg.append("%s%s.foreach(o => {%s%sif(o != null) { val pkd = o.PrimaryKeyData%s%sif(pkd.sameElements(primaryKey)) {%s%sreturn o%s%s}}%s%s)}%s%s}".format(pad3, f.Name, newline, pad3, newline, pad3, newline, pad3, newline, pad2, newline, pad2))
             }
           }
-
+        }
         serializedBuf = serializedBuf.append(ArrayTypeHandler.serializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
         deserializedBuf = deserializedBuf.append(ArrayTypeHandler.deSerializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
         val (prevObjDeserialized, convertOldObjtoNewObj, mappedPrevVerMatch, mappedPrevTypNotMatchKys) = ArrayTypeHandler.prevObjDeserializeMsgContainer(typ, msg.Fixed.toLowerCase(), f, childs)
@@ -692,6 +695,8 @@ class MessageDefImpl {
           // assignJsondata.append("%s%s.assignJsonData(map)%s".format(pad1, f.Name, newline))
           // assignCsvdata.append(newline + getArrayStr(f.Name, arrayBufType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
         } else if (f.ElemType.toLowerCase().equals("message")) {
+          throw new Exception("Adding Child Message/Messages is not allowed in Message/Container Definition")
+
           //  assignCsvdata.append("%s//%s Implementation of messages is not handled at this time%s".format(pad2, f.Name, newline))
           //  assignJsondata.append("%s//%s Implementation of messages is not handled %s".format(pad2, f.Name, newline))
           if (typ.get.typeString.toString().split("\\[").size == 2) {
@@ -729,6 +734,7 @@ class MessageDefImpl {
               }
             }
           }
+
         }
         serializedBuf = serializedBuf.append(ArrayTypeHandler.serializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
         deserializedBuf = deserializedBuf.append(ArrayTypeHandler.deSerializeMsgContainer(typ, msg.Fixed.toLowerCase(), f))
@@ -1049,7 +1055,7 @@ class MessageDefImpl {
     var mappedMsgFieldsArry = new StringBuilder(8 * 1024)
     var mappedPrevTypNotMatchkeys = new StringBuilder(8 * 1024)
     var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
-   
+
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
     val pad1 = "\t"
@@ -1091,7 +1097,7 @@ class MessageDefImpl {
       if (pMsgdef != null) {
         val (childAttrs, prevVerMsgBaseTypesIdxArray) = getPrevVerMsgChilds(pMsgdef, isMsg, message.Fixed)
         childs = childAttrs
-        
+
         if ((pMsgdef.dependencyJarNames != null) && (pMsgdef.JarName != null))
           jarset = jarset + pMsgdef.JarName ++ pMsgdef.dependencyJarNames
         else if (pMsgdef.JarName != null)
@@ -1100,7 +1106,7 @@ class MessageDefImpl {
           jarset = jarset ++ pMsgdef.dependencyJarNames
       }
 
-      scalaclass = scalaclass.append(getIsFixed(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
+      scalaclass = scalaclass.append(getIsFixed(message) + newline + getCanPersist(message) + newline + getName(message) + newline + getVersion(message) + newline + newline)
       // for (e <- message.Elements) {
       //  var fields = e.Fields
       var paritionkeys: List[String] = null
@@ -1246,6 +1252,9 @@ class MessageDefImpl {
 
           } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
 
+            if (f.ElemType.equals("Message"))
+              throw new Exception("Adding Child Messages are not allowed in Message/Container Definition")
+
             //val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, -1, true) // message.Version.toLong
 
@@ -1292,7 +1301,12 @@ class MessageDefImpl {
                   msgAndCntnrsStr = msgAndCntnrsStr.append(cntnr_9)
                   //   mappedPrevVerMatchkeys
 
-                } else if (f.ElemType.equals("Message")) {
+                }
+                /**
+                 * Commenting the below code since the child messages are not allowed in message def.
+                 *
+                 */
+                /*else if (f.ElemType.equals("Message")) {
                   val (msg_1, msg_2, msg_3, msg_4, msg_5, msg_6, msg_7, msg_8, msg_9, msg_10, msg_11, msg_12, msg_13, msg_14, msg_15) = handleMessage(mdMgr, ftypeVersion, f, message, childs, recompile)
                   scalaclass = scalaclass.append(msg_1)
                   assignCsvdata = assignCsvdata.append(msg_2)
@@ -1313,6 +1327,8 @@ class MessageDefImpl {
                   // mappedPrevVerMatchkeys
 
                 }
+                * */
+
               }
             }
           } else if (f.ElemType.equals("Concept")) {
@@ -1450,7 +1466,7 @@ class MessageDefImpl {
       }
     }
     log.trace("version from metadata " + msgdef.get.Version)
-    
+
     var newver = msgdef.get.Version + 1
 
     MdMgr.ConvertLongVersionToString(newver)
@@ -1676,6 +1692,19 @@ class MessageDefImpl {
       isfixed = isfixed.append("%soverride def IsFixed:Boolean = %s;%s%soverride def IsKv:Boolean = %s;%s".format(pad1, isf, newline, pad1, isKV, newline))
 
     isfixed.toString
+  }
+
+  private def getCanPersist(message: Message): String = {
+    val pad1 = "\t"
+    val newline = "\n"
+
+    var CanPersist = new StringBuilder(8 * 1024)
+    if (message.Persist)
+      CanPersist = CanPersist.append("%s override def CanPersist: Boolean = %s;%s".format(pad1, "true", newline))
+    else
+      CanPersist = CanPersist.append("%s override def CanPersist: Boolean = %s;%s".format(pad1, "false", newline))
+
+    CanPersist.toString
   }
 
   private def getArrayStr(mbrVar: String, classname: String): String = {
@@ -2136,11 +2165,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	  throw new Exception("Unhandled Collection")
 	 }
     """
-    
+
   }
   private def assignJsonData(assignJsonData: String) = {
     collectionsStr +
-    """
+      """
     private def assignJsonData(json: JsonData) : Unit =  {
 	type tList = List[String]
 	type tMap = Map[String, Any]
@@ -2165,8 +2194,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	"""
   }
   private def assignMappedJsonData(assignJsonData: String) = {
-   collectionsStr +
-    """
+    collectionsStr +
+      """
    	def ValueToString(v: Any): String = {
 		if (v.isInstanceOf[Set[_]]) {
       		return v.asInstanceOf[Set[_]].mkString(",")
@@ -2471,13 +2500,17 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def createMappedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
-
     try {
 
+      if (msg.Persist) {
+        if (msg.PartitionKey == null || msg.PartitionKey.size == 0) {
+          throw new Exception("Please provide parition keys in the MessageDefinition since the Message has to be Persisted")
+        }
+      }
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile, msg.Persist)
       else
-        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
+        containerDef = mdMgr.MakeMappedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile, msg.Persist)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2491,10 +2524,16 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var msgDef: MessageDef = new MessageDef()
     try {
 
+      if (msg.Persist) {
+        if (msg.PartitionKey == null || msg.PartitionKey.size == 0) {
+          throw new Exception("Please provide parition keys in the MessageDefinition since the Message has to be Persisted")
+        }
+      }
+
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile, msg.Persist)
       else
-        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
+        msgDef = mdMgr.MakeMappedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile, msg.Persist)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2507,10 +2546,16 @@ class XmlData(var dataInput: String) extends InputData(){ }
   private def createFixedContainerDef(msg: Message, list: List[(String, String)], mdMgr: MdMgr, argsList: List[(String, String, String, String, Boolean, String)], recompile: Boolean = false): ContainerDef = {
     var containerDef: ContainerDef = new ContainerDef()
     try {
+      if (msg.Persist) {
+        if (msg.PartitionKey == null || msg.PartitionKey.size == 0) {
+          throw new Exception("Please provide parition keys in the MessageDefinition since the Message has to be Persisted")
+        }
+      }
+
       if (msg.PartitionKey != null)
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile, msg.Persist)
       else
-        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile)
+        containerDef = mdMgr.MakeFixedContainer(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, MdMgr.ConvertVersionToLong(msg.Version), null, msg.jarset.toArray, null, null, null, recompile, msg.Persist)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2525,13 +2570,16 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
     try {
       var version = MdMgr.ConvertVersionToLong(msg.Version)
-      //if(recompile) 
-      //	  version = version+1
+      if (msg.Persist) {
+        if (msg.PartitionKey == null || msg.PartitionKey.size == 0) {
+          throw new Exception("Please provide parition keys in the MessageDefinition since the Message will be Persisted based on Partition Keys")
+        }
+      }
 
       if (msg.PartitionKey != null)
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, msg.PartitionKey.toArray, recompile, msg.Persist)
       else
-        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null, recompile)
+        msgDef = mdMgr.MakeFixedMsg(msg.NameSpace, msg.Name, msg.PhysicalName, argsList, version, null, msg.jarset.toArray, null, null, null, recompile, msg.Persist)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -2937,8 +2985,23 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var primaryKeysList: List[String] = null
     var conceptsList: List[String] = null
     var msgVersion: String = ""
+    var persistMsg: Boolean = false
     try {
       if (message != null) {
+        if (message.getOrElse("NameSpace", null) == null)
+          throw new Exception("Please provide the Name space in the message definition ")
+
+        if (message.getOrElse("Name", null) == null)
+          throw new Exception("Please provide the Name of the message definition ")
+
+        if (message.getOrElse("Version", null) == null)
+          throw new Exception("Please provide the Version of the message definition ")
+
+        val persist = message.getOrElse("Persist", "false").toString.toLowerCase
+
+        if (persist.equals("true"))
+          persistMsg = true
+
         for (key: String <- message.keys) {
           if (key.equals("Elements") || key.equals("Fields") || key.equals("Concepts")) {
             ele = getElementsObj(message, key).asInstanceOf[List[Element]]
@@ -2995,7 +3058,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
     val cur_time = System.currentTimeMillis
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "_" + message.get("Name").get.toString() + "_" + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
+    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg, conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {

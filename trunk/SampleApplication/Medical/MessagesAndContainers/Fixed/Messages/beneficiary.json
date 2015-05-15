@@ -5,6 +5,7 @@
     "Version": "00.01.00",
     "Description": "Beneficiary Data",
     "Fixed": "true",
+    "Persist": "true",
     "Elements": [
       {
         "Field": {
@@ -196,24 +197,6 @@
         "Field": {
           "Name": "Pppymt_Car",
           "Type": "System.Double"
-        }
-      },
-      {
-        "Message": {
-          "Name": "Inpatient_Claims",
-          "Type": "System.ArrayBufferOfInpatientClaim"
-        }
-      },
-      {
-        "Message": {
-          "Name": "Outpatient_Claims",
-          "Type": "System.ArrayBufferOfOutpatientClaim"
-        }
-      },
-      {
-        "Message": {
-          "Name": "HL7Messages",
-          "Type": "System.ArrayBufferOfHL7"
         }
       }
     ],

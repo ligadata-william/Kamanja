@@ -495,16 +495,30 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	
 	def init_com_ligadata_pmml_udfs_Udfs {
 	  
-
 		mgr.AddFunc("Pmml", "MakeStrings", "com.ligadata.pmml.udfs.Udfs.MakeStrings", ("System", "ArrayOfString"), List(("arr", "System", "ArrayOfTupleOfStringString"),("separator", "System", "String")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayBufferOfString")), null)
 		mgr.AddFunc("Pmml", "MakeOrderedPairs", "com.ligadata.pmml.udfs.Udfs.MakeOrderedPairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayOfString")), null)
 		mgr.AddFunc("Pmml", "MakePairs", "com.ligadata.pmml.udfs.Udfs.MakePairs", ("System", "ArrayOfTupleOfStringString"), List(("left", "System", "String"),("right", "System", "ArrayOfString")), null)
 		
-		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Int"), List(), null)
-		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Int"), List(), null)
-		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "dateDaysSinceYear", "com.ligadata.pmml.udfs.Udfs.dateDaysSinceYear", ("System", "Int"), List(("yr", "System", "Int")), null)
+	    mgr.AddFunc("Pmml", "idGen", "com.ligadata.pmml.udfs.Udfs.idGen", ("System", "String"), List(), null)
+	    mgr.AddFunc("Pmml", "concat", "com.ligadata.pmml.udfs.Udfs.concat", ("System", "String"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "replace", "com.ligadata.pmml.udfs.Udfs.replace", ("System", "String"), List(("replacewithin", "System", "Any"),("inWord", "System", "Any"),("replacewith", "System", "Any")), null)
+	    mgr.AddFunc("Pmml", "matches", "com.ligadata.pmml.udfs.Udfs.matches", ("System", "Boolean"), List(("matchwithin", "System", "Any"),("matchwith", "System", "Any")), null)
+	    mgr.AddFunc("Pmml", "random", "com.ligadata.pmml.udfs.Udfs.random", ("System", "Double"), List(), null)
+	    mgr.AddFunc("Pmml", "formatNumber", "com.ligadata.pmml.udfs.Udfs.formatNumber", ("System", "String"), List(("num", "System", "Any"),("formatting", "System", "String")), null)
+	    mgr.AddFunc("Pmml", "logMsg", "com.ligadata.pmml.udfs.Udfs.logMsg", ("System", "Boolean"), List(("severity", "System", "String"),("contextMsg", "System", "String"),("eventMsg", "System", "String"),("bool", "System", "Boolean")), null)
+
+
+	    mgr.AddFunc("Pmml", "CompoundStatementBoolean", "com.ligadata.pmml.udfs.Udfs.CompoundStatementBoolean", ("System", "Boolean"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementString", "com.ligadata.pmml.udfs.Udfs.CompoundStatementString", ("System", "String"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementInt", "com.ligadata.pmml.udfs.Udfs.CompoundStatementInt", ("System", "Int"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementLong", "com.ligadata.pmml.udfs.Udfs.CompoundStatementLong", ("System", "Long"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementFloat", "com.ligadata.pmml.udfs.Udfs.CompoundStatementFloat", ("System", "Float"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatementDouble", "com.ligadata.pmml.udfs.Udfs.CompoundStatementDouble", ("System", "Double"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+	    mgr.AddFunc("Pmml", "CompoundStatement", "com.ligadata.pmml.udfs.Udfs.CompoundStatement", ("System", "Any"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+
+
+		mgr.AddFunc("Pmml", "length", "com.ligadata.pmml.udfs.Udfs.length", ("System", "String"), List(("str", "System", "String")), null)
 		mgr.AddFunc("Pmml", "trimBlanks", "com.ligadata.pmml.udfs.Udfs.trimBlanks", ("System", "String"), List(("str", "System", "String")), null)
 		mgr.AddFunc("Pmml", "endsWith", "com.ligadata.pmml.udfs.Udfs.endsWith", ("System", "Boolean"), List(("inThis", "System", "String"),("findThis", "System", "String")), null)
 		mgr.AddFunc("Pmml", "startsWith", "com.ligadata.pmml.udfs.Udfs.startsWith", ("System", "Boolean"), List(("inThis", "System", "String"),("findThis", "System", "String")), null)
@@ -544,12 +558,6 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Double"), List(("exprs", "System", "ArrayBufferOfDouble")), null)
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Long"), List(("exprs", "System", "ArrayBufferOfLong")), null)
 		mgr.AddFunc("Pmml", "Median", "com.ligadata.pmml.udfs.Udfs.Median", ("System", "Int"), List(("exprs", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Max", "com.ligadata.pmml.udfs.Udfs.Max", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Min", "com.ligadata.pmml.udfs.Udfs.Min", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Avg", "com.ligadata.pmml.udfs.Udfs.Avg", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "Sum", "com.ligadata.pmml.udfs.Udfs.Sum", ("System", "HashMapOfIntInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
-		mgr.AddFunc("Pmml", "MultiSet", "com.ligadata.pmml.udfs.Udfs.MultiSet", ("System", "HashMapOfIntArrayBufferOfInt"), List(("exprs", "System", "ArrayBufferOfInt"),("groupByKey", "System", "ArrayBufferOfInt")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Float"), List(("exprs", "System", "ListOfFloat")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Double"), List(("exprs", "System", "ListOfDouble")), null)
 		mgr.AddFunc("Pmml", "Count", "com.ligadata.pmml.udfs.Udfs.Count", ("System", "Long"), List(("exprs", "System", "ListOfLong")), null)
@@ -984,11 +992,16 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "IntOr", "com.ligadata.pmml.udfs.Udfs.IntOr", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		mgr.AddFunc("Pmml", "Or", "com.ligadata.pmml.udfs.Udfs.Or", ("System", "Boolean"), List(("boolexpr", "System", "Boolean")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 		
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "BaseMsg")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "BaseContainer")), null)
+
+/*
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("value", "System", "MessageContainerBase")), null)
+		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "MessageContainerBase")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "MessageContainerBase")), null)
-		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "MessageContainerBase")), null)
 
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float"),("value", "System", "BaseContainer")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double"),("value", "System", "BaseContainer")), null)
@@ -1001,14 +1014,20 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long"),("value", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int"),("value", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Put", "com.ligadata.pmml.udfs.Udfs.Put", ("System", "Boolean"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String"),("value", "System", "BaseMsg")), null)
+*/
 
 		mgr.AddFunc("Pmml", "GetArray", "com.ligadata.pmml.udfs.Udfs.GetArray", ("System", "ArrayOfMessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String")), null)
+		mgr.AddFunc("Pmml", "GetHistory", "com.ligadata.pmml.udfs.Udfs.GetHistory", ("System", "ArrayOfMessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("appendCurrentChanges", "System", "Boolean")), null)
+/*
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Any")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Float")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Double")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Long")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("key", "System", "String")), null)
+*/
+
+		mgr.AddFunc("Pmml", "Get", "com.ligadata.pmml.udfs.Udfs.Get", ("System", "MessageContainerBase"), List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("primaryKey", "System", "ListOfString")), null)
 
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "QueueOfAny")), null)
 		mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "ListOfAny")), null)
@@ -1024,8 +1043,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Stack[T]")), null)
 		//mgr.AddFunc("Pmml", "CollectionLength", "com.ligadata.pmml.udfs.Udfs.CollectionLength", ("System", "Int"), List(("coll", "System", "Vector[T]")), null)
 
-	}
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ArrayofAny"), List(("coll", "System", "ArrayOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ArrayBufferofAny"), List(("coll", "System", "ArrayBufferOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ListofAny"), List(("coll", "System", "ListOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "QueueofAny"), List(("coll", "System", "QueueOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "SortedSetofAny"), List(("coll", "System", "SortedSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "TreeSetofAny"), List(("coll", "System", "TreeSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "ImmutableSetOfAny"), List(("coll", "System", "ImmutableSetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+  		mgr.AddFunc("Pmml", "Add", "com.ligadata.pmml.udfs.Udfs.Add", ("System", "SetOfAny"), List(("coll", "System", "SetOfAny"), ("items", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
 
+  		mgr.AddFunc("Pmml", "GetPartitionKey", "com.ligadata.pmml.udfs.Udfs.GetPartitionKey", ("System", "ListOfString"), List(("msg", "System", "BaseMsg")), null)
+  		mgr.AddFunc("Pmml", "GetPartitionKey", "com.ligadata.pmml.udfs.Udfs.GetPartitionKey", ("System", "ListOfString"), List(("msg", "System", "BaseContainer")), null)
+  		mgr.AddFunc("Pmml", "GetPrimaryKey", "com.ligadata.pmml.udfs.Udfs.GetPrimaryKey", ("System", "ListOfString"), List(("msg", "System", "BaseMsg")), null)
+  		mgr.AddFunc("Pmml", "GetPrimaryKey", "com.ligadata.pmml.udfs.Udfs.GetPrimaryKey", ("System", "ListOfString"), List(("msg", "System", "BaseContainer")), null)
+
+ 	}
 	
 	def init_com_ligadata_pmml_udfs_Udfs1 {
 	  
@@ -1267,11 +1299,11 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "MapKeys", "com.ligadata.pmml.udfs.Udfs.MapKeys", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
  		mgr.AddFunc("Pmml", "MapValues", "com.ligadata.pmml.udfs.Udfs.MapValues", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
 
+
  		/** time/date functions */
 		mgr.AddFunc("Pmml", "AgeCalc", "com.ligadata.pmml.udfs.Udfs.AgeCalc", ("System", "Int"), List(("yyyymmdd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2Secs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2Secs", ("System", "Int"), List(("compressedTime", "System", "Int")), null)
-		mgr.AddFunc("Pmml", "AsCompressedDate", "com.ligadata.pmml.udfs.Udfs.AsCompressedDate", ("System", "Int"), List(("milliSecs", "System", "Long")), null)
-		
+		mgr.AddFunc("Pmml", "AsCompressedDate", "com.ligadata.pmml.udfs.Udfs.AsCompressedDate", ("System", "Int"), List(("milliSecs", "System", "Long")), null)	
 		mgr.AddFunc("Pmml", "MonthFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.MonthFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "YearFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.YearFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DayOfMonthFromISO8601Int", "com.ligadata.pmml.udfs.Udfs.DayOfMonthFromISO8601Int", ("System", "Int"), List(("dt", "System", "Int")), null)
@@ -1289,22 +1321,37 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "WeeksAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("someDate", "System", "Int"),("numWks", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "DaysAgo", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "Long"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
-		//mgr.AddFunc("Pmml", "toDateTime", "com.ligadata.pmml.udfs.Udfs.YearsAgo", ("System", "DateTime"), List(("yyyymmdd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "toMillisFromJulian", "com.ligadata.pmml.udfs.Udfs.toMillisFromJulian", ("System", "Long"), List(("yyddd", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "CompressedTimeHHMMSSCC2MilliSecs", "com.ligadata.pmml.udfs.Udfs.CompressedTimeHHMMSSCC2MilliSecs", ("System", "Long"), List(("compressedTime", "System", "Int")), null)
-
 		mgr.AddFunc("Pmml", "DaysAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.DaysAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "WeeksAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.WeeksAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "MonthsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.MonthsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
 		mgr.AddFunc("Pmml", "YearsAgoAsISO8601", "com.ligadata.pmml.udfs.Udfs.YearsAgoAsISO8601", ("System", "Int"), List(("someDate", "System", "Int"),("numDays", "System", "Int")), null)
-	
+        mgr.AddFunc("Pmml", "iso8601DateFmt", "com.ligadata.pmml.udfs.Udfs.iso8601DateFmt", ("System", "String"), List(("fmtStr", "System", "String"),("yyyymmdds", "System", "Int")), null)
+        mgr.AddFunc("Pmml", "timestampFmt", "com.ligadata.pmml.udfs.Udfs.timestampFmt", ("System", "String"), List(("fmtStr", "System", "String"),("timestamp", "System", "Long")), null)
+        mgr.AddFunc("Pmml", "timeStampFromStr", "com.ligadata.pmml.udfs.Udfs.timeStampFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "dateFromStr", "com.ligadata.pmml.udfs.Udfs.dateFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "timeFromStr", "com.ligadata.pmml.udfs.Udfs.timeFromStr", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+		mgr.AddFunc("Pmml", "dateSecondsSinceYear", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceYear", ("System", "Long"), List(("yr", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "dateDaysSinceYear", "com.ligadata.pmml.udfs.Udfs.dateDaysSinceYear", ("System", "Long"), List(("yr", "System", "Int")), null)
+		mgr.AddFunc("Pmml", "dateMilliSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateMilliSecondsSinceMidnight", ("System", "Long"), List(), null)
+		mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(), null)
+        mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(("fmtStr", "System", "String"),("timestampStr", "System", "String")), null)
+        mgr.AddFunc("Pmml", "dateSecondsSinceMidnight", "com.ligadata.pmml.udfs.Udfs.dateSecondsSinceMidnight", ("System", "Long"), List(("timestamp", "System", "Long")), null)
+        mgr.AddFunc("Pmml", "millisecsBetween", "com.ligadata.pmml.udfs.Udfs.millisecsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "secondsBetween", "com.ligadata.pmml.udfs.Udfs.secondsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "minutesBetween", "com.ligadata.pmml.udfs.Udfs.minutesBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "hoursBetween", "com.ligadata.pmml.udfs.Udfs.hoursBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "daysBetween", "com.ligadata.pmml.udfs.Udfs.daysBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "weeksBetween", "com.ligadata.pmml.udfs.Udfs.weeksBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "monthsBetween", "com.ligadata.pmml.udfs.Udfs.monthsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+        mgr.AddFunc("Pmml", "yearsBetween", "com.ligadata.pmml.udfs.Udfs.yearsBetween", ("System", "Long"), List(("time1", "System", "Long"),("time2", "System", "Long"),("inclusive", "System", "Boolean")), null)
+
+  
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseMsg")), null)
 		mgr.AddFunc("Pmml", "Version", "com.ligadata.pmml.udfs.Udfs.Version", ("System", "String"), List(("msg", "System", "BaseContainer")), null)
-		//mgr.AddFunc("Pmml", "NewMessageOrContainer", "com.ligadata.pmml.udfs.Udfs.NewMessageOrContainer"
-		//			, ("System", "MessageContainerBase")
-		//			, List(("fqclassname", MdMgr.sysNS, "String")), null)
 					
-					
+	/*
 		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
 				, ("System", "MessageContainerBase")
 				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "Float")), null)
@@ -1320,8 +1367,14 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
 				, ("System", "MessageContainerBase")
 				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("key", "System", "String")), null)
- 
+ */
+		mgr.AddFunc("Pmml", "GetMsgContainerElseNew", "com.ligadata.pmml.udfs.Udfs.GetMsgContainerElseNew"
+				, ("System", "MessageContainerBase")
+				, List(("xId", "System", "Long"),("gCtx", "System", "EnvContext"),("fqClassName", "System", "String"),("containerId", "System", "String"),("partKey", "System", "ListOfString"),("primaryKey", "System", "ListOfString")), null)
 		
+		mgr.AddFunc("Pmml", "ToStringList", "com.ligadata.pmml.udfs.Udfs.ToStringList", ("System", "ListOfString"), List(("args", "System", "Any")), scala.collection.mutable.Set[FcnMacroAttr.Feature](FcnMacroAttr.HAS_INDEFINITE_ARITY))
+		mgr.AddFunc("Pmml", "ToString", "com.ligadata.pmml.udfs.Udfs.ToString", ("System", "String"), List(("arg", "System", "Any")), null)
+	
 	}
 
 	def InitFcns = {
@@ -1514,7 +1567,15 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		logger.debug("MetadataLoad...loading Macro functions")
 
 		
-		/** **************************************************************************************************************/
+		/** ************************************************************
+		 *  
+		 *  NOTE: For the Builds portion of the Builds/Does macros that 
+		 *  do the class update contexts... make sure the class name is
+		 *  unique.  Do this by qualifying the name with all of the arguments
+		 *  s.t. there is no confusion between 3 and 4 argument macros that
+		 *  have the same class base name.  
+		 *  
+		 ***************************************************************/
 		
 		/** catalog the CLASSUPDATE oriented macros: 
 		 
@@ -1549,13 +1610,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	  		
 		 */
 		val SetFieldMacroStringFixed : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.%2% = %3%; true }
 	} """
 		
 		val SetFieldMacroStringMapped : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.set("%2%", %3%); true }
 	} """
@@ -1633,13 +1694,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 
 
 		val SetFieldMacroContainerStringFixed : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_%4%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.%2% = %3%.%4%; true }
 	} """
 		
 		val SetFieldMacroContainerStringMapped : String =  """
-	class %1%_%2%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_%4%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def setField  : Boolean = { %1%.set("%2%", %3%.get("%4%").asInstanceOf[%4_type%]); true }
 	} """
@@ -1693,13 +1754,13 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	  		
 		 */
 		val incrementByMacroStringFixed : String =  """
-	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%.%2% += %3%; true }
 	} """
 		
 		val incrementByMacroStringMapped : String =  """
-	class %1%_%2%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
+	class %1%_%2%_%3%_incrementBy(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
 	  	def incrementBy  : Boolean = { %1%.set("%2%", (%1%.get("%2%").asInstanceOf[%2_type%] + %3%)); true }
 	} """
@@ -1728,21 +1789,52 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		/** **************************************************************************************************************/
 					
 		val putGlobalContainerFixedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %4% : %4_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.%4%.toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%, %4%); true }
 	} """
 		
 		val putGlobalContainerMappedMacroTemplate : String =  """
-	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %5% : %5_type%)
+	class %1%_%2%_%3%_%4%_Put(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%, val %3% : %3_type%, val %4% : %4_type%)
 	{
-	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%.get("%4%").asInstanceOf[%4_type%].toString, %5%); true }
+	  	def Put  : Boolean = { %1%.setObject(ctx.xId, %2%, %3%, %4%); true }
 	} """
 		
 		/**	EnvContext write access methods:
 		 * 	  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
 		 *	  def setObject(tempTransId: Long, containerName: String, key: Any, value: MessageContainerBase): Unit
-		 */
+		 
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "ListOfString")
+						, ("value", MdMgr.sysNS, "MessageContainerBase"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+		*/
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "ListOfString")
+						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+						, ("containerName", MdMgr.sysNS, "String")
+						, ("key", MdMgr.sysNS, "ListOfString")
+						, ("value", MdMgr.sysNS, "BaseContainer"))
+					, fcnMacrofeatures
+					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -1922,7 +2014,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 						, ("value", MdMgr.sysNS, "BaseMsg"))
 					, fcnMacrofeatures
 					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
+*/
 
 		/** **************************************************************************************************************/
 
@@ -2065,8 +2157,33 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (getAllObjectsMacroTemplate,getAllObjectsMacroTemplate)
 					,-1)	  
 
-		val getObjectMacroTemplate : String =   """Get(ctx.xId, %1%, %2%, %3%)"""
+		val getHistoryMacroTemplate : String =   """GetHistory(ctx.xId, %1%, %2%, %3%, %4%)"""
 
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetHistory"
+					, (MdMgr.sysNS, "ArrayOfMessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("partKey", MdMgr.sysNS, "ListOfString")
+					    , ("appendCurrentChanges", MdMgr.sysNS, "Boolean"))
+					, fcnMacrofeatures
+					, (getHistoryMacroTemplate,getHistoryMacroTemplate)
+					,-1)	  
+
+		val getObjectMacroTemplate : String =   """Get(ctx.xId, %1%, %2%, %3%, %4%)"""
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Get"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("partKey", MdMgr.sysNS, "ListOfString")
+					    , ("primaryKey", MdMgr.sysNS, "ListOfString"))
+					, fcnMacrofeatures
+					, (getObjectMacroTemplate,getObjectMacroTemplate)
+					,-1)	  
+
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "Get"
 					, (MdMgr.sysNS, "MessageContainerBase")
@@ -2126,10 +2243,23 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (getObjectMacroTemplate,getObjectMacroTemplate)
 					,-1)	  
+*/
 
+		val getObjectElseNewMacroTemplate : String =   """GetMsgContainerElseNew(ctx.xId, %1%, %2%, %3%, %4%, %5%)"""
 
-		val getObjectElseNewMacroTemplate : String =   """GetMsgContainerElseNew(ctx.xId, %1%, %2%, %3%, %4%)"""
+		mgr.AddMacro(MdMgr.sysNS
+					, "GetMsgContainerElseNew"
+					, (MdMgr.sysNS, "MessageContainerBase")
+					, List(("gCtx", MdMgr.sysNS, "EnvContext")
+					    , ("fqClassName", MdMgr.sysNS, "String")
+					    , ("containerName", MdMgr.sysNS, "String")
+					    , ("partKey", MdMgr.sysNS, "ListOfString")
+					    , ("primaryKey", MdMgr.sysNS, "ListOfString"))
+					, fcnMacrofeatures
+					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
+					,-1)
 
+/*
 		mgr.AddMacro(MdMgr.sysNS
 					, "GetMsgContainerElseNew"
 					, (MdMgr.sysNS, "MessageContainerBase")
@@ -2184,23 +2314,25 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (getObjectElseNewMacroTemplate,getObjectElseNewMacroTemplate)
 					,-1)	  
-
+*/
 					
 					
 					
 					
-		val containsMacroTemplate : String =   """Contains(ctx.xId, %1%, %2%, %3%)"""
+		val containsMacroTemplate : String =   """Contains(ctx.xId, %1%, %2%, %3%, %4%)"""
 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Contains"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext")
 					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "String"))
+					    , ("partKey", MdMgr.sysNS, "ListOfString")
+					    , ("primaryKey", MdMgr.sysNS, "ListOfString"))
 					, fcnMacrofeatures
 					, (containsMacroTemplate,containsMacroTemplate)
 					,-1)	  
 
+/*
 		val containsAnyMacroTemplate : String =   """ContainsAny(ctx.xId, %1%, %2%, %3%)"""
 
 		mgr.AddMacro(MdMgr.sysNS
@@ -2208,7 +2340,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext")
 					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "String"))
+					    , ("key", MdMgr.sysNS, "ArrayOfString"))
 					, fcnMacrofeatures
 					, (containsAnyMacroTemplate,containsAnyMacroTemplate)
 					,-1)	  
@@ -2220,11 +2352,11 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, (MdMgr.sysNS, "Boolean")
 					, List(("gCtx", MdMgr.sysNS, "EnvContext")
 					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "String"))
+					    , ("key", MdMgr.sysNS, "ArrayOfString"))
 					, fcnMacrofeatures
 					, (containsAllMacroTemplate,containsAllMacroTemplate)
 					,-1)	  
-
+*/
 	}
 
 }

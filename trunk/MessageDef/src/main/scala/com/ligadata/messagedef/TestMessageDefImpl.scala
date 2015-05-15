@@ -83,8 +83,9 @@ object TestMessageDefImpl extends LogTrait {
     //val json: String = Source.fromFile("concept.json").getLines.mkString
     //  val json: String = Source.fromFile("dictionaryMessage.json").getLines.mkString
 
-    //msg.processConcept(json, "JSON")
+    //   msg.processConcept(json, "JSON")
     //   msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)
+     println("Done")
   }
 
 }

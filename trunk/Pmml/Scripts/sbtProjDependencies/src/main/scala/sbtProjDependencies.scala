@@ -85,6 +85,7 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
                        --emitFQJars <t | 1 | f | 0>
                        --emitJarNamesOnly <t | 1 | f | 0>
                        --emitJarNamesOnlyList <t | 1 | f | 0>
+                       --emitJsonJarNamesOnlyList <t | 1 | f | 0>
                        --emitAll <t | 1 | f | 0>
         where sbtDeps (Required) contains the 'money' result (output line containing 'List(Attributed') from an sbt project fullClasspath task 
               emitCp will cause a ':' separated class path style string to be printed 
@@ -92,6 +93,7 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
               emitFQJars will print the jars with full path names (one jar per line)
               emitJarNamesOnly will print the jar names without paths (one jar per line)
               emitJarNamesOnlyList will print the jar names without paths as a comma delimited list
+              emitJsonJarNamesOnlyList will print the jar names without paths delimited by quote marks and spaces suitable for inclusion in json string
               emitAll will print all of the above. 
       
         Note: If multiple emits are requested, there will be one blank line between each emission to stdout.  At least
@@ -102,7 +104,7 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
 
     def testPaths : String = { 
 """
-[info] List(Attributed(/home/rich/github/Med/Fatafat/trunk/Pmml/PmmlUdfs/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/Metadata/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/Pmml/PmmlRuntime/target/scala-2.10/classes), Attributed(/home/rich/github/Med/Fatafat/trunk/FatafatBase/target/scala-2.10/classes), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar), Attributed(/home/rich/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar), Attributed(/home/rich/.ivy2/cache/joda-time/joda-time/jars/joda-time-2.3.jar), Attributed(/home/rich/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scalap/jars/scalap-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.0.jar))
+[info] List(Attributed(/home/rich/github/Med/RTD/trunk/Pmml/PmmlUdfs/target/scala-2.10/classes), Attributed(/home/rich/github/Med/RTD/trunk/Metadata/target/scala-2.10/classes), Attributed(/home/rich/github/Med/RTD/trunk/Pmml/PmmlRuntime/target/scala-2.10/classes), Attributed(/home/rich/github/Med/RTD/trunk/OnLEPBase/target/scala-2.10/classes), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar), Attributed(/home/rich/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar), Attributed(/home/rich/.ivy2/cache/joda-time/joda-time/jars/joda-time-2.3.jar), Attributed(/home/rich/.ivy2/cache/log4j/log4j/bundles/log4j-1.2.17.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar), Attributed(/home/rich/.ivy2/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scalap/jars/scalap-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-compiler/jars/scala-compiler-2.10.0.jar), Attributed(/home/rich/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.0.jar))
 """
     }
       
@@ -127,6 +129,8 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
               nextOption(map ++ Map('emitJarNamesOnly -> value), tail)
             case "--emitJarNamesOnlyList" :: value :: tail =>
               nextOption(map ++ Map('emitJarNamesOnlyList -> value), tail)
+            case "--emitJsonJarNamesOnlyList" :: value :: tail =>
+              nextOption(map ++ Map('emitJsonJarNamesOnlyList -> value), tail)
             case "--emitAll" :: value :: tail =>
               nextOption(map ++ Map('emitAll -> value), tail)
             case option :: tail =>
@@ -144,6 +148,7 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
         val emitFQJars = if (options.contains('emitFQJars)) options.apply('emitFQJars) else null
         val emitJarNamesOnly = if (options.contains('emitJarNamesOnly)) options.apply('emitJarNamesOnly) else null
         val emitJarNamesOnlyList = if (options.contains('emitJarNamesOnlyList)) options.apply('emitJarNamesOnlyList) else null
+        val emitJsonJarNamesOnlyList = if (options.contains('emitJsonJarNamesOnlyList)) options.apply('emitJsonJarNamesOnlyList) else null
         val emitAll = if (options.contains('emitAll)) options.apply('emitAll) else null
         
         val emitClassPath : Boolean = (emitCp == "1" || emitCp == "t" || emitAll == "1" || emitAll == "t")
@@ -151,10 +156,11 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
         val emitJarsWithPath : Boolean = (emitFQJars == "1" || emitFQJars == "t" || emitAll == "1" || emitAll == "t")
         val emitJarsNamesSansPath : Boolean = (emitJarNamesOnly == "1" || emitJarNamesOnly == "t" || emitAll == "1" || emitAll == "t")
         val emitJarsNamesSansPathList : Boolean = (emitJarNamesOnlyList == "1" || emitJarNamesOnlyList == "t" || emitAll == "1" || emitAll == "t")
+        val emitJsonJarsNamesSansPathList : Boolean = (emitJsonJarNamesOnlyList == "1" || emitJsonJarNamesOnlyList == "t" || emitAll == "1" || emitAll == "t")
         
 //        val reasonableArguments : Boolean = (sbtDeps != null && sbtDeps.size > 0 && //sbtDeps.startsWith("[info] List(Attributed") && 
         val reasonableArguments : Boolean = (sbtDeps != null && sbtDeps.size > 0 && 
-            (emitClassPath || emitWinClassPath || emitJarsWithPath  || emitJarsNamesSansPath || emitJarsNamesSansPathList))
+            (emitClassPath || emitWinClassPath || emitJarsWithPath  || emitJarsNamesSansPath || emitJarsNamesSansPathList || emitJsonJarsNamesSansPathList))
         if (! reasonableArguments) {
             println("Your arguments are not satisfactory...Usage:")
             println(usage)
@@ -210,9 +216,19 @@ sbtProjectDependencies --sbtDeps <deps from "`sbt 'show <proj>/fullClasspath' | 
                 print(path)
             })
             println
+        }
+        
+        if (emitJsonJarsNamesSansPathList) {
+            var i : Int = 0
+            depJars.foreach(path => {
+                if (i != 0) print(", ")
+                i += 1
+                print(s"${'\\'}${'"'}$path${'\\'}${'"'}")
+            })
             println
         }
         
+        println
     }
 }
 

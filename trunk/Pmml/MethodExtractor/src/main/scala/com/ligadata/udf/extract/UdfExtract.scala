@@ -153,7 +153,22 @@ object MethodExtract extends App with LogTrait{
 			excludeList = Array[String]()
 		}
 		/** get the members */
-		val mbrs = companion[com.ligadata.pmml.udfs.UdfBase](clsName).members
+			
+		/** Create an array buffer filled with the methods from the object with the supplied fully qualified class name */
+		val mirror = ru.runtimeMirror(udfLoaderInfo.loader)		 
+		var mbrs : ArrayBuffer[scala.reflect.runtime.universe.Symbol] = ArrayBuffer[scala.reflect.runtime.universe.Symbol]()
+		try {
+			val clz1 = Class.forName(clsName + "$",true,udfLoaderInfo.loader)
+			val clz1Sym = mirror.classSymbol(clz1)
+			val istrait = clz1Sym.isTrait
+			val isabstract = clz1Sym.isAbstractClass
+			val clsType = clz1Sym.toType
+			val members = clsType.declarations
+			members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
+		} catch {
+		  case t : Throwable => t.printStackTrace 
+		  sys.exit
+		}
 		
 	  	val initFcnNameBuffer : StringBuilder = new StringBuilder()
 		val initFcnNameNodes : Array[String] = clsName.split('.').map(node => node.trim)
@@ -165,7 +180,7 @@ object MethodExtract extends App with LogTrait{
 		val mgr : MdMgr = InitializeMdMgr
 
 		/** filter out the methods and then only utilize those that are in the object ... ignore inherited trait methods */ 
-		mbrs.filter(_.toString.startsWith("method")).foreach{ fcnMethod => 
+		mbrs.foreach{ fcnMethod => 
 			val fcnMethodObj = fcnMethod.asInstanceOf[MethodSymbol]
 			val name = fcnMethodObj.name
 			val returnType = fcnMethodObj.returnType

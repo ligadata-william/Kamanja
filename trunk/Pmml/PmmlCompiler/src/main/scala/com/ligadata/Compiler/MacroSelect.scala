@@ -137,7 +137,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  	
 	 *  
 	 */
-	def generateCode(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String) = {
+	def generateCode(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String, String,String) = {
 	  
   		if (macroDef.features.contains(FcnMacroAttr.CLASSUPDATE)) {
   			generateClassBuildsAndDoes(macroDef, argTypes)
@@ -157,7 +157,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  to return the actual type metadata in the second arg instead of a boolean or in addition to the boolean.
 	 *  @return a "builds/does" pair with a null "builds" value in tuple._1 since it is not used.
 	 */
-	def generateOnlyDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String) = {
+	def generateOnlyDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String,String) = {
 	  
 	  	/** either template can be used.  There is no mapped container */
   		val templateUsed : String = macroDef.macroTemplate._1
@@ -165,7 +165,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		val parameterValues : Array[String] = getArgValues
 
 		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues)
-		(null,functionMacroExpr)
+		(null,null,functionMacroExpr)
 	}
 	
 	/**
@@ -196,7 +196,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *   NOTE: The BaseTypeDef can be a typedef for any of the types or a function definition.  When it is a function
 	 *   definition, the typestring is the result type string representation
 	 */
-	def generateClassBuildsAndDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String) = {
+	def generateClassBuildsAndDoes(macroDef : MacroDef, argTypes : Array[(String,Boolean,BaseTypeDef)]) : (String,String,String) = {
 	  	/** 
 	  	 *  Prepare the print representations for each node and assign it to the variables.  Variable
 	  	 *  assignment is $1 for first argument, $1.type for its type, $2 for second argument, $2.type
@@ -220,11 +220,15 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   		val isFixed : Boolean = if (argTypesCnt > 0) {
   			val fixedArgTypes : Boolean = (argTypes.filter(triple => {
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = triple
-  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && argElem.asInstanceOf[ContainerTypeDef].IsFixed)
+  				val typStr : String = argElem.typeString
+  				val isCollection : Boolean = typStr.contains("scala.Array") || typStr.contains("scala.collection")
+  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && argElem.asInstanceOf[ContainerTypeDef].IsFixed && ! isCollection)
   			}).size > 0)
   			val mappedArgTypes : Boolean = (argTypes.filter(tripleM => {
   				val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = tripleM
-  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed)
+  				val typStr : String = argElem.typeString
+  				val isCollection : Boolean = typStr.contains("scala.Array") || typStr.contains("scala.collection")
+  				(isContainer && argElem.isInstanceOf[ContainerTypeDef] && ! argElem.asInstanceOf[ContainerTypeDef].IsFixed && ! isCollection)
   			}).size > 0)
 			if (mappedArgTypes && fixedArgTypes) {
 				false  /** bias toward the mapped in this case... */
@@ -327,8 +331,13 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val subExpr : String = ctx.fcnSubstitute.makeSubstitutions(mappedBuildsTemplate, substitutionMap)
    			(subExpr,buildsTemplate)
   		}
+		
+		val buildsClassKeyCandidate : String = substitutedClassExpr.split('(').head
+		val buildsClassKeyCandidateTrimmed = if (buildsClassKeyCandidate != null && buildsClassKeyCandidate.size > 0) buildsClassKeyCandidate.trim else null
+		val buildsClassKey : String = if (buildsClassKeyCandidateTrimmed != null && buildsClassKeyCandidateTrimmed.size > 0 &&
+		    								buildsClassKeyCandidateTrimmed.startsWith("class")) buildsClassKeyCandidateTrimmed else null
 		logger.debug("builds class to be queued:")
-		logger.debug(s"\n$substitutedClassExpr")		  
+		logger.debug(s"\n$buildsClassKey = \n$substitutedClassExpr")		  
 		
 		/** 
 		 *	Create the "does" portion 
@@ -345,7 +354,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		logger.debug(s"\n$doesCmd")		  
 		
 	  
-	  	(substitutedClassExpr,doesCmd)
+	  	(buildsClassKey, substitutedClassExpr, doesCmd)
 	}
 	
 	/** 
