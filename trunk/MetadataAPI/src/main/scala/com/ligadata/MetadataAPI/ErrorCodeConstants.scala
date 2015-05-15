@@ -75,8 +75,8 @@ object ErrorCodeConstants {
    val Add_Container_Failed = "Failed to Add Container";
    val Update_Container_Successful = "Container Updated Successfully";
    val Update_Container_Failed = "Failed to Update Container";
-   val Remove_Container_Failed = "Deleted Container Successfully";
-   val Remove_Container_Successful = "Failed to Delete Container";
+   val Remove_Container_Failed = "Failed to Delete Container";
+   val Remove_Container_Successful = "Deleted Container Successfully";
    val Remove_Container_Failed_Not_Found = "Failed to Delete Container. Container was not found";
    val Get_All_Containers_Failed = "Failed to fetch all containers";
    val Get_All_Containers_Failed_Not_Available = "Failed to fetch all containers. No container Available.";
