@@ -238,8 +238,11 @@ trait MetadataAPIService extends HttpService {
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid:Option[String], password:Option[String], role:Option[String]): Unit = {
     val action = "Get" + objtype
     val notes = "Invoked " + action + " API "
-    var argParm: String = verifyInput(objKey,objtype,rContext)
-    if (argParm == null) return
+    var argParm: String = null 
+    if (!objtype.equalsIgnoreCase("config")) {
+      argParm = verifyInput(objKey,objtype,rContext)
+      if (argParm == null) return
+    }
     
     if (objtype.equalsIgnoreCase("Config")) {
         val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext,userid,password,role)))
