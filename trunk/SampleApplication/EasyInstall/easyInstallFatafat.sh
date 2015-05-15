@@ -100,7 +100,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly
+sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -116,6 +116,7 @@ cp MetadataAPI/target/scala-2.10/MetadataAPI* $bin
 cp FatafatManager/target/scala-2.10/FatafatManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
+cp Utils/ExtractData/target/scala-2.10/ExtractData* $bin
 
 # *******************************
 # Copy jars required (more than required if the fat jars are used)

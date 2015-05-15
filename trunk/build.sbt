@@ -87,3 +87,5 @@ lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase)
 
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs)
 
+lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage)
+
