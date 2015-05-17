@@ -48,7 +48,10 @@ object PmmlError extends LogTrait {
 			logger.error(s"While processing $errorVicinity...")
 			logger.error(errorMsg)
 		}
-	  
+		
+		/** count the errors */
+		ctx.IncrErrorCounter
+		
 	}
 
 	/** 

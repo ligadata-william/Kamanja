@@ -186,6 +186,11 @@ class CompilerProxy{
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
 				       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
       val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir,recompile)
+      
+      /** errors were encountered... avoid Scala compilation of the broken src.  Src file
+       * is available in classStr, however
+       */
+      if (modDef == null) { 
 
       var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 
@@ -232,6 +237,8 @@ class CompilerProxy{
 
       modDef.objectDefinition = pmmlStr
       modDef.objectFormat = fXML
+ 
+      } /** end of (modDef == null) */
 
       (classStr,modDef)
     } catch{

@@ -3010,12 +3010,11 @@ object MetadataAPIImpl extends MetadataAPI {
       compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
 
-      // Make sure the version of the model is greater than any of previous models with same FullName
-      var latestVersion = GetLatestModel(modDef)
-      var isValid = true
-      if (latestVersion != None) {
-        isValid = IsValidVersion(latestVersion.get, modDef)
-      }
+      // ModelDef may be null if there were pmml compiler errors... act accordingly.  If modelDef present,
+      // make sure the version of the model is greater than any of previous models with same FullName
+      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
+      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else false
+ 
       if (isValid) {
         // save the jar file first
         UploadJarsToDB(modDef)
@@ -3028,7 +3027,10 @@ object MetadataAPIImpl extends MetadataAPI {
         NotifyEngine(objectsAdded, operations)
         apiResult
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required + ":" +  modDef.FullName + "." + MdMgr.Pad0s2Version(modDef.Version))
+        val reasonForFailure : String = if (modDef != null) ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required else ErrorCodeConstants.Add_Model_Failed
+        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
+        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
@@ -3054,8 +3056,8 @@ object MetadataAPIImpl extends MetadataAPI {
       compProxy.setLoggerLevel(Level.TRACE)
       val pmmlText = mod.ObjectDefinition
       var (classStr, modDef) = compProxy.compilePmml(pmmlText,true)
-      val latestVersion = GetLatestModel(modDef)
-      var isValid = true
+      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
+      val isValid : Boolean = (modDef != null)
       if (isValid) {
         RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
         UploadJarsToDB(modDef)
@@ -3069,7 +3071,10 @@ object MetadataAPIImpl extends MetadataAPI {
         NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, ErrorCodeConstants.Add_Model_Failed + ":" + modDef.FullName + "." + MdMgr.Pad0s2Version(modDef.Version))
+        val reasonForFailure : String = ErrorCodeConstants.Add_Model_Failed
+        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
+        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
@@ -3093,13 +3098,12 @@ object MetadataAPIImpl extends MetadataAPI {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
-      val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
-      val latestVersion = GetLatestModel(modDef)
-      var isValid = true
-      if (latestVersion != None) {
-          isValid = IsValidVersion(latestVersion.get, modDef)
-      }
+      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
+      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else false
+ 
       if (isValid) {
+        val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
+        
         RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
         UploadJarsToDB(modDef)
         val result = AddModel(modDef)
@@ -3112,7 +3116,10 @@ object MetadataAPIImpl extends MetadataAPI {
         NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateModel", null, ErrorCodeConstants.Update_Model_Failed_Invalid_Version + ":" + modDef.FullName + "." + MdMgr.Pad0s2Version(modDef.Version))
+        val reasonForFailure : String = if (modDef != null) ErrorCodeConstants.Update_Model_Failed_Invalid_Version else ErrorCodeConstants.Update_Model_Failed
+        val modDefName : String = if (modDef != null)  modDef.FullName else "(pmml compile failed)"
+        val modDefVer : String = if (modDef != null) MdMgr.Pad0s2Version(modDef.Version) else MdMgr.UnknownVersion
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, reasonForFailure + ":" +  modDefName + "." + modDefVer)
         apiResult.toString()
       }
     } catch {
