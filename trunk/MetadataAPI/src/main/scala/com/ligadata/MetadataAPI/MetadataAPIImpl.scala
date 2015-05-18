@@ -56,12 +56,12 @@ import java.util.Date
 
 case class JsonException(message: String) extends Exception(message)
 
-case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
-case class TypeDefList(Types: List[TypeDef])
+//case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
+//case class TypeDefList(Types: List[TypeDef])
 
-case class Argument(ArgName: String, ArgTypeNameSpace: String, ArgTypeName: String)
-case class Function(NameSpace: String, Name: String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Version: String, JarName: String, DependantJars: List[String])
-case class FunctionList(Functions: List[Function])
+//case class Argument(ArgName: String, ArgTypeNameSpace: String, ArgTypeName: String)
+//case class Function(NameSpace: String, Name: String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Version: String, JarName: String, DependantJars: List[String])
+//case class FunctionList(Functions: List[Function])
 
 //case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String,Description: String, Author: String, ActiveDate: String)
 case class Concept(NameSpace: String, Name: String, TypeNameSpace: String, TypeName: String, Version: String)
@@ -99,7 +99,7 @@ case class ContainerDefParsingException(e: String) extends Exception(e)
 case class ModelDefParsingException(e: String) extends Exception(e)
 case class ApiResultParsingException(e: String) extends Exception(e)
 case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
-case class ObjectNotFoundException(e: String) extends Exception(e)
+//case class ObjectNotFoundException(e: String) extends Exception(e)
 case class CreateStoreFailedException(e: String) extends Exception(e)
 case class UpdateStoreFailedException(e: String) extends Exception(e)
 
@@ -550,6 +550,11 @@ object MetadataAPIImpl extends MetadataAPI {
   private var configStore: DataStore = _
 
   def oStore = otherStore
+
+  def GetMetadataStore: DataStore = metadataStore
+  def GetConfigStore: DataStore = configStore
+  def GetJarStore: DataStore = jarStore
+  def GetTransStore: DataStore = transStore
 
   def KeyAsStr(k: com.ligadata.keyvaluestore.Key): String = {
     val k1 = k.toArray[Byte]
@@ -1833,6 +1838,7 @@ object MetadataAPIImpl extends MetadataAPI {
           var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveType", null, ErrorCodeConstants.Remove_Type_Not_Found + ":" + dispkey)
           apiResult.toString()
         case Some(ts) =>
+          logger.debug("Type " + dispkey + " is will be deleted ")
           DeleteObject(ts.asInstanceOf[BaseElemDef])
          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveType", null, ErrorCodeConstants.Remove_Type_Successful + ":" + dispkey)
           apiResult.toString()
@@ -2048,7 +2054,12 @@ object MetadataAPIImpl extends MetadataAPI {
     var key = functionName + ":" + version
     val dispkey = functionName + "." + MdMgr.Pad0s2Version(version)
     try {
-      DeleteObject(key, functionStore)
+      val funcDefs = MdMgr.GetMdMgr.FunctionsAvailable(nameSpace, functionName)
+      if (funcDefs != null) {
+	funcDefs.foreach(func => {
+	  DeleteObject(func)
+	})
+      }
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
       apiResult.toString()
     } catch {
