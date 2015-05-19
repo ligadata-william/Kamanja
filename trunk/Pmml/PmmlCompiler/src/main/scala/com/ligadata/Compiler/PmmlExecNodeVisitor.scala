@@ -120,6 +120,10 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 			  checkIfUniqueIdentifier(df.name, node)
 			  checkBaseTypeIdentifier(df.dataType, node)
 		  }
+		  case x : xFieldRef => {
+			  val fr : xFieldRef = x.asInstanceOf[xFieldRef]
+			  checkNameIdentifier(fr.field, node)
+		  }
 		  case x : xConstant => {
 			  val c : xConstant = x.asInstanceOf[xConstant]
 			  val id : String = c.dataType.toLowerCase
@@ -150,7 +154,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 		val identLen : Int = if (ident != null) ident.size else 0
 		val legalCnt : Int = ident.filter(c => FieldIdentifierSyntaxChecker.legalChars.contains(c)).size
 		if (identLen == 0 || identLen > legalCnt) {
-			ctx.logger.error(s"Name identifer $ident found in ${node.toString} is not a legal identifer... it contains one or more illegal characters")
+			ctx.logger.error(s"Name identifer '$ident' found in ${node.toString} is not a legal identifer... it contains one or more illegal characters")
 			ctx.IncrErrorCounter
 		} 
 	}
@@ -163,7 +167,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 	 */
 	def checkIfUniqueIdentifier(ident : String, node : PmmlExecNode) : Unit = {
 		if (ctx.DataDict.contains(ident) && ctx.TransformDict.contains(ident)) {
-			ctx.logger.error(s"Name identifer $ident found in ${node.toString} is not a legal identifer... two or more Data or Derived fields have this name")
+			ctx.logger.error(s"Name identifer '$ident' found in ${node.toString} is not a legal identifer... two or more Data or Derived fields have this name")
 			ctx.IncrErrorCounter
 		}
 	}
@@ -184,7 +188,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 		val identLen : Int = if (typeid != null) typeid.size else 0
 		val legalCnt : Int = typeid.filter(c => FieldIdentifierSyntaxChecker.legalChars.contains(c)).size
 		if (identLen == 0 || identLen > legalCnt) {
-			ctx.logger.error(s"Type identifer $typeid found in ${node.toString} is not a legal identifer... it contains one or more illegal characters")
+			ctx.logger.error(s"Type identifer '$typeid' found in ${node.toString} is not a legal identifer... it contains one or more illegal characters")
 			ctx.IncrErrorCounter
 		} 		
 	}
@@ -214,7 +218,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 		 *  FIXME: When functions are permitted in the Iterable position, then we should just pass on this check and wait
 		 *  until the full function type inference is performed. 
 		 *  
-		 *  NOTE: Nested collections are possible (e.g., Array[Array[Tuple6[Any,Any,Any,Any,Any,Any]]
+		 *  NOTE: Nested collections are possible (e.g., Array[Array[Tuple6[Any,Any,Any,Any,Any,Any]])
 		 *  Dive to the StructTypeDef or MappedMsgTypeDef elemType 
 		 */
 		var passedInitialSmellTest : Boolean = true
@@ -257,10 +261,10 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 			val isAMapMsg : String = if (isAMap) " Map Iterable is not supported..." else ""
 
 			if (notCollMsg.size > 0) {
-				ctx.logger.error(s"Field identifer $ident found in ${node.toString} is not a legal identifer... $notCollMsg")
+				ctx.logger.error(s"Field identifer '$ident' found in ${node.toString} is not a legal identifer... $notCollMsg")
 			}
 			if (isAMapMsg.size > 0) {
-				ctx.logger.error(s"Field identifer $ident found in ${node.toString} is not a legal identifer... $isAMapMsg")
+				ctx.logger.error(s"Field identifer '$ident' found in ${node.toString} is not a legal identifer... $isAMapMsg")
 			}
 			
 			val badFieldRef : String = if (notCollMsg.size == 0 && isAMapMsg.size == 0) {
@@ -268,7 +272,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 			} else ""
 			  
 			if (badFieldRef.size > 0) {
-				ctx.logger.error(s"Field identifer $ident found in ${node.toString} is not a legal identifer... $badFieldRef")
+				ctx.logger.error(s"Field identifer '$ident' found in ${node.toString} is not a legal identifer... $badFieldRef")
 			}
 			ctx.logger.error("    See the Iterable function documentation in the wiki for details. ")
 			
@@ -277,7 +281,7 @@ class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {
 			if (! passedInitialSmellTest) {
 				val identStr : String = if (ident != null) ident else "<NO IDENT SUPPLIED>"
 				val noParentStr : String = if (iterablesElem != null) iterablesElem.toString else "<No iterable function found here>"
-				ctx.logger.error(s"Field identifer $identStr found in $noParentStr is unacceptable... ")
+				ctx.logger.error(s"Field identifer '$identStr' found in $noParentStr is unacceptable... ")
 				ctx.IncrErrorCounter
 			}
 		}

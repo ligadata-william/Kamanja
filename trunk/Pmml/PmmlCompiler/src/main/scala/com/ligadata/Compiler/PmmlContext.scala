@@ -837,6 +837,13 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		PmmlExecNodeVisitor.Visit(xDictNode, syntaxChecker)
 		val dDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("DataDictionary")
 		PmmlExecNodeVisitor.Visit(dDictNode, syntaxChecker)
+		
+		/** At least one prediction in the mining schema please. */
+		val atLeastOnePrediction : Boolean = (MiningSchemaMap.values.filter(m => m.usageType.toLowerCase == "predicted").size > 0)
+		if (! atLeastOnePrediction) {
+			logger.error("Mining Schema must have at least one mining field with usageType == 'predicted'")
+			IncrErrorCounter
+		}
 	}
 		
 	/** 
