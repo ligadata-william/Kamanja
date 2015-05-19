@@ -2032,6 +2032,191 @@ object TestMetadataAPI{
       }
     }
   }
+  
+  def AddOutputMessage {
+	    try {
+	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+	      if (dirName == null) {
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        logger.info("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	      }
+
+	      if (!IsValidDir(dirName))
+	        return
+
+	      val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (cfgFiles.length == 0) {
+	        logger.fatal("No config files in the directory " + dirName)
+	        return
+	      }
+
+	      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (outputmsgFiles.length == 0) {
+	        logger.fatal("No json message files in the directory " + dirName)
+	        return
+	      }
+	      println("\nPick a Message Definition file(s) from below choices\n")
+
+	      var seq = 0
+	      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	      seq += 1
+	      println("[" + seq + "] Main Menu")
+
+	      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+	      //val choice:Int = readInt()
+	      val choicesStr: String = readLine()
+
+	      var valid: Boolean = true
+	      var choices: List[Int] = List[Int]()
+	      var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
+	      try {
+	        choices = choicesStr.filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+	      } catch {
+	        case _: Throwable => valid = false
+	      }
+
+	      if (valid) {
+
+	        choices.foreach(choice => {
+	          if (choice == outputmsgFiles.length + 1) {
+	            return
+	          }
+	          if (choice < 1 || choice > outputmsgFiles.length + 1) {
+	            logger.fatal("Invalid Choice : " + choice)
+	            return
+	          }
+
+	          val outputmsgDefFile = outputmsgFiles(choice - 1).toString
+	          logger.setLevel(Level.TRACE);
+	          val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
+	          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+	          val res: String = MetadataAPIOutputMsg.AddOutputMessage(outputmsgStr, "JSON")
+	          results += Tuple3(choice.toString, outputmsgDefFile, res)
+	        })
+	      } else {
+	        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+	        return
+	      }
+
+	      results.foreach(triple => {
+	        val (choice, filePath, result): (String, String, String) = triple
+	        println(s"Results for output message [$choice] $filePath => \n$result")
+	      })
+
+	    } catch {
+	      case e: AlreadyExistsException => {
+	        logger.error("Object Already in the metadata....")
+	      }
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def UpdateOutputMsg: Unit = {
+	    try {
+	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+	      if (dirName == null) {
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        logger.debug("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, the directory defaults to " + dirName)
+	      }
+
+	      if (!IsValidDir(dirName))
+	        return
+
+	      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (outputmsgFiles.length == 0) {
+	        logger.error("No output message files in the directory " + dirName)
+	        return
+	      }
+
+	      var outputmsgFilePath = ""
+	      println("Pick a Output Message Definition file from the below choice")
+
+	      var seq = 0
+	      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	      seq += 1
+	      println("[" + seq + "] Main Menu")
+
+	      print("\nEnter your choice: ")
+	      val choice: Int = readInt()
+
+	      if (choice == outputmsgFiles.length + 1)
+	        return
+
+	      if (choice < 1 || choice > outputmsgFiles.length + 1) {
+	        logger.error("Invalid Choice: " + choice)
+	        return
+	      }
+
+	      outputmsgFilePath = outputmsgFiles(choice - 1).toString
+	      val outputmsgStr = Source.fromFile(outputmsgFilePath).mkString
+	      println(outputmsgStr)
+	      println("Results as json string => \n" + MetadataAPIOutputMsg.UpdateOutputMsg(outputmsgStr))
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def RemoveOutputMsg {
+	    try {
+	      //logger.setLevel(Level.TRACE);  //check again
+
+	      val outputMsgKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true)
+
+	      if (outputMsgKeys.length == 0) {
+	        println("Sorry, No output messages available in the Metadata")
+	        return
+	      }
+
+	      println("\nPick the output message to be deleted from the following list: ")
+	      var seq = 0
+	      outputMsgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+
+	      print("\nEnter your choice: ")
+	      val choice: Int = readInt()
+
+	      if (choice < 1 || choice > outputMsgKeys.length) {
+	        println("Invalid choice " + choice + ",start with main menu...")
+	        return
+	      }
+
+	      val outputMsgKey = outputMsgKeys(choice - 1)
+	      val outputTokens = outputMsgKey.split("\\.")
+	      val outputNameSpace = outputTokens(0)
+	      val outputName = outputTokens(1)
+	      val outputVersion = outputTokens(2)
+	      val apiResult = MetadataAPIOutputMsg.RemoveOutputMsg(outputNameSpace, outputName, outputVersion.toLong)
+
+	      //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+	      println("Result as Json String => \n" + apiResult)
+
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def GetAllOutputMsgsFromCache {
+	    try {
+	      //logger.setLevel(Level.TRACE);  //check again
+	      val outputMsgsKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true)
+	      if (outputMsgsKeys.length == 0) {
+	        println("Sorry, No Output Msgs available in the Metadata")
+	        return
+	      }
+
+	      var seq = 0
+	      outputMsgsKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
 
   def StartTest{
     try{
@@ -2078,6 +2263,10 @@ object TestMetadataAPI{
       val dumpAllAdapters = ()            => { DumpAllAdaptersAsJson }
       val dumpAllCfgObjects = ()          => { DumpAllCfgObjectsAsJson }
       val removeEngineConfig = ()         => { RemoveEngineConfig }
+      val addOutputMessage = () 		  => { AddOutputMessage }
+      val getAllOutputMsgs = () 		  => { GetAllOutputMsgsFromCache }
+      val removeOutputMsg = () 			  => { RemoveOutputMsg }
+      val updateOutputMsg = () 			  => { UpdateOutputMsg }
 
       val topLevelMenu = List(("Add Model",addModel),
 			      ("Get Model",getModel),
@@ -2121,7 +2310,11 @@ object TestMetadataAPI{
 			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),
 			      ("Dump Adapter Node Objects",dumpAllAdapters),
 			      ("Dump All Config Objects",dumpAllCfgObjects),
-			      ("Remove Engine Config",removeEngineConfig))
+			      ("Remove Engine Config",removeEngineConfig),
+			      ("Add Output Message", addOutputMessage),
+			      ("Get All Output Messages", getAllOutputMsgs),
+			      ("Remove Output Message", removeOutputMsg),
+			      ("Update Output Message", updateOutputMsg))
 
       var done = false
       while ( done == false ){
