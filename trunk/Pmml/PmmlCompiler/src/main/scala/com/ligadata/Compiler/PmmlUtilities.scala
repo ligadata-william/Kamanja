@@ -46,8 +46,9 @@ object PmmlError extends LogTrait {
 			})
 			val errorVicinity : String = buffer.toString
 			logger.error(s"While processing $errorVicinity...")
-			logger.error(errorMsg)
 		}
+			
+		logger.error(errorMsg)
 		
 		/** count the errors */
 		ctx.IncrErrorCounter

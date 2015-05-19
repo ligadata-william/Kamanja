@@ -828,23 +828,35 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 
 	
 	/** 
+	 *  Run through the transformation dictionary and data dictionary looking for poor syntax, unknown field ids, 
+	 *  and other mess.
+	 */
+	def syntaxCheck() : Unit =  {
+	    val syntaxChecker : FieldIdentifierSyntaxChecker = new FieldIdentifierSyntaxChecker(this)
+		val xDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("TransformationDictionary")
+		PmmlExecNodeVisitor.Visit(xDictNode, syntaxChecker)
+		val dDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("DataDictionary")
+		PmmlExecNodeVisitor.Visit(dDictNode, syntaxChecker)
+	}
+		
+	/** 
 	 *  Collect the categorized values from the top level apply functions (i.e., parent node is xDerivedField).
 	 *  Update the top level apply functions categorized value array with them, eliminating them from the child
 	 *  nodes of the xDerived field.
 	 */
-	def transformTopLevelApplyNodes()  {
+	def transformTopLevelApplyNodes() : Unit =  {
 	    val catTransformer : IfActionTransform = new IfActionTransform(this)
 		val xDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("TransformationDictionary")
 		PmmlExecNodeVisitor.Visit(xDictNode, catTransformer)
 	}
 		
-	def ruleSetModelInfoCollector()  {
+	def ruleSetModelInfoCollector() : Unit =  {
 	    val rsModelCollector : RuleSetModelCollector = new RuleSetModelCollector(this)
 	    val rsm : Option[PmmlExecNode] = pmmlExecNodeMap.apply("RuleSetModel") 
 		PmmlExecNodeVisitor.Visit(rsm, rsModelCollector)
 	}
 
-	def simpleRuleInfoCollector()  {
+	def simpleRuleInfoCollector() : Unit =  {
 	    val rsModelCollector : SimpleRuleCollector = new SimpleRuleCollector(this)
 	    val rsm : Option[PmmlExecNode] = pmmlExecNodeMap.apply("RuleSetModel") 
 		PmmlExecNodeVisitor.Visit(rsm, rsModelCollector)

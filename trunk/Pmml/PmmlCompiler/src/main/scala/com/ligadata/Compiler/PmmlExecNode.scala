@@ -31,11 +31,13 @@ class PmmlExecNode (val qName : String, val lineNumber : Int, val columnNumber :
 	}
 	
 	/** general access to PmmlExecNode trees .. our node visitor */
-	def Visit(visitor : PmmlExecVisitor) {
-		visitor.Visit(this)
+	def Visit(visitor : PmmlExecVisitor, navStack : Stack[PmmlExecNode]) {
+		visitor.Visit(this,navStack)
+		navStack.push(this) /** make the node hierarchy available to the visitors */
 		children.foreach((child) => {
-			child.Visit(visitor)
+			child.Visit(visitor, navStack)
 	  	})
+	  	navStack.pop
 	}
 
 }

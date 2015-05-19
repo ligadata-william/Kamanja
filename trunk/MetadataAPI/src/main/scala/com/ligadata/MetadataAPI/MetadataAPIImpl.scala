@@ -3012,8 +3012,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
       // ModelDef may be null if there were pmml compiler errors... act accordingly.  If modelDef present,
       // make sure the version of the model is greater than any of previous models with same FullName
-      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
-      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else false
+      val latestVersion = GetLatestModel(modDef)
+      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
  
       if (isValid) {
         // save the jar file first
@@ -3056,7 +3056,7 @@ object MetadataAPIImpl extends MetadataAPI {
       compProxy.setLoggerLevel(Level.TRACE)
       val pmmlText = mod.ObjectDefinition
       var (classStr, modDef) = compProxy.compilePmml(pmmlText,true)
-      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
+      val latestVersion = GetLatestModel(modDef)
       val isValid : Boolean = (modDef != null)
       if (isValid) {
         RemoveModel(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
@@ -3098,8 +3098,8 @@ object MetadataAPIImpl extends MetadataAPI {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
-      val latestVersion = if (modDef != null) GetLatestModel(modDef) else None
-      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else false
+      val latestVersion = GetLatestModel(modDef)
+      val isValid : Boolean = if (latestVersion != None) IsValidVersion(latestVersion.get, modDef) else true
  
       if (isValid) {
         val key = MdMgr.MkFullNameWithVersion(modDef.nameSpace, modDef.name, modDef.ver)
