@@ -101,7 +101,7 @@ class SimpleRuleCollector(ctx : PmmlContext) extends PmmlExecVisitor {
 }
 
 object FieldIdentifierSyntaxChecker {
-	val legalChars : Set[Char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789".toSet
+	val legalChars : Set[Char] = ".ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz0123456789".toSet
 }
 
 class FieldIdentifierSyntaxChecker(ctx : PmmlContext) extends PmmlExecVisitor {

@@ -145,33 +145,67 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 	  			}
 	  			constStrExpr
 	  		}
+  		    /** 
+  		     *  The constant value of either the typename or mbrTypename is:
+  		     *  
+  		     *  o the name of a datafield 
+		     *  o the name a derived field.  
+		     *  o the name of a dataType
+		     *  
+		     *  Retrieve the typeString (i.e., the full package qualified typename) for it or 
+		     *  its member type. For Maps, the value's type is returned for mbrTypename
+  		     */ 
 	  		case "typename"  => { 
-	  		  /** 
-	  		   *  The constant value is either the name of a datafield or a derived field.  Retrieve the type info for
-	  		   *  the dataType of this field and return its typeString
-	  		   */ 
 	  		  val expandCompoundFieldTypes : Boolean = false
 	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
-	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
-	  		  if (typestr != null) s"${'"'}$typestr${'"'}" else "Any"
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = if (fldTypeInfo != null && fldTypeInfo.size > 0) fldTypeInfo.last else (null,false,null)
+	  		  if (typestr != null) {
+	  			  s"${'"'}$typestr${'"'}" 
+	  		  } else {
+	  		      /** see if it is a type name we know */
+	  			  val (typeStr,typ) : (String,BaseTypeDef) = ctx.MetadataHelper.getType(strRep)
+	  			  val typStr : String = if (typeStr != null) {
+	  				  s"${'"'}$typeStr${'"'}"
+	  			  } else {
+	  				  "Any"
+	  			  }
+	  			  typStr
+	  		  }
 	  		}
 	  		case "mbrTypename"  => { 
 	  		  /** 
-	  		   *  The constant value is either the name of a datafield or a derived field that is either an Array
-	  		   *  or ArrayBuffer (only collection types currently supported).  Retrieve the type info for member 
-	  		   *  type of this field's Array or ArrayBuffer type and return its typeString
+	  		   *  Only common single member collections are supported (no Maps yet) and no derived collection types.
 	  		   */ 
 	  		  val expandCompoundFieldTypes : Boolean = false
 	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
-	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
-	  		  if (typedef != null && (typedef.isInstanceOf[ArrayTypeDef] || typedef.isInstanceOf[ArrayBufTypeDef])) {
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = if (fldTypeInfo != null && fldTypeInfo.size > 0) fldTypeInfo.last else (null,false,null)
+	  		  val ts : String = if (typedef != null && (typestr.contains("scala.Array") || typestr.contains("scala.collection"))) {
 	  			  val typeStr : String = typedef match {
 	  			    case ar : ArrayTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
 	  			    case arb : ArrayBufTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
+	  			    case lst : ListTypeDef => typedef.asInstanceOf[ListTypeDef].valDef.typeString
+	  			    case qt : QueueTypeDef => typedef.asInstanceOf[QueueTypeDef].valDef.typeString
+	  			    case st : SortedSetTypeDef => typedef.asInstanceOf[SortedSetTypeDef].keyDef.typeString
+	  			    case tt : TreeSetTypeDef => typedef.asInstanceOf[TreeSetTypeDef].keyDef.typeString
+	  			    case it : ImmutableSetTypeDef => typedef.asInstanceOf[ImmutableSetTypeDef].keyDef.typeString
+	  			    case s  : SetTypeDef => typedef.asInstanceOf[SetTypeDef].keyDef.typeString
 	  			    case _ => "Any"
 	  			  }
 	  			  typeStr 
-	  		  } else "Any"
+	  		  } else {
+	  		      /** see if it is a type name we know... if so, return the last ElementType's typestring (no Maps yet).
+	  		       *  If it is not a container type, "Any" is printed... no doubt being the wrong thing and ending badly. */
+	  			  val containerType : ContainerTypeDef = ctx.MetadataHelper.getContainerType(strRep)
+	  			  val typestr : String = if (containerType != null) containerType.typeString else null
+	  			  val typeStr : String = if (typestr != null  && (typestr.contains("scala.Array") || typestr.contains("scala.collection"))) {
+	  				  val lastMbrType : BaseTypeDef = containerType.ElementTypes.last
+	  				  lastMbrType.typeString
+	  			  } else {
+	  				  "Any"
+	  			  }
+	  			  typeStr
+	  		  }
+	  		  ts
 	  		}
 
 	  		case _ => strRep
