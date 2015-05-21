@@ -2919,6 +2919,8 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           DeactivateObject(m.asInstanceOf[ModelDef])
+          
+          // TODO: Need to deactivate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Deactivate"
@@ -2961,7 +2963,12 @@ object MetadataAPIImpl extends MetadataAPI {
               return (new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, dispkey+" already active")).toString  
               
             }
-            var deactivateRS = DeactivateLocalModel(currActiveModel.nameSpace, currActiveModel.name, currActiveModel.Version)
+            var isSuccess = DeactivateLocalModel(currActiveModel.nameSpace, currActiveModel.name, currActiveModel.Version)
+            if (!isSuccess) {
+              logger.error("Error while trying to activate "+dispkey+", unable to deactivate active model. model ")
+              var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey +" -Unable to deactivate existing model")
+              apiResult.toString()      
+            }
           } 
         
       }
@@ -2979,6 +2986,7 @@ object MetadataAPIImpl extends MetadataAPI {
           ActivateObject(m.asInstanceOf[ModelDef])
           
           // Issue a Notification to all registered listeners that an Acivation took place.
+          // TODO: Need to activate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Activate"
