@@ -395,6 +395,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
+  private[this] var inactiveModels = new HashMap[String, MdlInfo]
+  private[this] var activeModels = new HashMap[String, MdlInfo]
   private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
@@ -594,6 +596,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
     val removedModels = new ArrayBuffer[(String, String, Long)]
     val removedMessages = new ArrayBuffer[(String, String, Long)]
     val removedContainers = new ArrayBuffer[(String, String, Long)]
+    val deactivatedModels = new HashMap[String,MdlInfo]
+    val activatedModels = new HashMap[String,MdlInfo]
 
     //// Check for Jars -- Begin
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
@@ -660,12 +664,12 @@ object FatafatMetadata extends MdBaseResolveInfo {
     //// Check for Jars -- End
 
     zkTransaction.Notifications.foreach(zkMessage => {
-      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong
       LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
-            case "Add" => {
+            case "Add" | "Activate" => {
               try {
                 val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
@@ -679,7 +683,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               }
             }
-            case "Remove" => {
+            case "Remove" | "Deactivate" => {
               try {
                 removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
