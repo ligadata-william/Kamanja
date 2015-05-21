@@ -395,8 +395,6 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
   private[this] var modelObjects = new HashMap[String, MdlInfo]
-  private[this] var inactiveModels = new HashMap[String, MdlInfo]
-  private[this] var activeModels = new HashMap[String, MdlInfo]
   private[this] var zkListener: ZooKeeperListener = _
 
   private[this] val reent_lock = new ReentrantReadWriteLock(true);
@@ -596,8 +594,6 @@ object FatafatMetadata extends MdBaseResolveInfo {
     val removedModels = new ArrayBuffer[(String, String, Long)]
     val removedMessages = new ArrayBuffer[(String, String, Long)]
     val removedContainers = new ArrayBuffer[(String, String, Long)]
-    val deactivatedModels = new HashMap[String,MdlInfo]
-    val activatedModels = new HashMap[String,MdlInfo]
 
     //// Check for Jars -- Begin
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
