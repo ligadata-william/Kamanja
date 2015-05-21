@@ -57,7 +57,7 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
         apiResult = "The " + objectType + " is not supported yet "
       }
     }
-    MetadataAPIImpl.getApiResult(apiResult)
+    apiResult
   }
 
   

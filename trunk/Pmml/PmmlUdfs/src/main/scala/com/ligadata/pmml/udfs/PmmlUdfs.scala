@@ -80,8 +80,8 @@ object Udfs extends LogTrait {
     @return true if the object exists
    */
 
-  def Contains(xId: Long, gCtx: EnvContext, containerName: String, key: String): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, key) else false
+  def Contains(xId: Long, gCtx: EnvContext, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.contains(xId, containerName, partKey, primaryKey) else false
     itExists
   }
   /** 
@@ -92,8 +92,8 @@ object Udfs extends LogTrait {
     @param keys : an array of identifiers sought in the 'containerName'
     @return true if the object exists
    */
-  def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, keys) else false
+  def ContainsAny(xId: Long, gCtx: EnvContext, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val itExists: Boolean = if (gCtx != null) gCtx.containsAny(xId, containerName, partKeys, primaryKeys) else false
     itExists
   }
   /** 
@@ -104,8 +104,8 @@ object Udfs extends LogTrait {
     @param keys : an array of identifiers sought in the 'containerName'
     @return true if the object exists
    */
-  def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, keys: Array[String]): Boolean = {
-    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, keys) else false
+  def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, partKeys, primaryKeys) else false
     allExist
   }
 
@@ -240,8 +240,8 @@ object Udfs extends LogTrait {
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: String): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, partKey, primaryKey)
   }
 
   /**
@@ -252,9 +252,11 @@ object Udfs extends LogTrait {
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Int): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+/*
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
+*/
 
   /**
       Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
@@ -264,9 +266,11 @@ object Udfs extends LogTrait {
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Long): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+/*
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
+*/
 
   /**
       Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
@@ -276,9 +280,11 @@ object Udfs extends LogTrait {
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Double): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+/*
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
+*/
 
   /**
       Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
@@ -288,9 +294,11 @@ object Udfs extends LogTrait {
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: Float): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.toString)
+/*
+  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float]): MessageContainerBase = {
+    gCtx.getObject(xId, containerId, key.map(k => k.toString))
   }
+*/
 
   /** 
    *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
@@ -304,8 +312,8 @@ object Udfs extends LogTrait {
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
   
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: String): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, partKey, primaryKey)
     if (mc != null) {
     	mc
     } else {
@@ -325,14 +333,61 @@ object Udfs extends LogTrait {
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
   
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Int): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+/*
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Int]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
     	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
+*/
+
+  /** 
+   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
+   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
+   *  
+   *  @param xId : transaction id from Pmml Runtime Context
+   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   */
+
+/*  
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Long]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
+    if (mc != null) {
+    	mc
+    } else {
+    	gCtx.NewMessageOrContainer(fqClassName)
+    }
+  }
+*/
+
+  /** 
+   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
+   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
+   *  
+   *  @param xId : transaction id from Pmml Runtime Context
+   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   */
+/*  
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Double]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
+    if (mc != null) {
+    	mc
+    } else {
+    	gCtx.NewMessageOrContainer(fqClassName)
+    }
+  }
+*/
 
   /** 
    *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
@@ -346,55 +401,87 @@ object Udfs extends LogTrait {
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
   
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Long): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
+/*  
+  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Float]): MessageContainerBase = {
+    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
     if (mc != null) {
     	mc
     } else {
     	gCtx.NewMessageOrContainer(fqClassName)
     }
   }
+*/
 
-  /** 
-   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
-   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+  /** Given the supplied msg or container, answer its partition key.  If there is none,
+      answer an empty List
+      @param msg : a Message or Container
+      @return the partition key as a List[String]
    */
+  def GetPartitionKey(msg : BaseMsg) : scala.collection.immutable.List[String] = {
+      val partitionKey : List[String] = if (msg.PartitionKeyData != null) {
+          msg.PartitionKeyData.toList
+      } else {
+          scala.collection.immutable.List[String]()
+      }
+      partitionKey
+  }
   
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Double): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
-    if (mc != null) {
-    	mc
-    } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
-    }
+  /** Given the supplied msg or container, answer its partition key.  If there is none,
+      answer an empty List
+      @param msg : a Message or Container
+      @return the partition key as a List[String]
+   */
+  def GetPartitionKey(msg : BaseContainer) : scala.collection.immutable.List[String] = {
+      val partitionKey : List[String] = if (msg.PartitionKeyData != null) {
+          msg.PartitionKeyData.toList
+      } else {
+          scala.collection.immutable.List[String]()
+      }
+      partitionKey
+  }
+  
+  /** Given the supplied msg or container, answer its primary key.  If there is none,
+      answer an empty List
+      @param msg : a Message or Container
+      @return the primary key as a List[String]
+   */
+  def GetPrimaryKey(msg : BaseMsg) : scala.collection.immutable.List[String] = {
+      val primaryKey : List[String] = if (msg.PrimaryKeyData != null) {
+          msg.PrimaryKeyData.toList
+      } else {
+          scala.collection.immutable.List[String]()
+      }
+      primaryKey
   }
 
-  /** 
-   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
-   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+  /** Given the supplied msg or container, answer its primary key.  If there is none,
+      answer an empty List
+      @param msg : a Message or Container
+      @return the primary key as a List[String]
    */
-  
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: Float): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.toString)
-    if (mc != null) {
-    	mc
-    } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
-    }
+  def GetPrimaryKey(msg : BaseContainer) : scala.collection.immutable.List[String] = {
+      val primaryKey : List[String] = if (msg.PrimaryKeyData != null) {
+          msg.PrimaryKeyData.toList
+      } else {
+          scala.collection.immutable.List[String]()
+      }
+      primaryKey
+  }
+
+  /**
+   *  Answer the array of messages or container for the supplied partition key found in the specified container.  If append boolean is set,
+   *  a message has been requested and the current message in the requesting model is appended to the history and returned.
+   *  @param xId : the transaction id associated with this model instance
+   *  @param gCtx : the engine's EnvContext portal known to the model that gives it access to the persisted data
+   *  @param containerId : The name of the container or message
+   *  @param partKey : the partition key that identifies which messages are to be retrieved.
+   *  @param appendCurrentChanges : a boolean that is useful for messages only .  When true, it will append the incoming message that caused
+   *    the calling model to execute to the returned history of messages
+   *  @return Array[MessageContainerBase] that will need to be downcast to their concrete type by the model before use.
+   */
+
+  def GetHistory(xId: Long, gCtx: EnvContext, containerId: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
+    gCtx.getHistoryObjects(xId, containerId, partKey, appendCurrentChanges)
   }
 
   /** 
@@ -422,8 +509,25 @@ object Udfs extends LogTrait {
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: String, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key, value)
+    true
+  }
+*/
+
+  /** 
+   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
+   *  
+   *  @param xId : transaction id from Pmml Runtime Context
+   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   */
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: BaseMsg): Boolean = {
+    gCtx.setObject(xId, containerId, key, value)
     true
   }
 
@@ -437,8 +541,8 @@ object Udfs extends LogTrait {
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Int, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: BaseContainer): Boolean = {
+    gCtx.setObject(xId, containerId, key, value)
     true
   }
 
@@ -452,10 +556,12 @@ object Udfs extends LogTrait {
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Long, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
+*/
 
   /** 
    *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
@@ -467,10 +573,12 @@ object Udfs extends LogTrait {
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Double, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
+*/
 
   /** 
    *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
@@ -482,10 +590,29 @@ object Udfs extends LogTrait {
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: Float, value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.toString, value)
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
     true
   }
+*/
+
+  /** 
+   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
+   *  
+   *  @param xId : transaction id from Pmml Runtime Context
+   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   */
+/*
+  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float], value: MessageContainerBase): Boolean = {
+    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
+    true
+  }
+*/
 
 
   /** 
@@ -8287,7 +8414,185 @@ object Udfs extends LogTrait {
   def CollectionLength[K: ClassTag, V: ClassTag](coll: HashMap[K, V]): Int = {
     coll.size
   }
-  
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : Array[T], items : T*) : Array[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              coll
+          } else {
+              Array[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : ArrayBuffer[T], items : T*) : ArrayBuffer[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              ArrayBuffer[T]() ++ coll
+          } else {
+              ArrayBuffer[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : List[T], items : T*) : scala.collection.immutable.List[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              scala.collection.immutable.List[T]() ++ coll
+          } else {
+              scala.collection.immutable.List[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : Queue[T], items : T*) : Queue[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              Queue[T]() ++ coll
+          } else {
+              Queue[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : SortedSet[T], items : T*)(implicit cmp: Ordering[T]): SortedSet[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              SortedSet[T]() ++ coll
+          } else {
+              SortedSet[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : TreeSet[T], items : T*)(implicit cmp: Ordering[T]) : TreeSet[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              TreeSet[T]() ++ coll
+          } else {
+              TreeSet[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : MutableSet[T], items : T*) : MutableSet[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              MutableSet[T]() ++ coll
+          } else {
+              MutableSet[T]()
+          }
+      }
+  }
+
+  /** 
+      Add the supplied item(s) to a collection 
+      @param collection a Collection of some type
+      @param item(s) an item to append 
+      @return a new collection with the item appended
+  */
+
+  def Add[T : ClassTag](coll : Set[T], items : T*) : Set[T] = {
+      if (coll != null && items != null) {
+          val itemArray : Array[T] = items.toArray
+          coll ++ (itemArray)
+      } else {
+          if (coll != null) {
+              Set[T]() ++ coll
+          } else {
+              Set[T]()
+          }
+      }
+  }
+
+
+  /** Accept an indefinite number of objects and make them as List of String.
+      Null objects produce "" for their values.
+      @param args : an indefinite number of objects of any type
+      @return a list of their string representations
+   */
+  def ToStringList(args : Any*) : List[String] = {
+  	val argList : List[Any] = args.toList
+  	argList.map( arg => if (arg != null) arg.toString else "")
+   }
+
+  /** Convert any type to string.  Null object produces ""
+      @param arg : any kind of object
+      @return its string representation
+   */
+  def ToString(arg : Any) : String = {
+  	if (arg != null) arg.toString else ""
+   }
   
   /**
    * Accept an arbitrary number of arguments of any type, except that at least the last one
@@ -8453,6 +8758,4 @@ object Udfs extends LogTrait {
   def CompoundStatement(args : Any*): Any = {
     if (args != null) args.toList.last else ""
   }
-
-  
 }

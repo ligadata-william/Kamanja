@@ -117,9 +117,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
             finalAPIResult = (new ApiResult(ErrorCodeConstants.Failure, APIName, null, deletedObjects.mkString(","))).toString
             loop.break
           } else {
-            val iResult = RemoveObjectDef(arg)
-            val apiResultStr = MetadataAPIImpl.getApiResult(iResult)
-            finalAPIResult = apiResultStr
+            finalAPIResult = RemoveObjectDef(arg)
           }
         })
       }

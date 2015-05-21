@@ -917,6 +917,7 @@ object JsonSerializer {
 		                  ("Name"      -> o.name) ~
 		                  ("FullName"  -> o.FullName) ~
 		                  ("Version"   -> MdMgr.Pad0s2Version(o.ver)) ~
+                      ("Persist"   -> o.containerType.persist) ~
 		                  ("JarName"      -> o.jarName) ~
 		                  ("PhysicalName" -> o.typeString) ~
 		                  ("ObjectDefinition" -> o.objectDefinition) ~
@@ -954,6 +955,7 @@ object JsonSerializer {
 		                 ("Name"      -> o.name) ~
 		                 ("FullName"  -> o.FullName) ~
 		                 ("Version"   -> MdMgr.Pad0s2Version(o.ver)) ~
+                     ("Persist"   -> o.containerType.persist) ~
 		                 ("JarName"      -> o.jarName) ~
 		                 ("PhysicalName" -> o.typeString) ~
 		                 ("ObjectDefinition" -> o.objectDefinition) ~

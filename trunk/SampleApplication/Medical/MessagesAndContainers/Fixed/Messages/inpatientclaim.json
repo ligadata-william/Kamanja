@@ -5,6 +5,7 @@
         "Version": "00.01.00",
         "Description": "Inpatient Claim",
         "Fixed": "true",
+        "Persist": "true",
         "Fields": [
             {
                 "Name": "Desynpuf_Id",
