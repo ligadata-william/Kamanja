@@ -216,7 +216,7 @@ object CustomUdfs extends LogTrait {
     }
   
     /**
-     * getTokenizedBoolean - Method will analyze a given string for the presence of tokens specified in the context parameters.  If the number of
+     * matchTermsetBoolean - Method will analyze a given string for the presence of tokens specified in the context parameters.  If the number of
      *                      present tokens exceeds the degree parameter, return TRUE, else return FALSE.  This method is CASE INSENSITIVE 
      *                        
      *                      

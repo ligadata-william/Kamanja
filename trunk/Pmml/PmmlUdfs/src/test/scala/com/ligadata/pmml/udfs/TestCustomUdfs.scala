@@ -14,7 +14,7 @@ class TestCustomUdfs extends FlatSpec {
     assert(expected === actual)
   }
    
-    "It" should "concat Ints" in {
+    it should "concat Ints" in {
     //input
     val input1:Int =1
     val input2:Int=5
@@ -25,7 +25,7 @@ class TestCustomUdfs extends FlatSpec {
     assert(expected === actual)
   }
     
-     "It" should "replace null values with empty string" in {
+     it should "replace null values with empty string" in {
     //input
     val input1:String ="textOne"
     val input2:String =null
@@ -78,7 +78,7 @@ class TestCustomUdfs extends FlatSpec {
        val actual = CustomUdfs.getMatchingTokens(inputString, context)
        assert(expected===actual)
      }
-        "it" should "return false if inputString is null" in{
+        it should "return false if inputString is null" in{
        //input
        val inputString ="ligadata"
        val context= null
@@ -88,7 +88,7 @@ class TestCustomUdfs extends FlatSpec {
        val actual = CustomUdfs.getMatchingTokens(inputString, context)
        assert(expected===actual)
      }
-        "it" should "return false if context is null" in{
+        it should "return false if context is null" in{
        //input
        val inputString =null
        val context= Array("Apple","Google","LIGADATA")
