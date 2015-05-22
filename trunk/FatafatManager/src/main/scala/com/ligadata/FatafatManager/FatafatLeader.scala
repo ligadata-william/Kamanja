@@ -40,11 +40,13 @@ object FatafatLeader {
   private[this] var zkConnectString: String = _
   private[this] var engineLeaderZkNodePath: String = _
   private[this] var engineDistributionZkNodePath: String = _
+  private[this] var dataChangeZkNodePath: String = _
   private[this] var adaptersStatusPath: String = _
   private[this] var zkSessionTimeoutMs: Int = _
   private[this] var zkConnectionTimeoutMs: Int = _
   private[this] var zkEngineDistributionNodeListener: ZooKeeperListener = _
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
+  private[this] var zkDataChangeNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
   private[this] var distributionMap = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]]]() // Nodeid & Unique Keys (adapter unique name & unique key)
   private[this] var foundKeysInValidation: scala.collection.immutable.Map[String, (String, Int, Int, Long)] = _
@@ -588,10 +590,63 @@ object FatafatLeader {
     ActionOnAdaptersDistImpl(receivedJsonStr)
   }
 
+  private def ActionOnDataChngImpl(receivedJsonStr: String): Unit = lock.synchronized {
+    // LOG.debug("ActionOnDataChngImpl => receivedJsonStr: " + receivedJsonStr)
+    if (receivedJsonStr == null || receivedJsonStr.size == 0) {
+      // nothing to do
+      LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+      return
+    }
+
+    try {
+      // Perform the action here
+      val json = parse(receivedJsonStr)
+      if (json == null || json.values == null) { // Not doing any action if not found valid json
+        LOG.debug("ActionOnAdaptersDistImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+        return
+      }
+
+      val values = json.values.asInstanceOf[Map[String, Any]]
+      val changedMsgsContainers = values.getOrElse("changeddata", null)
+
+      if (changedMsgsContainers != null) {
+        // Expecting List/Array of String here
+        var changedVals: Array[String] = null
+        if (changedMsgsContainers.isInstanceOf[List[_]]) {
+          try {
+            changedVals = changedMsgsContainers.asInstanceOf[List[String]].toArray
+          }
+        }
+        if (changedMsgsContainers.isInstanceOf[Array[_]]) {
+          try {
+            changedVals = changedMsgsContainers.asInstanceOf[Array[String]]
+          }
+        }
+
+        if (changedVals != null) {
+              envCtxt.clearIntermediateResults
+          envCtxt.clearIntermediateResults(changedVals)
+        }
+      }
+
+      // 
+    } catch {
+      case e: Exception => {
+        LOG.debug("Found invalid JSON: %s".format(receivedJsonStr))
+      }
+    }
+
+    LOG.debug("ActionOnDataChngImpl => Exit. receivedJsonStr: " + receivedJsonStr)
+  }
+
+  private def ActionOnDataChange(receivedJsonStr: String): Unit = {
+    ActionOnDataChngImpl(receivedJsonStr)
+  }
+
   private def ParticipentsAdaptersStatus(eventType: String, eventPath: String, eventPathData: Array[Byte], childs: Array[(String, Array[Byte])]): Unit = {
-    // LOG.info("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    // LOG.debug("ParticipentsAdaptersStatus => Enter, eventType:%s, eventPath:%s ".format(eventType, eventPath))
     if (IsLeaderNode == false) { // Not Leader node
-      // LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+      // LOG.debug("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
       return
     }
 
@@ -601,7 +656,7 @@ object FatafatLeader {
     }
 
     UpdatePartitionsNodeData(eventType, eventPath, eventPathData)
-    // LOG.info("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
+    // LOG.debug("ParticipentsAdaptersStatus => Exit, eventType:%s, eventPath:%s ".format(eventType, eventPath))
   }
 
   private def CheckForPartitionsChange: Unit = {
@@ -653,11 +708,12 @@ object FatafatLeader {
     uniqPartKeysValues.toArray
   }
 
-  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], validateInputAdap: ArrayBuffer[InputAdapter], enviCxt: EnvContext, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int): Unit = {
+  def Init(nodeId1: String, zkConnectString1: String, engineLeaderZkNodePath1: String, engineDistributionZkNodePath1: String, adaptersStatusPath1: String, inputAdap: ArrayBuffer[InputAdapter], outputAdap: ArrayBuffer[OutputAdapter], statusAdap: ArrayBuffer[OutputAdapter], validateInputAdap: ArrayBuffer[InputAdapter], enviCxt: EnvContext, zkSessionTimeoutMs1: Int, zkConnectionTimeoutMs1: Int, dataChangeZkNodePath1: String): Unit = {
     nodeId = nodeId1.toLowerCase
     zkConnectString = zkConnectString1
     engineLeaderZkNodePath = engineLeaderZkNodePath1
     engineDistributionZkNodePath = engineDistributionZkNodePath1
+    dataChangeZkNodePath = dataChangeZkNodePath1
     adaptersStatusPath = adaptersStatusPath1
     zkSessionTimeoutMs = zkSessionTimeoutMs1
     zkConnectionTimeoutMs = zkConnectionTimeoutMs1
@@ -667,17 +723,20 @@ object FatafatLeader {
     validateInputAdapters = validateInputAdap
     envCtxt = enviCxt
 
-    if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false) {
+    if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false && dataChangeZkNodePath != null && dataChangeZkNodePath.isEmpty() == false) {
       try {
         val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-        LOG.debug("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath))
+        LOG.debug("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s, dataChangeZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, dataChangeZkNodePath))
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
+        CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkAdapterStatusNodeListener = new ZooKeeperListener
         zkAdapterStatusNodeListener.CreatePathChildrenCacheListener(zkConnectString, adaptersStatusPath, false, ParticipentsAdaptersStatus, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         zkEngineDistributionNodeListener = new ZooKeeperListener
         zkEngineDistributionNodeListener.CreateListener(zkConnectString, engineDistributionZkNodePath, ActionOnAdaptersDistribution, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        zkDataChangeNodeListener = new ZooKeeperListener
+        zkDataChangeNodeListener.CreateListener(zkConnectString, dataChangeZkNodePath, ActionOnDataChange, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         try {
           Thread.sleep(500)
         } catch {
@@ -765,6 +824,9 @@ object FatafatLeader {
     if (zkEngineDistributionNodeListener != null)
       zkEngineDistributionNodeListener.Shutdown
     zkEngineDistributionNodeListener = null
+    if (zkDataChangeNodeListener != null)
+      zkDataChangeNodeListener.Shutdown
+    zkDataChangeNodeListener = null
     if (zkAdapterStatusNodeListener != null)
       zkAdapterStatusNodeListener.Shutdown
     zkAdapterStatusNodeListener = null

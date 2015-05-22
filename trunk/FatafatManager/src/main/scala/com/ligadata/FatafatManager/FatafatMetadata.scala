@@ -252,7 +252,7 @@ class FatafatMetadata {
       }
     }
 
-    // LOG.info("Loading Model:" + mdl.FullName + ". ClassName: " + clsName + ". IsModel:" + isModel)
+    // LOG.debug("Loading Model:" + mdl.FullName + ". ClassName: " + clsName + ". IsModel:" + isModel)
 
     if (isModel) {
       try {
@@ -336,7 +336,7 @@ class FatafatMetadata {
 
     // Load all jars first
     msgDefs.foreach(msg => {
-      // LOG.info("Loading msg:" + msg.FullName)
+      // LOG.debug("Loading msg:" + msg.FullName)
       LoadJarIfNeeded(msg, loadedJars, loader)
     })
 
@@ -455,7 +455,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Containers
+        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.databasePrincipal, FatafatConfiguration.databaseKeytab, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoPrincipal, FatafatConfiguration.statusInfoKeytab) // Containers
       }
     }
 
@@ -464,7 +464,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Messages
+        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.databasePrincipal, FatafatConfiguration.databaseKeytab, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoPrincipal, FatafatConfiguration.statusInfoKeytab) // Messages
       }
     }
 

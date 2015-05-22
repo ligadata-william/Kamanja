@@ -33,7 +33,7 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
   
   def process(cfgJson:String) = {
     
-    log.info("Requesting UploadEngineConfig {}",cfgJson)
+    log.debug("Requesting UploadEngineConfig {}",cfgJson)
     
     var objectList: List[String] = List[String]()
 

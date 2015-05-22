@@ -24,59 +24,6 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   val rand = new Random(hashCode)
 
-  private def msgInputDataAndMsgInfo(msgType: String, msgFormat: String, msgData: String): (MsgContainerObjAndTransformInfo, InputData) = {
-    val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
-    var retInpData: InputData = null
-    if (msgInfo != null) {
-      if (msgFormat.equalsIgnoreCase("csv")) {
-        try {
-          val inputData = new DelimitedData(msgData, ",")
-          inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
-          inputData.curPos = 0
-          retInpData = inputData
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to populate CSV data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
-            throw e
-          }
-        }
-      } else if (msgFormat.equalsIgnoreCase("json")) {
-        try {
-          val inputData = new JsonData(msgData)
-          val json = parse(inputData.dataInput)
-          val parsed_json = json.values.asInstanceOf[scala.collection.immutable.Map[String, Any]]
-          if (parsed_json.size != 1)
-            throw new Exception("Expecting only one message in JSON data : " + msgData)
-          inputData.root_json = Option(parsed_json)
-          inputData.cur_json = Option(parsed_json.head._2)
-          retInpData = inputData
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to populate JSON data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
-            throw e
-          }
-        }
-      } else if (msgFormat.equalsIgnoreCase("xml")) {
-        try {
-          val inputData = new XmlData(msgData)
-          inputData.root_xml = XML.loadString(inputData.dataInput)
-          inputData.cur_xml = inputData.root_xml
-          retInpData = inputData
-        } catch {
-          case e: Exception => {
-            LOG.error("Failed to populate XML data for messageType:%s, Reason:%s, ErrorMessage:%s".format(msgType, e.getCause, e.getMessage))
-            throw e
-          }
-        }
-      } else {
-        throw new Exception("Invalid input data type:" + msgFormat)
-      }
-    } else {
-      throw new Exception("Not found Message Type:" + msgType)
-    }
-    (msgInfo, retInpData)
-  }
-
   private def RunAllModels(tempTransId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
     var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
 
@@ -118,10 +65,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(tempTransId: Long, msgType: String, msgFormat: String, msgData: String, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
-    // LOG.info("LE => " + msgData)
+  def execute(tempTransId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
+    // LOG.debug("LE => " + msgData)
     try {
-      val (msgInfo, inputdata) = msgInputDataAndMsgInfo(msgType, msgFormat, msgData)
       if (msgInfo != null && inputdata != null) {
         val partKeyData = if (msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CanPersist) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata) else null
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
@@ -149,7 +95,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
         // Run all models
+        val mdlsStartTime = System.nanoTime
         val results = RunAllModels(tempTransId, msg, envContext)
+        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
+
         if (results.size > 0) {
           var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
 
@@ -190,7 +139,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                 ("output" -> res.results.toList.map(r =>
                   ("Name" -> r.name) ~
                     ("Type" -> r.usage.toString) ~
-                    ("Value" -> res.ValueString(r.result))))))
+                    ("Value" -> ModelResult.ValueString(r.result))))))
           val resStr = compact(render(json))
 
           envContext.saveStatus(tempTransId, "Start", true)
@@ -210,9 +159,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
               LOG.debug("====================================> Sending to Output Adapter")
             }
+            val sendOutStartTime = System.nanoTime
             output.foreach(o => {
               o.send(resStr, cntr.toString)
             })
+            LOG.debug(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
           }
           if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
             try {
@@ -239,7 +190,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           }
         }
       } else {
-        LOG.error("Recieved null message object for input:" + msgData)
+        LOG.error("Recieved null message object for input:" + inputdata.dataInput)
       }
     } catch {
       case e: Exception => LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))

@@ -13,7 +13,7 @@ import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
 
-case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
+case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String, Principal: Option[String], Keytab: Option[String])
 case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
 case class EnvCtxtJsonStr(classname: String, jarname: String, dependencyjars: Option[List[String]])
 
@@ -90,6 +90,9 @@ object FatafatMdCfg {
       return false
     }
 
+    FatafatConfiguration.databasePrincipal = if (dataStoreInfo.Principal == None || dataStoreInfo.Principal == null) "" else dataStoreInfo.Principal.get.replace("\"", "").trim
+    FatafatConfiguration.databaseKeytab = if (dataStoreInfo.Keytab == None || dataStoreInfo.Keytab == null) "" else dataStoreInfo.Keytab.get.replace("\"", "").trim
+
     FatafatConfiguration.statusInfoStoreType = statusStoreInfo.StoreType.replace("\"", "").trim
     if (FatafatConfiguration.statusInfoStoreType.size == 0) {
       LOG.error("Not found valid Status Information StoreType.")
@@ -108,6 +111,9 @@ object FatafatMdCfg {
       return false
     }
 
+    FatafatConfiguration.statusInfoPrincipal = if (statusStoreInfo.Principal == None || statusStoreInfo.Principal == null) "" else statusStoreInfo.Principal.get.replace("\"", "").trim
+    FatafatConfiguration.statusInfoKeytab = if (statusStoreInfo.Keytab == None || statusStoreInfo.Keytab == null) "" else statusStoreInfo.Keytab.get.replace("\"", "").trim
+    
     FatafatConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
     FatafatConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     FatafatConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
@@ -259,8 +265,8 @@ object FatafatMdCfg {
           envCtxt.SetMetadataResolveInfo(FatafatMetadata)
           val containerNames = FatafatMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = FatafatMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Containers
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Messages
+          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.databasePrincipal, FatafatConfiguration.databaseKeytab, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoPrincipal, FatafatConfiguration.statusInfoKeytab) // Containers
+          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.databasePrincipal, FatafatConfiguration.databaseKeytab, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoPrincipal, FatafatConfiguration.statusInfoKeytab) // Messages
           LOG.debug("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -402,6 +408,8 @@ object FatafatMdCfg {
         conf.formatOrInputAdapterName = adap.InputAdapterToVerify
       conf.className = adap.ClassName
       conf.jarName = adap.JarName
+      conf.delimiterString = adap.DelimiterString
+      conf.associatedMsg = adap.AssociatedMessage
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
 
@@ -488,6 +496,8 @@ object FatafatMdCfg {
       conf.jarName = adap.JarName
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
+      conf.delimiterString = adap.DelimiterString
+      conf.associatedMsg = adap.AssociatedMessage
 
       try {
         val adapter = CreateInputAdapterFromConfig(conf, outputAdapters, envCtxt, loaderInfo, mkExecCtxt)

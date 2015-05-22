@@ -78,9 +78,13 @@ object FatafatConfiguration {
   var dataStoreType: String = _
   var dataSchemaName: String = _
   var dataLocation: String = _
+  var databasePrincipal: String = _
+  var databaseKeytab: String = _
   var statusInfoStoreType: String = _
   var statusInfoSchemaName: String = _
   var statusInfoLocation: String = _
+  var statusInfoPrincipal: String = _
+  var statusInfoKeytab: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var clusterId: String = _
@@ -279,6 +283,7 @@ class FatafatManager {
       var engineDistributionZkNodePath = ""
       var metadataUpdatesZkNodePath = ""
       var adaptersStatusPath = ""
+      var dataChangeZkNodePath = ""
 
       if (FatafatConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
@@ -286,6 +291,7 @@ class FatafatManager {
         engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
+        dataChangeZkNodePath = zkNodeBasePath + "/datachange"
       }
 
       FatafatMdCfg.ValidateAllRequiredJars
@@ -299,7 +305,7 @@ class FatafatManager {
 
       if (retval) {
         FatafatMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, FatafatConfiguration.zkConnectString, metadataUpdatesZkNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
-        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
+        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
       /*
@@ -319,7 +325,7 @@ class FatafatManager {
     } catch {
       case e: Exception => {
         LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        // LOG.info("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
+        // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }
     } finally {
@@ -331,7 +337,8 @@ class FatafatManager {
 
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
-      if (ln.compareToIgnoreCase("Quit") == 0)
+      val trmln = ln.trim
+      if (trmln.length() > 0 && (trmln.compareToIgnoreCase("Quit") == 0 || trmln.compareToIgnoreCase("Exit") == 0))
         return true
     }
     return false;

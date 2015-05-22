@@ -8,6 +8,7 @@ import java.util.Date
 import java.text.ParseException
 import scala.Enumeration
 import scala.io._
+import scala.collection.mutable.ArrayBuffer
 
 import scala.collection.mutable._
 import scala.reflect.runtime.{ universe => ru }
@@ -154,8 +155,8 @@ object MetadataAPIImpl extends MetadataAPI {
   var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST","API_LEADER_SELECTION_ZK_NODE",
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
-                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT")
+                               "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","SSL_PASSWD", "DO_AUTH","SECURITY_IMPL_CLASS",
+                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT", "DATABASE_PRINCIPAL", "DATABASE_KEYTAB")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -329,7 +330,16 @@ object MetadataAPIImpl extends MetadataAPI {
     if (certPath != null) return certPath
     ""
   }
-  
+
+  /**
+   * getSSLCertificatePasswd
+   */
+  def getSSLCertificatePasswd: String = {
+    val passwd = metadataAPIConfig.getProperty("SSL_PASSWD")
+    if (passwd != null) return passwd
+    ""
+  }
+
   /**
    * getCurrentTime - Return string representation of the current Date/Time
    */
@@ -422,7 +432,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def getLeaderHost(leaderNode: String) : String = {
     val nodes = MdMgr.GetMdMgr.Nodes.values.toArray
     if ( nodes.length == 0 ){
-      logger.trace("No Nodes found ")
+      logger.debug("No Nodes found ")
       var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetLeaderHost", null, ErrorCodeConstants.Get_Leader_Host_Failed_Not_Available +" :" + leaderNode)
       apiResult.toString()
     }
@@ -434,7 +444,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       else{
   val nhost = nhosts(0)
-  logger.trace("node addr => " + nhost.NodeAddr)
+        logger.debug("node addr => " + nhost.NodeAddr)
   nhost.NodeAddr
       }
     }
@@ -1181,26 +1191,61 @@ object MetadataAPIImpl extends MetadataAPI {
     return jarName // Returning base jarName if not found in jar paths
   }
 
-  def UploadJarsToDB(obj: BaseElemDef) {
+  def UploadJarsToDB(obj: BaseElemDef, forceUploadMainJar: Boolean = true, alreadyCheckedJars: scala.collection.mutable.Set[String] = null): Unit = {
+    val checkedJars: scala.collection.mutable.Set[String] = if (alreadyCheckedJars == null) scala.collection.mutable.Set[String]() else alreadyCheckedJars
+
     try {
-      var keyList = new Array[String](0)
-      var valueList = new Array[Array[Byte]](0)
+      var keyList = new ArrayBuffer[String](0)
+      var valueList = new ArrayBuffer[Array[Byte]](0)
 
       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-      
-      keyList = keyList :+ obj.jarName
-      var jarName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + obj.jarName
-      var value = GetJarAsArrayOfBytes(jarName)
-      logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + obj.jarName)
-      valueList = valueList :+ value
+
+      if (obj.jarName != null && (forceUploadMainJar || checkedJars.contains(obj.jarName) == false)) { //BUGBUG 
+        val jarsPathsInclTgtDir = jarPaths + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+        var jarName = JarPathsUtils.GetValidJarFile(jarsPathsInclTgtDir, obj.jarName)
+        var value = GetJarAsArrayOfBytes(jarName)
+
+        var loadObject = false
+
+        if (forceUploadMainJar) {
+          loadObject = true
+        } else {
+          var mObj: IStorage = null
+          try {
+            mObj = GetObject(obj.jarName, jarStore)
+          } catch {
+            case e: ObjectNotFoundException => {
+              loadObject = true
+            }
+          }
+
+          if (loadObject == false) {
+            val ba = mObj.Value.toArray[Byte]
+            val fs = ba.length
+            if (fs != value.length) {
+              logger.debug("A jar file already exists, but it's size (" + fs + ") doesn't match with the size of the Jar (" +
+                jarName + "," + value.length + ") of the object(" + obj.FullNameWithVer + ")")
+              loadObject = true
+            }
+          }
+        }
+
+        checkedJars += obj.jarName
+
+        if (loadObject) {
+          logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + obj.jarName)
+          keyList += obj.jarName
+          valueList += value
+        }
+      }
 
       if (obj.DependencyJarNames != null) {
         obj.DependencyJarNames.foreach(j => {
-          // do not upload if it already exist, minor optimization
-          var loadObject = false
-          if (j.endsWith(".jar")) {
-            jarName = JarPathsUtils.GetValidJarFile(jarPaths, j)            
-            value = GetJarAsArrayOfBytes(jarName)
+          // do not upload if it already exist & just uploaded/checked in db, minor optimization
+          if (j.endsWith(".jar") && checkedJars.contains(j) == false) {
+            var loadObject = false
+            val jarName = JarPathsUtils.GetValidJarFile(jarPaths, j)
+            val value = GetJarAsArrayOfBytes(jarName)
             var mObj: IStorage = null
             try {
               mObj = GetObject(j, jarStore)
@@ -1221,20 +1266,22 @@ object MetadataAPIImpl extends MetadataAPI {
             }
 
             if (loadObject) {
-              keyList = keyList :+ j
+              keyList += j
               logger.debug("Update the jarfile (size => " + value.length + ") of the object: " + j)
-              valueList = valueList :+ value
+              valueList += value
             } else {
               logger.debug("The jarfile " + j + " already exists in DB.")
             }
+            checkedJars += j
           }
         })
       }
       if (keyList.length > 0) {
-        SaveObjectList(keyList, valueList, jarStore)
+        SaveObjectList(keyList.toArray, valueList.toArray, jarStore)
       }
     } catch {
       case e: Exception => {
+        e.printStackTrace
         throw new InternalErrorException("Failed to Update the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
       }
     }
@@ -1314,7 +1361,8 @@ object MetadataAPIImpl extends MetadataAPI {
   def GetDependantJars(obj: BaseElemDef): Array[String] = {
     try {
       var allJars = new Array[String](0)
-      allJars = allJars :+ obj.JarName
+      if (obj.JarName != null)
+        allJars = allJars :+ obj.JarName
       if (obj.DependencyJarNames != null) {
         obj.DependencyJarNames.foreach(j => {
           if (j.endsWith(".jar")) {
@@ -1359,14 +1407,20 @@ object MetadataAPIImpl extends MetadataAPI {
         
         allJars.foreach(jar => {
           curJar = jar
-          // download only if it doesn't already exists
-          val b = IsDownloadNeeded(jar, obj)
-          if (b == true) {
-            val key = jar
-            val mObj = GetObject(key, jarStore)
-            val ba = mObj.Value.toArray[Byte]
-            val jarName = dirPath + "/" + jar
-            PutArrayOfBytesToJar(ba, jarName)
+          try {
+            // download only if it doesn't already exists
+            val b = IsDownloadNeeded(jar, obj)
+            if (b == true) {
+              val key = jar
+              val mObj = GetObject(key, jarStore)
+              val ba = mObj.Value.toArray[Byte]
+              val jarName = dirPath + "/" + jar
+              PutArrayOfBytesToJar(ba, jarName)
+            }
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "): " + e.getMessage())
+            }
           }
         })
       }
@@ -1639,9 +1693,14 @@ object MetadataAPIImpl extends MetadataAPI {
       connectinfo += ("table" -> tableName)
       storeType match {
         case "hbase" => {
-          var databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+          val databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
+          val databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
+          val principal = GetMetadataAPIConfig.getProperty("DATABASE_PRINCIPAL")
+          val keytab = GetMetadataAPIConfig.getProperty("DATABASE_KEYTAB")
           connectinfo += ("hostlist" -> databaseHost)
-          connectinfo += ("schema" -> storeName)
+          connectinfo += ("schema" -> databaseSchema)
+          connectinfo += ("principal" -> principal)
+          connectinfo += ("keytab" -> keytab)
         }
         case "hashmap" => {
           var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
@@ -2092,14 +2151,68 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  private def CheckForMissingJar(obj: BaseElemDef): Array[String] = {
+    val missingJars = scala.collection.mutable.Set[String]()
+
+    var allJars = GetDependantJars(obj)
+    if (allJars.length > 0) {
+      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+      jarPaths.foreach(jardir => {
+        val dir = new File(jardir)
+        if (!dir.exists()) {
+          // attempt to create the missing directory
+          dir.mkdir();
+        }
+      })
+
+      val dirPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
+      val dir = new File(dirPath)
+      if (!dir.exists()) {
+        // attempt to create the missing directory
+        dir.mkdir();
+      }
+
+      allJars.foreach(jar => {
+        val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
+        val f = new File(jarName)
+        if (f.exists()) {
+          // Nothing to do
+        } else {
+          try {
+            val mObj = GetObject(jar, jarStore)
+            // Nothing to do after getting the object.
+          } catch {
+            case e: Exception => {
+              missingJars += jar
+            }
+          }
+        }
+      })
+    }
+
+    missingJars.toArray
+  }
+
   def AddFunctions(functionsText: String, format: String): String = {
+    logger.debug("Started AddFunctions => ")
     try {
       if (format != "JSON") {
         var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddFunctions", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionsText)
         apiResult.toString()
       } else {
         var funcList = JsonSerializer.parseFunctionList(functionsText, "JSON")
+        // Check for the Jars
+        val missingJars = scala.collection.mutable.Set[String]()
         funcList.foreach(func => {
+          missingJars ++= CheckForMissingJar(func)
+        })
+        if (missingJars.size > 0) {
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Add_Function_Failed + ":" + functionsText)
+          return apiResult.toString()
+        }
+        val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
+        funcList.foreach(func => {
+          UploadJarsToDB(func, false, alreadyCheckedJars)
           SaveObject(func, MdMgr.GetMdMgr)
         })
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddFunctions", null, ErrorCodeConstants.Add_Function_Successful + ":" + functionsText)
@@ -2114,12 +2227,20 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddFunction(functionText: String, format: String): String = {
+    logger.debug("Started AddFunction => ")
     try {
       if (format != "JSON") {
         var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddFunction", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionText)
         apiResult.toString()
       } else {
         var func = JsonSerializer.parseFunction(functionText, "JSON")
+        // Check for the Jars
+        val missingJars = CheckForMissingJar(func)
+        if (missingJars.size > 0) {
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Add_Function_Failed + ":" + functionText)
+          return apiResult.toString()
+        }
+        UploadJarsToDB(func, false)
         SaveObject(func, MdMgr.GetMdMgr)
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddFunction", null, ErrorCodeConstants.Add_Function_Successful + ":" + functionText)
         apiResult.toString()
@@ -2144,13 +2265,25 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def UpdateFunctions(functionsText: String, format: String): String = {
+    logger.debug("Started UpdateFunctions => ")
     try {
       if (format != "JSON") {
         var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "UpdateFunctions", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionsText + ".Format not JSON.")
         apiResult.toString()
       } else {
         var funcList = JsonSerializer.parseFunctionList(functionsText, "JSON")
+        // Check for the Jars
+        val missingJars = scala.collection.mutable.Set[String]()
         funcList.foreach(func => {
+          missingJars ++= CheckForMissingJar(func)
+        })
+        if (missingJars.size > 0) {
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
+          return apiResult.toString()
+        }
+        val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
+        funcList.foreach(func => {
+          UploadJarsToDB(func, false, alreadyCheckedJars)
           UpdateFunction(func)
         })
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateFunctions", null, ErrorCodeConstants.Update_Function_Successful + ":" + functionsText)
@@ -3130,11 +3263,11 @@ object MetadataAPIImpl extends MetadataAPI {
   private def getBaseType(typ: BaseTypeDef): BaseTypeDef = {
     // Just return the "typ" if "typ" is not supported yet
     if (typ.tType == tMap) {
-      logger.info("MapTypeDef/ImmutableMapTypeDef is not yet handled")
+      logger.debug("MapTypeDef/ImmutableMapTypeDef is not yet handled")
       return typ
     }
     if (typ.tType == tHashMap) {
-      logger.info("HashMapTypeDef is not yet handled")
+      logger.debug("HashMapTypeDef is not yet handled")
       return typ
     }
     if (typ.tType == tSet) {
@@ -4787,7 +4920,7 @@ object MetadataAPIImpl extends MetadataAPI {
         jarPaths:List[String],scala_home:String,
         java_home:String, classpath: String,
         clusterId:String,power:Int,
-        roles:Int,description:String): String = {
+    roles: Array[String], description: String): String = {
     try{
       // save in memory
       val ni = MdMgr.GetMdMgr.MakeNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
@@ -4811,7 +4944,7 @@ object MetadataAPIImpl extends MetadataAPI {
      jarPaths:List[String],scala_home:String,
      java_home:String, classpath: String,
      clusterId:String,power:Int,
-     roles:Int,description:String): String = {
+    roles: Array[String], description: String): String = {
     AddNode(nodeId,nodePort,nodeIpAddr,jarPaths,scala_home,
       java_home,classpath,
       clusterId,power,roles,description)
@@ -4835,11 +4968,11 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddAdapter(name:String,typeString:String,dataFormat: String,className: String, 
      jarName: String, dependencyJars: List[String], 
-     adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
     try{
       // save in memory
       val ai = MdMgr.GetMdMgr.MakeAdapter(name,typeString,dataFormat,className,jarName,
-            dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
+        dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
       MdMgr.GetMdMgr.AddAdapter(ai)
       // save in database
       val key = "AdapterInfo." + name
@@ -4857,8 +4990,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateAdapter(name:String,typeString:String,dataFormat: String,className: String, 
         jarName: String, dependencyJars: List[String], 
-        adapterSpecificCfg: String,inputAdapterToVerify: String): String = {
-    AddAdapter(name,typeString,dataFormat,className,jarName,dependencyJars,adapterSpecificCfg,inputAdapterToVerify)
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): String = {
+    AddAdapter(name, typeString, dataFormat, className, jarName, dependencyJars, adapterSpecificCfg, inputAdapterToVerify, delimiterString, associatedMsg)
   }
 
   def RemoveAdapter(name:String) : String = {
@@ -5045,8 +5178,24 @@ object MetadataAPIImpl extends MetadataAPI {
 
     val nodes = c1.Nodes
     nodes.foreach(n => {
-      val ni = MdMgr.GetMdMgr.MakeNode(n.NodeId,n.NodePort,n.NodeIpAddr,n.JarPaths,
-               n.Scala_home,n.Java_home,n.Classpath,c1.ClusterId,0,0,null)
+            val validRoles = NodeRole.ValidRoles.map(r => r.toLowerCase).toSet
+            val givenRoles = if (n.Roles == None) null else n.Roles.get
+            var foundRoles = ArrayBuffer[String]()
+            var notfoundRoles = ArrayBuffer[String]()
+            if (givenRoles != null) {
+              val gvnRoles = givenRoles.foreach(r => {
+                if (validRoles.contains(r.toLowerCase))
+                  foundRoles += r
+                else
+                  notfoundRoles += r
+              })
+              if (notfoundRoles.size > 0) {
+                logger.error("Found invalid node roles:%s for nodeid: %d".format(notfoundRoles.mkString(","), n.NodeId))
+              }
+            }
+
+            val ni = MdMgr.GetMdMgr.MakeNode(n.NodeId, n.NodePort, n.NodeIpAddr, n.JarPaths,
+              n.Scala_home, n.Java_home, n.Classpath, c1.ClusterId, 0, foundRoles.toArray, null)
       MdMgr.GetMdMgr.AddNode(ni)
       val key = "NodeInfo." + ni.nodeId
       val value = serializer.SerializeObjectToByteArray(ni)
@@ -5074,8 +5223,16 @@ object MetadataAPIImpl extends MetadataAPI {
       if(a.DataFormat != None ){
         dataFormat = a.DataFormat.get
       }
+            var delimiterString: String = null
+            var associatedMsg: String = null
+            if (a.DelimiterString != None) {
+              delimiterString = a.DelimiterString.get
+            }
+            if (a.AssociatedMessage != None) {
+              associatedMsg = a.AssociatedMessage.get
+            }
       // save in memory
-      val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name,a.TypeString,dataFormat,a.ClassName,a.JarName,depJars,ascfg, inputAdapterToVerify)
+            val ai = MdMgr.GetMdMgr.MakeAdapter(a.Name, a.TypeString, dataFormat, a.ClassName, a.JarName, depJars, ascfg, inputAdapterToVerify, delimiterString, associatedMsg)
       MdMgr.GetMdMgr.AddAdapter(ai)
       val key = "AdapterInfo." + ai.name
       val value = serializer.SerializeObjectToByteArray(ai)
@@ -5305,7 +5462,15 @@ object MetadataAPIImpl extends MetadataAPI {
     if (key.equalsIgnoreCase("MetadataSchemaName")) {
       finalKey = "DATABASE_SCHEMA"
     }
-    
+
+    if (key.equalsIgnoreCase("MetadataPrincipal")) {
+      finalKey = "DATABASE_PRINCIPAL"
+    }
+
+    if (key.equalsIgnoreCase("MetadataKeytab")) {
+      finalKey = "DATABASE_KEYTAB"
+    }
+
     // Special case 4: DATABASE can come under DATABASE or MetaDataStoreType
     if (key.equalsIgnoreCase("DATABASE") || key.equalsIgnoreCase("MetadataStoreType")) {
       finalKey = "DATABASE"
@@ -5470,6 +5635,21 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       logger.debug("DatabaseHost => " + databaseHost + ", DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
 
+      var databasePrincipal = ""
+      var databaseKeytab = ""
+      /*
+      var tmpMdPrincipal = configMap.APIConfigParameters.MetadataPrincipal
+      if (tmpMdPrincipal != null) {
+        databasePrincipal = tmpMdPrincipal
+      }
+
+      var tmpMdKeytab = configMap.APIConfigParameters.MetadataKeytab
+      if (tmpMdKeytab != null) {
+        databaseKeytab = tmpMdKeytab
+      }
+*/
+      logger.debug("DatabasePrincipal => " + databasePrincipal + ", DatabaseKeytab => " + databaseKeytab)
+
       var databaseSchema = "metadata"
       val databaseSchemaOpt = configMap.APIConfigParameters.MetadataSchemaName
       if (databaseSchemaOpt != None) {
@@ -5608,6 +5788,8 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("DATABASE_HOST", databaseHost)
       metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
       metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
+      metadataAPIConfig.setProperty("DATABASE_PRINCIPAL", databasePrincipal)
+      metadataAPIConfig.setProperty("DATABASE_KEYTAB", databaseKeytab)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarTargetDir)
       val jp = if (jarPaths != null) jarPaths else jarTargetDir
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
@@ -5672,7 +5854,7 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
     isInitilized = true
-    logger.info("Metadata synching is now available.")
+    logger.debug("Metadata synching is now available.")
     
   }
   
@@ -5736,7 +5918,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || !isInitilized) {
       // nothing to do
-      logger.info("Metadata synching is not available.")
+      logger.debug("Metadata synching is not available.")
       return
     }
 
@@ -5747,7 +5929,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    *  InitMdMgr - 
    */
-  def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String) {
+  def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String, databasePrincipal: String, databaseKeytab: String) {
 
     SetLoggerLevel(Level.TRACE)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
@@ -5757,6 +5939,8 @@ object MetadataAPIImpl extends MetadataAPI {
     metadataAPIConfig.setProperty("DATABASE_HOST", databaseHost)
     metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
     metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
+    metadataAPIConfig.setProperty("DATABASE_PRINCIPAL", databasePrincipal)
+    metadataAPIConfig.setProperty("DATABASE_KEYTAB", databaseKeytab)
 
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
