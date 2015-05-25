@@ -1,3 +1,4 @@
+package com.ligadata.FatafatBase
 
 class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
