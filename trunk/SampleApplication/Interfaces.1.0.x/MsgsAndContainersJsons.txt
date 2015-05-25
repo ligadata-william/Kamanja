@@ -1,0 +1,165 @@
+Messages:
+
+	{
+	  "Message": {
+		"NameSpace": "System",
+		"Name": "TransactionMsg",
+		"Version": "00.01.00",
+		"Description": "Transaction Message",
+		"Fixed": "true",
+		"Persist": "true",
+		"Fields": [
+		  {
+			"Name": "custId",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "branchId",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "accNo",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "amount",
+			"Type": "System.Double"
+		  },
+		  {
+			"Name": "balance",
+			"Type": "System.Double"
+		  },
+		  {
+			"Name": "date",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "time",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "locationId",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "transType",
+			"Type": "System.String"
+		  }
+		],
+		"PartitionKey": [
+		  "custId"
+		],
+		"PrimaryKey": [
+		  "branchId",
+		  "accNo"
+		]
+	  }
+	}
+
+	{
+	  "Message": {
+		"NameSpace": "System",
+		"Name": "CustomerInfo",
+		"Version": "00.01.00",
+		"Description": "Customer Information",
+		"Fixed": "true",
+		"Persist": "true",
+		"Fields": [
+		  {
+			"Name": "custId",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "cellnum",
+			"Type": "System.String"
+		  },
+		  {
+			"Name": "branchId",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "accNo",
+			"Type": "System.Long"
+		  }
+		],
+		"PartitionKey": [
+		  "custId"
+		],
+		"PrimaryKey": [
+		  "branchId",
+		  "accNo"
+		]
+	  }
+	}
+
+=======================================================
+
+Containers:
+
+	{
+	  "Container": {
+		"NameSpace": "System",
+		"Name": "AlertHistory",
+		"Version": "00.01.00",
+		"Description": "Alert History",
+		"Fixed": "true",
+		"Persist": "true",
+		"Fields": [
+		  {
+			"Name": "custId",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "branchId",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "accNo",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "lastAlertDate",
+			"Type": "System.Int"
+		  }
+		],
+		"PartitionKey": [
+		  "custId"
+		]
+	  }
+	}
+
+	{
+	  "Container": {
+		"NameSpace": "System",
+		"Name": "CustomerPreferences",
+		"Version": "00.01.00",
+		"Description": "Customer Preferences",
+		"Fixed": "true",
+		"Persist": "true",
+		"Fields": [
+		  {
+			"Name": "custId",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "branchId",
+			"Type": "System.Int"
+		  },
+		  {
+			"Name": "accNo",
+			"Type": "System.Long"
+		  },
+		  {
+			"Name": "minBalanceAlertOptOut",
+			"Type": "System.String"
+		  },
+		  {
+			"Name": "overdraftLimit",
+			"Type": "System.Double"
+		  }
+		],
+		"PartitionKey": [
+		  "custId"
+		]
+	  }
+	}
