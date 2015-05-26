@@ -18,8 +18,8 @@ class TimeRange(startTime: Int, endTime: Int) {
 }
 
 // RDD traits/classes
-trait PairRDD[K, V] extends Logger {
-  // val LOG = Logger.getLogger(getClass);
+trait PairRDD[K, V] {
+  val LOG = Logger.getLogger(getClass);
 
   def countByKey: Map[K, Int]
 
@@ -39,8 +39,8 @@ trait PairRDD[K, V] extends Logger {
   // def rightOuterJoinByPartition[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
 }
 
-abstract class RDD[T: ClassTag] extends Logger("RDD") {
-  // val LOG = Logger.getLogger(getClass);
+abstract class RDD[T: ClassTag] {
+  val LOG = Logger.getLogger(getClass);
 
   // final def iterator: Iterator[T]
 
@@ -85,20 +85,20 @@ abstract class RDD[T: ClassTag] extends Logger("RDD") {
   def keyBy[K](f: T => K): PairRDD[K, T]
 }
 
-trait RDDObject extends Logger {
-  // val LOG = Logger.getLogger(getClass);
+abstract class RDDObject[T: ClassTag] {
+  val LOG = Logger.getLogger(getClass);
 
   // Get Most Recent Message for Current Partition Key
-  def GetRecentRDDForCurrentPartitionKey[T: ClassTag]: RDD[T]
+  def GetRecentRDDForCurrentPartitionKey: RDD[T]
 
   // Get by Current (Partition) Key
-  def GetRDDForCurrentPartitionKey[T: ClassTag](tmRange: TimeRange, f: T => Boolean): RDD[T]
-  def GetRDDForCurrentPartitionKey[T: ClassTag](f: T => Boolean): RDD[T]
-  def GetCurrentRDDForPartitionKey[T: ClassTag]: RDD[T] // Should return some error/exception on facts if the size is too big
+  def GetRDDForCurrentPartitionKey(tmRange: TimeRange, f: T => Boolean): RDD[T]
+  def GetRDDForCurrentPartitionKey(f: T => Boolean): RDD[T]
+  def GetCurrentRDDForPartitionKey: RDD[T] // Should return some error/exception on facts if the size is too big
 
   // Get by Partition Key
-  def GetRDDForPartitionKey[T: ClassTag](partitionKey: Array[String], tmRange: TimeRange, f: T => Boolean): RDD[T]
-  def GetRDDForPartitionKey[T: ClassTag](partitionKey: Array[String], f: T => Boolean): RDD[T]
-  def GetRDDForPartitionKey[T: ClassTag](partitionKey: Array[String]): RDD[T] // Should return some error/exception on facts if the size is too big
+  def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRange, f: T => Boolean): RDD[T]
+  def GetRDDForPartitionKey(partitionKey: Array[String], f: T => Boolean): RDD[T]
+  def GetRDDForPartitionKey(partitionKey: Array[String]): RDD[T] // Should return some error/exception on facts if the size is too big
 }
 

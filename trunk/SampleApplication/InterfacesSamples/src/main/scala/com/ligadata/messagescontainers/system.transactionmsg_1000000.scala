@@ -10,7 +10,7 @@ import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import com.ligadata.BaseTypes._
 import com.ligadata.FatafatBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject }
+import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange }
 
 object System_TransactionMsg_1000000 extends BaseMsgObj with RDDObject {
   override def TransformDataAttributes: TransformMessage = null
@@ -82,15 +82,15 @@ object System_TransactionMsg_1000000 extends BaseMsgObj with RDDObject {
   }
 
   // Get Most Recent Message for Current Partition Key
-  override def GetRecentRDDForCurrentPartitionKey: RDD[System_TransactionMsg_1000000] = { null }
+  override def GetRecentRDDForCurrentPartitionKey: RDD[System_TransactionMsg_1000000] = { return null }
 
   // Get by Current (Partition) Key
-  override def GetRDDForCurrentPartitionKey(tmRange: TimeRangeObject, f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
+  override def GetRDDForCurrentPartitionKey(tmRange: TimeRange, f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
   override def GetRDDForCurrentPartitionKey(f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
   override def GetRDDForCurrentPartitionKey: RDD[System_TransactionMsg_1000000] = { null } // Should return some error/exception on facts if the size is too big
 
   // Get by Partition Key
-  override def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRangeObject, f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
+  override def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRange, f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
   override def GetRDDForPartitionKey(partitionKey: Array[String], f: System_TransactionMsg_1000000 => Boolean): RDD[System_TransactionMsg_1000000] = { null }
   override def GetRDDForPartitionKey(partitionKey: Array[String]): RDD[System_TransactionMsg_1000000] = { null } // Should return some error/exception on facts if the size is too big
 }
