@@ -12,7 +12,7 @@ import com.ligadata.FatafatBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
 import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange }
 
-object System_CustomerInfo_1000000 extends BaseMsgObj with RDDObject {
+object System_CustomerInfo_1000000 extends BaseMsgObj with RDDObject[System_CustomerInfo_1000000] {
   override def TransformDataAttributes: TransformMessage = null
   override def NeedToTransformData: Boolean = false
   override def FullName: String = "System.CustomerInfo"
@@ -87,7 +87,7 @@ object System_CustomerInfo_1000000 extends BaseMsgObj with RDDObject {
   // Get by Current (Partition) Key
   override def GetRDDForCurrentPartitionKey(tmRange: TimeRange, f: System_CustomerInfo_1000000 => Boolean): RDD[System_CustomerInfo_1000000] = { null }
   override def GetRDDForCurrentPartitionKey(f: System_CustomerInfo_1000000 => Boolean): RDD[System_CustomerInfo_1000000] = { null }
-  override def GetRDDForCurrentPartitionKey: RDD[System_CustomerInfo_1000000] = { null } // Should return some error/exception on facts if the size is too big
+  override def GetRDDCurrentForPartitionKey: RDD[System_CustomerInfo_1000000] = { null } // Should return some error/exception on facts if the size is too big
 
   // Get by Partition Key
   override def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRange, f: System_CustomerInfo_1000000 => Boolean): RDD[System_CustomerInfo_1000000] = { null }
