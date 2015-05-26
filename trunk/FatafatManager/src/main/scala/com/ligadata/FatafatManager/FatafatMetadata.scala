@@ -660,12 +660,12 @@ object FatafatMetadata extends MdBaseResolveInfo {
     //// Check for Jars -- End
 
     zkTransaction.Notifications.foreach(zkMessage => {
-      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong
       LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
-            case "Add" => {
+            case "Add" | "Activate" => {
               try {
                 val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
@@ -679,7 +679,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               }
             }
-            case "Remove" => {
+            case "Remove" | "Deactivate" => {
               try {
                 removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
