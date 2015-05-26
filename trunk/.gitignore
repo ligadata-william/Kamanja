@@ -26,6 +26,8 @@ project/plugins/project/
 *.pydevproject
 .project
 .metadata
+.cache-main
+.cache-tests
 bin/
 tmp/
 *.tmp

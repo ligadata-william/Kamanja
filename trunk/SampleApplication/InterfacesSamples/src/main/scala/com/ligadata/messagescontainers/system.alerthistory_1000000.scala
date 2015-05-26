@@ -58,7 +58,7 @@ object System_AlertHistory_1000000 extends BaseContainerObj with RDDObject[Syste
   // Get by Current (Partition) Key
   override def GetRDDForCurrentPartitionKey(tmRange: TimeRange, f: System_AlertHistory_1000000 => Boolean): RDD[System_AlertHistory_1000000] = { null }
   override def GetRDDForCurrentPartitionKey(f: System_AlertHistory_1000000 => Boolean): RDD[System_AlertHistory_1000000] = { null }
-  override def GetRDDForCurrentPartitionKey: RDD[System_AlertHistory_1000000] = { null } // Should return some error/exception on facts if the size is too big
+  override def GetRDDCurrentForPartitionKey: RDD[System_AlertHistory_1000000] = { null } // Should return some error/exception on facts if the size is too big
 
   // Get by Partition Key
   override def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRange, f: System_AlertHistory_1000000 => Boolean): RDD[System_AlertHistory_1000000] = { null }

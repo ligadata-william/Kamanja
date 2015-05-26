@@ -39,7 +39,7 @@ trait PairRDD[K, V] {
   // def rightOuterJoinByPartition[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
 }
 
-abstract class RDD[T: ClassTag] {
+trait RDD[T] {
   val LOG = Logger.getLogger(getClass);
 
   // final def iterator: Iterator[T]
@@ -85,7 +85,7 @@ abstract class RDD[T: ClassTag] {
   def keyBy[K](f: T => K): PairRDD[K, T]
 }
 
-abstract class RDDObject[T: ClassTag] {
+trait RDDObject[T] {
   val LOG = Logger.getLogger(getClass);
 
   // Get Most Recent Message for Current Partition Key
@@ -94,7 +94,7 @@ abstract class RDDObject[T: ClassTag] {
   // Get by Current (Partition) Key
   def GetRDDForCurrentPartitionKey(tmRange: TimeRange, f: T => Boolean): RDD[T]
   def GetRDDForCurrentPartitionKey(f: T => Boolean): RDD[T]
-  def GetCurrentRDDForPartitionKey: RDD[T] // Should return some error/exception on facts if the size is too big
+  def GetRDDCurrentForPartitionKey: RDD[T] // Should return some error/exception on facts if the size is too big
 
   // Get by Partition Key
   def GetRDDForPartitionKey(partitionKey: Array[String], tmRange: TimeRange, f: T => Boolean): RDD[T]
