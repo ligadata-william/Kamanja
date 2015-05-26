@@ -17,6 +17,9 @@ class TimeRange(startTime: Int, endTime: Int) {
   // Methods
 }
 
+trait RDDBase {
+}
+
 // RDD traits/classes
 trait PairRDD[K, V] {
   val LOG = Logger.getLogger(getClass);
@@ -39,15 +42,16 @@ trait PairRDD[K, V] {
   // def rightOuterJoinByPartition[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
 }
 
-trait RDD[T] {
+trait RDD[T <: RDDBase] {
+  val ctag: ClassTag[T]
   val LOG = Logger.getLogger(getClass);
 
   // final def iterator: Iterator[T]
 
-  def map[U: ClassTag](f: T => U): RDD[U]
-  def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U]
+  def map[U <: RDDBase ](f: T => U): RDD[U]
+  def map[U <: RDDBase](tmRange: TimeRange, f: T => U): RDD[U]
 
-  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U]
+  def flatMap[U <: RDDBase](f: T => TraversableOnce[U]): RDD[U]
 
   def filter(f: T => Boolean): RDD[T]
   def filter(tmRange: TimeRange, f: T => Boolean): RDD[T]
@@ -85,7 +89,7 @@ trait RDD[T] {
   def keyBy[K](f: T => K): PairRDD[K, T]
 }
 
-trait RDDObject[T] {
+trait RDDObject[T <: RDDBase] {
   val LOG = Logger.getLogger(getClass);
 
   // Get Most Recent Message for Current Partition Key

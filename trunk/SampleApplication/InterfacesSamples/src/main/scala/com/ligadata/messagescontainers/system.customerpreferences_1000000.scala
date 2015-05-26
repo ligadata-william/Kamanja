@@ -10,7 +10,7 @@ import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import com.ligadata.BaseTypes._
 import com.ligadata.FatafatBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange }
+import com.ligadata.FatafatBase._
 
 object System_CustomerPreferences_1000000 extends BaseContainerObj with RDDObject[System_CustomerPreferences_1000000] {
   override def FullName: String = "System.CustomerPreferences"
@@ -66,7 +66,7 @@ object System_CustomerPreferences_1000000 extends BaseContainerObj with RDDObjec
   override def GetRDDForPartitionKey(partitionKey: Array[String]): RDD[System_CustomerPreferences_1000000] = { null } // Should return some error/exception on facts if the size is too big
 }
 
-class System_CustomerPreferences_1000000 extends BaseContainer {
+class System_CustomerPreferences_1000000 extends BaseContainer with RDDBase {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
