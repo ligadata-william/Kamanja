@@ -95,3 +95,4 @@ lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata,
 
 lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
 
+lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSamples")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage)
