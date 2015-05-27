@@ -14,7 +14,7 @@ import org.apache.log4j._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
-import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.MetadataAPI.{MetadataAPIImpl,MetadataSynchronizer}
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
@@ -575,7 +575,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     }
 
     val zkTransaction = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
+    MetadataSynchronizer.UpdateMdMgr(zkTransaction)
 
     if (zkTransaction == null || zkTransaction.Notifications.size == 0) {
       // nothing to do

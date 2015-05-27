@@ -671,6 +671,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def InitMdMgr(configFile: String) {
+    InitMdMgrFromBootStrap(configFile)
+  }
 
   def InitMdMgrFromBootStrap(configFile: String) {
     MdMgr.GetMdMgr.truncate
