@@ -62,8 +62,8 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
       
     
     val objectName = (nameSpace + "."+ arg.Name +"."+ version).toLowerCase
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("delete", arg.ObjectType))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,objType,AuditConstants.FAIL,"",objectName)
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("delete", arg.ObjectType))) {
+	      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,objType,AuditConstants.FAIL,"",objectName)
         return new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Error:UPDATE not allowed for this user").toString
     }
 
@@ -87,7 +87,7 @@ class RemoveObjectsService(requestContext: RequestContext, userid:Option[String]
 	      return MetadataAPIImpl.RemoveType(nameSpace,arg.Name,version.toLong)
       }
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",objectName)
+    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",objectName)
     apiResult
   }
 

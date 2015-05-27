@@ -43,12 +43,12 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
       return
     }
 
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","function"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.FAIL,"",nameVal)
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("insert","function"))) {
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.SUCCESS,"",nameVal)       
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.SUCCESS,"",nameVal)       
       requestContext.complete(apiResult)     
     }
   }

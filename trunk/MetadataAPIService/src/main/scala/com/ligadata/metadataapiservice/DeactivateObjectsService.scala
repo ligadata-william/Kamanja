@@ -85,8 +85,8 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
           }
           
            // Do it here so that we know which OBJECT is being activated for the Audit purposes.
-          if ((!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("deactivate","model"))) && !authDone) {
-            MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT,arg.ObjectType,AuditConstants.FAIL,"unknown",nameSpace+"."+name+"."+version)
+          if ((!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("deactivate","model"))) && !authDone) {
+            SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT,arg.ObjectType,AuditConstants.FAIL,"unknown",nameSpace+"."+name+"."+version)
             requestContext.complete(new ApiResult(-1, APIName, null, "Error:UPDATE not allowed for this user").toString )
             return
           }
@@ -113,7 +113,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
     else{
       resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, activatedType, AuditConstants.SUCCESS,"",objectList.mkString(","))
+    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, activatedType, AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }

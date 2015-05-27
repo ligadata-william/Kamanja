@@ -46,8 +46,8 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
   def GetAllObjectKeys(objectType:String): String = {
     var apiResult:Array[String] = new Array[String](0)
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","keys"))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.FAIL,"",objectType)
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("get","keys"))) {
+	      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.FAIL,"",objectType)
 	      return new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:READ not allowed for this user").toString   
     }
 
@@ -75,7 +75,7 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
          return new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Invalid URL:" + apiResult.mkString).toString
       }
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.SUCCESS,"",objectType)
+    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,objectType,AuditConstants.SUCCESS,"",objectType)
     new ApiResult(ErrorCodeConstants.Success,  APIName, "Object Keys:" + apiResult.mkString(","), ErrorCodeConstants.Get_All_Object_Keys_Successful).toString
   }
 

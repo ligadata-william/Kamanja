@@ -37,12 +37,12 @@ class AddContainerService(requestContext: RequestContext, userid:Option[String],
 
     var nameVal = APIService.extractNameFromJson(containerJson,AuditConstants.CONTAINER) 
     
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","container"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,containerJson,AuditConstants.FAIL,"",nameVal)
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("insert","container"))) {
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,containerJson,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else { 
       val apiResult = MetadataAPIImpl.AddContainer(containerJson,"JSON")
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,containerJson,AuditConstants.SUCCESS,"",nameVal)
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,containerJson,AuditConstants.SUCCESS,"",nameVal)
       requestContext.complete(apiResult)    
     }   
   }

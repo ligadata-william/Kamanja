@@ -43,7 +43,7 @@ class GetAuditLogService(requestContext: RequestContext, userid:Option[String], 
   }
 
   def process(filterParameters: Array[String]) = {
-    val auditLog = MetadataAPIImpl.getAuditRec(filterParameters)
+    val auditLog = SecAuditImpl.getAuditRec(filterParameters)
     requestContext.complete(auditLog)
   }
 }

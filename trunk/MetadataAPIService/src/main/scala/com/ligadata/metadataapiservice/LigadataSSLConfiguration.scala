@@ -7,6 +7,7 @@ import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.TrustManagerFactory
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import spray.io._
+import com.ligadata.MetadataAPI.MetadataUtils
 
 // Must be enabled in the applicatin.conf
 trait LigadataSSLConfiguration {
@@ -14,7 +15,7 @@ trait LigadataSSLConfiguration {
   // if there is no SSLContext in scope implicitly the HttpServer uses the default SSLContext,
   // since we want non-default settings in this example we make a custom SSLContext available here
   implicit def sslContext: SSLContext = {
-    val keyStoreResource = MetadataAPIImpl.getSSLCertificatePath  
+    val keyStoreResource = MetadataUtils.getSSLCertificatePath  
     val kspass = "password"
 
     val ksp = new KeyStoreParameters()

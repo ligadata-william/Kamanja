@@ -43,12 +43,12 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
       return
     }
 
-	  if (!MetadataAPIImpl.checkAuth(userid, password, cert, MetadataAPIImpl.getPrivilegeName("insert","concept"))) {
-	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.FAIL,"",nameVal)
+	  if (!SecAuditImpl.checkAuth(userid, password, cert, SecAuditImpl.getPrivilegeName("insert","concept"))) {
+	    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.FAIL,"",nameVal)
 	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
 	  } else {
 	    val apiResult = MetadataAPIImpl.AddConcepts(conceptJson,formatType)
-	    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.SUCCESS,"",nameVal)
+	    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,conceptJson,AuditConstants.SUCCESS,"",nameVal)
 	    requestContext.complete(apiResult)
     }
 	}

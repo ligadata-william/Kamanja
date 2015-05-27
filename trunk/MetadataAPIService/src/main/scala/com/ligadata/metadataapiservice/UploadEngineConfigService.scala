@@ -43,12 +43,12 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
       objectList :::= List(elem.getOrElse("ClusterId",""))
     })
    
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","configuration"))) {
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.FAIL,"",objectList.mkString(","))
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("update","configuration"))) {
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.FAIL,"",objectList.mkString(","))
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
       val apiResult = MetadataAPIImpl.UploadConfig(cfgJson)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.SUCCESS,"",objectList.mkString(","))            
+      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.SUCCESS,"",objectList.mkString(","))            
       requestContext.complete(apiResult)    
     }
   }

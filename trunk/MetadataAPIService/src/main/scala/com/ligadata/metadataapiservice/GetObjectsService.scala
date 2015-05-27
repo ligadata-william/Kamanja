@@ -62,8 +62,8 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     }
     
     val objectName = (nameSpace + arg.Name + version).toLowerCase
-    if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get",arg.ObjectType))) {
-	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
+    if (!SecAuditImpl.checkAuth(userid,password,cert, SecAuditImpl.getPrivilegeName("get",arg.ObjectType))) {
+	      SecAuditImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
 	      return new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:READ not allowed for this user").toString
     }
 
@@ -87,7 +87,7 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
       }
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",nameSpace+"."+name+"."+version)
+    SecAuditImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",nameSpace+"."+name+"."+version)
     apiResult
   }
 
