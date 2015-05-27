@@ -1,0 +1,20 @@
+
+1. Samples to Create
+	a) Simple action on incoming data only. No history access & no other messages to access.
+	b) Incoming Data + Other dimension data (like Customer Preferences, etc)
+	c) Save computed results (like Alert Results or something else)
+	d) Save incoming messages (as history) & Models to update dimensions
+	e) Depending on PrimaryKey type we need to save/upate Alert History, etc
+	f) 
+
+2. Simplfy Model base classes to minimize derived classes
+
+3. Minimal Implementation of RDD traits
+
+4. Implementation of Transaction Context
+
+5. Change Message Compiler need to change to act on RDDObject
+
+6. Transformation model/classes
+
+7. 
