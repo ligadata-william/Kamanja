@@ -156,7 +156,7 @@ object MetadataAPIImpl extends MetadataAPI {
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
                                "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","SSL_PASSWD", "DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT", "DATABASE_PRINCIPAL", "DATABASE_KEYTAB")
+                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "DATABASE_PRINCIPAL", "DATABASE_KEYTAB")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -253,7 +253,7 @@ object MetadataAPIImpl extends MetadataAPI {
     // All is good, create the new class
     var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.fatafat.metadata.AuditAdapter]]
     auditObj = className.newInstance
-    auditObj.init
+    auditObj.init(metadataAPIConfig.getProperty("AUDIT_PARMS"))
     logger.debug("Created class "+ className.getName)
   }
   
@@ -3026,8 +3026,20 @@ object MetadataAPIImpl extends MetadataAPI {
     RemoveContainer(sysNS, containerName, version)
   }
 
-  // Remove model with Model Name and Version Number
+  /**
+   * 
+   */
   def DeactivateModel(nameSpace: String, name: String, version: Long): String = {
+    val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    if (DeactivateLocalModel(nameSpace,name,version)) {
+       (new ApiResult(ErrorCodeConstants.Success, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Successful + ":" + dispkey)).toString
+    } else {
+       (new ApiResult(ErrorCodeConstants.Failure, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Failed_Not_Active + ":" + dispkey)).toString
+    }
+  }
+  
+  // Remove model with Model Name and Version Number
+  private def DeactivateLocalModel(nameSpace: String, name: String, version: Long): Boolean = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     try {
@@ -3036,30 +3048,65 @@ object MetadataAPIImpl extends MetadataAPI {
         case None =>
           None
           logger.debug("No active model found => " + dispkey)
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Failed_Not_Active + ":" + dispkey)
-          apiResult.toString()
+          false
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           DeactivateObject(m.asInstanceOf[ModelDef])
+          
+          // TODO: Need to deactivate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Deactivate"
           NotifyEngine(objectsUpdated, operations)
-          var apiResult = new ApiResult(ErrorCodeConstants.Success, "Deactivate Model", null, ErrorCodeConstants.Deactivate_Model_Successful + ":" + dispkey)
-          apiResult.toString()
+          true
       }
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "Deactivate Model", null, "Error :" + e.toString() + ErrorCodeConstants.Deactivate_Model_Failed + ":" + dispkey)
-        apiResult.toString()
+        logger.error(e.getStackTrace)
+        false
       }
     }
   }
 
+  /**
+   * 
+   */
   def ActivateModel(nameSpace: String, name: String, version: Long): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    var currActiveModel: ModelDef = null
+
     try {
+      // We may need to deactivate an model if something else is active.  Find the active model
+      val oCur = MdMgr.GetMdMgr.Models(nameSpace, name, true, false)
+      oCur match {
+        case None => 
+        case Some(m) =>
+          var setOfModels = m.asInstanceOf[scala.collection.immutable.Set[ModelDef]]
+          if (setOfModels.size > 1) {
+            logger.error("Internal Metadata error, there are more then 1 versions of model "+nameSpace+"."+name+" active on this system.")
+          }
+          
+          // If some model is active, deactivate it.
+          if (setOfModels.size != 0) {
+            currActiveModel = setOfModels.last 
+            if (currActiveModel.NameSpace.equalsIgnoreCase(nameSpace) &&
+                currActiveModel.name.equalsIgnoreCase(name) &&
+                currActiveModel.Version == version) {
+              return (new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, dispkey+" already active")).toString  
+              
+            }
+            var isSuccess = DeactivateLocalModel(currActiveModel.nameSpace, currActiveModel.name, currActiveModel.Version)
+            if (!isSuccess) {
+              logger.error("Error while trying to activate "+dispkey+", unable to deactivate active model. model ")
+              var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey +" -Unable to deactivate existing model")
+              apiResult.toString()      
+            }
+          } 
+        
+      }
+
+      // Ok, at this point, we have deactivate  a previously active model.. now we activate this one.
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, false)
       o match {
         case None =>
@@ -3070,14 +3117,20 @@ object MetadataAPIImpl extends MetadataAPI {
         case Some(m) =>
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           ActivateObject(m.asInstanceOf[ModelDef])
+          
+          // Issue a Notification to all registered listeners that an Acivation took place.
+          // TODO: Need to activate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Activate"
           NotifyEngine(objectsUpdated, operations)
+
+          // No exceptions, we succeded
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "ActivateModel", null, ErrorCodeConstants.Activate_Model_Successful + ":" + dispkey)
           apiResult.toString()
       }
     } catch {
+      
       case e: Exception => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "ActivateModel", null, "Error :" + e.toString() + ErrorCodeConstants.Activate_Model_Failed + ":" + dispkey)
         apiResult.toString()
