@@ -2541,7 +2541,7 @@ object MetadataAPIImpl extends MetadataAPI {
             isValid = IsValidVersion(latestVersion.get, msg)
           }
           if (!isValid) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + msg.Name + " Error:Invalid Version")
             apiResult.toString()
           }     
           
@@ -2573,7 +2573,7 @@ object MetadataAPIImpl extends MetadataAPI {
             isValid = IsValidVersion(latestVersion.get, cont)
           }
           if (!isValid) {
-            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + cont.Name + " Error:Invalid Version")
             apiResult.toString()
           }   
           
