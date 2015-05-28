@@ -124,6 +124,12 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	/** This value used in all map/filter/groupBy apply functions as the element reference */
 	val applyElementName : String = "_each"
 	  
+	  
+	/** Error counter */
+	var errorCounter : Int = 0
+	def IncrErrorCounter : Unit = { errorCounter += 1 }
+	def ErrorCount : Int = { errorCounter }
+	
 	/** While processing elements this stack tracks where we are in the transformation dictionary generation */
 	val elementStack : Stack[PmmlExecNode] = Stack[PmmlExecNode]()
 	/** FcnTypeInfo stack ... used to decide whether field expressions should be fixed ( e.g., ctr.field) or mapped (e.g., ctr("field")) 
@@ -602,7 +608,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	def RuleScoreDistributions : ArrayBuffer[ArrayBuffer[xScoreDistribution]] = { scoreDistributions }
 	
 	/** Node name => function map for data collection */
-    type ElementVisitFcn = (String,String,String,Attributes) => PmmlNode
+    type ElementVisitFcn = (String,String,String,Attributes,Int,Int) => PmmlNode
     val  pmmlElementVistitorMap = Map[String, ElementVisitFcn]()
     pmmlElementVistitorMap += ("Constant" -> PmmlNode.mkPmmlConstant)
     pmmlElementVistitorMap += ("Header" -> PmmlNode.mkPmmlHeader)
@@ -637,36 +643,42 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
    
     
 	/** Dispatcher for PMML xml data collection */
-	def dispatchElementVisitor(ctx : PmmlContext, namespaceURI: String, localName: String , qName:String, atts: Attributes) {
+	def dispatchElementVisitor(ctx : PmmlContext
+							, namespaceURI: String
+							, localName: String 
+							, qName:String
+							, atts: Attributes
+							, lineNumber : Int
+							, columnNumber : Int) {
 		var node : PmmlNode = qName match {
-			case "Constant" => PmmlNode.mkPmmlConstant(namespaceURI, localName, qName, atts)
-			case "Header" => PmmlNode.mkPmmlHeader(namespaceURI, localName, qName, atts)
-			case "Application" => PmmlNode.mkPmmlApplication(namespaceURI, localName, qName, atts)
-			case "DataDictionary" => PmmlNode.mkPmmlDataDictionary(namespaceURI, localName, qName, atts)
-			case "DataField" => PmmlNode.mkPmmlDataField(namespaceURI, localName, qName, atts)
-			case "Value" => PmmlNode.mkPmmlValue(namespaceURI, localName, qName, atts)
-			case "Interval" => PmmlNode.mkPmmlInterval(namespaceURI, localName, qName, atts)
-			case "TransformationDictionary" => PmmlNode.mkPmmlTransformationDictionary(namespaceURI, localName, qName, atts)
-			case "DerivedField" => PmmlNode.mkPmmlDerivedField(namespaceURI, localName, qName, atts)
-			case "DefineFunction" => PmmlNode.mkPmmlDefineFunction(namespaceURI, localName, qName, atts)
-			case "ParameterField" => PmmlNode.mkPmmlParameterField(namespaceURI, localName, qName, atts)
-			case "Apply" => PmmlNode.mkPmmlApply(namespaceURI, localName, qName, atts)
-			case "FieldRef" => PmmlNode.mkPmmlFieldRef(namespaceURI, localName, qName, atts)
-			case "MapValues" => PmmlNode.mkPmmlMapValues(namespaceURI, localName, qName, atts)
-			case "FieldColumnPair" => PmmlNode.mkPmmlFieldColumnPair(namespaceURI, localName, qName, atts)
-			case "row" => PmmlNode.mkPmmlrow(namespaceURI, localName, qName, atts)
-			case "TableLocator" => PmmlNode.mkPmmlTableLocator(namespaceURI, localName, qName, atts)
-			case "InlineTable" => PmmlNode.mkPmmlInlineTable(namespaceURI, localName, qName, atts)
-			case "RuleSetModel" => PmmlNode.mkPmmlRuleSetModel(namespaceURI, localName, qName, atts)
-			case "MiningField" => PmmlNode.mkPmmlMiningField(namespaceURI, localName, qName, atts)
-			case "MiningSchema" => PmmlNode.mkPmmlMiningSchema(namespaceURI, localName, qName, atts)
-			case "SimpleRule" => PmmlNode.mkPmmlSimpleRule(namespaceURI, localName, qName, atts)
-			case "ScoreDistribution" => PmmlNode.mkPmmlScoreDistribution(namespaceURI, localName, qName, atts)
-			case "RuleSet" => PmmlNode.mkPmmlRuleSet(namespaceURI, localName, qName, atts)
-			case "RuleSelectionMethod" => PmmlNode.mkPmmlRuleSelectionMethod(namespaceURI, localName, qName, atts)
-			case "Array" => PmmlNode.mkPmmlArray(namespaceURI, localName, qName, atts)
-			case "SimplePredicate" => PmmlNode.mkPmmlSimplePredicate(namespaceURI, localName, qName, atts)
-			case "CompoundPredicate" => PmmlNode.mkPmmlCompoundPredicate(namespaceURI, localName, qName, atts)
+			case "Constant" => PmmlNode.mkPmmlConstant(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Header" => PmmlNode.mkPmmlHeader(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Application" => PmmlNode.mkPmmlApplication(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "DataDictionary" => PmmlNode.mkPmmlDataDictionary(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "DataField" => PmmlNode.mkPmmlDataField(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Value" => PmmlNode.mkPmmlValue(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Interval" => PmmlNode.mkPmmlInterval(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "TransformationDictionary" => PmmlNode.mkPmmlTransformationDictionary(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "DerivedField" => PmmlNode.mkPmmlDerivedField(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "DefineFunction" => PmmlNode.mkPmmlDefineFunction(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "ParameterField" => PmmlNode.mkPmmlParameterField(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Apply" => PmmlNode.mkPmmlApply(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "FieldRef" => PmmlNode.mkPmmlFieldRef(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "MapValues" => PmmlNode.mkPmmlMapValues(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "FieldColumnPair" => PmmlNode.mkPmmlFieldColumnPair(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "row" => PmmlNode.mkPmmlrow(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "TableLocator" => PmmlNode.mkPmmlTableLocator(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "InlineTable" => PmmlNode.mkPmmlInlineTable(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "RuleSetModel" => PmmlNode.mkPmmlRuleSetModel(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "MiningField" => PmmlNode.mkPmmlMiningField(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "MiningSchema" => PmmlNode.mkPmmlMiningSchema(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "SimpleRule" => PmmlNode.mkPmmlSimpleRule(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "ScoreDistribution" => PmmlNode.mkPmmlScoreDistribution(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "RuleSet" => PmmlNode.mkPmmlRuleSet(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "RuleSelectionMethod" => PmmlNode.mkPmmlRuleSelectionMethod(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "Array" => PmmlNode.mkPmmlArray(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "SimplePredicate" => PmmlNode.mkPmmlSimplePredicate(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
+			case "CompoundPredicate" => PmmlNode.mkPmmlCompoundPredicate(namespaceURI, localName, qName, atts, lineNumber, columnNumber)
 			//case _ => new PmmlNode(namespaceURI, localName, qName)
 		}
 		if (node != null) {
@@ -816,23 +828,42 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 
 	
 	/** 
+	 *  Run through the transformation dictionary and data dictionary looking for poor syntax, unknown field ids, 
+	 *  and other mess.
+	 */
+	def syntaxCheck() : Unit =  {
+	    val syntaxChecker : FieldIdentifierSyntaxChecker = new FieldIdentifierSyntaxChecker(this)
+		val xDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("TransformationDictionary")
+		PmmlExecNodeVisitor.Visit(xDictNode, syntaxChecker)
+		val dDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("DataDictionary")
+		PmmlExecNodeVisitor.Visit(dDictNode, syntaxChecker)
+		
+		/** At least one prediction in the mining schema please. */
+		val atLeastOnePrediction : Boolean = (MiningSchemaMap.values.filter(m => m.usageType.toLowerCase == "predicted").size > 0)
+		if (! atLeastOnePrediction) {
+			logger.error("Mining Schema must have at least one mining field with usageType == 'predicted'")
+			IncrErrorCounter
+		}
+	}
+		
+	/** 
 	 *  Collect the categorized values from the top level apply functions (i.e., parent node is xDerivedField).
 	 *  Update the top level apply functions categorized value array with them, eliminating them from the child
 	 *  nodes of the xDerived field.
 	 */
-	def transformTopLevelApplyNodes()  {
+	def transformTopLevelApplyNodes() : Unit =  {
 	    val catTransformer : IfActionTransform = new IfActionTransform(this)
 		val xDictNode : Option[PmmlExecNode] = pmmlExecNodeMap.apply("TransformationDictionary")
 		PmmlExecNodeVisitor.Visit(xDictNode, catTransformer)
 	}
 		
-	def ruleSetModelInfoCollector()  {
+	def ruleSetModelInfoCollector() : Unit =  {
 	    val rsModelCollector : RuleSetModelCollector = new RuleSetModelCollector(this)
 	    val rsm : Option[PmmlExecNode] = pmmlExecNodeMap.apply("RuleSetModel") 
 		PmmlExecNodeVisitor.Visit(rsm, rsModelCollector)
 	}
 
-	def simpleRuleInfoCollector()  {
+	def simpleRuleInfoCollector() : Unit =  {
 	    val rsModelCollector : SimpleRuleCollector = new SimpleRuleCollector(this)
 	    val rsm : Option[PmmlExecNode] = pmmlExecNodeMap.apply("RuleSetModel") 
 		PmmlExecNodeVisitor.Visit(rsm, rsModelCollector)
