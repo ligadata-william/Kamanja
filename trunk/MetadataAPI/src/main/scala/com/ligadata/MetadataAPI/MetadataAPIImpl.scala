@@ -940,7 +940,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def SaveObject(obj: BaseElemDef, mdMgr: MdMgr) {
+  def SaveObject(obj: BaseElemDef, mdMgr: MdMgr): Boolean = {
     try {
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       val dispkey = (getObjectType(obj) + "." + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)).toLowerCase
@@ -1044,12 +1044,15 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.error("SaveObject is not implemented for objects of type " + obj.getClass.getName)
         }
       }
+      true
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
+        false
      }
       case e: Exception => {
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
+        false
       }
     }
   }
@@ -2208,6 +2211,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def AddFunctions(functionsText: String, format: String): String = {
     logger.debug("Started AddFunctions => ")
+    var aggFailures: String = ""
     try {
       if (format != "JSON") {
         var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddFunctions", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionsText)
@@ -2226,10 +2230,17 @@ object MetadataAPIImpl extends MetadataAPI {
         val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
         funcList.foreach(func => {
           UploadJarsToDB(func, false, alreadyCheckedJars)
-          SaveObject(func, MdMgr.GetMdMgr)
+          if (!SaveObject(func, MdMgr.GetMdMgr)) {
+            if (!aggFailures.equalsIgnoreCase("")) aggFailures = aggFailures + ","  
+            aggFailures = aggFailures + func.FullNameWithVer
+          }
         })
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddFunctions", null, ErrorCodeConstants.Add_Function_Successful + ":" + functionsText)
-        apiResult.toString()
+        if (!aggFailures.equalsIgnoreCase("")) {
+          (new ApiResult(ErrorCodeConstants.Warning, "AddFunctions", null, ErrorCodeConstants.Add_Function_Warning + ":" + aggFailures)).toString()
+        }
+        else { 
+          (new ApiResult(ErrorCodeConstants.Success, "AddFunctions", null, ErrorCodeConstants.Add_Function_Successful + ":" + functionsText)).toString()
+        }
       }
     } catch {
       case e: Exception => {
@@ -2239,43 +2250,6 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def AddFunction(functionText: String, format: String): String = {
-    logger.debug("Started AddFunction => ")
-    try {
-      if (format != "JSON") {
-        var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddFunction", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + functionText)
-        apiResult.toString()
-      } else {
-        var func = JsonSerializer.parseFunction(functionText, "JSON")
-        // Check for the Jars
-        val missingJars = CheckForMissingJar(func)
-        if (missingJars.size > 0) {
-          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Add_Function_Failed + ":" + functionText)
-          return apiResult.toString()
-        }
-        UploadJarsToDB(func, false)
-        SaveObject(func, MdMgr.GetMdMgr)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddFunction", null, ErrorCodeConstants.Add_Function_Successful + ":" + functionText)
-        apiResult.toString()
-      }
-    } catch {
-      case e: MappingException => {
-        logger.debug("Failed to parse the function, json => " + functionText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Function_Failed + ":" + functionText)
-        apiResult.toString()
-      }
-      case e: AlreadyExistsException => {
-        logger.debug("Failed to add the function, json => " + functionText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Function_Failed + ":" + functionText)
-        apiResult.toString()
-      }
-      case e: Exception => {
-        logger.debug("Failed to up the function, json => " + functionText + ",Error => " + e.getMessage())
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Function_Failed + ":" + functionText)
-        apiResult.toString()
-      }
-    }
-  }
 
   def UpdateFunctions(functionsText: String, format: String): String = {
     logger.debug("Started UpdateFunctions => ")
