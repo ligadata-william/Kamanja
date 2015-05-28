@@ -1403,7 +1403,7 @@ object MetadataAPIImpl extends MetadataAPI {
         return
       }
       var allJars = GetDependantJars(obj)
-      logger.debug("Found " + allJars.length + " dependant jars ")
+      logger.debug("Found " + allJars.length + " dependant jars. Jars:" + allJars.mkString(","))
       if (allJars.length > 0) {
         val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
         jarPaths.foreach(jardir => {
@@ -1435,14 +1435,16 @@ object MetadataAPIImpl extends MetadataAPI {
             }
           } catch {
             case e: Exception => {
-              logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "): " + e.getMessage())
+              logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
+              e.printStackTrace
             }
           }
         })
       }
     } catch {
       case e: Exception => {
-        logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "): " + e.getMessage())
+        logger.error("Failed to download the Jar of the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "'s dep jar " + curJar + "). Message:" + e.getMessage + " Reason:" + e.getCause)
+        e.printStackTrace
       }
     }
   }
@@ -2235,6 +2237,13 @@ object MetadataAPIImpl extends MetadataAPI {
             aggFailures = aggFailures + func.FullNameWithVer
           }
         })
+/*
+        val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
+        val operations = funcList.map(f => "Add")
+        NotifyEngine(objectsAdded, operations)
+*/
+        if (funcList.size > 0)
+          PutTranId(funcList(0).tranId)
         if (!aggFailures.equalsIgnoreCase("")) {
           (new ApiResult(ErrorCodeConstants.Warning, "AddFunctions", null, ErrorCodeConstants.Add_Function_Warning + ":" + aggFailures)).toString()
         }
@@ -2273,6 +2282,13 @@ object MetadataAPIImpl extends MetadataAPI {
           UploadJarsToDB(func, false, alreadyCheckedJars)
           UpdateFunction(func)
         })
+/*
+        val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
+        val operations = funcList.map(f => "Add")
+        NotifyEngine(objectsAdded, operations)
+*/
+        if (funcList.size > 0)
+          PutTranId(funcList(0).tranId)
         var apiResult = new ApiResult(ErrorCodeConstants.Success, "UpdateFunctions", null, ErrorCodeConstants.Update_Function_Successful + ":" + functionsText)
         apiResult.toString()
       }
@@ -4228,15 +4244,20 @@ object MetadataAPIImpl extends MetadataAPI {
             AddObjectToCache(mObj, MdMgr.GetMdMgr)
             DownloadJarFromDB(mObj)
           } else {
-            logger.debug("The transaction id of the object => " + mObj.tranId)
-            AddObjectToCache(mObj, MdMgr.GetMdMgr)
-            DownloadJarFromDB(mObj)
-            logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
-            objectsChanged = objectsChanged :+ mObj
-            if (mObj.IsActive) {
-              operations = for (op <- objectsChanged) yield "Add"
-            } else {
-              operations = for (op <- objectsChanged) yield "Remove"
+            if (mObj.isInstanceOf[FunctionDef]){
+              // BUGBUG:: Not notifying functions at this moment. This may cause inconsistance between different instances of the metadata.
+            }
+            else {
+              logger.debug("The transaction id of the object => " + mObj.tranId)
+              AddObjectToCache(mObj, MdMgr.GetMdMgr)
+              DownloadJarFromDB(mObj)
+              logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
+              objectsChanged = objectsChanged :+ mObj
+              if (mObj.IsActive) {
+                operations = for (op <- objectsChanged) yield "Add"
+              } else {
+                operations = for (op <- objectsChanged) yield "Remove"
+              }
             }
           }
         } else {
