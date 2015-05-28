@@ -2844,6 +2844,8 @@ object MdMgr extends LogTrait {
     val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
     retVerInfo
   }
+  
+  def UnknownVersion : String = "000000000000000000000"
 
   def Pad0s2Version(verInfo: Long): String = {
     var remVer = verInfo
