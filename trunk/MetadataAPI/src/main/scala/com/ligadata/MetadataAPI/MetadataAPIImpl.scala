@@ -646,6 +646,11 @@ object MetadataAPIImpl extends MetadataAPI {
     var storeObjects = new Array[IStorage](keyList.length)
     keyList.foreach(key => {
       var value = valueList(i)
+      logger.debug("Writing Key:" + key)
+
+      SaveObject(key, value, store)
+/*
+
       object obj extends IStorage {
         var k = new com.ligadata.keyvaluestore.Key
         var v = new com.ligadata.keyvaluestore.Value
@@ -660,18 +665,26 @@ object MetadataAPIImpl extends MetadataAPI {
         def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
       }
       storeObjects(i) = obj
+*/
+
+
       i = i + 1
     })
+
+
+/*
     try {
       store.putBatch(storeObjects)
       store.commitTx(t)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to insert/update object for : " + keyList.mkString(","))
+        logger.error("Failed to insert/update object for : " + keyList.mkString(",") + ". Exception Message:" + e.getMessage + ". Reason:" + e.getCause)
         store.endTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
       }
     }
+*/
+
   }
 
 
