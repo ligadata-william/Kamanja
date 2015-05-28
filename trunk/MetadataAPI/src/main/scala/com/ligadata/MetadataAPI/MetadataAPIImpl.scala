@@ -2533,10 +2533,20 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
+          
+          // Make sure we are allowed to add this version.
+          val latestVersion = GetLatestMessage(msg) 
+          var isValid = true
+          if (latestVersion != None) {
+            isValid = IsValidVersion(latestVersion.get, msg)
+          }
+          if (!isValid) {
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
+            apiResult.toString()
+          }     
+          
           if( recompile ) {
-            // Incase of recompile, Message Compiler is automatically incrementing the previous version
-            // by 1. Before Updating the metadata with the new version, remove the old version
-            val latestVersion = GetLatestMessage(msg)
+            // val latestVersion = GetLatestMessage(msg)  
             RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
             resultStr = AddMessageDef(msg, recompile)
           }
@@ -2548,14 +2558,25 @@ object MetadataAPIImpl extends MetadataAPI {
             val depModels = GetDependentModels(msg.NameSpace,msg.Name,msg.ver)
             if( depModels.length > 0 ){
               depModels.foreach(mod => {
-          logger.debug("DependentModel => " + mod.FullNameWithVer)
-          resultStr = resultStr + RecompileModel(mod)
+                logger.debug("DependentModel => " + mod.FullNameWithVer)
+                resultStr = resultStr + RecompileModel(mod)
               })
             }
           }
           resultStr
         }
         case cont: ContainerDef => {
+          // Make sure we are allowed to add this version.
+          val latestVersion = GetLatestContainer(cont) 
+          var isValid = true
+          if (latestVersion != None) {
+            isValid = IsValidVersion(latestVersion.get, cont)
+          }
+          if (!isValid) {
+            var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
+            apiResult.toString()
+          }   
+          
           if( recompile ){
             // Incase of recompile, Message Compiler is automatically incrementing the previous version
             // by 1. Before Updating the metadata with the new version, remove the old version
@@ -3833,6 +3854,33 @@ object MetadataAPIImpl extends MetadataAPI {
     model
   }
 
+  def GetLatestFunction(fDef: FunctionDef): Option[FunctionDef] = {
+    try {
+      var key = fDef.nameSpace + "." + fDef.name + "." + fDef.ver
+      val dispkey = fDef.nameSpace + "." + fDef.name + "." + MdMgr.Pad0s2Version(fDef.ver)
+      val o = MdMgr.GetMdMgr.Messages(fDef.nameSpace.toLowerCase,
+                                      fDef.name.toLowerCase,
+                                      false,
+                                      true)
+      o match {
+        case None =>
+          None
+          logger.debug("message not in the cache => " + dispkey)
+          None
+        case Some(m) =>
+          // We can get called from the Add Message path, and M could be empty.
+          if (m.size == 0) return None
+          logger.debug("message found => " + m.head.asInstanceOf[MessageDef].FullName  + "." + MdMgr.Pad0s2Version( m.head.asInstanceOf[MessageDef].ver))
+          Some(m.head.asInstanceOf[FunctionDef])
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new UnexpectedMetadataAPIException(e.getMessage())
+      }
+    }    
+  }
+  
   // Get the latest message for a given FullName
   def GetLatestMessage(msgDef: MessageDef): Option[MessageDef] = {
     try {
