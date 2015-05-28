@@ -1,4 +1,4 @@
-package com.ligadata.keyvaluestore.hbase
+package com.ligadata.audit.adapters
 
 import com.ligadata.keyvaluestore._
 import com.ligadata.fatafat.metadata._
@@ -36,41 +36,56 @@ import java.util.Calendar
  *
  */
 
-class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
+class AuditHBaseAdapter extends AuditAdapter
 {
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
-
-  var keyspace = parameter.getOrElse("schema", "default") ;
-  var hostnames = parameter.getOrElse("hostlist", "localhost") ;
-  var table = parameter.getOrElse("table", "default")
-
+  var keyspace: String = _ 
+  var hostnames: String = _
+  var table: String = _
+  
   var config = new org.apache.hadoop.conf.Configuration
-  config.setInt("zookeeper.session.timeout", 5000);
-  config.setInt("zookeeper.recovery.retry", 1);
-  config.setInt("hbase.client.retries.number", 3);
-  config.setInt("hbase.client.pause", 5000);
-  
-  config.set("hbase.zookeeper.quorum", hostnames);
-
   var connection:HConnection = _
-  try{
-    connection = HConnectionManager.createConnection(config);
-  }
-  catch{
-    case e:Exception => {
-      throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
-    }
+  var tableHBase: org.apache.hadoop.hbase.client.HTableInterface = _
+  var adapterProperties: scala.collection.mutable.Map[String,String] =   scala.collection.mutable.Map[String,String]()
+  
+  /**
+   * init - This method implements all the needed steps required to use this adapter.  
+   * @param String - file name where all the information needed for initialization is stored.
+   * @return Unit
+   */
+  override def init(parms: String): Unit = {
+ 
+      if (parms != null) {
+        logger.info("HBASE AUDIT: Initializing to "+parms)
+        initPropertiesFromFile(parms)   
+      }
+      
+      keyspace = adapterProperties.getOrElse("schema", "default") ;
+      hostnames = adapterProperties.getOrElse("hostlist", "localhost")
+      table = adapterProperties.getOrElse("table", "metadata_audit")
+     
+      config.setInt("zookeeper.session.timeout", 5000);
+      config.setInt("zookeeper.recovery.retry", 1);
+      config.setInt("hbase.client.retries.number", 3);
+      config.setInt("hbase.client.pause", 5000);
+  
+      config.set("hbase.zookeeper.quorum", hostnames);
+      try{
+        connection = HConnectionManager.createConnection(config);
+      }
+      catch{
+        case e:Exception => {
+          throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+        }
+      }
+      createTable(table)
+      tableHBase = connection.getTable(table);
+      
+      logger.info("HBASE AUDIT: Initialized with "+keyspace+"."+hostnames+"."+table)
   }
   
-  createTable(table)
-  var tableHBase = connection.getTable(table);
-  
-  def init: Unit = {
-    
-  }
-  
-  def createTable(tableName:String) : Unit = {
+  private def createTable(tableName:String) : Unit = {
     val  admin = new HBaseAdmin(config);
     if (! admin.tableExists(tableName)) {
       val  tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
@@ -94,9 +109,15 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
       admin.createTable(tableDesc);
     }
   }
-
+  
+  /**
+   * addAuditRecord - Adds the Audit Record to the underlying storage for this adapter.
+   * @param - AuditRecord
+   * @return - Unit
+   */
   def addAuditRecord(rec: AuditRecord) = {
     try{
+      logger.info("HBASE AUDIT: Audit event ")
       var at:java.lang.Long = rec.actionTime.toLong
       var p = new Put(Bytes.toBytes(at.toString()))
       //p.add(Bytes.toBytes("actiontime"), Bytes.toBytes("base"),Bytes.toBytes(at))
@@ -110,7 +131,7 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
       tableHBase.put(p)
     } catch {
       case e:Exception => {
-	throw new Exception("Failed to save an object in HBase table " + table + ":" + e.getMessage())
+	      throw new Exception("Failed to save an object in HBase table " + table + ":" + e.getMessage())
       }
     }
   }
@@ -207,6 +228,9 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
     }
   }
   
+  /**
+   * Shutdown - Shutdown all the resources used by this class.
+   */
   override def Shutdown() = {
     if(tableHBase != null ){
       tableHBase.close()
@@ -215,6 +239,20 @@ class AuditStoreHBase(parameter: PropertyMap) extends AuditAdapter
     if( connection != null ){
       connection.close()
       connection = null
+    }
+  }
+  
+  
+  private def initPropertiesFromFile(parmFile: String): Unit = {  
+    try {
+       scala.io.Source.fromFile(parmFile).getLines.foreach(line => {
+         var parsedLine = line.split('=')
+         adapterProperties(parsedLine(0).trim) = parsedLine(1).trim      
+       })
+    } catch {
+      case e:Exception => {
+        throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
+      }     
     }
   }
 }

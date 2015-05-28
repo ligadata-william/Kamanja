@@ -92,29 +92,27 @@ object PmmlError extends LogTrait {
 object PmmlTypes extends LogTrait {
   
   	def scalaDataType(dataType : String) : String = {
-	  		val typ = dataType match {
+	  		val typ = dataType.toLowerCase match {
 		      case "string" => "String"
-		      case "Long" => "Long"
-		      case "Int" => "Int"
-		      case "Float" => "Float"
-		      case "Double" => "Double"
+		      case "long" => "Long"
+		      case "int" => "Int"
+		      case "float" => "Float"
+		      case "double" => "Double"
 		      case "integer" => "Int" 
-		      case "float" => "Float" 
-		      case "double" => "Double" 
 		      case "real" => "Double" 
 		      case "boolean" => "Boolean" 
 		      case "date" => "Long" 
 		      case "time" => "Long" 
-		      case "dateTime" => "Long" 
-		      case "dateDaysSince[0]" => "Long" 
-		      case "dateDaysSince[1960]" => "Long" 
-		      case "dateDaysSince[1970]" => "Long" 
-		      case "dateDaysSince[1980]" => "Long" 
-		      case "timeSeconds" => "Long" 
-		      case "dateTimeSecondsSince[0]" => "Long" 
-		      case "dateTimeSecondsSince[1960]" => "Long" 
-		      case "dateTimeSecondsSince[1970]" => "Long" 
-		      case "dateTimeSecondsSince[1980]" => "Long" 
+		      case "datetime" => "Long" 
+		      case "datedayssince[0]" => "Long" 
+		      case "datedayssince[1960]" => "Long" 
+		      case "datedayssince[1970]" => "Long" 
+		      case "datedayssince[1980]" => "Long" 
+		      case "timeseconds" => "Long" 
+		      case "datetimesecondssince[0]" => "Long" 
+		      case "datetimesecondssince[1960]" => "Long" 
+		      case "datetimesecondssince[1970]" => "Long" 
+		      case "datetimesecondssince[1980]" => "Long" 
 		  
 		      case _ => {
 		    	  //println(s"scalaDataType($dataType)... unknown type... Any returned")

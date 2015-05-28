@@ -10,6 +10,7 @@ import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
 import com.ligadata.keyvaluestore.cassandra.CreateKeySpaceFailedException
 
+
 /*
   	You open connection to a cluster hostname[,hostname]:port
   	You could provide username/password
@@ -30,7 +31,7 @@ class AuditCassandraAdapter extends AuditAdapter {
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
   
-  adapterProperties = Map[String,String]()
+  var adapterProperties: scala.collection.mutable.Map[String,String] = scala.collection.mutable.Map[String,String]()
 
   // Read all cassandra parameters
   var hostnames: String = _
@@ -54,8 +55,16 @@ class AuditCassandraAdapter extends AuditAdapter {
   /**
    * init - This is a method that must be implemented by the adapter impl.  This method should preform any necessary
    *        steps to set up the destination of the Audit Records (in this case Cassandra Keyspace/Table).
+   * @param String - class name that contains parameters required to initialize the Cassandra connection
+   * @return Unit
    */
-  override def init: Unit = {
+  override def init (parms: String): Unit = {
+    
+    if (parms != null) {
+      logger.info("CASSANDRA AUDIT: Initializing to "+parms)
+      initPropertiesFromFile(parms)   
+    }
+    
     hostnames = adapterProperties.getOrElse("hostlist", "localhost").toString; 
     keyspace = adapterProperties.getOrElse("schema", "metadata").toString;
     table = adapterProperties.getOrElse("table", "metadata_audit").toString;
@@ -121,6 +130,8 @@ class AuditCassandraAdapter extends AuditAdapter {
      " (audityear,actiontime,userorrole,userprivilege,action,objectaccessed,success,transactionid,notes) " +
      " values(?,?,?,?,?,?,?,?,?);"
     insertStmt = session.prepare(insertSql)
+    
+    logger.info("CASSANDRA AUDIT: Initialized with "+keyspace+"."+hostnames+"."+table)
   }
   
   
@@ -237,11 +248,25 @@ class AuditCassandraAdapter extends AuditAdapter {
   }
 
   /**
-   * 
+   * Shutdown - clean up all the resources used by this class.
    */
   override def Shutdown() =  {
     session.close()
     cluster.close()
+  }
+  
+  private def initPropertiesFromFile(parmFile: String): Unit = {
+    
+    try {
+       scala.io.Source.fromFile(parmFile).getLines.foreach(line => {
+         var parsedLine = line.split('=')
+         adapterProperties(parsedLine(0).trim) = parsedLine(1).trim      
+       })
+    } catch {
+      case e:Exception => {
+        throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
+      }     
+    }
   }
 }
 

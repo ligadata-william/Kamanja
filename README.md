@@ -50,13 +50,9 @@ questions and make contributions.
 
 1. [DOWNLOAD](http://goo.gl/forms/IOpB8qMU9n) latest Fatafat binaries
 
-2. Unzip the downloaded file
+2. Uncompress the downloaded file
 
-    a. On Mac OS, double click the zip file if it’s not already unzipped
-    
-    b. On Windows, use ‘winrar’ or ‘winzip’ to unzip it 
-    
-    c. On Linux, use 'unzip fatafat_install_v103.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
+    tar -zxf fatafat_v1.0.4.tar.gz
     
 3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/Fatafat/wiki/Installing-and-Running-Fatafat)
 
