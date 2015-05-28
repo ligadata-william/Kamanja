@@ -1117,7 +1117,6 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfLong"), List(("aSet", "System", "SetOfLong")), null)
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfDouble"), List(("aSet", "System", "SetOfDouble")), null)
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfFloat"), List(("aSet", "System", "SetOfFloat")), null)
-		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfBoolean"), List(("aSet", "System", "SetOfBoolean")), null)
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfString"), List(("aSet", "System", "SetOfString")), null)
 
 
