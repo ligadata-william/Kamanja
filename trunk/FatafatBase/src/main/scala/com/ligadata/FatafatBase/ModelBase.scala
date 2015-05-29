@@ -96,7 +96,7 @@ trait EnvContext {
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
   def getHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
-  def setObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit 
+  def setObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
 
   def contains(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean
   def containsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size  
@@ -166,3 +166,14 @@ trait ModelBaseObj {
 
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
+
+//BUGBUG:: Need to move com.ligadata.Pmml.Runtime.Context to this file
+class Context(tempTransId: Long) {
+  
+}
+
+class TransactionContext(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String) {
+  val ctx = new Context(tempTransId)
+  def GetContext: Context = { ctx }
+}
+
