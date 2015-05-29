@@ -159,6 +159,39 @@ object MetadataAPIOutputMsg {
     }
   }
 
+  def GetOutputMessageDef(objectName: String, formatType: String): String = {
+    val nameSpace = MdMgr.sysNS
+    GetOutputMessageDefFromCache(nameSpace, objectName, formatType, "-1")
+  }
+
+  def GetOutputMessageDef(nameSpace: String, objectName: String, formatType: String, version: String): String = {
+    GetOutputMessageDefFromCache(nameSpace, objectName, formatType, version)
+  }
+  // Specific message (format JSON or XML) as a String using messageName(with version) as the key
+  def GetOutputMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
+    val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
+    var key = nameSpace + "." + name + "." + version.toLong
+    try {
+      val o = MdMgr.GetMdMgr.OutputMessage(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
+      o match {
+        case None =>
+          None
+          logger.debug("output message not found => " + dispkey)
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetOutputMessageDefFromCache", null, ErrorCodeConstants.Get_OutputMessage_From_Cache_Failed + ":" + dispkey)
+          apiResult.toString()
+        case Some(m) =>
+          logger.debug("output message found => " + m.asInstanceOf[OutputMsgDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[OutputMsgDef].Version))
+          var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetOutputMessageDefFromCache", JsonSerializer.SerializeObjectToJson(m), ErrorCodeConstants.Get_OutputMessage_From_Cache_Successful)
+          apiResult.toString()
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetOutputMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_OutputMessage_From_Cache_Failed + ":" + dispkey)
+        apiResult.toString()
+      }
+    }
+  }
+
   // Remove output message with OutputMsg Name and Version Number
   def RemoveOutputMsg(nameSpace: String, name: String, version: Long): String = {
     var key = nameSpace + "." + name + "." + version
