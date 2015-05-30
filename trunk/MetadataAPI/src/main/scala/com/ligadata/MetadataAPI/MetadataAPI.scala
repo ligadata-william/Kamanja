@@ -95,7 +95,7 @@ trait MetadataAPI {
    * }}}
    * 
    */
-  def UpdateType(typesText:String, formatType:String): String
+  def UpdateType(typesText:String, formatType:String, userid: Option[String]): String
 
   /** Remove Type for given typeName and version
    * @param typeName name of the Type
@@ -113,7 +113,7 @@ trait MetadataAPI {
    * }}}
    * 
    */
-  def RemoveType(typeNameSpace:String, typeName:String, version:Long): String
+  def RemoveType(typeNameSpace:String, typeName:String, version:Long, userid: Option[String]): String
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -162,7 +162,7 @@ trait MetadataAPI {
    *    println("Result as Json String => \n" + result._2)
    *}}}
    */
-  def AddFunctions(functionsText:String, formatType:String): String
+  def AddFunctions(functionsText:String, formatType:String, userid: Option[String]): String
 
   /** Update existing functions
    * @param functionsText an input String of functions in a format defined by the next parameter formatType
@@ -200,7 +200,7 @@ trait MetadataAPI {
    * }}}
    *
    */
-  def UpdateFunctions(functionsText:String, formatType:String): String
+  def UpdateFunctions(functionsText:String, formatType:String, userid: Option[String]): String
 
   /** Remove function for given FunctionName and Version
    * @param functionName name of the function
@@ -217,7 +217,7 @@ trait MetadataAPI {
    *}}}
    * 
    */
-  def RemoveFunction(nameSpace:String, functionName:String, version:Long): String
+  def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String]): String
 
   /** Add new concepts 
    * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
@@ -244,7 +244,7 @@ trait MetadataAPI {
    *}}}
    * 
    */
-  def AddConcepts(conceptsText:String, format:String): String // Supported format is JSON/XML
+  def AddConcepts(conceptsText:String, format:String, userid: Option[String]): String // Supported format is JSON/XML
 
   /** Update existing concepts
    * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
@@ -272,7 +272,7 @@ trait MetadataAPI {
    *}}}
    * 
    */
-  def UpdateConcepts(conceptsText:String, format:String): String
+  def UpdateConcepts(conceptsText:String, format:String, userid: Option[String]): String
 
   /** RemoveConcepts take all concepts names to be removed as an Array
    * @param cocepts array of Strings where each string is name of the concept
@@ -306,7 +306,7 @@ trait MetadataAPI {
    * println("Result as Json String => \n" + result._2)
    * }}}
    */
-  def AddMessage(messageText:String, formatType:String): String 
+  def AddMessage(messageText:String, formatType:String, userid: Option[String]): String 
 
   /** Update message given messageText
    * 
@@ -316,7 +316,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def UpdateMessage(messageText:String, format:String): String
+  def UpdateMessage(messageText:String, format:String, userid: Option[String]): String
 
   /** Remove message with MessageName and Vesion Number
    * 
@@ -326,7 +326,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveMessage(messageName:String, version:Long): String
+  def RemoveMessage(messageName:String, version:Long, userid: Option[String]): String
 
   /** Add model given pmmlText in XML
    * 
@@ -353,7 +353,7 @@ trait MetadataAPI {
    * println("Result as Json String => \n" + result._2)
    * }}}
    */
-  def AddContainer(containerText:String, formatType:String): String 
+  def AddContainer(containerText:String, formatType:String, userid: Option[String]): String 
 
   /** Update container given containerText
    * 
@@ -363,7 +363,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def UpdateContainer(containerText:String, format:String): String
+  def UpdateContainer(containerText:String, format:String, userid: Option[String]): String
 
   /** Remove container with ContainerName and Vesion Number
    * 
@@ -373,7 +373,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveContainer(containerName:String, version:Long): String
+  def RemoveContainer(containerName:String, version:Long, userid: Option[String]): String
 
   /** Add model given pmmlText in XML
    * 
@@ -383,7 +383,7 @@ trait MetadataAPI {
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
 
-  def AddModel(pmmlText:String): String
+  def AddModel(pmmlText:String, userid: Option[String]): String
 
   /** Update model given pmmlText
    * 
@@ -392,7 +392,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def UpdateModel(pmmlText:String): String
+  def UpdateModel(pmmlText:String, userid: Option[String]): String
 
   /** Remove model with ModelName and Vesion Number
    * 
@@ -402,7 +402,7 @@ trait MetadataAPI {
    * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
    * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
    */
-  def RemoveModel(modelName:String, version:Long): String
+  def RemoveModel(modelName:String, version:Long, userid: Option[String]): String
 
   /** Retrieve All available ModelDefs from Metadata Store
    *
@@ -468,7 +468,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the MessageDef either as a JSON or XML string depending on the parameter formatType
    */
-  def GetMessageDef(objectNameSpace:String,objectName:String,version:String, formatType: String) : String
+  def GetMessageDef(objectNameSpace:String,objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieve All available ContainerDefs from Metadata Store
    *
@@ -506,7 +506,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the ContainerDef either as a JSON or XML string depending on the parameter formatType
    */
-  def GetContainerDef(objectNameSpace:String,objectName:String,version:String, formatType: String) : String
+  def GetContainerDef(objectNameSpace:String,objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieve All available FunctionDefs from Metadata Store. Answer the count and a string representation
    *  of them.
