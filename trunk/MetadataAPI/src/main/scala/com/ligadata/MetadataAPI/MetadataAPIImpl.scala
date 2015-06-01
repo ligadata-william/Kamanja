@@ -2440,7 +2440,7 @@ object MetadataAPIImpl extends MetadataAPI {
             // Incase of recompile, Message Compiler is automatically incrementing the previous version
             // by 1. Before Updating the metadata with the new version, remove the old version
                   val latestVersion = GetLatestContainer(cont)
-                  RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, userid)
+                  RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, None)
                   resultStr = AddContainerDef(cont, recompile)
           }
           else{
