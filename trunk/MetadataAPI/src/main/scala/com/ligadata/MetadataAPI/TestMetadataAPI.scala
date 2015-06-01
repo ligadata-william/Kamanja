@@ -2033,6 +2033,10 @@ object TestMetadataAPI{
     }
   }
 
+  def DumpTranIdForModelsAndMessages {
+    MetadataAPIImpl.dumpTranIdForModelsAndMessages
+  }
+
   def StartTest{
     try{
       val dumpMetadata = ()               => { DumpMetadata }
@@ -2078,6 +2082,7 @@ object TestMetadataAPI{
       val dumpAllAdapters = ()            => { DumpAllAdaptersAsJson }
       val dumpAllCfgObjects = ()          => { DumpAllCfgObjectsAsJson }
       val removeEngineConfig = ()         => { RemoveEngineConfig }
+      val dumpTranIdForModelsAndMessages = ()         => { DumpTranIdForModelsAndMessages }
 
       val topLevelMenu = List(("Add Model",addModel),
 			      ("Get Model",getModel),
@@ -2121,7 +2126,8 @@ object TestMetadataAPI{
 			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),
 			      ("Dump Adapter Node Objects",dumpAllAdapters),
 			      ("Dump All Config Objects",dumpAllCfgObjects),
-			      ("Remove Engine Config",removeEngineConfig))
+			      ("Remove Engine Config",removeEngineConfig),
+			      ("Dump TranId for models and messages",dumpTranIdForModelsAndMessages))
 
       var done = false
       while ( done == false ){
@@ -2196,7 +2202,7 @@ object TestMetadataAPI{
   def main(args: Array[String]){
     try{
       //logger.setLevel(Level.TRACE);  //check again
-    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      MetadataAPIImpl.SetLoggerLevel(Level.INFO)
     //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     //  serializer.SetLoggerLevel(Level.TRACE)
     //  JsonSerializer.SetLoggerLevel(Level.TRACE)
