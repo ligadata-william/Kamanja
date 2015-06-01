@@ -1812,6 +1812,32 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		val SetFieldNullMacroStringFixed : String =  """
+	class %1%_%2%_setFieldNull(val ctx : Context, var %1% : %1_type%)
+	{
+	  	def setFieldNull  : Boolean = { %1%.%2% = null.asInstanceOf[%2_type%]; true }
+	} """
+		
+		val SetFieldNullMacroStringMapped : String =  """
+	class %1%_%2%_setFieldNull(val ctx : Context, var %1% : %1_type%)
+	{
+	  	def setFieldNull  : Boolean = { %1%.set("%2%", null.asInstanceOf[%2_type%]); true }
+	} """
+		
+		mgr.AddMacro(MdMgr.sysNS
+					, "setFieldNull"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldNullMacroStringFixed,SetFieldNullMacroStringMapped))	  
+
 
 		val SetFieldMacroContainerStringFixed : String =  """
 	class %1%_%2%_%3%_%4%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)

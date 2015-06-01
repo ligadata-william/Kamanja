@@ -40,7 +40,7 @@ import com.ligadata.FatafatBase._
  * These are the udfs supplied with the system.
  */
 object Udfs extends LogTrait {
-
+  
   /** 
       Answer the version number of the supplied BaseMsg
       @param msg : A BaseMsg known to the model.

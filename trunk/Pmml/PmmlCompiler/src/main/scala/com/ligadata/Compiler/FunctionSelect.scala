@@ -780,22 +780,22 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  	})
 	  	}
 	  		  	
-	  	/** 3. */
+	  	/** 3.a */
 	  	/** 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract
 	  	 *  class or trait 
 	  	 */
 	  	if (! isIterableFcn) {
 		  	val argsWithPromotedContainerClasses : Array[(String,Boolean,BaseTypeDef)] = relaxToFirstTraitOrAbstractClass(argTypes)
-		  	val relaxedTypes2 : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
+		  	val relaxedTypes3a : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
 		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 		  		arg
 		  	})
-		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes2)
+		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes3a)
 	  	}
 	  		  	
-	  	/** 4. */
-	  	val relaxedTypes3 : Array[String] = argTypes.map( argInfo => {
+	  	/** 4.a relax all containers (collections or structs) to Any 
+	  	val relaxedTypes4a : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		if (isContainer) {
 	  			"Any"
@@ -803,10 +803,21 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  			arg
 	  		}
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes3)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4a) ****************/
+	  		  	
+	  	/** 4.b relax all containers that are NOT collections to Any */
+	  	val relaxedTypes4b : Array[String] = argTypes.map( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		if (isContainer && ctx.MetadataHelper.isContainerWithFieldOrKeyNames(elem)) {
+	  			"Any"
+	  		} else {
+	  			arg
+	  		}
+	  	})
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4b)
 	  		  	
 	  	/** 5. */
-	  	val relaxedTypes4 : Array[String] = argTypes.map( argInfo => {
+	  	val relaxedTypes5 : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		arg match {
 	  		  case "Int" => "Long"
@@ -814,13 +825,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  case _ => arg
 	  		}
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes5)
 	  	
 	  	/** 6. */
-	  	val relaxedTypes5 : Array[String] = argTypes.map( argInfo => {
+	  	val relaxedTypes6 : Array[String] = argTypes.map( argInfo => {
 	  		"Any"
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes5)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes6)
 	  	
 	  	logger.debug("...relaxed keys:")
 	  	relaxedKeys.foreach( key => logger.debug(s"\t$key"))
