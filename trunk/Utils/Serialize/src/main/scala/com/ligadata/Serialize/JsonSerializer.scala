@@ -723,6 +723,17 @@ object JsonSerializer {
                       ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
+        case o:FunctionDef => {
+          val json = (("ObjectType"      -> "FunctionDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
         case o:ArrayTypeDef => {
           val json = (("ObjectType"      -> "ArrayTypeDef") ~
                       ("Operation"       -> operation) ~
@@ -769,6 +780,17 @@ object JsonSerializer {
         }
         case o:MapTypeDef => {
           val json = (("ObjectType"      -> "MapTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:HashMapTypeDef => {
+          val json = (("ObjectType"      -> "HashMapTypeDef") ~
                       ("Operation"       -> operation) ~
                       ("NameSpace"       -> o.nameSpace) ~
                       ("Name"            -> o.name) ~
