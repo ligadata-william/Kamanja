@@ -952,7 +952,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case o: ModelDef => {
           logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
           SaveObject(key, value, modelStore)
-          mdMgr.AddModelDef(o)
+          mdMgr.AddModelDef(o, false)
         }
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)
@@ -1533,7 +1533,7 @@ object MetadataAPIImpl extends MetadataAPI {
       obj match {
         case o: ModelDef => {
           logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
-          mdMgr.AddModelDef(o)
+          mdMgr.AddModelDef(o, true)
         }
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)

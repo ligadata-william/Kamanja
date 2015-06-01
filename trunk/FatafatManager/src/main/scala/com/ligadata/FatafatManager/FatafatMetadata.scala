@@ -575,7 +575,6 @@ object FatafatMetadata extends MdBaseResolveInfo {
     }
 
     val zkTransaction = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
 
     if (zkTransaction == null || zkTransaction.Notifications.size == 0) {
       // nothing to do
@@ -587,6 +586,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
       return
     }
 
+    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
+
     val obj = new FatafatMetadata
 
     // BUGBUG:: Not expecting added element & Removed element will happen in same transaction at this moment
@@ -597,6 +598,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
     //// Check for Jars -- Begin
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
+
+    val unloadMsgsContainers = scala.collection.mutable.Set[String]()
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
@@ -618,6 +621,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
           }
         }
         case "MessageDef" => {
+          unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name)
           zkMessage.Operation match {
             case "Add" => {
               try {
@@ -633,6 +637,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
           }
         }
         case "ContainerDef" => {
+          // unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name) // Can we clear Container also?
           zkMessage.Operation match {
             case "Add" => {
               try {
@@ -650,6 +655,9 @@ object FatafatMetadata extends MdBaseResolveInfo {
         case _ => {}
       }
     })
+
+    if (unloadMsgsContainers.size > 0)
+      envCtxt.clearIntermediateResults(unloadMsgsContainers.toArray)
 
     val nonExistsJars = FatafatMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {

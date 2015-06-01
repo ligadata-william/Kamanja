@@ -783,7 +783,8 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		  
 		val clientName : String = ctx.ClientName
-		val modelPkg = s"com.$clientName.${nmspc}_${classname}_$versionNo.pmml"
+		val curTmInMilli = System.currentTimeMillis
+		val modelPkg = s"com.$clientName.${nmspc}_${classname}_${versionNo}_${curTmInMilli}.pmml"
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 		commentBuffer.append(s"package $modelPkg\n\n")
 
