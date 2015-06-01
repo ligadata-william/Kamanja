@@ -330,7 +330,7 @@ object MetadataAPIImpl extends MetadataAPI {
     if (certPath != null) return certPath
     ""
   }
-
+  
   /**
    * getSSLCertificatePasswd
    */
@@ -339,6 +339,16 @@ object MetadataAPIImpl extends MetadataAPI {
     if (passwd != null) return passwd
     ""
   }
+  
+  /**
+   * setSSLCertificatePasswd
+   */
+  def setSSLCertificatePasswd(pw: String) = {
+    metadataAPIConfig.setProperty("SSL_PASSWD", pw) 
+  }
+  
+  
+  
 
   /**
    * getCurrentTime - Return string representation of the current Date/Time
@@ -5964,6 +5974,15 @@ object MetadataAPIImpl extends MetadataAPI {
     } else {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
+    
+    // Read in the SSL Password and store it.
+    val standardIn = System.console
+    print("METADATA SSL PASSWORD:")
+    val pw = standardIn.readPassword()
+    var password: String = ""
+    pw.foreach(char =>{password = password + char })
+    if (!password.equalsIgnoreCase(""))
+      MetadataAPIImpl.setSSLCertificatePasswd(password)
 
     initZkListener
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
