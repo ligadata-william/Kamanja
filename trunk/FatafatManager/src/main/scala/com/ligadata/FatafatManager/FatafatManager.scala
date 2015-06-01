@@ -95,6 +95,9 @@ object FatafatConfiguration {
   var waitProcessingTime = 0
   // Debugging info configs -- End
 
+  var shutdown = false
+  var participentsChangedCntr: Long = 0
+
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
     jarPaths.foreach(jPath => {
@@ -427,8 +430,52 @@ class FatafatManager {
     }
 **/
 
-    print("Waiting till user kills the process")
-    while (true) { // Infinite wait for now
+
+    var timeOutEndTime: Long = 0
+    var participentsChangedCntr: Long = 0
+    var lookingForDups = false
+
+    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C")
+    while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
+      if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
+        lookingForDups = false
+        timeOutEndTime = 0
+        participentsChangedCntr = FatafatConfiguration.participentsChangedCntr
+        val cs = FatafatLeader.GetClusterStatus
+        if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+          val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+          if (isNotLeader) {
+            val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+            if (sameNodeIds.size > 1) {
+              lookingForDups = true
+              var mxTm = if (FatafatConfiguration.zkSessionTimeoutMs > FatafatConfiguration.zkConnectionTimeoutMs) FatafatConfiguration.zkSessionTimeoutMs else FatafatConfiguration.zkConnectionTimeoutMs
+              if (mxTm < 5000) // if the value is < 5secs, we are taking 5 secs
+                mxTm = 5000
+              timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
+              LOG.error("Found more than one of NodeId:%s in Participents:{%s}. Waiting for %d milli seconds to check whether it is real duplicate or not.".format(cs.nodeId, cs.participants.mkString(","), mxTm))
+            }
+          }
+        }
+      }
+
+      if (lookingForDups && timeOutEndTime > 0) {
+        if (timeOutEndTime < System.currentTimeMillis) {
+          lookingForDups = false
+          timeOutEndTime = 0
+          val cs = FatafatLeader.GetClusterStatus
+          if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+            val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+            if (isNotLeader) {
+              val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+              if (sameNodeIds.size > 1) {
+                LOG.error("Found more than one of NodeId:%s in Participents:{%s} for ever. Shutting down this node.".format(cs.nodeId, cs.participants.mkString(",")))
+                FatafatConfiguration.shutdown = true
+              }
+            }
+          }
+        }
+      }
+
       try {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
