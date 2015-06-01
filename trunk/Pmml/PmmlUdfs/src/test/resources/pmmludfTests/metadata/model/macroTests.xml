@@ -798,12 +798,77 @@ COPDv1.xml
 						<Constant dataType="integer">40</Constant> 
 					</Apply>
 	          	</Apply>
+
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.withsmokinghistory"/>
+	            	<FieldRef field="WithSmokingHistory"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.withenvironmentalexposures"/>
+	            	<FieldRef field="WithEnvironmentalExposures"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.dyspnoea"/>
+	            	<FieldRef field="Dyspnoea"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.chroniccough"/>
+	            	<FieldRef field="ChronicCough"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.chronicsputum"/>
+	            	<FieldRef field="ChronicSputum"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.copdsymptoms"/>
+	            	<FieldRef field="COPDSymptoms"/>
+	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.familyhistory"/>
+	            	<FieldRef field="FamilyHistory"/>
+	          	</Apply>
+	          	<!-- set a Boolean field to null -->
+	          	<Apply function="setFieldNull">
+	            	<FieldRef field="modelstate.familyhistory"/>
+	          	</Apply>
+	          	<!-- example of macro with function as a parameter -->
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.inpatientclaimsbydatekeys"/>
 					<Apply function="MapKeys">
 			       		<FieldRef field="inPatientClaimsByDate"/>
 					</Apply>
 	          	</Apply>
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.inpatientclaimtotalcosteachdate"/>
+					<Apply function="ToArray">
+						<Apply function="ContainerMap">
+				       		<FieldRef field="inPatientClaimCostsEachDate"/>
+				 			<Constant dataType="fIdent">Sum</Constant> 
+				 			<Constant dataType="ident">_each</Constant> 
+						</Apply>
+					</Apply>
+	          	</Apply>
+
+	          	<!-- make sure standard assignment of array works as well -->
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.outpatientclaimsbydatekeys"/>
+					<FieldRef field="outPatientClaimsByDateKeys"/>
+	          	</Apply>
+
+	          	<!-- 
+	          	<Apply function="setField">
+	            	<FieldRef field="modelstate.outpatientclaimsbydatekeys"/>
+					<Apply function="MapKeys">
+			       		<FieldRef field="outPatientClaimsByDate"/>
+					</Apply>
+	          	</Apply> -->
+
+	          	<!-- set an array field to null -->
+	          	<Apply function="setFieldNull">
+	            	<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
+	          	</Apply>
+
+	          	<!-- example of macro with nested functions as a parameter -->
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
 					<Apply function="ToArray">
@@ -814,7 +879,6 @@ COPDv1.xml
 						</Apply>
 					</Apply>
 	          	</Apply>
-
 				<Apply function="greaterThan">
 					<Apply function="CollectionLength">
 						<FieldRef field="inPatientClaimCostsByDate"/>
@@ -827,6 +891,8 @@ COPDv1.xml
 					</Apply>
 					<Constant dataType="integer">0</Constant> 
 				</Apply>
+					
+				<Constant dataType="boolean">true</Constant> <!-- always -->
 			</Apply> 
 		</DerivedField>
 

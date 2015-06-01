@@ -85,19 +85,19 @@
         }
       },
       {
-        "Container": {
+        "Field": {
           "Name": "InpatientHistory",
           "Type": "System.ArrayOfInpatientClaimHistory"
         }
       },
       {
-        "Container": {
+        "Field": {
           "Name": "OutpatientHistory",
           "Type": "System.ArrayOfOutpatientClaimHistory"
         }
       },
       {
-        "Container": {
+        "Field": {
           "Name": "HL7History",
           "Type": "System.ArrayOfHL7History"
         }
