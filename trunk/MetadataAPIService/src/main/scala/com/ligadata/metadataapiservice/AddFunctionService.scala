@@ -33,7 +33,7 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
   
   def process(functionJson:String, formatType:String): Unit = {
     
-    log.info("Requesting AddFunction {},{}",functionJson,formatType)
+    log.debug("Requesting AddFunction {},{}",functionJson,formatType)
     
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {

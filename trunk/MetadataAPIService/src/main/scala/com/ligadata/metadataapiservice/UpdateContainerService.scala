@@ -32,7 +32,7 @@ class UpdateContainerService(requestContext: RequestContext, userid:Option[Strin
   }
   
   def process(containerJson:String) = {
-    log.info("Requesting UpdateContainer {}",containerJson)
+    log.debug("Requesting UpdateContainer {}",containerJson)
     
     var nameVal = APIService.extractNameFromJson(containerJson, AuditConstants.CONTAINER) 
 

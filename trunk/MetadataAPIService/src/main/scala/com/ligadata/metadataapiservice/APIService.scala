@@ -125,7 +125,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       // start a new HTTP server on a specified port with our service actor as the handler
       IO(Http).tell(Http.Bind(service, serviceHost, servicePort), callbackActor)
 
-      logger.info("MetadataAPIService started, listening on (%s,%s)".format(serviceHost,servicePort))
+      logger.debug("MetadataAPIService started, listening on (%s,%s)".format(serviceHost,servicePort))
 
       sys.addShutdownHook({
         logger.debug("ShutdownHook called")

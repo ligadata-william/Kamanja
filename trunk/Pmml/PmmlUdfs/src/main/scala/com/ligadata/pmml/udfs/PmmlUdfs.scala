@@ -2113,6 +2113,36 @@ object Udfs extends LogTrait {
   }
 
   /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Int, expr2: Long): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Long, expr2: Long): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Long, expr2: Int): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
       Answer true if expr1 is greather than or equal expr2
       @param expr1 : a value
       @param expr2 : a value
@@ -2209,6 +2239,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def GreaterOrEqual(expr1: Float, expr2: Float): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Int, expr2: Long): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Long, expr2: Long): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Long, expr2: Int): Boolean = {
     (expr1 >= expr2)
   }
 
@@ -2318,6 +2378,36 @@ object Udfs extends LogTrait {
       @param expr2 : a value
       @return true if this is so, else false
    */
+  def LessOrEqual(expr1: Int, expr2: Long): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessOrEqual(expr1: Long, expr2: Long): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessOrEqual(expr1: Long, expr2: Int): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
   def LessThan(expr1: String, expr2: String): Boolean = {
     (expr1 < expr2)
   }
@@ -2409,6 +2499,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def LessThan(expr1: Float, expr2: Float): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Int, expr2: Long): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Long, expr2: Long): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Long, expr2: Int): Boolean = {
     (expr1 < expr2)
   }
 
@@ -2523,6 +2643,36 @@ object Udfs extends LogTrait {
   }
 
   /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Int, expr2: Long): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Long, expr2: Long): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Long, expr2: Int): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
       Answer true if expr1 is not equivalent to expr2
       @param expr1 : a value
       @param expr2 : a value
@@ -2629,6 +2779,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def NotEqual(expr1: Boolean, expr2: Boolean): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Int, expr2: Long): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Long, expr2: Long): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Long, expr2: Int): Boolean = {
     !(expr1 == expr2)
   }
 
@@ -5696,10 +5876,7 @@ object Udfs extends LogTrait {
    */
   def concat(args : Any*) : String = {
       val argList : List[Any] = args.toList
-      val buffer : StringBuilder = new StringBuilder
-      argList.foreach ( arg => if (arg != null) buffer.append(arg.toString) else "" )
-      val concatenation : String = buffer.toString
-      concatenation
+      argList.map( arg => if (arg != null) arg.toString else "" ).mkString("")
   }
 
   /** 

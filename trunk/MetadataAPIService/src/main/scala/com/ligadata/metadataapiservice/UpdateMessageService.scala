@@ -33,7 +33,7 @@ class UpdateMessageService(requestContext: RequestContext, userid:Option[String]
   
   def process(messageJson:String, formatType:String): Unit = {
     
-    log.info("Requesting Update {},{}",messageJson,formatType)
+    log.debug("Requesting Update {},{}",messageJson,formatType)
 
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {

@@ -32,7 +32,7 @@ class UpdateTypeService(requestContext: RequestContext, userid:Option[String], p
   }
   
   def process(typeJson:String, formatType:String): Unit = {
-    log.info("Requesting Update {},{}",typeJson,formatType)
+    log.debug("Requesting Update {},{}",typeJson,formatType)
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
       nameVal = APIService.extractNameFromJson(typeJson, AuditConstants.TYPE) 

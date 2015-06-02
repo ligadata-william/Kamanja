@@ -56,7 +56,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   }
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
 
     if (format.equalsIgnoreCase("json")) {
     //if (data.charAt(0).toString.equals("{")) {
@@ -284,6 +284,8 @@ class FatafatMonitor  {
         thisConf.jarName = qConf.getOrElse("JarName","").toString
         thisConf.dependencyJars = qConf.getOrElse("DependencyJars","").asInstanceOf[List[String]].toSet
         thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg","").toString
+        thisConf.delimiterString = qConf.getOrElse("DelimiterString","").toString
+        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage","").toString
 
         // Ignore if any value in the adapter was not set.
         if (thisConf.Name.size > 0 &&
@@ -307,6 +309,8 @@ class FatafatMonitor  {
         thisConf.jarName = qConf.getOrElse("JarName","").toString
         thisConf.dependencyJars = qConf.getOrElse("DependencyJars","").asInstanceOf[List[String]].toSet
         thisConf.adapterSpecificCfg = qConf.getOrElse("AdapterSpecificCfg","").toString
+        thisConf.delimiterString = qConf.getOrElse("DelimiterString","").toString
+        thisConf.associatedMsg = qConf.getOrElse("AssociatedMessage","").toString
 
         // Ignore if any value in the adapter was not set.
         if (thisConf.Name.size > 0 &&
