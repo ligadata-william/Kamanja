@@ -1973,7 +1973,16 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddArray(at: ArrayTypeDef): Unit = {
-    if (Type(at.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(at.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (at.Version <= latestType.Version) {
+	logger.error(s"current version => ${at.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"Array ${at.FullName} already exists.")
     }
     typeDefs.addBinding(at.FullName, at)
@@ -1999,9 +2008,19 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddArrayBuffer(abt: ArrayBufTypeDef): Unit = {
-    if (Type(abt.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(abt.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (abt.Version <= latestType.Version) {
+	logger.error(s"current version => ${abt.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"ArrayBuffer ${abt.FullName} already exists.")
     }
+
     typeDefs.addBinding(abt.FullName, abt)
   }
 
@@ -2074,9 +2093,19 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddSet(set: SetTypeDef): Unit = {
-    if (Type(set.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(set.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (set.Version <= latestType.Version) {
+	logger.error(s"current version => ${set.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"Set ${set.FullName} already exists.")
     }
+
     typeDefs.addBinding(set.FullName, set)
   }
 
@@ -2124,7 +2153,16 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddTreeSet(tree: TreeSetTypeDef): Unit = {
-    if (Type(tree.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(tree.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (tree.Version <= latestType.Version) {
+	logger.error(s"current version => ${tree.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"TreeSet ${tree.FullName} already exists.")
     }
     typeDefs.addBinding(tree.FullName, tree)
@@ -2149,7 +2187,16 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddSortedSet(set: SortedSetTypeDef): Unit = {
-    if (Type(set.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(set.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (set.Version <= latestType.Version) {
+	logger.error(s"current version => ${set.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"SortedSet ${set.FullName} cannot be created... a type by that name already exists.")
     }
     typeDefs.addBinding(set.FullName, set)
@@ -2174,7 +2221,16 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddMap(map: MapTypeDef): Unit = {
-    if (Type(map.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(map.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (map.Version <= latestType.Version) {
+	logger.error(s"current version => ${map.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }
     typeDefs.addBinding(map.FullName, map)
@@ -2199,7 +2255,16 @@ class MdMgr {
 
   @throws(classOf[AlreadyExistsException])
   def AddImmutableMap(map: ImmutableMapTypeDef): Unit = {
-    if (Type(map.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(map.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (map.Version <= latestType.Version) {
+	logger.error(s"current version => ${map.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"Map ${map.FullName} already exists.")
     }
     typeDefs.addBinding(map.FullName, map)
@@ -2493,10 +2558,28 @@ class MdMgr {
   @throws(classOf[AlreadyExistsException])
   @throws(classOf[NoSuchElementException])
   def AddMsg(msg: MessageDef): Unit = {
-    if (Type(msg.FullName, -1, false) != None) {
+    var typeExists: Boolean = false
+    val existingType = Type(msg.FullName, -1, false)
+    if (existingType != None) {
+      val latestType = existingType.get.asInstanceOf[BaseTypeDef]
+      if (msg.Version <= latestType.Version) {
+	logger.error(s"current version => ${msg.Version}, latest version => ${latestType.Version}")
+        typeExists = true
+      }
+    }
+    if(typeExists == true) {
       throw new AlreadyExistsException(s"Message type ${msg.FullName} already exists.")
     }
-    if (Message(msg.FullName, -1, false) != None) {
+    var msgExists: Boolean = false
+    val existingMsg = Message(msg.FullName, -1, false)
+    if (existingMsg != None) {
+      val latestMsg = existingMsg.get.asInstanceOf[MessageDef]
+      if (msg.Version <= latestMsg.Version) {
+	logger.error(s"current version => ${msg.Version}, latest version => ${latestMsg.Version}")
+        msgExists = true
+      }
+    }
+    if(msgExists == true) {
       throw new AlreadyExistsException(s"Message ${msg.FullName} already exists.")
     }
     if (msg.containerType == null) {

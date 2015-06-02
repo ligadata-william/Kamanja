@@ -148,7 +148,8 @@ object MetadataAPIImpl extends MetadataAPI {
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
-  private var tranObjects = new scala.collection.mutable.HashMap[Long,Set[BaseElemDef]]
+  //private var objectsToBeAdded = new scala.collection.mutable.HashMap[Long,Set[BaseElemDef]] with MultiMap[String, BaseElemDef]
+  //private var objectsToBeRemoved = new scala.collection.mutable.HashMap[Long,Set[BaseElemDef]] with MultiMap[String, BaseElemDef]
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -924,6 +925,14 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+//  def SaveObjectOpInLocalCache(obj:BaseElemDef, tranId: Long,op: String){
+//    if( op.equalsIgnoreCase("add") ){
+//      objectsToBeAdded.addBinding(tranId,obj)
+//    }
+//    if( op.equalsIgnoreCase("remove") ){
+//      objectsToBeRemoved.addBinding(tranId,obj)
+//    }
+//  }
 
   def SaveObject(obj: BaseElemDef, mdMgr: MdMgr) {
     try {
@@ -2434,7 +2443,7 @@ object MetadataAPIImpl extends MetadataAPI {
             // by 1. Before Updating the metadata with the new version, remove the old version
             val latestVersion = GetLatestMessage(msg)
 	    latestVersion.get.tranId = tId
-            RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+            //RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
             resultStr = AddMessageDef(msg, recompile)
           }
           else{
@@ -2460,7 +2469,7 @@ object MetadataAPIImpl extends MetadataAPI {
             // by 1. Before Updating the metadata with the new version, remove the old version
                   val latestVersion = GetLatestContainer(cont)
 		  latestVersion.get.tranId = tId
-                  RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+                  //RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
                   resultStr = AddContainerDef(cont, recompile)
           }
           else{
@@ -2564,8 +2573,8 @@ object MetadataAPIImpl extends MetadataAPI {
           }
           if (isValid) {
 	    latestVersion.get.tranId = tranId
-            RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
-            resultStr = AddMessageDef(msg)
+            //RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+            resultStr = AddMessageDef(msg,true)
 
             logger.debug("Check for dependent messages ...")
             val depMessages = GetDependentMessages.getDependentObjects(msg)
@@ -2583,6 +2592,7 @@ object MetadataAPIImpl extends MetadataAPI {
                 resultStr = resultStr + RecompileModel(mod)
               })
             }
+	    PutTranId(tranId)
             resultStr
           } else {
             var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
@@ -2598,27 +2608,27 @@ object MetadataAPIImpl extends MetadataAPI {
           }
 	  latestVersion.get.tranId = tranId
           if (isValid) {
-            RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
-            resultStr = AddContainerDef(msg)
+            //RemoveContainer(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+            resultStr = AddContainerDef(msg,true)
 
 
-      val depMessages = GetDependentMessages.getDependentObjects(msg)
-      if( depMessages.length > 0 ){
-        depMessages.foreach(msg => {
-    logger.debug("DependentMessage => " + msg)
-    resultStr = resultStr + RecompileMessage(msg)
-        })
-      }
-      val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
-      if( depModels.length > 0 ){
-        depModels.foreach(mod => {
-    logger.debug("DependentModel => " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version))
-	  mod.tranId = tranId
-    resultStr = resultStr + RecompileModel(mod)
-        })
-      }
-      PutTranId(tranId)
-      resultStr
+	    val depMessages = GetDependentMessages.getDependentObjects(msg)
+	    if( depMessages.length > 0 ){
+              depMessages.foreach(msg => {
+		logger.debug("DependentMessage => " + msg)
+		resultStr = resultStr + RecompileMessage(msg)
+              })
+	    }
+	    val depModels = MetadataAPIImpl.GetDependentModels(msg.NameSpace,msg.Name,msg.Version.toLong)
+	    if( depModels.length > 0 ){
+              depModels.foreach(mod => {
+		logger.debug("DependentModel => " + mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version))
+		mod.tranId = tranId
+		resultStr = resultStr + RecompileModel(mod)
+              })
+	    }
+	    PutTranId(tranId)
+	    resultStr
           } else {
             var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateMessage", null, ErrorCodeConstants.Update_Message_Failed + ":" + messageText + " Error:Invalid Version")
             apiResult.toString()
@@ -2680,7 +2690,7 @@ object MetadataAPIImpl extends MetadataAPI {
       isValid = IsValidVersion(latestVersion.get, msg)
     }
     if (isValid) {
-      RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+      //RemoveMessage(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
       AddMessageDef(msg)
     } else {
        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateCompiledMessage", null, "Error : Failed to update compiled Message" )
@@ -4109,7 +4119,9 @@ object MetadataAPIImpl extends MetadataAPI {
         logger.debug("No objects available in the Database")
         return
       }
-      keyArray.foreach(key => {
+
+      val sortedKeyArray = keyArray.map(elem => KeyAsStr(elem)).sortWith(_ < _)
+      sortedKeyArray.foreach(key => {
         val obj = GetObject(key, metadataStore)
         val mObj = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[BaseElemDef]
         if (mObj != null) {
@@ -4118,15 +4130,16 @@ object MetadataAPIImpl extends MetadataAPI {
             DownloadJarFromDB(mObj)
           } else {
             logger.debug("The transaction id of the object => " + mObj.tranId)
-            AddObjectToCache(mObj, MdMgr.GetMdMgr)
-            DownloadJarFromDB(mObj)
-            logger.error("Transaction is incomplete with the object " + KeyAsStr(key) + ",we may not have notified engine, attempt to do it now...")
-            objectsChanged = objectsChanged :+ mObj
-            if (mObj.IsActive) {
-              operations = for (op <- objectsChanged) yield "Add"
-            } else {
-              operations = for (op <- objectsChanged) yield "Remove"
-            }
+            //AddObjectToCache(mObj, MdMgr.GetMdMgr)
+            //DownloadJarFromDB(mObj)
+            //logger.warn("Transaction is incomplete with the object " + key + ",we may not have notified engine, attempt to do it now...")         
+	    logger.warn("Transaction is incomplete for the object " + key)
+            //objectsChanged = objectsChanged :+ mObj
+            //if (mObj.IsActive) {
+            //  operations = for (op <- objectsChanged) yield "Add"
+            //} else {
+            //  operations = for (op <- objectsChanged) yield "Remove"
+            //}
           }
         } else {
           throw InternalErrorException("serializer.Deserialize returned a null object")
@@ -4526,6 +4539,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def dumpTranIdForModelsAndMessages {
+      logger.info("Max Transaction Id => " + GetTranId)
       val modDefs = MdMgr.GetMdMgr.Models(true, true)
       modDefs match {
         case None =>
@@ -4536,7 +4550,7 @@ object MetadataAPIImpl extends MetadataAPI {
             logger.info(mod.FullName + "." + MdMgr.Pad0s2Version(mod.Version) + "=>" + mod.tranId)
 	  })
       }
-      val msgDefs = MdMgr.GetMdMgr.Messages(true, true)
+      val msgDefs = MdMgr.GetMdMgr.Messages(true, false)
       msgDefs match {
         case None =>
           logger.info("No Messages found ")
