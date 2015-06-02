@@ -6,7 +6,7 @@ COPDv1.xml
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
 	<Header copyright="Edifecs Corp. Copyright 2014" description="COPD Risk Assessment">
-		<Application name="MacroTests" version="000000.000001.000000"/>
+		<Application name="MacroTests" version="000000.000001.000001"/>
 	</Header>
 
 	<DataDictionary numberOfFields="8">
@@ -18,7 +18,26 @@ COPDv1.xml
 	    </DataField>
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
 		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
+		
+		<!-- Testing setField in nested and in the case of modelState_OutpatientClaimCostsByDateKeysStandard and modelState_OutpatientClaimTotalCostEachDateStandard,
+			the non-nested method of setting the value. -->
 
+		<DataField name="modelState_Desynpuf_Id" displayName="modelState_Desynpuf_Id" optype="categorical" dataType="string"/>
+		<DataField name="modelState_FortyYearsOrOlder" displayName="modelState_FortyYearsOrOlder" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_SmokingHistory" displayName="modelState_SmokingHistory" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_WithEnvironmentalExposure" displayName="modelState_WithEnvironmentalExposure" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_Dyspnoea" displayName="modelState_Dyspnoea" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_ChronicCough" displayName="modelState_ChronicCough" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_ChronicSputum" displayName="modelState_ChronicSputum" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_COPDSymptoms" displayName="modelState_COPDSymptoms" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_FamilyHistory" displayName="modelState_FamilyHistory" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_FamilyHistoryNull" displayName="modelState_FamilyHistoryNull" optype="categorical" dataType="boolean"/>
+		<DataField name="modelState_InpatientClaimCostsByDateKeysNested" displayName="modelState_InpatientClaimCostsByDateKeysNested" optype="categorical" dataType="ArrayOfInt"/>
+		<DataField name="modelState_InpatientClaimTotalCostEachDateNested" displayName="modelState_InpatientClaimTotalCostEachDateNested" optype="categorical" dataType="ArrayOfDouble"/>
+		<DataField name="modelState_OutpatientClaimsByDateKeysStandard" displayName="modelState_OutpatientClaimsByDateKeysStandard" optype="categorical" dataType="ArrayOfInt"/>
+		<DataField name="modelState_OutpatientClaimTotalCostEachDateStandard" displayName="modelState_OutpatientClaimTotalCostEachDateStandard" optype="categorical" dataType="ArrayOfDouble"/>
+		<DataField name="modelState_OutpatientClaimTotalCostEachDateNull" displayName="modelState_OutpatientClaimTotalCostEachDateNull" optype="categorical" dataType="ArrayOfDouble"/>
+		<DataField name="modelState_OutpatientClaimTotalCostEachDateNested" displayName="modelState_OutpatientClaimTotalCostEachDateNested" optype="categorical" dataType="ArrayOfDouble"/>
 
 	</DataDictionary>
 
@@ -791,6 +810,11 @@ COPDv1.xml
 	            	<FieldRef field="modelstate.desynpuf_id"/>
 	            	<FieldRef field="msg.desynpuf_id"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_Desynpuf_Id</Constant>
+	          		<FieldRef field="modelstate.desynpuf_id"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.fortyyrsorolder"/>
 					<Apply function="greaterOrEqual">
@@ -798,39 +822,83 @@ COPDv1.xml
 						<Constant dataType="integer">40</Constant> 
 					</Apply>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_FortyYearsOrOlder</Constant>
+	          		<FieldRef field="modelstate.fortyyrsorolder"/>
+	          	</Apply>
 
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.withsmokinghistory"/>
 	            	<FieldRef field="WithSmokingHistory"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_SmokingHistory</Constant>
+	          		<FieldRef field="modelstate.withsmokinghistory"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.withenvironmentalexposures"/>
 	            	<FieldRef field="WithEnvironmentalExposures"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_WithEnvironmentalExposure</Constant>
+	          		<FieldRef field="modelstate.withenvironmentalexposures"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.dyspnoea"/>
 	            	<FieldRef field="Dyspnoea"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_Dyspnoea</Constant>
+	          		<FieldRef field="modelstate.dyspnoea"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.chroniccough"/>
 	            	<FieldRef field="ChronicCough"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_ChronicCough</Constant>
+	          		<FieldRef field="modelstate.chroniccough"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.chronicsputum"/>
 	            	<FieldRef field="ChronicSputum"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_ChronicSputum</Constant>
+	          		<FieldRef field="modelstate.chronicsputum"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.copdsymptoms"/>
 	            	<FieldRef field="COPDSymptoms"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_COPDSymptoms</Constant>
+	          		<FieldRef field="modelstate.copdsymptoms"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.familyhistory"/>
 	            	<FieldRef field="FamilyHistory"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_FamilyHistory</Constant>
+	          		<FieldRef field="modelstate.familyhistory"/>
+	          	</Apply>
+
 	          	<!-- set a Boolean field to null -->
 	          	<Apply function="setFieldNull">
 	            	<FieldRef field="modelstate.familyhistory"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_FamilyHistoryNull</Constant>
+	          		<FieldRef field="modelstate.familyhistory"/>
+	          	</Apply>
+	          	
 	          	<!-- example of macro with function as a parameter -->
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.inpatientclaimsbydatekeys"/>
@@ -838,6 +906,11 @@ COPDv1.xml
 			       		<FieldRef field="inPatientClaimsByDate"/>
 					</Apply>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_InpatientClaimCostsByDateKeysNested</Constant>
+	          		<FieldRef field="modelstate.inpatientclaimsbydatekeys"/>
+	          	</Apply>
+
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.inpatientclaimtotalcosteachdate"/>
 					<Apply function="ToArray">
@@ -848,11 +921,19 @@ COPDv1.xml
 						</Apply>
 					</Apply>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_InpatientClaimTotalCostEachDateNested</Constant>
+	          		<FieldRef field="modelstate.inpatientclaimtotalcosteachdate"/>
+	          	</Apply>
 
 	          	<!-- make sure standard assignment of array works as well -->
 	          	<Apply function="setField">
 	            	<FieldRef field="modelstate.outpatientclaimsbydatekeys"/>
 					<FieldRef field="outPatientClaimsByDateKeys"/>
+	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_OutpatientClaimsByDateKeysStandard</Constant>
+	          		<FieldRef field="modelstate.outpatientclaimsbydatekeys"/>
 	          	</Apply>
 
 	          	<!-- 
@@ -867,6 +948,10 @@ COPDv1.xml
 	          	<Apply function="setFieldNull">
 	            	<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_OutpatientClaimTotalCostEachDateNull</Constant>
+	          		<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
+	          	</Apply>
 
 	          	<!-- example of macro with nested functions as a parameter -->
 	          	<Apply function="setField">
@@ -879,6 +964,11 @@ COPDv1.xml
 						</Apply>
 					</Apply>
 	          	</Apply>
+	          	<Apply function="Put">
+	          		<Constant dataType="string">modelState_OutpatientClaimTotalCostEachDateNested</Constant>
+	          		<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
+	          	</Apply>
+
 				<Apply function="greaterThan">
 					<Apply function="CollectionLength">
 						<FieldRef field="inPatientClaimCostsByDate"/>
@@ -1026,6 +1116,24 @@ COPDv1.xml
 			<!-- aggregations -->
 			<MiningField name="inPatientClaimCostsByDate" usageType="supplementary"/>
 			<MiningField name="outPatientClaimCostsByDate" usageType="supplementary"/>
+
+			<!-- Container Values -->
+			<MiningField name="modelState_Desynpuf_Id" usageType="supplementary"/>
+			<MiningField name="modelState_FortyYearsOrOlder" usageType="supplementary"/>
+			<MiningField name="modelState_SmokingHistory" usageType="supplementary"/>
+			<MiningField name="modelState_WithEnvironmentalExposure" usageType="supplementary"/>
+			<MiningField name="modelState_Dyspnoea" usageType="supplementary"/>
+			<MiningField name="modelState_ChronicCough" usageType="supplementary"/>
+			<MiningField name="modelState_ChronicSputum" usageType="supplementary"/>
+			<MiningField name="modelState_COPDSymptoms" usageType="supplementary"/>
+			<MiningField name="modelState_FamilyHistory" usageType="supplementary"/>
+			<MiningField name="modelState_FamilyHistoryNull" usageType="supplementary"/>
+			<MiningField name="modelState_InpatientClaimCostsByDateKeysNested" usageType="supplementary"/>
+			<MiningField name="modelState_InpatientClaimTotalCostEachDateNested" usageType="supplementary"/>
+			<MiningField name="modelState_OutpatientClaimsByDateKeysStandard" usageType="supplementary"/>
+			<MiningField name="modelState_OutpatientClaimTotalCostEachDateStandard" usageType="supplementary"/>
+			<MiningField name="modelState_OutpatientClaimTotalCostEachDateNull" usageType="supplementary"/>
+			<MiningField name="modelState_OutpatientClaimTotalCostEachDateNested" usageType="supplementary"/>			
 
 	    </MiningSchema>
 	
