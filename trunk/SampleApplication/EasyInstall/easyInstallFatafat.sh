@@ -130,6 +130,9 @@ echo "copy all Fatafat jars and the jars upon which they depend to the $systemli
 
 $srcPath/SampleApplication/EasyInstall/allDeps.scala --systemlib $systemlib BaseTypes BaseFunctions Serialize ZooKeeperClient ZooKeeperListener FatafatBase FatafatManager KafkaSimpleInputOutputAdapters FileSimpleInputOutputAdapters SimpleEnvContextImpl Storage Metadata MessageDef OutputMsgDef LoadtestCommon LoadtestRunner LoadtestMaster Loadtest PmmlRuntime PmmlCompiler PmmlUdfs MethodExtractor MetadataBootstrap MetadataAPI MetadataAPIService MetadataAPIServiceClient SimpleKafkaProducer KVInit ZooKeeperLeaderLatch JsonDataGen NodeInfoExtract Controller SimpleApacheShiroAdapter AuditAdapters FatafatData CustomUdfLib ExtractData 
 
+cp $ivyPath/cache/org.scala-lang/scala-library/jars/scala-library-2.10.4.jar $systemlib
+cp $ivyPath/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.10.4.jar $systemlib
+
 # sample configs
 #echo "copy sample configs..."
 cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
