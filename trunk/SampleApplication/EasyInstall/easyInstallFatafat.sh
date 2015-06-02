@@ -102,7 +102,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly
+sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -118,7 +118,7 @@ cp MetadataAPI/target/scala-2.10/MetadataAPI* $bin
 cp FatafatManager/target/scala-2.10/FatafatManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
-cp Utils/ExtractData/target/scala-2.10/ExtractData* $bini
+cp Utils/ExtractData/target/scala-2.10/ExtractData* $bin
 cp MetadataAPIService/target/scala-2.10/MetadataAPIService* $bin
 
 # *******************************
@@ -128,7 +128,7 @@ cp MetadataAPIService/target/scala-2.10/MetadataAPIService* $bin
 # Base Types and Functions, InputOutput adapters, and original versions of things
 echo "copy all Fatafat jars and the jars upon which they depend to the $systemlib"
 
-bash SampleApplication/EasyInstall/allDeps.scala --systemlib $systemlib BaseTypes BaseFunctions Serialize ZooKeeperClient ZooKeeperListener FatafatBase FatafatManager KafkaSimpleInputOutputAdapters FileSimpleInputOutputAdapters SimpleEnvContextImpl Storage Metadata MessageDef OutputMsgDef LoadtestCommon LoadtestRunner LoadtestMaster Loadtest PmmlRuntime PmmlCompiler PmmlUdfs MethodExtractor MetadataBootstrap MetadataAPI MetadataAPIService MetadataAPIServiceClient SimpleKafkaProducer KVInit ZooKeeperLeaderLatch JsonDataGen NodeInfoExtract Controller SimpleApacheShiroAdapter AuditAdapters FatafatData CustomUdfLib ExtractData 
+$srcPath/SampleApplication/EasyInstall/allDeps.scala --systemlib $systemlib BaseTypes BaseFunctions Serialize ZooKeeperClient ZooKeeperListener FatafatBase FatafatManager KafkaSimpleInputOutputAdapters FileSimpleInputOutputAdapters SimpleEnvContextImpl Storage Metadata MessageDef OutputMsgDef LoadtestCommon LoadtestRunner LoadtestMaster Loadtest PmmlRuntime PmmlCompiler PmmlUdfs MethodExtractor MetadataBootstrap MetadataAPI MetadataAPIService MetadataAPIServiceClient SimpleKafkaProducer KVInit ZooKeeperLeaderLatch JsonDataGen NodeInfoExtract Controller SimpleApacheShiroAdapter AuditAdapters FatafatData CustomUdfLib ExtractData 
 
 # sample configs
 #echo "copy sample configs..."
@@ -187,8 +187,8 @@ cp * $installPath/input/application-2-Healthcare/metadata/function
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/application-2-Healthcare/metadata/message
 
-cd $srcPath/SampleApplication/Medical/OutputMsg
-cp * $installPath/input/application-2-Healthcare/metadata/outputmsg
+#cd $srcPath/SampleApplication/Medical/OutputMsg
+#cp * $installPath/input/application-2-Healthcare/metadata/outputmsg
 
 # application-1-HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/message
