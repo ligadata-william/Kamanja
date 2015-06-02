@@ -242,7 +242,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         LOG.error("Recieved null message object for input:" + msgData)
       }
     } catch {
-      case e: Exception => LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+      case e: Exception => {
+        LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        e.printStackTrace
+      }
     }
 
     cntr += 1
