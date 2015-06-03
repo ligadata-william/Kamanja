@@ -33,6 +33,9 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
   var xformedMsgCntr = 0 // Current message Index, In case if we have multiple Transformed messages for a given input message
   var totalXformedMsgs = 0 // Total transformed messages, In case if we have multiple Transformed messages for a given input message
   def ValueString(v: Any): String = {
+    if (v == null) {
+    	return "null"
+    }
     if (v.isInstanceOf[Set[_]]) {
       return v.asInstanceOf[Set[_]].mkString(",")
     }
