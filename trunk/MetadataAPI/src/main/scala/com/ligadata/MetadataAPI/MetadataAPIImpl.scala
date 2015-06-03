@@ -149,6 +149,7 @@ object MetadataAPIImpl extends MetadataAPI {
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+  private var passwd: String = null
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -335,7 +336,6 @@ object MetadataAPIImpl extends MetadataAPI {
    * getSSLCertificatePasswd
    */
   def getSSLCertificatePasswd: String = {
-    val passwd = metadataAPIConfig.getProperty("SSL_PASSWD")
     if (passwd != null) return passwd
     ""
   }
@@ -344,7 +344,7 @@ object MetadataAPIImpl extends MetadataAPI {
    * setSSLCertificatePasswd
    */
   def setSSLCertificatePasswd(pw: String) = {
-    metadataAPIConfig.setProperty("SSL_PASSWD", pw) 
+    passwd = pw
   }
   
   
@@ -5575,6 +5575,12 @@ object MetadataAPIImpl extends MetadataAPI {
       return
     }
     
+    // SSL_PASSWORD will not be saved in the Config object, since that object is printed out for debugging purposes.
+    if (key.equalsIgnoreCase("SSL_PASSWD")) {
+      setSSLCertificatePasswd(value) 
+      return
+    }
+    
     // Special case 2a.. DATABASE_HOST should not override METADATA_LOCATION
     if (key.equalsIgnoreCase("DATABASE_HOST") && (metadataAPIConfig.getProperty(key.toUpperCase)!=null)) {
       return
@@ -5974,15 +5980,6 @@ object MetadataAPIImpl extends MetadataAPI {
     } else {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
-    
-    // Read in the SSL Password and store it.
-    val standardIn = System.console
-    print("METADATA SSL PASSWORD:")
-    val pw = standardIn.readPassword()
-    var password: String = ""
-    pw.foreach(char =>{password = password + char })
-    if (!password.equalsIgnoreCase(""))
-      MetadataAPIImpl.setSSLCertificatePasswd(password)
 
     initZkListener
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
