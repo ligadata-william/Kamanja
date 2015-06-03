@@ -1968,8 +1968,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveConcept(key: String): String = {
+  def RemoveConcept(key: String, userid: Option[String]): String = {
     try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",key)
       val c = MdMgr.GetMdMgr.Attributes(key, false, false)
       c match {
         case None =>
@@ -2272,11 +2273,12 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // RemoveConcepts take all concepts names to be removed as an Array
-  def RemoveConcepts(concepts: Array[String]): String = {
+  def RemoveConcepts(concepts: Array[String], userid: Option[String]): String = {
     val json = ("ConceptList" -> concepts.toList)
     val jsonStr = pretty(render(json))
+  //  logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",concepts.mkString(",")) 
     try {
-      concepts.foreach(c => { RemoveConcept(c) })
+      concepts.foreach(c => { RemoveConcept(c,None) })
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcepts", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + jsonStr)
       apiResult.toString()
     } catch {
@@ -2681,7 +2683,7 @@ object MetadataAPIImpl extends MetadataAPI {
           var objectsToBeRemoved = GetAdditionalTypesAdded(contDef, MdMgr.GetMdMgr)
           // Also remove a type with same name as messageDef
           var typeName = name
-          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON")
+          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON",None)
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
@@ -2711,7 +2713,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Message",AuditConstants.SUCCESS,"",key)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",key)
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -2727,7 +2729,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
           // Also remove a type with same name as messageDef
           var typeName = name
-          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON")
+          var typeDef = GetType(nameSpace, typeName, version.toString, "JSON",None)
           
           if (typeDef != None) {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
@@ -2766,61 +2768,61 @@ object MetadataAPIImpl extends MetadataAPI {
         case "MessageDef" | "ContainerDef" => {
           // ArrayOf<TypeName>
           var typeName = "arrayof" + msgDef.name
-          var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          var typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ArrayBufferOf<TypeName>
           typeName = "arraybufferof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // SortedSetOf<TypeName>
           typeName = "sortedsetof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ImmutableMapOfIntArrayOf<TypeName>
           typeName = "immutablemapofintarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ImmutableMapOfString<TypeName>
           typeName = "immutablemapofstringarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // ArrayOfArrayOf<TypeName>
           typeName = "arrayofarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // MapOfStringArrayOf<TypeName>
           typeName = "mapofstringarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // MapOfIntArrayOf<TypeName>
           typeName = "mapofintarrayof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // SetOf<TypeName>
           typeName = "setof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
           // TreeSetOf<TypeName>
           typeName = "treesetof" + msgDef.name
-          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON")
+          typeDef = GetType(msgDef.nameSpace, typeName, msgDef.ver.toString, "JSON",None)
           if (typeDef != None) {
             types = types :+ typeDef.get
           }
@@ -3369,7 +3371,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetAllModelsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var modelList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"",AuditConstants.MODEL)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"",AuditConstants.MODEL)
     try {
       val modDefs = MdMgr.GetMdMgr.Models(active, true)
       modDefs match {
@@ -3396,7 +3398,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetAllMessagesFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var messageList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",AuditConstants.MESSAGE)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",AuditConstants.MESSAGE)
     try {
       val msgDefs = MdMgr.GetMdMgr.Messages(active, true)
       msgDefs match {
@@ -3423,7 +3425,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetAllContainersFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var containerList: Array[String] = new Array[String](0)
-    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",AuditConstants.CONTAINER)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",AuditConstants.CONTAINER)
     try {
       val contDefs = MdMgr.GetMdMgr.Containers(active, true)
       contDefs match {
@@ -3560,8 +3562,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Specific model (format JSON or XML) as a String using modelName(with version) as the key
-  def GetModelDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
+  def GetModelDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",dispkey)
     try {
       var key = nameSpace + "." + name + "." + version.toLong
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
@@ -3587,13 +3590,14 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific models (format JSON or XML) as an array of strings using modelName(without version) as the key
   def GetModelDef(nameSpace: String, objectName: String, formatType:String, version: String, userid: Option[String]): String = {
     logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetModelDefFromCache(nameSpace,objectName,formatType,version)
+    GetModelDefFromCache(nameSpace,objectName,formatType,version,None)
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
-  def GetMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
+  def GetMessageDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
     var key = nameSpace + "." + name + "." + version.toLong
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.GETOBJECT),AuditConstants.GETOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",dispkey)
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
@@ -3616,9 +3620,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Specific container (format JSON or XML) as a String using containerName(with version) as the key
-  def GetContainerDefFromCache(nameSpace: String, name: String, formatType: String, version: String): String = {
+  def GetContainerDefFromCache(nameSpace: String, name: String, formatType: String, version: String, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + version.toLong
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version.toLong)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.GETOBJECT),AuditConstants.GETOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",dispkey)
     try {
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version.toLong, true)
       o match {
@@ -3933,9 +3938,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
-  def GetModelDefFromDB(nameSpace: String, objectName: String, formatType: String, version: String): String = {
+  def GetModelDefFromDB(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     var key = "ModelDef" + "." + nameSpace + '.' + objectName + "." + version.toLong
     val dispkey = "ModelDef" + "." + nameSpace + '.' + objectName + "." + MdMgr.Pad0s2Version(version.toLong)
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.GETOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",dispkey)
     try {
       var obj = GetObject(key.toLowerCase, modelStore)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetModelDefFromCache", ValueAsStr(obj.Value), ErrorCodeConstants.Get_Model_From_DB_Successful + ":" + dispkey)
@@ -3959,7 +3965,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetAllKeys(objectType: String): Array[String] = {
+  def GetAllKeys(objectType: String, userid: Option[String]): Array[String] = {
     try {
       var keys = scala.collection.mutable.Set[String]()
       typeStore.getAllKeys({ (key: Key) =>
@@ -3973,31 +3979,37 @@ object MetadataAPIImpl extends MetadataAPI {
               if (IsTypeObject(objType)) {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.TYPE,AuditConstants.SUCCESS,"",AuditConstants.TYPE)
             }
             case "FunctionDef" => {
               if (objType == "functiondef") {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",AuditConstants.FUNCTION)
             }
             case "MessageDef" => {
               if (objType == "messagedef") {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",AuditConstants.MESSAGE)
             }
             case "ContainerDef" => {
               if (objType == "containerdef") {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",AuditConstants.CONTAINER)
             }
             case "Concept" => {
               if (objType == "attributedef") {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",AuditConstants.CONCEPT)
             }
             case "ModelDef" => {
               if (objType == "modeldef") {
                 keys.add(typeName)
               }
+              if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.MODEL,AuditConstants.SUCCESS,"",AuditConstants.MODEL)
             }
             case _ => {
               logger.error("Unknown object type " + objectType + " in GetAllKeys function")
@@ -4119,7 +4131,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllTypesIntoCache {
     try {
-      val typeKeys = GetAllKeys("TypeDef")
+      val typeKeys = GetAllKeys("TypeDef", None)
       if (typeKeys.length == 0) {
         logger.debug("No types available in the Database")
         return
@@ -4140,7 +4152,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllConceptsIntoCache {
     try {
-      val conceptKeys = GetAllKeys("Concept")
+      val conceptKeys = GetAllKeys("Concept", None)
       if (conceptKeys.length == 0) {
         logger.debug("No concepts available in the Database")
         return
@@ -4159,7 +4171,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllFunctionsIntoCache {
     try {
-      val functionKeys = GetAllKeys("FunctionDef")
+      val functionKeys = GetAllKeys("FunctionDef", None)
       if (functionKeys.length == 0) {
         logger.debug("No functions available in the Database")
         return
@@ -4178,7 +4190,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllMessagesIntoCache {
     try {
-      val msgKeys = GetAllKeys("MessageDef")
+      val msgKeys = GetAllKeys("MessageDef",None)
       if (msgKeys.length == 0) {
         logger.debug("No messages available in the Database")
         return
@@ -4454,7 +4466,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllContainersIntoCache {
     try {
-      val contKeys = GetAllKeys("ContainerDef")
+      val contKeys = GetAllKeys("ContainerDef",None)
       if (contKeys.length == 0) {
         logger.debug("No containers available in the Database")
         return
@@ -4473,7 +4485,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def LoadAllModelsIntoCache {
     try {
-      val modKeys = GetAllKeys("ModelDef")
+      val modKeys = GetAllKeys("ModelDef",None)
       if (modKeys.length == 0) {
         logger.debug("No models available in the Database")
         return
@@ -4502,12 +4514,12 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
   def GetMessageDef(objectName: String, formatType: String): String = {
     val nameSpace = MdMgr.sysNS
-    GetMessageDefFromCache(nameSpace, objectName, formatType, "-1")
+    GetMessageDefFromCache(nameSpace, objectName, formatType, "-1",None)
   }
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
   def GetMessageDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetMessageDefFromCache(nameSpace, objectName, formatType, version)
+    GetMessageDefFromCache(nameSpace, objectName, formatType, version,None)
   }
 
   // Specific message (format JSON or XML) as a String using messageName(with version) as the key
@@ -4519,12 +4531,12 @@ object MetadataAPIImpl extends MetadataAPI {
   // Specific containers (format JSON or XML) as a String using containerName(without version) as the key
   def GetContainerDef(objectName: String, formatType: String): String = {
     val nameSpace = MdMgr.sysNS
-    GetContainerDefFromCache(nameSpace, objectName, formatType, "-1")
+    GetContainerDefFromCache(nameSpace, objectName, formatType, "-1",None)
   }
   // Specific container (format JSON or XML) as a String using containerName(with version) as the key
   def GetContainerDef(nameSpace: String, objectName: String, formatType: String, version: String, userid: Option[String]): String = {
     logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONTAINER,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetContainerDefFromCache(nameSpace, objectName, formatType, version)
+    GetContainerDefFromCache(nameSpace, objectName, formatType, version,None)
   }
 
   // Specific container (format JSON or XML) as a String using containerName(with version) as the key
@@ -4534,9 +4546,10 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // Answer count and dump of all available functions(format JSON or XML) as a String
-  def GetAllFunctionDefs(formatType: String): (Int,String) = {
+  def GetAllFunctionDefs(formatType: String, userid: Option[String]): (Int,String) = {
     try {
       val funcDefs = MdMgr.GetMdMgr.Functions(true, true)
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"","ALL")
       funcDefs match {
         case None =>
           None
@@ -4556,8 +4569,9 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String): String = {
+  def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, userid: Option[String]): String = {
     try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"LATEST")
       val funcDefs = MdMgr.GetMdMgr.FunctionsAvailable(nameSpace, objectName)
       if (funcDefs == null) {
         logger.debug("No Functions found ")
@@ -4578,18 +4592,19 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetFunctionDef(nameSpace: String, objectName: String, formatType: String, version:String, userid: Option[String]): String = {
     logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+objectName+"."+version)
-    GetFunctionDef(nameSpace,objectName,formatType)
+    GetFunctionDef(nameSpace,objectName,formatType, None)
   }
 
   // Specific messages (format JSON or XML) as a String using messageName(without version) as the key
-  def GetFunctionDef(objectName: String, formatType: String): String = {
+  def GetFunctionDef(objectName: String, formatType: String, userid: Option[String]): String = {
     val nameSpace = MdMgr.sysNS
-    GetFunctionDef(nameSpace, objectName, formatType)
+    GetFunctionDef(nameSpace, objectName, formatType, userid)
   }
 
   // All available concepts as a String
-  def GetAllConcepts(formatType: String): String = {
+  def GetAllConcepts(formatType: String, userid: Option[String]): String = {
     try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"","ALL")
       val concepts = MdMgr.GetMdMgr.Attributes(true, true)
       concepts match {
         case None =>
@@ -4753,8 +4768,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   // All available types(format JSON or XML) as a String
-  def GetAllTypes(formatType: String): String = {
+  def GetAllTypes(formatType: String, userid: Option[String]): String = {
     try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"","ALL")
       val typeDefs = MdMgr.GetMdMgr.Types(true, true)
       typeDefs match {
         case None =>
@@ -4855,8 +4871,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def GetType(nameSpace: String, objectName: String, version: String, formatType: String): Option[BaseTypeDef] = {
+  def GetType(nameSpace: String, objectName: String, version: String, formatType: String, userid: Option[String]): Option[BaseTypeDef] = {
     try {
+      val dispkey = nameSpace+"."+objectName+"."+version
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",dispkey)
       val typeDefs = MdMgr.GetMdMgr.Types(MdMgr.sysNS, objectName, false, false)
       typeDefs match {
         case None => None

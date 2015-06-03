@@ -288,7 +288,7 @@ trait MetadataAPI {
    *}}}
    * 
    */
-  def RemoveConcepts(concepts:Array[String]): String
+  def RemoveConcepts(concepts:Array[String], userid: Option[String]): String
 
   /** Add message given messageText
    * 
@@ -516,7 +516,7 @@ trait MetadataAPI {
    * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType as a Tuple2[Int,String]
    */
 
-  def GetAllFunctionDefs(formatType: String) : (Int,String)
+  def GetAllFunctionDefs(formatType: String, userid: Option[String]) : (Int,String)
 
   /** Retrieve specific FunctionDef(s) from Metadata Store
    *
@@ -525,7 +525,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the FunctionDef(s) either as a JSON or XML string depending on the parameter formatType
    */
-  def GetFunctionDef(objectName:String,formatType: String) : String
+  def GetFunctionDef(objectName:String,formatType: String, userid: Option[String]) : String
 
   /** Retrieve a specific FunctionDef from Metadata Store
    *
@@ -535,7 +535,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the FunctionDef either as a JSON or XML string depending on the parameter formatType
    */
-  def GetFunctionDef( objectName:String,version:String, formatType: String) : String
+  def GetFunctionDef( objectName:String,version:String, formatType: String, userid: Option[String]) : String
 
   /** Retrieve All available Concepts from Metadata Store
    *
@@ -543,7 +543,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the Concept(s) either as a JSON or XML string depending on the parameter formatType
    */
-  def GetAllConcepts(formatType: String) : String
+  def GetAllConcepts(formatType: String, userid: Option[String]) : String
 
   /** Retrieve specific Concept(s) from Metadata Store
    *
@@ -599,7 +599,7 @@ trait MetadataAPI {
    * @return the result as a JSON String of object ApiResult where ApiResult.resultData contains
    * the available types as a JSON or XML string depending on the parameter formatType
    */
-  def GetAllTypes(formatType: String) : String
+  def GetAllTypes(formatType: String, userid: Option[String]) : String
 
   /** Retrieve a specific Type  from Metadata Store
    *
