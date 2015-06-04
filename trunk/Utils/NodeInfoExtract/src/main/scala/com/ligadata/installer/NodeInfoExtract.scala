@@ -32,7 +32,7 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 	 */
 	def initializeEngineConfig : Unit = {
 		if (nodeConfigPath != null) {
-			val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString)
+			val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString, None, "NodeInfoExtract")
 			//println(result)
 		} else {
 			throw new RuntimeException("initializeEngineConfig erroneously called... logic error ")

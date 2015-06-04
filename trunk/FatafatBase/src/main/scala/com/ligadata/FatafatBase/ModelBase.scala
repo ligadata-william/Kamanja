@@ -29,7 +29,9 @@ class Result(val name: String, val usage: MinVarType, val result: Any) {
 
 object ModelResult {
   def ValueString(v: Any): String = {
-    if (v == null) return ""
+    if (v == null) {
+    	return "null"
+    }
     if (v.isInstanceOf[Set[_]]) {
       return v.asInstanceOf[Set[_]].mkString(",")
     }

@@ -22,6 +22,12 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	if (fcnSelector.isIterableFcn) {
 	  		return (null,null)
 	  	}
+
+	  	/** debug helper */
+	  	val ofInterest : Boolean = (node.function == "setField")
+	  	if (ofInterest) {
+	  		val stop : Int = 0
+	  	}
 	  	
 	  	var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  			= fcnSelector.collectArgKeys(expandingContainerFields)
@@ -41,12 +47,6 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  		(null,null)
 	  	} else {
 		  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
-		  	
-		  	/** debug helper */
-		  	val ofInterest : Boolean = (node.function == "Put")
-		  	if (ofInterest) {
-		  		val stop : Int = 0
-		  	}
 		  	
 		  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 		  	var winningKey : String = simpleKey
@@ -110,6 +110,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  	(macroDef, argTypes)
 	  	}
 	  	(macroDefRet, argTypesRet)
+
 	}
 	
 	/**
@@ -279,9 +280,12 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  			val (argNams,argTyp) : ((String,String),String) = if (child.isInstanceOf[xConstant]) {
 	  							val uniqNo : Int = ctx.Counter()
 			  					val constNm = "value" + uniqNo.toString 
-			  					((constNm,constNm),argTypeStr)
+			  					((constNm,constNm), argTypeStr)
 				  			} else {
 				  				if (child.isInstanceOf[xApply]) {
+				  					val fcnArg : xApply = child.asInstanceOf[xApply]
+				  					val fcnTypeInfo : FcnTypeInfo = fcnArg.GetTypeInfo
+				  					val fcnDef : FunctionDef = if (fcnTypeInfo != null) fcnTypeInfo.fcnDef else null
 									val fcnArgNm = child.asInstanceOf[xApply].function + "Result" +  idx.toString
 									((fcnArgNm,fcnArgNm), argTypeStr)
 					  			} else {
@@ -405,7 +409,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 			val ((buildsArgName, doesArgName), exprStr, isContainer) : ((String,String),String,Boolean) = fcnArgValues(idx)
 			//val childNode = if (! isContainer) node.Children.apply(cnt) else null
 			val childNode = if (! elemdef.isInstanceOf[ContainerTypeDef]) node.Children.apply(cnt) else null
-			if (elemdef.isInstanceOf[ContainerTypeDef]) {
+			if (ctx.MetadataHelper.isContainerWithFieldOrKeyNames(elemdef)) { //elemdef.isInstanceOf[ContainerTypeDef]) {
 				val appropriateTypeArgs = argTypes(cnt)
 				val (typeStr, isCtnr, elem) : (String,Boolean,BaseTypeDef) = appropriateTypeArgs
 				val whichType : String = typStr

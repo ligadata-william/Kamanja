@@ -46,7 +46,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
 
     objectType match {
       case "model" => {
-	      MetadataAPIImpl.ActivateModel(nameSpace,name,version.toLong).toString
+	      MetadataAPIImpl.ActivateModel(nameSpace,name,version.toLong,userid).toString
       }
       case _ => {
 	      new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Deactivate/Activate on " + objectType + " is not supported yet").toString 
@@ -65,7 +65,6 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     var version = "-1"
     var name = ""
     var authDone = false
-    var objectList: List[String]  = List[String]()
     
     logger.debug(APIName + ":" + apiArgListJson)
     
@@ -96,8 +95,7 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
           
           // Make sure that we do not perform another AUTH check, and add this object name to the list of objects processed in this call.
           authDone = true
-          objectList :::= List(nameSpace+"."+name+"."+version)
-          
+    
 	        if(arg.ObjectType == null ){
 	          resultStr =  new ApiResult(ErrorCodeConstants.Failure, APIName, null,"Error: The value of object type can't be null").toString
 	          loop.break
@@ -115,7 +113,6 @@ class ActivateObjectsService(requestContext: RequestContext, userid:Option[Strin
     else{
       resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null,"No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }

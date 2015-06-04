@@ -39,8 +39,7 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
        MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,pmmlStr,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,pmmlStr,AuditConstants.SUCCESS,"",nameVal)    
+      val apiResult = MetadataAPIImpl.UpdateModel(pmmlStr,userid) 
       requestContext.complete(apiResult)      
     }
   }
