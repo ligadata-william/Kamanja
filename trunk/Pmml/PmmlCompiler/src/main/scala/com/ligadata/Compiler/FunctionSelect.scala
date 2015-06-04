@@ -131,7 +131,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
 	  	var simpleKey : String = if (hasArgs) buildSimpleKey(scalaFcnName, argTypes.map( argTriple => argTriple._1)) else s"$scalaFcnName()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.info(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.debug(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
 	  	var funcDef : FunctionDef = ctx.MetadataHelper.FunctionByTypeSig(simpleKey)
 	  	var winningKey : String = null
@@ -161,9 +161,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	}
 	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}...see if it is a macro."
 	  	if (typeInfo != null) { 
-	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  		logger.debug(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	} else {
-	  		PmmlError.logWarning(ctx, s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	}
 	  	
 	  	typeInfo
@@ -238,7 +238,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	var elementFcn : FunctionDef = null
 	  	val fcnNamePresentInArgs : Boolean = (elemFcnName != null) 
 	  	if (fcnNamePresentInArgs) {
-	  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with key ... $elemFKey")
+	  		logger.debug(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with key ... $elemFKey")
 	  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(elemFKey)
 	  	}
 	  	if (elementFcn == null && fcnNamePresentInArgs) {
@@ -255,7 +255,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 																, returnTypes)
 		  	breakable {
 	  		  	addlElemKeys.foreach(key => {
-	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with a relaxed key ... $key")
+	  		  		logger.debug(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with a relaxed key ... $key")
 	  		  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (elementFcn != null) {
 	  		  			winningMbrKey = key
@@ -268,7 +268,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
 	  		val foundMbrDef : String = if (winningMbrKey != null)  s"YES ...mbr key $winningMbrKey found ${node.function}" else s"NO mbr function $elemFcnName for ${node.function}!!"
 	  		if (winningMbrKey != null) {
-	  			logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  			logger.debug(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		} else {
 	  			PmmlError.logError(ctx, s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		}
@@ -279,7 +279,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  container fields is an example
 	  	 */
 	  	var winningKey : String = null
-	  	logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with key ... $iterableFKey")
+	  	logger.debug(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with key ... $iterableFKey")
   		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(iterableFKey)
   		val typeInfo : FcnTypeInfo = if (iterableFcn == null) {
   			/** redo the Iterable fcn key too (chg container type to its parent or Any) */
@@ -295,7 +295,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   																	, returnTypes)
  		  	breakable {
 	  		  	addlIterableKeys.foreach(key => {
-	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with a relaxed key ... $key")
+	  		  		logger.debug(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with a relaxed key ... $key")
 	  		  		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (iterableFcn != null) {
 	  		  			winningKey = key
@@ -305,9 +305,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
   			val foundIterableFcnDef : String = if (winningKey != null)  s"YES ...$winningKey found ${node.function}" else s"NO!! ${node.function}"
 	  		if (winningKey != null) {
-	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+	  			logger.debug(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
 	  		} else {
-	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")	  			
+	  			logger.debug(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")	  			
 	  		}
 
   			/** 
@@ -433,7 +433,23 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		val childArgs
   					: (Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)
   					= typeStringFor(child, expandCompoundFieldTypes)
-  			argTypes += childArgs
+  			val typeStringForRetTypeString : String = childArgs._5
+  			val isFcn : Boolean = (typeStringForRetTypeString != null)
+  			val applyNode : xApply = if (child.isInstanceOf[xApply]) child.asInstanceOf[xApply] else null
+  			if (applyNode != null) {
+  				val fcnInfo : FcnTypeInfo = applyNode.GetTypeInfo
+  				val fcnDef : FunctionDef = if (fcnInfo != null) fcnInfo.fcnDef else null
+  				val reasonable : Boolean = (isFcn && fcnDef != null && typeStringForRetTypeString == fcnDef.returnTypeString)
+  				
+  				val returnType : BaseTypeDef = if (fcnDef != null) fcnDef.retType else ctx.mgr.ActiveType("Boolean") // either 'and' or 'or'
+  				/** FIXME: if 'if' take the type of the true or false action */
+  				
+  				/** For functions, build an appropriate arg key based on the function return type */
+  				val fcnArg : Array[(String,Boolean,BaseTypeDef)] = Array[(String,Boolean,BaseTypeDef)]((typeStringForRetTypeString,false,returnType))
+  				argTypes += Tuple5(fcnArg,null,null,null,null)
+  			} else {
+  				argTypes += childArgs
+  			}
   		})
 	  	argTypes.toArray
 	}
@@ -673,7 +689,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
 	  	var relaxedKeys : ArrayBuffer[String] = ArrayBuffer[String]()
 	  	
-	  	/** 1.a */
+	  	/** 1.a.i */
 	  	/** 
 	  	 *  For any container type defs that have member types, promote these member types to the first trait or 
 	  	 *  abstract class found in their respective superclasses.  The outer collection that has the changed
@@ -685,15 +701,30 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	}
 	  	val containerArgsWithPromotedMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypesToFirstTraitOrAbstractClass(argTypes)
 	  	if (containerArgsWithPromotedMemberTypes != null && containerArgsWithPromotedMemberTypes.size > 0) {
-		  	val relaxedTypes1a : Array[String] = containerArgsWithPromotedMemberTypes.map( argInfo => {
+		  	val relaxedTypes1ai : Array[String] = containerArgsWithPromotedMemberTypes.map( argInfo => {
 		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 		  		arg
 		  	})
-		  	if (relaxedTypes1a != null && relaxedTypes1a.size > 0) {
-		  		relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1a)
+		  	if (relaxedTypes1ai != null && relaxedTypes1ai.size > 0) {
+		  		relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1ai)
 		  	}
 	  	}
 	  	
+	  	/** 1.a.ii */
+	  	/** 
+	  	 *  For any container type defs that have member types, promote any member type that is itself a container, leaving
+	  	 *  any other member types present along (e.g., Map[Int,SomeContainer] => Map[Int,Any])
+	  	 */
+	  	val containerArgsWithPromotedContainerMemberTypes : Array[(String,Boolean,BaseTypeDef)] = relaxCollectionMbrTypeContainersToAny(argTypes)
+	  	val relaxedTypes1aii : Array[String] = containerArgsWithPromotedContainerMemberTypes.map( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		arg
+	  	})
+	  	if (relaxedTypes1aii != null && relaxedTypes1aii.size > 0) {
+	  		relaxedKeys += buildSimpleKey(fcnName, relaxedTypes1aii)
+	  	}
+	  	
+	  	//
 	  	/** 1.b */
 	  	/** 
 	  	 *  Change the member types to Any keeping the outer collection the same.
@@ -749,22 +780,22 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		  	})
 	  	}
 	  		  	
-	  	/** 3. */
+	  	/** 3.a */
 	  	/** 
 	  	 *  Change the containers in the argTypes to use the first base class they have that is either an abstract
 	  	 *  class or trait 
 	  	 */
 	  	if (! isIterableFcn) {
 		  	val argsWithPromotedContainerClasses : Array[(String,Boolean,BaseTypeDef)] = relaxToFirstTraitOrAbstractClass(argTypes)
-		  	val relaxedTypes2 : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
+		  	val relaxedTypes3a : Array[String] = argsWithPromotedContainerClasses.map( argInfo => {
 		  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 		  		arg
 		  	})
-		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes2)
+		  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes3a)
 	  	}
 	  		  	
-	  	/** 4. */
-	  	val relaxedTypes3 : Array[String] = argTypes.map( argInfo => {
+	  	/** 4.a relax all containers (collections or structs) to Any 
+	  	val relaxedTypes4a : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		if (isContainer) {
 	  			"Any"
@@ -772,10 +803,21 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  			arg
 	  		}
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes3)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4a) ****************/
+	  		  	
+	  	/** 4.b relax all containers that are NOT collections to Any */
+	  	val relaxedTypes4b : Array[String] = argTypes.map( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		if (isContainer && ctx.MetadataHelper.isContainerWithFieldOrKeyNames(elem)) {
+	  			"Any"
+	  		} else {
+	  			arg
+	  		}
+	  	})
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4b)
 	  		  	
 	  	/** 5. */
-	  	val relaxedTypes4 : Array[String] = argTypes.map( argInfo => {
+	  	val relaxedTypes5 : Array[String] = argTypes.map( argInfo => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
 	  		arg match {
 	  		  case "Int" => "Long"
@@ -783,13 +825,13 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		  case _ => arg
 	  		}
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes4)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes5)
 	  	
 	  	/** 6. */
-	  	val relaxedTypes5 : Array[String] = argTypes.map( argInfo => {
+	  	val relaxedTypes6 : Array[String] = argTypes.map( argInfo => {
 	  		"Any"
 	  	})
-	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes5)
+	  	relaxedKeys += buildSimpleKey(fcnName, relaxedTypes6)
 	  	
 	  	logger.debug("...relaxed keys:")
 	  	relaxedKeys.foreach( key => logger.debug(s"\t$key"))
@@ -870,9 +912,50 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	}
 	
 	/** 
-	 *  For ContainerTypeDefs that have an element or element (e.g., Array[SomeBigStructure] that is a container type,
-	 *  change it to 'Any' (i.e., 'SomeBigStructure' to 'Any'), keeping the base collection the same (in the example
-	 *  'Array').
+	 *  For ContainerTypeDefs that have one or more container element types (e.g., Array[SomeContainer], Map[Int,SomeContainer]),
+	 *  keep the base container, but promote the ContainerTypeDef member types ONLY to Any.
+	 *  
+	 *  @param argTypes a triple of type information that describes the arguments to the function being considered 
+	 *  	(type string, isContainerWithFields, the arg metadata)
+	 *  @return a new set of arguments with the described transformations made
+	 */
+	
+	def relaxCollectionMbrTypeContainersToAny(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Array[(String,Boolean,BaseTypeDef)] = {
+
+	  	val buffer : StringBuilder = new StringBuilder
+	  	val newArgInfo : Array[(String,Boolean,BaseTypeDef)] = argTypes.map ( argInfo => {
+	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argInfo
+	  		
+	  		val newArg : String = if (elem.isInstanceOf[ContainerTypeDef] && elem.asInstanceOf[ContainerTypeDef].ElementTypes.size > 0) {
+	  			val coll : ContainerTypeDef = elem.asInstanceOf[ContainerTypeDef]
+	  			val collectionPart : String = arg.split('[').head
+	  			buffer.clear
+	  			val newElements : Array[String] = coll.ElementTypes.map( e => {
+	  				if (e.isInstanceOf[ContainerTypeDef]) {
+	  					"Any"
+	  				} else {
+	  					e.typeString
+	  				}
+	  			})
+	  			buffer.clear
+	  			newElements.addString(buffer, ",")
+	  			val elementTypePart : String = buffer.toString
+	  			buffer.clear
+	  			buffer.append(s"$collectionPart[$elementTypePart]")
+	  			buffer.toString
+	  		} else {
+	  			arg
+	  		}
+	  		
+	  		(newArg, isContainer, elem)
+	  	})
+
+		newArgInfo	
+	}
+	
+	/** 
+	 *  For ContainerTypeDefs that have one or more element types (e.g., Array[SomeBigStructure] => Array[Any], Map[Int,Double] =>
+	 *  Map[Any,Any), keeping the base collection the same.
 	 *  
 	 *  @param argTypes a triple of type information that describes the arguments to the function being considered 
 	 *  	(type string, isContainerWithFields, the arg metadata)
@@ -905,6 +988,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 
 		newArgInfo	
 	}
+
 	/** 
 	 *  When a function has an argument that is an iterable function and that argument was a 'map' function or something 
 	 *  similar, the receiver array that was used has its type changed to whatever the member function in the map
@@ -1622,6 +1706,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				mbrsArgTypes = typeInfo.mbrArgTypes 
 				collectionType = typeInfo.containerTypeDef
 				collElemTypes = typeInfo.collectionElementTypes
+				fcnNode.SetTypeInfo(typeInfo)
 			}
 						
 			/**
@@ -1639,8 +1724,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 					 *  FIXME: This is clearly inadequate... groupBy et al need to be handled 
 					 */
 					val nominalCollectionName = ObjType.asString(collectionType.tType)
+					val typeStr : String = collectionType.typeString
+					val collectionName : String = typeStr.split('[').head
 					val returnElementTypes : String = determineMapReturnElementTypes(mbrFuncDef, mbrsArgTypes)
-					val returnType : String = s"$nominalCollectionName[$returnElementTypes]"
+					val returnType : String = s"$collectionName[$returnElementTypes]"
 					returnType
 				} else {
 					val retTypeString : String = if (isFilterFcn) {
@@ -1656,6 +1743,10 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				"Any"
 			}
 		} else {
+			val ofInterest : Boolean = (fcnNode.function == "MapKeys")
+			if (ofInterest) {
+				val stopHere : Int = 0
+			}
 			val typeInfo : FcnTypeInfo = fcnNodeSelector.selectSimpleFcn 
 			if (typeInfo != null) {
 				funcDef  = typeInfo.fcnDef
@@ -1725,7 +1816,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 					}
   				}
   			})
-  			if (argCnt > 1) {
+  			if (nonNullArgCnt > 1) {
   				buffer.append(")")
   			} 
   			buffer.toString

@@ -1,0 +1,17 @@
+{
+  "DriverName": "oracle.jdbc.driver.OracleDriver",
+  "URLString": "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=myserver)(PORT=7896))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=myserver)))",
+  "UserId": "",
+  "Password": "",
+  "Timeout": "86400",
+  "Query": "SELECT A,B,C FROM TBL1",
+  "WriteHeader": "true",
+  "FieldDelimiter": "\u0001",
+  "RowDelimiter": "\n",
+  "CompressionString": "gz",
+  "FileName": "/tmp/output.dat.gz",
+  "DriverJars": [
+    "/tmp/ojdbc6.jar"
+  ]
+}
+

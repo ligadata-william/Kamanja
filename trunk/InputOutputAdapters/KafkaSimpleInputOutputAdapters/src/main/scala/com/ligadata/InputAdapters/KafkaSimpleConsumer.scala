@@ -229,7 +229,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
                   processingXformMsg = 0
                   totalXformMsg = 0
                 }
-                execThread.execute(transactionId, new String(message, "UTF-8"), qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, processingXformMsg, totalXformMsg)
+                execThread.execute(transactionId, new String(message, "UTF-8"), qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
 
                 val key = Category + "/" + qc.Name + "/evtCnt"
                 cntrAdapter.addCntr(key, 1) // for now adding each row

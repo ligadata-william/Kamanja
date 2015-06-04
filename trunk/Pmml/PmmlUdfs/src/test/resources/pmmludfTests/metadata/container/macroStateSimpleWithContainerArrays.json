@@ -1,0 +1,116 @@
+{
+  "Container": {
+    "NameSpace": "System",
+    "Name": "macrostate",
+    "Version": "000000.000001.000000",
+    "Description": "macro state container",
+    "Fixed": "true",
+    "Elements": [ 
+      {
+        "Field": {
+          "Name": "desynpuf_id",
+          "Type": "System.String"
+        }
+      },
+      {
+        "Field": {
+          "Name": "FortyYrsOrOlder",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "WithSmokingHistory",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "WithEnvironmentalExposures",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Dyspnoea",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "ChronicCough",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "ChronicSputum",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "COPDSymptoms",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "FamilyHistory",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimsByDateKeys",
+          "Type": "System.ArrayOfInt"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimTotalCostEachDate",
+          "Type": "System.ArrayOfDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimsByDateKeys",
+          "Type": "System.ArrayOfInt"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimTotalCostEachDate",
+          "Type": "System.ArrayOfDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "InpatientHistory",
+          "Type": "System.ArrayOfInpatientClaimHistory"
+        }
+      },
+      {
+        "Field": {
+          "Name": "OutpatientHistory",
+          "Type": "System.ArrayOfOutpatientClaimHistory"
+        }
+      },
+      {
+        "Field": {
+          "Name": "HL7History",
+          "Type": "System.ArrayOfHL7History"
+        }
+      }
+  ],
+  "PartitionKey": [
+      "desynpuf_id"
+  ],
+  "PrimaryKey": [
+      "desynpuf_id"
+  ]
+
+  }
+}
+
+

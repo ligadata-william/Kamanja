@@ -12,12 +12,14 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 
 import org.apache.hadoop.hbase._
 import org.apache.log4j._
 
 import java.nio.ByteBuffer
 import java.io.IOException
+import org.apache.hadoop.security.UserGroupInformation;
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -29,8 +31,7 @@ import java.io.IOException
  *
  */
 
-class KeyValueHBaseTx(owner : DataStore) extends Transaction
-{
+class KeyValueHBaseTx(owner: DataStore) extends Transaction {
 	var parent :DataStore = owner
 
 	def add(source: IStorage) = { owner.add(source) }
@@ -44,28 +45,45 @@ class KeyValueHBaseTx(owner : DataStore) extends Transaction
 	def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
-class KeyValueHBase(parameter: PropertyMap) extends DataStore
-{
+class KeyValueHBase(parameter: PropertyMap) extends DataStore {
 	val loggerName = this.getClass.getName
 	val logger = Logger.getLogger(loggerName)
 
 	var keyspace = parameter.getOrElse("schema", "default") ;
 	var hostnames = parameter.getOrElse("hostlist", "localhost") ;
-	var table = parameter.getOrElse("table", "default")
+
+	var table = keyspace + ":" + parameter.getOrElse("table", "default")
 
 	var config = new org.apache.hadoop.conf.Configuration
+	// val config = HBaseConfiguration.create();
+
 	config.setInt("zookeeper.session.timeout", 5000);
 	config.setInt("zookeeper.recovery.retry", 1);
 	config.setInt("hbase.client.retries.number", 3);
 	config.setInt("hbase.client.pause", 5000);
 	
 	config.set("hbase.zookeeper.quorum", hostnames);
+/*
+  config.set("hadoop.proxyuser.hdfs.groups", "*")
+  config.set("hadoop.security.authorization", "true")
+  config.set("hbase.security.authentication", "kerberos")
+  config.set("hadoop.security.authentication", "kerberos")
+  config.set("hbase.regionserver.kerberos.principal", "hbase/_HOST@INTRANET.LIGADATA.COM")
+  config.set("hbase.master.kerberos.principal", "hbase/_HOST@INTRANET.LIGADATA.COM")
 
+  org.apache.hadoop.security.UserGroupInformation.setConfiguration(config);
+
+  val principal = parameter.getOrElse("principal", "").trim
+  val keytab = parameter.getOrElse("keytab", "").trim
+
+  UserGroupInformation.loginUserFromKeytab(principal, keytab);
+
+  val ugi = UserGroupInformation.getLoginUser
+*/
 	var connection:HConnection = _
 	try{
 	  connection = HConnectionManager.createConnection(config);
-	}
-        catch{
+  } catch {
 	  case e:Exception => {
 	     throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
 	  }
@@ -74,7 +92,22 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	createTable(table)
 	var tableHBase = connection.getTable(table);
 
+  private def relogin: Unit = {
+/*
+    try {
+      if (ugi != null)
+        ugi.checkTGTAndReloginFromKeytab
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to relogin into HBase. Message:" + e.getMessage())
+        // Not throwing exception from here
+      }
+    }
+*/
+  }
+
         def createTable(tableName:String) : Unit = {
+    relogin
 	  val  admin = new HBaseAdmin(config);
 	  if (! admin.tableExists(tableName)) {
 	    val  tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
@@ -86,48 +119,48 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	  }
 	}
 
-	def add(source: IStorage) =
-	{
+  def add(source: IStorage) = {
+    relogin
 		var p = new Put(source.Key.toArray[Byte])
 
 		p.add(Bytes.toBytes("value"), Bytes.toBytes("base"),source.Value.toArray[Byte] )
 
 		val succeeded = tableHBase.checkAndPut(p.getRow(), Bytes.toBytes("value"), Bytes.toBytes("base"), null, p)
-		if(!succeeded)
-		{
-			throw new Exception("not applied")
-		}
-	}
+    if (!succeeded) {
+      throw new Exception("not applied")
+    }
+  }
 
-	def put(source: IStorage) =
-	{
-		var p = new Put(source.Key.toArray[Byte])
+  def put(source: IStorage) = {
+    relogin
+    var p = new Put(source.Key.toArray[Byte])
 
-		p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte] )
+    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
 
-		tableHBase.put(p)
+    tableHBase.put(p)
 
-	}
+  }
 
-	def putBatch(sourceArray: Array[IStorage]) =
-	{
-	  sourceArray.foreach( source => {
+  def putBatch(sourceArray: Array[IStorage]) = {
+    relogin
+    sourceArray.foreach(source => {
 	    var p = new Put(source.Key.toArray[Byte])
 	    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte] )
 	    tableHBase.put(p)
 	  })
 	}
 
-	def delBatch(keyArray: Array[Key]) = {
-	  keyArray.foreach( k => {
-	    val p = new Delete(k.toArray[Byte])
-	    val result = tableHBase.delete(p)
-	  })
-	}
+  def delBatch(keyArray: Array[Key]) = {
+    relogin
+    keyArray.foreach(k => {
+      val p = new Delete(k.toArray[Byte])
+      val result = tableHBase.delete(p)
+    })
+  }
 
-	def get(key: Key, handler : (Value) => Unit) =
-	{
-	  try{
+  def get(key: Key, handler: (Value) => Unit) = {
+    relogin
+    try {
 		var p = new Get(key.toArray[Byte])
 
 		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
@@ -148,9 +181,9 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	  }
 	}
 	
-	def get(key: Key, target: IStorage)  =
-	{
-	  try{
+  def get(key: Key, target: IStorage) = {
+    relogin
+    try {
 		var p = new Get(key.toArray[Byte])
 
 		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
@@ -171,9 +204,9 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	  }
 	}
 
-	def del(key: Key) =
-	{
-		val p = new Delete(key.toArray[Byte])
+  def del(key: Key) = {
+    relogin
+    val p = new Delete(key.toArray[Byte])
 
 		val result = tableHBase.delete(p)
 	}
@@ -184,10 +217,12 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 
 	def endTx(tx : Transaction) = {}
 
-	def commitTx(tx : Transaction) = { tableHBase.flushCommits }
+  def commitTx(tx: Transaction) = {
+    relogin
+    tableHBase.flushCommits
+  }
 
-	override def Shutdown() =
-	{
+  override def Shutdown() = {
 	  if(tableHBase != null ){
 	    tableHBase.close()
 	    tableHBase = null
@@ -198,8 +233,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 	  }
 	}
 
-	def TruncateStore() =
-	{
+  def TruncateStore() = {
+    relogin
 /*
 		val a = new HBaseAdmin(connection)
 
@@ -216,39 +251,31 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore
 
 	}
 
-	def getAllKeys( handler : (Key) => Unit)
-	{
+  def getAllKeys(handler: (Key) => Unit) {
+    relogin
 		var p = new Scan()
 
 		val iter = tableHBase.getScanner(p)
 
-		try
-		{
-			var fContinue = true
+    try {
+      var fContinue = true
 
-			do
-			{
-				val row = iter.next()
-				if(row!=null)
-				{
-					val v = row.getRow()
-					val key = new Key
-					for(b <- v)
-						key+=b
+      do {
+        val row = iter.next()
+        if (row != null) {
+          val v = row.getRow()
+          val key = new Key
+          for (b <- v)
+            key += b
 
-					handler(key)
-				}
-				else
-				{
-					fContinue = false;
-				}
-			}
-			while(fContinue)
+          handler(key)
+        } else {
+          fContinue = false;
+        }
+      } while (fContinue)
 
-		}
-		finally
-		{
-			iter.close()
+    } finally {
+      iter.close()
 		}
 
 	}

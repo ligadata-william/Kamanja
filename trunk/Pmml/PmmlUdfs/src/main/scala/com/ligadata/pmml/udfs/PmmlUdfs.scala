@@ -42,7 +42,7 @@ import com.ligadata.FatafatBase._
  * These are the udfs supplied with the system.
  */
 object Udfs extends LogTrait {
-
+  
   /** 
       Answer the version number of the supplied BaseMsg
       @param msg : A BaseMsg known to the model.
@@ -2115,6 +2115,36 @@ object Udfs extends LogTrait {
   }
 
   /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Int, expr2: Long): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Long, expr2: Long): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterThan(expr1: Long, expr2: Int): Boolean = {
+    (expr1 > expr2)
+  }
+
+  /** 
       Answer true if expr1 is greather than or equal expr2
       @param expr1 : a value
       @param expr2 : a value
@@ -2211,6 +2241,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def GreaterOrEqual(expr1: Float, expr2: Float): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Int, expr2: Long): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Long, expr2: Long): Boolean = {
+    (expr1 >= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is greather than or equal expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def GreaterOrEqual(expr1: Long, expr2: Int): Boolean = {
     (expr1 >= expr2)
   }
 
@@ -2320,6 +2380,36 @@ object Udfs extends LogTrait {
       @param expr2 : a value
       @return true if this is so, else false
    */
+  def LessOrEqual(expr1: Int, expr2: Long): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessOrEqual(expr1: Long, expr2: Long): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessOrEqual(expr1: Long, expr2: Int): Boolean = {
+    (expr1 <= expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
   def LessThan(expr1: String, expr2: String): Boolean = {
     (expr1 < expr2)
   }
@@ -2411,6 +2501,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def LessThan(expr1: Float, expr2: Float): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Int, expr2: Long): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Long, expr2: Long): Boolean = {
+    (expr1 < expr2)
+  }
+
+  /** 
+      Answer true if expr1 is less than expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def LessThan(expr1: Long, expr2: Int): Boolean = {
     (expr1 < expr2)
   }
 
@@ -2525,6 +2645,36 @@ object Udfs extends LogTrait {
   }
 
   /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Int, expr2: Long): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Long, expr2: Long): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def Equal(expr1: Long, expr2: Int): Boolean = {
+    (expr1 == expr2)
+  }
+
+  /** 
       Answer true if expr1 is not equivalent to expr2
       @param expr1 : a value
       @param expr2 : a value
@@ -2631,6 +2781,36 @@ object Udfs extends LogTrait {
       @return true if this is so, else false
    */
   def NotEqual(expr1: Boolean, expr2: Boolean): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Int, expr2: Long): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Long, expr2: Long): Boolean = {
+    !(expr1 == expr2)
+  }
+
+  /** 
+      Answer true if expr1 is not equivalent to expr2
+      @param expr1 : a value
+      @param expr2 : a value
+      @return true if this is so, else false
+   */
+  def NotEqual(expr1: Long, expr2: Int): Boolean = {
     !(expr1 == expr2)
   }
 
@@ -5698,10 +5878,7 @@ object Udfs extends LogTrait {
    */
   def concat(args : Any*) : String = {
       val argList : List[Any] = args.toList
-      val buffer : StringBuilder = new StringBuilder
-      argList.foreach ( arg => if (arg != null) buffer.append(arg.toString) else "" )
-      val concatenation : String = buffer.toString
-      concatenation
+      argList.map( arg => if (arg != null) arg.toString else "" ).mkString("")
   }
 
   /** 
@@ -6630,46 +6807,24 @@ object Udfs extends LogTrait {
   }
 
   /** 
-      Coerce the supplied array buffer to a set.
-      @param arr an ArrayBuffer[Any]
-      @return an Set[Any]
-   */
-  def ToSet(arr: ArrayBuffer[Any]): Set[Any] = {
-    if (arr == null || arr.size == 0)
-      return Array[Any]().toSet
-    arr.toSet
-  }
-
-  /** 
-      Coerce the supplied array to a set.
-      @param arr an Array[Any]
-      @return an Set[Any]
-   */
-  def ToSet(arr: Array[Any]): Set[Any] = {
-    if (arr == null || arr.size == 0)
-      return Array[Any]().toSet
-    arr.toSet
-  }
-
-  /** 
       Coerce the supplied queue to a set.
-      @param q an Queue[Any]
-      @return an Set[Any]
+      @param q a Queue[T]
+      @return n Set[T]
    */
-  def ToSet(q: Queue[Any]): Set[Any] = {
+  def ToSet[T: ClassTag](q: Queue[T]): Set[T] = {
     if (q == null || q.size == 0)
-      return Queue[Any]().toSet
+      return Set[T]().toSet
     q.toSet
   }
 
   /** 
       Coerce the supplied List to a set.
-      @param l an Queue[Any]
-      @return an Set[Any]
+      @param l a List[T]
+      @return n Set[T]
    */
-  def ToSet(l: List[Any]): Set[Any] = {
+  def ToSet[T: ClassTag](l: List[T]): Set[T] = {
     if (l == null || l.size == 0)
-      return List[Any]().toSet
+      return Set[T]().toSet
     l.toSet
   }
 
@@ -6695,31 +6850,10 @@ object Udfs extends LogTrait {
     set.toArray
   }
 
-  /** 
-      Coerce the supplied mutable set to an Array.
-      @param set a scala.collection.mutable.Set[Any]
-      @return an Array[Any]
-   */
-  def ToArray(set: MutableSet[Any]): Array[Any] = {
-    if (set == null || set.size == 0)
-      return Array[Any]()
-    set.toArray
-  }
-
-  /** 
-      Coerce the supplied set to an Array.
-      @param set a scala.collection.immutable.Set[Any]
-      @return an Array[Any]
-   */
-  def ToArray(set: Set[Any]): Array[Any] = {
-    if (set == null || set.size == 0)
-      return Array[Any]()
-    set.toArray
-  }
 
   /** 
       Coerce the supplied array buffer to an Array.
-      @param set a scala.collection.mutable.ArrayBuffer[T]
+      @param arr a scala.collection.mutable.ArrayBuffer[T]
       @return an Array[T]
    */
   def ToArray[T: ClassTag](arr: ArrayBuffer[T]): Array[T] = {
@@ -6729,35 +6863,13 @@ object Udfs extends LogTrait {
   }
 
   /** 
-      Coerce the supplied array buffer to an Array.
-      @param set a scala.collection.mutable.ArrayBuffer[Any]
-      @return an Array[Any]
-   */
-  def ToArray(arr: ArrayBuffer[Any]): Array[Any] = {
-    if (arr == null || arr.size == 0)
-      return Array[Any]()
-    arr.toArray
-  }
-
-  /** 
       Coerce the supplied array to an Array.
-      @param set a scala.Array[T]
+      @param arr a scala.Array[T]
       @return an Array[T]
    */
   def ToArray[T: ClassTag](arr: Array[T]): Array[T] = {
     if (arr == null || arr.size == 0)
       return Array[T]()
-    arr.toArray
-  }
-
-  /** 
-      Coerce the supplied array to an Array.
-      @param set a scala.Array[Any]
-      @return an Array[Any]
-   */
-  def ToArray(arr: Array[Any]): Array[Any] = {
-    if (arr == null || arr.size == 0)
-      return Array[Any]()
     arr.toArray
   }
 
@@ -6773,19 +6885,8 @@ object Udfs extends LogTrait {
   }
 
   /** 
-      Coerce the supplied SortedSet to an Array.
-      @param set a scala.collection.mutable.SortedSet[Any]
-      @return an Array[Any]
-   */
-  def ToArray(set: SortedSet[Any]): Array[Any] = {
-    if (set == null || set.size == 0)
-      return Array[Any]()
-    set.toArray
-  }
-
-  /** 
       Coerce the supplied TreeSet to an Array.
-      @param set a scala.collection.mutable.TreeSet[T]
+      @param ts a scala.collection.mutable.TreeSet[T]
       @return an Array[T]
    */
   def ToArray[T: ClassTag](ts: TreeSet[T]): Array[T] = {
@@ -6795,19 +6896,8 @@ object Udfs extends LogTrait {
   }
 
   /** 
-      Coerce the supplied TreeSet to an Array.
-      @param set a scala.collection.mutable.TreeSet[Any]
-      @return an Array[Any]
-   */
-  def ToArray(ts: TreeSet[Any]): Array[Any] = {
-    if (ts == null || ts.size == 0)
-      return Array[Any]()
-    ts.toArray
-  }
-
-  /** 
       Coerce the supplied List to an Array.
-      @param set a scala.collection.mutable.List[T]
+      @param l a scala.collection.mutable.List[T]
       @return an Array[T]
    */
   def ToArray[T: ClassTag](l: List[T]): Array[T] = {
@@ -6817,19 +6907,8 @@ object Udfs extends LogTrait {
   }
 
   /** 
-      Coerce the supplied List to an Array.
-      @param set a scala.collection.mutable.List[Any]
-      @return an Array[Any]
-   */
-  def ToArray(l: List[Any]): Array[Any] = {
-    if (l == null || l.size == 0)
-      return Array[Any]()
-    l.toArray
-  }
-
-  /** 
       Coerce the supplied Queue to an Array.
-      @param set a scala.collection.mutable.Queue[T]
+      @param q a scala.collection.mutable.Queue[T]
       @return an Array[T]
    */
   def ToArray[T: ClassTag](q: Queue[T]): Array[T] = {
@@ -6838,16 +6917,6 @@ object Udfs extends LogTrait {
     q.toArray
   }
 
-  /** 
-      Coerce the supplied Queue to an Array.
-      @param set a scala.collection.mutable.Queue[Any]
-      @return an Array[Any]
-   */
-  def ToArray(q: Queue[Any]): Array[Any] = {
-    if (q == null || q.size == 0)
-      return Array[Any]()
-    q.toArray
-  }
 
   /**
    *
@@ -8361,19 +8430,19 @@ object Udfs extends LogTrait {
       Answer the supplied map's keys as an array.
       @param receiver a scala.collection.immutable.Map[Any,Any]
       @return Array[Any]
-   */
+  
   def MapKeys(receiver: MutableMap[Any, Any]): Array[Any] = {
     receiver.keys.toArray
-  }
+  } */
 
   /** 
       Answer the supplied map's keys as an array.
       @param receiver a scala.collection.immutable.Map[Any,Any]
       @return Array[Any]
-   */
+   
   def MapKeys(receiver: Map[Any, Any]): Array[Any] = {
     receiver.keys.toArray
-  }
+  }*/
 
   /** 
       Answer the supplied map's values as an array.
