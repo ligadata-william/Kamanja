@@ -131,7 +131,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val hasArgs : Boolean = (argTypes != null && argTypes.size > 0 && argTypes.filter(_._1 != null).size > 0)
 	  	var simpleKey : String = if (hasArgs) buildSimpleKey(scalaFcnName, argTypes.map( argTriple => argTriple._1)) else s"$scalaFcnName()"
 	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.info(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+	  	logger.debug(s"selectSimpleFcn ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 	  	//simpleKey = "Get(EnvContext,String,Long)"
 	  	var funcDef : FunctionDef = ctx.MetadataHelper.FunctionByTypeSig(simpleKey)
 	  	var winningKey : String = null
@@ -161,7 +161,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	}
 	  	val foundDef : String = if (typeInfo != null)  s"YES ...$winningKey found ${node.function}" else s"NO ${node.function}...see if it is a macro."
 	  	if (typeInfo != null) { 
-	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
+	  		logger.debug(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	} else {
 	  		logger.info(s"selectSimpleFcn ...funcDef produced? $foundDef ")
 	  	}
@@ -238,7 +238,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	var elementFcn : FunctionDef = null
 	  	val fcnNamePresentInArgs : Boolean = (elemFcnName != null) 
 	  	if (fcnNamePresentInArgs) {
-	  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with key ... $elemFKey")
+	  		logger.debug(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with key ... $elemFKey")
 	  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(elemFKey)
 	  	}
 	  	if (elementFcn == null && fcnNamePresentInArgs) {
@@ -255,7 +255,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 																, returnTypes)
 		  	breakable {
 	  		  	addlElemKeys.foreach(key => {
-	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with a relaxed key ... $key")
+	  		  		logger.debug(s"selectIterableFcn ...searching mdmgr for mbr fcn $elemFcnName of ${node.function} with a relaxed key ... $key")
 	  		  		elementFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (elementFcn != null) {
 	  		  			winningMbrKey = key
@@ -268,7 +268,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
 	  		val foundMbrDef : String = if (winningMbrKey != null)  s"YES ...mbr key $winningMbrKey found ${node.function}" else s"NO mbr function $elemFcnName for ${node.function}!!"
 	  		if (winningMbrKey != null) {
-	  			logger.info(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
+	  			logger.debug(s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		} else {
 	  			PmmlError.logError(ctx, s"selectIterableFcn ...mbr funcDef produced? $foundMbrDef ")
 	  		}
@@ -279,7 +279,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	 *  container fields is an example
 	  	 */
 	  	var winningKey : String = null
-	  	logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with key ... $iterableFKey")
+	  	logger.debug(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with key ... $iterableFKey")
   		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(iterableFKey)
   		val typeInfo : FcnTypeInfo = if (iterableFcn == null) {
   			/** redo the Iterable fcn key too (chg container type to its parent or Any) */
@@ -295,7 +295,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   																	, returnTypes)
  		  	breakable {
 	  		  	addlIterableKeys.foreach(key => {
-	  		  		logger.info(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with a relaxed key ... $key")
+	  		  		logger.debug(s"selectIterableFcn ...searching mdmgr for iterable fcn ${node.function} with a relaxed key ... $key")
 	  		  		iterableFcn = ctx.MetadataHelper.FunctionByTypeSig(key)
 	  		  		if (iterableFcn != null) {
 	  		  			winningKey = key
@@ -305,9 +305,9 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		}
   			val foundIterableFcnDef : String = if (winningKey != null)  s"YES ...$winningKey found ${node.function}" else s"NO!! ${node.function}"
 	  		if (winningKey != null) {
-	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
+	  			logger.debug(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")
 	  		} else {
-	  			logger.info(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")	  			
+	  			logger.debug(s"selectIterableFcn ...iterable funcDef produced? $foundIterableFcnDef ")	  			
 	  		}
 
   			/** 

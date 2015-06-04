@@ -669,6 +669,9 @@ class JarDef extends BaseElemDef{
   def typeString: String = PhysicalName
 }
 
+object NodeRole {
+  def ValidRoles = Set("RestAPI", "ProcessingEngine")
+}
 
 class NodeInfo {
   /**
@@ -683,7 +686,7 @@ class NodeInfo {
   var classpath: String = _
   var clusterId: String = _
   var power:Int = _
-  var roles:Int = _
+  var roles: Array[String] = new Array[String](0)
   var description: String = _
 
   def NodeId: String = nodeId
@@ -695,7 +698,7 @@ class NodeInfo {
   def Classpath: String = classpath
   def ClusterId: String = clusterId
   def Power: Int = power
-  def Roles: Int = roles
+  def Roles: Array[String] = roles
   def Description: String = description
   def NodeAddr: String = nodeIpAddr + ":" + nodePort.toString
 }
@@ -738,6 +741,8 @@ class AdapterInfo {
   var dataFormat: String = _ // valid only for Input or Validate types. Output and Status does not have this
   var className: String = _
   var inputAdapterToVerify: String = _ // Valid only for Output Adapter.
+  var delimiterString: String = _ // Delimiter String for CSV
+  var associatedMsg: String = _ // Queue Associated Message
   var jarName: String = _
   var dependencyJars: Array[String] = new Array[String](0)
   var adapterSpecificCfg: String = _
@@ -749,7 +754,9 @@ class AdapterInfo {
   def JarName: String = jarName
   def DependencyJars: Array[String] = dependencyJars
   def AdapterSpecificCfg: String = adapterSpecificCfg
-  def InputAdapterToVerify: String  = inputAdapterToVerify
+  def InputAdapterToVerify: String = inputAdapterToVerify
+  def DelimiterString: String = delimiterString
+  def AssociatedMessage: String = associatedMsg
 }
 
 class AuditRecord

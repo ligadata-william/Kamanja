@@ -25,7 +25,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   var executor: ExecutorService = _
 
-  // LOG.info("FileConsumer")
+  // LOG.debug("FileConsumer")
 
   //BUGBUG:: Not validating the values in FileAdapterConfiguration 
 
@@ -94,7 +94,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0)
+                      execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
                       tempTransId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -148,7 +148,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0)
+            execThread.execute(tempTransId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
             tempTransId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -212,7 +212,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
     executor.execute(new Runnable() {
       override def run() {
 
-        // LOG.info("FileConsumer.run")
+        // LOG.debug("FileConsumer.run")
 
         val s = System.nanoTime
 

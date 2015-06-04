@@ -1143,7 +1143,7 @@ class MessageDefImpl {
 
           if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
 
-            log.trace("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
+            log.debug("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
 
             val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
 
@@ -1465,8 +1465,8 @@ class MessageDefImpl {
         e.printStackTrace()
       }
     }
-    log.trace("version from metadata " + msgdef.get.Version)
-
+    log.debug("version from metadata " + msgdef.get.Version)
+    
     var newver = msgdef.get.Version + 1
 
     MdMgr.ConvertLongVersionToString(newver)
