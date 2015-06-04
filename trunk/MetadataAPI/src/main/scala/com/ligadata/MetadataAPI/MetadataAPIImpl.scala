@@ -149,11 +149,9 @@ object MetadataAPIImpl extends MetadataAPI {
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
-<<<<<<< HEAD
   private var currentTranLevel: Long = _
-=======
   private var passwd: String = null
->>>>>>> d1a44e2e9ce6832fe0b286319cabe28ed0905df3
+
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -2851,11 +2849,8 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveContainer(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-<<<<<<< HEAD
     var newTranId = GetNewTranId
-=======
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Container",AuditConstants.SUCCESS,"",key)
->>>>>>> d1a44e2e9ce6832fe0b286319cabe28ed0905df3
     try {
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -2875,12 +2870,8 @@ object MetadataAPIImpl extends MetadataAPI {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
           objectsToBeRemoved.foreach(typ => {
-<<<<<<< HEAD
             typ.tranId = newTranId
-            RemoveType(typ.nameSpace, typ.name, typ.ver)
-=======
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
->>>>>>> d1a44e2e9ce6832fe0b286319cabe28ed0905df3
           })
           // ContainerDef itself
           contDef.tranId = newTranId
@@ -2905,11 +2896,9 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-<<<<<<< HEAD
+
     var newTranId = GetNewTranId
-=======
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",key)
->>>>>>> d1a44e2e9ce6832fe0b286319cabe28ed0905df3
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -2931,14 +2920,9 @@ object MetadataAPIImpl extends MetadataAPI {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
           
-<<<<<<< HEAD
           objectsToBeRemoved.foreach(typ => {   
-            typ.tranId = newTranId
-            RemoveType(typ.nameSpace, typ.name, typ.ver)
-=======
-          objectsToBeRemoved.foreach(typ => {           
+            typ.tranId = newTranId         
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
->>>>>>> d1a44e2e9ce6832fe0b286319cabe28ed0905df3
           })
           
           // MessageDef itself - add it to the list of other objects to be passed to the zookeeper
