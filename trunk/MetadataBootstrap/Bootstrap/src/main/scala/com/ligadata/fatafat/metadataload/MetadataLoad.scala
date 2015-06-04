@@ -130,6 +130,12 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddList(MdMgr.sysNS, "ListOfBoolean", MdMgr.sysNS, "Boolean", baseTypesVer)
 		
 		mgr.AddQueue("System", "QueueOfAny", "System", "Any", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfString", "System", "String", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfInt", "System", "Int", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfLong", "System", "Long", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfFloat", "System", "Float", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfDouble", "System", "Double", baseTypesVer)
+		mgr.AddQueue("System", "QueueOfBoolean", "System", "Boolean", baseTypesVer)
 
 		mgr.AddSortedSet("System", "SortedSetOfAny", "System", "Any", baseTypesVer)
 
@@ -157,6 +163,7 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddHashMap(MdMgr.sysNS, "HashMapOfAnyAny", (MdMgr.sysNS, "Any"), (MdMgr.sysNS, "Any"), baseTypesVer)
 		mgr.AddMap(MdMgr.sysNS, "MapOfAnyAny", (MdMgr.sysNS, "Any"), (MdMgr.sysNS, "Any"), baseTypesVer)
 		mgr.AddImmutableMap(MdMgr.sysNS, "ImmutableMapOfAnyAny", (MdMgr.sysNS, "Any"), (MdMgr.sysNS, "Any"), baseTypesVer)
+		mgr.AddImmutableMap(MdMgr.sysNS, "ImmutableMapOfIntAny", (MdMgr.sysNS, "Int"), (MdMgr.sysNS, "Any"), baseTypesVer)
 
 		
 		mgr.AddMap(MdMgr.sysNS, "MapOfStringFloat", (MdMgr.sysNS, "String"), (MdMgr.sysNS, "Float"), baseTypesVer)
@@ -1080,17 +1087,65 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	def init_com_ligadata_pmml_udfs_Udfs1 {
 	  
 		mgr.AddFunc("Pmml", "Between", "com.ligadata.pmml.udfs.Udfs.Between", ("System", "ArrayOfAny"), List(("set", "System", "SetOfAny")), null)
+
 		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ArrayOfAny")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfInt"), List(("arr", "System", "ArrayOfInt")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfLong"), List(("arr", "System", "ArrayOfLong")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfDouble"), List(("arr", "System", "ArrayOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfFloat"), List(("arr", "System", "ArrayOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfString"), List(("arr", "System", "ArrayOfString")), null)
 
 		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ArrayBufferOfAny")), null)
-		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "QueueOfAny")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfInt"), List(("arr", "System", "ArrayBufferOfInt")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfLong"), List(("arr", "System", "ArrayBufferOfLong")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfDouble"), List(("arr", "System", "ArrayBufferOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfFloat"), List(("arr", "System", "ArrayBufferOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfString"), List(("arr", "System", "ArrayBufferOfString")), null)
+
 		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "ListOfAny")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfInt"), List(("arr", "System", "ListOfInt")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfLong"), List(("arr", "System", "ListOfLong")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfDouble"), List(("arr", "System", "ListOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfFloat"), List(("arr", "System", "ListOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfString"), List(("arr", "System", "ListOfString")), null)
+
+		mgr.AddFunc("Pmml", "ToSet", "com.ligadata.pmml.udfs.Udfs.ToSet", ("System", "SetOfAny"), List(("arr", "System", "QueueOfAny")), null)
+
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ArrayOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfInt"), List(("arr", "System", "ArrayOfInt")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfLong"), List(("arr", "System", "ArrayOfLong")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfDouble"), List(("arr", "System", "ArrayOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfFloat"), List(("arr", "System", "ArrayOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfBoolean"), List(("arr", "System", "ArrayOfBoolean")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfString"), List(("arr", "System", "ArrayOfString")), null)
+
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ArrayBufferOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfInt"), List(("arr", "System", "ArrayBufferOfInt")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfLong"), List(("arr", "System", "ArrayBufferOfLong")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfDouble"), List(("arr", "System", "ArrayBufferOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfFloat"), List(("arr", "System", "ArrayBufferOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfBoolean"), List(("arr", "System", "ArrayBufferOfBoolean")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfString"), List(("arr", "System", "ArrayBufferOfString")), null)
+ 
+
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("aList", "System", "ListOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfInt"), List(("aList", "System", "ListOfInt")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfLong"), List(("aList", "System", "ListOfLong")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfDouble"), List(("aList", "System", "ListOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfFloat"), List(("aList", "System", "ListOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfBoolean"), List(("aList", "System", "ListOfBoolean")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfString"), List(("aList", "System", "ListOfString")), null)
+
+ 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("aSet", "System", "SetOfAny")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfInt"), List(("aSet", "System", "SetOfInt")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfLong"), List(("aSet", "System", "SetOfLong")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfDouble"), List(("aSet", "System", "SetOfDouble")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfFloat"), List(("aSet", "System", "SetOfFloat")), null)
+		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfString"), List(("aSet", "System", "SetOfString")), null)
+
+
  		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "SortedSetOfAny")), null)
  		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "TreeSetOfAny")), null)
- 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "SetOfAny")), null)
-		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "ListOfAny")), null)
 		mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "QueueOfAny")), null)
  		//mgr.AddFunc("Pmml", "ToArray", "com.ligadata.pmml.udfs.Udfs.ToArray", ("System", "ArrayOfAny"), List(("arr", "System", "StackOfAny")), null)
 		
@@ -1314,6 +1369,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
  		mgr.AddFunc("Pmml", "Zip", "com.ligadata.pmml.udfs.Udfs.Zip", ("System", "ImmutableSetOfTupleOfAny2"), List(("receiver", "System", "ImmutableSetOfAny"), ("other", "System", "ImmutableSetOfAny")), null)
  		mgr.AddFunc("Pmml", "Zip", "com.ligadata.pmml.udfs.Udfs.Zip", ("System", "SortedSetOfTupleOfAny2"), List(("receiver", "System", "SortedSetOfAny"), ("other", "System", "SortedSetOfAny")), null)
 
+ 		mgr.AddFunc("Pmml", "MapKeys", "com.ligadata.pmml.udfs.Udfs.MapKeys", ("System", "ArrayOfInt"), List(("receiver", "System", "ImmutableMapOfIntAny")), null)
  		mgr.AddFunc("Pmml", "MapKeys", "com.ligadata.pmml.udfs.Udfs.MapKeys", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
  		mgr.AddFunc("Pmml", "MapValues", "com.ligadata.pmml.udfs.Udfs.MapValues", ("System", "ArrayOfAny"), List(("receiver", "System", "ImmutableMapOfAnyAny")), null)
 
@@ -1630,19 +1686,26 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroStringFixed : String =  """
 	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%.%2% = %3%; true }
+	  	def setField  : Boolean = { %1%.%2% = %3%.asInstanceOf[%2_type%]; true }
 	} """
 		
 		val SetFieldMacroStringMapped : String =  """
 	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%.set("%2%", %3%); true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%.asInstanceOf[%2_type%); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
 					, "setField"
 					, (MdMgr.sysNS, "Boolean")
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Int"), ("value", MdMgr.sysNS, "Int"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfInt"), ("value", MdMgr.sysNS, "ArrayOfInt"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 		  
@@ -1656,7 +1719,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "setField"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfDouble"), ("value", MdMgr.sysNS, "ArrayOfDouble"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Long"), ("value", MdMgr.sysNS, "Long"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfLong"), ("value", MdMgr.sysNS, "ArrayOfLong"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 
@@ -1670,7 +1747,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "setField"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfBoolean"), ("value", MdMgr.sysNS, "ArrayOfBoolean"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "String"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfString"), ("value", MdMgr.sysNS, "ArrayOfString"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 
@@ -1685,7 +1776,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "setField"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfInt"), ("value", MdMgr.sysNS, "ArrayOfAny"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Double"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfDouble"), ("value", MdMgr.sysNS, "ArrayOfAny"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 		  
@@ -1699,7 +1804,21 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "setField"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfLong"), ("value", MdMgr.sysNS, "ArrayOfAny"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Boolean"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfBoolean"), ("value", MdMgr.sysNS, "ArrayOfAny"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
 
@@ -1709,6 +1828,39 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Any"))
 					, fcnMacrofeatures
 					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "ArrayOfString"), ("value", MdMgr.sysNS, "ArrayOfAny"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "setField"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Any"), ("value", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldMacroStringFixed,SetFieldMacroStringMapped))	  
+
+		val SetFieldNullMacroStringFixed : String =  """
+	class %1%_%2%_setFieldNull(val ctx : Context, var %1% : %1_type%)
+	{
+	  	def setFieldNull  : Boolean = { %1%.%2% = null.asInstanceOf[%2_type%]; true }
+	} """
+		
+		val SetFieldNullMacroStringMapped : String =  """
+	class %1%_%2%_setFieldNull(val ctx : Context, var %1% : %1_type%)
+	{
+	  	def setFieldNull  : Boolean = { %1%.set("%2%", null.asInstanceOf[%2_type%]); true }
+	} """
+		
+		mgr.AddMacro(MdMgr.sysNS
+					, "setFieldNull"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("container", MdMgr.sysNS, "Any"), ("containerField", MdMgr.sysNS, "Any"))
+					, fcnMacrofeatures
+					, (SetFieldNullMacroStringFixed,SetFieldNullMacroStringMapped))	  
 
 
 		val SetFieldMacroContainerStringFixed : String =  """
@@ -2070,10 +2222,108 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfString"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Int"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfInt"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -2084,10 +2334,164 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfLong"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Double"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
 		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfDouble"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Float"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfFloat"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
@@ -2098,9 +2502,90 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfBoolean"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfBoolean"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfBoolean"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfBoolean"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
 					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Any"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ArrayBufferOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ListOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "QueueOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "SetOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
+		  
+		mgr.AddMacro(MdMgr.sysNS
+					, "Put"
+					, (MdMgr.sysNS, "Boolean")
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "ImmutableSetOfAny"))
+					, fcnMacrofeatures
+					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict)
+					,-1)	  
 		  
 
 		/** 

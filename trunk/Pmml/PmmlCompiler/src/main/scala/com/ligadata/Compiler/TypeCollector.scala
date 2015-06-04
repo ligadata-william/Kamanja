@@ -124,11 +124,11 @@ class FcnTypeInfo(var typeInfoType : InfoType
 	override def toString : String = {
 		val typeInfoTypeStr : String = s"typeInfoType = ${typeInfoType.toString}"
 		val fcnDefStr : String = if (fcnDef != null) s"fcnDef = ${fcnDef.toString}" else "NOT SET"
-		val argTypesStr : String =  if (argTypes != null) s"argTypes = ${argTypes.map( itm => itm._1).mkString(",")}" else "NOT SET"
+		val argTypesStr : String =  if (argTypes != null) s"argTypes = ${argTypes.map( itm => if (itm != null) itm._1 else "null").mkString(",")}" else "NOT SET"
 		//var argTypesFull : Array[Array[(String,Boolean,BaseTypeDef)]]
 		val winningKeyStr : String = if (winningKey != null) s"winningKey = $winningKey" else "NOT SET"
 		val mbrFcnStr : String = if (mbrFcn != null) s"mbrFcn = ${mbrFcn.FullName}" else "NOT SET"
-		val mbrArgTypesStr : String = if (mbrArgTypes != null) s"mbrArgTypes = ${mbrArgTypes.map( itm => itm._1).mkString(",")}" else "NOT SET"
+		val mbrArgTypesStr : String = if (mbrArgTypes != null) s"mbrArgTypes = ${mbrArgTypes.map( itm => if (itm != null) itm._1 else "null").mkString(",")}" else "NOT SET"
 		//val 		, var elemFcnArgsFull : Array[Array[(String,Boolean,BaseTypeDef)]] = null
 		val elemFcnArgRangeStr : String = if (elemFcnArgRange != null) s"elemFcnArgRange = $elemFcnArgRange" else "NOT SET"
 		val containerTypeDefStr = if (containerTypeDef != null) s"containerTypeDef = ${containerTypeDef.FullName}" else "NOT SET"
