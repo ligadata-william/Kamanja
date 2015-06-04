@@ -38,8 +38,7 @@ class UpdateConceptService(requestContext: RequestContext, userid:Option[String]
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,conceptJson,AuditConstants.FAIL,"",nameVal) 
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.UpdateConcepts(conceptJson,"JSON")
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,conceptJson,AuditConstants.SUCCESS,"",nameVal)            
+      val apiResult = MetadataAPIImpl.UpdateConcepts(conceptJson,"JSON",userid)    
       requestContext.complete(apiResult)     
     }
   }

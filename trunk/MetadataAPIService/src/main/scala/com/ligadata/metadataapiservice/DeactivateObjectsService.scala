@@ -43,7 +43,7 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
 
     objectType match {
       case "model" => {
- 	      MetadataAPIImpl.DeactivateModel(nameSpace,name,version.toLong).toString
+ 	      MetadataAPIImpl.DeactivateModel(nameSpace,name,version.toLong,userid).toString
       }
       case _ => {
 	      new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Deactivate/Activate on " + objectType + " is not supported yet").toString 
@@ -113,7 +113,6 @@ class DeactivateObjectsService(requestContext: RequestContext, userid:Option[Str
     else{
       resultStr = new ApiResult(ErrorCodeConstants.Failure, APIName, null, "No arguments passed to the API, nothing much to do").toString 
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DEACTIVATEOBJECT, activatedType, AuditConstants.SUCCESS,"",objectList.mkString(","))
     requestContext.complete(resultStr)
   }
 }
