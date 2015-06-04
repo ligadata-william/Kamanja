@@ -25,9 +25,8 @@ object TestMetadataAPI {
 
   private case class Key(namespace:String, name:String, version:String)
   private type OptionMap = Map[Symbol, Any]
-  private val logger = Logger.getLogger(this.getClass)
-  logger.setLevel(Level.OFF)
 
+  private val userid: Option[String] = Some("N/A")
   private var containerFilesDir:String = _
   private var messageFilesDir:String = _
   private var modelFilesDir:String = _
@@ -36,6 +35,8 @@ object TestMetadataAPI {
   private var conceptFilesDir:String = _
   private var configFilesDir:String = _
   private var jarTargetDir:String = _
+  private val logger = Logger.getLogger(this.getClass)
+  logger.setLevel(Level.OFF)
 
   def main(args: Array[String]){
     try{
@@ -57,12 +58,13 @@ object TestMetadataAPI {
       MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
       initMetadataDirectories(myConfigFile)
       StartTest
-    }catch {
+    }
+    catch {
       case e: Exception => {
         e.printStackTrace()
       }
     }
-    finally{
+    finally {
       MetadataAPIImpl.shutdown
     }
   }
@@ -131,7 +133,8 @@ object TestMetadataAPI {
           logger.error("Invalid Choice : " + choice)
         }
       }
-    }catch {
+    }
+    catch {
       case e: Exception => {
         e.printStackTrace()
       }
@@ -228,7 +231,6 @@ object TestMetadataAPI {
       fileCount += 1
       println("[" + fileCount + "] " + file)
     })
-
     fileCount += 1
     println("[" + fileCount + "] Main Menu")
 
@@ -238,12 +240,12 @@ object TestMetadataAPI {
   private def listKeys(metadataType:String, active:Boolean = true): List[String] = {
     var keys:List[String] = List[String]()
     metadataType.toLowerCase match {
-      case "container" => keys = MetadataAPIImpl.GetAllContainersFromCache(active).toList
-      case "message" => keys = MetadataAPIImpl.GetAllMessagesFromCache(active).toList
-      case "model" => keys = MetadataAPIImpl.GetAllModelsFromCache(active).toList
-      case "function" => keys = MetadataAPIImpl.GetAllFunctionsFromCache(active).toList
-      case "type" => keys = MetadataAPIImpl.GetAllTypesFromCache(active).toList
-      case "concept" => keys = MetadataAPIImpl.GetAllConceptsFromCache(active).toList
+      case "container" => keys = MetadataAPIImpl.GetAllContainersFromCache(active, None).toList
+      case "message" => keys = MetadataAPIImpl.GetAllMessagesFromCache(active, None).toList
+      case "model" => keys = MetadataAPIImpl.GetAllModelsFromCache(active, None).toList
+      case "function" => keys = MetadataAPIImpl.GetAllFunctionsFromCache(active, None).toList
+      case "type" => keys = MetadataAPIImpl.GetAllTypesFromCache(active, None).toList
+      case "concept" => keys = MetadataAPIImpl.GetAllConceptsFromCache(active, None).toList
       case _ => throw new IllegalArgumentException("Invalid metadata type '" + metadataType + "'. Valid types are:\n\tcontainer\n\tmessage\n\tmodel\n\tfunction\n\ttype\n\tconcept")
     }
 
@@ -311,7 +313,6 @@ object TestMetadataAPI {
         selectedFiles = selectedFiles :+ files(choice - 1).getAbsolutePath
       }
     })
-
     selectedFiles
   }
 
@@ -357,42 +358,42 @@ object TestMetadataAPI {
         files = selectFiles(containerFilesDir, "json")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddContainer(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.AddContainer(Source.fromFile(file).mkString, userid)
         })
       }
       case "message" => {
         files = selectFiles(messageFilesDir, "json")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddMessage(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.AddMessage(Source.fromFile(file).mkString, userid)
         })
       }
       case "model" => {
         files = selectFiles(modelFilesDir, "xml")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddModel(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.AddModel(Source.fromFile(file).mkString, userid)
         })
       }
       case "function" => {
         files = selectFiles(functionFilesDir, "json")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddFunctions(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.AddFunctions(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
       case "type" => {
         files = selectFiles(typeFilesDir, "json")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddTypes(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.AddTypes(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
       case "concept" => {
         files = selectFiles(conceptFilesDir, "json")
         if(files.length == 0) return
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.AddConcepts(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.AddConcepts(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
       case "config" => {
@@ -403,7 +404,7 @@ object TestMetadataAPI {
           return
         }
         else {
-          results = results :+ MetadataAPIImpl.UploadConfig(Source.fromFile(files(0)).mkString)
+          results = results :+ MetadataAPIImpl.UploadConfig(Source.fromFile(files(0)).mkString, userid, "N/A")
         }
       }
       case "jar" => {
@@ -414,7 +415,6 @@ object TestMetadataAPI {
         })
       }
     }
-
     if(results.length > 0) {
       println("Results as a json string =>")
       results.foreach(result => {
@@ -432,40 +432,39 @@ object TestMetadataAPI {
       }
     }
     var results: List[String] = List[String]()
-
     metadataType.toLowerCase match {
       case "container" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetContainerDefFromCache(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetContainerDefFromCache(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "message" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetMessageDefFromCache(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetMessageDefFromCache(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "model" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetModelDefFromCache(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetModelDefFromCache(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "function" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetFunctionDef(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetFunctionDef(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "type" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetTypeDef(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetTypeDef(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "concept" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.GetConceptDef(key.namespace, key.name, "JSON", key.version)
+          results = results :+ MetadataAPIImpl.GetConceptDef(key.namespace, key.name, "JSON", key.version, userid)
         })
       }
       case "config" => {
-        results = results :+ MetadataAPIImpl.GetAllClusterCfgs("JSON")
+        results = results :+ MetadataAPIImpl.GetAllClusterCfgs("JSON", userid)
       }
 
     }
@@ -486,37 +485,37 @@ object TestMetadataAPI {
       case "container" => {
         files = selectFiles(containerFilesDir, "json")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateContainer(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.UpdateContainer(Source.fromFile(file).mkString, userid)
         })
       }
       case "message" => {
         files = selectFiles(messageFilesDir, "json")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateMessage(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.UpdateMessage(Source.fromFile(file).mkString, userid)
         })
       }
       case "model" => {
         files = selectFiles(modelFilesDir, "xml")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateModel(Source.fromFile(file).mkString)
+          results = results :+ MetadataAPIImpl.UpdateModel(Source.fromFile(file).mkString, userid)
         })
       }
       case "function" => {
         files = selectFiles(functionFilesDir, "json")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateFunctions(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.UpdateFunctions(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
       case "type" => {
         files = selectFiles(typeFilesDir, "json")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateType(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.UpdateType(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
       case "concept" => {
         files = selectFiles(conceptFilesDir, "json")
         files.foreach(file => {
-          results = results :+ MetadataAPIImpl.UpdateConcepts(Source.fromFile(file).mkString, "JSON")
+          results = results :+ MetadataAPIImpl.UpdateConcepts(Source.fromFile(file).mkString, "JSON", userid)
         })
       }
     }
@@ -539,32 +538,32 @@ object TestMetadataAPI {
     metadataType.toLowerCase match {
       case "container" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveContainer(key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveContainer(key.name, key.version.toLong, userid)
         })
       }
       case "message" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveMessage(key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveMessage(key.name, key.version.toLong, userid)
         })
       }
       case "model" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveModel(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveModel(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case "function" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveFunction(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveFunction(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case "type" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveType(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveType(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case "concept" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.RemoveConcept(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.RemoveConcept(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case _ => throw new IllegalArgumentException("Metadata type '" + metadataType + "' is not a valid type. Valid types: container, message, model, function, type and concept.")
@@ -588,7 +587,7 @@ object TestMetadataAPI {
     metadataType.toLowerCase match {
       case "model" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.ActivateModel(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.ActivateModel(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case _ => throw new IllegalArgumentException("Metadata type '" + metadataType + "' is not a valid type for activate. Valid types: model.")
@@ -596,7 +595,7 @@ object TestMetadataAPI {
 
     if (results.length > 0) {
       println("Results as a json string =>")
-      results.foreach(reuslts => {
+      results.foreach(result => {
         println(result + "\n")
       })
     }
@@ -612,7 +611,7 @@ object TestMetadataAPI {
     metadataType.toLowerCase match {
       case "model" => {
         keys.foreach(key => {
-          results = results :+ MetadataAPIImpl.DeactivateModel(key.namespace, key.name, key.version.toLong)
+          results = results :+ MetadataAPIImpl.DeactivateModel(key.namespace, key.name, key.version.toLong, userid)
         })
       }
       case _ => throw new IllegalArgumentException("Metadata type '" + metadataType + "' is not a valid type for deactivate. Valid types: model.")
@@ -620,7 +619,7 @@ object TestMetadataAPI {
 
     if (results.length > 0) {
       println("Results as a json string =>")
-      results.foreach(reuslts => {
+      results.foreach(result => {
         println(result + "\n")
       })
     }

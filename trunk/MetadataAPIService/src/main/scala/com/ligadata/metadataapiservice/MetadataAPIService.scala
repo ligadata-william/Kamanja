@@ -31,7 +31,11 @@ trait MetadataAPIService extends HttpService {
 
   val metadataAPIRoute = {
     optionalHeaderValueByName("userid") { userId => { optionalHeaderValueByName("password") { password => {optionalHeaderValueByName("role")  { role =>
-      logger.debug("userid => " + userId + ",password => xxxxx" + ",role => " + role)
+      var user: Option[String] = None
+      
+      // Make sure that the Audit knows the difference between No User specified and an None (request originates within the engine)
+      if(userId == None) user = Some("")
+      logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role)
       get {     
         path("api" / Rest) {str => 
           {  
@@ -39,25 +43,25 @@ trait MetadataAPIService extends HttpService {
             logger.debug("GET reqeust : api/"+str)
             if (toknRoute.size == 1) {
               if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-                requestContext => processGetAuditLogRequest(null,requestContext,userId,password,role)
+                requestContext => processGetAuditLogRequest(null,requestContext,user,password,role)
               }
               else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
-                requestContext => processGetLeaderRequest(null,requestContext,userId,password,role)
+                requestContext => processGetLeaderRequest(null,requestContext,user,password,role)
               }    
               else{
-                requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,userId,password,role)
+                requestContext =>  processGetObjectRequest(toknRoute(0),"",requestContext,user,password,role)
 	            }
             }
             else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-              requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,userId,password,role)
+              requestContext => processGetKeysRequest(toknRoute(1).toLowerCase,requestContext,user,password,role)
             }  
             else if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
               // strip the first token and send the rest
               val filterParameters = toknRoute.slice(1,toknRoute.size)
-              requestContext => processGetAuditLogRequest(filterParameters,requestContext,userId,password,role)
+              requestContext => processGetAuditLogRequest(filterParameters,requestContext,user,password,role)
             }    
             else {
-              requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, userId, password, role)
+              requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role)
             }           
           } 
         } 
@@ -74,18 +78,18 @@ trait MetadataAPIService extends HttpService {
                        {
                          logger.debug("Uploading jar "+ jarName)
                          requestContext => 
-                           val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext,userId,password,role)))
+                           val uploadJarService = actorRefFactory.actorOf(Props(new UploadJarService(requestContext,user,password,role)))
                            uploadJarService ! UploadJarService.Process(jarName,reqBody)
                        }   
                      }
                    }
                  }
               }  else if( toknRoute(0).equalsIgnoreCase("Activate") || toknRoute(0).equalsIgnoreCase("Deactivate")) { 
-                entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext,userId,password,role) }
+                entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0),toknRoute(1).toLowerCase,toknRoute(2), requestContext,user,password,role) }
               } else {
                 entity(as[String]) { reqBody =>  
                   {
-                    if (toknRoute.size == 1) {  requestContext => processPutRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }      
+                    if (toknRoute.size == 1) {  requestContext => processPutRequest (toknRoute(0),reqBody,requestContext,user,password,role) }      
                     else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Unknown PUT route")).toString) } 
                   }
                 }
@@ -99,7 +103,7 @@ trait MetadataAPIService extends HttpService {
             {
               val toknRoute = str.split("/") 
               logger.debug("POST reqeust : api/"+str)          
-              if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,userId,password,role) }}}
+              if (toknRoute.size == 1) { entity(as[String]) { reqBody => { requestContext => processPostRequest (toknRoute(0),reqBody,requestContext,user,password,role) }}}
               else { requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString) }
             }
           }
@@ -111,7 +115,7 @@ trait MetadataAPIService extends HttpService {
             {
               val toknRoute = str.split("/")
               logger.debug("DELETE reqeust : api/"+str)
-              if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,userId,password,role) }  
+              if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext,user,password,role) }  
               else {  requestContext =>  requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown DELETE route")).toString) }
             }
           }
