@@ -1,11 +1,7 @@
 KafkaRootDir=$1
-if [ ! -d "$KafkaRootDir" ]; then
-        echo "Not valid Kafka path supplied."
-        echo "$0 <kafka installation path>"
-        exit 1
+if [ -d "$KafkaRootDir" ]; then
+	KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 fi
-
-KafkaRootDir=$(echo $KafkaRootDir | sed 's/[\/]*$//')
 
 jar_full_path=$(which jar)
 
@@ -43,6 +39,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/script/InitKvStores_Template.sh > $install_dir/input/application-2-Healthcare/bin/InitKvStores.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/script/StartMetadataAPI_Template.sh > $install_dir/input/application-2-Healthcare/bin/ApplicationMetadata.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/script/StartMetadataAPI_Cassandra_Template.sh > $install_dir/input/application-2-Healthcare/bin/ApplicationMetadata_Cassandra.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/script/StartRestService_Template.sh > $install_dir/input/application-2-Healthcare/bin/RestService.sh
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/application-2-Healthcare/bin/PushSampleDataToKafka.sh
 
 # application-1-HelloWorld

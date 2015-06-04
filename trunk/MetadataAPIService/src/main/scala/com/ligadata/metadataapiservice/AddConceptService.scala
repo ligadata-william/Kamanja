@@ -33,7 +33,7 @@ class AddConceptService(requestContext: RequestContext, userid:Option[String], p
 	}
 	
 	def process(conceptJson:String, formatType:String): Unit = {
-	  log.info("Requesting AddConcept {},{}",conceptJson,formatType)
+	  log.debug("Requesting AddConcept {},{}",conceptJson,formatType)
     
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {

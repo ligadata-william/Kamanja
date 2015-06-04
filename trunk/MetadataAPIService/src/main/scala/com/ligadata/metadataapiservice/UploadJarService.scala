@@ -33,7 +33,7 @@ class UploadJarService(requestContext: RequestContext, userid:Option[String], pa
   
   def process(jarName:String,byteArray:Array[Byte]) = {
     
-    log.info("Requesting UploadJar {}",jarName)
+    log.debug("Requesting UploadJar {}",jarName)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("update","jars"))) {
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTJAR,jarName,AuditConstants.FAIL,"",jarName)

@@ -16,10 +16,12 @@ class ApiResult(var statusCode:Int, var functionName: String, var resultData: St
  * Override toString to return ApiResult as a String
  */
   override def toString: String = {
-    val json = ("APIResults" -> ("statusCode" -> statusCode) ~ 
-        ("functionName" -> functionName) ~ 
-        ("resultData"  -> resultData) ~ 
-        ("status/error Description" -> description))
+    
+    var json = ("APIResults" -> ("Status Code" -> statusCode) ~ 
+                                ("Function Name" -> functionName) ~ 
+                                ("Result Data"  -> resultData) ~ 
+                                ("Result Description" -> description))    
+
     pretty(render(json))
   }
 }

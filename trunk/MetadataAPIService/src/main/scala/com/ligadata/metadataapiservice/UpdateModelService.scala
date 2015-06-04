@@ -31,7 +31,7 @@ class UpdateModelService(requestContext: RequestContext, userid:Option[String], 
   
   def process(pmmlStr:String) = {
     
-    log.info("Requesting UpdateModel {}",pmmlStr)
+    log.debug("Requesting UpdateModel {}",pmmlStr)
 
     var nameVal = APIService.extractNameFromPMML(pmmlStr) 
 

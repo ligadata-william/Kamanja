@@ -431,7 +431,7 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
 
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
-      logger.trace("DependentModels => " + depModels)
+      logger.debug("DependentModels => " + depModels)
 
       logger.debug("DependentModels => " + depModels)
 	

@@ -34,7 +34,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
   
   def process(messageJson:String) = {
     
-    log.info("Requesting AddMessage {}",messageJson)
+    log.debug("Requesting AddMessage {}",messageJson)
 
     var nameVal = APIService.extractNameFromJson(messageJson,AuditConstants.MESSAGE)
     

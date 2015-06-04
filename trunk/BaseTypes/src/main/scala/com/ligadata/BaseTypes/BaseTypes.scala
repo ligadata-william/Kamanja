@@ -9,10 +9,10 @@ import java.io.{ DataOutputStream, DataInputStream }
 // helper class that implement TypeImplementation 
 object IntImpl extends TypeImplementation[Int] {
   def Input(value: String): Int = { // Converts String to Type T
-    value match {
+    value.trim match {
       case null => 0
       case x: String if x.length() == 0 => 0
-      case x: String => x.toInt
+      case x: String => x.trim.toInt
     }
   }
   def Serialize(value: Int): Array[Byte] = { // Convert Type T to Array[Byte]
@@ -37,10 +37,10 @@ object IntImpl extends TypeImplementation[Int] {
 
 object LongImpl extends TypeImplementation[Long] {
   def Input(value: String): Long = { // Converts String to Type T
-    value match {
+    value.trim match {
       case null => 0
       case x: String if x.length() == 0 => 0
-      case x: String => x.toLong
+      case x: String => x.trim.toLong
     }
   }
   def Serialize(value: Long): Array[Byte] = { // Convert Type T to Array[Byte]
@@ -65,10 +65,10 @@ object LongImpl extends TypeImplementation[Long] {
 
 object FloatImpl extends TypeImplementation[Float] {
   def Input(value: String): Float = { // Converts String to Type T
-    value match {
+    value.trim match {
       case null => 0
       case x: String if x.length() == 0 => 0
-      case x: String => x.toFloat
+      case x: String => x.trim.toFloat
     }
   }
   def Serialize(value: Float): Array[Byte] = { // Convert Type T to Array[Byte]
@@ -93,10 +93,10 @@ object FloatImpl extends TypeImplementation[Float] {
 
 object DoubleImpl extends TypeImplementation[Double] {
   def Input(value: String): Double = { // Converts String to Type T
-    value match {
+    value.trim match {
       case null => 0
       case x: String if x.length() == 0 => 0
-      case x: String => x.toDouble
+      case x: String => x.trim.toDouble
     }
   }
   def Serialize(value: Double): Array[Byte] = { // Convert Type T to Array[Byte]
@@ -123,7 +123,7 @@ object DoubleImpl extends TypeImplementation[Double] {
 
 object BoolImpl extends TypeImplementation[Boolean] {
   def Input(value: String): Boolean = { // Converts String to Type T
-    val i = value.toInt
+    val i = value.trim.toInt
     (i != 0)
   }
   def Serialize(value: Boolean): Array[Byte] = { // Convert Type T to Array[Byte]
@@ -176,10 +176,10 @@ object StringImpl extends TypeImplementation[String] {
 
 object CharImpl extends TypeImplementation[Char] {
   def Input(value: String): Char = { // Converts String to Type T
-    value match {
+    value.trim match {
       case null => ' '
       case x: String if x.length() == 0 => ' '
-      case x: String => x.charAt(0)
+      case x: String => x.trim.charAt(0)
     }
   }
   def Serialize(value: Char): Array[Byte] = { // Convert Type T to Array[Byte]

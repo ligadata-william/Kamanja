@@ -31,7 +31,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
   
   def process(functionJson:String) = {
     
-    log.info("Requesting UpdateFunction {}",functionJson)
+    log.debug("Requesting UpdateFunction {}",functionJson)
 
     var nameVal = APIService.extractNameFromJson(functionJson, AuditConstants.FUNCTION) 
 

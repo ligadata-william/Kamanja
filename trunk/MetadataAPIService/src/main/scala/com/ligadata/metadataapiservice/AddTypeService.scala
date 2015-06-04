@@ -33,7 +33,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
   
   def process(typeJson:String, formatType:String): Unit = {
     
-    log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
+    log.debug("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
       nameVal = APIService.extractNameFromJson(typeJson, AuditConstants.TYPE) 

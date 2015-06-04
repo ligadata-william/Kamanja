@@ -32,7 +32,7 @@ class RemoveEngineConfigService(requestContext: RequestContext, userid:Option[St
   }
   
   def process(cfgJson:String) = { 
-    log.info("Requesting RemoveEngineConfig {}",cfgJson)
+    log.debug("Requesting RemoveEngineConfig {}",cfgJson)
 
     var objectList: List[String] = List[String]()
 
