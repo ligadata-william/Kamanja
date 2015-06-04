@@ -1,0 +1,5 @@
+java -jar /tmp/drdigital/bin/KVInit-1.0 --kvname System.SputumCodes        --config /tmp/drdigital/config/Engine1Config.properties --csvpath /tmp/drdigital/input/pmmludfTests/data/sputumCodes.csv       --keyfieldname icd9Code
+java -jar /tmp/drdigital/bin/KVInit-1.0 --kvname System.SmokeCodes         --config /tmp/drdigital/config/Engine1Config.properties --csvpath /tmp/drdigital/input/pmmludfTests/data/smokingCodes.csv      --keyfieldname icd9Code
+java -jar /tmp/drdigital/bin/KVInit-1.0 --kvname System.EnvCodes           --config /tmp/drdigital/config/Engine1Config.properties --csvpath /tmp/drdigital/input/pmmludfTests/data/envExposureCodes.csv  --keyfieldname icd9Code
+java -jar /tmp/drdigital/bin/KVInit-1.0 --kvname System.CoughCodes         --config /tmp/drdigital/config/Engine1Config.properties --csvpath /tmp/drdigital/input/pmmludfTests/data/coughCodes.csv        --keyfieldname icd9Code
+java -jar /tmp/drdigital/bin/KVInit-1.0 --kvname System.DyspnoeaCodes      --config /tmp/drdigital/config/Engine1Config.properties --csvpath /tmp/drdigital/input/pmmludfTests/data/dyspnoea.csv          --keyfieldname icd9Code

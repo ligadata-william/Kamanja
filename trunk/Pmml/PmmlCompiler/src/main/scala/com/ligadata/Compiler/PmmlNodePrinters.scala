@@ -510,7 +510,28 @@ object NodePrinterHelpers extends LogTrait {
   			val missingValueTreatment = fld._2.missingValueTreatment
   			val invalidValueTreatment = fld._2.invalidValueTreatment
   			
-  			ctx.miningSchemaInstantiators += (fld._1 -> s"new MiningField(${'"'}$name${'"'},${'"'}$usageType${'"'},${'"'}$opType${'"'},$importance,${'"'}$outliers${'"'},$lowValue,$highValue,new StringDataValue(${'"'}$missingValueReplacement${'"'}),${'"'}$missingValueTreatment${'"'},${'"'}$invalidValueTreatment${'"'})")
+  			/** determine the dataType for this mining field ... needed to create the correct missingValueReplacement DataValue */
+  			val (typeStr, typedef) : (String,BaseTypeDef) = ctx.MetadataHelper.getDictFieldType(name)
+  			val missingValueReplSnip : String = if (typeStr != null && typedef != null 
+  			    								&& missingValueReplacement != null && missingValueReplacement.size > 0) {
+  				val fldType : String = typedef.Name 
+  				/** Create a default for this type with the supplied value ... hopefully the make will come up 
+  				    with an appropriate DataValue*/
+  				s"DataValue.make(${'"'}$fldType${'"'}, ${'"'}$missingValueReplacement${'"'})"
+			} else {
+				if (typeStr != null && typedef != null) {
+					/** when missing value replacement is not given, make the type's default value the default */
+					val fldType : String = typedef.Name
+					s"DataValue.defaultValue(${'"'}$fldType${'"'})"
+				} else {
+	 				logger.error(s"Mining field '$name' has an unknown type")
+	 				ctx.IncrErrorCounter
+					s"new StringDataValue(${'"'}$missingValueReplacement${'"'})"
+				}
+			}
+  			  
+  			ctx.miningSchemaInstantiators += (fld._1 -> s"new MiningField(${'"'}$name${'"'},${'"'}$usageType${'"'},${'"'}$opType${'"'},$importance,${'"'}$outliers${'"'},$lowValue,$highValue,$missingValueReplSnip,${'"'}$missingValueTreatment${'"'},${'"'}$invalidValueTreatment${'"'})")
+  			
   		})
 	
    		clsBuffer.toString
