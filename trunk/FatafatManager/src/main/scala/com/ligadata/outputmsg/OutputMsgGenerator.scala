@@ -23,8 +23,8 @@ class OutputMsgGenerator {
    */
   def generateOutputMsg(message: MessageContainerBase, ModelReslts: scala.collection.mutable.Map[String, Array[(String, Any)]], allOutputMsgs: Array[OutputMsgDef]): Array[(String, Array[String], String)] = {
     try {
-      println("ModelReslts  " + ModelReslts.size)
-      println("allOutputMsgs  " + allOutputMsgs.size)
+      log.info("ModelReslts  " + ModelReslts.size)
+      log.info("allOutputMsgs  " + allOutputMsgs.size)
       val (outputMsgExits, exitstingOutputMsgDefs, map) = getOutputMsgdef(message, ModelReslts, allOutputMsgs)
       if (map != null)
         myMap = map
@@ -57,7 +57,7 @@ class OutputMsgGenerator {
         val outputformat = outputMsgDef.OutputFormat
         newOutputFormat = extractor.replaceAllIn(outputformat, GetValue _) //.replaceAllIn(outputMsgDef.OutputFormat, GetValue _)
         outputMsgDef.ParitionKeys.foreach(partitionKey => {
-          println("partitionKey._1.toLowerCase() " + partitionKey._1.toLowerCase())
+          log.info("partitionKey._1.toLowerCase() " + partitionKey._1.toLowerCase())
           var key: StringBuffer = new StringBuffer()
           partitionKey._2.foreach(prtkey => {
             key = key.append("." + prtkey._1)
@@ -98,7 +98,12 @@ class OutputMsgGenerator {
       var count: Int = 0
       var mymap: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
       allOutputMsgs.foreach(outputMsg => {
-        val delimiter = outputMsg.DataDeclaration.getOrElse("Delim", ",")
+        //    val delimiter = outputMsg.DataDeclaration.getOrElse("Delim", ",")
+        val delimiter = ","
+        outputMsg.DataDeclaration.foreach(f => {
+          mymap(f._1.toLowerCase()) = f._2
+        })
+
         outputMsg.Fields.foreach(field => {
           val msgOrMdlFullName = field._1._1
           log.info("msgOrMdlFullName : " + msgOrMdlFullName)
@@ -112,32 +117,33 @@ class OutputMsgGenerator {
             val fieldNames = key.toString().split("\\.")
             val fieldName = fieldNames(1)
             log.info("mapkey " + mapkey)
-            if (fld._2 != null && fld._2.trim() != "") { //get the default value
-              value = fld._2
+            if (msgOrMdlFullName.toLowerCase().equals(Msg.FullName.toLowerCase())) {
+              /////
+              // if(Msg.asInstanceOf[MessageContainerBase].get(fldName.toString)) != None)
+              value = getFldValue(fld._1, Msg, delimiter)
             } else {
-              if (msgOrMdlFullName.toLowerCase().equals(Msg.FullName.toLowerCase())) {
-                /////
-                value = getFldValue(fld._1, Msg, delimiter)
-              } else {
-                ModelReslts.foreach(mdlMap => {
-                  if (mdlMap._1.toLowerCase().equals(msgOrMdlFullName.toLowerCase())) {
-                    mdlMap._2.foreach(f => {
-                      if (f._1.toLowerCase().equals(fieldName.toLowerCase())) {
-                        value = ValueToString(f._2, delimiter)
-                      }
-                    })
-                    count = count + 1
-                  }
-                })
-              }
+              ModelReslts.foreach(mdlMap => {
+                if (mdlMap._1.toLowerCase().equals(msgOrMdlFullName.toLowerCase())) {
+                  mdlMap._2.foreach(f => {
+                    if (f._1.toLowerCase().equals(fieldName.toLowerCase())) {
+                      value = ValueToString(f._2, delimiter)
+                    } else if (fld._2 != null && fld._2.trim() != "") { //get the default value
+                      value = fld._2
+                    }
+
+                  })
+                  count = count + 1
+                }
+              })
             }
+            //  }
             log.info("mapkey: " + mapkey + " value: " + value)
             mymap(mapkey) = value
           })
           count = count + 1
         })
 
-        mymap.foreach(map => println("map " + map._1 + "value " + map._2))
+        mymap.foreach(map => log.info("map " + map._1 + "value " + map._2))
         if (count > 0) {
           outputMsgDefExists = true
           finalOutputMsgs += outputMsg
@@ -156,7 +162,7 @@ class OutputMsgGenerator {
   }
 
   private def getFldValue(fld: Array[(String, String)], message: MessageContainerBase, delimiter: String): String = {
-    println("field, size  " + fld.size)
+
     var value: String = ""
     if (fld.size == 0) {
       value = null
@@ -176,7 +182,6 @@ class OutputMsgGenerator {
       log.info("delimter**** : " + delimiter)
       if (fldType == null || fldType.trim() == "")
         throw new Exception("Type of field " + fldName + " do not exist")
-      println("fldName " + fldName)
       val fldtyp = fldType.split("\\.")
 
       if (index >= fld.size)
@@ -184,7 +189,7 @@ class OutputMsgGenerator {
 
       val namespace = fldtyp(0).toString
       val name = fldtyp(1).toString
-      println("fldtyp " + namespace + " : " + name)
+      log.info("fldtyp " + namespace + " : " + name)
       val typ = MdMgr.GetMdMgr.Type(namespace, name, -1, true)
 
       if (typ == null || typ == None)
@@ -192,7 +197,7 @@ class OutputMsgGenerator {
 
       val typetype = typ.get.tType.toString().toLowerCase()
       // val typetype = typ.get.tTypeType.toString().toLowerCase()
-
+      log.info("typetype : " + typetype)
       if (typetype != null) {
 
         if (typetype.toString().toLowerCase().equals("tcontainer") || typetype.toString().toLowerCase().equals("tmessage")) {
@@ -204,7 +209,6 @@ class OutputMsgGenerator {
           }
 
         } else if (typetype.equals("tarray")) {
-
           val arrayType = typ.get.asInstanceOf[ArrayTypeDef]
 
           if (arrayType == null) throw new Exception("Array type do not exist")
@@ -245,7 +249,6 @@ class OutputMsgGenerator {
             arryBufValue.foreach(value => {
               valueStr = value.toString + delimiter
             })
-
             if (valueStr.trim().length() > 1)
               return valueStr.substring(0, valueStr.length() - 1)
             else return valueStr
@@ -256,7 +259,7 @@ class OutputMsgGenerator {
             var value: String = ""
 
             arryBuf.foreach(mc => {
-              println(mc)
+              log.info(mc)
               value = getMsgFldValue(mc, fld(index + 1)._1, fld(index + 1)._2, fld, index + 1, delimiter) + delimiter
             })
             if (value.trim().length() > 1)

@@ -44,6 +44,10 @@ object MetadataAPIOutputMsg {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + outputMsgText)
         apiResult.toString()
       }
+      case e: ObjectNolongerExistsException => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + outputMsgText)
+        apiResult.toString()
+      }
       case e: Exception => {
         logger.trace("Failed to up the output message, json => " + outputMsgText + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + outputMsgText)
@@ -74,11 +78,21 @@ object MetadataAPIOutputMsg {
         MetadataAPIImpl.NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + null + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + null + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }
     } catch {
-      case e: ObjectNotFoundException => {
+      case e: MappingException => {
+        logger.trace("Failed to parse the output message, json => " + outputMsgText + ",Error => " + e.getMessage())
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
+        apiResult.toString()
+      }
+      case e: AlreadyExistsException => {
+        logger.trace("Failed to add the output message, json => " + outputMsgText + ",Error => " + e.getMessage())
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
+        apiResult.toString()
+      }
+      case e: ObjectNolongerExistsException => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
         apiResult.toString()
       }

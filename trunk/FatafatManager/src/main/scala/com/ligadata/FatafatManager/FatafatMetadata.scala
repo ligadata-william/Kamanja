@@ -753,6 +753,9 @@ object FatafatMetadata extends MdBaseResolveInfo {
             }
           }
         }
+        case "OutputMsgDef" => {
+
+        }
         case _ => {
           LOG.warn("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")
         }

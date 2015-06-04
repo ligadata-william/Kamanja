@@ -1169,6 +1169,7 @@ class MessageDefImpl {
 
             if (typ.get.tType == null) throw new Exception("tType in Type do not exists")
 
+           
             if (typ.get.tType.toString().equals("tArray")) {
 
               val (arr_1, arr_2, arr_3, arr_4, arr_5, arr_6, arr_7, arr_8, arr_9, arr_10, arr_11, arr_12, arr_13, arr_14, arr_15, arr_16, arr_17, arr_18, arr_19) = handleArrayType(keys, typ, f, message, childs, prevVerMsgBaseTypesIdxArry, recompile)

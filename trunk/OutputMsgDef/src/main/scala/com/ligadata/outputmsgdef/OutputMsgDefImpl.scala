@@ -29,6 +29,7 @@ object OutputMsgDefImpl {
    *
    */
   def parseOutputMessageDef(outputmsgDefJson: String, formatType: String): OutputMsgDef = {
+    var outputMsgDef = new OutputMsgDef
     try {
 
       implicit val jsonFormats: Formats = DefaultFormats
@@ -123,15 +124,20 @@ object OutputMsgDefImpl {
         //   Fields ((fullname, typeOf)) = (value)
       })
 
-      var outputMsgDef = new OutputMsgDef
       outputMsgDef = MdMgr.GetMdMgr.MakeOutputMsg(nameSpace.toLowerCase(), name.toLowerCase(), version, outputQ, partionFieldKeys, dfaults, dataDeclrtion, Fields, outputFormat)
-      outputMsgDef
+
     } catch {
+      case e: ObjectNolongerExistsException => {
+        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        throw e
+
+      }
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        // e.printStackTrace()
+        log.trace("Error " + e.getMessage())
       }
     }
+    outputMsgDef
   }
 
   private def extractOutputFormat(outputformat: String): Array[String] = {
@@ -144,11 +150,14 @@ object OutputMsgDefImpl {
   private def getFieldsInfo(Fieldkey: String): (String, Array[(String, String)], String, String) = {
     var fieldsInfo: ArrayBuffer[(String, String)] = new ArrayBuffer[(String, String)]()
     var partitionKeys = Array[(String, Array[(String, String)], String, String)]()
+    var fullname: String = ""
+    var fullpartionkey: String = ""
+    var typeof: String = ""
     try {
       if (Fieldkey == null || Fieldkey.trim() == "")
         throw new Exception("Field do not exists")
 
-      var fullpartionkey = Fieldkey.substring(2, Fieldkey.length() - 1)
+      fullpartionkey = Fieldkey.substring(2, Fieldkey.length() - 1)
 
       val partionKeyParts = fullpartionkey.split("\\.")
       if (partionKeyParts.size < 3)
@@ -159,7 +168,7 @@ object OutputMsgDefImpl {
 
       val (containerDef, messageDef, modelDef) = getModelMsgContainer(namespace, name)
       val (childs, typeOf) = getModelMsgContainerChilds(containerDef, messageDef, modelDef)
-
+      typeof = typeOf
       for (i <- 2 until partionKeyParts.size) {
         val fld = partionKeyParts(i).toString().toLowerCase()
 
@@ -177,14 +186,19 @@ object OutputMsgDefImpl {
         }
 
       }
-      val fullname = namespace + "." + name
-      (fullname, fieldsInfo.toArray, typeOf, fullpartionkey.toLowerCase())
+      fullname = namespace + "." + name
+
     } catch {
+      case e: ObjectNolongerExistsException => {
+        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        throw e
+      }
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        // e.printStackTrace()
+        log.trace("Error " + e.getMessage())
       }
     }
+    (fullname, fieldsInfo.toArray, typeof, fullpartionkey.toLowerCase())
   }
 
   private def getFieldTypeFromMsgCtr(childs: Map[String, Any], fld: String): String = {
@@ -201,9 +215,13 @@ object OutputMsgDefImpl {
         }
       })
     } catch {
+      case e: ObjectNolongerExistsException => {
+        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        throw e
+      }
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        // e.printStackTrace()
+        log.trace("Error " + e.getMessage())
       }
     }
     fldtype.toLowerCase()
@@ -246,9 +264,13 @@ object OutputMsgDefImpl {
         }
       }
     } catch {
+      case e: ObjectNolongerExistsException => {
+        log.error(s"Either Model or Message or Container do not exists in Metadata.")
+        throw e
+      }
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        //  e.printStackTrace()
+        log.trace("Error " + e.getMessage())
       }
     }
     fieldType
@@ -260,49 +282,41 @@ object OutputMsgDefImpl {
     var modelObj: ModelDef = null
     var prevVerMsgObjstr: String = ""
     var childs: ArrayBuffer[(String, String)] = ArrayBuffer[(String, String)]()
-    try {
+    if (namespace == null || namespace.trim() == "")
+      throw new Exception("Proper Namespace do not exists in message/container definition")
+    if (name == null || name.trim() == "")
+      throw new Exception("Proper Name do not exists in message")
 
-      if (namespace == null || namespace.trim() == "")
-        throw new Exception("Proper Namespace do not exists in message/container definition")
-      if (name == null || name.trim() == "")
-        throw new Exception("Proper Name do not exists in message")
+    val msgdef = MdMgr.GetMdMgr.Message(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
+    val model = MdMgr.GetMdMgr.Model(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
+    val container = mdMgr.Container(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
 
-      val msgdef = MdMgr.GetMdMgr.Message(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
-      val model = MdMgr.GetMdMgr.Model(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
-      val container = mdMgr.Container(namespace.toString.toLowerCase(), name.toString.toLowerCase(), -1, false)
-
-      msgdef match {
-        case None => {
-          msgdefObj = null
-        }
-        case Some(m) =>
-          msgdefObj = m.asInstanceOf[MessageDef]
+    msgdef match {
+      case None => {
+        msgdefObj = null
       }
+      case Some(m) =>
+        msgdefObj = m.asInstanceOf[MessageDef]
+    }
 
-      container match {
-        case None => {
-          cntainerObj = null
-        }
-        case Some(c) =>
-          cntainerObj = c.asInstanceOf[ContainerDef]
+    container match {
+      case None => {
+        cntainerObj = null
       }
+      case Some(c) =>
+        cntainerObj = c.asInstanceOf[ContainerDef]
+    }
 
-      model match {
-        case None => {
-          modelObj = null
-        }
-        case Some(m) =>
-          modelObj = m.asInstanceOf[ModelDef]
+    model match {
+      case None => {
+        modelObj = null
       }
+      case Some(m) =>
+        modelObj = m.asInstanceOf[ModelDef]
+    }
 
-      if (msgdef == null && container == null && model == null) {
-        throw new AlreadyExistsException(s"Either Model or Message or Container do not exists for $namespace.$name given in output Message definition.")
-      }
-
-    } catch {
-      case e: Exception => {
-        e.printStackTrace()
-      }
+    if (msgdefObj == null && cntainerObj == null && modelObj == null) {
+      throw new ObjectNolongerExistsException(s"Either Model or Message or Container do not exists in Metadata for $namespace.$name given in output Message definition.")
     }
 
     (cntainerObj, msgdefObj, modelObj)
@@ -361,8 +375,8 @@ object OutputMsgDefImpl {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        log.debug("Error " + e.getMessage())
+        throw e
       }
     }
     (childs, typeOf)

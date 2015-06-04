@@ -1458,7 +1458,7 @@ object TestApiService {
 
       outputmsgFilePath = outputmsgFiles(choice - 1).toString
       val outputmsgStr = Source.fromFile(outputmsgFilePath).mkString
-      val res: String = MakeHttpRequest("post", host_url, "OutputMsg", "JSON", outputmsgStr)
+      val res: String = MakeHttpRequest("put", host_url, "OutputMsg", "JSON", outputmsgStr)
       println("Results as json string => \n" + res)
     } catch {
       case e: Exception => {
