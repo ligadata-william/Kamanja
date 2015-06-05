@@ -96,6 +96,11 @@ class MetadataLoad (val mgr : MdMgr, val typesPath : String, val fcnPath : Strin
 		mgr.AddScalar(MdMgr.sysNS, "Float", tFloat, "Float", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.FloatImpl")
 		mgr.AddScalar(MdMgr.sysNS, "Char", tChar, "Char", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.CharImpl")
 
+		mgr.AddScalar(MdMgr.sysNS, "date", tLong, "Long", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.LongImpl")
+		mgr.AddScalar(MdMgr.sysNS, "dateTime", tLong, "Long", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.LongImpl")
+		mgr.AddScalar(MdMgr.sysNS, "time", tLong, "Long", baseTypesVer, "basetypes_2.10-0.1.0.jar", Array("metadata_2.10-1.0.jar"), "com.ligadata.BaseTypes.LongImpl")
+
+		
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfAny", MdMgr.sysNS, "Any", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfString", MdMgr.sysNS, "String", 1, baseTypesVer)
 		mgr.AddArray(MdMgr.sysNS, "ArrayOfInt", MdMgr.sysNS, "Int", 1, baseTypesVer)

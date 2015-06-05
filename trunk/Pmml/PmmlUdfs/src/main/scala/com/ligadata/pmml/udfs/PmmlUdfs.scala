@@ -29,6 +29,8 @@ import org.joda.time.Months
 import org.joda.time.Years
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.DateTimeParser
 import org.joda.time.chrono.JulianChronology
 
 import org.apache.log4j.Logger
@@ -6220,8 +6222,15 @@ object Udfs extends LogTrait {
     	0
     } else { 
 	    val formatter : DateTimeFormatter  = DateTimeFormat.forPattern("yyyyDDD").withChronology(JulianChronology.getInstance)
-	    val lcd : DateTime = formatter.parseDateTime("20" + yydddStr);
-	    lcd.getMillis()
+	    try {
+		    val lcd : DateTime = formatter.parseDateTime("20" + yydddStr);
+		    lcd.getMillis()
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
+		    	0
+		    }
+	    }
     }
     millis
   }
@@ -6376,7 +6385,7 @@ object Udfs extends LogTrait {
         Answer a String from the time in timestampStr argument formatted according to the format string
         argument presented.
 
-        @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
+        @param fmtStr - instructions on how to format the string. @see iso860DateFmt for format info 
         @param timestamp - the number of millisecs since epoch
         @return a Long representing the timestamp as millisecs since the epoch (1970 based)
      */
@@ -6389,7 +6398,8 @@ object Udfs extends LogTrait {
 
     /** 
         Answer the number of millisecs from the epoch for the supplied string that presumably
-        has the supplied format.
+        has the supplied format. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
 
         @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
         @param timestampStr - the string to parse
@@ -6397,14 +6407,135 @@ object Udfs extends LogTrait {
      */
     def timeStampFromStr(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val millis : Long = dateTime.getMillis
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val millis : Long = dateTime.getMillis
+    		millis
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
+    }
+    
+    /** 
+        Answer the number of millisecs from the epoch for the supplied string that presumably
+        has one of the supplied formats found in fmtStrArray. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
+
+        @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
+        @param timestampStr - the string to parse
+        @return a Long representing the timestamp as millisecs since the epoch (1970 based)
+     */
+    def timeStampFromStr(fmtStrArray : Array[String], timestampStr : String): Long = {
+        //val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
+		val millis : Long = if (fmtStrArray != null && fmtStrArray.size > 0 && timestampStr != null) {
+	        val parsers : Array[DateTimeParser] = fmtStrArray.map (fmt => {
+	        	DateTimeFormat.forPattern(fmt).getParser()
+	        })
+	        val formatter : DateTimeFormatter = new DateTimeFormatterBuilder().append( null, parsers ).toFormatter();
+		    try {
+		        val dateTime : DateTime = formatter.parseDateTime(timestampStr)
+		        val msecs : Long = dateTime.getMillis
+		        msecs
+		    } catch {
+			    case iae:IllegalArgumentException => {
+			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${fmtStrArray.toString}'")
+			    	0
+			    }
+		    }
+		} else {
+			0
+		}
         millis
     }
+    
+    
+    /** 
+        Answer the number of millisecs from the epoch for the supplied string that is in one of 
+        the following <b>builtin</b> formats:
+        
+        """
+        	 Pattern						Example
+			 "yyyy-MM-dd HH:mm:ss:SSS"		2015-02-28 14:02:31:222
+			 "yyyy-MM-dd HH:mm:ss"			2015-02-28 14:02:31
+			 "MM/dd/yy HH:mm:ss"			04/15/15 23:59:59
+			 "dd-MM-yyyy HH:mm:ss"			04/15/2015 23:59:59
+			 "dd-MM-yyyy HH:mm:ss:SSS"		04/15/15 23:59:59:999
+			 "dd-MMM-yyyy HH:mm:ss"			15-Apr-2015 23:59:59
+			 "dd-MM-yyyy HH:mm:ss:SSS"		15-04-2015 23:59:59:999
+        """
+        
+        Should your timestamp not be one of these, use the more general forms of this function that allows
+        you to supply one or more formats.  @see timeStampFromStr(fmtStr : String, timestampStr : String): Long
+        and @see timeStampFromStr(fmtStrArray : Array[String], timestampStr : String): Long for details.
 
+        @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
+        @param timestampStr - the string to parse
+        @return a Long representing the timestamp as millisecs since the epoch (1970 based)
+     */
+    def timeStampFromString(timestampStr : String): Long = {
+        DateTimeHelpers.timeStampFromString(timestampStr)   /** use the builtin helpers in PmmlRuntimeDecls */
+    }
+    
+    /** 
+        Answer the number of millisecs from the epoch for the supplied date string that is in one of 
+        the following <b>builtin</b> formats:
+        
+        """
+        	 Pattern						Example
+        	 yyyy-MM-dd						2015-04-15
+			 yyyy-MMM-dd					2015-Apr-15
+			 MM/dd/yy						04/15/15
+			 MMM-dd-yy						Apr-15-15
+			 dd-MM-yyyy						15-04-2015
+			 dd-MMM-yyyy					15-Apr-2015
+        """
+        
+        Should your timestamp not be one of these, use the more general forms of this function that allows
+        you to supply one or more formats.  @see timeStampFromStr(fmtStr : String, timestampStr : String): Long
+        and @see timeStampFromStr(fmtStrArray : Array[String], timestampStr : String): Long and 
+        @see dateFromStr(fmtStr : String, timestampStr : String): Long for details.
+
+        @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
+        @param timestampStr - the string to parse
+        @return a Long representing the timestamp as millisecs since the epoch (1970 based)
+     */
+    def dateFromString(timestampStr : String): Long = {
+        DateTimeHelpers.dateFromString(timestampStr)  /** use the builtin helpers in PmmlRuntimeDecls */
+    }
+    
+    /** 
+        Answer the number of millisecs from the epoch for the supplied time string that is in one of 
+        the following <b>builtin</b> formats:
+        
+        """
+        	 Pattern						Example
+			 "HH:mm:ss"						23:59:59
+			 "HH:mm:ss:SSS"					23:59:59:999
+			 "h:mm:ss"						12:45:59
+			 "h:mm:ss aa"					12:45:59 AM
+        """
+        
+        Should your time not be formatted like one of these, use the more general forms of this function that allows
+        you to supply one or more formats. @see timeStampFromStr(fmtStr : String, timestampStr : String): Long
+        and @see timeStampFromStr(fmtStrArray : Array[String], timestampStr : String): Long for details. @see 
+        timeFromStr(fmtStr : String, timestampStr : String): Long ... also available.
+
+        @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
+        @param timeStr - the string to parse
+        @return a Long representing the timestamp as millisecs since the epoch (1970 based)
+     */
+    def timeFromString(timeStr : String): Long = {
+        DateTimeHelpers.timeFromString(timeStr)   /** use the builtin helpers in PmmlRuntimeDecls */
+    }
+    
+    
     /** 
         Answer the number of millisecs from the epoch for the supplied date portion in the supplied 
-        string that presumably has the supplied format.
+        string that presumably has the supplied format. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
 
         @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
         @param timestampStr - the string to parse
@@ -6412,10 +6543,17 @@ object Udfs extends LogTrait {
      */
     def dateFromStr(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val dt : DateTime = new DateTime(dateTime.getYear, dateTime.getMonthOfYear, dateTime.getDayOfMonth, 0, 0)
-        val millis : Long = dt.getMillis
-        millis
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val dt : DateTime = new DateTime(dateTime.getYear, dateTime.getMonthOfYear, dateTime.getDayOfMonth, 0, 0)
+	        val millis : Long = dt.getMillis
+	        millis
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
     }
 
     def javaEpoch : LocalDateTime = {
@@ -6444,15 +6582,22 @@ object Udfs extends LogTrait {
 
     def dateSecondsSinceMidnight(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val hrOfDay : Int = dateTime.getHourOfDay
-        val minOfHr : Int = dateTime.getMinuteOfHour
-        val minOfDay : Int = dateTime.getMinuteOfDay
-        val secOfMin : Int = dateTime.getSecondOfMinute
-        val secOfDay : Int = dateTime.getSecondOfDay
-        val tm : LocalDateTime = new LocalDateTime(1970, 1, 1, hrOfDay, minOfHr, secOfMin, dateTime.getMillisOfSecond)
-        val seconds : Long = new Duration(javaEpoch.toDateTime.getMillis, tm.toDateTime.getMillis).getStandardSeconds()
-        seconds
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val hrOfDay : Int = dateTime.getHourOfDay
+	        val minOfHr : Int = dateTime.getMinuteOfHour
+	        val minOfDay : Int = dateTime.getMinuteOfDay
+	        val secOfMin : Int = dateTime.getSecondOfMinute
+	        val secOfDay : Int = dateTime.getSecondOfDay
+	        val tm : LocalDateTime = new LocalDateTime(1970, 1, 1, hrOfDay, minOfHr, secOfMin, dateTime.getMillisOfSecond)
+	        val seconds : Long = new Duration(javaEpoch.toDateTime.getMillis, tm.toDateTime.getMillis).getStandardSeconds()
+	        seconds
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
     }
 
     /** 
