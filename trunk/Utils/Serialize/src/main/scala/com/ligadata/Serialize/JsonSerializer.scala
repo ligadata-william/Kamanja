@@ -39,7 +39,7 @@ case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,Dat
 case class MetadataApiConfig(ApiConfigParameters: ParameterMap)
 
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
-case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
+case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification], transactionId: Option[String])
 
 
 case class JDataStore(StoreType: String,SchemaName:String,Location:String, Principal: Option[String], Keytab: Option[String])
@@ -1377,8 +1377,14 @@ object JsonSerializer {
     json 
   }
 
-  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {
-    var json = "{\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {    
+    // Insert the highest Transaction ID into the JSON Notification message.
+    var max: Long = 0
+    objList.foreach(obj => {max = scala.math.max(obj.TranId, max)}) 
+    
+    var json = "{\n"+"\"transactionId\":\""+max+"\",\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
+    
+    println(json)
     json 
   }
 

@@ -149,7 +149,9 @@ object MetadataAPIImpl extends MetadataAPI {
   var isInitilized: Boolean = false
   private var zkListener: ZooKeeperListener = _
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+  private var currentTranLevel: Long = _
   private var passwd: String = null
+
   
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -876,6 +878,13 @@ object MetadataAPIImpl extends MetadataAPI {
   def NotifyEngine(objList: Array[BaseElemDef], operations: Array[String]) {
     try {
       val notifyEngine = GetMetadataAPIConfig.getProperty("NOTIFY_ENGINE")
+      
+      // We have to update the currentTranLevel here, since addObjectToCache method does not have the tranId in object
+      // yet (a bug that is being ractified now)...  We can remove this code when that is fixed.
+      var max: Long = 0
+      objList.foreach(obj => {max = scala.math.max(max, obj.TranId)}) 
+      if (currentTranLevel < max) currentTranLevel = max
+      
       if (notifyEngine != "YES") {
         logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
         PutTranId(objList(0).tranId)
@@ -1462,6 +1471,10 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateObjectInCache(obj: BaseElemDef, operation: String, mdMgr: MdMgr): BaseElemDef = {
     var updatedObject: BaseElemDef = null
+    
+    // Update the current transaction level with this object  ???? What if an exception occurs ????
+    if (currentTranLevel < obj.TranId) currentTranLevel = obj.TranId
+    
     try {
       obj match {
         case o: FunctionDef => {
@@ -1536,6 +1549,10 @@ object MetadataAPIImpl extends MetadataAPI {
   def AddObjectToCache(o: Object, mdMgr: MdMgr) {
     // If the object's Delete flag is set, this is a noop.
     val obj = o.asInstanceOf[BaseElemDef]
+    
+    // Update the current transaction level with this object  ???? What if an exception occurs ????
+    if (currentTranLevel < obj.TranId) currentTranLevel = obj.TranId
+    
     if (obj.IsDeleted)
       return
     try {
@@ -2836,6 +2853,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveContainer(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    var newTranId = GetNewTranId
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Container",AuditConstants.SUCCESS,"",key)
     try {
       val o = MdMgr.GetMdMgr.Container(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2856,16 +2874,17 @@ object MetadataAPIImpl extends MetadataAPI {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
           objectsToBeRemoved.foreach(typ => {
+            typ.tranId = newTranId
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
           })
           // ContainerDef itself
+          contDef.tranId = newTranId
           DeleteObject(contDef)
           var allObjectsArray =  objectsToBeRemoved :+ contDef
 
-          if( zkNotify ){
-            val operations = for (op <- allObjectsArray) yield "Remove"
-            NotifyEngine(allObjectsArray, operations)
-          }
+          val operations = for (op <- allObjectsArray) yield "Remove"
+          NotifyEngine(allObjectsArray, operations)
+
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveContainer", null, ErrorCodeConstants.Remove_Container_Successful + ":" + dispkey)
           apiResult.toString()
       }
@@ -2881,6 +2900,8 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+
+    var newTranId = GetNewTranId
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",key)
     try {
       val o = MdMgr.GetMdMgr.Message(nameSpace.toLowerCase, name.toLowerCase, version, true)
@@ -2903,19 +2924,20 @@ object MetadataAPIImpl extends MetadataAPI {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
           
-          objectsToBeRemoved.foreach(typ => {           
+          objectsToBeRemoved.foreach(typ => {   
+            typ.tranId = newTranId         
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
           })
           
           // MessageDef itself - add it to the list of other objects to be passed to the zookeeper
           // to notify other instnances
+          msgDef.tranId = newTranId
           DeleteObject(msgDef)
           var allObjectsArray = objectsToBeRemoved :+ msgDef
-        
-        if( zkNotify ){
+
           val operations = for (op <- allObjectsArray) yield "Remove"
           NotifyEngine(allObjectsArray, operations)
-        }
+
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveMessage", null, ErrorCodeConstants.Remove_Message_Successful + ":" + dispkey)
           apiResult.toString()
       }
@@ -3097,6 +3119,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def DeactivateLocalModel(nameSpace: String, name: String, version: Long): Boolean = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    val newTranId = GetNewTranId
     try {
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -3109,6 +3132,7 @@ object MetadataAPIImpl extends MetadataAPI {
           DeactivateObject(m.asInstanceOf[ModelDef])
           
           // TODO: Need to deactivate the appropriate message?
+          m.tranId = newTranId
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Deactivate"
@@ -3130,6 +3154,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     var currActiveModel: ModelDef = null
+    val newTranId = GetNewTranId
     
     // Audit this call
     logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"", nameSpace+"."+name+"."+version)
@@ -3179,6 +3204,7 @@ object MetadataAPIImpl extends MetadataAPI {
           // Issue a Notification to all registered listeners that an Acivation took place.
           // TODO: Need to activate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
+          m.tranId = newTranId
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Activate"
           NotifyEngine(objectsUpdated, operations)
@@ -3201,6 +3227,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var key = nameSpace + "." + name + "." + version
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,"Model",AuditConstants.SUCCESS,"",key)
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    var newTranId = GetNewTranId
     try {
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -3213,6 +3240,7 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("model found => " + m.asInstanceOf[ModelDef].FullName + "." + MdMgr.Pad0s2Version(m.asInstanceOf[ModelDef].Version))
           DeleteObject(m.asInstanceOf[ModelDef])
           var objectsUpdated = new Array[BaseElemDef](0)
+          m.tranId = newTranId
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           var operations = for (op <- objectsUpdated) yield "Remove"
           NotifyEngine(objectsUpdated, operations)
@@ -4273,15 +4301,16 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
       if( configAvailable ){
-  RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
+        RefreshApiConfigForGivenNode(metadataAPIConfig.getProperty("NODE_ID"))
       }
       else{
-  logger.debug("Assuming bootstrap... No config objects in persistent store")
+        logger.debug("Assuming bootstrap... No config objects in persistent store")
       }
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
       val maxTranId = GetTranId
+      currentTranLevel = maxTranId
       logger.debug("Max Transaction Id => " + maxTranId)
       var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
       metadataStore.getAllKeys({ (key: Key) => keys.add(key) })
@@ -4638,9 +4667,13 @@ object MetadataAPIImpl extends MetadataAPI {
     }  
   }
 
-  def UpdateMdMgr(zkTransaction: ZooKeeperTransaction) = {
+  def UpdateMdMgr(zkTransaction: ZooKeeperTransaction): Unit = {
     var key: String = null
     var dispkey: String = null
+    
+    // If we already processed this transaction, currTranLevel will be at least at the level of this notify.
+    if (zkTransaction.transactionId.getOrElse("0").toLong <= currentTranLevel) return
+    
     try {
       zkTransaction.Notifications.foreach(zkMessage => {
         key = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
