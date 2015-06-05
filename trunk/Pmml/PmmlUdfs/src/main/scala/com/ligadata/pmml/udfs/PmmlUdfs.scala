@@ -6222,8 +6222,15 @@ object Udfs extends LogTrait {
     	0
     } else { 
 	    val formatter : DateTimeFormatter  = DateTimeFormat.forPattern("yyyyDDD").withChronology(JulianChronology.getInstance)
-	    val lcd : DateTime = formatter.parseDateTime("20" + yydddStr);
-	    lcd.getMillis()
+	    try {
+		    val lcd : DateTime = formatter.parseDateTime("20" + yydddStr);
+		    lcd.getMillis()
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
+		    	0
+		    }
+	    }
     }
     millis
   }
@@ -6399,9 +6406,16 @@ object Udfs extends LogTrait {
      */
     def timeStampFromStr(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val millis : Long = dateTime.getMillis
-        millis
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val millis : Long = dateTime.getMillis
+    		millis
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
     }
     
     /** 
@@ -6419,9 +6433,16 @@ object Udfs extends LogTrait {
 	        	DateTimeFormat.forPattern(fmt).getParser()
 	        })
 	        val formatter : DateTimeFormatter = new DateTimeFormatterBuilder().append( null, parsers ).toFormatter();
-	        val dateTime : DateTime = formatter.parseDateTime(timestampStr)
-	        val msecs : Long = dateTime.getMillis
-	        msecs
+		    try {
+		        val dateTime : DateTime = formatter.parseDateTime(timestampStr)
+		        val msecs : Long = dateTime.getMillis
+		        msecs
+		    } catch {
+			    case iae:IllegalArgumentException => {
+			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${fmtStrArray.toString}'")
+			    	0
+			    }
+		    }
 		} else {
 			0
 		}
@@ -6519,10 +6540,17 @@ object Udfs extends LogTrait {
      */
     def dateFromStr(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val dt : DateTime = new DateTime(dateTime.getYear, dateTime.getMonthOfYear, dateTime.getDayOfMonth, 0, 0)
-        val millis : Long = dt.getMillis
-        millis
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val dt : DateTime = new DateTime(dateTime.getYear, dateTime.getMonthOfYear, dateTime.getDayOfMonth, 0, 0)
+	        val millis : Long = dt.getMillis
+	        millis
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
     }
 
     def javaEpoch : LocalDateTime = {
@@ -6551,15 +6579,22 @@ object Udfs extends LogTrait {
 
     def dateSecondsSinceMidnight(fmtStr : String, timestampStr : String): Long = {
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
-        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
-        val hrOfDay : Int = dateTime.getHourOfDay
-        val minOfHr : Int = dateTime.getMinuteOfHour
-        val minOfDay : Int = dateTime.getMinuteOfDay
-        val secOfMin : Int = dateTime.getSecondOfMinute
-        val secOfDay : Int = dateTime.getSecondOfDay
-        val tm : LocalDateTime = new LocalDateTime(1970, 1, 1, hrOfDay, minOfHr, secOfMin, dateTime.getMillisOfSecond)
-        val seconds : Long = new Duration(javaEpoch.toDateTime.getMillis, tm.toDateTime.getMillis).getStandardSeconds()
-        seconds
+	    try {
+	        val dateTime : DateTime = fmt.parseDateTime(timestampStr);
+	        val hrOfDay : Int = dateTime.getHourOfDay
+	        val minOfHr : Int = dateTime.getMinuteOfHour
+	        val minOfDay : Int = dateTime.getMinuteOfDay
+	        val secOfMin : Int = dateTime.getSecondOfMinute
+	        val secOfDay : Int = dateTime.getSecondOfDay
+	        val tm : LocalDateTime = new LocalDateTime(1970, 1, 1, hrOfDay, minOfHr, secOfMin, dateTime.getMillisOfSecond)
+	        val seconds : Long = new Duration(javaEpoch.toDateTime.getMillis, tm.toDateTime.getMillis).getStandardSeconds()
+	        seconds
+	    } catch {
+		    case iae:IllegalArgumentException => {
+		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+		    	0
+		    }
+	    }
     }
 
     /** 

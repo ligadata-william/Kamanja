@@ -883,15 +883,16 @@ class RuleSetModel(val modelName : String
  *  of millisecs since the epoch (all date and time types are represented in this fashion).  Those 
  *  values then can be converted to other useful formats using the core udf library in the PmmlUdfs object.
  */
-object DateTimeHelpers {
+object DateTimeHelpers extends LogTrait {
 
     val timeStampPatterns : Array[String] = Array[String]("yyyy-MM-dd HH:mm:ss:SSS"
     													, "yyyy-MM-dd HH:mm:ss"
     													, "MM/dd/yy HH:mm:ss"
     													, "dd-MM-yyyy HH:mm:ss"
-    													, "dd-MM-yyyy HH:mm:ss:SSSS"
+    													, "dd-MM-yyyy HH:mm:ss:SSS"
     													, "dd-MMM-yyyy HH:mm:ss"
-    													, "dd-MM-yyyy HH:mm:ss:SSSS"
+    													, "dd-MM-yyyy HH:mm:ss:SSS"
+    													, "dd-MM-yyyy h:mm:ss aa"
     													)
     val timeStampParsers : Array[DateTimeParser] = timeStampPatterns.map (fmt => {
     	DateTimeFormat.forPattern(fmt).getParser()
@@ -920,9 +921,16 @@ object DateTimeHelpers {
      */
     def timeStampFromString(timestampStr : String): Long = {
 		val millis : Long = if (timestampStr != null) {
-	        val dateTime : DateTime = tsformatter.parseDateTime(timestampStr)
-	        val msecs : Long = dateTime.getMillis
-	        msecs
+		    try {
+		        val dateTime : DateTime = tsformatter.parseDateTime(timestampStr)
+		        val msecs : Long = dateTime.getMillis
+		        msecs
+		    } catch {
+			    case iae:IllegalArgumentException => {
+			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
+			    	0
+			    }
+		    }
 		} else {
 			0
 		}
@@ -962,9 +970,16 @@ object DateTimeHelpers {
      */
     def dateFromString(dateStr : String): Long = {
 		val millis : Long = if (dateStr != null) {
-	        val dateTime : DateTime = dtformatter.parseDateTime(dateStr)
-	        val msecs : Long = dateTime.getMillis
-	        msecs
+		    try {
+		        val dateTime : DateTime = dtformatter.parseDateTime(dateStr)
+		        val msecs : Long = dateTime.getMillis
+		        msecs
+		    } catch {
+			    case iae:IllegalArgumentException => {
+			    	logger.error(s"Unable to parse '$dateStr' with any of the patterns - '${datePatterns.toString}'")
+			    	0
+			    }
+		    }
 		} else {
 			0
 		}
@@ -973,14 +988,14 @@ object DateTimeHelpers {
     
     val timePatterns : Array[String] =      Array[String]("HH:mm:ss"
     													, "HH:mm:ss:SSS"
-    													, "h:mm:ss"
+    													, "hh:mm:ss"
     													, "h:mm:ss aa"
     													)
     val timeParsers : Array[DateTimeParser] = timePatterns.map (fmt => {
     	DateTimeFormat.forPattern(fmt).getParser()
     })
 
-	val tmformatter : DateTimeFormatter = new DateTimeFormatterBuilder().append( null, timeStampParsers ).toFormatter();
+	val tmformatter : DateTimeFormatter = new DateTimeFormatterBuilder().append( null, timeParsers ).toFormatter();
     
     /** 
         Answer the number of millisecs from the epoch for the supplied time string that is in one of 
@@ -1000,9 +1015,16 @@ object DateTimeHelpers {
      */
     def timeFromString(timeStr : String): Long = {
 		val millis : Long = if (timeStr != null) {
-	        val dateTime : DateTime = tmformatter.parseDateTime(timeStr)
-	        val msecs : Long = dateTime.getMillis
-	        msecs
+		    try {
+		        val dateTime : DateTime = tmformatter.parseDateTime(timeStr)
+		        val msecs : Long = dateTime.getMillis
+		        msecs
+		    } catch {
+		      case iae:IllegalArgumentException => {
+		    	  logger.error(s"Unable to parse '$timeStr' with any of the patterns - '${timePatterns.toString}'")
+		    	  0
+		      }
+		    }
 		} else {
 			0
 		}

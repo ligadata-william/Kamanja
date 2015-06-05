@@ -75,21 +75,21 @@ COPDv1.xml
 	  	<!-- format a time -->
 		<DerivedField name="morningTime" dataType="string" optype="categorical">
 			<Apply function="timestampFmt">
-				<Constant dataType="string">yyyy-MM-dd HH:mm:ss:SSS</Constant>
+				<Constant dataType="string">HH:mm:ss:SSS</Constant>
 				<FieldRef field="morningTimeMs"/>
 			</Apply>
 		</DerivedField>
 	  	<!-- format a time -->
 		<DerivedField name="eveningTime" dataType="string" optype="categorical">
 			<Apply function="timestampFmt">
-				<Constant dataType="string">dd-MMM-yyyy HH:mm:ss</Constant>
+				<Constant dataType="string">hh:mm:ss aa</Constant>
 				<FieldRef field="eveningTimeMs"/>
 			</Apply>
 		</DerivedField>
 	  	<!-- format a time -->
 		<DerivedField name="milTime" dataType="string" optype="categorical">
 			<Apply function="timestampFmt">
-				<Constant dataType="string">dd-MMM-yyyy HH:mm:ss</Constant>
+				<Constant dataType="string">HH:mm:ss</Constant>
 				<FieldRef field="milTimeMs"/>
 			</Apply>
 		</DerivedField>
