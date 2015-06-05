@@ -305,7 +305,7 @@ object FatafatLeader {
     updatePartitionsFlag = true
   }
 
-  private def GetClusterStatus: ClusterStatus = lock1.synchronized {
+  def GetClusterStatus: ClusterStatus = lock1.synchronized {
     return clusterStatus
   }
 
@@ -337,6 +337,7 @@ object FatafatLeader {
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
     LOG.debug("EventChangeCallback => Enter")
+    FatafatConfiguration.participentsChangedCntr += 1
     SetClusterStatus(cs)
     LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
     LOG.debug("EventChangeCallback => Exit")
