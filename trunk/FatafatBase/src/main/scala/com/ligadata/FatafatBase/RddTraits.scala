@@ -43,12 +43,12 @@ trait PairRDD[K, V] {
 }
 
 trait RDD[T <: RDDBase] {
-  val ctag: ClassTag[T]
+  // val ctag: ClassTag[T]
   val LOG = Logger.getLogger(getClass);
 
-  // final def iterator: Iterator[T]
+  def iterator: Iterator[T]
 
-  def map[U <: RDDBase ](f: T => U): RDD[U]
+  def map[U <: RDDBase](f: T => U): RDD[U]
   def map[U <: RDDBase](tmRange: TimeRange, f: T => U): RDD[U]
 
   def flatMap[U <: RDDBase](f: T => TraversableOnce[U]): RDD[U]
@@ -65,7 +65,7 @@ trait RDD[T <: RDDBase] {
 
   def foreach(f: T => Unit): Unit
 
-  def toArray: Array[T]
+  def toArray[T: ClassTag]: Array[T]
 
   def subtract(other: RDD[T]): RDD[T]
 

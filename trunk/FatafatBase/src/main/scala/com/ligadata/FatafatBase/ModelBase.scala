@@ -168,12 +168,12 @@ class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames
 }
 
 //BUGBUG:: Need to move com.ligadata.Pmml.Runtime.Context to this file
-class Context(tempTransId: Long) {
+class ModelContext(tempTransId: Long) {
   
 }
 
 class TransactionContext(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String) {
-  val ctx = new Context(tempTransId)
-  def GetContext: Context = { ctx }
+  val ctx = new ModelContext(tempTransId)
+  def GetContext = ctx
 }
 
