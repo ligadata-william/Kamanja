@@ -515,9 +515,18 @@ object NodePrinterHelpers extends LogTrait {
   			val missingValueReplSnip : String = if (typeStr != null && typedef != null 
   			    								&& missingValueReplacement != null && missingValueReplacement.size > 0) {
   				val fldType : String = typedef.Name 
-  				/** Create a default for this type with the supplied value ... hopefully the make will come up 
-  				    with an appropriate DataValue*/
-  				s"DataValue.make(${'"'}$fldType${'"'}, ${'"'}$missingValueReplacement${'"'})"
+  				/** 
+  				 *  Create a default for this type with the supplied value.  If a compile instruction was supplied, 
+  				 *  insert the raw text as the sole argument to the runtime function DataValue.make(Any), else
+  				 *  allow the DataValue.make(<Some builtin type>,String) to initialize an appropriate value based 
+  				 *  upon the supplied type.  See DataValue in the PmmlRuntimeDecls for more information.
+  				 */
+  				if (missingValueReplacement.startsWith("!compile:")) {
+  					val compileThis : String = missingValueReplacement.split("compile:").last
+  					s"DataValue.make($compileThis)" 
+  				} else {
+  					s"DataValue.make(${'"'}$fldType${'"'}, ${'"'}$missingValueReplacement${'"'})"
+  				}
 			} else {
 				if (typeStr != null && typedef != null) {
 					/** when missing value replacement is not given, make the type's default value the default */

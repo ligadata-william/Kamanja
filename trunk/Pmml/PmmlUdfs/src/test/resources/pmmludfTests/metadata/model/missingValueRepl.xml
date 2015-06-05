@@ -30,6 +30,9 @@ COPDv1.xml
 		<DataField name="eveningTimeMs" displayName="eveningTimeMs" optype="categorical" dataType="time"/>
 		<DataField name="milTimeMs" displayName="milTimeMs" optype="categorical" dataType="time"/>
 
+		<DataField name="someCostsByDate" displayName="someCostsByDate" optype="categorical" dataType="ImmutableMapOfIntDouble"/>
+
+
 	</DataDictionary>
 
 	<TransformationDictionary>
@@ -981,10 +984,11 @@ COPDv1.xml
 
 			<!-- aggregations -->
 			<MiningField name="inPatientClaimCostsByDate" usageType="supplementary"/>
-			<MiningField name="outPatientClaimCostsByDate" usageType="supplementary" missingValueReplacement="compile:new Map[Int,Double]()"/>
+			<MiningField name="outPatientClaimCostsByDate" usageType="supplementary" missingValueReplacement="!compile:Map[Int,Double]()"/>
+			<MiningField name="someCostsByDate" usageType="supplementary" missingValueReplacement="!compile:Map[Int,Double]()"/>
 
 			<!-- missingValueReplacement for array ? -->
-			<MiningField name="inPatientClaimTotalCostEachDate" usageType="supplementary" missingValueReplacement="compile:Array[Double]()"/>
+			<MiningField name="inPatientClaimTotalCostEachDate" usageType="supplementary" missingValueReplacement="!compile:Array[Double]()"/>
 	
 			<!-- missingValueReplacement for *Ms fields below unfilled 
 			via model execution...The missingValueReplacement values initialize

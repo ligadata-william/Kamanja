@@ -6398,7 +6398,8 @@ object Udfs extends LogTrait {
 
     /** 
         Answer the number of millisecs from the epoch for the supplied string that presumably
-        has the supplied format.
+        has the supplied format. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
 
         @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
         @param timestampStr - the string to parse
@@ -6420,7 +6421,8 @@ object Udfs extends LogTrait {
     
     /** 
         Answer the number of millisecs from the epoch for the supplied string that presumably
-        has one of the supplied formats found in fmtStrArray.
+        has one of the supplied formats found in fmtStrArray. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
 
         @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
         @param timestampStr - the string to parse
@@ -6532,7 +6534,8 @@ object Udfs extends LogTrait {
     
     /** 
         Answer the number of millisecs from the epoch for the supplied date portion in the supplied 
-        string that presumably has the supplied format.
+        string that presumably has the supplied format. If parse fails (IllegalArgumentException caught),
+        the epoch is returned.
 
         @param fmtStr - instructions on how to parse the string. @see iso860DateFmt for format info 
         @param timestampStr - the string to parse
