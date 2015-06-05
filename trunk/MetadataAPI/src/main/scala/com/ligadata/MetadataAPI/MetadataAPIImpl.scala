@@ -1471,6 +1471,10 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def UpdateObjectInCache(obj: BaseElemDef, operation: String, mdMgr: MdMgr): BaseElemDef = {
     var updatedObject: BaseElemDef = null
+    
+    // Update the current transaction level with this object  ???? What if an exception occurs ????
+    if (currentTranLevel < obj.TranId) currentTranLevel = obj.TranId
+    
     try {
       obj match {
         case o: FunctionDef => {
@@ -3115,6 +3119,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private def DeactivateLocalModel(nameSpace: String, name: String, version: Long): Boolean = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
+    val newTranId = GetNewTranId
     try {
       val o = MdMgr.GetMdMgr.Model(nameSpace.toLowerCase, name.toLowerCase, version, true)
       o match {
@@ -3127,6 +3132,7 @@ object MetadataAPIImpl extends MetadataAPI {
           DeactivateObject(m.asInstanceOf[ModelDef])
           
           // TODO: Need to deactivate the appropriate message?
+          m.tranId = newTranId
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Deactivate"
@@ -3148,6 +3154,7 @@ object MetadataAPIImpl extends MetadataAPI {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     var currActiveModel: ModelDef = null
+    val newTranId = GetNewTranId
     
     // Audit this call
     logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.ACTIVATEOBJECT,AuditConstants.MODEL,AuditConstants.SUCCESS,"", nameSpace+"."+name+"."+version)
@@ -3197,6 +3204,7 @@ object MetadataAPIImpl extends MetadataAPI {
           // Issue a Notification to all registered listeners that an Acivation took place.
           // TODO: Need to activate the appropriate message?
           var objectsUpdated = new Array[BaseElemDef](0)
+          m.tranId = newTranId
           objectsUpdated = objectsUpdated :+ m.asInstanceOf[ModelDef]
           val operations = for (op <- objectsUpdated) yield "Activate"
           NotifyEngine(objectsUpdated, operations)
