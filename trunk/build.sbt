@@ -29,7 +29,9 @@ lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener"))
 
 lazy val FatafatBase = project.in(file("FatafatBase")) dependsOn(Metadata)
 
-lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch)
+lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, FatafatBase)
+
+lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, ApiImpl, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
