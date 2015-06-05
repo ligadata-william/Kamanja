@@ -4662,9 +4662,8 @@ object MetadataAPIImpl extends MetadataAPI {
   def UpdateMdMgr(zkTransaction: ZooKeeperTransaction): Unit = {
     var key: String = null
     var dispkey: String = null
-
-    println ("GOTTA UPDATE THIS:  current tran level is "+currentTranLevel+ " and the zkTransaction level is "+ zkTransaction.transactionId.getOrElse("0").toLong)
     
+    // If we already processed this transaction, currTranLevel will be at least at the level of this notify.
     if (zkTransaction.transactionId.getOrElse("0").toLong <= currentTranLevel) return
     
     try {
