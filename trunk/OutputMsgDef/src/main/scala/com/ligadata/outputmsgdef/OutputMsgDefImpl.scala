@@ -4,14 +4,16 @@ import scala.collection.mutable.{ Map, HashMap, MultiMap, Set, SortedSet, ArrayB
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
 import com.ligadata.fatafat.metadata.ObjType._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.fatafat.metadata.MdMgr._
 import org.apache.log4j.Logger
+import scala.collection.mutable.ListBuffer
 
-case class OutputMessageStruct(NameSpace: String, Name: String, Version: String, Description: String, Queue: String, PartitionKey: List[String], Defaults: List[scala.collection.immutable.Map[String, String]], DataDeclaration: List[scala.collection.immutable.Map[String, String]], OutputFormat: String)
-case class OutputMessageDefinition(OutputMessage: OutputMessageStruct)
+class OutputMessage(var NameSpace: String, var Name: String, var Version: String, var Description: String, var Queue: String, var PartitionKey: List[String], var Defaults: List[scala.collection.mutable.Map[String, String]], var DataDeclaration: List[scala.collection.mutable.Map[String, String]], var OutputFormat: String)
+
+//case class OutputMessageStruct(NameSpace: String, Name: String, Version: String, Description: String, Queue: String, PartitionKey: List[String], Defaults: List[scala.collection.immutable.Map[String, String]], DataDeclaration: List[scala.collection.immutable.Map[String, String]], OutputFormat: String)
+//case class OutputMessageDefinition(OutputMessage: OutputMessageStruct)
 
 object OutputMsgDefImpl {
 
@@ -33,18 +35,28 @@ object OutputMsgDefImpl {
     try {
 
       implicit val jsonFormats: Formats = DefaultFormats
-      val json = parse(outputmsgDefJson)
+      val outputMessageDef = parseOutMsg(outputmsgDefJson)
+      if (outputMessageDef == null)
+        throw new Exception("output message definition info do not exists")
 
-      val OutputMsgDefInst = json.extract[OutputMessageDefinition]
-      val outputQ = OutputMsgDefInst.OutputMessage.Queue.toLowerCase()
-      val paritionKeys = OutputMsgDefInst.OutputMessage.PartitionKey
-      val dataDeclaration = OutputMsgDefInst.OutputMessage.DataDeclaration
-      val outputFormat = OutputMsgDefInst.OutputMessage.OutputFormat.toLowerCase()
-      val defaults = OutputMsgDefInst.OutputMessage.Defaults
-      val name = OutputMsgDefInst.OutputMessage.Name.toLowerCase()
-      val nameSpace = OutputMsgDefInst.OutputMessage.NameSpace.toLowerCase()
+      println("Name " + outputMessageDef.Name)
+      println("NameSpace " + outputMessageDef.NameSpace)
+      println("Version " + outputMessageDef.Version)
+      println("Queue" + outputMessageDef.Queue)
+      println("OutputFormat " + outputMessageDef.OutputFormat)
+      outputMessageDef.DataDeclaration.foreach(f => println("f " + f))
+      outputMessageDef.Defaults.foreach(f => println("f " + f))
 
-      val versionStr = OutputMsgDefInst.OutputMessage.Version
+      val outputQ = outputMessageDef.Queue.toLowerCase()
+      val paritionKeys = outputMessageDef.PartitionKey
+      val dataDeclaration = outputMessageDef.DataDeclaration
+      val outputFormat = outputMessageDef.OutputFormat.toLowerCase()
+      val defaults = outputMessageDef.Defaults
+      val name = outputMessageDef.Name.toLowerCase()
+      val nameSpace = outputMessageDef.NameSpace.toLowerCase()
+
+      val versionStr = outputMessageDef.Version
+
       if (versionStr == null || versionStr.trim() == "")
         throw new Exception(" Please provide the version in the Output Message definition")
 
@@ -133,8 +145,9 @@ object OutputMsgDefImpl {
 
       }
       case e: Exception => {
-        // e.printStackTrace()
+        e.printStackTrace()
         log.trace("Error " + e.getMessage())
+        throw e
       }
     }
     outputMsgDef
@@ -381,4 +394,77 @@ object OutputMsgDefImpl {
     }
     (childs, typeOf)
   }
+
+  def parseOutMsg(outputmsgDefJson: String): OutputMessage = {
+    var partitionKeysList: List[String] = null
+    var dataDeclBuffer = new ListBuffer[Map[String, String]]
+    var defaultsListBuffer = new ListBuffer[Map[String, String]]
+    var defaults = new ListBuffer[Map[String, String]]
+    type MapList = List[scala.collection.immutable.Map[String, String]]
+    type StringList = List[String]
+    type keyMap = scala.collection.immutable.Map[String, String]
+    implicit val jsonFormats: Formats = DefaultFormats
+    val map = parse(outputmsgDefJson).values.asInstanceOf[scala.collection.immutable.Map[String, Any]]
+    val outputKey = "OutputMessage"
+
+    if (map.contains(outputKey)) {
+      val outputmsg = map.get(outputKey).get.asInstanceOf[scala.collection.immutable.Map[String, Any]]
+      println("outputmsg 1 : " + outputmsg)
+
+      if (outputmsg != null) {
+        if (outputmsg.getOrElse("NameSpace", null) == null)
+          throw new Exception("Please provide the Name space in the output message definition ")
+
+        if (outputmsg.getOrElse("Name", null) == null)
+          throw new Exception("Please provide the Name of the output message definition ")
+
+        if (outputmsg.getOrElse("Version", null) == null)
+          throw new Exception("Please provide the Version of the output message definition ")
+
+        if (outputmsg.getOrElse("Queue", null) == null)
+          throw new Exception("Please provide the output Queue of the output message definition ")
+
+        if (outputmsg.getOrElse("OutputFormat", null) == null)
+          throw new Exception("Please provide the OutputFormat of the output message definition ")
+
+        val nameSpace = outputmsg.get("NameSpace").get.toString
+        val name = outputmsg.get("Name").get.toString
+        val version = outputmsg.get("Version").get.toString
+        val queue = outputmsg.get("Queue").get.toString
+        val desc: String = outputmsg.getOrElse("Description", "").toString
+        val outputFrmt = outputmsg.get("OutputFormat").get.toString
+
+        val dataDecl = outputmsg.getOrElse("DataDeclaration", null)
+
+        if (dataDecl != null && dataDecl.isInstanceOf[MapList]) {
+          val dataDeclList = dataDecl.asInstanceOf[MapList]
+          for (l <- dataDeclList) {
+            val dataDeclMap = l.asInstanceOf[scala.collection.immutable.Map[String, String]]
+            var dd : Map[String, String] = Map[String, String]()
+            dataDeclMap.foreach(f => {dd(f._1) = f._2   })
+            dataDeclBuffer += dd
+          }
+        }
+
+        val defaults = outputmsg.getOrElse("Defaults", null)
+        if (defaults != null && defaults.isInstanceOf[MapList]) {
+          val dfltslList = defaults.asInstanceOf[MapList]
+          for (l <- dfltslList) {
+            val dfltslMap = l.asInstanceOf[scala.collection.immutable.Map[String, String]]
+            var dd: Map[String, String] = Map[String, String]()
+            dfltslMap.foreach(f => {dd(f._1) = f._2   })
+            defaultsListBuffer += dd
+          }
+        }
+
+        val partitionKeys = outputmsg.getOrElse("PartitionKey", null)
+        if (partitionKeys != null && partitionKeys.isInstanceOf[StringList]) {
+          partitionKeysList = partitionKeys.asInstanceOf[StringList]
+        }
+        return new OutputMessage(nameSpace, name, version, desc, queue, partitionKeysList, defaultsListBuffer.toList, dataDeclBuffer.toList, outputFrmt)
+      } else return null
+
+    } else throw new Exception("Incorrect Output Message Definition json")
+  }
+
 }

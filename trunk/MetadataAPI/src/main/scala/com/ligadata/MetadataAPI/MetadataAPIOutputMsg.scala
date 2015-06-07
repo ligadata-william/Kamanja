@@ -21,6 +21,8 @@ object MetadataAPIOutputMsg {
         apiResult.toString()
       } else {
         var outputMsg = com.ligadata.outputmsgdef.OutputMsgDefImpl.parseOutputMessageDef(outputMsgText, "JSON")
+        val dispkey = outputMsg.FullName + "." + MdMgr.Pad0s2Version(outputMsg.Version)
+
         MetadataAPIImpl.SaveObject(outputMsg, MdMgr.GetMdMgr)
         MetadataAPIImpl.AddObjectToCache(outputMsg, MdMgr.GetMdMgr)
         var objectsAdded = new Array[BaseElemDef](0)
@@ -29,7 +31,7 @@ object MetadataAPIOutputMsg {
         val operations = for (op <- objectsAdded) yield "Add"
         logger.trace("Notify engine via zookeeper")
         MetadataAPIImpl.NotifyEngine(objectsAdded, operations)
-        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddOutputMsg", null, ErrorCodeConstants.Add_OutputMessage_Successful + ":" + outputMsgText)
+        var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddOutputMsg", null, ErrorCodeConstants.Add_OutputMessage_Successful + ":" + dispkey)
         apiResult.toString()
 
       }
@@ -59,6 +61,7 @@ object MetadataAPIOutputMsg {
   def UpdateOutputMsg(outputMsgText: String): String = {
     try {
       var outputMsgDef = com.ligadata.outputmsgdef.OutputMsgDefImpl.parseOutputMessageDef(outputMsgText, "JSON")
+      val dispkey = outputMsgDef.FullName + "." + MdMgr.Pad0s2Version(outputMsgDef.Version)
       val key = MdMgr.MkFullNameWithVersion(outputMsgDef.nameSpace, outputMsgDef.name, outputMsgDef.ver)
       val latestVersion = GetLatestOutputMsg(outputMsgDef)
       var isValid = true
@@ -78,7 +81,7 @@ object MetadataAPIOutputMsg {
         MetadataAPIImpl.NotifyEngine(objectsUpdated, operations)
         result
       } else {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + null + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + key)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + null + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + dispkey)
         apiResult.toString()
       }
     } catch {
@@ -106,7 +109,7 @@ object MetadataAPIOutputMsg {
   // Get the latest output message for a given FullName
   def GetLatestOutputMsg(outputMsgDef: OutputMsgDef): Option[OutputMsgDef] = {
     try {
-      var key = outputMsgDef.nameSpace + "." + outputMsgDef.name + "." + outputMsgDef.ver
+      var key = outputMsgDef.FullName + "." + MdMgr.Pad0s2Version(outputMsgDef.ver.toLong)
       val o = MdMgr.GetMdMgr.OutputMessages(outputMsgDef.nameSpace.toLowerCase,
         outputMsgDef.name.toLowerCase,
         false,
@@ -134,14 +137,15 @@ object MetadataAPIOutputMsg {
 
   // Add Output (outputmsg def)
   def AddOutputMsg(outputMsgDef: OutputMsgDef): String = {
+    var key = outputMsgDef.FullName + "." + MdMgr.Pad0s2Version(outputMsgDef.Version)
     try {
-      var key = outputMsgDef.FullNameWithVer
+
       MetadataAPIImpl.SaveObject(outputMsgDef, MdMgr.GetMdMgr)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "AddOutputMsg", null, ErrorCodeConstants.Add_OutputMessage_Successful + ":" + key)
       apiResult.toString()
     } catch {
       case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + outputMsgDef.Name)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }
     }
@@ -161,7 +165,7 @@ object MetadataAPIOutputMsg {
           val oCount = os.length
           outputMsgList = new Array[String](oCount)
           for (i <- 0 to oCount - 1) {
-            outputMsgList(i) = os(i).FullNameWithVer
+            outputMsgList(i) = os(i).FullName + "." + MdMgr.Pad0s2Version(os(i).Version)
           }
           outputMsgList
       }
@@ -208,7 +212,7 @@ object MetadataAPIOutputMsg {
 
   // Remove output message with OutputMsg Name and Version Number
   def RemoveOutputMsg(nameSpace: String, name: String, version: Long): String = {
-    var key = nameSpace + "." + name + "." + version
+    var key = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     try {
       val om = MdMgr.GetMdMgr.OutputMessage(nameSpace.toLowerCase, name.toLowerCase, version, true)
       om match {
