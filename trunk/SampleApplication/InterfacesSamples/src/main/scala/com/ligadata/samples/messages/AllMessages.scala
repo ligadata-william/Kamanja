@@ -4,7 +4,7 @@ import java.util.Date
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{DataInputStream, DataOutputStream}
-import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, RDDBase, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange}
+import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange}
 
 object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory, CustAlertHistoryBuilder] {
   type T = CustAlertHistory
@@ -43,7 +43,7 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
   override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class CustAlertHistoryBuilder extends RDDBase {
+class CustAlertHistoryBuilder {
   def withAlertDt(curDt : Date) : CustAlertHistoryBuilder = {this}
   def withAlertType(alertType: String) : CustAlertHistoryBuilder = {this}
   def withNumDays(daysWithLessBalance : Int) : CustAlertHistoryBuilder = {this}
@@ -56,7 +56,7 @@ class CustAlertHistoryBuilder extends RDDBase {
   var lastAlertDt: Date = _;
 }
 
-class CustAlertHistory extends BaseContainer with RDDBase {
+class CustAlertHistory extends BaseContainer {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
@@ -132,7 +132,7 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, 
   override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class CustPreferencesBuilder extends RDDBase {
+class CustPreferencesBuilder {
   var custid: Long = 0;
   var branchid: Int = 0;
   var accno: Long = 0;
@@ -141,7 +141,7 @@ class CustPreferencesBuilder extends RDDBase {
   var multiDayMinBalanceAlertOptout = false;
 }
 
-class CustPreferences extends BaseContainer with RDDBase {
+class CustPreferences extends BaseContainer {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
@@ -218,10 +218,10 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTr
   override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class CustTransactionBuilder extends RDDBase {
+class CustTransactionBuilder {
 }
 
-class CustTransaction extends BaseMsg with RDDBase {
+class CustTransaction extends BaseMsg {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
@@ -300,7 +300,7 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class GlobalPreferencesBuilder extends RDDBase {
+class GlobalPreferencesBuilder  {
   def build : GlobalPreferences = null
   
 // define all withXXX methods to set values in the builder  
@@ -311,7 +311,7 @@ class GlobalPreferencesBuilder extends RDDBase {
   var maxNumDaysAllowedWithMinBalance: Int = 2;
 }
 
-class GlobalPreferences extends BaseContainer with RDDBase {
+class GlobalPreferences extends BaseContainer {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
