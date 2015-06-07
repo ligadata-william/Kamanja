@@ -18,9 +18,6 @@ class TimeRange(startTime: Int, endTime: Int) {
   // Methods
 }
 
-trait RDDBase {
-}
-
 // Temporarly creating model base and model base object to compile, this should be replaced with ModelBase and ModelBaseObj
 // When implementing sample models completely - 
 trait RddModelBase {
@@ -50,16 +47,16 @@ trait PairRDD[K, V] {
   // def rightOuterJoinByPartition[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
 }
 
-trait RDD[T <: RDDBase] {
+trait RDD[T  <: Any] {
   // val ctag: ClassTag[T]
   val LOG = Logger.getLogger(getClass);
 
   def iterator: Iterator[T]
 
-  def map[U <: RDDBase](f: T => U): RDD[U]
-  def map[U <: RDDBase](tmRange: TimeRange, f: T => U): RDD[U]
+  def map[U <: Any](f: T => U): RDD[U]
+  def map[U <: Any](tmRange: TimeRange, f: T => U): RDD[U]
 
-  def flatMap[U <: RDDBase](f: T => TraversableOnce[U]): RDD[U]
+  def flatMap[U <: Any](f: T => TraversableOnce[U]): RDD[U]
 
   def filter(f: T => Boolean): RDD[T]
   def filter(tmRange: TimeRange, f: T => Boolean): RDD[T]
@@ -97,7 +94,7 @@ trait RDD[T <: RDDBase] {
   def keyBy[K](f: T => K): PairRDD[K, T]
 }
 
-trait RDDObject[T <: RDDBase, B <: RDDBase] {
+trait RDDObject[T <: Any, B <: Any] {
   val LOG = Logger.getLogger(getClass);
 
   // get builder
