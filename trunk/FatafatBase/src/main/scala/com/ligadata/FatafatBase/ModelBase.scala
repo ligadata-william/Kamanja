@@ -27,10 +27,12 @@ import MinVarType._
 class Result(val name: String, val usage: MinVarType, val result: Any) {
 }
 
+// Need to properly define ModelResult related objects..
 object ModelResult {
+  def builder : ModelResultBuilder = null
   def ValueString(v: Any): String = {
     if (v == null) {
-    	return "null"
+      return "null"
     }
     if (v.isInstanceOf[Set[_]]) {
       return v.asInstanceOf[Set[_]].mkString(",")
@@ -43,6 +45,11 @@ object ModelResult {
     }
     v.toString
   }
+}
+
+class ModelResultBuilder {
+  def build : ModelResult = null;
+  def withResult(obj: Any) : ModelResultBuilder = null;
 }
 
 class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: String, val mdlVersion: String, val results: Array[Result]) {
