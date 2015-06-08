@@ -29,25 +29,24 @@ trait RddModelBaseObj {
   def CreateNewModel(ctxt: TransactionContext): RddModelBase // Creating same type of object with given values 
 }
 
-
 // RDD traits/classes
-trait PairRDD[K, V] {
+class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
   val LOG = Logger.getLogger(getClass);
 
-  def count: Long
+  def count: Long = self.size
   
-  def countByKey: Map[K, Int]
-  def groupByKey: PairRDD[K, Iterable[V]]
+  def countByKey: Map[K, Long] = null
+  def groupByKey: RDD[(K, Seq[V])] = null
 
   // Join Functions
-  def join[W](other: PairRDD[K, W]): PairRDD[K, (V, W)]
-  def fullOuterJoin[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], Option[W])]
-  def leftOuterJoin[W](other: PairRDD[K, W]): PairRDD[K, (V, Option[W])]
-  def rightOuterJoin[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
-  // def rightOuterJoinByPartition[W](other: PairRDD[K, W]): PairRDD[K, (Option[V], W)]
+  def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = null
+  def fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))] = null
+  def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = null
+  def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
+  // def rightOuterJoinByPartition[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
 }
 
-trait RDD[T  <: Any] {
+trait RDD[T <: Any] {
   // val ctag: ClassTag[T]
   val LOG = Logger.getLogger(getClass);
 
@@ -66,7 +65,7 @@ trait RDD[T  <: Any] {
 
   def intersection(other: RDD[T]): RDD[T]
 
-  def groupBy[K](f: T => K): PairRDD[K, Iterable[T]]
+  def groupBy[K](f: T => K): RDD[(K, Seq[T])]
 
   def foreach(f: T => Unit): Unit
 
@@ -91,7 +90,7 @@ trait RDD[T  <: Any] {
 
   def isEmpty: Boolean
 
-  def keyBy[K](f: T => K): PairRDD[K, T]
+  def keyBy[K](f: T => K): RDD[(K, T)]
 }
 
 trait RDDObject[T <: Any] {

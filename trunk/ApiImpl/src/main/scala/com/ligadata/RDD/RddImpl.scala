@@ -47,7 +47,7 @@ class RddImpl[T <: Any] extends RDD[T] {
     throw new Exception("Unhandled function intersection")
   }
 
-  override def groupBy[K](f: T => K): PairRDD[K, Iterable[T]] = null
+  override def groupBy[K](f: T => K): RDD[(K, Seq[T])] = null
 
   override def foreach(f: T => Unit): Unit = {
     collections.iterator.foreach(f)
@@ -87,6 +87,6 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def isEmpty: Boolean = collections.isEmpty
 
-  override def keyBy[K](f: T => K): PairRDD[K, T] = null
+  override def keyBy[K](f: T => K): RDD[(K, T)] = null
 }
 
