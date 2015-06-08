@@ -6,7 +6,7 @@ import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{DataInputStream, DataOutputStream}
 import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange}
 
-object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory, CustAlertHistoryBuilder] {
+object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory] {
   type T = CustAlertHistory
   
   override def FullName: String = "com.ligadata.samples.messages.CustAlertHistory"
@@ -18,7 +18,8 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
   override def IsKv: Boolean = false;
   override def CanPersist: Boolean = true;
 
-  def builder = new CustAlertHistoryBuilder
+  def build = new T
+  def build(from: T) = new T(from)
   
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
@@ -52,35 +53,26 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
   override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class CustAlertHistoryBuilder {
-  def withAlertDt(curDt : Date) : CustAlertHistoryBuilder = {this}
-  def withAlertType(alertType: String) : CustAlertHistoryBuilder = {this}
-  def withNumDays(daysWithLessBalance : Int) : CustAlertHistoryBuilder = {this}
-  
-  def build : CustAlertHistory = null
-  
-  var custid: Long = 0;
-  var branchid: Int = 0;
-  var accno: Long = 0;
-  var lastAlertDt: Date = _;
-}
-
 class CustAlertHistory extends BaseContainer {
-  override def IsFixed: Boolean = true;
-  override def IsKv: Boolean = false;
-
-  override def CanPersist: Boolean = true;
-
-  override def FullName: String = "com.ligadata.samples.messages.CustAlertHistory"
-  override def NameSpace: String = "com.ligadata.samples.messages"
-  override def Name: String = "CustAlertHistory"
-  override def Version: String = "000000.000001.000000"
+  override def IsFixed: Boolean = CustAlertHistory.IsFixed;
+  override def IsKv: Boolean = CustAlertHistory.IsKv;
+  override def CanPersist: Boolean = CustAlertHistory.CanPersist;
+  override def FullName: String = CustAlertHistory.FullName
+  override def NameSpace: String = CustAlertHistory.NameSpace
+  override def Name: String = CustAlertHistory.Name
+  override def Version: String = CustAlertHistory.Version
 
   var custid: Long = 0;
   var branchid: Int = 0;
   var accno: Long = 0;
-  var lastalertdate: Int = 0;
-  var lastAlertDt: Date = _;
+  var alertDt: Date = _;
+  var alertType: String = ""
+  var numDaysWithLessBalance: Int = 0
+  
+  def this(from: CustAlertHistory) = { this}
+  def withAlertDt(curDt : Date) : CustAlertHistory = {this}
+  def withAlertType(alertType: String) : CustAlertHistory = {this}
+  def withNumDays(daysWithLessBalance : Int) : CustAlertHistory = {this}
 
   def save = {}
   override def PartitionKeyData: Array[String] = null
@@ -104,7 +96,7 @@ class CustAlertHistory extends BaseContainer {
 }
 
 
-object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, CustPreferencesBuilder] {
+object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences] {
   type T = CustPreferences
 
   override def FullName: String = "com.ligadata.samples.messages.CustPreferences"
@@ -116,7 +108,8 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, 
   override def IsKv: Boolean = false;
   override def CanPersist: Boolean = true;
 
-  def builder = new CustPreferencesBuilder
+  def build = new T
+  def build(from: T) = new T(from)
   
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
@@ -148,27 +141,26 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, 
   override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
   override def getRDD(key: Array[String], func: T => Boolean) : RDD[T] = null
   override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
-}
-
-class CustPreferencesBuilder {
-  var custid: Long = 0;
-  var branchid: Int = 0;
-  var accno: Long = 0;
-  var minBalanceAlertOptout = false;
-  var overdraftlimit: Double = 0;
-  var multiDayMinBalanceAlertOptout = false;
+  
+  // Saving data
+  override def saveOne(inst: T) = {}
+  override def saveOne(key: Array[String], inst: T) = {}
+  override def saveRDD(data: RDD[T]) = {}
 }
 
 class CustPreferences extends BaseContainer {
-  override def IsFixed: Boolean = true;
-  override def IsKv: Boolean = false;
+  override def IsFixed: Boolean = CustPreferences.IsFixed;
+  override def IsKv: Boolean = CustPreferences.IsKv;
+  override def CanPersist: Boolean = CustPreferences.CanPersist;
+  override def FullName: String = CustPreferences.FullName
+  override def NameSpace: String = CustPreferences.NameSpace
+  override def Name: String = CustPreferences.Name
+  override def Version: String = CustPreferences.Version
 
-  override def CanPersist: Boolean = true;
-
-  override def FullName: String = "com.ligadata.samples.messages.CustPreferences"
-  override def NameSpace: String = "com.ligadata.samples.messages"
-  override def Name: String = "CustPreferences"
-  override def Version: String = "000000.000001.000000"
+  def this(from: CustPreferences) = { this}
+  def withMinBalanceAlertOptout(curDt : Date) : CustPreferences = {this}
+  def withOverdraftlimit(alertType: String) : CustPreferences = {this}
+  def withMultiDayMinBalanceAlertOptout(daysWithLessBalance : Int) : CustPreferences = {this}
 
   var custid: Long = 0;
   var branchid: Int = 0;
@@ -198,7 +190,7 @@ class CustPreferences extends BaseContainer {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 }
 
-object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTransactionBuilder] {
+object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction] {
   type T = CustTransaction
 
   override def TransformDataAttributes: TransformMessage = null
@@ -216,7 +208,9 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTr
   val partKeyPos = Array(0)
   val default =  new CustTransaction
     
-  def builder = new CustTransactionBuilder
+  def build = new T
+  def build(from: T) = new T(from)
+  
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
@@ -245,19 +239,16 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTr
   override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class CustTransactionBuilder {
-}
-
 class CustTransaction extends BaseMsg {
-  override def IsFixed: Boolean = true;
-  override def IsKv: Boolean = false;
+  override def IsFixed: Boolean = CustTransaction.IsFixed;
+  override def IsKv: Boolean = CustTransaction.IsKv;
+  override def CanPersist: Boolean = CustTransaction.CanPersist;
+  override def FullName: String = CustTransaction.FullName
+  override def NameSpace: String = CustTransaction.NameSpace
+  override def Name: String = CustTransaction.Name
+  override def Version: String = CustTransaction.Version
 
-  override def CanPersist: Boolean = true;
-
-  override def FullName: String = "com.ligadata.samples.messages.CustTransaction"
-  override def NameSpace: String = "com.ligadata.samples.messages"
-  override def Name: String = "CustTransaction"
-  override def Version: String = "000000.000001.000000"
+  def this(from: CustTransaction) = { this}
 
   var custid: Long = 0;
   var branchid: Int = 0;
@@ -290,7 +281,7 @@ class CustTransaction extends BaseMsg {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 }
 
-object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferences, GlobalPreferencesBuilder] {
+object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferences] {
   type T = GlobalPreferences
 
   override def FullName: String = "com.ligadata.samples.messages.GlobalPreferences"
@@ -302,11 +293,12 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def IsKv: Boolean = false;
   override def CanPersist: Boolean = true;
 
-  def builder = new GlobalPreferencesBuilder
+  def build = new T
+  def build(from: T) = new T(from)
   
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
-  val default = new GlobalPreferencesBuilder
+  val default = new GlobalPreferences
   
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
@@ -336,28 +328,17 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
-class GlobalPreferencesBuilder  {
-  def build : GlobalPreferences = null
-  
-// define all withXXX methods to set values in the builder  
-  var overDraftLimit: Double = 0.0;
-  var minAlertBalance: Double = 0.0
-  var minAlertDurationInHrs: Int = 48;
-  var numLookbackDaysForMultiDayMinBalanceAlert: Int = 30;
-  var maxNumDaysAllowedWithMinBalance: Int = 2;
-}
-
 class GlobalPreferences extends BaseContainer {
-  override def IsFixed: Boolean = true;
-  override def IsKv: Boolean = false;
+  override def IsFixed: Boolean = GlobalPreferences.IsFixed;
+  override def IsKv: Boolean = GlobalPreferences.IsKv;
+  override def CanPersist: Boolean = GlobalPreferences.CanPersist;
+  override def FullName: String = GlobalPreferences.FullName
+  override def NameSpace: String = GlobalPreferences.NameSpace
+  override def Name: String = GlobalPreferences.Name
+  override def Version: String = GlobalPreferences.Version
 
-  override def CanPersist: Boolean = true;
-
-  override def FullName: String = "com.ligadata.samples.messages.GlobalPreferences"
-  override def NameSpace: String = "com.ligadata.samples.messages"
-  override def Name: String = "GlobalPreferences"
-  override def Version: String = "000000.000001.000000"
-
+  def this(from: GlobalPreferences) = { this}
+  
   var overDraftLimit: Double = 0.0;
   var minAlertBalance: Double = 0.0
   var minAlertDurationInHrs: Int = 48;

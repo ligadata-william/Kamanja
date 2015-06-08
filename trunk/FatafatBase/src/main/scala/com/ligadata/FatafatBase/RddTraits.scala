@@ -94,12 +94,13 @@ trait RDD[T  <: Any] {
   def keyBy[K](f: T => K): PairRDD[K, T]
 }
 
-trait RDDObject[T <: Any, B <: Any] {
+trait RDDObject[T <: Any] {
   val LOG = Logger.getLogger(getClass);
 
   // get builder
-  def builder : B 
-  
+  def build : T 
+  def build(from: T) : T 
+
   // First group of functions retrieve one object (either recent or for a given key & filter)
   // Get recent entry for the Current Key
   def getRecent: Option[T] 
@@ -126,6 +127,11 @@ trait RDDObject[T <: Any, B <: Any] {
   def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T]
   def getRDD(key: Array[String], func: T => Boolean) : RDD[T]
   def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T]
+
+  // Saving data
+  def saveOne(inst: T) = {}
+  def saveOne(key: Array[String], inst: T) = {}
+  def saveRDD(data: RDD[T]) = {}
 }
 
 object StringUtils {

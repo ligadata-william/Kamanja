@@ -67,7 +67,7 @@ class LowBalanceAlert(ctxt: TransactionContext) extends RddModelBase {
     // Check if at least min number of hours elapsed since last alert  
     val curDt = RddDate.currentDateTime
     val alertHistory = CustAlertHistory.getRecentOrDefault
-    if (curDt.timeDiffInHrs(alertHistory.lastAlertDt) < gPref.minAlertDurationInHrs)
+    if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
       return None
 
     // continue with alert generation only if balance from current transaction is less than threshold
@@ -76,7 +76,7 @@ class LowBalanceAlert(ctxt: TransactionContext) extends RddModelBase {
       return None
       
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.builder.withAlertDt(curDt).withAlertType("lowBalanceAlert").build.save
+    CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     Option(ModelResult.builder.withResult(new LowBalanceAlertResult(ctxt)).build) 
   }
@@ -122,7 +122,7 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
     // Check if at least min number of hours elapsed since last alert  
     val curDt = currentDateTime
     val alertHistory = CustAlertHistory.getRecentOrDefault
-    if (curDt.timeDiffInHrs(alertHistory.lastAlertDt) < gPref.minAlertDurationInHrs)
+    if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
       return None
       
     // get history of transaction whose balance is less than minAlertBalance in last N days
@@ -140,14 +140,14 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
       return None
       
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.builder.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).build.save
+    CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     Option(ModelResult.builder.withResult(new LowBalanceAlertResult2(ctxt)).build) 
   }
 }
 
 // Model: LocationAlert
-// Description: Generate alert based on locations used to perform transaction.
+// Description: Generate alert based on locations of transaction transaction .
 //              This model uses more complex logic of maintaining than simply comparing the current balance
 //
 // Conditions: Generate an alert 
