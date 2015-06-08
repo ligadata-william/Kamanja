@@ -100,10 +100,21 @@ trait RDDObject[T <: Any, B <: Any] {
   // get builder
   def builder : B 
   
-  // Get for Current Key
+  // First group of functions retrieve one object (either recent or for a given key & filter)
+  // Get recent entry for the Current Key
   def getRecent: Option[T] 
   def getRecentOrDefault: T
   
+  // Get recent entry for the given key
+  def getRecent(key: Array[String]): Option[T]
+  def getRecentOrDefault(key: Array[String]): T
+  
+  def getOne(tmRange: TimeRange, f: T => Boolean): Option[T]
+  def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T]
+  def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T
+  def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T
+
+  // This group of functions retrieve collection of objects 
   def getRDDForCurrKey(f: T => Boolean): RDD[T]
   def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T]
   
@@ -112,9 +123,9 @@ trait RDDObject[T <: Any, B <: Any] {
   def getRDD(tmRange: TimeRange) : RDD[T]
   def getRDD(func: T => Boolean) : RDD[T]
   
-  def getRDDForKey(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T]
-  def getRDDForKey(key: Array[String], func: T => Boolean) : RDD[T]
-  def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T]
+  def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T]
+  def getRDD(key: Array[String], func: T => Boolean) : RDD[T]
+  def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T]
 }
 
 object StringUtils {
@@ -192,7 +203,6 @@ case class RddDate(tms : Long) extends Date (tms) {
   def timeDiffInHrs(dt: Date): Int = 0
   def timeDiffInHrs(dt: RddDate): Int = 0
   def lastNdays(days: Int) : TimeRange = null;
-  
 }
 
 object RddUtils {

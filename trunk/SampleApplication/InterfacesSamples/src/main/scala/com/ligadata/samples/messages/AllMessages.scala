@@ -27,6 +27,15 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
+  // Get recent entry for the given key
+  override def getRecent(key: Array[String]): Option[T] = None
+  override def getRecentOrDefault(key: Array[String]): T = null
+  
+  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
   override def getRecentOrDefault: T = null
@@ -38,9 +47,9 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
   override def getRDD(tmRange: TimeRange) : RDD[T] = null
   override def getRDD(func: T => Boolean) : RDD[T] = null
   
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
 class CustAlertHistoryBuilder {
@@ -116,6 +125,15 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
+  // Get recent entry for the given key
+  override def getRecent(key: Array[String]): Option[T] = None
+  override def getRecentOrDefault(key: Array[String]): T = null
+  
+  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
   override def getRecentOrDefault: T = null
@@ -127,9 +145,9 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences, 
   override def getRDD(tmRange: TimeRange) : RDD[T] = null
   override def getRDD(func: T => Boolean) : RDD[T] = null
   
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
 class CustPreferencesBuilder {
@@ -202,6 +220,15 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTr
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
+  // Get recent entry for the given key
+  override def getRecent(key: Array[String]): Option[T] = None
+  override def getRecentOrDefault(key: Array[String]): T = null
+  
+  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
   override def getRecentOrDefault: T = null
@@ -213,9 +240,9 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction, CustTr
   override def getRDD(tmRange: TimeRange) : RDD[T] = null
   override def getRDD(func: T => Boolean) : RDD[T] = null
   
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
 class CustTransactionBuilder {
@@ -284,6 +311,15 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
+  // Get recent entry for the given key
+  override def getRecent(key: Array[String]): Option[T] = None
+  override def getRecentOrDefault(key: Array[String]): T = null
+  
+  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
+  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
   override def getRecentOrDefault: T = null
@@ -295,9 +331,9 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def getRDD(tmRange: TimeRange) : RDD[T] = null
   override def getRDD(func: T => Boolean) : RDD[T] = null
   
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], func: T => Boolean) : RDD[T] = null
-  override def getRDDForKey(key: Array[String], tmRange: TimeRange) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], func: T => Boolean) : RDD[T] = null
+  override def getRDD(key: Array[String], tmRange: TimeRange) : RDD[T] = null
 }
 
 class GlobalPreferencesBuilder  {

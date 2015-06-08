@@ -127,7 +127,7 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
       
     // get history of transaction whose balance is less than minAlertBalance in last N days
     val lookBackTime = curDt.lastNdays(gPref.numLookbackDaysForMultiDayMinBalanceAlert)
-    val rcntTxns = CustTransaction.getRDD(lookBackTime, { trn => trn.balance < gPref.minAlertBalance })
+    val rcntTxns = CustTransaction.getRDD(lookBackTime, { trn : CustTransaction => trn.balance < gPref.minAlertBalance })
     
     // quick check to whether it is worth doing group by operation
     if (rcntTxns.isEmpty || rcntTxns.count < gPref.maxNumDaysAllowedWithMinBalance)
@@ -145,3 +145,25 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
     Option(ModelResult.builder.withResult(new LowBalanceAlertResult2(ctxt)).build) 
   }
 }
+
+// Model: LocationAlert
+// Description: Generate alert based on locations used to perform transaction.
+//              This model uses more complex logic of maintaining than simply comparing the current balance
+//
+// Conditions: Generate an alert 
+//   if current location is more than < 100 (configurable) and 
+//   if number of days that balance < 100 in last 30 days is more than 3 days
+//   if low balance alert hasn't been issued in 48 hours and 
+//   if customer preferences has minBalanceAlertOptOut is false.
+//
+// Inputs:
+//   CustPreferences     - one record for each customer
+//   CustAlertHistory    - one record for each customer (no history accessed even if system maintains)
+//   ModelPreferences    - one global record where model level constants are configured
+//   CustTransaction     - current transaction message and history of messages in last 30 days
+//                         balance attribute in transaction reflects the current balance after this transaction
+// Output:
+//   CustAlertHistory    - a new entry is created - system decides on how to store/how many to keep based on policies
+//   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
+//
+
