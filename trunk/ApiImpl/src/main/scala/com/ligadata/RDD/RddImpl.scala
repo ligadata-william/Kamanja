@@ -6,22 +6,22 @@ import org.apache.log4j.Logger
 import com.ligadata.FatafatBase._
 import scala.collection.mutable.ArrayBuffer
 
-class RddImpl[T <: RDDBase] extends RDD[T] {
+class RddImpl[T <: Any] extends RDD[T] {
   private val collections = ArrayBuffer[T]()
 
   override def iterator: Iterator[T] = collections.iterator
 
-  override def map[U <: RDDBase](f: T => U): RDD[U] = {
+  override def map[U <: Any](f: T => U): RDD[U] = {
     val newrdd = new RddImpl[U]()
     newrdd.collections ++= collections.iterator.map(f)
     newrdd
   }
 
-  override def map[U <: RDDBase](tmRange: TimeRange, f: T => U): RDD[U] = {
+  override def map[U <: Any](tmRange: TimeRange, f: T => U): RDD[U] = {
     throw new Exception("Unhandled function map")
   }
 
-  override def flatMap[U <: RDDBase](f: T => TraversableOnce[U]): RDD[U] = {
+  override def flatMap[U <: Any](f: T => TraversableOnce[U]): RDD[U] = {
     val newrdd = new RddImpl[U]()
     newrdd.collections ++= collections.iterator.flatMap(f)
     newrdd
