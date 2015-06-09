@@ -186,65 +186,72 @@ class CompilerProxy{
       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
 				       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
       val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir,recompile)
-
-      var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
-
-      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
       
-      if (classPath.size == 0)
-	classPath = "."
+      /** if errors were encountered... the model definition is not manufactured.
+       *  Avoid Scala compilation of the broken src.  Src file MAY be available 
+       *  in classStr.  However, if there were simple syntactic issues or simple semantic
+       *  issues, it may not be generated.
+       */
+      if (modDef != null) { 
 
-      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-
-      if (modDef.DependencyJarNames != null) {
-	val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
-	if (classPath != null && classPath.size > 0) {
-          classPath = classPath + ":" + depJars 
-	} else {
-          classPath = depJars 
-	}
-      }
-
-      var (jarFile,depJars) = 
-	compiler.createJar(classStr,
-			   classPath,
-			   pmmlScalaFile,
-			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
-			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-			   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-			   false,
-			   compiler_work_dir)
-
-      /* The following check require cleanup at some point */
-      if(jarFile.compareToIgnoreCase("Not Set") == 0 ){
-	throw new ModelCompilationFailedException("Failed to produce the jar file")
-      }
+	      var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"    
 	
-      modDef.jarName = jarFile
-      modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
-      if( modDef.ver == 0 ){
-	modDef.ver     = 1
-      }
-      if( modDef.modelType == null){
-	modDef.modelType = "RuleSet"
-      }
+	      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+	      
+	      if (classPath.size == 0)
+	    	  classPath = "."
 
-      modDef.objectDefinition = pmmlStr
-      modDef.objectFormat = fXML
+    	  val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+
+    	  if (modDef.DependencyJarNames != null) {
+			  val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+			  if (classPath != null && classPath.size > 0) {
+				  classPath = classPath + ":" + depJars 
+			  } else {
+				  classPath = depJars 
+			  }
+	      }
+
+	      var (jarFile,depJars) = 
+				compiler.createJar(classStr,
+						   classPath,
+						   pmmlScalaFile,
+						   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+						   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MANIFEST_PATH"),
+						   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+						   MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+						   false,
+						   compiler_work_dir)
+
+		  /* The following check require cleanup at some point */
+		  if(jarFile.compareToIgnoreCase("Not Set") == 0 ){
+			  throw new ModelCompilationFailedException("Failed to produce the jar file")
+		  }
+	
+	      modDef.jarName = jarFile
+		  modDef.dependencyJarNames = depJars.map(f => {(new java.io.File(f)).getName})
+	      if( modDef.ver == 0 ) {
+	    	  modDef.ver = 1
+	      }
+	      if( modDef.modelType == null) {
+	    	  modDef.modelType = "RuleSet"
+	      }
+
+	      modDef.objectDefinition = pmmlStr
+	      modDef.objectFormat = fXML
+ 
+      } /** end of (modDef != null) */
 
       (classStr,modDef)
-    } catch{
-      case e:Exception =>{
-
-	logger.error("Failed to compile the model definition " + e.toString)
-	throw new ModelCompilationFailedException(e.getMessage())
-      }
-      case e:AlreadyExistsException =>{
-	logger.error("Failed to compile the model definition " + e.toString)
-
-	throw new ModelCompilationFailedException(e.getMessage())
-      }
+    } catch {
+    	case e:Exception =>{
+    		logger.error("Failed to compile the model definition " + e.toString)
+    		throw new ModelCompilationFailedException(e.getMessage())
+    	}
+    	case e:AlreadyExistsException => {
+    		logger.error("Failed to compile the model definition " + e.toString)
+    		throw new ModelCompilationFailedException(e.getMessage())
+    	}
     }
   }
 

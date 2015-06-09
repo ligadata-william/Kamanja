@@ -145,7 +145,7 @@ object MethodExtract extends App with LogTrait{
 		LoadJarIfNeeded(cp, udfLoaderInfo.loadedJars, udfLoaderInfo.loader)
 		
 		val justObjectsFcns : String = clsName.split('.').last.trim
-		//logger.trace(s"Just catalog the functions found in $clsName")
+		//logger.debug(s"Just catalog the functions found in $clsName")
 
 		if (excludeListStr != null) {
 			excludeList = excludeListStr.split(',').map(fn => fn.trim)
@@ -216,7 +216,7 @@ object MethodExtract extends App with LogTrait{
 		}
 		initFcnBuffer.append(s"}\n")
 		val fcnStr = initFcnBuffer.toString
-		//logger.info(s"$fcnStr")
+		//logger.debug(s"$fcnStr")
 
 		/** Serialize the types that were generated during the UDF lib introspection and print them to stdout */
 		val sortedTypeMap : LinkedHashMap[String, BaseElemDef] = LinkedHashMap(typeMap.toSeq.sortBy(_._1):_*)
@@ -269,7 +269,7 @@ object MethodExtract extends App with LogTrait{
 		val functionsAsJson : String = JsonSerializer.SerializeObjectListToJson("Functions",funcDefs.toArray)		
 		writeFile(functionsAsJson, fcndefPath)
 		
-		//logger.trace("Complete!")
+		//logger.debug("Complete!")
 	}
 
 	def usage : String = {
@@ -386,15 +386,15 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 
 	    // Loading all jars
 	    for (j <- jars) {
-	      //logger.info("Processing Jar " + j.trim)
+	      //logger.debug("Processing Jar " + j.trim)
 	      val fl = new File(j.trim)
 	      if (fl.exists) {
 	        try {
 	          if (loadedJars(fl.getPath())) {
-	            //logger.info("Jar " + j.trim + " already loaded to class path.")
+	            //logger.debug("Jar " + j.trim + " already loaded to class path.")
 	          } else {
 	            loader.addURL(fl.toURI().toURL())
-	            //logger.info("Jar " + j.trim + " added to class path.")
+	            //logger.debug("Jar " + j.trim + " added to class path.")
 	            loadedJars += fl.getPath()
 	          }
 	        } catch {

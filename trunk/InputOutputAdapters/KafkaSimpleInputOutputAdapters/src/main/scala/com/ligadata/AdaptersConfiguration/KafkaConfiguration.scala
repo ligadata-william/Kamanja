@@ -26,6 +26,8 @@ object KafkaQueueAdapterConfiguration {
     qc.className = inputConfig.className
     qc.jarName = inputConfig.jarName
     qc.dependencyJars = inputConfig.dependencyJars
+    qc.delimiterString = if (inputConfig.delimiterString == null) null else inputConfig.delimiterString.trim
+    qc.associatedMsg = if (inputConfig.associatedMsg == null) null else inputConfig.associatedMsg.trim
 
     val adapCfg = parse(inputConfig.adapterSpecificCfg)
     if (adapCfg == null || adapCfg.values == null) {

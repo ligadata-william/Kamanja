@@ -648,7 +648,7 @@ class MethodCmd(  val mgr : MdMgr
 	 */
 	private def SimpleType(unQualifiedTypeName : String, typeParts : Array[String]) : (String, BaseElemDef) = {
 	  	var key : String = s"System.$unQualifiedTypeName"
-	  	//logger.trace(s"SimpleType(unQualifiedTypeName = $unQualifiedTypeName)")
+	  	//logger.debug(s"SimpleType(unQualifiedTypeName = $unQualifiedTypeName)")
 
 	  	if (unQualifiedTypeName.contains("Double")) {
 	  		val stop : Int = 0

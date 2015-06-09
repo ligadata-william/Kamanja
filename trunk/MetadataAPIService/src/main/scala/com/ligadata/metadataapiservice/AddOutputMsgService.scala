@@ -45,8 +45,7 @@ class AddOutputMsgService(requestContext: RequestContext, userid: Option[String]
       MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, outputMsgJson, AuditConstants.FAIL, "", nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString)
     } else {
-      val apiResult = MetadataAPIOutputMsg.AddOutputMessage(outputMsgJson, formatType)
-      MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, outputMsgJson, AuditConstants.SUCCESS, "", nameVal)
+      val apiResult = MetadataAPIOutputMsg.AddOutputMessage(outputMsgJson, formatType, userid)
       requestContext.complete(apiResult)
     }
 

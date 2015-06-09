@@ -68,29 +68,28 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
     }
     arg.ObjectType match {
       case "model" => {
-	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "message" => {
-	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetMessageDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "container" => {
-	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetContainerDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "function" => {
-	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "concept" => {
-	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "type" => {
-	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version)
+	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version,userid)
       }
       case "outputmsg" => {
         
 	      apiResult = MetadataAPIOutputMsg.GetOutputMessageDef(nameSpace,arg.Name,formatType,version)
       }
     }
-    MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.SUCCESS,"",nameSpace+"."+name+"."+version)
     apiResult
   }
 

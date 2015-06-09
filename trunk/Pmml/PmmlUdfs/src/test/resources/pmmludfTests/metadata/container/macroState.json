@@ -1,0 +1,176 @@
+{
+  "Container": {
+    "NameSpace": "System",
+    "Name": "macrostate",
+    "Version": "00.01.00",
+    "Description": "macro state container",
+    "Fixed": "true",
+    "Elements": [ 
+      {
+        "Field": {
+          "Name": "desynpuf_id",
+          "Type": "System.String"
+        }
+      },
+      {
+        "Field": {
+          "Name": "FortyYrsOrOlder",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "desynpuf_id_hl7s",
+          "Type": "System.ArrayOfHL7"
+        }
+      },
+      {
+        "Field": {
+          "Name": "hl7InfoThisLastYear",
+          "Type": "System.ArrayOfHL7"
+        }
+      },
+      {
+        "Field": {
+          "Name": "WithSmokingHistory",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "desynpuf_id_inpatient_claims",
+          "Type": "System.ArrayOfInpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inpatientInfoThisLastYear",
+          "Type": "System.ArrayOfInpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "desynpuf_id_outpatient_claims",
+          "Type": "System.ArrayOfOutpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outpatientInfoThisLastYear",
+          "Type": "System.ArrayOfOutpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "WithEnvironmentalExposures",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Dyspnoea",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "ChronicCough",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "ChronicSputum",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "COPDSymptoms",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "FamilyHistory",
+          "Type": "System.Boolean"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimsByDateValues",
+          "Type": "System.ArrayOfArrayOfInpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimsByDateKeys",
+          "Type": "System.ArrayOfInt"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimCostTuples",
+          "Type": "System.ArrayOfArrayOfTupleOfAny6"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimCostsEachDate",
+          "Type": "System.ArrayOfArrayOfDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimTotalCostEachDate",
+          "Type": "System.ArrayOfDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimsByDateValues",
+          "Type": "System.ArrayOfArrayOfOutpatientClaim"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimsByDateKeys",
+          "Type": "System.ArrayOfInt"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimCostTuples",
+          "Type": "System.ArrayOfArrayOfTupleOfAny5"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimCostsEachDate",
+          "Type": "System.ArrayOfArrayOfDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "inPatientClaimCostsByDate",
+          "Type": "System.ImmutableMapOfIntDouble"
+        }
+      },
+      {
+        "Field": {
+          "Name": "outPatientClaimTotalCostEachDate",
+          "Type": "System.ArrayOfDouble"
+        }
+      }
+  ],
+  "PartitionKey": [
+      "desynpuf_id"
+  ],
+  "PrimaryKey": [
+      "desynpuf_id"
+  ]
+
+  }
+}
+
+

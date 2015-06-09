@@ -53,25 +53,25 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
 
     objectType match {
       case "model" => {
-	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false)
+	      apiResult = MetadataAPIImpl.GetAllModelsFromCache(false,userid)
       }
       case "message" => {
-	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllMessagesFromCache(true,userid)
       }
       case "container" => {
-	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllContainersFromCache(true,userid)
       }
       case "function" => {
-	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true,userid)
       }
       case "concept" => {
-	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true,userid)
       }
       case "type" => {
-	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true)
+	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true,userid)
       }
       case "outputmsg" => {
-	      apiResult = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true)
+	      apiResult = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
       }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")

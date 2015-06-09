@@ -4,6 +4,8 @@ package com.ligadata.FatafatBase
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
   var formatOrInputAdapterName: String = _ // CSV/JSON/XML for input adapter. For output it is just corresponding input adapter name. For Status it is default
+  var delimiterString: String = _ // Delimiter String for CSV
+  var associatedMsg: String = _ // Queue Associated Message
   var className: String = _ // Class where the Adapter can be loaded (Object derived from InputAdapterObj)
   var jarName: String = _ // Jar where the className can be found
   var dependencyJars: Set[String] = _ // All dependency Jars for jarName 
@@ -65,7 +67,7 @@ trait ExecContext {
   val output: Array[OutputAdapter]
   val envCtxt: EnvContext
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit
 }
 
 trait MakeExecContext {

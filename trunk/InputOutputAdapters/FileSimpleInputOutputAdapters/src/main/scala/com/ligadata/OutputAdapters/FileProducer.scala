@@ -36,9 +36,9 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
   val compString = if (fc.CompressionString == null) null else fc.CompressionString.trim
 
   if (compString == null || compString.size == 0) {
-    os = new FileOutputStream(sFileName);
+    os = new FileOutputStream(sFileName, fc.append);
   } else if (compString.compareToIgnoreCase("gz") == 0) {
-    os = new GZIPOutputStream(new FileOutputStream(sFileName))
+    os = new GZIPOutputStream(new FileOutputStream(sFileName, fc.append)) // fc.append make sense here??
   } else {
     throw new Exception("Not yet handled other than text & GZ files")
   }

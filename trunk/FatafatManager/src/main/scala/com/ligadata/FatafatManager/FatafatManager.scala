@@ -78,9 +78,13 @@ object FatafatConfiguration {
   var dataStoreType: String = _
   var dataSchemaName: String = _
   var dataLocation: String = _
+  var databasePrincipal: String = _
+  var databaseKeytab: String = _
   var statusInfoStoreType: String = _
   var statusInfoSchemaName: String = _
   var statusInfoLocation: String = _
+  var statusInfoPrincipal: String = _
+  var statusInfoKeytab: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var clusterId: String = _
@@ -94,6 +98,9 @@ object FatafatConfiguration {
   var waitProcessingSteps = collection.immutable.Set[Int]()
   var waitProcessingTime = 0
   // Debugging info configs -- End
+
+  var shutdown = false
+  var participentsChangedCntr: Long = 0
 
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
@@ -279,6 +286,7 @@ class FatafatManager {
       var engineDistributionZkNodePath = ""
       var metadataUpdatesZkNodePath = ""
       var adaptersStatusPath = ""
+      var dataChangeZkNodePath = ""
 
       if (FatafatConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
@@ -286,6 +294,7 @@ class FatafatManager {
         engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
+        dataChangeZkNodePath = zkNodeBasePath + "/datachange"
       }
 
       FatafatMdCfg.ValidateAllRequiredJars
@@ -299,7 +308,7 @@ class FatafatManager {
 
       if (retval) {
         FatafatMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, FatafatConfiguration.zkConnectString, metadataUpdatesZkNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
-        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
+        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
       /*
@@ -319,7 +328,7 @@ class FatafatManager {
     } catch {
       case e: Exception => {
         LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        // LOG.info("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
+        // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }
     } finally {
@@ -331,7 +340,8 @@ class FatafatManager {
 
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
-      if (ln.compareToIgnoreCase("Quit") == 0)
+      val trmln = ln.trim
+      if (trmln.length() > 0 && (trmln.compareToIgnoreCase("Quit") == 0 || trmln.compareToIgnoreCase("Exit") == 0))
         return true
     }
     return false;
@@ -427,8 +437,52 @@ class FatafatManager {
     }
 **/
 
-    print("Waiting till user kills the process")
-    while (true) { // Infinite wait for now
+
+    var timeOutEndTime: Long = 0
+    var participentsChangedCntr: Long = 0
+    var lookingForDups = false
+
+    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C")
+    while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
+      if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
+        lookingForDups = false
+        timeOutEndTime = 0
+        participentsChangedCntr = FatafatConfiguration.participentsChangedCntr
+        val cs = FatafatLeader.GetClusterStatus
+        if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+          val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+          if (isNotLeader) {
+            val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+            if (sameNodeIds.size > 1) {
+              lookingForDups = true
+              var mxTm = if (FatafatConfiguration.zkSessionTimeoutMs > FatafatConfiguration.zkConnectionTimeoutMs) FatafatConfiguration.zkSessionTimeoutMs else FatafatConfiguration.zkConnectionTimeoutMs
+              if (mxTm < 5000) // if the value is < 5secs, we are taking 5 secs
+                mxTm = 5000
+              timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
+              LOG.error("Found more than one of NodeId:%s in Participents:{%s}. Waiting for %d milli seconds to check whether it is real duplicate or not.".format(cs.nodeId, cs.participants.mkString(","), mxTm))
+            }
+          }
+        }
+      }
+
+      if (lookingForDups && timeOutEndTime > 0) {
+        if (timeOutEndTime < System.currentTimeMillis) {
+          lookingForDups = false
+          timeOutEndTime = 0
+          val cs = FatafatLeader.GetClusterStatus
+          if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+            val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+            if (isNotLeader) {
+              val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+              if (sameNodeIds.size > 1) {
+                LOG.error("Found more than one of NodeId:%s in Participents:{%s} for ever. Shutting down this node.".format(cs.nodeId, cs.participants.mkString(",")))
+                FatafatConfiguration.shutdown = true
+              }
+            }
+          }
+        }
+      }
+
       try {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {

@@ -138,19 +138,19 @@ class MdMgr {
   }
 
   def dump {
-    typeDefs.foreach(obj => { logger.trace("Type Key = " + obj._1) })
-    funcDefs.foreach(obj => { logger.trace("Function Key = " + obj._1) })
-    msgDefs.foreach(obj => { logger.trace("Message Key = " + obj._1) })
-    containerDefs.foreach(obj => { logger.trace("Container Key = " + obj._1) })
-    attrbDefs.foreach(obj => { logger.trace("Attribute Key = " + obj._1) })
-    modelDefs.foreach(obj => { logger.trace("Model Key = " + obj._1) })
-    compilerFuncDefs.foreach(obj => { logger.trace("CompilerFunction Key = " + obj._1) })
-    macroDefs.foreach(obj => { logger.trace("Macro Key = " + obj._1) })
-    macroDefSets.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    clusters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    clusterCfgs.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    nodes.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    adapters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    typeDefs.foreach(obj => { logger.debug("Type Key = " + obj._1) })
+    funcDefs.foreach(obj => { logger.debug("Function Key = " + obj._1) })
+    msgDefs.foreach(obj => { logger.debug("Message Key = " + obj._1) })
+    containerDefs.foreach(obj => { logger.debug("Container Key = " + obj._1) })
+    attrbDefs.foreach(obj => { logger.debug("Attribute Key = " + obj._1) })
+    modelDefs.foreach(obj => { logger.debug("Model Key = " + obj._1) })
+    compilerFuncDefs.foreach(obj => { logger.debug("CompilerFunction Key = " + obj._1) })
+    macroDefs.foreach(obj => { logger.debug("Macro Key = " + obj._1) })
+    macroDefSets.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    clusters.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    clusterCfgs.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    nodes.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    adapters.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
     outputMsgDefs.foreach(obj => { logger.trace("outputMsgDef Key = " + obj._1) })
   }
 
@@ -600,10 +600,10 @@ class MdMgr {
         case Some(fs) => {
           // val signature = key.trim.toLowerCase + "(" + args.foldLeft("")((sig, elem) => sig + "," + elem.trim.toLowerCase) + ")"
           val signature = key.trim.toLowerCase + "(" + args.map(elem => elem.trim.toLowerCase).mkString(",") + ")"
-          //logger.trace("signature => " + signature)
-          //logger.trace("fs => " + fs.size)
+          //logger.debug("signature => " + signature)
+          //logger.debug("fs => " + fs.size)
           val matches = fs.filter(f => (onlyActive == false || (onlyActive && f.IsActive)) && (signature == f.typeString))
-          //logger.trace("matches => " + matches.toSet.size)
+          //logger.debug("matches => " + matches.toSet.size)
           if (matches.size > 0) Some(matches.toSet) else None
         }
       }
@@ -689,7 +689,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val model = modelDefs.getOrElse(key, null)
     if (model == null) {
-      logger.trace("The model " + key + " doesn't exist ")
+      logger.debug("The model " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
     } else {
       var versionMatch: ModelDef = null
@@ -700,15 +700,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The model " + key + " is removed ")
+              logger.debug("The model " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The model " + key + " is activated ")
+              logger.debug("The model " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The model " + key + " is deactivated ")
+              logger.debug("The model " + key + " is deactivated ")
             }
           }
         })
@@ -721,7 +721,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val message = msgDefs.getOrElse(key, null)
     if (message == null) {
-      logger.trace("The message " + key + " doesn't exist ")
+      logger.debug("The message " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
     } else {
       var versionMatch: MessageDef = null
@@ -732,15 +732,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The message " + key + " is removed ")
+              logger.debug("The message " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The message " + key + " is activated ")
+              logger.debug("The message " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The message " + key + " is deactivated ")
+              logger.debug("The message " + key + " is deactivated ")
             }
           }
         })
@@ -753,7 +753,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val container = containerDefs.getOrElse(key, null)
     if (container == null) {
-      logger.trace("The container " + key + " doesn't exist ")
+      logger.debug("The container " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
     } else {
       var versionMatch: ContainerDef = null
@@ -764,15 +764,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The container " + key + " is removed ")
+              logger.debug("The container " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The container " + key + " is activated ")
+              logger.debug("The container " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The container " + key + " is deactivated ")
+              logger.debug("The container " + key + " is deactivated ")
             }
           }
         })
@@ -785,7 +785,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val function = funcDefs.getOrElse(key, null)
     if (function == null) {
-      logger.trace("The function " + key + " doesn't exist ")
+      logger.debug("The function " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
     } else {
       var versionMatch: FunctionDef = null
@@ -796,15 +796,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The function " + key + " is removed ")
+              logger.debug("The function " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The function " + key + " is activated ")
+              logger.debug("The function " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The function " + key + " is deactivated ")
+              logger.debug("The function " + key + " is deactivated ")
             }
           }
         })
@@ -817,7 +817,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val attribute = attrbDefs.getOrElse(key, null)
     if (attribute == null) {
-      logger.trace("The attribute " + key + " doesn't exist ")
+      logger.debug("The attribute " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The attribute $key may have been removed already")
     } else {
       var versionMatch: BaseAttributeDef = null
@@ -828,15 +828,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The attribute " + key + " is removed ")
+              logger.debug("The attribute " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The attribute " + key + " is activated ")
+              logger.debug("The attribute " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The attribute " + key + " is deactivated ")
+              logger.debug("The attribute " + key + " is deactivated ")
             }
           }
         })
@@ -849,7 +849,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val typ = typeDefs.getOrElse(key, null)
     if (typ == null) {
-      logger.trace("The type " + key + " doesn't exist ")
+      logger.debug("The type " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
     } else {
       var versionMatch: BaseTypeDef = null
@@ -860,15 +860,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The type " + key + " is removed ")
+              logger.debug("The type " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The type " + key + " is activated ")
+              logger.debug("The type " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The type " + key + " is deactivated ")
+              logger.debug("The type " + key + " is deactivated ")
             }
           }
         })
@@ -2626,7 +2626,7 @@ class MdMgr {
     classpath: String,
     clusterId: String,
     power: Int,
-    roles: Int,
+    roles: Array[String],
     description: String): NodeInfo = {
     val ni = new NodeInfo
     ni.nodeId = nodeId
@@ -2701,7 +2701,7 @@ class MdMgr {
 
   def MakeAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String): AdapterInfo = {
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): AdapterInfo = {
     val ai = new AdapterInfo
     ai.name = name
     ai.typeString = typeString
@@ -2711,6 +2711,8 @@ class MdMgr {
     if (dependencyJars != null) {
       ai.dependencyJars = dependencyJars.toArray
     }
+    ai.delimiterString = delimiterString // Delimiter String for CSV
+    ai.associatedMsg = associatedMsg // Queue Associated Message
     ai.adapterSpecificCfg = adapterSpecificCfg
     ai.inputAdapterToVerify = inputAdapterToVerify
     ai
@@ -2978,6 +2980,8 @@ object MdMgr extends LogTrait {
     val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
     retVerInfo
   }
+  
+  def UnknownVersion : String = "000000000000000000000"
 
   def Pad0s2Version(verInfo: Long): String = {
     var remVer = verInfo

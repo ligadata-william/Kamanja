@@ -2,6 +2,7 @@ package com.ligadata.Compiler
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
+import org.xml.sax.Locator
 import scala.collection._
 import scala.collection.mutable.Stack
 import org.apache.log4j.Logger
@@ -10,6 +11,11 @@ class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTr
 	var start = false
 	var node: PmmlNode = _
 	val buffer:StringBuilder = new StringBuilder()
+	var _locator : Locator = null
+	
+	override def setDocumentLocator(locator : Locator) {
+		_locator = locator
+	}
 	
 	override def startElement(namespaceURI: String, localName: String , qName:String , atts: Attributes ) = {
 		buffer.setLength(0);
@@ -18,14 +24,16 @@ class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTr
 			logger.debug(s"...encountered $qName")
 			/** dispatch the element visitor that will build the appropriate kind of PmmlNode for it.and push to stack 
 			 	The dispatcher pushes it on the stack to be decorated by its children. */
-			ctx.dispatchElementVisitor(ctx, namespaceURI, localName , qName, atts)
+			ctx.dispatchElementVisitor(ctx
+									, namespaceURI
+									, localName 
+									, qName
+									, atts
+									, _locator.getLineNumber()
+									, _locator.getColumnNumber())
 			
-			//if (qName == "SimpleRule") {
-				//logger.debug("reached SimpleRule")
-			//}
 		} else {
 			logger.debug(s"...element $qName is of no interest at all")
-			//ctx.dispatchElementVisitor(ctx, namespaceURI, localName , qName, atts)
 		}
 	}
 

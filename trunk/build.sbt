@@ -33,6 +33,8 @@ lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata,
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
+lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase)
+
 lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/FileSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(FatafatBase, FatafatData, Storage, Serialize)
@@ -90,4 +92,6 @@ lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase)
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs)
 
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage)
+
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
 

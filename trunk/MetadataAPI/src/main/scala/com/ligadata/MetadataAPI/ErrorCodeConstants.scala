@@ -58,6 +58,7 @@ object ErrorCodeConstants {
   
   //Function
    val Add_Function_Successful = "Function Added Successfully";
+   val Add_Function_Warning = "Some functions failed to update"
    val Add_Function_Failed = "Failed to Add Function";
    val Remove_Function_Successfully = "Deleted Function Successfully";
    val Remove_Function_Failed = "Failed to Delete Function";

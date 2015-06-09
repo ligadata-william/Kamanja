@@ -367,7 +367,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
+  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, databasePrincipal: String, databaseKeytab: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
@@ -393,6 +393,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         case "hbase" => {
           connectinfo += ("hostlist" -> dataLocation)
           connectinfo += ("schema" -> storeName)
+          connectinfo += ("principal" -> databasePrincipal)
+          connectinfo += ("keytab" -> databaseKeytab)
         }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
@@ -844,17 +846,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Adding new messages or Containers
   //BUGBUG:: May be we need to lock before we do anything here
-  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit = {
+  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, databasePrincipal: String, databaseKeytab: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoPrincipal: String, statusInfoKeytab: String): Unit = {
     logger.debug("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     if (_allDataDataStore == null) {
       logger.debug("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
-      _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation)
+      _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation, databasePrincipal, databaseKeytab)
     }
     if (_runningTxnsDataStore == null) {
-      _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation)
+      _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation, statusInfoPrincipal, statusInfoKeytab)
     }
     if (_checkPointAdapInfoDataStore == null) {
-      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation)
+      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation, statusInfoPrincipal, statusInfoKeytab)
     }
 
     val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
@@ -1140,6 +1142,19 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _adapterUniqKeyValData.clear
 
     _modelsResult.clear
+  }
+
+  // Clear Intermediate results After updating them on different node or different component (like KVInit), etc
+  //BUGBUG:: May be we need to lock before we do anything here
+  def clearIntermediateResults(unloadMsgsContainers: Array[String]): Unit = {
+    if (unloadMsgsContainers == null)
+      return
+    unloadMsgsContainers.foreach(mc => {
+      val msgCont = _messagesOrContainers.getOrElse(mc.toLowerCase, null)
+      if (msgCont != null && msgCont.data != null) {
+        msgCont.data.clear
+      }
+    })
   }
 
   // Get all Status information from intermediate table

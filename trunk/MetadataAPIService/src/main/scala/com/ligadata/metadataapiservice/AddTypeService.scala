@@ -33,7 +33,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
   
   def process(typeJson:String, formatType:String): Unit = {
     
-    log.info("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
+    log.debug("Requesting AddType {},{}",typeJson.substring(1,200) + " .....",formatType)
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
       nameVal = APIService.extractNameFromJson(typeJson, AuditConstants.TYPE) 
@@ -46,8 +46,7 @@ class AddTypeService(requestContext: RequestContext, userid:Option[String], pass
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,typeJson,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,typeJson,AuditConstants.SUCCESS,"",nameVal)       
+      val apiResult = MetadataAPIImpl.AddTypes(typeJson,formatType,userid)     
       requestContext.complete(apiResult)      
     }
   }

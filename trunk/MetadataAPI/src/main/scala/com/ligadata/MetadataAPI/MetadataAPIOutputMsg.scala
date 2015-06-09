@@ -14,7 +14,7 @@ import util.control.Breaks._
 
 object MetadataAPIOutputMsg {
 
-  def AddOutputMessage(outputMsgText: String, format: String): String = {
+  def AddOutputMessage(outputMsgText: String, format: String, userid: Option[String]): String = {
     try {
       if (format != "JSON") {
         var apiResult = new ApiResult(ErrorCodeConstants.Not_Implemented_Yet, "AddOutputMsg", null, ErrorCodeConstants.Not_Implemented_Yet_Msg + ":" + outputMsgText)
@@ -22,7 +22,7 @@ object MetadataAPIOutputMsg {
       } else {
         var outputMsg = com.ligadata.outputmsgdef.OutputMsgDefImpl.parseOutputMessageDef(outputMsgText, "JSON")
         val dispkey = outputMsg.FullName + "." + MdMgr.Pad0s2Version(outputMsg.Version)
-
+        MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.INSERTOBJECT, outputMsgText, AuditConstants.SUCCESS, "", outputMsg.FullNameWithVer)
         MetadataAPIImpl.SaveObject(outputMsg, MdMgr.GetMdMgr)
         MetadataAPIImpl.AddObjectToCache(outputMsg, MdMgr.GetMdMgr)
         var objectsAdded = new Array[BaseElemDef](0)
@@ -58,9 +58,11 @@ object MetadataAPIOutputMsg {
     }
   }
 
-  def UpdateOutputMsg(outputMsgText: String): String = {
+  def UpdateOutputMsg(outputMsgText: String, userid: Option[String]): String = {
     try {
       var outputMsgDef = com.ligadata.outputmsgdef.OutputMsgDefImpl.parseOutputMessageDef(outputMsgText, "JSON")
+      MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.UPDATEOBJECT, outputMsgText, AuditConstants.SUCCESS, "", outputMsgDef.FullNameWithVer)
+
       val dispkey = outputMsgDef.FullName + "." + MdMgr.Pad0s2Version(outputMsgDef.Version)
       val key = MdMgr.MkFullNameWithVersion(outputMsgDef.nameSpace, outputMsgDef.name, outputMsgDef.ver)
       val latestVersion = GetLatestOutputMsg(outputMsgDef)
@@ -70,7 +72,7 @@ object MetadataAPIOutputMsg {
         println("isValid  " + isValid)
       }
       if (isValid) {
-        RemoveOutputMsg(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver)
+        RemoveOutputMsg(latestVersion.get.nameSpace, latestVersion.get.name, latestVersion.get.ver, userid)
         val result = AddOutputMsg(outputMsgDef)
         var objectsUpdated = new Array[BaseElemDef](0)
         var operations = new Array[String](0)
@@ -151,8 +153,10 @@ object MetadataAPIOutputMsg {
     }
   }
 
-  def GetAllOutputMsgsFromCache(active: Boolean): Array[String] = {
+  def GetAllOutputMsgsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var outputMsgList: Array[String] = new Array[String](0)
+    if (userid != None) MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.READ), AuditConstants.GETKEYS, AuditConstants.OUTPUTMSG, AuditConstants.SUCCESS, "", AuditConstants.OUTPUTMSG)
+
     try {
       val outputMsgDefs = MdMgr.GetMdMgr.OutputMessages(active, true)
       outputMsgDefs match {
@@ -211,10 +215,11 @@ object MetadataAPIOutputMsg {
   }
 
   // Remove output message with OutputMsg Name and Version Number
-  def RemoveOutputMsg(nameSpace: String, name: String, version: Long): String = {
+  def RemoveOutputMsg(nameSpace: String, name: String, version: Long, userid: Option[String]): String = {
     var key = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
     try {
       val om = MdMgr.GetMdMgr.OutputMessage(nameSpace.toLowerCase, name.toLowerCase, version, true)
+
       om match {
         case None =>
           None
@@ -223,6 +228,8 @@ object MetadataAPIOutputMsg {
           apiResult.toString()
         case Some(o) =>
           logger.debug("output message found => " + o.asInstanceOf[OutputMsgDef].FullNameWithVer)
+          if (userid != None) MetadataAPIImpl.logAuditRec(userid, Some(AuditConstants.WRITE), AuditConstants.DELETEOBJECT, "Model", AuditConstants.SUCCESS, "", o.asInstanceOf[OutputMsgDef].FullNameWithVer)
+
           MetadataAPIImpl.DeleteObject(o.asInstanceOf[OutputMsgDef])
           var objectsUpdated = new Array[BaseElemDef](0)
           objectsUpdated = objectsUpdated :+ o.asInstanceOf[OutputMsgDef]
