@@ -16,8 +16,7 @@ import com.google.protobuf.ExtensionRegistry;
 import com.ligadata.Serialize.MetadataObjects._
 import com.ligadata.Serialize.MetadataObjects.MetadataType._
 import java.io._
-
-case class ProtoBufSerializationException(e: String) extends Throwable(e)
+import com.ligadata.Exceptions._
 
 class ProtoBufSerializer extends Serializer{
 

@@ -10,8 +10,7 @@ import com.ligadata.fatafat.metadata._
 
 import com.twitter.chill.ScalaKryoInstantiator
 import com.esotericsoftware.kryo.io.{Input, Output}
-
-case class KryoSerializationException(e: String) extends Throwable(e)
+import com.ligadata.Exceptions._
 
 class KryoSerializer extends Serializer{
 

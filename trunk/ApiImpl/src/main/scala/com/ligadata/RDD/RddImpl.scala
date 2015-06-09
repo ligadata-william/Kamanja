@@ -11,17 +11,17 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def iterator: Iterator[T] = collections.iterator
 
-  override def map[U <: Any](f: T => U): RDD[U] = {
+  override def map[U: ClassTag](f: T => U): RDD[U] = {
     val newrdd = new RddImpl[U]()
     newrdd.collections ++= collections.iterator.map(f)
     newrdd
   }
 
-  override def map[U <: Any](tmRange: TimeRange, f: T => U): RDD[U] = {
+  override def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U] = {
     throw new Exception("Unhandled function map")
   }
 
-  override def flatMap[U <: Any](f: T => TraversableOnce[U]): RDD[U] = {
+  override def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U] = {
     val newrdd = new RddImpl[U]()
     newrdd.collections ++= collections.iterator.flatMap(f)
     newrdd
@@ -47,7 +47,7 @@ class RddImpl[T <: Any] extends RDD[T] {
     throw new Exception("Unhandled function intersection")
   }
 
-  override def groupBy[K](f: T => K): RDD[(K, Seq[T])] = null
+  override def groupBy[K](f: T => K): RDD[(K, Iterable[T])] = null
 
   override def foreach(f: T => Unit): Unit = {
     collections.iterator.foreach(f)
@@ -60,18 +60,18 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def subtract(other: RDD[T]): RDD[T] = null
 
-  override def count: Int = size
+  override def count(): Long = size()
 
-  override def size: Int = collections.size
+  override def size(): Long = collections.size
 
-  override def first: Option[T] = {
+  override def first(): Option[T] = {
     if (collections.size > 0)
       return Some(collections(0))
     None
   }
 
   // def last(index: Int): Option[T]
-  override def last: Option[T] =  {
+  override def last(): Option[T] = {
     if (collections.size > 0)
       return Some(collections(collections.size - 1))
     None
@@ -85,7 +85,7 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def min[U: ClassTag](f: (Option[U], T) => U): Option[U] = None
 
-  override def isEmpty: Boolean = collections.isEmpty
+  override def isEmpty(): Boolean = collections.isEmpty
 
   override def keyBy[K](f: T => K): RDD[(K, T)] = null
 }

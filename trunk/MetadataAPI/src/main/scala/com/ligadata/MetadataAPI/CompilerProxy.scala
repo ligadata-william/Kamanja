@@ -19,9 +19,7 @@ import com.ligadata.messagedef._
 import com.ligadata.Compiler._
 import com.ligadata.fatafat.metadata.ObjFormatType._
 import com.ligadata.Serialize._
-
-case class MsgCompilationFailedException(e: String) extends Exception(e)
-case class ModelCompilationFailedException(e: String) extends Exception(e)
+import com.ligadata.Exceptions._
 
 object JarPathsUtils{
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {

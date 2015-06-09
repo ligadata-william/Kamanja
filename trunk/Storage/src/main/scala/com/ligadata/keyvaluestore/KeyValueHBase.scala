@@ -18,6 +18,7 @@ import org.apache.log4j._
 
 import java.nio.ByteBuffer
 import java.io.IOException
+import com.ligadata.Exceptions._
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*

@@ -9,6 +9,8 @@ import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.BatchStatement
 import java.nio.ByteBuffer
 import org.apache.log4j._
+import com.ligadata.Exceptions._
+
 /*
   	You open connection to a cluster hostname[,hostname]:port
   	You could provide username/password
@@ -24,8 +26,6 @@ import org.apache.log4j._
 	USE default;
 	CREATE TABLE default (key blob, value blob, primary key(key) );
  */
-
-case class CreateKeySpaceFailedException(e: String) extends Exception(e)
 
 class KeyValueCassandraTx(owner: DataStore) extends Transaction {
   var parent: DataStore = owner

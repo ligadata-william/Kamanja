@@ -8,8 +8,7 @@ import java.util.Calendar
 import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
-import com.ligadata.keyvaluestore.cassandra.CreateKeySpaceFailedException
-
+import com.ligadata.Exceptions._
 
 /*
   	You open connection to a cluster hostname[,hostname]:port

@@ -6,6 +6,7 @@ import java.nio.ByteBuffer
 import com.redis.cluster._
 import com.redis._
 import collection.mutable.WrappedArray
+import com.ligadata.Exceptions._
 
 class KeyValueRedisTx(owner: DataStore) extends Transaction {
   var parent: DataStore = owner

@@ -20,6 +20,7 @@ import com.ligadata.fatafat.metadata.ContainerDef
 import com.ligadata.fatafat.metadata.ArrayTypeDef
 import com.ligadata.fatafat.metadata.ArrayBufTypeDef
 import com.ligadata.fatafat.metadata._
+import com.ligadata.Exceptions._
 
 trait Attrib {
   var NameSpace: String
@@ -31,7 +32,6 @@ class Message(var msgtype: String, var NameSpace: String, var Name: String, var 
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
-case class MessageException(message: String) extends Exception(message)
 
 case class Concept(var NameSpace: Option[String], var Name: Option[String], var Type: Option[String])
 class ConceptList(var Concepts: List[Concept])
