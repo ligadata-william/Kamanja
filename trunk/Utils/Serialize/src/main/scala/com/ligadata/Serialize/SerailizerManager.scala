@@ -1,6 +1,6 @@
 package com.ligadata.Serialize
 
-case class SerializerManagerException(message: String) extends Exception(message)
+import com.ligadata.Exceptions._
 
 object SerializerManager {
   def GetSerializer(serializerType: String): Serializer = {

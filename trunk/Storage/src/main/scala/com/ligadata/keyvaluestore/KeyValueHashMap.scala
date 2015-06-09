@@ -5,6 +5,8 @@ import com.ligadata.keyvaluestore._
 import java.io.File;
 import java.nio.ByteBuffer
 import org.apache.log4j._
+import com.ligadata.Exceptions._
+
 /*
 
 No schema setup

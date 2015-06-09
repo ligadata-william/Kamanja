@@ -3,6 +3,7 @@ package com.ligadata.MetadataAPI
 import com.ligadata.fatafat.metadata.ObjType._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.Exceptions._
 
 import org.json4s._
 import org.json4s.JsonDSL._

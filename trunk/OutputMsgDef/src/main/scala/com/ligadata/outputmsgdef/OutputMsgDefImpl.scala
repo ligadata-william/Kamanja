@@ -7,6 +7,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.fatafat.metadata.ObjType._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.Exceptions._
 import org.apache.log4j.Logger
 import scala.collection.mutable.ListBuffer
 

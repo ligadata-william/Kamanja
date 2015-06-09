@@ -1,9 +1,12 @@
 package com.ligadata.FatafatBase
 
 import scala.language.implicitConversions
-import scala.reflect.{ classTag, ClassTag }
+// import scala.reflect.{ classTag, ClassTag }
 import org.apache.log4j.Logger
 import java.util.Date
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
@@ -36,7 +39,7 @@ class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
   def count: Long = self.size
   
   def countByKey: Map[K, Long] = null
-  def groupByKey: RDD[(K, Seq[V])] = null
+  def groupByKey: RDD[(K, Iterable[V])] = null
 
   // Join Functions
   def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = null
@@ -47,15 +50,14 @@ class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
 }
 
 trait RDD[T <: Any] {
-  // val ctag: ClassTag[T]
   val LOG = Logger.getLogger(getClass);
 
   def iterator: Iterator[T]
 
-  def map[U <: Any](f: T => U): RDD[U]
-  def map[U <: Any](tmRange: TimeRange, f: T => U): RDD[U]
+  def map[U: ClassTag](f: T => U): RDD[U]
+  def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U]
 
-  def flatMap[U <: Any](f: T => TraversableOnce[U]): RDD[U]
+  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U]
 
   def filter(f: T => Boolean): RDD[T]
   def filter(tmRange: TimeRange, f: T => Boolean): RDD[T]
@@ -63,9 +65,11 @@ trait RDD[T <: Any] {
   def union(other: RDD[T]): RDD[T]
   def ++(other: RDD[T]): RDD[T] = this.union(other)
 
+  // def sortBy[K](f: (T) => K, ascending: Boolean = true) (implicit ord: Ordering[K], ctag: ClassTag[K]): RDD[T] = this.keyBy[K](f).sortByKey(ascending, numPartitions).values
+        
   def intersection(other: RDD[T]): RDD[T]
 
-  def groupBy[K](f: T => K): RDD[(K, Seq[T])]
+  def groupBy[K](f: T => K): RDD[(K, Iterable[T])]
 
   def foreach(f: T => Unit): Unit
 
@@ -73,14 +77,14 @@ trait RDD[T <: Any] {
 
   def subtract(other: RDD[T]): RDD[T]
 
-  def count: Int
+  def count(): Long
 
-  def size: Int
+  def size(): Long
 
-  def first: Option[T]
+  def first(): Option[T]
 
   // def last(index: Int): Option[T]
-  def last: Option[T] /* = this.last(0) */
+  def last(): Option[T] /* = this.last(0) */
 
   def top(num: Int): Array[T]
 
@@ -88,7 +92,7 @@ trait RDD[T <: Any] {
 
   def min[U: ClassTag](f: (Option[U], T) => U): Option[U]
 
-  def isEmpty: Boolean
+  def isEmpty(): Boolean
 
   def keyBy[K](f: T => K): RDD[(K, T)]
 }

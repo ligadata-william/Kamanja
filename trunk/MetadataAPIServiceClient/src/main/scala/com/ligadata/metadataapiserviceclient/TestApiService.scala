@@ -20,20 +20,10 @@ import java.io._
 import java.util.Properties
 import scala.io._
 import com.ligadata.Serialize._
+import com.ligadata.Exceptions._
 
-case class ApiResultInfo(statusCode: Int, statusDescription: String, resultData: String)
+case class ApiResultInfo(statusCode:Int, statusDescription: String, resultData: String)
 case class ApiResultJsonProxy(ApiResults: ApiResultInfo)
-
-case class ApiResultParsingException(e: String) extends Throwable(e)
-case class Json4sParsingException(e: String) extends Throwable(e)
-case class Json4sSerializationException(e: String) extends Throwable(e)
-
-case class MissingPropertyException(e: String) extends Exception(e)
-case class MissingArgumentException(e: String) extends Exception(e)
-case class InvalidArgumentException(e: String) extends Exception(e)
-case class InvalidPropertyException(e: String) extends Exception(e)
-case class InternalErrorException(e: String) extends Exception(e)
-case class AlreadyExistsException(e: String) extends Exception(e)
 
 object TestApiService {
   val loggerName = this.getClass.getName

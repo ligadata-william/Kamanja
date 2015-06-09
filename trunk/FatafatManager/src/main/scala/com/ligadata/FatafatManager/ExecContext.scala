@@ -34,6 +34,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+          e.printStackTrace()
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))

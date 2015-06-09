@@ -10,9 +10,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-import java.util.Date
+import com.ligadata.Exceptions._
 
-case class JsonException(message: String) extends Exception(message)
+import java.util.Date
 
 case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
 case class TypeDefList(Types: List[TypeDef])
@@ -49,30 +49,8 @@ case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeI
 case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String], DelimiterString: Option[String], AssociatedMessage: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 case class JEnvCtxtJsonStr(classname: String, jarname: String, dependencyjars: Option[List[String]])
-
 case class MetadataApiArg(ObjectType: String, NameSpace: String, Name: String, Version: String, FormatType: String)
 case class MetadataApiArgList(ArgList: List[MetadataApiArg])
-
-case class UnsupportedObjectException(e: String) extends Exception(e)
-case class Json4sSerializationException(e: String) extends Exception(e)
-case class Json4sParsingException(e: String) extends Exception(e)
-case class FunctionListParsingException(e: String) extends Exception(e)
-case class FunctionParsingException(e: String) extends Exception(e)
-case class TypeDefListParsingException(e: String) extends Exception(e)
-case class TypeParsingException(e: String) extends Exception(e)
-case class TypeDefProcessingException(e: String) extends Exception(e)
-case class ConceptListParsingException(e: String) extends Exception(e)
-case class ConceptParsingException(e: String) extends Exception(e)
-case class MessageDefParsingException(e: String) extends Exception(e)
-case class ContainerDefParsingException(e: String) extends Exception(e)
-case class ModelDefParsingException(e: String) extends Exception(e)
-case class ApiResultParsingException(e: String) extends Exception(e)
-case class UnexpectedMetadataApiException(e: String) extends Exception(e)
-case class ObjectNotFoundException(e: String) extends Exception(e)
-case class CreateStoreFailedException(e: String) extends Exception(e)
-case class ZkTransactionParsingException(e: String) extends Exception(e)
-case class EngineConfigParsingException(e: String) extends Exception(e)
-case class ApiArgListParsingException(e: String) extends Exception(e)
 
 // The implementation class
 object JsonSerializer {

@@ -25,6 +25,7 @@ import java.io.IOException
 
 import java.util.Date
 import java.util.Calendar
+import com.ligadata.Exceptions._
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*

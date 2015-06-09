@@ -5,6 +5,7 @@ import com.ligadata.keyvaluestore._
 import java.io.File
 import java.nio.ByteBuffer
 import org.mapdb.Fun._;
+import com.ligadata.Exceptions._
 
 /*
 

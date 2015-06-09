@@ -17,8 +17,7 @@ import org.scalatest.Assertions._
 import scala.collection.mutable.ArrayBuffer
 import scala.io._
 import java.util.Date
-
-case class MissingArgumentException(e: String) extends Throwable(e)
+import com.ligadata.Exceptions._
 
 object TestMetadataAPI{
 

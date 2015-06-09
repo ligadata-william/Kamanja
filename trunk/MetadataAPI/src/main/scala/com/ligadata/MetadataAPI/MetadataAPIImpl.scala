@@ -37,6 +37,7 @@ import scala.collection.immutable.HashMap
 import scala.collection.mutable.HashMap
 
 import com.ligadata.messagedef._
+import com.ligadata.Exceptions._
 
 import scala.xml.XML
 import org.apache.log4j._
@@ -56,36 +57,32 @@ import util.control.Breaks._
 import java.util.Date
 
 case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], /* MetadataAdapterSpecificConfig: Option[String], */ MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
+case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
+case class TypeDefList(Types: List[TypeDef])
+
+case class Argument(ArgName: String, ArgTypeNameSpace: String, ArgTypeName: String)
+case class Function(NameSpace: String, Name: String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Version: String, JarName: String, DependantJars: List[String])
+case class FunctionList(Functions: List[Function])
+
+//case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String,Description: String, Author: String, ActiveDate: String)
+case class Concept(NameSpace: String, Name: String, TypeNameSpace: String, TypeName: String, Version: String)
+case class ConceptList(Concepts: List[Concept])
+
+// case class Attr(NameSpace: String, Name: String, Version: Long, Type: TypeDef)
+
+// case class MessageStruct(NameSpace: String, Name: String, FullName: String, Version: Long, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
+case class MessageDefinition(Message: MessageStruct)
+case class ContainerDefinition(Container: MessageStruct)
+
+case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
+case class ModelDefinition(Model: ModelInfo)
+
+case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
 case class APIResultInfo(statusCode: Int, functionName: String, resultData: String, description: String)
 case class APIResultJsonProxy(APIResults: APIResultInfo)
-
-case class UnsupportedObjectException(e: String) extends Exception(e)
-case class Json4sParsingException(e: String) extends Exception(e)
-case class FunctionListParsingException(e: String) extends Exception(e)
-case class FunctionParsingException(e: String) extends Exception(e)
-case class TypeDefListParsingException(e: String) extends Exception(e)
-case class TypeParsingException(e: String) extends Exception(e)
-case class TypeDefProcessingException(e: String) extends Exception(e)
-case class ConceptListParsingException(e: String) extends Exception(e)
-case class ConceptParsingException(e: String) extends Exception(e)
-case class MessageDefParsingException(e: String) extends Exception(e)
-case class ContainerDefParsingException(e: String) extends Exception(e)
-case class ModelDefParsingException(e: String) extends Exception(e)
-case class ApiResultParsingException(e: String) extends Exception(e)
-case class UnexpectedMetadataAPIException(e: String) extends Exception(e)
-case class ObjectNotFoundException(e: String) extends Exception(e)
-case class CreateStoreFailedException(e: String) extends Exception(e)
-case class UpdateStoreFailedException(e: String) extends Exception(e)
-
-case class LoadAPIConfigException(e: String) extends Exception(e)
-case class MissingPropertyException(e: String) extends Exception(e)
-case class InvalidPropertyException(e: String) extends Exception(e)
-case class KryoSerializationException(e: String) extends Exception(e)
-case class InternalErrorException(e: String) extends Exception(e)
-case class TranIdNotFoundException(e: String) extends Exception(e)
 
 /**
  *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the

@@ -11,6 +11,7 @@ import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.FatafatBase._
 import com.ligadata.FatafatBase.{ EnvContext, MessageContainerBase }
 import com.ligadata.fatafat.metadata._
+import com.ligadata.Exceptions._
 import java.net.URLClassLoader
 import com.ligadata.Serialize._
 import org.json4s._

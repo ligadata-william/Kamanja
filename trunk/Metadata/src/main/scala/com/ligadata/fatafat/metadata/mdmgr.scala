@@ -5,6 +5,7 @@ import scala.collection.immutable.List
 import scala.collection.mutable.{ Map, HashMap, MultiMap, Set, SortedSet, ArrayBuffer }
 import scala.io.Source._
 import scala.util.control.Breaks._
+import com.ligadata.Exceptions._
 
 import java.util._
 import java.lang.RuntimeException
@@ -14,10 +15,6 @@ import org.apache.log4j._
 
 import ObjTypeType._
 import ObjType._
-
-case class AlreadyExistsException(e: String) extends Throwable(e)
-case class ObjectNolongerExistsException(e: String) extends Throwable(e)
-case class InvalidArgumentException(e: String) extends Throwable(e)
 
 /**
  * class MdMgr
