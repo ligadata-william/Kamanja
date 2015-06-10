@@ -190,7 +190,7 @@ class FatafatManager {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown(exitCode: Int): Unit = {
+  private def Shutdown(exitCode: Int): Int = {
     if (FatafatMetadata.envCtxt != null)
       FatafatMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
     FatafatLeader.Shutdown
@@ -200,7 +200,7 @@ class FatafatManager {
       FatafatMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
-    sys.exit(exitCode)
+    return exitCode
   }
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -211,7 +211,7 @@ class FatafatManager {
         nextOption(map ++ Map('config -> value), tail)
       case option :: tail => {
         LOG.error("Unknown option " + option)
-        sys.exit(1)
+        throw new Exception("Unknown option " + option)
       }
     }
   }
@@ -381,33 +381,29 @@ class FatafatManager {
     return false;
   }
 
-  def run(args: Array[String]): Unit = {
+  def run(args: Array[String]): Int = {
     FatafatConfiguration.Reset
     FatafatLeader.Reset
     if (args.length == 0) {
       PrintUsage()
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     val options = nextOption(Map(), args.toList)
     val cfgfile = options.getOrElse('config, null)
     if (cfgfile == null) {
       LOG.error("Need configuration file as parameter")
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     FatafatConfiguration.configFile = cfgfile.toString
     val (loadConfigs, failStr) = Utils.loadConfiguration(FatafatConfiguration.configFile, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
     if (loadConfigs == null) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     FatafatConfiguration.allConfigs = loadConfigs
@@ -425,20 +421,11 @@ class FatafatManager {
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
-    /*
     if (initialize == false) {
-      Shutdown(1)
-      return
-    }
-*/
-
-    if (initialize == false) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     val statusPrint_PD = new Runnable {
@@ -528,7 +515,7 @@ class FatafatManager {
     }
 
     scheduledThreadPool.shutdownNow()
-    Shutdown(0)
+    return Shutdown(0)
   }
 
 }
@@ -536,7 +523,7 @@ class FatafatManager {
 object OleService {
   def main(args: Array[String]): Unit = {
     val mgr = new FatafatManager
-    mgr.run(args)
+    sys.exit(mgr.run(args))
   }
 }
 
