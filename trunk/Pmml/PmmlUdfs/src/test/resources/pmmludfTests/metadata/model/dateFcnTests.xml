@@ -537,62 +537,77 @@
         <DerivedField name="executeTest" dataType="boolean" optype="categorical">
             <Apply function="and">
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateDaysSinceYear1</Constant>
                 	<FieldRef field="dateDaysSinceYear1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateDaysSinceYear2</Constant>
                 	<FieldRef field="dateDaysSinceYear2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfdateSecondsSinceYear1</Constant>
             		<FieldRef field="dateSecondsSinceYear1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfdateSecondsSinceMidnight1</Constant>
 	            	<FieldRef field="dateSecondsSinceMidnight1"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfTimenow1</Constant>
                 	<FieldRef field="Timenow1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfNow1</Constant>
                 	<FieldRef field="Now1"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfYearsAgo1</Constant>
             		<FieldRef field="YearsAgo1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfYearsAgo2</Constant>
 	            	<FieldRef field="YearsAgo2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfYearsAgo3</Constant>
                 	<FieldRef field="YearsAgo3"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfYearsAgo4</Constant>
                 	<FieldRef field="YearsAgo4"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfMonthsAgo1</Constant>
             		<FieldRef field="MonthsAgo1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfMonthsAgo2</Constant>
 	            	<FieldRef field="MonthsAgo2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfMonthsAgo3</Constant>
                 	<FieldRef field="MonthsAgo3"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfMonthsAgo4</Constant>
                 	<FieldRef field="MonthsAgo4"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfMonthsAgoAsISO8601_1</Constant>
             		<FieldRef field="MonthsAgoAsISO8601_1"/>
 	            </Apply>
@@ -601,206 +616,257 @@
 	            	<FieldRef field="MonthsAgoAsISO8601_2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfWeeksAgo1</Constant>
                 	<FieldRef field="WeeksAgo1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfWeeksAgo2</Constant>
                 	<FieldRef field="WeeksAgo2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfWeeksAgoAsISO8601_1</Constant>
             		<FieldRef field="WeeksAgoAsISO8601_1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfWeeksAgoAsISO8601_2</Constant>
 	            	<FieldRef field="WeeksAgoAsISO8601_2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfDaysAgo1</Constant>
                 	<FieldRef field="DaysAgo1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfDaysAgo2</Constant>
                 	<FieldRef field="DaysAgo2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfDaysAgo3</Constant>
             		<FieldRef field="DaysAgo1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfDaysAgo4</Constant>
 	            	<FieldRef field="DaysAgo2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfDaysAgoAsISO8601_1</Constant>
                 	<FieldRef field="DaysAgoAsISO8601_1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfDaysAgoAsISO8601_2</Constant>
                 	<FieldRef field="DaysAgoAsISO8601_2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOftoMillisFromJulian1</Constant>
             		<FieldRef field="toMillisFromJulian1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOftoMillisFromJulian2</Constant>
 	            	<FieldRef field="toMillisFromJulian2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfCompressedTimeHHMMSSCC2MilliSecs1</Constant>
                 	<FieldRef field="CompressedTimeHHMMSSCC2MilliSecs1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfCompressedTimeHHMMSSCC2MilliSecs2</Constant>
                 	<FieldRef field="CompressedTimeHHMMSSCC2MilliSecs2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfAsCompressedDate1</Constant>
             		<FieldRef field="AsCompressedDate1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfAsCompressedDate2</Constant>
 	            	<FieldRef field="AsCompressedDate2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfMonthFromISO8601Int1</Constant>
                 	<FieldRef field="MonthFromISO8601Int1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfMonthFromISO8601Int2</Constant>
                 	<FieldRef field="MonthFromISO8601Int2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfYearFromISO8601Int1</Constant>
             		<FieldRef field="YearFromISO8601Int1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfYearFromISO8601Int2</Constant>
 	            	<FieldRef field="YearFromISO8601Int2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfYearFromISO8601Int3</Constant>
                 	<FieldRef field="YearFromISO8601Int3"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfYearFromISO8601Int4</Constant>
                 	<FieldRef field="YearFromISO8601Int4"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfAgeCalc1</Constant>
             		<FieldRef field="AgeCalc1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfAgeCalc2</Constant>
 	            	<FieldRef field="AgeCalc2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfiso8601DateFmt1</Constant>
                 	<FieldRef field="iso8601DateFmt1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfiso8601DateFmt2</Constant>
                 	<FieldRef field="iso8601DateFmt2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOftimeStampFromStr1</Constant>
             		<FieldRef field="timeStampFromStr1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOftimeStampFromStr2</Constant>
 	            	<FieldRef field="timeStampFromStr2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateFromStr1</Constant>
                 	<FieldRef field="dateFromStr1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateFromStr2</Constant>
                 	<FieldRef field="dateFromStr2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOftimeFromStr1</Constant>
             		<FieldRef field="timeFromStr1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOftimeFromStr2</Constant>
 	            	<FieldRef field="timeFromStr2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateSecondsSinceMidnight2</Constant>
                 	<FieldRef field="dateSecondsSinceMidnight2"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfdateSecondsSinceMidnight3</Constant>
                 	<FieldRef field="dateSecondsSinceMidnight3"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfmillisecsBetween1</Constant>
             		<FieldRef field="millisecsBetween1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfmillisecsBetween2</Constant>
 	            	<FieldRef field="millisecsBetween2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfsecondsBetween1</Constant>
                 	<FieldRef field="secondsBetween1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfsecondsBetween2</Constant>
                 	<FieldRef field="secondsBetween2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfminutesBetween1</Constant>
             		<FieldRef field="minutesBetween1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfminutesBetween2</Constant>
 	            	<FieldRef field="minutesBetween2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfhoursBetween1</Constant>
                 	<FieldRef field="hoursBetween1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfhoursBetween2</Constant>
                 	<FieldRef field="hoursBetween2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfdaysBetween1</Constant>
             		<FieldRef field="daysBetween1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfdaysBetween2</Constant>
 	            	<FieldRef field="daysBetween2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfweeksBetween1</Constant>
                 	<FieldRef field="weeksBetween1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfweeksBetween2</Constant>
                 	<FieldRef field="weeksBetween2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfmonthsBetween1</Constant>
             		<FieldRef field="monthsBetween1"/>
 	            </Apply>
 	            <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
 	            	<Constant dataType="string">valueOfmonthsBetween2</Constant>
 	            	<FieldRef field="monthsBetween2"/>
 	            </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfyearsBetween1</Constant>
                 	<FieldRef field="yearsBetween1"/>
                 </Apply>
                 <Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
                 	<Constant dataType="string">valueOfyearsBetween2</Constant>
                 	<FieldRef field="yearsBetween2"/>
                 </Apply>
             	<Apply function="Put">
+                    <Constant dataType="context">ctx</Constant>
             		<Constant dataType="string">valueOfexecuteTest</Constant>
                 	<Constant dataType="boolean">true</Constant>
 	            </Apply>

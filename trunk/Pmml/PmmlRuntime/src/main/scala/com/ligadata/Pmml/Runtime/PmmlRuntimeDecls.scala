@@ -14,7 +14,7 @@ trait LogTrait {
 }
 
 /** class Context(mgr : MdMgr) { <== we may want 'mgr' this at runtime ...*/
-class Context(val xId : Long) extends LogTrait {
+class Context(val xId : Long, val gCtx : EnvContext) extends LogTrait {
 	
 	override def equals(another : Any) : Boolean = {
 		(this == another)
@@ -488,7 +488,7 @@ object DataValue {
 	 *  This snippet simply adds the mining field to the ruleset's mining dictionary.
 	 * 
 	 * @param anyObj some instantiated object that was compiled inline as an argument expression to this make method.
-	 * @param an AnyDataValue that accepts the instantiated object and makes it the value of the returned AnyDataValue 
+	 * @return an AnyDataValue that accepts the instantiated object and makes it the value of the returned AnyDataValue 
 	 *   
 	 */
 	def make(anyObj : Any) : DataValue = {
