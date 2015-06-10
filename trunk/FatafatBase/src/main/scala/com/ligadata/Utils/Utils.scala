@@ -1,6 +1,7 @@
 
 package com.ligadata.Utils
 
+import com.google.common.base.Optional
 import java.io.{ InputStream, FileInputStream, File }
 import java.util.Properties
 
@@ -94,5 +95,10 @@ object Utils {
     }
     return (configs, failStr)
   }
-
+  
+  def optionToOptional[T](option: Option[T]): Optional[T] =
+    option match {
+      case Some(value) => Optional.of(value)
+      case None => Optional.absent()
+    }  
 }

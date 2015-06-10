@@ -9,6 +9,8 @@ import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 import com.ligadata.Exceptions._
 import com.ligadata.FatafatBase.api.java.function._
+import com.google.common.base.Optional
+import com.ligadata.Utils.Utils
 
 class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
@@ -130,17 +132,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
 
   def size(): Long = rdd.size()
 
-  def first(): T = {
-    if (rdd.isEmpty)
-      throw new ObjectNotFoundException("Empty collection.")
-    rdd.first.get
-  }
+  def first(): Optional[T] = Utils.optionToOptional(rdd.first)
 
-  def last(): T = {
-    if (rdd.isEmpty)
-      throw new ObjectNotFoundException("Empty collection.")
-    rdd.last.get
-  }
+  def last(): Optional[T] = Utils.optionToOptional(rdd.last)
 
   def isEmpty(): Boolean = rdd.isEmpty()
 }
