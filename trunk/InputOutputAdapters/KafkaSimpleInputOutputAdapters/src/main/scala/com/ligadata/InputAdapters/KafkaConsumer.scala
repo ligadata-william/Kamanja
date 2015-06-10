@@ -205,7 +205,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             processingXformMsg = 0
                             totalXformMsg = 0
                           }
-                          execThread.execute(tempTransId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg)
+                          execThread.execute(tempTransId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
                           tempTransId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1

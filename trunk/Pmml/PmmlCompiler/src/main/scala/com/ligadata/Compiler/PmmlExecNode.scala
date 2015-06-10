@@ -9,7 +9,7 @@ import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
 
 
-class PmmlExecNode (val qName : String) extends LogTrait  { 
+class PmmlExecNode (val qName : String, val lineNumber : Int, val columnNumber : Int) extends LogTrait  { 
 	var children : Queue[PmmlExecNode] = new Queue[PmmlExecNode]()
 	
 	def addChild(child : PmmlExecNode) = {
@@ -23,7 +23,7 @@ class PmmlExecNode (val qName : String) extends LogTrait  {
 	
 	def asString(ctx : PmmlContext) : String = "PMML"
 	  
-	override def toString : String = s"Node $qName"
+	override def toString : String = s"Node $qName ($lineNumber:$columnNumber)"
 	
 	def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order) : String = 
 	{
@@ -31,16 +31,19 @@ class PmmlExecNode (val qName : String) extends LogTrait  {
 	}
 	
 	/** general access to PmmlExecNode trees .. our node visitor */
-	def Visit(visitor : PmmlExecVisitor) {
-		visitor.Visit(this)
+	def Visit(visitor : PmmlExecVisitor, navStack : Stack[PmmlExecNode]) {
+		visitor.Visit(this,navStack)
+		navStack.push(this) /** make the node hierarchy available to the visitors */
 		children.foreach((child) => {
-			child.Visit(visitor)
+			child.Visit(visitor, navStack)
 	  	})
+	  	navStack.pop
 	}
 
 }
 
-class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNode("Constant") {
+class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val value : DataValue) 
+			extends PmmlExecNode("Constant", lineNumber, columnNumber) {
 	def Value : DataValue = value
 	
 	override def asString(ctx : PmmlContext) : String = {
@@ -142,33 +145,67 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	  			}
 	  			constStrExpr
 	  		}
+  		    /** 
+  		     *  The constant value of either the typename or mbrTypename is:
+  		     *  
+  		     *  o the name of a datafield 
+		     *  o the name a derived field.  
+		     *  o the name of a dataType
+		     *  
+		     *  Retrieve the typeString (i.e., the full package qualified typename) for it or 
+		     *  its member type. For Maps, the value's type is returned for mbrTypename
+  		     */ 
 	  		case "typename"  => { 
-	  		  /** 
-	  		   *  The constant value is either the name of a datafield or a derived field.  Retrieve the type info for
-	  		   *  the dataType of this field and return its typeString
-	  		   */ 
 	  		  val expandCompoundFieldTypes : Boolean = false
 	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
-	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
-	  		  if (typestr != null) s"${'"'}$typestr${'"'}" else "Any"
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = if (fldTypeInfo != null && fldTypeInfo.size > 0) fldTypeInfo.last else (null,false,null)
+	  		  if (typestr != null) {
+	  			  s"${'"'}$typestr${'"'}" 
+	  		  } else {
+	  		      /** see if it is a type name we know */
+	  			  val (typeStr,typ) : (String,BaseTypeDef) = ctx.MetadataHelper.getType(strRep)
+	  			  val typStr : String = if (typeStr != null) {
+	  				  s"${'"'}$typeStr${'"'}"
+	  			  } else {
+	  				  "Any"
+	  			  }
+	  			  typStr
+	  		  }
 	  		}
 	  		case "mbrTypename"  => { 
 	  		  /** 
-	  		   *  The constant value is either the name of a datafield or a derived field that is either an Array
-	  		   *  or ArrayBuffer (only collection types currently supported).  Retrieve the type info for member 
-	  		   *  type of this field's Array or ArrayBuffer type and return its typeString
+	  		   *  Only common single member collections are supported (no Maps yet) and no derived collection types.
 	  		   */ 
 	  		  val expandCompoundFieldTypes : Boolean = false
 	  		  val fldTypeInfo : Array[(String,Boolean,BaseTypeDef)] = ctx.getFieldType(strRep, expandCompoundFieldTypes) 
-	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = fldTypeInfo.last
-	  		  if (typedef != null && (typedef.isInstanceOf[ArrayTypeDef] || typedef.isInstanceOf[ArrayBufTypeDef])) {
+	  		  val (typestr, isContainerWMbrs, typedef) : (String,Boolean,BaseTypeDef) = if (fldTypeInfo != null && fldTypeInfo.size > 0) fldTypeInfo.last else (null,false,null)
+	  		  val ts : String = if (typedef != null && (typestr.contains("scala.Array") || typestr.contains("scala.collection"))) {
 	  			  val typeStr : String = typedef match {
 	  			    case ar : ArrayTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
 	  			    case arb : ArrayBufTypeDef => typedef.asInstanceOf[ArrayTypeDef].elemDef.typeString
+	  			    case lst : ListTypeDef => typedef.asInstanceOf[ListTypeDef].valDef.typeString
+	  			    case qt : QueueTypeDef => typedef.asInstanceOf[QueueTypeDef].valDef.typeString
+	  			    case st : SortedSetTypeDef => typedef.asInstanceOf[SortedSetTypeDef].keyDef.typeString
+	  			    case tt : TreeSetTypeDef => typedef.asInstanceOf[TreeSetTypeDef].keyDef.typeString
+	  			    case it : ImmutableSetTypeDef => typedef.asInstanceOf[ImmutableSetTypeDef].keyDef.typeString
+	  			    case s  : SetTypeDef => typedef.asInstanceOf[SetTypeDef].keyDef.typeString
 	  			    case _ => "Any"
 	  			  }
 	  			  typeStr 
-	  		  } else "Any"
+	  		  } else {
+	  		      /** see if it is a type name we know... if so, return the last ElementType's typestring (no Maps yet).
+	  		       *  If it is not a container type, "Any" is printed... no doubt being the wrong thing and ending badly. */
+	  			  val containerType : ContainerTypeDef = ctx.MetadataHelper.getContainerType(strRep)
+	  			  val typestr : String = if (containerType != null) containerType.typeString else null
+	  			  val typeStr : String = if (typestr != null  && (typestr.contains("scala.Array") || typestr.contains("scala.collection"))) {
+	  				  val lastMbrType : BaseTypeDef = containerType.ElementTypes.last
+	  				  lastMbrType.typeString
+	  			  } else {
+	  				  "Any"
+	  			  }
+	  			  typeStr
+	  		  }
+	  		  ts
 	  		}
 
 	  		case _ => strRep
@@ -180,7 +217,8 @@ class xConstant(val dataType : String, val value : DataValue) extends PmmlExecNo
 	}
 }
 
-class xHeader(val copyright : String, val description : String) extends PmmlExecNode("Header") {
+class xHeader(lineNumber : Int, columnNumber : Int, val copyright : String, val description : String) 
+			extends PmmlExecNode("Header", lineNumber, columnNumber) {
 
 	var applicationName : String = "Some App"
 	var version : String = "Some Version"
@@ -212,12 +250,13 @@ class dateTimeSecondsSince1960(timesecs : Long)
 class dateTimeSecondsSince1970(timesecs : Long)
 class dateTimeSecondsSince1980(timesecs : Long)
 class timeSeconds(timesecs : Long)
-class xDataField(val name : String
+class xDataField(lineNumber : Int, columnNumber : Int
+				, val name : String
 				, val displayName : String
 				, val optype : String
 				, val dataType : String
 				, val taxonomy : String
-				, val isCyclic : String) extends PmmlExecNode("DataField") {
+				, val isCyclic : String) extends PmmlExecNode("DataField", lineNumber, columnNumber) {
 	var values : ArrayBuffer[(String,String)] = ArrayBuffer[(String,String)]() /** (value, property) */
 	var leftMargin : String = ""
 	var rightMargin : String =""
@@ -281,7 +320,7 @@ class xDataField(val name : String
 }
 
 
-class xDataDictionary extends PmmlExecNode("DataDictionary") {
+class xDataDictionary(lineNumber : Int, columnNumber : Int) extends PmmlExecNode("DataDictionary", lineNumber, columnNumber) {
 	var map = new HashMap[String,xDataField]()
 	
 	def DataDictionary = { map }
@@ -348,10 +387,11 @@ class xDataDictionary extends PmmlExecNode("DataDictionary") {
 	}
 }	 
 
-class xDerivedField(val name : String
+class xDerivedField(lineNumber : Int, columnNumber : Int
+					, val name : String
 					, val displayName : String
 					, val optype : String
-					, val dataType : String) extends PmmlExecNode("DerivedField") {
+					, val dataType : String) extends PmmlExecNode("DerivedField", lineNumber, columnNumber) {
 	var values : ArrayBuffer[(String,String)] = ArrayBuffer[(String,String)]() /** (value, property) */
 	var leftMargin : String = _
 	var rightMargin : String = _
@@ -375,7 +415,7 @@ class xDerivedField(val name : String
 	  name
 	}
 	
-	override def toString : String = s"DerivedField '$name'"
+	override def toString : String = s"DerivedField '$name' ($lineNumber:$columnNumber)"
 
 	override def asString(ctx : PmmlContext) : String = 
 	{
@@ -423,7 +463,8 @@ class xDerivedField(val name : String
 	}
 }
 
-class xTransformationDictionary() extends PmmlExecNode("TransformationDictionary") {
+class xTransformationDictionary(lineNumber : Int, columnNumber : Int) 
+			extends PmmlExecNode("TransformationDictionary", lineNumber, columnNumber) {
 	var map = new HashMap[String,xDerivedField]()
 	
 	def add(node : xDerivedField) {
@@ -509,9 +550,10 @@ class xTransformationDictionary() extends PmmlExecNode("TransformationDictionary
 	}
 }	 
 
-class xDefineFunction(val name : String
+class xDefineFunction(lineNumber : Int, columnNumber : Int
+					, val name : String
 					, val optype : String
-					, val dataType : String)  extends PmmlExecNode("DefineFunction") {	
+					, val dataType : String)  extends PmmlExecNode("DefineFunction", lineNumber, columnNumber) {	
 	override def asString(ctx : PmmlContext) : String = 
 	{
 		val applyv = s"name = $name, optype = $optype, dataType = $dataType"
@@ -557,9 +599,10 @@ class xDefineFunction(val name : String
 
 }
 
-class xParameterField(val name : String
+class xParameterField(lineNumber : Int, columnNumber : Int
+					, val name : String
 					, val optype : String
-					, val dataType : String)  extends PmmlExecNode("ParameterField") {	
+					, val dataType : String)  extends PmmlExecNode("ParameterField", lineNumber, columnNumber) {	
 
 	override def asString(ctx : PmmlContext) : String = 
 	{
@@ -587,7 +630,8 @@ class xParameterField(val name : String
 
 }
 
-class xApply(val function : String, val mapMissingTo : String, val invalidValueTreatment : String = "returnInvalid") extends PmmlExecNode("Apply") {
+class xApply(lineNumber : Int, columnNumber : Int, val function : String, val mapMissingTo : String, val invalidValueTreatment : String = "returnInvalid") 
+			extends PmmlExecNode("Apply", lineNumber, columnNumber) {
   
 	var typeInfo : FcnTypeInfo = null
 	def SetTypeInfo(typInfo : FcnTypeInfo) = { typeInfo = typInfo }
@@ -630,12 +674,13 @@ class xApply(val function : String, val mapMissingTo : String, val invalidValueT
 		fcn
 	}
 	
-	override def toString : String = s"Apply function '$function'"
+	override def toString : String = s"Apply function '$function' ($lineNumber:$columnNumber)"
 
 
 }
 
-class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExecNode("FieldRef") {
+class xFieldRef(lineNumber : Int, columnNumber : Int, val field : String, val mapMissingTo : String ) 
+			extends PmmlExecNode("FieldRef", lineNumber, columnNumber) {
   
 	override def asString(ctx : PmmlContext) : String = 
 	{
@@ -660,7 +705,8 @@ class xFieldRef(val field : String, val mapMissingTo : String ) extends PmmlExec
 	}
 }
 
-class xExtension(val extender : String, val name : String , val value : String ) extends PmmlExecNode("Extension") {
+class xExtension(lineNumber : Int, columnNumber : Int, val extender : String, val name : String , val value : String ) 
+			extends PmmlExecNode("Extension", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = 
 	{
@@ -756,12 +802,13 @@ class xExtension(val extender : String, val name : String , val value : String )
  *      </InlineTable>
  *              
  */
-class xMapValuesMap(val mapMissingTo : String
+class xMapValuesMap(lineNumber : Int, columnNumber : Int
+					, val mapMissingTo : String
 					, val defaultValue : String
 					, val outputColumn : String
 					, val dataType : String
 					, val treatAsKeyValueMap : String
-					, val dataSourceIsInline : String) extends PmmlExecNode("MapValuesMap") {
+					, val dataSourceIsInline : String) extends PmmlExecNode("MapValuesMap", lineNumber, columnNumber) {
 	var fieldColumnMap : Map[String,String]  = Map[String,String]()
 	var table : Map[String,String] = Map[String,String]()
 	var metadata : Map[String, Tuple2[String,Boolean]] = Map[String,Tuple2[String,Boolean]]() /** colnm/(type,isarray) */
@@ -804,13 +851,14 @@ class xMapValuesMap(val mapMissingTo : String
 	}
 }
 
-class xMapValuesMapInline(mapMissingTo : String
+class xMapValuesMapInline(lineNumber : Int, columnNumber : Int
+					, mapMissingTo : String
 					, defaultValue : String
 					, outputColumn : String
 					, dataType : String
 					, val containerStyle : String
 					, val dataSource : String) 
-			extends xMapValuesMap( mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
+			extends xMapValuesMap(lineNumber, columnNumber, mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** general diagnostic function to see what is there */
 	override def asString(ctx : PmmlContext) : String = 
@@ -837,13 +885,14 @@ class xMapValuesMapInline(mapMissingTo : String
 
 }
 
-class xMapValuesMapExternal(mapMissingTo : String
+class xMapValuesMapExternal(lineNumber : Int, columnNumber : Int
+					, mapMissingTo : String
 					, defaultValue : String
 					, outputColumn : String
 					, dataType : String
 					, containerStyle : String
 					, dataSource : String)
-			extends xMapValuesMap(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
+			extends xMapValuesMap(lineNumber, columnNumber, mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
   override def asString(ctx : PmmlContext) : String = 
@@ -869,13 +918,14 @@ class xMapValuesMapExternal(mapMissingTo : String
 	}
 }
 
-class xMapValuesArray(val mapMissingTo : String
+class xMapValuesArray(lineNumber : Int, columnNumber : Int
+					, val mapMissingTo : String
 					, val defaultValue : String
 					, val outputColumn : String
 					, val dataType : String
 					, val containerStyle : String
 					, val dataSource : String)
-			extends PmmlExecNode("MapValuesArray") {
+			extends PmmlExecNode("MapValuesArray", lineNumber, columnNumber) {
 	var fieldColumnMap : Map[String,String]  = Map[String,String]() /** maps external table names to internal */
 	var table : ArrayBuffer[String] = ArrayBuffer[String]()
 	var metadata : Map[String, Tuple2[String,Boolean]] = Map[String,Tuple2[String,Boolean]]() /** colnm/(type,isarray) */
@@ -915,13 +965,14 @@ class xMapValuesArray(val mapMissingTo : String
 	}
 }
 
-class xMapValuesArrayExternal(mapMissingTo : String
+class xMapValuesArrayExternal(lineNumber : Int, columnNumber : Int
+					, mapMissingTo : String
 					, defaultValue : String
 					, outputColumn : String
 					, dataType : String
 					, containerStyle : String
 					, dataSource : String)
-			extends xMapValuesArray(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
+			extends xMapValuesArray(lineNumber, columnNumber, mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
 	override def asString(ctx : PmmlContext) : String = {
@@ -946,13 +997,14 @@ class xMapValuesArrayExternal(mapMissingTo : String
 	}
 }
 
-class xMapValuesArrayInline(mapMissingTo : String
+class xMapValuesArrayInline(lineNumber : Int, columnNumber : Int
+					, mapMissingTo : String
 					, defaultValue : String
 					, outputColumn : String
 					, dataType : String
 					, containerStyle : String
 					, dataSource : String)
-			extends xMapValuesArray(mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
+			extends xMapValuesArray(lineNumber, columnNumber, mapMissingTo, defaultValue, outputColumn, dataType, containerStyle, dataSource) {
 
 	/** FIXME : need containers here to capture the content in the TableLocator and represent the data and metadata queries */
 	override def asString(ctx : PmmlContext) : String = {
@@ -1009,7 +1061,8 @@ class xMapValuesArrayInline(mapMissingTo : String
 */
 
 
-class xFieldColumnPair(field : String, column : String) extends PmmlExecNode("FieldColumnPair") {
+class xFieldColumnPair(lineNumber : Int, columnNumber : Int, field : String, column : String) 
+			extends PmmlExecNode("FieldColumnPair", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xFieldColumnPair(field = $field column = $column)"
@@ -1032,7 +1085,8 @@ class xFieldColumnPair(field : String, column : String) extends PmmlExecNode("Fi
 	}
 }
 
-class xMiningField(val name : String
+class xMiningField(lineNumber : Int, columnNumber : Int
+				, val name : String
 			    , val usageType : String
 			    , val opType : String
 			    , var importance : Double
@@ -1041,7 +1095,7 @@ class xMiningField(val name : String
 			    , var highValue : Double
 			    , val missingValueReplacement : String
 			    , val missingValueTreatment : String
-			    , val invalidValueTreatment : String) extends PmmlExecNode("MiningField") {
+			    , val invalidValueTreatment : String) extends PmmlExecNode("MiningField", lineNumber, columnNumber) {
 
 	def Importance(impertance : Double) { importance = impertance }
 	def LowValue(lval : Double) { lowValue = lval }
@@ -1073,7 +1127,8 @@ class xMiningField(val name : String
 	}
 }
 
-class xRuleSelectionMethod(val criterion : String) extends PmmlExecNode("RuleSelectionMethod") {
+class xRuleSelectionMethod(lineNumber : Int, columnNumber : Int, val criterion : String) 
+			extends PmmlExecNode("RuleSelectionMethod", lineNumber, columnNumber) {
 
 	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
 	{
@@ -1088,10 +1143,11 @@ class xRuleSelectionMethod(val criterion : String) extends PmmlExecNode("RuleSel
 	}
 }
 
-class xRuleSetModel(val modelName : String
+class xRuleSetModel(lineNumber : Int, columnNumber : Int
+				, val modelName : String
 				, val functionName : String
 				, val algorithmName : String
-				, val isScorable : String) extends PmmlExecNode("RuleSetModel") {
+				, val isScorable : String) extends PmmlExecNode("RuleSetModel", lineNumber, columnNumber) {
 	var miningSchemaMap : HashMap[String,xMiningField] = HashMap[String,xMiningField]()
 	var ruleSet : ArrayBuffer[xSimpleRule] = ArrayBuffer[xSimpleRule]()
 	var ruleSetSelectionMethods : ArrayBuffer[xRuleSelectionMethod] = ArrayBuffer[xRuleSelectionMethod]()
@@ -1162,10 +1218,11 @@ class xRuleSetModel(val modelName : String
 	}
 }
 
-class xRuleSet(val recordCount : String
+class xRuleSet(lineNumber : Int, columnNumber : Int
+				, val recordCount : String
 				, val nbCorrect : String
 				, val defaultScore : String
-				, val defaultConfidence : String)  extends PmmlExecNode("RuleSet") {
+				, val defaultConfidence : String)  extends PmmlExecNode("RuleSet", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xRuleSet(recordCount = $recordCount, nbCorrect = $nbCorrect, defaultScore = $defaultScore, defaultConfidence = $defaultConfidence )"
@@ -1192,12 +1249,13 @@ class xRuleSet(val recordCount : String
 	}
 }
 
-class xSimpleRule(val id : Option[String]
+class xSimpleRule(lineNumber : Int, columnNumber : Int
+				, val id : Option[String]
 			    , val score : String
 			    , var recordCount : Double
 			    , var nbCorrect : Double
 			    , var confidence : Double
-			    , var weight : Double) extends PmmlExecNode("SimpleRule") {
+			    , var weight : Double) extends PmmlExecNode("SimpleRule", lineNumber, columnNumber) {
   
 	var scoreDistributions : ArrayBuffer[xScoreDistribution] = ArrayBuffer[xScoreDistribution]()
 	
@@ -1263,10 +1321,11 @@ class xSimpleRule(val id : Option[String]
 	}
 }
 
-class xScoreDistribution(var value : String
+class xScoreDistribution(lineNumber : Int, columnNumber : Int
+				, var value : String
 			    , var recordCount : Double
 			    , var confidence : Double
-			    , var probability : Double) extends PmmlExecNode("ScoreDistribution") {
+			    , var probability : Double) extends PmmlExecNode("ScoreDistribution", lineNumber, columnNumber) {
 
 	def RecordCount(rc : Double) { recordCount = rc }
 	def Confidence(conf : Double) { confidence = conf }
@@ -1289,7 +1348,8 @@ class xScoreDistribution(var value : String
 	}
 }
 
-class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("CompoundPredicate") {
+class xCompoundPredicate(lineNumber : Int, columnNumber : Int, val booleanOperator : String) 
+			extends PmmlExecNode("CompoundPredicate", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xCompoundPredicate(booleanOperator = $booleanOperator)"
@@ -1340,7 +1400,8 @@ class xCompoundPredicate(val booleanOperator : String) extends PmmlExecNode("Com
 	
 }
 
-class xSimplePredicate(val field : String, val operator : String, value : String) extends PmmlExecNode("SimplePredicate") {
+class xSimplePredicate(lineNumber : Int, columnNumber : Int, val field : String, val operator : String, value : String) 
+			extends PmmlExecNode("SimplePredicate", lineNumber, columnNumber) {
   
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xSimplePredicate($field $operator $value)"
@@ -1384,7 +1445,8 @@ class xSimplePredicate(val field : String, val operator : String, value : String
    </SimpleSetPredicate> 
  
  */
-class xSimpleSetPredicate(val field: String, val booleanOperator: String) extends PmmlExecNode("SimpleSetPredicate") {
+class xSimpleSetPredicate(lineNumber : Int, columnNumber : Int, val field: String, val booleanOperator: String) 
+			extends PmmlExecNode("SimpleSetPredicate", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xSimpleSetPredicate($field $booleanOperator {...})"
@@ -1418,7 +1480,8 @@ class xSimpleSetPredicate(val field: String, val booleanOperator: String) extend
 	}
 }
 
-class xArray(val n: String, val arrayType : String, val array : Array[String]) extends PmmlExecNode("Array") {
+class xArray(lineNumber : Int, columnNumber : Int, val n: String, val arrayType : String, val array : Array[String]) 
+			extends PmmlExecNode("Array", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
 		val s = array.toString()
@@ -1457,7 +1520,8 @@ class xArray(val n: String, val arrayType : String, val array : Array[String]) e
 	}
 }
 
-class xValue(val value : String, val property : String) extends PmmlExecNode("Value") {
+class xValue(lineNumber : Int, columnNumber : Int, val value : String, val property : String) 
+			extends PmmlExecNode("Value", lineNumber, columnNumber) {
 	
 	override def asString(ctx : PmmlContext) : String = {
 		val ext = s"xValue(value = $value, property = $property)"
@@ -1484,7 +1548,7 @@ object PmmlExecNode extends LogTrait {
  
 
 	def mkPmmlExecConstant(ctx : PmmlContext, c : PmmlConstant) : Option[xConstant] = {
-		var const : xConstant = new xConstant(c.dataType, PmmlTypes.dataValueFromString(c.dataType, c.Value()))
+		var const : xConstant = new xConstant(c.lineNumber, c.columnNumber, c.dataType, PmmlTypes.dataValueFromString(c.dataType, c.Value()))
 		
 		Some(const)
 	}
@@ -1494,7 +1558,7 @@ object PmmlExecNode extends LogTrait {
 		ctx.pmmlTerms("Copyright") = Some(headerNode.copyright)
 		ctx.pmmlTerms("Description") = Some(headerNode.description)
 	  
-		Some(new xHeader(headerNode.copyright, headerNode.description))
+		Some(new xHeader(headerNode.lineNumber, headerNode.columnNumber, headerNode.copyright, headerNode.description))
 	}
 	
 	def mkPmmlExecApplication(ctx : PmmlContext, headerNode : PmmlApplication) : Option[PmmlExecNode] = {
@@ -1517,7 +1581,7 @@ object PmmlExecNode extends LogTrait {
 	}
 	
 	def mkPmmlExecDataDictionary(ctx : PmmlContext, node : PmmlDataDictionary) : Option[xDataDictionary] = {
-		Some(new xDataDictionary())
+		Some(new xDataDictionary(node.lineNumber, node.columnNumber))
 	}
 	
 	def mkPmmlExecDataField(ctx : PmmlContext, d : PmmlDataField) : Option[xDataField] = {
@@ -1527,7 +1591,7 @@ object PmmlExecNode extends LogTrait {
 		top match {
 		  case Some(top) => {
 			  var dict : xDataDictionary = top.asInstanceOf[xDataDictionary]
-			  datafld = new xDataField(d.name, d.displayName, d.optype, d.dataType, d.taxonomy, d.isCyclic)
+			  datafld = new xDataField(d.lineNumber, d.columnNumber, d.name, d.displayName, d.optype, d.dataType, d.taxonomy, d.isCyclic)
 			  dict.add(datafld)
 			  ctx.dDict(datafld.name) = datafld
 			  if (d.Children.size > 0) {
@@ -1581,7 +1645,7 @@ object PmmlExecNode extends LogTrait {
 
 	
 	def mkPmmlExecTransformationDictionary(ctx : PmmlContext, node : PmmlTransformationDictionary) : Option[xTransformationDictionary] = {
-		Some(new xTransformationDictionary())
+		Some(new xTransformationDictionary(node.lineNumber, node.columnNumber))
 	}
 
 	def mkPmmlExecDerivedField(ctx : PmmlContext, d : PmmlDerivedField) : Option[PmmlExecNode] = {
@@ -1591,7 +1655,7 @@ object PmmlExecNode extends LogTrait {
 		top match {
 		  case Some(top) => {
 			  	var dict : xTransformationDictionary = top.asInstanceOf[xTransformationDictionary]
-			  	fld = new xDerivedField(d.name, d.displayName, d.optype, d.dataType)
+			  	fld = new xDerivedField(d.lineNumber, d.columnNumber, d.name, d.displayName, d.optype, d.dataType)
 				dict.add(fld)
 				ctx.xDict(fld.name) = fld
 		  }
@@ -1606,19 +1670,19 @@ object PmmlExecNode extends LogTrait {
 	}
 	
 	def mkPmmlExecDefineFunction(ctx : PmmlContext, node : PmmlDefineFunction) : Option[xDefineFunction] = {  
-		Some(new xDefineFunction(node.name, node.optype, node.dataType))
+		Some(new xDefineFunction(node.lineNumber, node.columnNumber, node.name, node.optype, node.dataType))
 	}
 			
 	def mkPmmlExecParameterField(ctx : PmmlContext, node : PmmlParameterField) : Option[xParameterField] = {  
-		Some(new xParameterField(node.name, node.optype, node.dataType))
+		Some(new xParameterField(node.lineNumber, node.columnNumber, node.name, node.optype, node.dataType))
 	}
 			
 	def mkPmmlExecApply(ctx : PmmlContext, node : PmmlApply) : Option[xApply] = {  
-		Some(new xApply(node.function, node.mapMissingTo, node.invalidValueTreatment))
+		Some(new xApply(node.lineNumber, node.columnNumber, node.function, node.mapMissingTo, node.invalidValueTreatment))
 	}
 
 	def mkPmmlExecFieldRef(ctx : PmmlContext, node : PmmlFieldRef) : Option[xFieldRef] = {
-		Some(new xFieldRef(node.field, node.mapMissingTo))
+		Some(new xFieldRef(node.lineNumber, node.columnNumber, node.field, node.mapMissingTo))
 	}
 	
 	def mkPmmlExecMapValues(ctx : PmmlContext, d : PmmlMapValues) : Option[PmmlExecNode] = {
@@ -1628,16 +1692,16 @@ object PmmlExecNode extends LogTrait {
 		
 		var mapvalues = if (containerStyle == "map") {
 			if (dataSrc == "inline") {
-				new xMapValuesMapInline(d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
+				new xMapValuesMapInline(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
 			  
 			} else { /** locator */
-				new xMapValuesMapExternal(d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
+				new xMapValuesMapExternal(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
 			}
 		} else { /** array */
 			if (dataSrc == "inline") {
-				new xMapValuesArrayInline(d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
+				new xMapValuesArrayInline(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
 			} else { /** locator */
-				new xMapValuesArrayExternal(d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
+				new xMapValuesArrayExternal(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
 			}
 		}
 		Some(mapvalues)
@@ -1700,8 +1764,8 @@ object PmmlExecNode extends LogTrait {
 		if (pmmlxtensions.length > 0) {
 			val extens  = pmmlxtensions.map(x => {
 				x match {
-				  	case Some(x) => new xExtension(x.extender, x.name, x.value)
-				  	case _ => new xExtension("", "", "")
+				  	case Some(x) => new xExtension(node.lineNumber, node.columnNumber, x.extender, x.name, x.value)
+				  	case _ => new xExtension(node.lineNumber, node.columnNumber, "", "", "")
 				}
 			}).toArray
 		  
@@ -1730,8 +1794,8 @@ object PmmlExecNode extends LogTrait {
 		if (pmmlxtensions.length > 0) {
 			val extenss  = pmmlxtensions.map(x => {
 				x match {
-				  	case Some(x) => new xExtension(x.extender, x.name, x.value)
-				  	case _ => new xExtension("", "", "")
+				  	case Some(x) => new xExtension(node.lineNumber, node.columnNumber, x.extender, x.name, x.value)
+				  	case _ => new xExtension(node.lineNumber, node.columnNumber, "", "", "")
 				}
 			}).toArray
 			val extensions = extenss.filter(_.name.length > 0)
@@ -1757,12 +1821,12 @@ object PmmlExecNode extends LogTrait {
 		ctx.pmmlTerms("ModelName") = Some(node.modelName)
 		ctx.pmmlTerms("FunctionName") = Some(node.functionName)
 		
-		Some(new xRuleSetModel(node.modelName, node.functionName, node.algorithmName, node.isScorable))
+		Some(new xRuleSetModel(node.lineNumber, node.columnNumber, node.modelName, node.functionName, node.algorithmName, node.isScorable))
 	}
 	
 	def hlpMkMiningField(ctx : PmmlContext, d : PmmlMiningField) : xMiningField = {
 		val name : String = d.name
-		var fld : xMiningField = new xMiningField(d.name
+		var fld : xMiningField = new xMiningField(d.lineNumber, d.columnNumber, d.name
 											    , d.usageType
 											    , d.optype
 											    , 0.0
@@ -1811,7 +1875,7 @@ object PmmlExecNode extends LogTrait {
 		  }
 		  case _ => None
 		}
-		Some(new xRuleSet(prs.recordCount, prs.nbCorrect, prs.defaultScore, prs.defaultConfidence))
+		Some(new xRuleSet(prs.lineNumber, prs.columnNumber, prs.recordCount, prs.nbCorrect, prs.defaultScore, prs.defaultConfidence))
 	}
 	
 	
@@ -1819,7 +1883,7 @@ object PmmlExecNode extends LogTrait {
 		var rsm : Option[xRuleSetModel] = ctx.pmmlExecNodeStack.apply(1).asInstanceOf[Option[xRuleSetModel]]
 		
 		val id : Option[String] = Some(d.id)
-		var rule : xSimpleRule = new xSimpleRule( id
+		var rule : xSimpleRule = new xSimpleRule( d.lineNumber, d.columnNumber, id
 													    , d.score
 													    , 0.0 /** recordCount */
 													    , 0.0 /** nbCorrect */
@@ -1849,7 +1913,7 @@ object PmmlExecNode extends LogTrait {
 		top match {
 		  case Some(top) => {
 			  	var mf : xSimpleRule = ctx.pmmlExecNodeStack.top.asInstanceOf[xSimpleRule]
-				var sd : xScoreDistribution = new xScoreDistribution(d.value
+				var sd : xScoreDistribution = new xScoreDistribution(d.lineNumber, d.columnNumber, d.value
 															, 0.0 /** recordCount */
 														    , 0.0 /** confidence */
 														    , 0.0) /** probability */
@@ -1873,7 +1937,7 @@ object PmmlExecNode extends LogTrait {
 		top match {
 		  case Some(top) => {
 			  	var mf : xRuleSetModel = top.asInstanceOf[xRuleSetModel]
-			  	var rsm : xRuleSelectionMethod = new xRuleSelectionMethod(d.criterion)
+			  	var rsm : xRuleSelectionMethod = new xRuleSelectionMethod(d.lineNumber, d.columnNumber, d.criterion)
 				mf.addRuleSetSelectionMethod(rsm)
 		  }
 		  case _ => None
@@ -1895,20 +1959,20 @@ object PmmlExecNode extends LogTrait {
 			}
 		}
  		
-		var arr : xArray = new xArray(a.n, a.arrayType, sanQuotesTrimmedElems)
+		var arr : xArray = new xArray(a.lineNumber, a.columnNumber, a.n, a.arrayType, sanQuotesTrimmedElems)
 		Some(arr)
 	}
 
 	def mkPmmlExecSimplePredicate(ctx : PmmlContext, d : PmmlSimplePredicate) : Option[xSimplePredicate] = {  
-		Some(new xSimplePredicate(d.field, d.operator, d.value))
+		Some(new xSimplePredicate(d.lineNumber, d.columnNumber, d.field, d.operator, d.value))
 	}
 	
 	def mkPmmlExecSimpleSetPredicate(ctx : PmmlContext, d : PmmlSimpleSetPredicate) : Option[xSimpleSetPredicate] = {
-		Some(new xSimpleSetPredicate(d.field, d.booleanOperator))
+		Some(new xSimpleSetPredicate(d.lineNumber, d.columnNumber, d.field, d.booleanOperator))
 	}
 	
 	def mkPmmlExecCompoundPredicate(ctx : PmmlContext, d : PmmlCompoundPredicate) : Option[xCompoundPredicate] = {
-		Some(new xCompoundPredicate(d.booleanOperator))
+		Some(new xCompoundPredicate(d.lineNumber, d.columnNumber, d.booleanOperator))
 	}
 	
 	

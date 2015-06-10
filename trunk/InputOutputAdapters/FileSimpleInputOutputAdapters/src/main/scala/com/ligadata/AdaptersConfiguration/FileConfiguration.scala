@@ -12,6 +12,7 @@ class FileAdapterConfiguration extends AdapterConfiguration {
   var MessagePrefix: String = _ // This is the first String in the message
   var IgnoreLines: Int = _ // number of lines to ignore in each file
   var AddTS2MsgFlag: Boolean = false // Add TS after the Prefix Msg
+  var append: Boolean = false // To append the data to file. Used only for output adapter
 }
 
 object FileAdapterConfiguration {
@@ -27,6 +28,8 @@ object FileAdapterConfiguration {
     fc.className = inputConfig.className
     fc.jarName = inputConfig.jarName
     fc.dependencyJars = inputConfig.dependencyJars
+    fc.delimiterString = if (inputConfig.delimiterString == null) null else inputConfig.delimiterString.trim
+    fc.associatedMsg = if (inputConfig.associatedMsg == null) null else inputConfig.associatedMsg.trim
 
     val adapCfg = parse(inputConfig.adapterSpecificCfg)
     if (adapCfg == null || adapCfg.values == null) {
@@ -42,6 +45,8 @@ object FileAdapterConfiguration {
         fc.MessagePrefix = kv._2.trim
       } else if (kv._1.compareToIgnoreCase("IgnoreLines") == 0) {
         fc.IgnoreLines = kv._2.trim.toInt
+      } else if (kv._1.compareToIgnoreCase("append") == 0) {
+        fc.append = kv._2.trim.toBoolean
       } else if (kv._1.compareToIgnoreCase("AddTS2MsgFlag") == 0) {
       } else if (kv._1.compareToIgnoreCase("Files") == 0) {
         fc.Files = kv._2.split(",").map(str => str.trim).filter(str => str.size > 0)

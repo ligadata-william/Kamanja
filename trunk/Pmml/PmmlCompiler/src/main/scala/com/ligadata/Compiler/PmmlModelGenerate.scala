@@ -260,37 +260,44 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 		 */
 		ctx.collectContainers
 		
-		/** collect the udf functions from the TransactionDictinary, etc. */
-		ctx.collectUdfs()
-		/** transform the 'if' apply elements rewriting the child list by removing the true and false elements at the list end.  */
-		ctx.transformTopLevelApplyNodes()
-		
-		/** collect additional information needed to decorate the runtime RuleSetModel class */
-		ctx.ruleSetModelInfoCollector()
-		/** ditto for SimpleRule class */
-		ctx.simpleRuleInfoCollector() 
-		
-		/** collect the input field and output fields for model definition generation */
-		ctx.collectModelInputVars
-		ctx.collectModelOutputVars
-
-		
-		/** 
-		 *  Build the source code returning StringBuilders for the pieces.  The
-		 *  classDecls for the RuleSetModel, Rule and Derived fields are processed
-		 *  first so that the necessary strings for instantiation of these classes
-		 *  can be collected in the classInstanceMakerMap in the ctx.
-		 *  
-		 *  They are printed in the other order however with the model class first.
-		 */
-		val codeBuffer : StringBuilder = new StringBuilder()
-
-		val classDeclsBuffer : StringBuilder = NodePrinterHelpers.classDecls(ctx, this)
-		val modelClassBuffer : StringBuilder = NodePrinterHelpers.modelClass(ctx, this)
-		
-		codeBuffer.append(modelClassBuffer.toString)
-		codeBuffer.append(classDeclsBuffer.toString)
-		codeBuffer.toString
+		/** Syntactic and Preliminary Semantic checks ... if this one fails, don't bother with the rest of it. */
+		ctx.syntaxCheck
+		if (ctx.ErrorCount > 0) {
+			logger.error(s"\nThere are either syntax or simple semantic issues with this pmml... no point proceeding...\n")
+			"No Source was generated"
+		} else {	
+			/** collect the udf functions from the TransactionDictinary, etc. */
+			ctx.collectUdfs()
+			/** transform the 'if' apply elements rewriting the child list by removing the true and false elements at the list end.  */
+			ctx.transformTopLevelApplyNodes()
+			
+			/** collect additional information needed to decorate the runtime RuleSetModel class */
+			ctx.ruleSetModelInfoCollector()
+			/** ditto for SimpleRule class */
+			ctx.simpleRuleInfoCollector() 
+			
+			/** collect the input field and output fields for model definition generation */
+			ctx.collectModelInputVars
+			ctx.collectModelOutputVars
+	
+			
+			/** 
+			 *  Build the source code returning StringBuilders for the pieces.  The
+			 *  classDecls for the RuleSetModel, Rule and Derived fields are processed
+			 *  first so that the necessary strings for instantiation of these classes
+			 *  can be collected in the classInstanceMakerMap in the ctx.
+			 *  
+			 *  They are printed in the other order however with the model class first.
+			 */
+			val codeBuffer : StringBuilder = new StringBuilder()
+	
+			val classDeclsBuffer : StringBuilder = NodePrinterHelpers.classDecls(ctx, this)
+			val modelClassBuffer : StringBuilder = NodePrinterHelpers.modelClass(ctx, this)
+			
+			codeBuffer.append(modelClassBuffer.toString)
+			codeBuffer.append(classDeclsBuffer.toString)
+			codeBuffer.toString
+		}
 }
 	
 	

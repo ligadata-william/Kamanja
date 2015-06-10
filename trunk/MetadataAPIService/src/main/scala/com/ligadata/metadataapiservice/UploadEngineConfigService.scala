@@ -33,7 +33,7 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
   
   def process(cfgJson:String) = {
     
-    log.info("Requesting UploadEngineConfig {}",cfgJson)
+    log.debug("Requesting UploadEngineConfig {}",cfgJson)
     
     var objectList: List[String] = List[String]()
 
@@ -47,8 +47,7 @@ class UploadEngineConfigService(requestContext: RequestContext, userid:Option[St
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.FAIL,"",objectList.mkString(","))
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.UploadConfig(cfgJson)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTCONFIG,cfgJson,AuditConstants.SUCCESS,"",objectList.mkString(","))            
+      val apiResult = MetadataAPIImpl.UploadConfig(cfgJson, userid, objectList.mkString(","))          
       requestContext.complete(apiResult)    
     }
   }

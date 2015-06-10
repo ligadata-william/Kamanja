@@ -39,16 +39,16 @@ case class ParameterMap(RootDir:String, GitRootDir: String, Database: String,Dat
 case class MetadataApiConfig(ApiConfigParameters: ParameterMap)
 
 case class ZooKeeperNotification(ObjectType:String,Operation:String,NameSpace:String,Name:String,Version:String,PhysicalName:String,JarName:String,DependantJars:List[String])
-case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification])
+case class ZooKeeperTransaction(Notifications : List[ZooKeeperNotification], transactionId: Option[String])
 
 
-case class JDataStore(StoreType: String,SchemaName:String,Location:String)
-case class JStatusInfo(StoreType: String,SchemaName:String,Location:String)
+case class JDataStore(StoreType: String,SchemaName:String,Location:String, Principal: Option[String], Keytab: Option[String])
+case class JStatusInfo(StoreType: String,SchemaName:String,Location:String, Principal: Option[String], Keytab: Option[String])
 case class JZooKeeperInfo(ZooKeeperNodeBasePath:String,ZooKeeperConnectString:String,ZooKeeperSessionTimeoutMs: String,ZooKeeperConnectionTimeoutMs:String)
-case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String)
+case class JNodeInfo(NodeId:String,NodePort: Int,NodeIpAddr: String,JarPaths: List[String],Scala_home: String, Java_home: String, Classpath: String, Roles: Option[List[String]])
 case class JClusterCfg(DataStore: String,StatusInfo: String, ZooKeeperInfo: String, EnvironmentContext: String)
 case class JClusterInfo(ClusterId:String,Config: JClusterCfg, Nodes: List[JNodeInfo])
-case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String])
+case class JAdapterInfo(Name:String,TypeString:String,DataFormat:Option[String],InputAdapterToVerify: Option[String],ClassName:String,JarName:String,DependencyJars: Option[List[String]],AdapterSpecificCfg: Option[String], DelimiterString: Option[String], AssociatedMessage: Option[String])
 case class EngineConfig(Clusters: Option[List[JClusterInfo]], Adapters: Option[List[JAdapterInfo]])
 
 case class MetadataApiArg(ObjectType:String,NameSpace:String,Name:String,Version:String,FormatType:String)
@@ -72,7 +72,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(funcListJson)
 
-      logger.trace("Parsed the json : " + funcListJson)
+      logger.debug("Parsed the json : " + funcListJson)
       val funcList = json.extract[FunctionList]
       var funcDefList : ArrayBuffer[FunctionDef] = ArrayBuffer[FunctionDef]()
 
@@ -94,7 +94,7 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
 	    val funcName = funcDef.mkString(",")
-	    logger.trace("Failed to add the func: " + funcName  + ": " + e.getMessage())
+	    logger.debug("Failed to add the func: " + funcName  + ": " + e.getMessage())
 	  }
 	}
       })
@@ -190,13 +190,13 @@ object JsonSerializer {
       case e:AlreadyExistsException => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	throw new AlreadyExistsException(e.getMessage())
       }
       case e:Exception => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	throw new TypeDefProcessingException(e.getMessage())
       }
     }
@@ -210,10 +210,10 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(typeListJson)
 
-      logger.trace("Parsed the json : " + typeListJson)
+      logger.debug("Parsed the json : " + typeListJson)
       val typeList = json.extract[TypeDefList]
 
-      logger.trace("Type count  => " + typeList.Types.length)
+      logger.debug("Type count  => " + typeList.Types.length)
       var typeDefList : ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
 
       typeList.Types.map(typ => {
@@ -224,12 +224,12 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	    logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	  }
 	  case e:TypeDefProcessingException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.trace("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	    logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	  }
 	}
       })
@@ -254,30 +254,30 @@ object JsonSerializer {
       val json = parse(conceptsStr)
       val conceptList = json.extract[ConceptList]
 
-      //logger.trace("Parsed the json str " + conceptsStr)
+      //logger.debug("Parsed the json str " + conceptsStr)
       val attrDefList = new Array[BaseAttributeDef](conceptList.Concepts.length)
       var i = 0;
       conceptList.Concepts.map(o => {
 	try{
-	  //logger.trace("Create Concept for " + o.NameSpace + "." + o.Name)
+	  //logger.debug("Create Concept for " + o.NameSpace + "." + o.Name)
 	  val attr = MdMgr.GetMdMgr.MakeConcept(o.NameSpace,
 						o.Name,
 						o.TypeNameSpace,
 						o.TypeName,
 						o.Version.toLong,
 						false)
-	  logger.trace("Created AttributeDef for " + o.NameSpace + "." + o.Name)
+	  logger.debug("Created AttributeDef for " + o.NameSpace + "." + o.Name)
 	  attrDefList(i) =  attr
 	  i = i + 1
 	} catch {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(o.NameSpace,o.Name,o.Version)
 	    val fullName  = keyValues.mkString(",")
-	    logger.trace("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
+	    logger.debug("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
 	  }
 	}
       })
-      //logger.trace("Found " + attrDefList.length + " concepts ")
+      //logger.debug("Found " + attrDefList.length + " concepts ")
       attrDefList
     }catch {
       case e:MappingException =>{
@@ -299,11 +299,11 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(zkTransactionJson)
 
-      logger.trace("Parsed the json : " + zkTransactionJson)
+      logger.debug("Parsed the json : " + zkTransactionJson)
 
       val zkTransaction = json.extract[ZooKeeperTransaction]
 
-      logger.trace("Serialized ZKTransaction => " + zkSerializeObjectToJson(zkTransaction))
+      logger.debug("Serialized ZKTransaction => " + zkSerializeObjectToJson(zkTransaction))
 
       zkTransaction
     } catch {
@@ -345,7 +345,7 @@ object JsonSerializer {
       //val derivedConcept = MdMgr.GetMdMgr.MakeDerivedAttr(func,attrList)
     }catch {
       case e:AlreadyExistsException => {
-	logger.trace("Failed to add the DerivedConcept: : " + e.getMessage())
+	logger.debug("Failed to add the DerivedConcept: : " + e.getMessage())
       }
       case e:MappingException =>{
 	e.printStackTrace()
@@ -365,7 +365,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(contDefJson)
 
-      logger.trace("Parsed the json : " + contDefJson)
+      logger.debug("Parsed the json : " + contDefJson)
 
       val ContDefInst = json.extract[ContainerDefinition]
       val attrList = ContDefInst.Container.Attributes.map(attr => (attr.NameSpace,attr.Name, attr.Type.TypeNameSpace,attr.Type.TypeName,false, attr.CollectionType.get))
@@ -397,7 +397,7 @@ object JsonSerializer {
     try{
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(typeJson)
-      logger.trace("Parsed the json : " + typeJson)
+      logger.debug("Parsed the json : " + typeJson)
       val typ = json.extract[TypeDef]
       typeDef = processTypeDef(typ)
       typeDef
@@ -407,7 +407,7 @@ object JsonSerializer {
 	throw Json4sParsingException(e.getMessage())
       }
       case e:AlreadyExistsException => {
-	logger.trace("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
+	logger.debug("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
 	throw new AlreadyExistsException(e.getMessage())
       }
       case e:Exception => {
@@ -425,7 +425,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(conceptJson)
 
-      logger.trace("Parsed the json : " + conceptJson)
+      logger.debug("Parsed the json : " + conceptJson)
 
       val conceptInst = json.extract[Concept]
       val concept = MdMgr.GetMdMgr.MakeConcept(conceptInst.NameSpace,
@@ -455,7 +455,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(functionJson)
 
-      logger.trace("Parsed the json : " + functionJson)
+      logger.debug("Parsed the json : " + functionJson)
 
       val functionInst = json.extract[Function]
       val argList = functionInst.Arguments.map(arg => (arg.ArgName,arg.ArgTypeNameSpace,arg.ArgTypeName))
@@ -494,7 +494,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(msgDefJson)
 
-      logger.trace("Parsed the json : " + msgDefJson)
+      logger.debug("Parsed the json : " + msgDefJson)
 
       val MsgDefInst = json.extract[MessageDefinition]
       val attrList = MsgDefInst.Message.Attributes
@@ -533,7 +533,7 @@ object JsonSerializer {
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(modDefJson)
 
-      logger.trace("Parsed the json : " + modDefJson)
+      logger.debug("Parsed the json : " + modDefJson)
 
       val ModDefInst = json.extract[ModelDefinition]
 
@@ -578,7 +578,7 @@ object JsonSerializer {
     try{
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(configJson)
-      logger.trace("Parsed the json : " + configJson)
+      logger.debug("Parsed the json : " + configJson)
 
       val cfg = json.extract[EngineConfig]
       cfg
@@ -600,7 +600,7 @@ object JsonSerializer {
     try{
       implicit val jsonFormats: Formats = DefaultFormats
       val json = parse(apiArgListJson)
-      logger.trace("Parsed the json : " + apiArgListJson)
+      logger.debug("Parsed the json : " + apiArgListJson)
 
       val cfg = json.extract[MetadataApiArgList]
       cfg
@@ -701,6 +701,17 @@ object JsonSerializer {
                       ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
           pretty(render(json))
         }
+        case o:FunctionDef => {
+          val json = (("ObjectType"      -> "FunctionDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
         case o:ArrayTypeDef => {
           val json = (("ObjectType"      -> "ArrayTypeDef") ~
                       ("Operation"       -> operation) ~
@@ -747,6 +758,17 @@ object JsonSerializer {
         }
         case o:MapTypeDef => {
           val json = (("ObjectType"      -> "MapTypeDef") ~
+                      ("Operation"       -> operation) ~
+                      ("NameSpace"       -> o.nameSpace) ~
+                      ("Name"            -> o.name) ~
+                      ("Version"         -> o.ver) ~
+                      ("PhysicalName"    -> o.physicalName) ~
+                      ("JarName"         -> o.jarName) ~
+                      ("DependantJars"   -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o:HashMapTypeDef => {
+          val json = (("ObjectType"      -> "HashMapTypeDef") ~
                       ("Operation"       -> operation) ~
                       ("NameSpace"       -> o.nameSpace) ~
                       ("Name"            -> o.name) ~
@@ -823,7 +845,7 @@ object JsonSerializer {
 
   @throws(classOf[UnsupportedObjectException])
   def SerializeCfgObjectToJson(cfgObj: Object): String = {
-    logger.trace("Generating Json for an object of type " + cfgObj.getClass().getName())
+    logger.debug("Generating Json for an object of type " + cfgObj.getClass().getName())
     cfgObj match{
       case o:ClusterInfo => {
 	val json = (("ClusterId"     -> o.clusterId))
@@ -841,6 +863,7 @@ object JsonSerializer {
 		    ("JarPaths"     -> o.jarPaths.toList) ~
 		    ("Scala_home"     -> o.scala_home) ~
 		    ("Java_home"     -> o.java_home) ~
+		    ("Roles"     -> o.roles.toList) ~
 		    ("Classpath"     -> o.classpath) ~
 		    ("ClusterId"     -> o.clusterId))
 	pretty(render(json))
@@ -853,7 +876,9 @@ object JsonSerializer {
 		    ("ClassName"      -> o.className) ~
 		    ("JarName"        -> o.jarName) ~
 		    ("DependencyJars" -> o.dependencyJars.toList) ~
-		    ("AdapterSpecificCfg"  -> o.adapterSpecificCfg))
+		    ("AdapterSpecificCfg"  -> o.adapterSpecificCfg) ~
+		    ("DelimiterString"  -> o.delimiterString) ~
+		    ("AssociatedMessage"  -> o.associatedMsg))
 	pretty(render(json))
       }
       case _ => {
@@ -1330,8 +1355,14 @@ object JsonSerializer {
     json 
   }
 
-  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {
-    var json = "{\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
+  def zkSerializeObjectListToJson[T <: BaseElemDef](objType:String, objList: Array[T],operations: Array[String]) : String = {    
+    // Insert the highest Transaction ID into the JSON Notification message.
+    var max: Long = 0
+    objList.foreach(obj => {max = scala.math.max(obj.TranId, max)}) 
+    
+    var json = "{\n"+"\"transactionId\":\""+max+"\",\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList,operations) + "\n}" 
+    
+    println(json)
     json 
   }
 

@@ -34,7 +34,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
   
   def process(messageJson:String) = {
     
-    log.info("Requesting AddMessage {}",messageJson)
+    log.debug("Requesting AddMessage {}",messageJson)
 
     var nameVal = APIService.extractNameFromJson(messageJson,AuditConstants.MESSAGE)
     
@@ -42,8 +42,7 @@ class AddMessageService(requestContext: RequestContext, userid:Option[String], p
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,messageJson,AuditConstants.FAIL,"",nameVal)   
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )      
     } else {
-      val apiResult = MetadataAPIImpl.AddMessage(messageJson)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,messageJson,AuditConstants.SUCCESS,"",nameVal)   
+      val apiResult = MetadataAPIImpl.AddMessage(messageJson,userid)   
       requestContext.complete(apiResult)
     }
   }

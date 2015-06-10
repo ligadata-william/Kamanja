@@ -39,19 +39,19 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
 
     objectType match {
       case "node" => {
-        apiResult = MetadataAPIImpl.GetAllNodes("JSON")
+        apiResult = MetadataAPIImpl.GetAllNodes("JSON",userid)
       }
       case "cluster" => {
-        apiResult = MetadataAPIImpl.GetAllClusters("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusters("JSON",userid)
       }
       case "adapter" => {
-        apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
+        apiResult = MetadataAPIImpl.GetAllAdapters("JSON",userid)
       }
       case "clustercfg" => {
-        apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
+        apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON",userid)
       }
       case "all" => {
-        apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
+        apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON",userid)
       }
       case _ => {
         apiResult = "The " + objectType + " is not supported yet "
@@ -75,7 +75,6 @@ class GetConfigObjectsService(requestContext: RequestContext, userid:Option[Stri
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure,APIName, null, "Error: READ not allowed for this user").toString )
     } else {
       val apiResult = GetConfigObjects(objectType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETCONFIG,AuditConstants.CONFIG,AuditConstants.SUCCESS,"",objectType)
       requestContext.complete(apiResult)      
     }
   }

@@ -34,6 +34,7 @@ lazy val FatafatBase = project.in(file("FatafatBase")) dependsOn(Metadata, Excep
 lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, FatafatBase, Exceptions)
 
 lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, ApiImpl, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)
+lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase, Exceptions)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase, Exceptions)
 
@@ -94,4 +95,6 @@ lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) depen
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
 
 lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSamples")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
+
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
 
