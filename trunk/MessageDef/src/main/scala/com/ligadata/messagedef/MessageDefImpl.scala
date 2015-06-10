@@ -51,6 +51,7 @@ class MessageDefImpl {
 
   val logger = this.getClass.getName
   lazy val log = Logger.getLogger(logger)
+  var rddHandler = new RDDHandler
 
   private def error[T](prefix: String): Option[T] =
     throw MessageException("%s must be specified".format(prefix))
@@ -1727,9 +1728,9 @@ class MessageDefImpl {
   private def importStmts(msgtype: String): String = {
     var imprt: String = ""
     if (msgtype.equals("Message"))
-      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase}"
+      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange}"
     else if (msgtype.equals("Container"))
-      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase}"
+      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange}"
 
     """
 package com.ligadata.messagescontainers
@@ -1760,10 +1761,10 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     val cls = "class"
     val obj = "object"
     if (msg.msgtype.equals("Message")) {
-      oname = "BaseMsgObj {"
+      oname = "BaseMsgObj with RDDObject["+msg.Name+"]{"
       sname = "BaseMsg {"
     } else if (msg.msgtype.equals("Container")) {
-      oname = "BaseContainerObj {"
+      oname = "BaseContainerObj with RDDObject["+msg.Name+"]{"
       sname = "BaseContainer {"
     }
     val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
