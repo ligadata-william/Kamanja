@@ -112,6 +112,40 @@ object FatafatConfiguration {
     })
     return jarName // Returning base jarName if not found in jar paths
   }
+
+  def Reset: Unit = {
+    configFile = null
+    allConfigs = null
+    metadataStoreType = null
+    metadataSchemaName = null
+    metadataLocation = null
+    dataStoreType = null
+    dataSchemaName = null
+    dataLocation = null
+    databasePrincipal = null
+    databaseKeytab = null
+    statusInfoStoreType = null
+    statusInfoSchemaName = null
+    statusInfoLocation = null
+    statusInfoPrincipal = null
+    statusInfoKeytab = null
+    jarPaths = null
+    nodeId = 0
+    clusterId = null
+    nodePort = 0
+    zkConnectString = null
+    zkNodeBasePath = null
+    zkSessionTimeoutMs = 0
+    zkConnectionTimeoutMs = 0
+
+    // Debugging info configs -- Begin
+    waitProcessingSteps = null
+    waitProcessingTime = 0
+    // Debugging info configs -- End
+
+    shutdown = false
+    participentsChangedCntr = 0
+  }
 }
 
 class FatafatClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
@@ -348,8 +382,7 @@ class FatafatManager {
   }
 
   def run(args: Array[String]): Unit = {
-    FatafatConfiguration.shutdown = false
-    FatafatConfiguration.participentsChangedCntr = 0
+    FatafatConfiguration.Reset
     if (args.length == 0) {
       PrintUsage()
       Shutdown(1)
