@@ -348,6 +348,8 @@ class FatafatManager {
   }
 
   def run(args: Array[String]): Unit = {
+    FatafatConfiguration.shutdown = false
+    FatafatConfiguration.participentsChangedCntr = 0
     if (args.length == 0) {
       PrintUsage()
       Shutdown(1)
