@@ -207,6 +207,12 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 	  		  }
 	  		  ts
 	  		}
+	  		case "context"  => { 
+	  			/** Note: the constant value could be anything... the point of the "context" constant dataType is to inject the Context object
+	  			 *  for the current model instance into the code generation output stream... This works because the Context is present in 
+	  			 *  each of the classes that are generated... be they the model class itself or the derived variables, ruleset, etc.*/
+	  			"ctx"
+	  		}
 
 	  		case _ => strRep
 	  	}
