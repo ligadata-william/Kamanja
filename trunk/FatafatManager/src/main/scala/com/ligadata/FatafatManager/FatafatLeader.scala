@@ -64,6 +64,38 @@ object FatafatLeader {
   private[this] var updatePartitionsFlag = false
   private[this] var distributionExecutor = Executors.newFixedThreadPool(1)
 
+  def Reset: Unit = {
+    clusterStatus = ClusterStatus("", false, "", null)
+    zkLeaderLatch = null
+    nodeId = null
+    zkConnectString = null
+    engineLeaderZkNodePath = null
+    engineDistributionZkNodePath = null
+    dataChangeZkNodePath = null
+    adaptersStatusPath = null
+    zkSessionTimeoutMs = 0
+    zkConnectionTimeoutMs = 0
+    zkEngineDistributionNodeListener = null
+    zkAdapterStatusNodeListener = null
+    zkDataChangeNodeListener = null
+    zkcForSetData = null
+    distributionMap = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]]]() // Nodeid & Unique Keys (adapter unique name & unique key)
+    foundKeysInValidation = null
+    adapterMaxPartitions = scala.collection.mutable.Map[String, Int]() // Adapters & Max Partitions
+    allPartitionsToValidate = scala.collection.mutable.Map[String, Set[String]]()
+    nodesStatus = scala.collection.mutable.Set[String]() // NodeId
+    expectedNodesAction = null
+    curParticipents = Set[String]() // Derived from clusterStatus.participants
+    canRedistribute = false
+    inputAdapters = null
+    outputAdapters = null
+    statusAdapters = null
+    validateInputAdapters = null
+    envCtxt = null
+    updatePartitionsFlag = false
+    distributionExecutor = Executors.newFixedThreadPool(1)
+  }
+
   private def SetCanRedistribute(redistFlag: Boolean): Unit = lock.synchronized {
     canRedistribute = redistFlag
   }

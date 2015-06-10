@@ -383,6 +383,7 @@ class FatafatManager {
 
   def run(args: Array[String]): Unit = {
     FatafatConfiguration.Reset
+    FatafatLeader.Reset
     if (args.length == 0) {
       PrintUsage()
       Shutdown(1)
