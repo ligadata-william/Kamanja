@@ -55,28 +55,6 @@ import util.control.Breaks._
 
 import java.util.Date
 
-case class JsonException(message: String) extends Exception(message)
-
-case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
-case class TypeDefList(Types: List[TypeDef])
-
-case class Argument(ArgName: String, ArgTypeNameSpace: String, ArgTypeName: String)
-case class Function(NameSpace: String, Name: String, PhysicalName: String, ReturnTypeNameSpace: String, ReturnTypeName: String, Arguments: List[Argument], Version: String, JarName: String, DependantJars: List[String])
-case class FunctionList(Functions: List[Function])
-
-//case class Concept(NameSpace: String,Name: String, TypeNameSpace: String, TypeName: String,Version: String,Description: String, Author: String, ActiveDate: String)
-case class Concept(NameSpace: String, Name: String, TypeNameSpace: String, TypeName: String, Version: String)
-case class ConceptList(Concepts: List[Concept])
-
-// case class Attr(NameSpace: String, Name: String, Version: Long, Type: TypeDef)
-
-// case class MessageStruct(NameSpace: String, Name: String, FullName: String, Version: Long, JarName: String, PhysicalName: String, DependencyJars: List[String], Attributes: List[Attr])
-case class MessageDefinition(Message: MessageStruct)
-case class ContainerDefinition(Container: MessageStruct)
-
-case class ModelInfo(NameSpace: String, Name: String, Version: String, ModelType: String, JarName: String, PhysicalName: String, DependencyJars: List[String], InputAttributes: List[Attr], OutputAttributes: List[Attr])
-case class ModelDefinition(Model: ModelInfo)
-
 case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
 
 case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
@@ -1871,6 +1849,22 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+
+
+  def TruncateDbStore: Unit = lock.synchronized {
+    try {
+      logger.debug("Truncating datastore")
+      metadataStore.TruncateStore
+      transStore.TruncateStore
+      jarStore.TruncateStore
+      configStore.TruncateStore
+    } catch {
+      case e: Exception => {
+        throw e;
+      }
+    }
+  }
+
 
   def AddType(typeText: String, format: String): String = {
     try {
@@ -6155,7 +6149,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    * Create a listener to monitor Meatadata Cache
    */
-  private def initZkListener: Unit = {
+  def initZkListener: Unit = {
      // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
     if (znodePath != null) znodePath = znodePath.trim + "/metadataupdate" else return
