@@ -70,6 +70,9 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetAllTypesFromCache(true,userid)
       }
+      case "outputmsg" => {
+	      apiResult = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
+      }
       case _ => {
          apiResult = Array[String]("The " + objectType + " is not supported yet ")
          return new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Invalid URL:" + apiResult.mkString).toString

@@ -45,6 +45,8 @@ lazy val Metadata = project.in(file("Metadata"))
 
 lazy val MessageDef = project.in(file("MessageDef")) dependsOn(Metadata,MetadataBootstrap)
 
+lazy val OutputMsgDef  = project.in(file("OutputMsgDef")) dependsOn(Metadata,FatafatBase,BaseTypes)
+
 lazy val LoadtestCommon = project.in(file("Tools/LoadtestCommon")) dependsOn(Storage)
 
 lazy val LoadtestRunner = project.in(file("Tools/LoadtestRunner")) dependsOn(LoadtestCommon)
@@ -63,7 +65,7 @@ lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(Pm
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, FatafatBase, BaseTypes)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef)
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(FatafatBase,MetadataAPI,ZooKeeperLeaderLatch)
 

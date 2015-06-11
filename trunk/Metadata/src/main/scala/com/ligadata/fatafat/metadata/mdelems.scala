@@ -13,15 +13,15 @@ object ObjFormatType extends Enumeration {
   type FormatType = Value
   val fCSV, fJSON, fXML, fSERIALIZED = Value
 
-  def asString(typ : FormatType) : String = {
-     val str = typ.toString match {
-	case "fCSV" =>  "CSV"
-	case "fJSON" => "JSON"
-	case "fXML" => "XML"
-	case "fSERIALIZED" => "SERIALIZED"
-	case _ => "Unknown"
-      }
-      str
+  def asString(typ: FormatType): String = {
+    val str = typ.toString match {
+      case "fCSV" => "CSV"
+      case "fJSON" => "JSON"
+      case "fXML" => "XML"
+      case "fSERIALIZED" => "SERIALIZED"
+      case _ => "Unknown"
+    }
+    str
   }
 
 }
@@ -43,60 +43,60 @@ import ObjScalarType._
 */
 
 object ObjType extends Enumeration {
-	type Type = Value
-	val tNone, tAny, tInt, tLong, tFloat, tDouble, tString, tBoolean, tChar, tArray, tArrayBuf, tSet, tTreeSet, tSortedSet, tMap, tHashMap, tMsgMap, tList, tQueue, tStruct, tAttr = Value
-	
-	def asString(typ : Type) : String = {
-		val str = typ.toString match {
-			case "tNone" =>  "None"
-			case "tInt" => "Int"
-			case "tAny" => "Any"
-			case "tLong" => "Long"
-			case "tFloat" => "Float"
-			case "tDouble" => "Double"
-			case "tString" => "String"
-			case "tBoolean" => "Boolean"
-			case "tChar" => "Char"
-			case "tArray" => "Array"
-			case "tArrayBuf" => "ArrayBuffer"
-			case "tSet" => "Set"
-			case "tSortedSet" => "SortedSet"
-			case "tTreeSet" => "TreeSet"
-			case "tMap" => "Map"
-			case "tHashMap" => "HashMap"
-			case "tMsgMap" => "Map"
-			case "tList" => "List"
-			case "tQueue" => "Queue"
-			case "tStruct" => "Struct"
-			case _ => "None"
-		}
-		str
-	}
-	def fromString(typeStr : String) : Type = {
-		val typ : Type = typeStr match {
-			case "None" =>  tNone
-			case "Any" => tAny
-			case "Int" => tInt
-			case "Long" => tLong
-			case "Float" => tFloat
-			case "Double" => tDouble
-			case "String" => tString
-			case "Boolean" => tBoolean
-			case "Char" => tChar
-			case "Array" => tArray
-			case "Set" => tSet
-			case "SortedSet" => tSortedSet
-			case "TreeSet" => tTreeSet
-			case "Map" => tMap
-			case "HashMap" => tHashMap
-			case "MsgMap" => tMap
-			case "List" => tList
-			case "Queue" => tQueue
-			case "Struct" => tStruct
-			case _ => tNone
-		}
-		typ
-	}
+  type Type = Value
+  val tNone, tAny, tInt, tLong, tFloat, tDouble, tString, tBoolean, tChar, tArray, tArrayBuf, tSet, tTreeSet, tSortedSet, tMap, tHashMap, tMsgMap, tList, tQueue, tStruct, tAttr = Value
+
+  def asString(typ: Type): String = {
+    val str = typ.toString match {
+      case "tNone" => "None"
+      case "tInt" => "Int"
+      case "tAny" => "Any"
+      case "tLong" => "Long"
+      case "tFloat" => "Float"
+      case "tDouble" => "Double"
+      case "tString" => "String"
+      case "tBoolean" => "Boolean"
+      case "tChar" => "Char"
+      case "tArray" => "Array"
+      case "tArrayBuf" => "ArrayBuffer"
+      case "tSet" => "Set"
+      case "tSortedSet" => "SortedSet"
+      case "tTreeSet" => "TreeSet"
+      case "tMap" => "Map"
+      case "tHashMap" => "HashMap"
+      case "tMsgMap" => "Map"
+      case "tList" => "List"
+      case "tQueue" => "Queue"
+      case "tStruct" => "Struct"
+      case _ => "None"
+    }
+    str
+  }
+  def fromString(typeStr: String): Type = {
+    val typ: Type = typeStr match {
+      case "None" => tNone
+      case "Any" => tAny
+      case "Int" => tInt
+      case "Long" => tLong
+      case "Float" => tFloat
+      case "Double" => tDouble
+      case "String" => tString
+      case "Boolean" => tBoolean
+      case "Char" => tChar
+      case "Array" => tArray
+      case "Set" => tSet
+      case "SortedSet" => tSortedSet
+      case "TreeSet" => tTreeSet
+      case "Map" => tMap
+      case "HashMap" => tHashMap
+      case "MsgMap" => tMap
+      case "List" => tList
+      case "Queue" => tQueue
+      case "Struct" => tStruct
+      case _ => tNone
+    }
+    typ
+  }
 }
 
 import ObjType._
@@ -146,7 +146,7 @@ trait BaseElem {
   def IsActive: Boolean // Return true if the Element is active, otherwise false
   def IsDeactive: Boolean // Return true if the Element is de-active, otherwise false
   def IsDeleted: Boolean // Return true if the Element is deleted, otherwise false
-  def TranId : Long // a unique number representing the transaction that modifies this object
+  def TranId: Long // a unique number representing the transaction that modifies this object
   def Active: Unit // Make the element as Active
   def Deactive: Unit // Make the element as de-active
   def Deleted: Unit // Mark the element as deleted
@@ -175,7 +175,7 @@ class BaseElemDef extends BaseElem {
   override def IsActive: Boolean = active // Return true if the Element is active, otherwise false
   override def IsDeactive: Boolean = (active == false) // Return true if the Element is de-active, otherwise false
   override def IsDeleted: Boolean = (deleted == true) // Return true if the Element is deleted, otherwise false
-  override def TranId : Long = tranId// a unique number representing the transaction that modifies this object
+  override def TranId: Long = tranId // a unique number representing the transaction that modifies this object
   override def Active: Unit = active = true // Make the element as Active
   override def Deactive: Unit = active = false // Make the element as de-active
   override def Deleted: Unit = deleted = true // Mark the element as deleted
@@ -184,7 +184,7 @@ class BaseElemDef extends BaseElem {
   // Override in other places if required
   override def equals(that: Any) = {
     that match {
-      case f: BaseElemDef => f.FullNameWithVer+ "."+f.IsDeleted == FullNameWithVer+"."+IsDeleted
+      case f: BaseElemDef => f.FullNameWithVer + "." + f.IsDeleted == FullNameWithVer + "." + IsDeleted
       case _ => false
     }
   }
@@ -205,8 +205,8 @@ class BaseElemDef extends BaseElem {
   var physicalName: String = _ // Mapping from Logical name to Physical Name when we generate code. This is Case sensitive.
   var active: Boolean = true // Represent whether element is active or deactive. By default it is active.
   var deleted: Boolean = false // Represent whether element is deleted. By default it is false.
-  var tranId: Long = 0	
-  var objectDefinition:String = _
+  var tranId: Long = 0
+  var objectDefinition: String = _
   var objectFormat: ObjFormatType.FormatType = fJSON
 }
 
@@ -224,7 +224,7 @@ trait TypeImplementation[T] {
   def Deserialize(value: Array[Byte]): T // Convert Array[Byte] to Type T
   def SerializeIntoDataOutputStream(dos: DataOutputStream, value: T): Unit
   def DeserializeFromDataInputStream(dis: DataInputStream): T
- 
+
   def toString(value: T): String // Convert Type T to String
   def toJsonString(value: T): String // Convert Type T to Json String
 }
@@ -251,7 +251,7 @@ class AnyTypeDef extends BaseTypeDef {
   def tType = tNone
 
   override def typeString: String = {
-    "Any" 
+    "Any"
   }
 }
 
@@ -259,21 +259,21 @@ abstract class ContainerTypeDef extends BaseTypeDef {
   def tTypeType = tContainer
 
   def IsFixed: Boolean
-  /** 
+  /**
    *  Answer the element type or types that are held in the ContainerTypeDef subclass.
    *  This is primarily used to understand the element types of collections.  An array
-   *  is returned since tuples and maps to name two have more than one element 
-   *  
-   *  While all ContainerTypeDef subclasses implement this, this is really used 
+   *  is returned since tuples and maps to name two have more than one element
+   *
+   *  While all ContainerTypeDef subclasses implement this, this is really used
    *  to describe only those container based upon one of the collection classes that
    *  have element types as part of their type specification.  Specifically
    *  the MappedMsgTypeDef and StructTypeDef both use this default behavior.  See
    *  the respective classes for how to gain access to the field domain and fields
    *  they possess.
-   *  
-   *  @return As a default, give a null list.  
+   *
+   *  @return As a default, give a null list.
    */
-  def ElementTypes : Array[BaseTypeDef] = Array[BaseTypeDef]()
+  def ElementTypes: Array[BaseTypeDef] = Array[BaseTypeDef]()
 }
 
 class SetTypeDef extends ContainerTypeDef {
@@ -284,8 +284,8 @@ class SetTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.Set[" + keyDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef)
   }
 }
 
@@ -297,8 +297,8 @@ class ImmutableSetTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.immutable.Set[" + keyDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef)
   }
 }
 
@@ -310,21 +310,21 @@ class TreeSetTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.TreeSet[" + keyDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef)
   }
 }
 
 class SortedSetTypeDef extends ContainerTypeDef {
   def tType = tSortedSet
-  var keyDef : BaseTypeDef = _
-   
-  override def IsFixed : Boolean = false
-  override def typeString : String = {
-	 "scala.collection.mutable.SortedSet[" + keyDef.typeString + "]"
+  var keyDef: BaseTypeDef = _
+
+  override def IsFixed: Boolean = false
+  override def typeString: String = {
+    "scala.collection.mutable.SortedSet[" + keyDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef)
   }
 }
 
@@ -338,8 +338,8 @@ class MapTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.Map[" + keyDef.typeString + "," + valDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef,valDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef, valDef)
   }
 }
 
@@ -353,8 +353,8 @@ class ImmutableMapTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.immutable.Map[" + keyDef.typeString + "," + valDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef,valDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef, valDef)
   }
 }
 
@@ -368,8 +368,8 @@ class HashMapTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.HashMap[" + keyDef.typeString + "," + valDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(keyDef,valDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(keyDef, valDef)
   }
 }
 
@@ -381,8 +381,8 @@ class ListTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.immutable.List[" + valDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(valDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(valDef)
   }
 }
 
@@ -394,8 +394,8 @@ class QueueTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.Queue[" + valDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(valDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(valDef)
   }
 }
 
@@ -409,8 +409,8 @@ class ArrayTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.Array[" + elemDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(elemDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(elemDef)
   }
 }
 
@@ -424,8 +424,8 @@ class ArrayBufTypeDef extends ContainerTypeDef {
   override def typeString: String = {
     "scala.collection.mutable.ArrayBuffer[" + elemDef.typeString + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	Array(elemDef)
+  override def ElementTypes: Array[BaseTypeDef] = {
+    Array(elemDef)
   }
 }
 
@@ -437,11 +437,11 @@ class TupleTypeDef extends ContainerTypeDef {
 
   override def IsFixed: Boolean = false
   override def typeString: String = {
-    val sz : Int = tupleDefs.size
+    val sz: Int = tupleDefs.size
     s"scala.Tuple$sz[" + tupleDefs.map(tup => tup.typeString).mkString(",") + "]"
   }
-  override def ElementTypes : Array[BaseTypeDef] = {
-	tupleDefs
+  override def ElementTypes: Array[BaseTypeDef] = {
+    tupleDefs
   }
 }
 
@@ -455,8 +455,8 @@ object RelationKeyType extends Enumeration {
 import RelationKeyType._
 
 abstract class RelationKeyBase {
-  var constraintName:String = _ // If we have given any name for this constraint
-  var key:Array[String] = _ // Local Primary Key / Foreign Key Field Names
+  var constraintName: String = _ // If we have given any name for this constraint
+  var key: Array[String] = _ // Local Primary Key / Foreign Key Field Names
   def KeyType: RelationKeyType // Relation type could be Primary / Foreign at this moment
 }
 
@@ -466,8 +466,8 @@ class PrimaryKey extends RelationKeyBase {
 
 class ForeignKey extends RelationKeyBase {
   def KeyType: RelationKeyType = tForeign
-  var forignContainerName:String = _// Container or Message Name
-  var forignKey:Array[String] = _ // Names in Foreign Container (which are primary keys there). Expecting same number of names in key & forignKey
+  var forignContainerName: String = _ // Container or Message Name
+  var forignKey: Array[String] = _ // Names in Foreign Container (which are primary keys there). Expecting same number of names in key & forignKey
 }
 
 trait EntityType {
@@ -481,22 +481,22 @@ trait EntityType {
 }
 
 class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
-	def tType = tMsgMap
+  def tType = tMsgMap
 
-	var attrMap : Map[String, BaseAttributeDef] = Map[String, BaseAttributeDef]()
+  var attrMap: Map[String, BaseAttributeDef] = Map[String, BaseAttributeDef]()
 
-  	override def NumMems = attrMap.size
-  	override def IsFixed: Boolean = false
-  	def attributeFor(name : String) : BaseAttributeDef = { 
-	  	val key = name.toLowerCase()
-	  	val hasName : Boolean = attrMap.contains(key)
-		val baseAttrDef : BaseAttributeDef = if (hasName) {
-			attrMap.apply(key) 
-		}  else {
-			null
-		}
-	  	baseAttrDef
-  	}
+  override def NumMems = attrMap.size
+  override def IsFixed: Boolean = false
+  def attributeFor(name: String): BaseAttributeDef = {
+    val key = name.toLowerCase()
+    val hasName: Boolean = attrMap.contains(key)
+    val baseAttrDef: BaseAttributeDef = if (hasName) {
+      attrMap.apply(key)
+    } else {
+      null
+    }
+    baseAttrDef
+  }
 }
 
 class StructTypeDef extends ContainerTypeDef with EntityType {
@@ -506,14 +506,14 @@ class StructTypeDef extends ContainerTypeDef with EntityType {
 
   override def NumMems = memberDefs.size
   override def IsFixed: Boolean = true
-  def attributeFor(name : String) : BaseAttributeDef = { 
-	  val key = name.toLowerCase()
-      val optMbr : Option[BaseAttributeDef] = memberDefs.find( m => m.name == key)
-      val mbr : BaseAttributeDef = optMbr match {
-		case Some(optMbr) => optMbr
-		case _ => null
-     }
-     mbr
+  def attributeFor(name: String): BaseAttributeDef = {
+    val key = name.toLowerCase()
+    val optMbr: Option[BaseAttributeDef] = memberDefs.find(m => m.name == key)
+    val mbr: BaseAttributeDef = optMbr match {
+      case Some(optMbr) => optMbr
+      case _ => null
+    }
+    mbr
   }
 }
 
@@ -529,7 +529,7 @@ class AttributeDef extends BaseAttributeDef {
   def tType = tAttr
   def tTypeType = tContainer
   def parent = inherited
-  override def typeDef : BaseTypeDef = aType
+  override def typeDef: BaseTypeDef = aType
 
   var aType: BaseTypeDef = _
   var inherited: AttributeDef = _ // attributes could be inherited from others - in that case aType would be same as parent one
@@ -603,57 +603,57 @@ class FunctionDef extends BaseElemDef {
       case _ => false
     }
   }
-  def typeString : String = (FullName + "(" + args.map(arg => arg.Type.typeString).mkString(",") + ")").toLowerCase
+  def typeString: String = (FullName + "(" + args.map(arg => arg.Type.typeString).mkString(",") + ")").toLowerCase
   //def tStr: String = (FullName + "(" + args.map(arg => arg.Type.FullName).mkString(",") + ")").toLowerCase
 
   def returnTypeString: String = if (retType != null) retType.typeString else "Unit"
   //def AnotherImplementationForReturnTypeString: String = if (retType != null) retType.tStr else "Unit"
-    
-  def isIterableFcn : Boolean = { features.contains(FcnMacroAttr.ITERABLE) }
+
+  def isIterableFcn: Boolean = { features.contains(FcnMacroAttr.ITERABLE) }
 }
 
-/** 
+/**
  *  The FcnMacroAttr.Feature is used to describe the sort of macro or function is being defined.  Briefly,
- *  
+ *
  *    ITERABLE - when included in a MacroDef instance's features set, the first argument of the macro
  *    	is a Scala Iterable and the code that will be generated looks like arg1.filter( itm => arg2(arg3,arg4,...,argN)
- *      or other iterable function (e.g., map, foldLeft, zip, etc).  
- *    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect 
- *    	and return whether the update happened as a Boolean.  This is needed so that the variable updates can be folded into 
+ *      or other iterable function (e.g., map, foldLeft, zip, etc).
+ *    CLASSUPDATE - when designated in the features set, it indicates the macro will update its first argument as a side effect
+ *    	and return whether the update happened as a Boolean.  This is needed so that the variable updates can be folded into
  *      the flow of a pmml predicate interpretation.  Variable updates are currently done inside a class as a variable arg
  *      to the constructor.  These classes are added to the current derived field class before the enclosing '}' for the
- *      class representing the derived field.  A global optimization of the derived field's function would be needed to 
- *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple 
- *      parts. 
+ *      class representing the derived field.  A global optimization of the derived field's function would be needed to
+ *      do a better job by reorganizing the code and possibly breaking the top level derived function into multiple
+ *      parts.
  *    HAS_INDEFINITE_ARITY when set this function def as a varargs or if you prefer variadic specification on its last
- *      argument (e.g., And(boolExpr : Boolean*) ).  
+ *      argument (e.g., And(boolExpr : Boolean*) ).
  */
 object FcnMacroAttr extends Enumeration {
-	type Feature = Value
-	val ITERABLE, CLASSUPDATE, HAS_INDEFINITE_ARITY = Value
-	
-	def fromString(feat : String) : Feature = {
-		val feature : Feature = feat match {
-			case "ITERABLE" =>  ITERABLE
-			case "CLASSUPDATE" => CLASSUPDATE
-			case "HAS_INDEFINITE_ARITY" => HAS_INDEFINITE_ARITY
-		}
-		feature
-	}
+  type Feature = Value
+  val ITERABLE, CLASSUPDATE, HAS_INDEFINITE_ARITY = Value
+
+  def fromString(feat: String): Feature = {
+    val feature: Feature = feat match {
+      case "ITERABLE" => ITERABLE
+      case "CLASSUPDATE" => CLASSUPDATE
+      case "HAS_INDEFINITE_ARITY" => HAS_INDEFINITE_ARITY
+    }
+    feature
+  }
 }
 
 class MacroDef extends FunctionDef {
-  /** 
+  /**
    *  This is the template text with subsitution variables embedded.  These
    *  are demarcated with "%" ... e.g., %variable%.  Variable symbol names can have most characters
-   *  in them including .+_, ... no support for escaped % at this point.  
-   *  
+   *  in them including .+_, ... no support for escaped % at this point.
+   *
    *  Note: There are two templates.  One is for the containers with fixed fields.  The other is for
    *  the so-called mapped containers that use a dictionary to represent sparse fields.  Obviously
-   *  some macros don't have containers as one of their elements.  In this case, the same template 
+   *  some macros don't have containers as one of their elements.  In this case, the same template
    *  populates both members of the tuple.  See MakeMacro in mdmgr.scala for details.
    */
-  var macroTemplate: (String,String) = ("","")
+  var macroTemplate: (String, String) = ("", "")
 }
 
 class ModelDef extends BaseElemDef {
@@ -664,8 +664,7 @@ class ModelDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
 
-
-class JarDef extends BaseElemDef{
+class JarDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
 
@@ -721,16 +720,15 @@ class ClusterCfgInfo {
    * This object captures the information related to a clusterConfiguration
    */
   var clusterId: String = _
-  var cfgMap:scala.collection.mutable.HashMap[String,String] = _
+  var cfgMap: scala.collection.mutable.HashMap[String, String] = _
   var modifiedTime: Date = _
   var createdTime: Date = _
 
   def ClusterId: String = clusterId
-  def CfgMap:scala.collection.mutable.HashMap[String,String] = cfgMap
+  def CfgMap: scala.collection.mutable.HashMap[String, String] = cfgMap
   def ModifiedTime: Date = modifiedTime
   def CreatedTime: Date = createdTime
 }
-
 
 class AdapterInfo {
   /**
@@ -759,17 +757,26 @@ class AdapterInfo {
   def AssociatedMessage: String = associatedMsg
 }
 
-class AuditRecord
-{
+class AuditRecord {
   var actionTime: String = _
   var action: String = _
-  var notes : String = _
-  var objectAccessed : String = _
+  var notes: String = _
+  var objectAccessed: String = _
   var success: String = _
   var transactionId: String = _
-  var userOrRole : String = _
+  var userOrRole: String = _
   var userPrivilege: String = _
 
-  override def toString : String = 
+  override def toString: String =
     "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
 }
+class OutputMsgDef extends BaseElemDef {
+  var Queue: String = _
+  var ParitionKeys: Array[(String, Array[(String, String)], String, String)] = _ // Output Partition Key. Message/Model Full Qualified Name as first value in tuple, Rest of the field name as second value in tuple and "Mdl" Or "Msg" String as the third value in tuple.
+  var DataDeclaration: Map[String, String] = _
+  var Defaults: Map[String, String] = _ // Local Variables. So, we are not expecting qualified names here.
+  var Fields: Map[(String, String), Set[(Array[(String, String)], String)]] = _ // Fields from Message/Model. Map Key is Message/Model Full Qualified Name as first value in key tuple and "Mdl" Or "Msg" String as the second value in key tuple. Value is Set of fields & corresponding Default Value (if not present NULL)
+  var OutputFormat: String = _ // Format String
+}
+
+

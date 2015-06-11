@@ -102,6 +102,21 @@ object ErrorCodeConstants {
    val Get_Message_From_Cache_Successful = "Successfully fetched message from cache";
    val Recompile_Message_Failed = "Failed to recompile message";
    
+   //Output Message
+   val Add_OutputMessage_Successful = "Output Message Added Successfully";
+   val Add_OutputMessage_Failed = "Failed to Add Output Message";
+   val Update_OutputMessage_Successful = "Output Message Updated Successfully";
+   val Update_OutputMessage_Failed = "Failed to Update Output Message";
+   val Remove_OutputMessage_Successful = "Deleted Output Message Successfully";
+   val Remove_OutputMessage_Failed = "Failed to Delete Output Message";
+   val Remove_OutputMessage_Failed_Not_Found = "Failed to Delete Output Message. Output Message Not found"
+   val Get_All_OutputMessages_Failed = "Failed to fetch all Output messages";
+   val Get_All_OutputMessages_Failed_Not_Available = "Failed to fetch all Outputmessages. No Output Message Available.";
+   val Get_All_OutputMessages_Succesful = "All Output Messages fetched successfully";
+   val Get_OutputMessage_From_Cache_Failed = "Failed to fetch Output message from cache";
+   val Get_OutputMessage_From_Cache_Successful = "Successfully fetched Output message from cache";
+   val Recompile_OutputMessage_Failed = "Failed to recompile Output message";
+   
   //Model
    val Deactivate_Model_Successful = "Deactivated Model Successfully";
    val Deactivate_Model_Failed = "Failed to Deactivate Model";
