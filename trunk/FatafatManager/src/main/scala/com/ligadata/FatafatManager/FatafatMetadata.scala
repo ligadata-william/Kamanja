@@ -80,21 +80,15 @@ class FatafatMetadata {
     LOG.debug("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
-  def PrepareMessage(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
-    if (loadJars)
-      LoadJarIfNeeded(msg, loadedJars, loader)
-    // else Assuming we are already loaded all the required jars
-
-    var clsName = msg.PhysicalName.trim
-    if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') // if no $ at the end we are taking $
-      clsName = clsName + "$"
-
+  private[this] def CheckAndPrepMessage(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef): Boolean = {
     var isMsg = true
+    var curClass: Class[_] = null
 
     try {
       // If required we need to enable this test
       // Convert class name into a class
       var curClz = Class.forName(clsName, true, loader)
+      curClass = curClz
 
       isMsg = false
 
@@ -107,14 +101,24 @@ class FatafatMetadata {
       case e: Exception => {
         LOG.error("Failed to get classname :" + clsName)
         e.printStackTrace
+        return false
       }
     }
 
     if (isMsg) {
       try {
-        val module = mirror.staticModule(clsName)
-        val obj = mirror.reflectModule(module)
-        val objinst = obj.instance
+        var objinst: Any = null
+        try {
+          // Trying Singleton Object
+          val module = mirror.staticModule(clsName)
+          val obj = mirror.reflectModule(module)
+          objinst = obj.instance
+        } catch {
+          case e: Exception => {
+            // Trying Regular Object instantiation
+            objinst = curClass.newInstance
+          }
+        }
         if (objinst.isInstanceOf[BaseMsgObj]) {
           val messageobj = objinst.asInstanceOf[BaseMsgObj]
           val msgName = msg.FullName.toLowerCase
@@ -144,17 +148,105 @@ class FatafatMetadata {
           messageObjects(msgName) = mgsObj
 
           LOG.debug("Created Message:" + msgName)
+          return true
         } else {
           LOG.error("Failed to instantiate message object :" + clsName)
+          return false
         }
       } catch {
         case e: Exception => {
           LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          return false
         }
       }
     } else {
       LOG.error("Failed to instantiate message object :" + clsName)
+      return false
     }
+    return false
+  }
+
+  def PrepareMessage(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
+    if (loadJars)
+      LoadJarIfNeeded(msg, loadedJars, loader)
+    // else Assuming we are already loaded all the required jars
+
+    var clsName = msg.PhysicalName.trim
+
+    var foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
+
+    if (foundFlg == false) {
+      if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
+        clsName = clsName + "$"
+        foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
+      }
+    }
+  }
+
+  private[this] def CheckAndPrepContainer(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef): Boolean = {
+    var isContainer = true
+    var curClass: Class[_] = null
+
+    try {
+      // If required we need to enable this test
+      // Convert class name into a class
+      var curClz = Class.forName(clsName, true, loader)
+      curClass = curClz
+
+      isContainer = false
+
+      while (curClz != null && isContainer == false) {
+        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
+        if (isContainer == false)
+          curClz = curClz.getSuperclass()
+      }
+    } catch {
+      case e: Exception => {
+        LOG.error("Failed to get classname :" + clsName)
+        e.printStackTrace
+        return false
+      }
+    }
+
+    if (isContainer) {
+      try {
+        var objinst: Any = null
+        try {
+          // Trying Singleton Object
+          val module = mirror.staticModule(clsName)
+          val obj = mirror.reflectModule(module)
+          objinst = obj.instance
+        } catch {
+          case e: Exception => {
+            // Trying Regular Object instantiation
+            objinst = curClass.newInstance
+          }
+        }
+
+        if (objinst.isInstanceOf[BaseContainerObj]) {
+          val containerobj = objinst.asInstanceOf[BaseContainerObj]
+          val contName = container.FullName.toLowerCase
+          val contObj = new MsgContainerObjAndTransformInfo(null, containerobj)
+          GetChildsFromEntity(container.containerType, contObj.childs)
+          containerObjects(contName) = contObj
+
+          LOG.debug("Created Container:" + contName)
+          return true
+        } else {
+          LOG.error("Failed to instantiate container object :" + clsName)
+          return false
+        }
+      } catch {
+        case e: Exception => {
+          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          return false
+        }
+      }
+    } else {
+      LOG.error("Failed to instantiate containerObjects object :" + clsName)
+      return false
+    }
+    return false
   }
 
   def PrepareContainer(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
@@ -172,71 +264,25 @@ class FatafatMetadata {
     }
 
     var clsName = container.PhysicalName.trim
-    if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') // if no $ at the end we are taking $
-      clsName = clsName + "$"
 
-    var isContainer = true
-
-    try {
-      // If required we need to enable this test
-      // Convert class name into a class
-      var curClz = Class.forName(clsName, true, loader)
-
-      isContainer = false
-
-      while (curClz != null && isContainer == false) {
-        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
-        if (isContainer == false)
-          curClz = curClz.getSuperclass()
+    var foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
+    if (foundFlg == false) {
+      if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
+        clsName = clsName + "$"
+        foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
       }
-    } catch {
-      case e: Exception => {
-        LOG.error("Failed to get classname :" + clsName)
-        e.printStackTrace
-      }
-    }
-
-    if (isContainer) {
-      try {
-        val module = mirror.staticModule(clsName)
-        val obj = mirror.reflectModule(module)
-        val objinst = obj.instance
-        if (objinst.isInstanceOf[BaseContainerObj]) {
-          val containerobj = objinst.asInstanceOf[BaseContainerObj]
-          val contName = container.FullName.toLowerCase
-          val contObj = new MsgContainerObjAndTransformInfo(null, containerobj)
-          GetChildsFromEntity(container.containerType, contObj.childs)
-          containerObjects(contName) = contObj
-
-          LOG.debug("Created Container:" + contName)
-        } else {
-          LOG.error("Failed to instantiate container object :" + clsName)
-        }
-      } catch {
-        case e: Exception => {
-          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
-        }
-      }
-    } else {
-      LOG.error("Failed to instantiate containerObjects object :" + clsName)
     }
   }
 
-  def PrepareModel(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
-    if (loadJars)
-      LoadJarIfNeeded(mdl, loadedJars, loader)
-    // else Assuming we are already loaded all the required jars
-
-    var clsName = mdl.PhysicalName.trim
-    if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') // if no $ at the end we are taking $
-      clsName = clsName + "$"
-
+  private[this] def CheckAndPrepModel(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef): Boolean = {
     var isModel = true
+    var curClass: Class[_] = null
 
     try {
       // If required we need to enable this test
       // Convert class name into a class
       var curClz = Class.forName(clsName, true, loader)
+      curClass = curClz
 
       isModel = false
 
@@ -249,6 +295,7 @@ class FatafatMetadata {
       case e: Exception => {
         LOG.error("Failed to get classname :" + clsName)
         e.printStackTrace
+        return false
       }
     }
 
@@ -256,25 +303,58 @@ class FatafatMetadata {
 
     if (isModel) {
       try {
-        val module = mirror.staticModule(clsName)
-        val obj = mirror.reflectModule(module)
+        var objinst: Any = null
+        try {
+          // Trying Singleton Object
+          val module = mirror.staticModule(clsName)
+          val obj = mirror.reflectModule(module)
+          // curClz.newInstance
+          objinst = obj.instance
+        } catch {
+          case e: Exception => {
+            // Trying Regular Object instantiation
+            objinst = curClass.newInstance
+          }
+        }
 
-        val objinst = obj.instance
         // val objinst = obj.instance
         if (objinst.isInstanceOf[ModelBaseObj]) {
           val modelobj = objinst.asInstanceOf[ModelBaseObj]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
           modelObjects(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
           LOG.debug("Created Model:" + mdlName)
+          return true
         } else {
           LOG.error("Failed to instantiate model object :" + clsName)
           LOG.debug("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
+          return false
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        case e: Exception =>
+          LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+          return false
       }
     } else {
       LOG.error("Failed to instantiate model object :" + clsName)
+      return false
+    }
+    return false
+  }
+
+  def PrepareModel(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
+    if (loadJars)
+      LoadJarIfNeeded(mdl, loadedJars, loader)
+    // else Assuming we are already loaded all the required jars
+
+    var clsName = mdl.PhysicalName.trim
+
+    var foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
+
+    if (foundFlg == false) {
+      if (clsName.size > 0 && clsName.charAt(clsName.size - 1) != '$') { // if no $ at the end we are taking $
+        clsName = clsName + "$"
+        foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
+      }
     }
   }
 

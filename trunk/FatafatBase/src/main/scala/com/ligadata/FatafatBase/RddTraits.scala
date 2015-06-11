@@ -25,17 +25,6 @@ class TimeRange(startTime: Int, endTime: Int) {
   // Methods
 }
 
-// Temporarly creating model base and model base object to compile, this should be replaced with ModelBase and ModelBaseObj
-// When implementing sample models completely - 
-trait RddModelBase {
-  def execute(outputDefault: Boolean): Option[ModelResult] // if outputDefault is true we will output the default value if nothing matches, otherwise null 
-}
-
-trait RddModelBaseObj {
-  def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(ctxt: TransactionContext): RddModelBase // Creating same type of object with given values 
-}
-
 // RDD traits/classes
 class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
   val LOG = Logger.getLogger(getClass);

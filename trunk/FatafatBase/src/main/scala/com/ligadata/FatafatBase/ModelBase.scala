@@ -29,7 +29,7 @@ class Result(val name: String, val usage: MinVarType, val result: Any) {
 
 // Need to properly define ModelResult related objects..
 object ModelResult {
-  def builder : ModelResultBuilder = null
+  def builder: ModelResultBuilder = null
   def ValueString(v: Any): String = {
     if (v == null) {
       return "null"
@@ -48,8 +48,8 @@ object ModelResult {
 }
 
 class ModelResultBuilder {
-  def build : ModelResult = null;
-  def withResult(obj: Any) : ModelResultBuilder = null;
+  def build: ModelResult = null;
+  def withResult(obj: Any): ModelResultBuilder = null;
 }
 
 class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: String, val mdlVersion: String, val results: Array[Result]) {
@@ -156,43 +156,32 @@ trait EnvContext {
    *  @return a MesssageContainerBase of that ilk
    */
   def NewMessageOrContainer(fqclassname: String): MessageContainerBase
-
 }
 
-trait ModelBase {
-  val gCtx: EnvContext
-  val msg: MessageContainerBase
-  val modelName: String
-  val modelVersion: String
-  val tenantId: String
-  val tempTransId: Long
-
-  def getModelName: String = modelName // Model Name
-  def getVersion: String = modelVersion // Model Version
-  def getTenantId: String = tenantId // Tenant Id
-  def getTempTransId: Long = tempTransId // tempTransId
-
+abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseObj) {
+  final def EnvContext() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null // gCtx
+  final def ModelName() = factory.ModelName() // Model Name
+  final def Version() = factory.Version() // Model Version
+  final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
+  final def TempTransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tempTransId else null // tempTransId
+  
   def execute(outputDefault: Boolean): ModelResult // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
 trait ModelBaseObj {
   def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String): ModelBase // Creating same type of object with given values 
-
-  def getModelName: String // Model Name
-  def getVersion: String // Model Version
+  def CreateNewModel(ctxt: TransactionContext): ModelBase // Creating same type of object with given values 
+  def ModelName(): String // Model Name
+  def Version(): String // Model Version
 }
 
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
-//BUGBUG:: Need to move com.ligadata.Pmml.Runtime.Context to this file
-class ModelContext(tempTransId: Long) {
-  
+//BUGBUG:: Need to use this instead of com.ligadata.Pmml.Runtime.Context
+class ModelContext(val txnContext: TransactionContext) {
 }
 
-class TransactionContext(tempTransId: Long, gCtx: EnvContext, msg: MessageContainerBase, tenantId: String) {
-  val ctx = new ModelContext(tempTransId)
-  def GetContext = ctx
+class TransactionContext(val tempTransId: Long, val gCtx: EnvContext, /* val msg: MessageContainerBase, */ val tenantId: String) {
 }
 
