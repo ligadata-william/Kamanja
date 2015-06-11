@@ -1,7 +1,7 @@
 package com.ligadata.models.samples.models
 
-import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddModelBase, RddModelBaseObj, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResult, TransactionContext }
+import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
+import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResult, TransactionContext, ModelContext }
 import com.ligadata.samples.messages.{CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
@@ -48,37 +48,39 @@ import RddDate._
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-object LowBalanceAlert extends RddModelBaseObj {
+object LowBalanceAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(txnContext: TransactionContext): RddModelBase = return new LowBalanceAlert(txnContext)
+  override def CreateNewModel(txnContext: TransactionContext): ModelBase = return new LowBalanceAlert(txnContext)
+  override def ModelName: String = "LowBalanceAlert" // Model Name
+  override def Version: String = "0.0.1" // Model Version
 } 
 
 class LowBalanceAlertResult (ctxt: TransactionContext) {
 }
 
-class LowBalanceAlert(ctxt: TransactionContext) extends RddModelBase {
-  override def execute(emitAllResults : Boolean) : Option[ModelResult] = {
+class LowBalanceAlert(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
+  override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrDefault
     val pref = CustPreferences.getRecentOrDefault
     if (pref.minBalanceAlertOptout == false)
-      return None
+      return null
 
     // Check if at least min number of hours elapsed since last alert  
     val curDt = RddDate.currentDateTime
     val alertHistory = CustAlertHistory.getRecentOrDefault
     if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
-      return None
+      return null
 
     // continue with alert generation only if balance from current transaction is less than threshold
     val rcntTxn = CustTransaction.getRecent
     if (rcntTxn.isEmpty || rcntTxn.get.balance >= gPref.minAlertBalance)
-      return None
+      return null
       
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").save
     // ... Prepare results here ... need to populate result object with appropriate attributes
-    Option(ModelResult.builder.withResult(new LowBalanceAlertResult(ctxt)).build) 
+    ModelResult.builder.withResult(new LowBalanceAlertResult(ctxt)).build 
   }
 }
 
@@ -103,27 +105,29 @@ class LowBalanceAlert(ctxt: TransactionContext) extends RddModelBase {
 //   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
 //
 
-object LowBalanceAlert2 extends RddModelBaseObj {
+object LowBalanceAlert2 extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(txnContext: TransactionContext): RddModelBase = return new LowBalanceAlert2(txnContext)
+  override def CreateNewModel(txnContext: TransactionContext): ModelBase = return new LowBalanceAlert2(txnContext)
+  override def ModelName: String = "LowBalanceAlert2" // Model Name
+  override def Version: String = "0.0.1" // Model Version
 } 
 
 class LowBalanceAlertResult2(ctxt: TransactionContext) {
 }
 
-class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
-  override def execute(emitAllResults : Boolean) : Option[ModelResult] = {
+class LowBalanceAlert2(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
+  override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrDefault
     val pref = CustPreferences.getRecentOrDefault
     if (pref.multiDayMinBalanceAlertOptout == false)
-      return None
+      return null
      
     // Check if at least min number of hours elapsed since last alert  
     val curDt = currentDateTime
     val alertHistory = CustAlertHistory.getRecentOrDefault
     if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
-      return None
+      return null
       
     // get history of transaction whose balance is less than minAlertBalance in last N days
     val lookBackTime = curDt.lastNdays(gPref.numLookbackDaysForMultiDayMinBalanceAlert)
@@ -131,18 +135,18 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends RddModelBase {
     
     // quick check to whether it is worth doing group by operation
     if (rcntTxns.isEmpty || rcntTxns.count < gPref.maxNumDaysAllowedWithMinBalance)
-      return None
+      return null
       
     // compute distinct days in the retrieved history (number of days with balance less than minAlertBalance)
     // and check if those days meet the threshold
     val daysWhenBalanceIsLessThanMin = rcntTxns.groupBy({trn => trn.date}).count.toInt
     if(daysWhenBalanceIsLessThanMin <= gPref.maxNumDaysAllowedWithMinBalance)
-      return None
+      return null
       
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).save
     // ... Prepare results here ... need to populate result object with appropriate attributes
-    Option(ModelResult.builder.withResult(new LowBalanceAlertResult2(ctxt)).build) 
+    ModelResult.builder.withResult(new LowBalanceAlertResult2(ctxt)).build 
   }
 }
 

@@ -1,7 +1,7 @@
 
 package com.ligadata.FatafatManager
 
-import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult }
+import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult, TransactionContext }
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
@@ -38,7 +38,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
 
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-            val curMd = md.mdl.CreateNewModel(tempTransId, envContext, finalTopMsgOrContainer, md.tenantId)
+            val curMd = md.mdl.CreateNewModel(new TransactionContext(tempTransId, envContext, /* finalTopMsgOrContainer, */ md.tenantId))
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
@@ -47,12 +47,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                 // Nothing to output
               }
             } else {
-              LOG.error("Failed to create model " + md.mdl.getModelName)
+              LOG.error("Failed to create model " + md.mdl.ModelName())
             }
           } else {
           }
         } catch {
-          case e: Exception => { LOG.error("Model Failed => " + md.mdl.getModelName + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+          case e: Exception => { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
         }
       })
     }
