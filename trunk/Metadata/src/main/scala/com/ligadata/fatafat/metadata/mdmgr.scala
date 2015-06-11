@@ -2586,17 +2586,24 @@ class MdMgr {
    *
    */
   def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
-    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
+    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars), false)
   }
 
-  def AddModelDef(mdl: ModelDef): Unit = {
+  def AddModelDef(mdl: ModelDef, allowLatestVersion: Boolean): Unit = {
 
     var modelExists: Boolean = false
     val existingModel = Model(mdl.FullName, -1, false)
     if (existingModel != None) {
       val latesmodel = existingModel.get.asInstanceOf[ModelDef]
-      if (mdl.Version <= latesmodel.Version) {
-        modelExists = true
+      if (allowLatestVersion) {
+        if (mdl.Version < latesmodel.Version) {
+          modelExists = true
+        }
+      }
+      else {
+        if (mdl.Version <= latesmodel.Version) {
+          modelExists = true
+        }
       }
     }
 
