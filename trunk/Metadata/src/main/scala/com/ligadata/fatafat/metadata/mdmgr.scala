@@ -53,6 +53,7 @@ class MdMgr {
   private var containerDefs = new HashMap[String, Set[ContainerDef]] with MultiMap[String, ContainerDef]
   private var attrbDefs = new HashMap[String, Set[BaseAttributeDef]] with MultiMap[String, BaseAttributeDef]
   private var modelDefs = new HashMap[String, Set[ModelDef]] with MultiMap[String, ModelDef]
+  private var outputMsgDefs = new HashMap[String, Set[OutputMsgDef]] with MultiMap[String, OutputMsgDef]
 
   // FunctionDefs keyed by function signature nmspc.name(argtyp1,argtyp2,...) map 
   private var compilerFuncDefs = scala.collection.mutable.Map[String, FunctionDef]()
@@ -84,6 +85,7 @@ class MdMgr {
     clusterCfgs.clear
     nodes.clear
     adapters.clear
+    outputMsgDefs.clear
   }
 
   def truncate(objectType: String) {
@@ -126,6 +128,9 @@ class MdMgr {
       case "Adapters" => {
         adapters.clear
       }
+      case "OutputMsgDef" => {
+    	  outputMsgDefs.clear
+        }
       case _ => {
         logger.error("Unknown object type " + objectType + " in truncate function")
       }
@@ -146,6 +151,7 @@ class MdMgr {
     clusterCfgs.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
     nodes.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
     adapters.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    outputMsgDefs.foreach(obj => { logger.trace("outputMsgDef Key = " + obj._1) })
   }
 
   private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Long): Option[T] = {
@@ -2580,17 +2586,24 @@ class MdMgr {
    *
    */
   def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
-    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
+    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars), false)
   }
 
-  def AddModelDef(mdl: ModelDef): Unit = {
+  def AddModelDef(mdl: ModelDef, allowLatestVersion: Boolean): Unit = {
 
     var modelExists: Boolean = false
     val existingModel = Model(mdl.FullName, -1, false)
     if (existingModel != None) {
       val latesmodel = existingModel.get.asInstanceOf[ModelDef]
-      if (mdl.Version <= latesmodel.Version) {
-        modelExists = true
+      if (allowLatestVersion) {
+        if (mdl.Version < latesmodel.Version) {
+          modelExists = true
+        }
+      }
+      else {
+        if (mdl.Version <= latesmodel.Version) {
+          modelExists = true
+        }
       }
     }
 
@@ -2753,6 +2766,136 @@ class MdMgr {
     clusterCfgs.toMap
   }
 
+    /** Get All Versions of Output Messages */
+    def OutputMessages(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = { GetImmutableSet(Some(outputMsgDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
+
+    /** Get All Versions of Output Messages for Key */
+    def OutputMessages(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = { GetImmutableSet(outputMsgDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
+    def OutputMessages(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = OutputMessages(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
+
+    /** Answer the OutputMessageDef with the supplied namespace and name  */
+    def OutputMessage(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[OutputMsgDef] = OutputMessage(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+    /** Answer the ACTIVE and CURRENT Output Message with the supplied namespace and name  */
+    def ActiveOutputMessage(nameSpace: String, name: String): OutputMsgDef = {
+      val optMsg: Option[OutputMsgDef] = OutputMessage(MdMgr.MkFullName(nameSpace, name), -1, true)
+      val outputMsg: OutputMsgDef = optMsg match {
+        case Some(optOutputMsg) => optOutputMsg
+        case _ => null
+      }
+      outputMsg
+    }
+
+    /** Answer the Output Message with the supplied key. */
+    def OutputMessage(key: String, ver: Long, onlyActive: Boolean): Option[OutputMsgDef] = GetReqValue(OutputMessages(key, onlyActive, false), ver)
+
+    @throws(classOf[AlreadyExistsException])
+    @throws(classOf[NoSuchElementException])
+    def AddOutputMsg(outputMsg: OutputMsgDef): Unit = {
+
+      if (OutputMessage(outputMsg.FullName, -1, false) != None) {
+        throw new AlreadyExistsException(s"Output Message ${outputMsg.FullName} already exists.")
+      }
+      outputMsgDefs.addBinding(outputMsg.FullName, outputMsg)
+    }
+
+    /**
+     *  Construct and catalog a output message with the supplied named attributes. They may be of arbitrary
+     *  types.
+     *
+     *  @param nameSpace - the namespace in which this output message should be cataloged
+     *  @param name - the name of the output message.
+     *  @param queue - the name of the queue the output message need to puclished to
+     *  @param partionKeys - partition keys
+     *  @param defaults - default value
+     *  @param dataDeclrtion - delimeter value
+     *  @param fields - all the fields of the output message
+     *  @param outputFormat - output format string
+     */
+
+    @throws(classOf[AlreadyExistsException])
+    @throws(classOf[NoSuchElementException])
+    def AddOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String): Unit = {
+      AddOutputMsg(MakeOutputMsg(nameSpace, name, ver, queue, partionKeys, defaults, dataDeclrtion, fields, outputFormat))
+    }
+
+    /**
+     *  Construct and catalog a output message with the supplied named attributes. They may be of arbitrary
+     *  types.
+     *
+     *  @param nameSpace - the namespace in which this output message should be cataloged
+     *  @param name - the name of the output message.
+     *  @param queue - the name of the queue the output message need to puclished to
+     *  @param partionKeys - partition keys
+     *  @param defaults - default value
+     *  @param dataDeclrtion - delimeter value
+     *  @param fields - all the fields of the output message
+     *  @param outputFormat - output format string
+     *  @return OutputMsgDef
+     */
+
+    def MakeOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String): OutputMsgDef = {
+
+      val latestActiveMessage = OutputMessage(nameSpace, name, -1, false)
+      if (latestActiveMessage != None) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Output Message $nameSpace.$name already exists in the system")
+        }
+      }
+      val physicalName: String = nameSpace+"_"+name+"_"+ver+"_"+System.currentTimeMillis
+      var od = new OutputMsgDef
+      val outputMsgNm = MdMgr.MkFullName(nameSpace, name)
+      od.nameSpace = nameSpace
+      od.name = name
+      od.ver = ver
+      od.Queue = queue
+      od.ParitionKeys = partionKeys
+      od.Defaults = defaults
+      od.DataDeclaration = dataDeclrtion
+      od.Fields = fields
+      od.OutputFormat = outputFormat
+      od.PhysicalName(physicalName)
+      SetBaseElem(od, nameSpace, name, ver, null, null)
+      od
+    }
+
+    @throws(classOf[ObjectNolongerExistsException])
+    def ModifyOutputMsg(nameSpace: String, name: String, ver: Long, operation: String): OutputMsgDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
+      val outputMsg = outputMsgDefs.getOrElse(key, null)
+      if (outputMsg == null) {
+        logger.trace("The output message " + key + " doesn't exist ")
+        throw new ObjectNolongerExistsException(s"The output message $key may have been removed already")
+      } else {
+        var versionMatch: OutputMsgDef = null
+        outputMsgDefs(key).foreach(o =>
+          if (o.ver == ver) {
+            versionMatch = o
+            operation match {
+              case "Remove" => {
+                o.Deleted
+                o.Deactive
+                logger.info("The output message " + key + " is removed ")
+              }
+              case "Activate" => {
+                o.Active
+                logger.info("The output message " + key + " is activated ")
+              }
+              case "Deactivate" => {
+                o.Deactive
+                logger.info("The output message " + key + " is deactivated ")
+              }
+            }
+          })
+        versionMatch
+      }
+    }
+
+    def RemoveOutputMsg(nameSpace: String, name: String, ver: Long): BaseElemDef = {
+      ModifyOutputMsg(nameSpace, name, ver, "Remove")
+    }
+      
+  
   // External Functions -- End 
 
 }

@@ -55,7 +55,7 @@ import util.control.Breaks._
 
 import java.util.Date
 
-case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String])
+case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
 
 case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
 
@@ -548,6 +548,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private var otherStore: DataStore = _
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
+  private var outputmsgStore: DataStore = _
 
   def oStore = otherStore
 
@@ -833,6 +834,10 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def SaveOutputMsObjectList(objList: Array[BaseElemDef]) {
+    SaveObjectList(objList, outputmsgStore)
+  }
+  
   def SaveObject(key: String, value: String, store: DataStore) {
     var ba = serializer.SerializeObjectToByteArray(value)
     SaveObject(key, ba, store)
@@ -949,7 +954,7 @@ object MetadataAPIImpl extends MetadataAPI {
         case o: ModelDef => {
           logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
           SaveObject(key, value, modelStore)
-          mdMgr.AddModelDef(o)
+          mdMgr.AddModelDef(o, false)
         }
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)
@@ -1036,6 +1041,11 @@ object MetadataAPIImpl extends MetadataAPI {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
           SaveObject(key, value, typeStore)
           mdMgr.AddContainerType(o)
+        }
+        case o: OutputMsgDef => {
+          logger.trace("Adding the Output Message to the cache: name of the object =>  " + dispkey)
+          SaveObject(key, value, outputmsgStore)
+          mdMgr.AddOutputMsg(o)
         }
         case _ => {
           logger.error("SaveObject is not implemented for objects of type " + obj.getClass.getName)
@@ -1134,6 +1144,10 @@ object MetadataAPIImpl extends MetadataAPI {
         case o: ContainerTypeDef => {
           logger.debug("Updating the Type in the DB: name of the object =>  " + dispkey)
           UpdateObject(key, value, typeStore)
+        }
+        case o: OutputMsgDef => {
+          logger.debug("Updating the output message in the DB: name of the object =>  " + dispkey)
+          UpdateObject(key, value, outputmsgStore)
         }
         case _ => {
           logger.error("UpdateObject is not implemented for objects of type " + obj.getClass.getName)
@@ -1509,6 +1523,9 @@ object MetadataAPIImpl extends MetadataAPI {
         case o: ContainerTypeDef => {
           updatedObject = mdMgr.ModifyType(o.nameSpace, o.name, o.ver, operation)
         }
+        case o: OutputMsgDef => {
+          updatedObject = mdMgr.ModifyOutputMsg(o.nameSpace, o.name, o.ver, operation)
+        }
         case _ => {
           throw new InternalErrorException("UpdateObjectInCache is not implemented for objects of type " + obj.getClass.getName)
         }
@@ -1539,7 +1556,7 @@ object MetadataAPIImpl extends MetadataAPI {
       obj match {
         case o: ModelDef => {
           logger.debug("Adding the model to the cache: name of the object =>  " + dispkey)
-          mdMgr.AddModelDef(o)
+          mdMgr.AddModelDef(o, true)
         }
         case o: MessageDef => {
           logger.debug("Adding the message to the cache: name of the object =>  " + dispkey)
@@ -1609,6 +1626,10 @@ object MetadataAPIImpl extends MetadataAPI {
         case o: ContainerTypeDef => {
           logger.debug("Adding the Type to the cache: name of the object =>  " + dispkey)
           mdMgr.AddContainerType(o)
+        }
+        case o: OutputMsgDef => {
+          logger.trace("Adding the Output Msg to the cache: name of the object =>  " + key)
+          mdMgr.AddOutputMsg(o)
         }
         case _ => {
           logger.error("SaveObject is not implemented for objects of type " + obj.getClass.getName)
@@ -1775,6 +1796,7 @@ object MetadataAPIImpl extends MetadataAPI {
       conceptStore = metadataStore
       typeStore = metadataStore
       otherStore = metadataStore
+      outputmsgStore = metadataStore
       tableStoreMap = Map("models" -> modelStore,
         "messages" -> messageStore,
         "containers" -> containerStore,
@@ -1782,9 +1804,10 @@ object MetadataAPIImpl extends MetadataAPI {
         "concepts" -> conceptStore,
         "types" -> typeStore,
         "others" -> otherStore,
-  "jar_store" -> jarStore,
-  "config_objects" -> configStore,
-        "transaction_id" -> transStore)
+        "jar_store" -> jarStore,
+        "config_objects" -> configStore,
+        "transaction_id" -> transStore,
+        "outputmsgs" -> outputmsgStore)
     } catch {
       case e: CreateStoreFailedException => {
         e.printStackTrace()
@@ -4657,9 +4680,42 @@ object MetadataAPIImpl extends MetadataAPI {
           case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
         }
       }
+      case "OutputMsgDef" => {
+          zkMessage.Operation match {
+            case "Add" => {
+              LoadOutputMsgIntoCache(key)
+            }
+            case "Remove" | "Activate" | "Deactivate" => {
+              try {
+                MdMgr.GetMdMgr.ModifyOutputMsg(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, zkMessage.Operation)
+              } catch {
+                case e: ObjectNolongerExistsException => {
+                  logger.error("The object " + key + " nolonger exists in metadata : It may have been removed already")
+              }
+            }
+          }
+        }
+      }
       case _ => { logger.error("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..") }
     }  
   }
+  
+  def LoadOutputMsgIntoCache(key: String) {
+	    try {
+	      logger.debug("Fetch the object " + key + " from database ")
+	      val obj = GetObject(key.toLowerCase, outputmsgStore)
+	      logger.debug("Deserialize the object " + key)
+	      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
+	      val outputMsgDef = outputMsg.asInstanceOf[OutputMsgDef]
+	      logger.debug("Add the output msg def object " + key + " to the cache ")
+	      AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
 
   def UpdateMdMgr(zkTransaction: ZooKeeperTransaction): Unit = {
     var key: String = null
@@ -6005,6 +6061,14 @@ object MetadataAPIImpl extends MetadataAPI {
       val CONFIG_FILES_DIR = gitRootDir + "/Fatafat/trunk/SampleApplication/Medical/Configs"
       logger.debug("CONFIG_FILES_DIR => " + CONFIG_FILES_DIR)
 
+      var OUTPUTMESSAGE_FILES_DIR = ""
+      val OUTPUTMESSAGE_FILES_DIR1 = configMap.APIConfigParameters.OUTPUTMESSAGE_FILES_DIR
+      if (OUTPUTMESSAGE_FILES_DIR1 == None) {
+        OUTPUTMESSAGE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
+      } else
+        OUTPUTMESSAGE_FILES_DIR = OUTPUTMESSAGE_FILES_DIR1.get
+      logger.debug("OUTPUTMESSAGE_FILES_DIR => " + OUTPUTMESSAGE_FILES_DIR)
+
       metadataAPIConfig.setProperty("ROOT_DIR", rootDir)
       metadataAPIConfig.setProperty("GIT_ROOT", gitRootDir)
       metadataAPIConfig.setProperty("DATABASE", database)
@@ -6033,6 +6097,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("COMPILER_WORK_DIR", COMPILER_WORK_DIR)
       metadataAPIConfig.setProperty("MODEL_EXEC_LOG", MODEL_EXEC_FLAG)
       metadataAPIConfig.setProperty("CONFIG_FILES_DIR", CONFIG_FILES_DIR)
+      metadataAPIConfig.setProperty("OUTPUTMESSAGE_FILES_DIR", OUTPUTMESSAGE_FILES_DIR)
 
       propertiesAlreadyLoaded = true;
 

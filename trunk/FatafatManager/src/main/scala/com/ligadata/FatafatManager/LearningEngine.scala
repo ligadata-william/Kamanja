@@ -15,6 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.outputmsg.OutputMsgGenerator
 
 class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
@@ -122,7 +123,21 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                 e.printStackTrace
               }
           }
+          val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
+          results.map(res => {
+            resMap(res.mdlName) = res.results.map(r => { (r.name, r.result) })
+          })
 
+          var resStr = "Not found any output."
+          val outputMsgs = FatafatMetadata.getMdMgr.OutputMessages(true, true)
+          if (outputMsgs != None && outputMsgs != null) {
+            println("msg " + msg.FullName)
+            var outputGen = new OutputMsgGenerator()
+            val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
+            resStr = resultedoutput.map(resout => resout._3).mkString("\n")
+          }
+
+          /*
           val json =
             ("ModelsResult" -> results.toList.map(res =>
               ("EventDate" -> res.eventDate) ~
@@ -141,7 +156,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                     ("Type" -> r.usage.toString) ~
                     ("Value" -> ModelResult.ValueString(r.result))))))
           val resStr = compact(render(json))
-
+		*/
           envContext.saveStatus(tempTransId, "Start", true)
           if (isValidPartitionKey) {
             envContext.saveModelsResult(tempTransId, partKeyDataList, allMdlsResults)

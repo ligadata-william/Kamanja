@@ -59,6 +59,7 @@ object AuditConstants {
   
   // Objects
   val MESSAGE = "Message"
+  val OUTPUTMSG = "OutputMsg"
   val MODEL = "Model"
   val CONTAINER = "Container"
   val FUNCTION = "Function"

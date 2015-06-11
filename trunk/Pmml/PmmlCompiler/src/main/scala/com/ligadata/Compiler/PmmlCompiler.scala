@@ -476,7 +476,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	
 	private def constructModelDef(ctx : PmmlContext,recompile:Boolean = false) : ModelDef = {
 		/**
-			val modelPkg = s"com.$clientName.$classname.pmml"
+			val curTmInMilli = System.currentTimeMillis
+			val modelPkg = s"com.$clientName.$classname_$curTmInMilli.pmml"
 			ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 			ctx.pmmlTerms("ClassName") = Some(classname)
 			ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal, null) // BUGBUG:: We need to fill collectionType properly instead of null

@@ -66,7 +66,6 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
 	      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,arg.ObjectType,AuditConstants.FAIL,"",nameSpace+"."+name+"."+version)
 	      return new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:READ not allowed for this user").toString
     }
-
     arg.ObjectType match {
       case "model" => {
 	      apiResult = MetadataAPIImpl.GetModelDef(nameSpace,arg.Name,formatType,version,userid)
@@ -85,6 +84,10 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
       }
       case "type" => {
 	      apiResult = MetadataAPIImpl.GetTypeDef(nameSpace,arg.Name,formatType,version,userid)
+      }
+      case "outputmsg" => {
+        
+	      apiResult = MetadataAPIOutputMsg.GetOutputMessageDef(nameSpace,arg.Name,formatType,version)
       }
     }
     apiResult
