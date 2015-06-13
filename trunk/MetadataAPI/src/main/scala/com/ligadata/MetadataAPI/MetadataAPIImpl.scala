@@ -2583,7 +2583,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
-      val (classStr, cntOrMsgDef) = compProxy.compileMessageDef(contOrMsgText,recompile)
+      val (classStrVer, cntOrMsgDef, classStrNoVer) = compProxy.compileMessageDef(contOrMsgText,recompile)
       logger.debug("Message/Container Compiler returned an object of type " + cntOrMsgDef.getClass().getName())
       cntOrMsgDef match {
         case msg: MessageDef => {
@@ -2728,7 +2728,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
-      val (classStr, msgDef) = compProxy.compileMessageDef(messageText)
+      val (classStrVer, msgDef, classStrNoVer) = compProxy.compileMessageDef(messageText)
       val key = msgDef.FullNameWithVer
       msgDef match {
         case msg: MessageDef => {
