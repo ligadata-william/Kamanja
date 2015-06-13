@@ -83,7 +83,7 @@ class CompilerProxy{
 	     , scalaGeneratedCode : String
 	     , clientName : String
 	     ) : Int = 
-  {  
+  { 
     val scalaSrcFileName : String = s"$moduleName.scala"
     createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
 
@@ -100,9 +100,9 @@ class CompilerProxy{
       val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
-	logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-	logger.error(s"cmd used : $mvCmd")
-      }		
+	      logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+	      logger.error(s"cmd used : $mvCmd")
+      }	
       mvCmdRc
     }
   }
@@ -116,10 +116,10 @@ class CompilerProxy{
 		, clientName : String
 		, pmmlFilePath : String
 		, scalahome : String
-		, javahome : String) : (Int, String) =
-  {
-    //val (prop,envVars) = MetadataAPIImpl.readProperties
-    /** prep the workspace and go there*/
+		, javahome : String
+    , isLocalOnly: Boolean = false) : (Int, String) =
+  {   
+    /* this is going to be called 2x to create a Versioned and non-Versioned (aka Local) jarFiles - Local call is always done second */   
     val killDir = s"rm -Rf $compiler_work_dir/$moduleName"
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
     if (killDirRc != 0) {
@@ -131,25 +131,39 @@ class CompilerProxy{
     if (tmpdirRc != 0) {
       logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
       return (tmpdirRc, "")
-    }
+    }     
     /** create a copy of the pmml source in the work directory */
     val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/$moduleName/").!
     if (cpRc != 0) {
       logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
       return (cpRc, "")
     }
-    /** compile the generated code */
-    val rc : Int = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)
+
+
+    /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
+    var rc: Int = 0
+    if (!isLocalOnly) {
+      rc = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)   
+    } else {
+      rc = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName+"_local", classpath, scalaGeneratedCode, clientName)
+    }
+
+    // Bail if compilation filed.
     if (rc != 0) {
       return (rc, "")
     }
-
+    
     /** create the jar */
-    var d = new java.util.Date()
-    var epochTime = d.getTime
-    // insert epochTime into jar file
-    val moduleNameJar : String = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
-    val jarPath = compiler_work_dir + "/" + moduleNameJar
+    var  moduleNameJar: String = ""
+    if (!isLocalOnly) {
+      var d = new java.util.Date()
+      var epochTime = d.getTime
+      moduleNameJar = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
+    } else {
+      moduleNameJar = moduleNamespace + "_" + moduleName + ".jar"
+    }
+
+    val jarPath = compiler_work_dir + "/" + moduleNameJar      
     val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
@@ -255,19 +269,23 @@ class CompilerProxy{
 
 
   @throws(classOf[MsgCompilationFailedException])
-  def compileMessageDef(msgDefStr: String,recompile:Boolean = false) : (String,ContainerDef) = {
+  def compileMessageDef(msgDefStr: String,recompile:Boolean = false) : (String,ContainerDef,String) = {
     try{
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
       logger.debug("Call Message Compiler ....")
-      val(classStr, msgDef) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)
+      val(classStrVer, msgDef, classStrNoVer) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
 
       
       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePath)
       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
-      dumpStrTextToFile(classStr,msgDefClassFilePath)
+      dumpStrTextToFile(classStrVer,msgDefClassFilePath)
+      val msgDefFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.txt"
+      dumpStrTextToFile(msgDefStr,msgDefFilePathLocal)     
+      val msgDefClassFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.scala"
+      dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
 
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
 
@@ -281,39 +299,54 @@ class CompilerProxy{
         }
       }
 
-      var(status,jarFile) = jarCode(msgDef.nameSpace,
+      // Call JarCode 2x, first call will generate a versioned Jar File. Second will generate
+      // the not versioned one.
+      logger.debug("Generating Versioned JarFile for "+msgDefClassFilePath)
+      var(status,jarFileVersion) = jarCode(msgDef.nameSpace,
 				    msgDef.name,
 				    msgDef.ver.toString,
-				    classStr,
+				    classStrVer,
 				    classPath,
 				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
 				    "Test Client",
 				    msgDefFilePath,
 				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
 				    MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"))
-
-
-      logger.debug("Status => " + status)
+      logger.debug("Status => " + status)    
+      
+      logger.debug("Generating No Versioned JarFile for "+msgDefClassFilePath)
+      var(status2,jarFileNoVersion) = jarCode(msgDef.nameSpace,
+            msgDef.name,
+            msgDef.ver.toString,
+            classStrNoVer,
+            classPath,
+            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+            "Test Client",
+            msgDefFilePathLocal,
+            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+            true)
+      logger.debug("Status => " + status2)     
 
       if( status != 0 ){
-	logger.error("Compilation of MessgeDef scala file has failed, Message is not added")
-	throw new MsgCompilationFailedException(msgDefStr)
+	      logger.error("Compilation of MessgeDef scala file has failed, Message is not added")
+	      throw new MsgCompilationFailedException(msgDefStr)
       }
 
-      logger.debug("Jar File => " + jarFile)
+      logger.debug("Jar Files => " + jarFileVersion + ", "+jarFileNoVersion)
 
       if ( msgDef.nameSpace == null ){
-	msgDef.nameSpace = MetadataAPIImpl.sysNS
+	      msgDef.nameSpace = MetadataAPIImpl.sysNS
       }
 
-      msgDef.jarName = jarFile
+      msgDef.jarName = jarFileVersion
       if (msgDef.containerType.isInstanceOf[ContainerTypeDef])
-        msgDef.containerType.asInstanceOf[ContainerTypeDef].jarName = jarFile
+        msgDef.containerType.asInstanceOf[ContainerTypeDef].jarName = jarFileVersion
 
       msgDef.objectDefinition = msgDefStr
       msgDef.objectFormat = fJSON
       
-      (classStr,msgDef)
+      (classStrVer,msgDef,classStrNoVer)
     }
     catch{
       case e:Exception =>{
