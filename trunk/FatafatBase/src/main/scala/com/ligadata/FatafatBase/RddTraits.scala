@@ -187,8 +187,8 @@ trait RDDObject[T <: Any] {
 }
 
 object JavaRDDObject {
-  implicit def fromRDDObject[T: ClassTag](rddObj: RDDObject[T]): JavaRDDObject[T] = new JavaRDDObject[T](rddObj)
-  implicit def toRDDObject[T](rddObj: JavaRDDObject[T]): RDDObject[T] = rddObj.rddObj
+  def fromRDDObject[T: ClassTag](rddObj: RDDObject[T]): JavaRDDObject[T] = new JavaRDDObject[T](rddObj)
+  def toRDDObject[T](rddObj: JavaRDDObject[T]): RDDObject[T] = rddObj.rddObj
 }
 
 abstract class AbstractJavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]]
