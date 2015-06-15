@@ -11,6 +11,8 @@ import com.ligadata.Exceptions._
 import com.ligadata.FatafatBase.api.java.function._
 import com.google.common.base.Optional
 import com.ligadata.Utils.Utils
+import java.util.{Comparator, List => JList, Iterator => JIterator}
+import java.lang.{Iterable => JIterable, Long => JLong}
 
 class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
@@ -107,15 +109,12 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
 
   def iterator: java.util.Iterator[T] = asJavaIterator(rdd.iterator)
 
-/*
-  def map[R](f: Function1[T, R]): JavaRDD[R] = new JavaRDD(rdd.map(f)(fakeClassTag))(fakeClassTag)
+  def map[R](f: Function1[T, R]): JavaRDD[R] = null
+  def map[R](tmRange: TimeRange,f: Function1[T, R]): JavaRDD[R] = null
 
-  def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = {
-    import scala.collection.JavaConverters._
-    def fn = (x: T) => f.call(x).asScala
-    JavaRDD.fromRDD(rdd.flatMap(fn)(fakeClassTag[U]))(fakeClassTag[U])
-  }
-*/
+  def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = null
+
+  // def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = null
   
   def count(): Long = rdd.count()
 
@@ -133,10 +132,12 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
 
   override def wrapRDD(rdd: RDD[T]): JavaRDD[T] = JavaRDD.fromRDD(rdd)
 
+  def filter(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rdd.filter((x => f.call(x).booleanValue())))
+  
   def union(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.union(other.rdd))
-  
+
   def intersection(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.intersection(other.rdd))
-  
+
   def subtract(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.subtract(other))
 
   // def sortBy[S](f: JFunction1[T, S], ascending: Boolean): JavaRDD[T]
@@ -152,34 +153,91 @@ trait RDDObject[T <: Any] {
   // First group of functions retrieve one object (either recent or for a given key & filter)
   // Get recent entry for the Current Key
   def getRecent: Option[T]
-  def getRecentOrDefault: T
+  def getRecentOrNew: T
 
   // Get recent entry for the given key
   def getRecent(key: Array[String]): Option[T]
-  def getRecentOrDefault(key: Array[String]): T
+  def getRecentOrNew(key: Array[String]): T
 
   def getOne(tmRange: TimeRange, f: T => Boolean): Option[T]
   def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T]
-  def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T
-  def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T
+  def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T
+  def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T
 
   // This group of functions retrieve collection of objects 
   def getRDDForCurrKey(f: T => Boolean): RDD[T]
   def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T]
 
   // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  def getRDD(tmRange: TimeRange, func: T => Boolean): RDD[T]
+  def getRDD(tmRange: TimeRange, f: T => Boolean): RDD[T]
   def getRDD(tmRange: TimeRange): RDD[T]
-  def getRDD(func: T => Boolean): RDD[T]
+  def getRDD(f: T => Boolean): RDD[T]
 
-  def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean): RDD[T]
-  def getRDD(key: Array[String], func: T => Boolean): RDD[T]
+  def getRDD(key: Array[String], tmRange: TimeRange, f: T => Boolean): RDD[T]
+  def getRDD(key: Array[String], f: T => Boolean): RDD[T]
   def getRDD(key: Array[String], tmRange: TimeRange): RDD[T]
 
   // Saving data
-  def saveOne(inst: T) = {}
-  def saveOne(key: Array[String], inst: T) = {}
-  def saveRDD(data: RDD[T]) = {}
+  def saveOne(inst: T): Unit = {}
+  def saveOne(key: Array[String], inst: T): Unit = {}
+  def saveRDD(data: RDD[T]): Unit = {}
+}
+
+object JavaRDDObject {
+  implicit def fromRDDObject[T: ClassTag](rddObj: RDDObject[T]): JavaRDDObject[T] = new JavaRDDObject[T](rddObj)
+  implicit def toRDDObject[T](rddObj: JavaRDDObject[T]): RDDObject[T] = rddObj.rddObj
+}
+
+abstract class AbstractJavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]]
+  extends JavaRDDObjectLike[T, This]
+
+trait JavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]] {
+  val LOG = Logger.getLogger(getClass);
+  def wrapRDDObject(rddObj: RDDObject[T]): This
+
+  implicit val classTag: ClassTag[T]
+  def rddObj: RDDObject[T]
+
+  // get builder
+  def build: T = rddObj.build
+  def build(from: T): T = rddObj.build(from)
+
+  // First group of functions retrieve one object (either recent or for a given key & filter)
+  // Get recent entry for the Current Key
+  def getRecent: Optional[T] = Utils.optionToOptional(rddObj.getRecent)
+  def getRecentOrNew: T = rddObj.getRecentOrNew
+
+  // Get recent entry for the given key
+  def getRecent(key: Array[String]): Optional[T] = Utils.optionToOptional(rddObj.getRecent(key))
+  def getRecentOrNew(key: Array[String]): T = rddObj.getRecentOrNew(key)
+
+  def getOne(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): Optional[T] = null
+  def getOne(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): Optional[T] = null
+  def getOneOrNew(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): T = rddObj.build
+  def getOneOrNew(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): T = rddObj.build
+
+  // This group of functions retrieve collection of objects 
+  def getRDDForCurrKey(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDDForCurrKey(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+
+  // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
+  def getRDD(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDD(tmRange: TimeRange): JavaRDD[T] = rddObj.getRDD(tmRange)
+  def getRDD(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+
+  def getRDD(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDD(key: Array[String], f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDD(key: Array[String], tmRange: TimeRange): JavaRDD[T] = rddObj.getRDD(key, tmRange)
+
+  // Saving data
+  def saveOne(inst: T): Unit = rddObj.saveOne(inst)
+  def saveOne(key: Array[String], inst: T): Unit = rddObj.saveOne(key, inst)
+  def saveRDD(data: RDD[T]): Unit = rddObj.saveRDD(data)
+}
+
+class JavaRDDObject[T](val rddObj: RDDObject[T])(implicit val classTag: ClassTag[T])
+  extends AbstractJavaRDDObjectLike[T, JavaRDDObject[T]] {
+  override def wrapRDDObject(rddObj: RDDObject[T]): JavaRDDObject[T] = JavaRDDObject.fromRDDObject(rddObj)
 }
 
 object StringUtils {
