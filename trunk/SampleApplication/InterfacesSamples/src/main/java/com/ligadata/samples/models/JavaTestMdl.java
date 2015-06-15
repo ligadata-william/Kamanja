@@ -2,11 +2,15 @@ package com.ligadata.samples.models;
 
 import com.ligadata.FatafatBase.*;
 import com.ligadata.samples.messages.*;
+import com.google.common.base.Optional;
 
 public class JavaTestMdl extends ModelBase {
 	static JavaTestMdlObj objSignleton = new JavaTestMdlObj();
 
 	public ModelResult execute(boolean emitAllResults) {
+		CustAlertHistory custAlertHistory = CustAlertHistory$.MODULE$.getRecentOrNew();
+		// Yet to see how can we get getRecent. CustAlertHistory$.MODULE$.getRecent();
+
 		return null;
 	}
 
