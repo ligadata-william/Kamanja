@@ -181,6 +181,9 @@ trait RDDObject[T <: Any] {
   def saveOne(inst: T): Unit = {}
   def saveOne(key: Array[String], inst: T): Unit = {}
   def saveRDD(data: RDD[T]): Unit = {}
+  
+  def toJavaRDDObject: JavaRDDObject[T]
+  def toRDDObject: RDDObject[T] = this
 }
 
 object JavaRDDObject {
@@ -238,6 +241,9 @@ trait JavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]] {
 class JavaRDDObject[T](val rddObj: RDDObject[T])(implicit val classTag: ClassTag[T])
   extends AbstractJavaRDDObjectLike[T, JavaRDDObject[T]] {
   override def wrapRDDObject(rddObj: RDDObject[T]): JavaRDDObject[T] = JavaRDDObject.fromRDDObject(rddObj)
+
+  def toJavaRDDObject: JavaRDDObject[T] = this 
+  def toRDDObject: RDDObject[T] = rddObj
 }
 
 object StringUtils {
