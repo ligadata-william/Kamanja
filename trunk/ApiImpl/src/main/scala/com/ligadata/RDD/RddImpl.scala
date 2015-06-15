@@ -18,7 +18,10 @@ class RddImpl[T <: Any] extends RDD[T] {
   }
 
   override def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U] = {
-    throw new Exception("Unhandled function map")
+    val newrdd = new RddImpl[U]()
+    // BUGBUG:: Yet to implement filtering tmRange
+    newrdd.collections ++= collections.iterator.map(f)
+    newrdd
   }
 
   override def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U] = {
@@ -35,12 +38,15 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def filter(tmRange: TimeRange, f: T => Boolean): RDD[T] = {
     val newrdd = new RddImpl[T]()
+    // BUGBUG:: Yet to implement filtering tmRange
     newrdd.collections ++= collections.iterator.filter(f)
     newrdd
   }
 
   override def union(other: RDD[T]): RDD[T] = {
-    throw new Exception("Unhandled function union")
+    val newrdd = new RddImpl[T]()
+    newrdd.collections ++= (collections ++ other.iterator)
+    newrdd
   }
 
   override def intersection(other: RDD[T]): RDD[T] = {
@@ -55,7 +61,9 @@ class RddImpl[T <: Any] extends RDD[T] {
 
   override def toArray[T: ClassTag]: Array[T] = {
     throw new Exception("Unhandled function toArray")
-    /* return collections.toArray */
+    // val arrvals = collections.iterator.toArray
+    // arrvals
+    // collections.toArray
   }
 
   override def subtract(other: RDD[T]): RDD[T] = null
@@ -77,16 +85,31 @@ class RddImpl[T <: Any] extends RDD[T] {
     None
   }
 
-  override def top(num: Int): Array[T] = null
-
-  override def max[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
-    None
+  override def top(num: Int): Array[T] = {
+    // BUGBUG:: Order the data and select top N
+    null
   }
 
-  override def min[U: ClassTag](f: (Option[U], T) => U): Option[U] = None
+  override def max[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
+    var maxVal: Option[U] = None
+    collections.foreach(c => {
+      maxVal = Some(f(maxVal, c))
+    })
+    maxVal
+  }
+
+  override def min[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
+    var minVal: Option[U] = None
+    collections.foreach(c => {
+      minVal = Some(f(minVal, c))
+    })
+    minVal
+  }
 
   override def isEmpty(): Boolean = collections.isEmpty
 
-  override def keyBy[K](f: T => K): RDD[(K, T)] = null
+  override def keyBy[K](f: T => K): RDD[(K, T)] = {
+    map(x => (f(x), x))
+  }
 }
 
