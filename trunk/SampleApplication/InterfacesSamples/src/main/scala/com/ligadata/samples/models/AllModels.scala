@@ -61,14 +61,14 @@ class LowBalanceAlertResult (ctxt: TransactionContext) {
 class LowBalanceAlert(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
   override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrDefault
-    val pref = CustPreferences.getRecentOrDefault
+    val gPref = GlobalPreferences.getRecentOrNew
+    val pref = CustPreferences.getRecentOrNew
     if (pref.minBalanceAlertOptout == false)
       return null
 
     // Check if at least min number of hours elapsed since last alert  
     val curDt = RddDate.currentDateTime
-    val alertHistory = CustAlertHistory.getRecentOrDefault
+    val alertHistory = CustAlertHistory.getRecentOrNew
     if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
       return null
 
@@ -118,14 +118,14 @@ class LowBalanceAlertResult2(ctxt: TransactionContext) {
 class LowBalanceAlert2(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
   override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrDefault
-    val pref = CustPreferences.getRecentOrDefault
+    val gPref = GlobalPreferences.getRecentOrNew
+    val pref = CustPreferences.getRecentOrNew
     if (pref.multiDayMinBalanceAlertOptout == false)
       return null
      
     // Check if at least min number of hours elapsed since last alert  
     val curDt = currentDateTime
-    val alertHistory = CustAlertHistory.getRecentOrDefault
+    val alertHistory = CustAlertHistory.getRecentOrNew
     if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
       return null
       

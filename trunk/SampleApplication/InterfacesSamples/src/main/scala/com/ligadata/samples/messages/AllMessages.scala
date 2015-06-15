@@ -30,16 +30,16 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
 
   // Get recent entry for the given key
   override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrDefault(key: Array[String]): T = null
+  override def getRecentOrNew(key: Array[String]): T = null
   
   override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
   override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
 
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
-  override def getRecentOrDefault: T = null
+  override def getRecentOrNew: T = null
   override def getRDDForCurrKey(f: CustAlertHistory => Boolean): RDD[T] = null
   override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
   
@@ -120,16 +120,16 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences] 
 
   // Get recent entry for the given key
   override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrDefault(key: Array[String]): T = null
+  override def getRecentOrNew(key: Array[String]): T = null
   
   override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
   override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
 
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
-  override def getRecentOrDefault: T = null
+  override def getRecentOrNew: T = null
   override def getRDDForCurrKey(f: CustPreferences => Boolean): RDD[T] = null
   override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
   
@@ -216,16 +216,16 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction] {
 
   // Get recent entry for the given key
   override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrDefault(key: Array[String]): T = null
+  override def getRecentOrNew(key: Array[String]): T = null
   
   override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
   override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
 
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
-  override def getRecentOrDefault: T = null
+  override def getRecentOrNew: T = null
   override def getRDDForCurrKey(f: CustTransaction => Boolean): RDD[T] = null
   override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
   
@@ -305,16 +305,16 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
 
   // Get recent entry for the given key
   override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrDefault(key: Array[String]): T = null
+  override def getRecentOrNew(key: Array[String]): T = null
   
   override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
   override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrDefault(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrDefault(tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
+  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
 
   // Get for Current Key
   override def getRecent: Option[T] = { None }  
-  override def getRecentOrDefault: T = null
+  override def getRecentOrNew: T = null
   override def getRDDForCurrKey(f: GlobalPreferences => Boolean): RDD[T] = null
   override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
   
