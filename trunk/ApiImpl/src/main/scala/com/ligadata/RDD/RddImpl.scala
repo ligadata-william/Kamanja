@@ -55,7 +55,11 @@ class RddImpl[T: ClassTag] extends RDD[T] {
     throw new Exception("Unhandled function intersection")
   }
 
-  override def groupBy[K](f: T => K): RDD[(K, Iterable[T])] = null
+  override def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])] = {
+    val newrdd = new RddImpl[(K, Iterable[T])]()
+    newrdd.collections ++= collections.map(x => (f(x), x)).groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2))
+    newrdd
+  }
 
   override def foreach(f: T => Unit): Unit = {
     collections.iterator.foreach(f)
