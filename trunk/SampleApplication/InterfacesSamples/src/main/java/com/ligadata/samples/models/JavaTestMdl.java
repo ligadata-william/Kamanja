@@ -10,8 +10,8 @@ public class JavaTestMdl extends ModelBase {
 			return (msg instanceof CustAlertHistory);
 		}
 
-		public ModelBase CreateNewModel(TransactionContext txnContext) {
-			return new JavaTestMdl(txnContext);
+		public ModelBase CreateNewModel(ModelContext mdlContext) {
+			return new JavaTestMdl(mdlContext);
 		}
 
 		public String ModelName() {
@@ -45,7 +45,7 @@ public class JavaTestMdl extends ModelBase {
 		return null;
 	}
 
-	public JavaTestMdl(TransactionContext inTxnContext) {
-		super(new ModelContext(inTxnContext), objSignleton);
+	public JavaTestMdl(ModelContext mdlContext) {
+		super(mdlContext, objSignleton);
 	}
 }
