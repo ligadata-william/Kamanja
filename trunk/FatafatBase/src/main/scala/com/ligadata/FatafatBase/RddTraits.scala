@@ -50,6 +50,13 @@ class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
   def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = null
   def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
   // def rightOuterJoinByPartition[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
+  def mapValues[U](f: V => U): RDD[(K, U)] = null
+}
+
+object RDD {
+  implicit def rddToPairRDDFunctions[K, V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]): PairRDDFunctions[K, V] = {
+    new PairRDDFunctions(rdd)
+  }
 }
 
 trait RDD[T <: Any] {
@@ -135,7 +142,12 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
     JavaRDD.fromRDD(rdd.flatMap(fn)(fakeClassTag[U]))(fakeClassTag[U])
   }
 
-  def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = null
+  def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = {
+    // The type parameter is U instead of K in order to work around a compiler bug; see SPARK-4459
+    implicit val ctagK: ClassTag[U] = fakeClassTag
+    implicit val ctagV: ClassTag[JList[T]] = fakeClassTag
+    JavaPairRDD.fromRDD(JavaPairRDD.groupByResultToJava(rdd.groupBy(FatafatUtils.toScalaFunction1(f))(fakeClassTag)))
+  }
 
   def count(): Long = rdd.count()
 
@@ -165,6 +177,10 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
 }
 
 object JavaPairRDD {
+  def groupByResultToJava[K: ClassTag, T](rdd: RDD[(K, Iterable[T])]): RDD[(K, JIterable[T])] = {
+    RDD.rddToPairRDDFunctions(rdd).mapValues(asJavaIterable)
+  }
+
   def fromRDD[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)]): JavaPairRDD[K, V] = {
     new JavaPairRDD[K, V](rdd)
   }
