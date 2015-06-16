@@ -8,6 +8,7 @@ import com.google.common.base.Optional;
 public class LowBalanceAlertModel2 extends ModelBase { 
 
 	static LowBalanceAlertModel2Obj objSignleton = new LowBalanceAlertModel2Obj();
+	
 	private TransactionContext txnContext = null;
 	
     // Collections/messages to be used in this model
@@ -44,7 +45,8 @@ public class LowBalanceAlertModel2 extends ModelBase {
         
         // compute distinct days in the retrieved history (number of days with balance less than minAlertBalance)
         // and check if those days meet the threshold
-        int daysWhenBalanceIsLessThanMin = (rcntTxns.groupBy(new TransactionCorrelator())).count;
+       // int daysWhenBalanceIsLessThanMin = (rcntTxns.groupBy(new TransactionCorrelator())).count;
+        int daysWhenBalanceIsLessThanMin = 0;
         		
         if(daysWhenBalanceIsLessThanMin <= gPref.maxNumDaysAllowedWithMinBalance())
           return null;
@@ -60,45 +62,10 @@ public class LowBalanceAlertModel2 extends ModelBase {
     /**
      * @param inTxnContext
      */
-    public LowBalanceAlertModel2 (TransactionContext inTxnContext) {
-    	super(new ModelContext(inTxnContext), objSignleton);
+    public LowBalanceAlertModel2 (ModelContext mdlContext) {
+    	super(mdlContext, objSignleton);
     }
 
-    /**
-      * 
-      * @param msg
-      * @return
-      */	 
-    public static boolean IsValidMessage(MessageContainerBase msg) {
-  	  return (msg instanceof CustTransaction);
-    }
-       
-       
-    /**
-    *  
-    * @param txnContext
-    * @return
-    */
-    public static LowBalanceAlertModel2 CreateNewModel(TransactionContext txnContext) {
-      return new LowBalanceAlertModel2(txnContext);  	  
-    }
- 
-    /**
-     * 
-     * @return
-     */
-	public static String getModelName() {
-		return "LowBalanceAlertModel2";
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public static String getVersion() {
-		return "0.0.1";
-	}
-	
     // This is the object that needs to be implemented to 
     class LowBalanceAlertResult2 {
     	private TransactionContext cxt;
@@ -122,6 +89,25 @@ public class LowBalanceAlertModel2 extends ModelBase {
       public Integer call(CustTransaction ct) {   
         return new Integer(ct.date());
       } 	
+    }
+    
+    public static class LowBalanceAlertModel2Obj implements ModelBaseObj {
+    	
+    	public boolean IsValidMessage(MessageContainerBase msg) {
+    		return (msg instanceof CustTransaction);
+    	}
+    	
+    	public ModelBase CreateNewModel(ModelContext mdlContext) {
+    		return new LowBalanceAlertModel2(mdlContext);
+    	}
+
+    	public String ModelName() {
+    		return "LowBalanceAlertModel2Obj";
+    	}
+
+    	public String Version() {
+    		return "0.0.1";
+    	}
     }
 	
 	
