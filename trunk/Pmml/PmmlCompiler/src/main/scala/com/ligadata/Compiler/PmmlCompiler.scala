@@ -410,6 +410,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		 */
 		parseObject(ctx, is);
 		xformObject(ctx)
+		ctx.NodeXformComplete
 		val srcCode : String = generateCode(ctx)
 		
 		val modelDef : ModelDef = if (ctx.ErrorCount > 0) {
