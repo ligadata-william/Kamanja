@@ -50,7 +50,7 @@ import RddDate._
 
 object LowBalanceAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(txnContext: TransactionContext): ModelBase = return new LowBalanceAlert(txnContext)
+  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
   override def ModelName: String = "LowBalanceAlert" // Model Name
   override def Version: String = "0.0.1" // Model Version
 } 
@@ -58,7 +58,7 @@ object LowBalanceAlert extends ModelBaseObj {
 class LowBalanceAlertResult (ctxt: TransactionContext) {
 }
 
-class LowBalanceAlert(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
+class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
   override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew
@@ -80,7 +80,7 @@ class LowBalanceAlert(ctxt: TransactionContext) extends ModelBase(new ModelConte
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").save
     // ... Prepare results here ... need to populate result object with appropriate attributes
-    ModelResult.builder.withResult(new LowBalanceAlertResult(ctxt)).build 
+    ModelResult.builder.withResult(new LowBalanceAlertResult(mdlCtxt.txnContext)).build 
   }
 }
 
@@ -107,7 +107,7 @@ class LowBalanceAlert(ctxt: TransactionContext) extends ModelBase(new ModelConte
 
 object LowBalanceAlert2 extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
-  override def CreateNewModel(txnContext: TransactionContext): ModelBase = return new LowBalanceAlert2(txnContext)
+  override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
   override def ModelName: String = "LowBalanceAlert2" // Model Name
   override def Version: String = "0.0.1" // Model Version
 } 
@@ -115,7 +115,7 @@ object LowBalanceAlert2 extends ModelBaseObj {
 class LowBalanceAlertResult2(ctxt: TransactionContext) {
 }
 
-class LowBalanceAlert2(ctxt: TransactionContext) extends ModelBase(new ModelContext(ctxt), LowBalanceAlert) {
+class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
   override def execute(emitAllResults : Boolean) : ModelResult = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew
@@ -146,7 +146,7 @@ class LowBalanceAlert2(ctxt: TransactionContext) extends ModelBase(new ModelCont
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).save
     // ... Prepare results here ... need to populate result object with appropriate attributes
-    ModelResult.builder.withResult(new LowBalanceAlertResult2(ctxt)).build 
+    ModelResult.builder.withResult(new LowBalanceAlertResult2(mdlCtxt.txnContext)).build 
   }
 }
 
