@@ -74,6 +74,7 @@ object Udfs extends LogTrait {
   }
 
   /** 
+    @deprecated("Use Contains(ctx: Context, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean ", "2015-Jun-08")
     Answer whether the supplied container and key exist in the storage manged by the global context
     @param xId : the transaction id that initialized the model instance that is calling
     @param gCtx : the EnvContext object that initialized the model instance that is calling
@@ -87,6 +88,20 @@ object Udfs extends LogTrait {
     itExists
   }
   /** 
+    Answer whether the supplied container and key exist in the storage manged by the global context
+    @param ctx : the runtime Context for the calling model instance
+    @param containerName : The top level container name that purportedly contains the companion 'key'
+    @param key : the object identifer of interest that purportedly lives in supplied 'containerName'
+    @return true if the object exists
+   */
+
+  def Contains(ctx: Context, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
+    val itExists: Boolean = if (ctx != null && ctx.gCtx != null) ctx.gCtx.contains(ctx.xId, containerName, partKey, primaryKey) else false
+    itExists
+  }
+  
+  /** 
+    @deprecated("Use ContainsAny(ctx: Context, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean ", "2015-Jun-08")
     Answer whether ANY of the supplied keys exist in the supplied container.
     @param xId : the transaction id that initialized the model instance that is calling
     @param gCtx : the EnvContext object that initialized the model instance that is calling
@@ -99,6 +114,19 @@ object Udfs extends LogTrait {
     itExists
   }
   /** 
+    Answer whether ANY of the supplied keys exist in the supplied container.
+    @param ctx : the runtime Context for the calling model instance
+    @param containerName : The top level container name that purportedly contains the companion 'key'
+    @param keys : an array of identifiers sought in the 'containerName'
+    @return true if any of the supplied keys are found
+   */
+  def ContainsAny(ctx: Context, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val itExists: Boolean = if (ctx != null && ctx.gCtx != null) ctx.gCtx.containsAny(ctx.xId, containerName, partKeys, primaryKeys) else false
+    itExists
+  }
+
+  /** 
+    @deprecated("Use ContainsAll(ctx: Context, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean ", "2015-Jun-08")
     Answer whether ALL of the supplied keys exist in the supplied container.
     @param xId : the transaction id that initialized the model instance that is calling
     @param gCtx : the EnvContext object that initialized the model instance that is calling
@@ -108,6 +136,17 @@ object Udfs extends LogTrait {
    */
   def ContainsAll(xId: Long, gCtx: EnvContext, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     val allExist: Boolean = if (gCtx != null) gCtx.containsAll(xId, containerName, partKeys, primaryKeys) else false
+    allExist
+  }
+  /** 
+    Answer whether ALL of the supplied keys exist in the supplied container.
+    @param ctx : the runtime Context for the calling model instance
+    @param containerName : The top level container name that purportedly contains the companion 'key'
+    @param keys : an array of identifiers sought in the 'containerName'
+    @return true if the object exists
+   */
+  def ContainsAll(ctx: Context, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    val allExist: Boolean = if (ctx != null && ctx.gCtx != null) ctx.gCtx.containsAll(ctx.xId, containerName, partKeys, primaryKeys) else false
     allExist
   }
 
@@ -134,10 +173,116 @@ object Udfs extends LogTrait {
       @param value : the value to store.
       @return if it was set, true else false
    */
+  def Put(ctx: Context, variableName: String, value: Array[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: ArrayBuffer[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: List[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Queue[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Set[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: MutableSet[String]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
   def Put(ctx: Context, variableName: String, value: Int): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
       set = ctx.valuePut(variableName, new IntDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Array[Int]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
     }
     set
   }
@@ -164,6 +309,51 @@ object Udfs extends LogTrait {
       @param value : the value to store.
       @return if it was set, true else false
    */
+  def Put(ctx: Context, variableName: String, value: Array[Long]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Float): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new FloatDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Array[Float]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
   def Put(ctx: Context, variableName: String, value: Double): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
@@ -179,13 +369,14 @@ object Udfs extends LogTrait {
       @param value : the value to store.
       @return if it was set, true else false
    */
-  def Put(ctx: Context, variableName: String, value: Any): Boolean = {
+  def Put(ctx: Context, variableName: String, value: Array[Double]): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
       set = ctx.valuePut(variableName, new AnyDataValue(value))
     }
     set
   }
+
 
   /**
       Put the supplied 'value' into the dictionary field named 'variableName'.
@@ -209,13 +400,45 @@ object Udfs extends LogTrait {
       @param value : the value to store.
       @return if it was set, true else false
    */
-  def Put(ctx: Context, variableName: String, value: Float): Boolean = {
+  def Put(ctx: Context, variableName: String, value: Array[Boolean]): Boolean = {
     var set: Boolean = (ctx != null)
     if (set) {
-      set = ctx.valuePut(variableName, new FloatDataValue(value))
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
     }
     set
   }
+
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Any): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
+  /**
+      Put the supplied 'value' into the dictionary field named 'variableName'.
+      @param ctx : the global state singleton for the calling model instance that contains the variables
+      @param variableName : the name of the field in either the data or transaction dictionary found in the ctx
+      @param value : the value to store.
+      @return if it was set, true else false
+   */
+  def Put(ctx: Context, variableName: String, value: Array[Any]): Boolean = {
+    var set: Boolean = (ctx != null)
+    if (set) {
+      set = ctx.valuePut(variableName, new AnyDataValue(value))
+    }
+    set
+  }
+
 
   /** runtime state increment function */
 
@@ -235,7 +458,8 @@ object Udfs extends LogTrait {
   }
 
   /**
-      Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
+	  @deprecated("Use Get(ctx: Context, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase", "2015-Jun-08")      
+	  Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
       @param xId : the transaction id that initialized the model instance that is calling
       @param gCtx : the EnvContext object that initialized the model instance that is calling
       @param containerName : The top level container name that purportedly contains the companion 'key'
@@ -248,61 +472,19 @@ object Udfs extends LogTrait {
 
   /**
       Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
-      @param xId : the transaction id that initialized the model instance that is calling
-      @param gCtx : the EnvContext object that initialized the model instance that is calling
+   *  @param ctx : the Pmml Runtime Context instance for the calling model
       @param containerName : The top level container name that purportedly contains the companion 'key'
       @param key : the identifying key sought in the 'containerName'
       @return the MessageContainerBase associated with these keys.
    */
-/*
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int]): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.map(k => k.toString))
+  def Get(ctx: Context, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+	  if (ctx != null && ctx.gCtx != null) ctx.gCtx.getObject(ctx.xId, containerId, partKey, primaryKey) else null
   }
-*/
 
-  /**
-      Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
-      @param xId : the transaction id that initialized the model instance that is calling
-      @param gCtx : the EnvContext object that initialized the model instance that is calling
-      @param containerName : The top level container name that purportedly contains the companion 'key'
-      @param key : the identifying key sought in the 'containerName'
-      @return the MessageContainerBase associated with these keys.
-   */
-/*
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long]): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.map(k => k.toString))
-  }
-*/
-
-  /**
-      Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
-      @param xId : the transaction id that initialized the model instance that is calling
-      @param gCtx : the EnvContext object that initialized the model instance that is calling
-      @param containerName : The top level container name that purportedly contains the companion 'key'
-      @param key : the identifying key sought in the 'containerName'
-      @return the MessageContainerBase associated with these keys.
-   */
-/*
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double]): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.map(k => k.toString))
-  }
-*/
-
-  /**
-      Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
-      @param xId : the transaction id that initialized the model instance that is calling
-      @param gCtx : the EnvContext object that initialized the model instance that is calling
-      @param containerName : The top level container name that purportedly contains the companion 'key'
-      @param key : the identifying key sought in the 'containerName'
-      @return the MessageContainerBase associated with these keys.
-   */
-/*
-  def Get(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float]): MessageContainerBase = {
-    gCtx.getObject(xId, containerId, key.map(k => k.toString))
-  }
-*/
 
   /** 
+	  @deprecated("Use GetMsgContainerElseNew(ctx: Context, fqClassName : String, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase", "2015-Jun-08")      
+	  Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
    *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
    *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
    *  
@@ -327,92 +509,21 @@ object Udfs extends LogTrait {
    *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
    *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
    *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param ctx : the Pmml Runtime Context instance for the calling model
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
    *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
    */
   
-/*
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Int]): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
+  def GetMsgContainerElseNew(ctx: Context, fqClassName : String, containerId: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    val mc : MessageContainerBase = if (ctx != null && ctx.gCtx != null) ctx.gCtx.getObject(ctx.xId, containerId, partKey, primaryKey) else null
     if (mc != null) {
     	mc
     } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
+    	ctx.gCtx.NewMessageOrContainer(fqClassName)
     }
   }
-*/
-
-  /** 
-   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
-   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-
-/*  
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Long]): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
-    if (mc != null) {
-    	mc
-    } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
-    }
-  }
-*/
-
-  /** 
-   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
-   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-/*  
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Double]): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
-    if (mc != null) {
-    	mc
-    } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
-    }
-  }
-*/
-
-  /** 
-   *  GetMsgContainerElseNew will attempt to retrieve the Message or Container from the container with supplied key.  Should it
-   *  not be present in the kv store, a new and empty version of the fqClassName is instantiated and returned.
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-  
-/*  
-  def GetMsgContainerElseNew(xId: Long, gCtx: EnvContext, fqClassName : String, containerId: String, key: List[Float]): MessageContainerBase = {
-    val mc : MessageContainerBase = gCtx.getObject(xId, containerId, key.map(k => k.toString))
-    if (mc != null) {
-    	mc
-    } else {
-    	gCtx.NewMessageOrContainer(fqClassName)
-    }
-  }
-*/
 
   /** Given the supplied msg or container, answer its partition key.  If there is none,
       answer an empty List
@@ -471,6 +582,8 @@ object Udfs extends LogTrait {
   }
 
   /**
+	  @deprecated("Use GetHistory(ctx: Context, containerId: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] ", "2015-Jun-08")
+	  Get the MessageContainerBase associated with the supplied containerId and key from the EnvContext managed stores.
    *  Answer the array of messages or container for the supplied partition key found in the specified container.  If append boolean is set,
    *  a message has been requested and the current message in the requesting model is appended to the history and returned.
    *  @param xId : the transaction id associated with this model instance
@@ -486,7 +599,23 @@ object Udfs extends LogTrait {
     gCtx.getHistoryObjects(xId, containerId, partKey, appendCurrentChanges)
   }
 
+  /**
+   *  Answer the array of messages or container for the supplied partition key found in the specified container.  If append boolean is set,
+   *  a message has been requested and the current message in the requesting model is appended to the history and returned.
+   *  @param ctx : the model instance's context
+   *  @param containerId : The name of the container or message
+   *  @param partKey : the partition key that identifies which messages are to be retrieved.
+   *  @param appendCurrentChanges : a boolean that is useful for messages only .  When true, it will append the incoming message that caused
+   *    the calling model to execute to the returned history of messages
+   *  @return Array[MessageContainerBase] that will need to be downcast to their concrete type by the model before use.
+   */
+
+  def GetHistory(ctx: Context, containerId: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
+      if (ctx != null && ctx.gCtx != null) ctx.gCtx.getHistoryObjects(ctx.xId, containerId, partKey, appendCurrentChanges) else Array[MessageContainerBase]()
+  }
+
   /** 
+	  @deprecated("Use GetArray(ctx: Context, gCtx: EnvContext, containerId: String): Array[MessageContainerBase] ", "2015-Jun-08")
    *  Get an array that contains all of the MessageContainerBase elements for the supplied 'containerId'
    *  
    *  @param xId : transaction id from Pmml Runtime Context
@@ -494,7 +623,7 @@ object Udfs extends LogTrait {
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   *  @return either the Array[MessageContainerBase] subclass with the supplied containerId or an empty array 
    */
   
   def GetArray(xId: Long, gCtx: EnvContext, containerId: String): Array[MessageContainerBase] = {
@@ -502,23 +631,21 @@ object Udfs extends LogTrait {
   }
 
   /** 
-   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
+   *  Get an array that contains all of the MessageContainerBase elements for the supplied 'containerId'
    *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param ctx : the model instance's context
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   *  @return either the Array[MessageContainerBase] subclass with the supplied containerId or an empty array 
    */
-/*
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key, value)
-    true
+  
+  def GetArray(ctx: Context, containerId: String): Array[MessageContainerBase] = {
+      if (ctx != null && ctx.gCtx != null) ctx.gCtx.getAllObjects(ctx.xId, containerId) else Array[MessageContainerBase]()
   }
-*/
 
   /** 
+	  @deprecated("Use Put(ctx: Context, containerId: String, key: List[String], value: BaseMsg): Boolean ", "2015-Jun-08")
    *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
    *  
    *  @param xId : transaction id from Pmml Runtime Context
@@ -526,7 +653,7 @@ object Udfs extends LogTrait {
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   *  @return true if it worked
    */
   def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: BaseMsg): Boolean = {
     gCtx.setObject(xId, containerId, key, value)
@@ -536,12 +663,26 @@ object Udfs extends LogTrait {
   /** 
    *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
    *  
+   *  @param ctx : the model instance's context
+   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
+   *  @param containerId : the name of the kv container
+   *  @param key : the key within the container being sought
+   *  @return true if it worked
+   */
+  def Put(ctx: Context, containerId: String, key: List[String], value: BaseMsg): Boolean = {
+      if (ctx != null && ctx.gCtx != null) {ctx.gCtx.setObject(ctx.xId, containerId, key, value); true} else false
+  }
+
+  /** 
+	  @deprecated("Use Put(ctx: Context, containerId: String, key: List[String], value: BaseContainer): Boolean ", "2015-Jun-08")
+   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
+   *  
    *  @param xId : transaction id from Pmml Runtime Context
    *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   *  @return true if it worked
    */
   def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[String], value: BaseContainer): Boolean = {
     gCtx.setObject(xId, containerId, key, value)
@@ -551,70 +692,15 @@ object Udfs extends LogTrait {
   /** 
    *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
    *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
+   *  @param ctx : the model instance's context
    *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
    *  @param containerId : the name of the kv container
    *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
+   *  @return true if it worked
    */
-/*
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Int], value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
-    true
+  def Put(ctx: Context, containerId: String, key: List[String], value: BaseContainer): Boolean = {
+	  if (ctx != null && ctx.gCtx != null) {ctx.gCtx.setObject(ctx.xId, containerId, key, value); true} else false
   }
-*/
-
-  /** 
-   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-/*
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Long], value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
-    true
-  }
-*/
-
-  /** 
-   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-/*
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Double], value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
-    true
-  }
-*/
-
-  /** 
-   *  Add/update the object with the supplied 'containerId' and 'key' in the EnvContext managed storage with the supplied 'value'
-   *  
-   *  @param xId : transaction id from Pmml Runtime Context
-   *  @param gCtx : the engine's EnvContext object that possesses the kv stores.
-   *  @param fqClassName : the fully qualified class name of the MessageContainerBase subclass that will be created if the keys will not produce an instance
-   *  @param containerId : the name of the kv container
-   *  @param key : the key within the container being sought
-   *  @return either the MessageContainerBase subclass with the supplied key or a brand new instance of the fqClassName (NO FIELDS FILLED) 
-   */
-/*
-  def Put(xId: Long, gCtx: EnvContext, containerId: String, key: List[Float], value: MessageContainerBase): Boolean = {
-    gCtx.setObject(xId, containerId, key.map(k => k.toString), value)
-    true
-  }
-*/
 
 
   /** 
@@ -5792,6 +5878,17 @@ object Udfs extends LogTrait {
    */
   def IsNotMissing(ctx : Context, fldName : String) : Boolean = {
 	  (! IsMissing(ctx,fldName))
+  }
+  
+  /** 
+   *  Answer the current transaction id from the caller's runtime context.
+   *  
+   *  @param ctx the runtime context for a given model
+   *  @return xid or 0 if the ctx is bogus
+   *  
+   */
+  def getXid(ctx : Context) : Long = {
+	  if (ctx != null) ctx.xId else 0
   }
   
   /** 

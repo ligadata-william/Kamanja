@@ -198,7 +198,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			}
 		}
 	  	if (names.size > 1) {
-	  		val newParentContainer = if (priorType.isInstanceOf[ContainerTypeDef]) priorType.asInstanceOf[ContainerTypeDef] else null
+	  		val newParentContainer : ContainerTypeDef = if (priorType.isInstanceOf[ContainerTypeDef]) priorType.asInstanceOf[ContainerTypeDef] else null
 	  		if (newParentContainer == null) {
 				PmmlError.logError(ctx, s"Malformed compound name... The name '$name' in field reference value '$fieldRefRep' is not a container. ")
 				PmmlError.logError(ctx, s"Either the metadata type for this field is incorrect or it should be the last field in the field reference.")	  
@@ -211,21 +211,32 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	}
 			
 	/** 
-	 *  Answer a ContainerTypeDef that has names (either fields or known keys) or null 
-	 *  if not a container.  Namespaces from the namespace
-	 *  search path are used until the container is found or they are exhausted.
+	 *  Answer a ContainerTypeDef that has names (either StructTypeDef or MappedMsgTypeDef) or null 
+	 *  if not a container.  If there is a namespace alias supplied with the type, use it.  Otherwise
+	 *  use the namespace search path and choose the first match found.
+	 *  @param name the type name from some dataType of a DataField or DerivedField (typically)
+	 *  @return the StructTypeDef or MappedMsgTypeDef with this name ... or null if name not found
 	 */
 	def getContainerWithNamesType(name : String) : ContainerTypeDef = {
-	
 	  	var containerType : ContainerTypeDef = null
-	  	breakable {
-			ctx.namespaceSearchPath.foreach( nmspc => {			
-				val cntnr : ContainerTypeDef = getContainerWithNamesType(nmspc, name)
-				if (cntnr != null) {
-					containerType = cntnr
-					break
-				}
-			})
+	  	if (name != null && name.size > 0 && name.contains('.')) {
+	  		val alias : String =  name.split('.').head	  		
+	  		val containerTypeName : String =  name.split('.').tail.head
+	  		if (containerTypeName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed type name argument... The name '$name' should either be an unqualified type name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		containerType = if (nmSpc != null) getContainerWithNamesType(nmSpc, containerTypeName) else null
+	  	} else {
+		  	breakable {
+				ctx.namespaceSearchPath.foreach( nmspc => {			
+					val cntnr : ContainerTypeDef = getContainerWithNamesType(nmspc._2, name)
+					if (cntnr != null) {
+						containerType = cntnr
+						break
+					}
+				})
+		  	}
 	  	}
 	  	containerType
 	}
@@ -249,8 +260,9 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	}
 
 	/** 
-	 *  Answer a ContainerTypeDef or null if not a container.  Namespaces from the namespace
-	 *  search path are used until the container is found or they are exhausted.
+	 *  Answer a ContainerTypeDef or null if not a container.  If the dataType name supplied has 
+	 *  an namespace alias prefix, use it.  Otherwise, use the Namespaces from the namespace
+	 *  search path paired with the supplied name to locate the container.
 	 *  
 	 *  NOTE: This function will return any kind of ContainerTypeDef, not just those with
 	 *  known names.  Included types would be class ListTypeDef, QueueTypeDef, ArrayTypeDef
@@ -260,16 +272,25 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	 *  @return the first ContainerTypeDef associated with this name or null if not found
 	 */
 	def getContainerType(name : String) : ContainerTypeDef = {
-	
 	  	var containerType : ContainerTypeDef = null
-	  	breakable {
-			ctx.namespaceSearchPath.foreach( nmspc => {			
-				val cntnr : ContainerTypeDef = getContainerType(nmspc, name)
-				if (cntnr != null) {
-					containerType = cntnr
-					break
-				}
-			})
+	  	if (name != null && name.size > 0 && name.contains('.')) {
+	  		val alias : String =  name.split('.').head
+	  		val containerTypeName : String =  name.split('.').tail.head
+	  		if (containerTypeName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed type name argument... The name '$name' should either be an unqualified type name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		containerType = if (nmSpc != null) getContainerType(nmSpc, containerTypeName) else null
+	  	} else {
+		  	breakable {
+				ctx.namespaceSearchPath.foreach( nmspc => {			
+					val cntnr : ContainerTypeDef = getContainerType(nmspc._2, name)
+					if (cntnr != null) {
+						containerType = cntnr
+						break
+					}
+				})
+		  	}
 	  	}
 	  	containerType
 	}
@@ -277,6 +298,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	
 	/** 
 	 *  Answer a ContainerTypeDef or null if not a container
+	 *  @return a ContainerTypeDef that matches
 	 */
 	def getContainerType(nmSpc : String, container : String) : ContainerTypeDef = {
 		val baseTypeDef : BaseTypeDef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, container))
@@ -292,16 +314,25 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	 *  Answer a BaseAttributeDef or null for the supplied concept name.  Namespaces from the namespace
 	 *  search path are used until the concept is found or they are exhausted.
 	 */
-	def getConcept(name : String) : BaseAttributeDef = {
-	
+	def getConcept(name : String) : BaseAttributeDef = {	
 	  	var attr : BaseAttributeDef = null
-	  	breakable {
-			ctx.namespaceSearchPath.foreach( nmspc => {			
-				attr  = mgr.ActiveAttribute(nmspc, name)
-				if (attr != null) {
-					break
-				}
-			})
+	  	if (name != null && name.size > 0 && name.contains('.')) {
+	  		val alias : String =  name.split('.').head
+	  		val restOfName : String =  name.split('.').tail.head
+	  		if (restOfName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed concept name argument... The concept name '$name' should either be an unqualified name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		attr = if (nmSpc != null) mgr.ActiveAttribute(nmSpc, restOfName) else null
+	  	} else {
+		  	breakable {
+				ctx.namespaceSearchPath.foreach( nmspc => {			
+					attr  = mgr.ActiveAttribute(nmspc._2, name)
+					if (attr != null) {
+						break
+					}
+				})
+		  	}
 	  	}
 	  	attr
 	}
@@ -353,10 +384,12 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 				Array(fcnName)
 			}
 			if (nameParts.size > 2) { /** we won't use any more than two  ... no nested namespaces */
-				PmmlError.logError(ctx, "There are more namespaces than can be used... getFunctions fails due to bad argument $fcnName")
+				PmmlError.logError(ctx, "There are more namespaces than can be used... getFunctions fails due to bad argument $fcnName.  Use namespace alias, not full pkg qualified namespace.  See wiki.")
 			} else {
 				if (nameParts.size == 2) {  /** asking for specific namespace */
-					val nmspFcns : Set[FunctionDef] = mgr.FunctionsAvailable(nameParts(0),nameParts(1))
+					val alias : String =  nameParts(0)
+					val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else alias
+					val nmspFcns : Set[FunctionDef] = mgr.FunctionsAvailable(nmSpc,nameParts(1))
 					if (functions != null && nmspFcns != null && nmspFcns.size > 0) { 
 						functions ++= nmspFcns
 					}
@@ -364,7 +397,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 					/** use the namespaceSearchPath elements for the namespace until a match or all possibilities exhausted */
 
 					ctx.namespaceSearchPath.foreach( nmspc => {			
-						val nmspFcns : Set[FunctionDef] = mgr.FunctionsAvailable(nmspc,fcnName)
+						val nmspFcns : Set[FunctionDef] = mgr.FunctionsAvailable(nmspc._2,fcnName)
 						if (functions != null && nmspFcns != null && nmspFcns.size > 0) {
 						  functions ++= nmspFcns
 						}
@@ -376,12 +409,11 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	}
 	
 	/** 
-	 *  Answer any function definitions with the supplied namespace and name that have the indefinite arity feature.
+	 *  Answer any function definitions with the supplied namespace alias and name that have the indefinite arity feature.
 	 *  
-	 *  @param name : the name, possibly prefixed with a namespace, of this function.  With namespace, only it will be
+	 *  @param name : the name, possibly prefixed with a namespace alias, of this function.  With namespace alias, only it will be
 	 *  	searched.  If no namespace is is specified, the namespace search path (part of the PmmlContext containing
-	 *   	possibly multiple namespaces in a list) is used to
-	 *   	for keys for the metadata search.
+	 *   	possibly multiple namespace alias/namespace pairs in a list) is utilized to find first match.
 	 *  @return scala.collection.immutable.Set[FunctionDef] if any are present else null
 	 */
 	def FunctionsAvailableWithIndefiniteArity(fcnName : String) : scala.collection.immutable.Set[FunctionDef] = {
@@ -408,25 +440,37 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
   	}
 
 	/** 
-	 *  With the supplied function signature, try to find the FunctionDef that matches it
+	 *  With the supplied function signature, try to find the FunctionDef that matches it. If a namespace alias is prepended to the
+	 *  function signature (i.e., namespace exists in the [namespace.]fcnName([argtype1,argtype2,...,argtypeN])), look up its
+	 *  actual namespace if possible.
 	 *  
 	 *  @paramn typesig : a function identifer with args in the form [namespace.]fcnName([argtype1,argtype2,...,argtypeN]) 
 	 *  @return matching FunctionDef or null
 	 */
+	
 	def FunctionByTypeSig(typesig : String) : FunctionDef = {
 		var fdef : FunctionDef = null
 		val buffer : StringBuilder = new StringBuilder
-		breakable {
-		  	/** if the namespace was supplied... allow it */
-		  	if (typesig.split('(').head.contains(".")) {
-		  		fdef = mgr.FunctionByTypeSig(typesig)
-		  		if (fdef != null) {
-		  			break
-		  		}
-		  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
+	  	/** if the namespace alias was supplied... use it */
+	  	if (typesig.split('(').head.contains(".")) {
+	  		val (namepart, args) : (String,String) = typesig.span(_ != '(')
+	  		val names : Array[String] = namepart.split('.')
+	  		val reasonable : Boolean = (namepart.size == 2)
+	  		if (reasonable) {
+	  			val alias : String =  names(0)
+	  			val nm : String = names(1)
+	  			val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else alias
+	  			
+	  			val key : String = nmSpc.concat(nm).concat(args)
+	  			fdef = mgr.FunctionByTypeSig(key)
+	  		} else {
+	  			fdef = mgr.FunctionByTypeSig(typesig)
+	  		}
+	  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
+	  		breakable {
 			  	ctx.namespaceSearchPath.foreach( path => {
 			  		buffer.clear
-			  		buffer.append(path)
+			  		buffer.append(path._2)
 			  		buffer.append(".")
 			  		buffer.append(typesig)
 			  		val key = buffer.toString
@@ -435,7 +479,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 			  			break
 			  		}
 			  	})
-		  	}
+	  		}
 		}
 	  	fdef
 	}
@@ -443,28 +487,48 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	/** 
 	 *  With the supplied function signature, try to find the MacroByTypeSig that matches it
 	 *  
-	 *  @paramn typesig : a function identifer with args in the form [namespace.]fcnName([argtype1,argtype2,...,argtypeN]) 
+	 *  @param typesig : a function identifer with args in the form [namespace.]fcnName([argtype1,argtype2,...,argtypeN]) 
 	 *  @return matching MacroDef or null
 	 *  
-	 *  Note: The macro search is always without namespace prefix ...
+	 *  Note: At this time, all macros are actually defined in System namespace.  However, there may come a day when
+	 *  macros become first class citizens in metadata and have protocol for adding them, modifying them, and deleting
+	 *  them... all with their own namespaces if that is what the application developer wishes.  For this reason 
+	 *  macro lookup by typesig gets the same treatment as the function lookup. 
 	 */
 
 	def MacroByTypeSig(typesig : String) : MacroDef = {
 		var mdef : MacroDef = null
 		val buffer : StringBuilder = new StringBuilder
-		breakable {
-			ctx.namespaceSearchPath.foreach( path => {
-		  		buffer.clear
-		  		buffer.append(path)
-		  		buffer.append(".")
-		  		buffer.append(typesig)
-		  		val key = buffer.toString
-		  		mdef = mgr.MacroByTypeSig(key)
-		  		if (mdef != null) {
-		  			break
-		  		}
-		  	})
-		}
+	  	if (typesig.split('(').head.contains(".")) {
+	  		val (namepart, args) : (String,String) = typesig.span(_ != '(')
+	  		val names : Array[String] = namepart.split('.')
+	  		val reasonable : Boolean = (namepart.size == 2)
+	  		if (reasonable) {
+	  			val alias : String =  names(0)
+	  			val nm : String = names(1)
+	  			val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else alias
+	  			
+	  			val key : String = nmSpc.concat(nm).concat(args)
+	  			mdef = mgr.MacroByTypeSig(key)
+	  		} else {
+	  			
+	  			mdef = mgr.MacroByTypeSig(typesig)
+	  		}
+	  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
+			breakable {
+				ctx.namespaceSearchPath.foreach( path => {
+			  		buffer.clear
+			  		buffer.append(path._2)
+			  		buffer.append(".")
+			  		buffer.append(typesig)
+			  		val key = buffer.toString
+			  		mdef = mgr.MacroByTypeSig(key)
+			  		if (mdef != null) {
+			  			break
+			  		}
+			  	})
+			}
+	  	}
 
 	  	mdef
 	}
@@ -479,13 +543,13 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		val withNmSpc : Boolean = true
 		breakable {
 		  	ctx.namespaceSearchPath.foreach( nmSpc => {
-		  		val (typeStrWOut, baseTypeWOut) = getDDictFieldType(nmSpc, nm : String, ! withNmSpc)
+		  		val (typeStrWOut, baseTypeWOut) = getDDictFieldType(nmSpc._2, nm : String, ! withNmSpc)
 		  		if (baseTypeWOut != null) {
 					typeStr = typeStrWOut
 					baseType = baseTypeWOut
 		  			break
 		  		}
-		  		val (typeStrWith, baseTypeWith) = getDDictFieldType(nmSpc, nm : String, withNmSpc)
+		  		val (typeStrWith, baseTypeWith) = getDDictFieldType(nmSpc._2, nm : String, withNmSpc)
 		  		if (baseTypeWith != null) {
 					typeStr = typeStrWith
 					baseType = baseTypeWith
@@ -497,8 +561,11 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	  	(typeStr, baseType)
 	}
 	
-	/** Search this bad boy, with and without namespace qualifiers...
-	 *  @param nmSpc the namespace key to use for the search when withNmSpc arg set
+	/** Search for the supplied field name, 'nm'.  Use the supplied 'nmSpc' name to locate the BaseType information for the field.
+	 *  When the DataField or DerivedField named 'nm' has a dataType that is prefixed with a valid namespace alias, it will be used 
+	 *  instead of the supplied 'nmSpc'.
+	 *  @param nmSpc a namespace key to use for the type search when withNmSpc arg set UNLESS the dictionary field has a namespace alias qualified dataType. In that
+	 *  	case the namespace alias is used if valid in lieu of the supplied namespace. @see getDDictFieldType(nm : String) implementation for details.
 	 *  @param nm the name of the data dictionary field
 	 *  @param withNmSpc the namespace is used to prefix the dataType name
 	 *  @return a tuple (type rep string , corresponding base type) 
@@ -508,8 +575,13 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		var fldTypedef : BaseTypeDef = null
 		val scalaType : String = if (ctx.dDict.contains(key)) {
 			val fld : xDataField = ctx.dDict.apply(key)
-			val fldType = fld.dataType
-			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, fldType)).asInstanceOf[BaseTypeDef]
+			val fldType : String = fld.dataType
+			
+			val alias : String =  if (fldType.contains('.')) fldType.split('.').head else null
+			val fldTypeName : String = if (fldType.contains('.')) fldType.split('.').tail.head else fldType
+			val nameSpc : String = if (alias != null && ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else nmSpc
+					
+			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nameSpc, fldTypeName)).asInstanceOf[BaseTypeDef]
 			if (fldTypedef != null) {
 				fldTypedef.typeString
 			} else {
@@ -533,13 +605,13 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		val withNmSpc : Boolean = true
 		breakable {
 		  	ctx.namespaceSearchPath.foreach( nmSpc => {
-		  		val (typeStrWOut, baseTypeWOut) = getXDictFieldType(nmSpc, nm : String, ! withNmSpc)
+		  		val (typeStrWOut, baseTypeWOut) = getXDictFieldType(nmSpc._2, nm : String, ! withNmSpc)
 		  		if (baseTypeWOut != null) {
 					typeStr = typeStrWOut
 					baseType = baseTypeWOut
 		  			break
 		  		}
-		  		val (typeStrWith, baseTypeWith) = getXDictFieldType(nmSpc, nm : String, withNmSpc)
+		  		val (typeStrWith, baseTypeWith) = getXDictFieldType(nmSpc._2, nm : String, withNmSpc)
 		  		if (baseTypeWith != null) {
 					typeStr = typeStrWith
 					baseType = baseTypeWith
@@ -562,8 +634,13 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		var fldTypedef : BaseTypeDef = null
 		val scalaType : String = if (ctx.xDict.contains(key)) {
 			val fld : xDerivedField = ctx.xDict.apply(key)
-			val fldType = fld.dataType
-			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, fldType)).asInstanceOf[BaseTypeDef]
+			val fldType : String = fld.dataType
+			
+			val alias : String =  if (fldType.contains('.')) fldType.split('.').head else null
+			val fldTypeName : String = if (fldType.contains('.')) fldType.split('.').tail.head else fldType
+			val nameSpc : String = if (alias != null && ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else nmSpc
+					
+			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nameSpc, fldTypeName)).asInstanceOf[BaseTypeDef]
 			if (fldTypedef != null) {
 				fldTypedef.typeString
 			} else {
@@ -604,32 +681,45 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 	def getType(typename : String) : (String,BaseTypeDef) = {
 		var typeStr : String = null
 		var baseType : BaseTypeDef = null
-		breakable {
-		  	ctx.namespaceSearchPath.foreach( nmSpc => {
-		  		val fldTypedef : BaseTypeDef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, typename)).asInstanceOf[BaseTypeDef]
-				if (fldTypedef != null) {
-					typeStr = fldTypedef.typeString
-					baseType = fldTypedef
-					break
-				} else {
-					/** Translate the possible builtin type to a scala equiv and try again. */
-					val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(typename)
-					/** verify it is present in the metadata and get metadata description for it */
-					val fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, scalaVersionOfPmmlBuiltinType))
+	  	if (typename != null && typename.size > 0 && typename.contains('.')) {
+	  		val alias : String =  typename.split('.').head
+	  		val restOfName : String =  typename.split('.').tail.head
+	  		if (restOfName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed type name argument... The type name '$typename' should either be an unqualified name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		baseType = if (nmSpc != null) mgr.ActiveType(nmSpc, restOfName) else null
+	  		if (baseType != null) {
+	  			typeStr = baseType.typeString
+	  		}
+	  	} else {
+			breakable {
+			  	ctx.namespaceSearchPath.foreach( nmSpc => {
+			  		val fldTypedef : BaseTypeDef = mgr.ActiveType(nmSpc._2, typename)
 					if (fldTypedef != null) {
-						 typeStr = fldTypedef.typeString
-						 baseType = fldTypedef
-						 break
+						typeStr = fldTypedef.typeString
+						baseType = fldTypedef
+						break
+					} else {
+						/** Translate the possible builtin type to a scala equiv and try again. */
+						val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(typename)
+						/** verify it is present in the metadata and get metadata description for it */
+						val fldTypedef : BaseTypeDef = mgr.ActiveType(nmSpc._2, scalaVersionOfPmmlBuiltinType)
+						if (fldTypedef != null) {
+							 typeStr = fldTypedef.typeString
+							 baseType = fldTypedef
+							 break
+						}
 					}
-				}
-		  	})
-		}
+			  	})
+			}
+	  	}
 
 	  	(typeStr, baseType)	
 	}
 	
 	/** 
-	 *  Answer whether this is a container that has a list keys or fields
+	 *  Answer whether this is a container that has a list of keys (MappedMsgTypeDef) or contains fields (StructTypeDef)
 	 *  @param typedef A BaseTypeDef
 	 *  @return true if typedef is any {StructTypeDef, MappedMsgTypeDef}
 	 */

@@ -1030,20 +1030,22 @@ object NodePrinterHelpers extends LogTrait {
 		/** pick the first one (and only one) AFTER the gCtx for now */
 		val msgContainerInfoSize : Int = msgNameContainerInfo.size
 		if (msgContainerInfoSize <= 1) {
-			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
+			PmmlError.logError(ctx, s"unable to detect message to work with... there must be one")		
+			/** leave now before the crash that would happen were the next statement to execute */
+		} else {
+			val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
+			val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
+			val msgTypeStr : String = msgTypedef.typeString
+			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
+			
+			objBuffer.append(s"    def CreateNewModel(tempTransId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
+			objBuffer.append(s"    {\n") 
+			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
+			objBuffer.append(s"    }\n") 	
+			objBuffer.append(s"\n")
+	
+			objBuffer.append(s"} \n")
 		}
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
-		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
-		val msgTypeStr : String = msgTypedef.typeString
-		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
-		
-		objBuffer.append(s"    def CreateNewModel(tempTransId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
-		objBuffer.append(s"    {\n") 
-		objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
-		objBuffer.append(s"    }\n") 	
-		objBuffer.append(s"\n")
-
-		objBuffer.append(s"} \n")
 
 		objBuffer.toString
 	}
@@ -1096,7 +1098,7 @@ object NodePrinterHelpers extends LogTrait {
 		} else {
 			clsBuffer.append(s"   extends ModelBase {\n") 
 		}
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(tempTransId)\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(tempTransId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
@@ -1125,196 +1127,198 @@ object NodePrinterHelpers extends LogTrait {
 		/** pick the first one (and only one) AFTER the gCtx for now */
 		val msgContainerInfoSize : Int = msgNameContainerInfo.size
 		if (msgContainerInfoSize <= 1) {
-			logger.error("unable to detect message to work with... there must be one") /** crash this ... with next statement */
-		}
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
-		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
-		
-		clsBuffer.append(s"\n")
-		clsBuffer.append(s"    /***********************************************************************/\n")
-		clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
-		clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
-		clsBuffer.append(s"    /***********************************************************************/\n")
-		/** 
-		 *  Add the initialize function to the the class body 
-		 */
-		clsBuffer.append(s"    def initialize : $nmspc$classname$verNoStr = {\n")
-		clsBuffer.append(s"\n")
-		
-		val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
-		val ruleCtorsInOrder = ctx.simpleRuleInsertionOrder
-		val ruleSetModel = ctx.RuleRuleSetInstantiators("RuleSetModel")
-		val ruleSetModelCtorStr : String = ruleSetModel.head  // there is only one of these 
-		
-		/** initialize the RuleSetModel and SimpleRules array with new instances of respective classes */
-		clsBuffer.append(s"        ctx.SetRuleSetModel($ruleSetModelCtorStr)\n")
-		clsBuffer.append(s"        val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
-		clsBuffer.append(s"        /** Initialize the RuleSetModel and SimpleRules array with new instances of respective classes */\n")		
-		clsBuffer.append(s"        var simpleRuleInstances : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]()\n")
-		//ruleCtors.foreach( ruleCtorStr => clsBuffer.append(s"        ruleSetModel.AddRule($ruleCtorStr)\n"))
-		ruleCtorsInOrder.foreach( ruleCtorStr => clsBuffer.append(s"        ruleSetModel.AddRule($ruleCtorStr)\n"))
-		
-		clsBuffer.append(s"        /* Update the ruleset model with the default score and rule selection methods collected for it */\n")
-		val dfltScore : String = ctx.DefaultScore
-		clsBuffer.append(s"        ruleSetModel.DefaultScore(new StringDataValue(${'"'}$dfltScore${'"'}))\n")
-		ctx.RuleSetSelectionMethods.foreach( selMethod => {
-				val criterion : String = selMethod.criterion
-		  		clsBuffer.append(s"        ruleSetModel.AddRuleSelectionMethod(new RuleSelectionMethod(${'"'}$criterion${'"'}))\n")
-		 })
-		
-		clsBuffer.append(s"\n        /* Update each rules ScoreDistribution if necessary.... */\n")
-		var i : Int = 1
-		if (ctx.RuleScoreDistributions.size > 0) {
-			for(rsds  <- ctx.RuleScoreDistributions) {
-				if (rsds.size > 0) {
-					clsBuffer.append(s"        val rule$i : SimpleRule = ruleSetModel.RuleSet().apply($i)\n")
-					for (rsd <- rsds) {
-						val value = rsd.value
-						val recordCount = rsd.recordCount
-						val confidence = rsd.confidence
-						val probability = rsd.probability
-						clsBuffer.append(s"            rule$i.addScoreDistribution(new ScoreDistribution(${'"'}$value${'"'}, $recordCount, $confidence, $probability))\n")
-					}
-				} else {
-					clsBuffer.append(s"        /** no rule score distribution for rule$i */\n")
-				}
-				i = i + 1
-			}
+			PmmlError.logError(ctx, s"unable to detect message to work with... there must be one")		
+			/** this one is so serious it presents problems later... bail now */
 		} else {
-			clsBuffer.append(s"        /* ... no score distribution information present in the pmml */\n")
+			val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
+			val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
+			
+			clsBuffer.append(s"\n")
+			clsBuffer.append(s"    /***********************************************************************/\n")
+			clsBuffer.append(s"    ctx.dDict.apply(${'"'}gCtx${'"'}).Value(new AnyDataValue(gCtx))\n")
+			clsBuffer.append(s"    ctx.dDict.apply(${'"'}$msgName${'"'}).Value(new AnyDataValue($msgName))\n")
+			clsBuffer.append(s"    /***********************************************************************/\n")
+			/** 
+			 *  Add the initialize function to the the class body 
+			 */
+			clsBuffer.append(s"    def initialize : $nmspc$classname$verNoStr = {\n")
+			clsBuffer.append(s"\n")
+			
+			val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
+			val ruleCtorsInOrder = ctx.simpleRuleInsertionOrder
+			val ruleSetModel = ctx.RuleRuleSetInstantiators("RuleSetModel")
+			val ruleSetModelCtorStr : String = ruleSetModel.head  // there is only one of these 
+			
+			/** initialize the RuleSetModel and SimpleRules array with new instances of respective classes */
+			clsBuffer.append(s"        ctx.SetRuleSetModel($ruleSetModelCtorStr)\n")
+			clsBuffer.append(s"        val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
+			clsBuffer.append(s"        /** Initialize the RuleSetModel and SimpleRules array with new instances of respective classes */\n")		
+			clsBuffer.append(s"        var simpleRuleInstances : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]()\n")
+			//ruleCtors.foreach( ruleCtorStr => clsBuffer.append(s"        ruleSetModel.AddRule($ruleCtorStr)\n"))
+			ruleCtorsInOrder.foreach( ruleCtorStr => clsBuffer.append(s"        ruleSetModel.AddRule($ruleCtorStr)\n"))
+			
+			clsBuffer.append(s"        /* Update the ruleset model with the default score and rule selection methods collected for it */\n")
+			val dfltScore : String = ctx.DefaultScore
+			clsBuffer.append(s"        ruleSetModel.DefaultScore(new StringDataValue(${'"'}$dfltScore${'"'}))\n")
+			ctx.RuleSetSelectionMethods.foreach( selMethod => {
+					val criterion : String = selMethod.criterion
+			  		clsBuffer.append(s"        ruleSetModel.AddRuleSelectionMethod(new RuleSelectionMethod(${'"'}$criterion${'"'}))\n")
+			 })
+			
+			clsBuffer.append(s"\n        /* Update each rules ScoreDistribution if necessary.... */\n")
+			var i : Int = 1
+			if (ctx.RuleScoreDistributions.size > 0) {
+				for(rsds  <- ctx.RuleScoreDistributions) {
+					if (rsds.size > 0) {
+						clsBuffer.append(s"        val rule$i : SimpleRule = ruleSetModel.RuleSet().apply($i)\n")
+						for (rsd <- rsds) {
+							val value = rsd.value
+							val recordCount = rsd.recordCount
+							val confidence = rsd.confidence
+							val probability = rsd.probability
+							clsBuffer.append(s"            rule$i.addScoreDistribution(new ScoreDistribution(${'"'}$value${'"'}, $recordCount, $confidence, $probability))\n")
+						}
+					} else {
+						clsBuffer.append(s"        /** no rule score distribution for rule$i */\n")
+					}
+					i = i + 1
+				}
+			} else {
+				clsBuffer.append(s"        /* ... no score distribution information present in the pmml */\n")
+			}
+			
+	 		/** Add the mining schema to the ruleSetModel object */
+			clsBuffer.append(s"\n        /* Update each ruleSetModel's mining schema dict */\n")
+	  		ctx.miningSchemaInstantiators.foreach(fld => { 
+	  			val mFieldName : String = fld._1
+	  			val ctor : String = fld._2
+	  			clsBuffer.append(s"        ruleSetModel.AddMiningField(${'"'}$mFieldName${'"'}, $ctor)\n")
+	  		})
+	
+			/** ... and for convenience update the ctx with them  */
+			clsBuffer.append(s"\n")
+			clsBuffer.append(s"        /* For convenience put the mining schema map in the context as well as ruleSetModel */\n")
+			clsBuffer.append(s"        ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())\n")
+			
+			/** 
+			 *  Several additional pieces of information are associated with the RuleSetModel and SimpleRule classes.
+			 *  Add code to decorate the instances of these classes created in the snippet above. 
+			 */
+			
+			/** initialize the data dictionary */
+			clsBuffer.append(s"        /** initialize the data dictionary */\n")
+			val dictBuffer : StringBuilder = new StringBuilder()
+			val ddNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("DataDictionary") 
+			ddNode match {
+			  case Some(ddNode) => generator.generateCode1(Some(ddNode), dictBuffer, generator, CodeFragment.VALDECL)
+			  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!\n")
+			}
+			clsBuffer.append(dictBuffer.toString)
+			clsBuffer.append(s"\n")
+			
+			/** initialize the transformation dictionary (derived field part) */
+			clsBuffer.append(s"        /** initialize the transformation dictionary (derived field part) */\n")
+			val xNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary") 
+			dictBuffer.clear
+			xNode match {
+			  case Some(xNode) => generator.generateCode1(Some(xNode), dictBuffer, generator, CodeFragment.VALDECL)
+			  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!")
+			}		
+			clsBuffer.append(dictBuffer.toString)
+			clsBuffer.append(s"\n")
+			
+			/** fill the Context's mining field dictionary ... generator generates ruleSet.addMiningField(... */
+			clsBuffer.append(s"        /** fill the Context's mining field dictionary ...*/\n")
+			val rsmNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel") 
+			dictBuffer.clear
+			clsBuffer.append(s"        //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
+			rsmNode match {
+			  case Some(rsmNode) => generator.generateCode1(Some(rsmNode), dictBuffer, generator, CodeFragment.MININGFIELD)
+			  case _ => PmmlError.logError(ctx, s"no mining fields... whoops!\n")
+			}
+			clsBuffer.append(dictBuffer.toString)
+			clsBuffer.append(s"        /** put a reference of the mining schema map in the context for convenience. */\n")
+			clsBuffer.append(s"        ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())\n")
+			clsBuffer.append(s"\n")
+			
+			clsBuffer.append(s"        /** Build the dictionary of model identifiers \n")
+			clsBuffer.append(s"            Keys are: \n")
+			clsBuffer.append(s"                 ApplicationName , FunctionName, PMML, Version,  \n")
+			clsBuffer.append(s"                 Copyright, Description, ModelName, ClassName \n")
+			clsBuffer.append(s"         */\n")
+			var modelIdent : Option[String] = ctx.pmmlTerms.apply("ApplicationName")
+			val modelId = modelIdent match {
+			  case Some(modelIdent) => s"${'"'}$modelIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ApplicationName${'"'}) = Some($modelId)\n")
+			
+			var fcnIdent : Option[String] = ctx.pmmlTerms.apply("FunctionName")
+			val fcnId = fcnIdent match {
+			  case Some(fcnIdent) => s"${'"'}$fcnIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}FunctionName${'"'}) = Some($fcnId)\n")
+			
+			var srcIdent : Option[String] = ctx.pmmlTerms.apply("PMML")
+			val srcId = srcIdent match {
+			  case Some(srcIdent) => s"${'"'}$srcIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}PMML${'"'}) = Some($srcId)\n")
+			
+			var verIdent : Option[String] = ctx.pmmlTerms.apply("Version")
+			val verId = verIdent match {
+			  case Some(verIdent) => s"${'"'}$verIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Version${'"'}) = Some($verId)\n")
+			
+			var cpyIdent : Option[String] = ctx.pmmlTerms.apply("Copyright")
+			val cpyId = cpyIdent match {
+			  case Some(cpyIdent) => s"${'"'}$cpyIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Copyright${'"'}) = Some($cpyId)\n")
+			
+			var descrIdent : Option[String] = ctx.pmmlTerms.apply("Description")
+			val descrId = descrIdent match {
+			  case Some(descrIdent) => s"${'"'}$descrIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Description${'"'}) = Some($descrId)\n")
+			
+			var mdlIdent : Option[String] = ctx.pmmlTerms.apply("ModelName")
+			val mdlId = mdlIdent match {
+			  case Some(mdlIdent) => s"${'"'}$mdlIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ModelName${'"'}) = Some($mdlId)\n")
+			clsBuffer.append(s"\n")
+			
+			var clsIdent : Option[String] = ctx.pmmlTerms.apply("ClassName")
+			val clsId = clsIdent match {
+			  case Some(clsIdent) => s"${'"'}$clsIdent${'"'}"
+			  case _ => "None"
+			}
+			clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ClassName${'"'}) = Some($clsId)\n")
+			clsBuffer.append(s"\n")
+			clsBuffer.append(s"        this\n")
+			clsBuffer.append(s"    }   /** end of initialize fcn  */	\n")  /** end of initialize fcn  */		
+			clsBuffer.append(s"\n")
+			
+	   		/** 
+			 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
+			 */
+			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
+			clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResult = {\n")
+			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
+			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
+			clsBuffer.append(s"    }\n")
+			clsBuffer.append(s"\n")
+			
+			preparePrepareResultsFunction(ctx, classname, generator, clsBuffer)
 		}
-		
- 		/** Add the mining schema to the ruleSetModel object */
-		clsBuffer.append(s"\n        /* Update each ruleSetModel's mining schema dict */\n")
-  		ctx.miningSchemaInstantiators.foreach(fld => { 
-  			val mFieldName : String = fld._1
-  			val ctor : String = fld._2
-  			clsBuffer.append(s"        ruleSetModel.AddMiningField(${'"'}$mFieldName${'"'}, $ctor)\n")
-  		})
-
-		/** ... and for convenience update the ctx with them  */
-		clsBuffer.append(s"\n")
-		clsBuffer.append(s"        /* For convenience put the mining schema map in the context as well as ruleSetModel */\n")
-		clsBuffer.append(s"        ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())\n")
-		
-		/** 
-		 *  Several additional pieces of information are associated with the RuleSetModel and SimpleRule classes.
-		 *  Add code to decorate the instances of these classes created in the snippet above. 
-		 */
-		
-		/** initialize the data dictionary */
-		clsBuffer.append(s"        /** initialize the data dictionary */\n")
-		val dictBuffer : StringBuilder = new StringBuilder()
-		val ddNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("DataDictionary") 
-		ddNode match {
-		  case Some(ddNode) => generator.generateCode1(Some(ddNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!\n")
-		}
-		clsBuffer.append(dictBuffer.toString)
-		clsBuffer.append(s"\n")
-		
-		/** initialize the transformation dictionary (derived field part) */
-		clsBuffer.append(s"        /** initialize the transformation dictionary (derived field part) */\n")
-		val xNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary") 
-		dictBuffer.clear
-		xNode match {
-		  case Some(xNode) => generator.generateCode1(Some(xNode), dictBuffer, generator, CodeFragment.VALDECL)
-		  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!")
-		}		
-		clsBuffer.append(dictBuffer.toString)
-		clsBuffer.append(s"\n")
-		
-		/** fill the Context's mining field dictionary ... generator generates ruleSet.addMiningField(... */
-		clsBuffer.append(s"        /** fill the Context's mining field dictionary ...*/\n")
-		val rsmNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel") 
-		dictBuffer.clear
-		clsBuffer.append(s"        //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
-		rsmNode match {
-		  case Some(rsmNode) => generator.generateCode1(Some(rsmNode), dictBuffer, generator, CodeFragment.MININGFIELD)
-		  case _ => PmmlError.logError(ctx, s"no mining fields... whoops!\n")
-		}
-		clsBuffer.append(dictBuffer.toString)
-		clsBuffer.append(s"        /** put a reference of the mining schema map in the context for convenience. */\n")
-		clsBuffer.append(s"        ctx.MiningSchemaMap(ruleSetModel.MiningSchemaMap())\n")
-		clsBuffer.append(s"\n")
-		
-		clsBuffer.append(s"        /** Build the dictionary of model identifiers \n")
-		clsBuffer.append(s"            Keys are: \n")
-		clsBuffer.append(s"                 ApplicationName , FunctionName, PMML, Version,  \n")
-		clsBuffer.append(s"                 Copyright, Description, ModelName, ClassName \n")
-		clsBuffer.append(s"         */\n")
-		var modelIdent : Option[String] = ctx.pmmlTerms.apply("ApplicationName")
-		val modelId = modelIdent match {
-		  case Some(modelIdent) => s"${'"'}$modelIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ApplicationName${'"'}) = Some($modelId)\n")
-		
-		var fcnIdent : Option[String] = ctx.pmmlTerms.apply("FunctionName")
-		val fcnId = fcnIdent match {
-		  case Some(fcnIdent) => s"${'"'}$fcnIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}FunctionName${'"'}) = Some($fcnId)\n")
-		
-		var srcIdent : Option[String] = ctx.pmmlTerms.apply("PMML")
-		val srcId = srcIdent match {
-		  case Some(srcIdent) => s"${'"'}$srcIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}PMML${'"'}) = Some($srcId)\n")
-		
-		var verIdent : Option[String] = ctx.pmmlTerms.apply("Version")
-		val verId = verIdent match {
-		  case Some(verIdent) => s"${'"'}$verIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Version${'"'}) = Some($verId)\n")
-		
-		var cpyIdent : Option[String] = ctx.pmmlTerms.apply("Copyright")
-		val cpyId = cpyIdent match {
-		  case Some(cpyIdent) => s"${'"'}$cpyIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Copyright${'"'}) = Some($cpyId)\n")
-		
-		var descrIdent : Option[String] = ctx.pmmlTerms.apply("Description")
-		val descrId = descrIdent match {
-		  case Some(descrIdent) => s"${'"'}$descrIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}Description${'"'}) = Some($descrId)\n")
-		
-		var mdlIdent : Option[String] = ctx.pmmlTerms.apply("ModelName")
-		val mdlId = mdlIdent match {
-		  case Some(mdlIdent) => s"${'"'}$mdlIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ModelName${'"'}) = Some($mdlId)\n")
-		clsBuffer.append(s"\n")
-		
-		var clsIdent : Option[String] = ctx.pmmlTerms.apply("ClassName")
-		val clsId = clsIdent match {
-		  case Some(clsIdent) => s"${'"'}$clsIdent${'"'}"
-		  case _ => "None"
-		}
-		clsBuffer.append(s"        ctx.pmmlModelIdentifiers(${'"'}ClassName${'"'}) = Some($clsId)\n")
-		clsBuffer.append(s"\n")
-		clsBuffer.append(s"        this\n")
-		clsBuffer.append(s"    }   /** end of initialize fcn  */	\n")  /** end of initialize fcn  */		
-		clsBuffer.append(s"\n")
-		
-   		/** 
-		 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
-		 */
-		clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
-		clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResult = {\n")
-		clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
-		clsBuffer.append(s"        prepareResults(emitAllResults)\n")
-		clsBuffer.append(s"    }\n")
-		clsBuffer.append(s"\n")
-		
-		preparePrepareResultsFunction(ctx, classname, generator, clsBuffer)
 		clsBuffer.toString
  	}
 
