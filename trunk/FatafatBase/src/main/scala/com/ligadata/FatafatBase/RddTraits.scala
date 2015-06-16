@@ -11,11 +11,13 @@ import com.ligadata.Exceptions._
 import com.ligadata.FatafatBase.api.java.function._
 import com.google.common.base.Optional
 import com.ligadata.Utils.Utils
-import java.util.{Comparator, List => JList, Iterator => JIterator}
-import java.lang.{Iterable => JIterable, Long => JLong}
+import java.util.{ Comparator, List => JList, Iterator => JIterator }
+import java.lang.{ Iterable => JIterable, Long => JLong }
 
 object FatafatUtils {
   def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
+  def toScalaFunction1[T, R](fun: Function1[T, R]): T => R = x => fun.call(x)
+  def pairFunToScalaFun[A, B, C](x: PairFunction[A, B, C]): A => (B, C) = y => x.call(y)
 }
 
 import FatafatUtils._
@@ -56,7 +58,7 @@ trait RDD[T <: Any] {
   def iterator: Iterator[T]
 
   def elementClassTag: ClassTag[T]
-  
+
   def map[U: ClassTag](f: T => U): RDD[U]
   def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U]
 
@@ -72,7 +74,7 @@ trait RDD[T <: Any] {
 
   def intersection(other: RDD[T]): RDD[T]
 
-  def groupBy[K](f: T => K): RDD[(K, Iterable[T])]
+  def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])]
 
   def foreach(f: T => Unit): Unit
 
@@ -98,8 +100,8 @@ trait RDD[T <: Any] {
   def isEmpty(): Boolean
 
   def keyBy[K](f: T => K): RDD[(K, T)]
-  
-  def toJavaRDD() : JavaRDD[T]
+
+  def toJavaRDD(): JavaRDD[T]
 }
 
 object JavaRDD {
@@ -119,13 +121,22 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
 
   def iterator: java.util.Iterator[T] = asJavaIterator(rdd.iterator)
 
-  def map[R](f: Function1[T, R]): JavaRDD[R] = null
-  def map[R](tmRange: TimeRange,f: Function1[T, R]): JavaRDD[R] = null
+  def map[R](f: Function1[T, R]): JavaRDD[R] = {
+    JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
+  }
 
-  def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = null
+  def map[R](tmRange: TimeRange, f: Function1[T, R]): JavaRDD[R] = {
+    // BUGBUG:: Yet to implement filtering tmRange
+    JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
+  }
+
+  def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = {
+    def fn = (x: T) => f.call(x).asScala
+    JavaRDD.fromRDD(rdd.flatMap(fn)(fakeClassTag[U]))(fakeClassTag[U])
+  }
 
   def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = null
-  
+
   def count(): Long = rdd.count()
 
   def size(): Long = rdd.size()
@@ -143,7 +154,7 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
   override def wrapRDD(rdd: RDD[T]): JavaRDD[T] = JavaRDD.fromRDD(rdd)
 
   def filter(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rdd.filter((x => f.call(x).booleanValue())))
-  
+
   def union(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.union(other.rdd))
 
   def intersection(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.intersection(other.rdd))
@@ -160,10 +171,6 @@ object JavaPairRDD {
 
   implicit def toRDD[K, V](rdd: JavaPairRDD[K, V]): RDD[(K, V)] = rdd.rdd
 
-  private implicit def toScalaFunction[T, R](fun: Function1[T, R]): T => R = x => fun.call(x)
-
-  implicit def pairFunToScalaFun[A, B, C](x: PairFunction[A, B, C]): A => (B, C) = y => x.call(y)
-
   /** Convert a JavaRDD of key-value pairs to JavaPairRDD. */
   def fromJavaRDD[K, V](rdd: JavaRDD[(K, V)]): JavaPairRDD[K, V] = {
     implicit val ctagK: ClassTag[K] = fakeClassTag
@@ -172,8 +179,7 @@ object JavaPairRDD {
   }
 }
 
-class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
-                       (implicit val kClassTag: ClassTag[K], implicit val vClassTag: ClassTag[V])
+class JavaPairRDD[K, V](val rdd: RDD[(K, V)])(implicit val kClassTag: ClassTag[K], implicit val vClassTag: ClassTag[V])
   extends AbstractJavaRDDLike[(K, V), JavaPairRDD[K, V]] {
 
   override def wrapRDD(rdd: RDD[(K, V)]): JavaPairRDD[K, V] = JavaPairRDD.fromRDD(rdd)
@@ -181,10 +187,10 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
   override val classTag: ClassTag[(K, V)] = rdd.elementClassTag
 
   import JavaPairRDD._
-  
+
   def filter(f: Function1[(K, V), java.lang.Boolean]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.filter(x => f.call(x).booleanValue()))
-  
+
   def union(other: JavaPairRDD[K, V]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.union(other.rdd))
 
@@ -235,7 +241,7 @@ trait RDDObject[T <: Any] {
   def saveOne(inst: T): Unit = {}
   def saveOne(key: Array[String], inst: T): Unit = {}
   def saveRDD(data: RDD[T]): Unit = {}
-  
+
   def toJavaRDDObject: JavaRDDObject[T]
   def toRDDObject: RDDObject[T] = this
 }
@@ -296,7 +302,7 @@ class JavaRDDObject[T](val rddObj: RDDObject[T])(implicit val classTag: ClassTag
   extends AbstractJavaRDDObjectLike[T, JavaRDDObject[T]] {
   override def wrapRDDObject(rddObj: RDDObject[T]): JavaRDDObject[T] = JavaRDDObject.fromRDDObject(rddObj)
 
-  def toJavaRDDObject: JavaRDDObject[T] = this 
+  def toJavaRDDObject: JavaRDDObject[T] = this
   def toRDDObject: RDDObject[T] = rddObj
 }
 
