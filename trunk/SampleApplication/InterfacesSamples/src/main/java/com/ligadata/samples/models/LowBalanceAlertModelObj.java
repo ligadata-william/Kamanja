@@ -9,7 +9,7 @@ public class LowBalanceAlertModelObj implements ModelBaseObj {
 		return (msg instanceof CustTransaction);
 	}
 	
-	public ModelBase CreateNewModel(TransactionContext txnContext) {
+	public ModelBase CreateNewModel(ModelContext txnContext) {
 		return new LowBalanceAlertModel(txnContext);
 	}
 

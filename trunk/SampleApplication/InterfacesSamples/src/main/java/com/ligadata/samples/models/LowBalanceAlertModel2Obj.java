@@ -1,9 +1,6 @@
 package com.ligadata.samples.models;
 
-import com.ligadata.FatafatBase.MessageContainerBase;
-import com.ligadata.FatafatBase.ModelBase;
-import com.ligadata.FatafatBase.ModelBaseObj;
-import com.ligadata.FatafatBase.TransactionContext;
+import com.ligadata.FatafatBase.*;
 import com.ligadata.samples.messages.*;
 
 public class LowBalanceAlertModel2Obj implements ModelBaseObj {
@@ -12,7 +9,7 @@ public class LowBalanceAlertModel2Obj implements ModelBaseObj {
 		return (msg instanceof CustTransaction);
 	}
 	
-	public ModelBase CreateNewModel(TransactionContext txnContext) {
+	public ModelBase CreateNewModel(ModelContext txnContext) {
 		return new LowBalanceAlertModel2(txnContext);
 	}
 
