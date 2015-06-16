@@ -88,53 +88,59 @@ object OutputMsgDefImpl {
       var fieldscheck: Set[(String, String)] = Set[(String, String)]()
       var partionFieldKeys = Array[(String, Array[(String, String)], String, String)]()
 
-      paritionKeys.foreach(partionkey => {
-        val (fullname, fieldsInfo, typeOf, fullpartionkey) = getFieldsInfo(partionkey)
-        partionFieldKeys = partionFieldKeys :+ (fullname, fieldsInfo.toArray, typeOf, fullpartionkey)
-        var defaultValue: String = null
-        if (dfaults.contains(partionkey)) {
-          defaultValue = dfaults(partionkey)
-        }
-        var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
-        var value: Array[(String, String)] = Array[(String, String)]()
-        value = fldInfo
-        if (Fields.contains((fullname, typeOf)))
-          Fields((fullname, typeOf)) += ((value, defaultValue))
-        else {
-          var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
-          valueVal += ((fldInfo, defaultValue))
-          Fields((fullname, typeOf)) = (valueVal)
-        }
+      if (paritionKeys != null && paritionKeys.size > 0) {
+        paritionKeys.foreach(partionkey => {
+          val (fullname, fieldsInfo, typeOf, fullpartionkey) = getFieldsInfo(partionkey)
+          partionFieldKeys = partionFieldKeys :+ (fullname, fieldsInfo.toArray, typeOf, fullpartionkey)
+          var defaultValue: String = null
+          if (dfaults.contains(partionkey)) {
+            defaultValue = dfaults(partionkey)
+          }
+          var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
+          var value: Array[(String, String)] = Array[(String, String)]()
+          value = fldInfo
+          if (Fields.contains((fullname, typeOf)))
+            Fields((fullname, typeOf)) += ((value, defaultValue))
+          else {
+            var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
+            valueVal += ((fldInfo, defaultValue))
+            Fields((fullname, typeOf)) = (valueVal)
+          }
 
-      })
+        })
+      }
 
       var dataDeclrtion = scala.collection.mutable.Map[String, String]()
-      dataDeclaration.foreach(dd => { dd.foreach(d => { dataDeclrtion(d._1.toLowerCase()) = d._2 }) })
+      if (dataDeclaration != null && dataDeclaration.size > 0) {
+        dataDeclaration.foreach(dd => { dd.foreach(d => { dataDeclrtion(d._1.toLowerCase()) = d._2 }) })
+      }
 
       val allOutputFormatFlds = extractOutputFormat(outputFormat)
       // var outputFormatFields = Map[(String, Array[(String, String)], String, String)]()
 
-      allOutputFormatFlds.foreach(outputFormatFld => {
-        val outputFmtFld = outputFormatFld.substring(2, outputFormatFld.length() - 1).toLowerCase()
-        var defaultValue: String = null
-        if (dfaults.contains(outputFmtFld)) {
-          defaultValue = dfaults(outputFmtFld)
-        }
-        val (fullname, fieldsInfo, typeOf, fullFieldkey) = getFieldsInfo(outputFormatFld)
+      if (allOutputFormatFlds != null && allOutputFormatFlds.size > 0) {
+        allOutputFormatFlds.foreach(outputFormatFld => {
+          val outputFmtFld = outputFormatFld.substring(2, outputFormatFld.length() - 1).toLowerCase()
+          var defaultValue: String = null
+          if (dfaults.contains(outputFmtFld)) {
+            defaultValue = dfaults(outputFmtFld)
+          }
+          val (fullname, fieldsInfo, typeOf, fullFieldkey) = getFieldsInfo(outputFormatFld)
 
-        var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
-        var value: Array[(String, String)] = Array[(String, String)]()
-        value = fldInfo
-        if (Fields.contains((fullname, typeOf)))
-          Fields((fullname, typeOf)) += ((value, defaultValue))
-        else {
-          var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
-          valueVal += ((fldInfo, defaultValue))
-          Fields((fullname, typeOf)) = (valueVal)
-        }
-        //  value += ((fldInfo, defaultValue))
-        //   Fields ((fullname, typeOf)) = (value)
-      })
+          var fldInfo: Array[(String, String)] = fieldsInfo.asInstanceOf[Array[(String, String)]]
+          var value: Array[(String, String)] = Array[(String, String)]()
+          value = fldInfo
+          if (Fields.contains((fullname, typeOf)))
+            Fields((fullname, typeOf)) += ((value, defaultValue))
+          else {
+            var valueVal: scala.collection.mutable.Set[(Array[(String, String)], String)] = scala.collection.mutable.Set[(Array[(String, String)], String)]()
+            valueVal += ((fldInfo, defaultValue))
+            Fields((fullname, typeOf)) = (valueVal)
+          }
+          //  value += ((fldInfo, defaultValue))
+          //   Fields ((fullname, typeOf)) = (value)
+        })
+      }
 
       outputMsgDef = MdMgr.GetMdMgr.MakeOutputMsg(nameSpace.toLowerCase(), name.toLowerCase(), version, outputQ, partionFieldKeys, dfaults, dataDeclrtion, Fields, outputFormat)
 
@@ -440,8 +446,8 @@ object OutputMsgDefImpl {
           val dataDeclList = dataDecl.asInstanceOf[MapList]
           for (l <- dataDeclList) {
             val dataDeclMap = l.asInstanceOf[scala.collection.immutable.Map[String, String]]
-            var dd : Map[String, String] = Map[String, String]()
-            dataDeclMap.foreach(f => {dd(f._1) = f._2   })
+            var dd: Map[String, String] = Map[String, String]()
+            dataDeclMap.foreach(f => { dd(f._1) = f._2 })
             dataDeclBuffer += dd
           }
         }
@@ -452,7 +458,7 @@ object OutputMsgDefImpl {
           for (l <- dfltslList) {
             val dfltslMap = l.asInstanceOf[scala.collection.immutable.Map[String, String]]
             var dd: Map[String, String] = Map[String, String]()
-            dfltslMap.foreach(f => {dd(f._1) = f._2   })
+            dfltslMap.foreach(f => { dd(f._1) = f._2 })
             defaultsListBuffer += dd
           }
         }
