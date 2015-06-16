@@ -44,10 +44,12 @@ public class LowBalanceAlertModel2 extends ModelBase {
         
         // compute distinct days in the retrieved history (number of days with balance less than minAlertBalance)
         // and check if those days meet the threshold
+        /*
         int daysWhenBalanceIsLessThanMin = (rcntTxns.groupBy(new TransactionCorrelator())).count;
         		
         if(daysWhenBalanceIsLessThanMin <= gPref.maxNumDaysAllowedWithMinBalance())
           return null;
+          */
 
         // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
         CustAlertHistory.build().withAlertDt(curDt).withAlertType("lowBalanceAlert").save();
