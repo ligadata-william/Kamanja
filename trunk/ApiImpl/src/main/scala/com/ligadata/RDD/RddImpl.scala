@@ -6,8 +6,10 @@ import org.apache.log4j.Logger
 import com.ligadata.FatafatBase._
 import scala.collection.mutable.ArrayBuffer
 
-class RddImpl[T <: Any] extends RDD[T] {
+class RddImpl[T: ClassTag] extends RDD[T] {
   private val collections = ArrayBuffer[T]()
+
+  override def elementClassTag: ClassTag[T] = classTag[T]
 
   override def iterator: Iterator[T] = collections.iterator
 
@@ -111,5 +113,10 @@ class RddImpl[T <: Any] extends RDD[T] {
   override def keyBy[K](f: T => K): RDD[(K, T)] = {
     map(x => (f(x), x))
   }
+
+  override def toJavaRDD(): JavaRDD[T] = {
+    new JavaRDD(this)(elementClassTag)
+  }
+
 }
 
