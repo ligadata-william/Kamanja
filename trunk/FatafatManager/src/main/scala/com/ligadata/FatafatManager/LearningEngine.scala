@@ -1,7 +1,7 @@
 
 package com.ligadata.FatafatManager
 
-import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult, TransactionContext }
+import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult, TransactionContext, ModelContext }
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
@@ -39,7 +39,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
 
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-            val curMd = md.mdl.CreateNewModel(new TransactionContext(tempTransId, envContext, /* finalTopMsgOrContainer, */ md.tenantId))
+            val curMd = md.mdl.CreateNewModel(new ModelContext(new TransactionContext(tempTransId, envContext, md.tenantId), finalTopMsgOrContainer))
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {

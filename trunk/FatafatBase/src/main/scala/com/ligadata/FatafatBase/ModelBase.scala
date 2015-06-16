@@ -170,7 +170,7 @@ abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseO
 
 trait ModelBaseObj {
   def IsValidMessage(msg: MessageContainerBase): Boolean // Check to fire the model
-  def CreateNewModel(ctxt: TransactionContext): ModelBase // Creating same type of object with given values 
+  def CreateNewModel(mdlCtxt: ModelContext): ModelBase // Creating same type of object with given values 
   def ModelName(): String // Model Name
   def Version(): String // Model Version
 }
@@ -178,10 +178,9 @@ trait ModelBaseObj {
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {
 }
 
-//BUGBUG:: Need to use this instead of com.ligadata.Pmml.Runtime.Context
-class ModelContext(val txnContext: TransactionContext) {
+class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
 }
 
-class TransactionContext(val tempTransId: Long, val gCtx: EnvContext, /* val msg: MessageContainerBase, */ val tenantId: String) {
+class TransactionContext(val tempTransId: Long, val gCtx: EnvContext, val tenantId: String) {
 }
 
