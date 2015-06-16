@@ -17,6 +17,16 @@ object myBuild extends Build {
 
   parallelExecution := false
 
+  val wdir = new File("./target/scala-2.10/classes/jars/lib/workingdir")
+  if( !wdir.exists() ){
+    wdir.mkdir()
+  }
+
+  val appdir = new File("./target/scala-2.10/classes/jars/lib/application")
+  if( !appdir.exists() ){
+    appdir.mkdir()
+  }
+
   copy(new File("lib_managed"))
 
   copy(new File("../.."))
