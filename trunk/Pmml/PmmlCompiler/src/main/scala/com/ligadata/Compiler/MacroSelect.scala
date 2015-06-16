@@ -50,7 +50,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		  	
 		  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
 		  	var winningKey : String = simpleKey
-		  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
+		  	val nmspcsSearched : String = ctx.NameSpaceSearchPathAsStr
 		  	logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
 		  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
 		  	if (macroDef == null) {
@@ -82,7 +82,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 			  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
 			  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, argTypesNoExp.map( argPair => argPair._1))
 			  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, returnTypes)
-			  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
+			  	val nmspcsSearched : String = ctx.NameSpaceSearchPathAsStr
 			  	ctx.logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
 			  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
 			  	if (macroDef == null) {
