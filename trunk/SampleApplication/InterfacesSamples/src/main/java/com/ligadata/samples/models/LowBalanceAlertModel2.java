@@ -7,19 +7,15 @@ import com.google.common.base.Optional;
 
 public class LowBalanceAlertModel2 extends ModelBase { 
 
-	static LowBalanceAlertModel2Obj objSignleton = new LowBalanceAlertModel2Obj();
-	
+	static LowBalanceAlertModel2Obj objSignleton = new LowBalanceAlertModel2Obj();	
 	private TransactionContext txnContext = null;
-	
-    // Collections/messages to be used in this model
-    private GlobalPreferences gPref = null;
-    private CustPreferences pref = null;
-    private JavaRDD<CustTransaction> rcntTxns = null;
-    private RddDate curDt = RddDate.currentDateTime();
-    private CustAlertHistory alertHistory = null;
-    
+    GlobalPreferences gPref = null;
     
     public ModelResult execute(boolean emitAllResults) {
+        CustPreferences pref = null;
+        JavaRDD<CustTransaction> rcntTxns = null;
+        RddDate curDt = RddDate.currentDateTime();
+        CustAlertHistory alertHistory = null;
         
         // First check the preferences and decide whether to continue or not
     	gPref = GlobalPreferences.getRecentOrNew();
@@ -45,8 +41,8 @@ public class LowBalanceAlertModel2 extends ModelBase {
         
         // compute distinct days in the retrieved history (number of days with balance less than minAlertBalance)
         // and check if those days meet the threshold
-       // int daysWhenBalanceIsLessThanMin = (rcntTxns.groupBy(new TransactionCorrelator())).count;
-        int daysWhenBalanceIsLessThanMin = 0;
+
+        int daysWhenBalanceIsLessThanMin = 0; // (rcntTxns.groupBy(new TransactionCorrelator())).count;
 
         if(daysWhenBalanceIsLessThanMin <= gPref.maxNumDaysAllowedWithMinBalance())
           return null;

@@ -10,15 +10,13 @@ public class LowBalanceAlertModel extends ModelBase {
 	static LowBalanceAlertModelObj objSignleton = new LowBalanceAlertModelObj();
 	
     private TransactionContext txnContext = null;
-    
-    // Collections/messages to be used in this model
-    private GlobalPreferences gPref = null;
-    private CustPreferences pref = null;
-    private com.google.common.base.Optional<CustTransaction> rcntTxnOp = com.google.common.base.Optional.absent();
-    private RddDate curDt = RddDate.currentDateTime();
-    private CustAlertHistory alertHistory = null;
-    
     public ModelResult execute(boolean emitAllResults) {
+    	
+        GlobalPreferences gPref = null;
+        CustPreferences pref = null;
+        com.google.common.base.Optional<CustTransaction> rcntTxnOp = com.google.common.base.Optional.absent();
+        RddDate curDt = RddDate.currentDateTime();
+        CustAlertHistory alertHistory = null;
     
         // First check the preferences and decide whether to continue or not
     	gPref = GlobalPreferences.getRecentOrNew();
