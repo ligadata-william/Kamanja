@@ -49,45 +49,9 @@ public class LowBalanceAlertModel extends ModelBase {
     /**
      * @param inTxnContext
      */
-    public LowBalanceAlertModel (TransactionContext inTxnContext) {
-    	super(new ModelContext(inTxnContext), objSignleton);
+    public LowBalanceAlertModel (ModelContext mdlContext) {
+    	super(mdlContext, objSignleton);
     }
-
-    /**
-      * 
-      * @param msg
-      * @return
-      */	 
-    public static boolean IsValidMessage(MessageContainerBase msg) {
-  	  return (msg instanceof CustTransaction);
-    }
-       
-       
-    /**
-    *  
-    * @param txnContext
-    * @return
-    */
-    public static LowBalanceAlertModel CreateNewModel(TransactionContext txnContext) {
-      return new LowBalanceAlertModel(txnContext);  	  
-    }
- 
-    /**
-     * 
-     * @return
-     */
-	public static String getModelName() {
-		return "LowBalanceAlertModel";
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public static String getVersion() {
-		return "0.0.1";
-	}
-	
 	
 
     // This is the object that needs to be implemented to 
@@ -96,6 +60,26 @@ public class LowBalanceAlertModel extends ModelBase {
     	public LowBalanceAlertResult(TransactionContext inTxnContext) {
           cxt = inTxnContext;
     	}
+    }
+
+    public static class LowBalanceAlertModelObj implements ModelBaseObj {
+    	
+    	public boolean IsValidMessage(MessageContainerBase msg) {
+    		return (msg instanceof CustTransaction);
+    	}
+    	
+    	public ModelBase CreateNewModel(ModelContext mdlContext) {
+    		return new LowBalanceAlertModel(mdlContext);
+    	}
+
+    	public String ModelName() {
+    		return "JavaTestMdl";
+    	}
+
+    	public String Version() {
+    		return "0.0.1";
+    	}
+
     }
 
 }
