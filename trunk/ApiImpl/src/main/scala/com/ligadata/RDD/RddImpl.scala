@@ -6,6 +6,8 @@ import org.apache.log4j.Logger
 import com.ligadata.FatafatBase._
 import scala.collection.mutable.ArrayBuffer
 
+/*
+
 class RddImpl[T: ClassTag] extends RDD[T] {
   private val collections = ArrayBuffer[T]()
 
@@ -72,7 +74,9 @@ class RddImpl[T: ClassTag] extends RDD[T] {
     // collections.toArray
   }
 
-  override def subtract(other: RDD[T]): RDD[T] = null
+  override def subtract(other: RDD[T]): RDD[T] = {
+    throw new Exception("Unhandled function subtract")
+  }
 
   override def count(): Long = size()
 
@@ -93,7 +97,7 @@ class RddImpl[T: ClassTag] extends RDD[T] {
 
   override def top(num: Int): Array[T] = {
     // BUGBUG:: Order the data and select top N
-    null
+    throw new Exception("Unhandled function top")
   }
 
   override def max[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
@@ -121,6 +125,46 @@ class RddImpl[T: ClassTag] extends RDD[T] {
   override def toJavaRDD(): JavaRDD[T] = {
     new JavaRDD(this)(elementClassTag)
   }
-
 }
+
+class PairRDDFunctionsImpl[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null) extends PairRDDFunctions[K, V](self) {
+  val LOG = Logger.getLogger(getClass);
+
+  def count: Long = self.size
+
+  def countByKey: Map[K, Long] = {
+    makeRDD(self.iterator.toList.groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.size.toLong).toArray)
+    // self.iterator.map(x => (f(x), x)).groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2))
+    // self.iterator.red
+    
+    // val v = self.mapValues(_ => 1L).reduceByKey(_ + _).toMap
+    null
+  }
+
+  def groupByKey: RDD[(K, Iterable[V])] = {
+    throw new Exception("Unhandled function groupByKey")
+  }
+
+  // Join Functions
+  def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = {
+    throw new Exception("Unhandled function join")
+  }
+  def fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))] = {
+    throw new Exception("Unhandled function fullOuterJoin")
+  }
+  def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = {
+    throw new Exception("Unhandled function leftOuterJoin")
+  }
+  def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = {
+    throw new Exception("Unhandled function rightOuterJoin")
+  }
+  // def rightOuterJoinByPartition[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
+  def mapValues[U](f: V => U): RDD[(K, U)] = {
+    throw new Exception("Unhandled function mapValues")
+    // newrdd.collections ++= collections.map(x => (f(x), x)).groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2))
+  }
+}
+
+*/
+
 

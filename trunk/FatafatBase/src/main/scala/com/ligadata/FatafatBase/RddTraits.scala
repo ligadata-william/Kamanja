@@ -6,13 +6,14 @@ import org.apache.log4j.Logger
 import java.util.Date
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
+import scala.reflect.{ classTag, ClassTag }
 import com.ligadata.Exceptions._
 import com.ligadata.FatafatBase.api.java.function._
 import com.google.common.base.Optional
 import com.ligadata.Utils.Utils
 import java.util.{ Comparator, List => JList, Iterator => JIterator }
 import java.lang.{ Iterable => JIterable, Long => JLong }
+import scala.collection.mutable.ArrayBuffer
 
 object FatafatUtils {
   def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
@@ -36,79 +37,258 @@ class TimeRange(startTime: Int, endTime: Int) {
 }
 
 // RDD traits/classes
-class PairRDDFunctions[K <: Any, V <: Any](self: RDD[(K, V)]) {
+class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null) {
   val LOG = Logger.getLogger(getClass);
 
   def count: Long = self.size
 
-  def countByKey: Map[K, Long] = null
-  def groupByKey: RDD[(K, Iterable[V])] = null
+  def countByKey: Map[K, Long] = {
+    self.Collection.groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.size.toLong)
+  }
+
+  def groupByKey: RDD[(K, Iterable[V])] = {
+    val newrdd = RDD.makeRDD(self.Collection.groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2).asInstanceOf[Iterable[V]]).toArray)
+    newrdd
+  }
 
   // Join Functions
-  def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = null
-  def fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))] = null
-  def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = null
-  def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
-  // def rightOuterJoinByPartition[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = null
-  def mapValues[U](f: V => U): RDD[(K, U)] = null
-}
+  def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = {
+    val s1 = self.Collection.groupBy(t => t._1)
+    val s2 = other.Collection.groupBy(t => t._1)
+    val result = ArrayBuffer[(K, (V, W))]()
+    s1.foreach(s1kv => {
+      val fndValPairs = s2.getOrElse(s1kv._1, null)
+      if (fndValPairs != null) {
+        s1kv._2.foreach(s1pair => {
+          fndValPairs.foreach(s2pair => {
+            result += ((s1kv._1, (s1pair._2, s2pair._2)))
+          })
+        })
+      }
+    })
 
-object RDD {
-  implicit def rddToPairRDDFunctions[K, V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V]): PairRDDFunctions[K, V] = {
-    new PairRDDFunctions(rdd)
+    val newrdd = RDD.makeRDD(result.toArray)
+    newrdd
+  }
+
+  def fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))] = {
+    val s1 = self.Collection.groupBy(t => t._1)
+    val s2 = other.Collection.groupBy(t => t._1)
+    val result = ArrayBuffer[(K, (Option[V], Option[W]))]()
+    s1.foreach(s1kv => {
+      val fndValPairs = s2.getOrElse(s1kv._1, null)
+      if (fndValPairs != null) {
+        s1kv._2.foreach(s1pair => {
+          fndValPairs.foreach(s2pair => {
+            result += ((s1kv._1, (Some(s1pair._2), Some(s2pair._2))))
+          })
+        })
+      } else {
+        s1kv._2.foreach(s1pair => {
+          result += ((s1kv._1, (Some(s1pair._2), None)))
+        })
+      }
+    })
+    
+    // Looking for the Remaining stuff from s2
+    s2.foreach(s2kv => {
+      val fndValPairs = s1.getOrElse(s2kv._1, null)
+      if (fndValPairs == null) { // if this is not present in s1 map, add this
+        s2kv._2.foreach(s2pair => {
+          result += ((s2kv._1, (None, Some(s2pair._2))))
+        })
+      }
+    })
+
+    val newrdd = RDD.makeRDD(result.toArray)
+    newrdd
+  }
+
+  def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = {
+    val s1 = self.Collection.groupBy(t => t._1)
+    val s2 = other.Collection.groupBy(t => t._1)
+    val result = ArrayBuffer[(K, (V, Option[W]))]()
+    s1.foreach(s1kv => {
+      val fndValPairs = s2.getOrElse(s1kv._1, null)
+      if (fndValPairs != null) {
+        s1kv._2.foreach(s1pair => {
+          fndValPairs.foreach(s2pair => {
+            result += ((s1kv._1, (s1pair._2, Some(s2pair._2))))
+          })
+        })
+      } else {
+        s1kv._2.foreach(s1pair => {
+          result += ((s1kv._1, (s1pair._2, None)))
+        })
+      }
+    })
+
+    val newrdd = RDD.makeRDD(result.toArray)
+    newrdd
+  }
+
+  def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = {
+    val s1 = self.Collection.groupBy(t => t._1)
+    val s2 = other.Collection.groupBy(t => t._1)
+    val result = ArrayBuffer[(K, (Option[V], W))]()
+    s2.foreach(s2kv => {
+      val fndValPairs = s1.getOrElse(s2kv._1, null)
+      if (fndValPairs != null) {
+        s2kv._2.foreach(s2pair => {
+          fndValPairs.foreach(s1pair => {
+            result += ((s2kv._1, (Some(s1pair._2), s2pair._2)))
+          })
+        })
+      } else {
+        s2kv._2.foreach(s2pair => {
+          result += ((s2kv._1, (None, s2pair._2)))
+        })
+      }
+    })
+
+    val newrdd = RDD.makeRDD(result.toArray)
+    newrdd
+  }
+
+  def mapValues[U](f: V => U): RDD[(K, U)] = {
+    val newrdd = RDD.makeRDD(self.Collection.map(v => (v._1, f(v._2))).toArray)
+    newrdd
   }
 }
 
-trait RDD[T <: Any] {
+object RDD {
+  implicit def rddToPairRDDFunctions[K, V](rdd: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null): PairRDDFunctions[K, V] = {
+    new PairRDDFunctions(rdd)
+  }
+
+  def makeRDD[T](values: Array[T]): RDD[T] = {
+    val newrdd = new RDD[T]()(ClassTag.AnyRef.asInstanceOf[ClassTag[T]])
+    newrdd.collection ++= values
+    newrdd
+  }
+}
+
+class RDD[T: ClassTag] {
+  private val collection = ArrayBuffer[T]()
+
+  private[FatafatBase] def Collection = collection
+
   val LOG = Logger.getLogger(getClass);
 
-  def iterator: Iterator[T]
+  def iterator: Iterator[T] = collection.iterator
 
-  def elementClassTag: ClassTag[T]
+  def elementClassTag: ClassTag[T] = classTag[T]
 
-  def map[U: ClassTag](f: T => U): RDD[U]
-  def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U]
+  def map[U: ClassTag](f: T => U): RDD[U] = {
+    val newrdd = new RDD[U]()
+    newrdd.collection ++= collection.iterator.map(f)
+    newrdd
+  }
 
-  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U]
+  def map[U: ClassTag](tmRange: TimeRange, f: T => U): RDD[U] = {
+    val newrdd = new RDD[U]()
+    // BUGBUG:: Yet to implement filtering tmRange
+    newrdd.collection ++= collection.iterator.map(f)
+    newrdd
+  }
 
-  def filter(f: T => Boolean): RDD[T]
-  def filter(tmRange: TimeRange, f: T => Boolean): RDD[T]
+  def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U] = {
+    val newrdd = new RDD[U]()
+    newrdd.collection ++= collection.iterator.flatMap(f)
+    newrdd
+  }
 
-  def union(other: RDD[T]): RDD[T]
+  def filter(f: T => Boolean): RDD[T] = {
+    val newrdd = new RDD[T]()
+    newrdd.collection ++= collection.iterator.filter(f)
+    newrdd
+  }
+
+  def filter(tmRange: TimeRange, f: T => Boolean): RDD[T] = {
+    val newrdd = new RDD[T]()
+    // BUGBUG:: Yet to implement filtering tmRange
+    newrdd.collection ++= collection.iterator.filter(f)
+    newrdd
+  }
+
+  def union(other: RDD[T]): RDD[T] = {
+    val newrdd = new RDD[T]()
+    newrdd.collection ++= (collection ++ other.iterator)
+    newrdd
+  }
+
   def ++(other: RDD[T]): RDD[T] = this.union(other)
 
   // def sortBy[K](f: (T) => K, ascending: Boolean = true) (implicit ord: Ordering[K], ctag: ClassTag[K]): RDD[T] = this.keyBy[K](f).sortByKey(ascending, numPartitions).values
 
-  def intersection(other: RDD[T]): RDD[T]
+  def intersection(other: RDD[T]): RDD[T] = {
+    throw new Exception("Unhandled function intersection")
+  }
 
-  def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])]
+  def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])] = {
+    val newrdd = new RDD[(K, Iterable[T])]()
+    newrdd.collection ++= collection.map(x => (f(x), x)).groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2))
+    newrdd
+  }
 
-  def foreach(f: T => Unit): Unit
+  def foreach(f: T => Unit): Unit = {
+    collection.iterator.foreach(f)
+  }
 
-  def toArray[T: ClassTag]: Array[T]
+  def toArray: Array[T] = {
+    collection.toArray
+  }
 
-  def subtract(other: RDD[T]): RDD[T]
+  def subtract(other: RDD[T]): RDD[T] = {
+    throw new Exception("Unhandled function subtract")
+  }
 
-  def count(): Long
+  def count(): Long = size()
 
-  def size(): Long
+  def size(): Long = collection.size
 
-  def first(): Option[T]
+  def first(): Option[T] = {
+    if (collection.size > 0)
+      return Some(collection(0))
+    None
+  }
 
-  // def last(index: Int): Option[T]
-  def last(): Option[T] /* = this.last(0) */
+  def last(): Option[T] = {
+    if (collection.size > 0)
+      return Some(collection(collection.size - 1))
+    None
+  }
 
-  def top(num: Int): Array[T]
+  def top(num: Int): Array[T] = {
+    // BUGBUG:: Order the data and select top N
+    throw new Exception("Unhandled function top")
+  }
 
-  def max[U: ClassTag](f: (Option[U], T) => U): Option[U]
+  def max[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
+    var maxVal: Option[U] = None
+    collection.foreach(c => {
+      maxVal = Some(f(maxVal, c))
+    })
+    maxVal
+  }
 
-  def min[U: ClassTag](f: (Option[U], T) => U): Option[U]
+  def min[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
+    var minVal: Option[U] = None
+    collection.foreach(c => {
+      minVal = Some(f(minVal, c))
+    })
+    minVal
+  }
 
-  def isEmpty(): Boolean
+  def isEmpty(): Boolean = collection.isEmpty
 
-  def keyBy[K](f: T => K): RDD[(K, T)]
+  def keyBy[K](f: T => K): RDD[(K, T)] = {
+    map(x => (f(x), x))
+  }
 
-  def toJavaRDD(): JavaRDD[T]
+  def toJavaRDD(): JavaRDD[T] = {
+    new JavaRDD(this)(elementClassTag)
+  }
 }
 
 object JavaRDD {
