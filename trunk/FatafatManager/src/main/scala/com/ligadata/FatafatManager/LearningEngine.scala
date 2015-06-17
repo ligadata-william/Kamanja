@@ -130,33 +130,33 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
           var resStr = "Not found any output."
           val outputMsgs = FatafatMetadata.getMdMgr.OutputMessages(true, true)
-          if (outputMsgs != None && outputMsgs != null) {
-            println("msg " + msg.FullName)
+          if (outputMsgs != None && outputMsgs != null && outputMsgs.get.size > 0) {
+            LOG.info("msg " + msg.FullName)
+            LOG.info(" outputMsgs.size" +outputMsgs.get.size)
             var outputGen = new OutputMsgGenerator()
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
             resStr = resultedoutput.map(resout => resout._3).mkString("\n")
-          }
+          } else {
 
-          /*
-          val json =
-            ("ModelsResult" -> results.toList.map(res =>
-              ("EventDate" -> res.eventDate) ~
-                ("ExecutionTime" -> res.executedTime) ~
-                ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
-                ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
-                ("ModelName" -> res.mdlName) ~
-                ("ModelVersion" -> res.mdlVersion) ~
-                ("uniqKey" -> res.uniqKey) ~
-                ("uniqVal" -> res.uniqVal) ~
-                ("xformCntr" -> res.xformedMsgCntr) ~
-                ("xformTotl" -> res.totalXformedMsgs) ~
-                ("TxnId" -> tempTransId) ~
-                ("output" -> res.results.toList.map(r =>
-                  ("Name" -> r.name) ~
-                    ("Type" -> r.usage.toString) ~
-                    ("Value" -> ModelResult.ValueString(r.result))))))
-          val resStr = compact(render(json))
-		*/
+            val json =
+              ("ModelsResult" -> results.toList.map(res =>
+                ("EventDate" -> res.eventDate) ~
+                  ("ExecutionTime" -> res.executedTime) ~
+                  ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
+                  ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
+                  ("ModelName" -> res.mdlName) ~
+                  ("ModelVersion" -> res.mdlVersion) ~
+                  ("uniqKey" -> res.uniqKey) ~
+                  ("uniqVal" -> res.uniqVal) ~
+                  ("xformCntr" -> res.xformedMsgCntr) ~
+                  ("xformTotl" -> res.totalXformedMsgs) ~
+                  ("TxnId" -> tempTransId) ~
+                  ("output" -> res.results.toList.map(r =>
+                    ("Name" -> r.name) ~
+                      ("Type" -> r.usage.toString) ~
+                      ("Value" -> ModelResult.ValueString(r.result))))))
+            resStr = compact(render(json))
+          }
           envContext.saveStatus(tempTransId, "Start", true)
           if (isValidPartitionKey) {
             envContext.saveModelsResult(tempTransId, partKeyDataList, allMdlsResults)
