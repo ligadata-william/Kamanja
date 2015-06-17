@@ -23,6 +23,7 @@ object System_Beneficiary_1000001_1430446866134 extends BaseMsgObj {
   override def CreateNewMessage: BaseMsg = new System_Beneficiary_1000001_1430446866134()
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
+  override def CanPersist: Boolean = true;
 
   val partitionKeys: Array[String] = Array("desynpuf_id")
   val partKeyPos = Array(0)
@@ -91,6 +92,7 @@ class System_Beneficiary_1000001_1430446866134 extends BaseMsg {
   override def NameSpace: String = "System"
   override def Name: String = "Beneficiary"
   override def Version: String = "000000.000001.000001"
+    override def CanPersist: Boolean = true;
 
   var desynpuf_id: String = _;
   var bene_birth_dt: Int = _;

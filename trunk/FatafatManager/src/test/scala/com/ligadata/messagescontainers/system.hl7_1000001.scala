@@ -23,6 +23,7 @@ object System_HL7_1000001_1430446865995 extends BaseMsgObj {
   override def CreateNewMessage: BaseMsg = new System_HL7_1000001_1430446865995()
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
+  override def CanPersist: Boolean = true;
 
   val partitionKeys: Array[String] = Array("desynpuf_id")
   val partKeyPos = Array(0)
@@ -91,6 +92,7 @@ class System_HL7_1000001_1430446865995 extends BaseMsg {
   override def NameSpace: String = "System"
   override def Name: String = "HL7"
   override def Version: String = "000000.000001.000001"
+    override def CanPersist: Boolean = true;
 
   var desynpuf_id: String = _;
   var clm_id: Long = _;
