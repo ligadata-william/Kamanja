@@ -1287,5 +1287,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
   }
+  
+  override def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+    None
+  }
+
+  override def getRDD(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    Array[MessageContainerBase]()
+  }
+
+  override def saveOne(containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
+    
+  }
 }
 
