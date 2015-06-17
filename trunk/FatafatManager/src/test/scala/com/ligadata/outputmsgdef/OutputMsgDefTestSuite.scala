@@ -1,5 +1,17 @@
 package com.ligadata.outputmsgdef
 
+import org.json4s.jackson.JsonMethods._
+import org.json4s.DefaultFormats
+import org.json4s.Formats
+import scala.xml.XML
+import scala.xml.Elem
+import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
+import com.ligadata.BaseTypes._
+import com.ligadata.FatafatBase.SerializeDeserialize
+import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
+
+import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase }
+
 import org.scalatest.FunSuite
 import com.ligadata.FatafatBase.BaseMsg
 import com.ligadata.FatafatBase.{ DelimitedData, InputData }
@@ -13,7 +25,6 @@ import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import com.ligadata.BaseTypes._
 import java.io.{ DataInputStream, DataOutputStream }
 import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, MdBaseResolveInfo }
-import com.ligadata.messagescontainers._
 import com.ligadata.fatafat.metadataload.MetadataLoad
 
 trait MsgMdlInitialize extends BeforeAndAfterEach { this: Suite =>
@@ -83,7 +94,6 @@ class OutputMsgDefTestSuite extends FunSuite with MsgMdlInitialize {
     val aatdeficiency = "true"
     val outputFrmtRslt = "{ \"claimid\": \"" + claimid + "\", \"pufid\": \"" + pufid + "\", \"aatdeficiency\": \"" + aatdeficiency + "\"}"
     assert(outputresult.size === 1)
-    println("outputFrmtRslt  " + outputFrmtRslt)
     assert(outputresult(0)._1 === queue)
     assert(outputresult(0)._2 === Array("100", claimid))
     assert(outputresult(0)._3 === outputFrmtRslt)
@@ -92,14 +102,15 @@ class OutputMsgDefTestSuite extends FunSuite with MsgMdlInitialize {
 
 }
 
-object System_HL7_1000001_1430141013869 extends BaseMsgObj {
+
+object System_HL7_1000001_1430446865995 extends BaseMsgObj {
   override def TransformDataAttributes: TransformMessage = null
   override def NeedToTransformData: Boolean = false
   override def FullName: String = "System.HL7"
   override def NameSpace: String = "System"
   override def Name: String = "HL7"
   override def Version: String = "000000.000001.000001"
-  override def CreateNewMessage: BaseMsg = new System_HL7_1000001_1430141013869()
+  override def CreateNewMessage: BaseMsg = new System_HL7_1000001_1430446865995()
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
   override def CanPersist: Boolean = true;
@@ -163,7 +174,7 @@ object System_HL7_1000001_1430141013869 extends BaseMsgObj {
 
 }
 
-class System_HL7_1000001_1430141013869 extends BaseMsg {
+class System_HL7_1000001_1430446865995 extends BaseMsg {
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
 
@@ -171,7 +182,7 @@ class System_HL7_1000001_1430141013869 extends BaseMsg {
   override def NameSpace: String = "System"
   override def Name: String = "HL7"
   override def Version: String = "000000.000001.000001"
-  override def CanPersist: Boolean = true;
+    override def CanPersist: Boolean = true;
 
   var desynpuf_id: String = _;
   var clm_id: Long = _;
@@ -263,32 +274,109 @@ class System_HL7_1000001_1430141013869 extends BaseMsg {
   override def PrimaryKeyData: Array[String] = Array(desynpuf_id.toString)
 
   override def set(key: String, value: Any): Unit = { throw new Exception("set function is not yet implemented") }
-  //override def get(key: String): Any = { throw new Exception("get function is not yet implemented") }
-  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
-
-  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
-
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = {
-    return null
-  }
 
   override def get(key: String): Any = {
     try {
-      println(" Try with reflection ")
+      // Try with reflection
       return getWithReflection(key)
     } catch {
       case e: Exception => {
-        println(" Call By Name")
-
+        // Call By Name
         return getByName(key)
       }
     }
   }
+  override def getOrElse(key: String, default: Any): Any = { throw new Exception("getOrElse function is not yet implemented") }
 
   private def getByName(key: String): Any = {
     try {
       if (key.equals("desynpuf_id")) return desynpuf_id;
       if (key.equals("clm_id")) return clm_id;
+      if (key.equals("clm_from_dt")) return clm_from_dt;
+      if (key.equals("clm_thru_dt")) return clm_thru_dt;
+      if (key.equals("bene_birth_dt")) return bene_birth_dt;
+      if (key.equals("bene_death_dt")) return bene_death_dt;
+      if (key.equals("bene_sex_ident_cd")) return bene_sex_ident_cd;
+      if (key.equals("bene_race_cd")) return bene_race_cd;
+      if (key.equals("bene_esrd_ind")) return bene_esrd_ind;
+      if (key.equals("sp_state_code")) return sp_state_code;
+      if (key.equals("bene_county_cd")) return bene_county_cd;
+      if (key.equals("bene_hi_cvrage_tot_mons")) return bene_hi_cvrage_tot_mons;
+      if (key.equals("bene_smi_cvrage_tot_mons")) return bene_smi_cvrage_tot_mons;
+      if (key.equals("bene_hmo_cvrage_tot_mons")) return bene_hmo_cvrage_tot_mons;
+      if (key.equals("plan_cvrg_mos_num")) return plan_cvrg_mos_num;
+      if (key.equals("sp_alzhdmta")) return sp_alzhdmta;
+      if (key.equals("sp_chf")) return sp_chf;
+      if (key.equals("sp_chrnkidn")) return sp_chrnkidn;
+      if (key.equals("sp_cncr")) return sp_cncr;
+      if (key.equals("sp_copd")) return sp_copd;
+      if (key.equals("sp_depressn")) return sp_depressn;
+      if (key.equals("sp_diabetes")) return sp_diabetes;
+      if (key.equals("sp_ischmcht")) return sp_ischmcht;
+      if (key.equals("sp_osteoprs")) return sp_osteoprs;
+      if (key.equals("sp_ra_oa")) return sp_ra_oa;
+      if (key.equals("sp_strketia")) return sp_strketia;
+      if (key.equals("age")) return age;
+      if (key.equals("infectious_parasitic_diseases")) return infectious_parasitic_diseases;
+      if (key.equals("neoplasms")) return neoplasms;
+      if (key.equals("endocrine_nutritional_metabolic_diseases_immunity_disorders")) return endocrine_nutritional_metabolic_diseases_immunity_disorders;
+      if (key.equals("diseases_blood_blood_forming_organs")) return diseases_blood_blood_forming_organs;
+      if (key.equals("mental_disorders")) return mental_disorders;
+      if (key.equals("diseases_nervous_system_sense_organs")) return diseases_nervous_system_sense_organs;
+      if (key.equals("diseases_circulatory_system")) return diseases_circulatory_system;
+      if (key.equals("diseases_respiratory_system")) return diseases_respiratory_system;
+      if (key.equals("diseases_digestive_system")) return diseases_digestive_system;
+      if (key.equals("diseases_genitourinary_system")) return diseases_genitourinary_system;
+      if (key.equals("complications_of_pregnancy_childbirth_the_puerperium")) return complications_of_pregnancy_childbirth_the_puerperium;
+      if (key.equals("diseases_skin_subcutaneous_tissue")) return diseases_skin_subcutaneous_tissue;
+      if (key.equals("diseases_musculoskeletal_system_connective_tissue")) return diseases_musculoskeletal_system_connective_tissue;
+      if (key.equals("congenital_anomalies")) return congenital_anomalies;
+      if (key.equals("certain_conditions_originating_in_the_perinatal_period")) return certain_conditions_originating_in_the_perinatal_period;
+      if (key.equals("symptoms_signs_ill_defined_conditions")) return symptoms_signs_ill_defined_conditions;
+      if (key.equals("injury_poisoning")) return injury_poisoning;
+      if (key.equals("factors_influencing_health_status_contact_with_health_services")) return factors_influencing_health_status_contact_with_health_services;
+      if (key.equals("external_causes_of_injury_poisoning")) return external_causes_of_injury_poisoning;
+      if (key.equals("hypothyroidism")) return hypothyroidism;
+      if (key.equals("infarction")) return infarction;
+      if (key.equals("alzheimer")) return alzheimer;
+      if (key.equals("alzheimer_related")) return alzheimer_related;
+      if (key.equals("anemia")) return anemia;
+      if (key.equals("asthma")) return asthma;
+      if (key.equals("atrial_fibrillation")) return atrial_fibrillation;
+      if (key.equals("hyperplasia")) return hyperplasia;
+      if (key.equals("cataract")) return cataract;
+      if (key.equals("kidney_disease")) return kidney_disease;
+      if (key.equals("pulmonary_disease")) return pulmonary_disease;
+      if (key.equals("depression")) return depression;
+      if (key.equals("diabetes")) return diabetes;
+      if (key.equals("glaucoma")) return glaucoma;
+      if (key.equals("heart_failure")) return heart_failure;
+      if (key.equals("hip_pelvic_fracture")) return hip_pelvic_fracture;
+      if (key.equals("hyperlipidemia")) return hyperlipidemia;
+      if (key.equals("hypertension")) return hypertension;
+      if (key.equals("ischemic_heart_disease")) return ischemic_heart_disease;
+      if (key.equals("osteoporosis")) return osteoporosis;
+      if (key.equals("ra_oa")) return ra_oa;
+      if (key.equals("stroke")) return stroke;
+      if (key.equals("breast_cancer")) return breast_cancer;
+      if (key.equals("colorectal_cancer")) return colorectal_cancer;
+      if (key.equals("prostate_cancer")) return prostate_cancer;
+      if (key.equals("lung_cancer")) return lung_cancer;
+      if (key.equals("endometrial_cancer")) return endometrial_cancer;
+      if (key.equals("tobacco")) return tobacco;
+      if (key.equals("height")) return height;
+      if (key.equals("weight")) return weight;
+      if (key.equals("systolic")) return systolic;
+      if (key.equals("diastolic")) return diastolic;
+      if (key.equals("totalcholesterol")) return totalcholesterol;
+      if (key.equals("ldl")) return ldl;
+      if (key.equals("triglycerides")) return triglycerides;
+      if (key.equals("shortnessofbreath")) return shortnessofbreath;
+      if (key.equals("chestpain")) return chestpain;
+      if (key.equals("aatdeficiency")) return aatdeficiency;
+
+      // if (key.equals("desynpuf_id")) return desynpuf_id;
+      //if (key.equals("clm_id")) return clm_id;
       return null;
     } catch {
       case e: Exception => {
@@ -302,11 +390,17 @@ class System_HL7_1000001_1430141013869 extends BaseMsg {
     val ru = scala.reflect.runtime.universe
     val m = ru.runtimeMirror(getClass.getClassLoader)
     val im = m.reflect(this)
-    val fieldX = ru.typeOf[System_HL7_1000001_1430141013869].declaration(ru.newTermName(key)).asTerm.accessed.asTerm
+    val fieldX = ru.typeOf[System_HL7_1000001_1430446865995].declaration(ru.newTermName(key)).asTerm.accessed.asTerm
     val fmX = im.reflectField(fieldX)
-    println("fmX.get=" + fmX.get)
     fmX.get
   }
+
+  override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
+
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = {
+    return null
+  }
+
   def populate(inputdata: InputData) = {
     if (inputdata.isInstanceOf[DelimitedData])
       populateCSV(inputdata.asInstanceOf[DelimitedData])
