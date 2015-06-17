@@ -102,6 +102,10 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
 }
 
 trait EnvContext {
+  def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase]
+  def getRDD(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase]
+  def saveOne(containerName: String, partKey: List[String], value: MessageContainerBase): Unit
+
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
@@ -164,7 +168,7 @@ abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseO
   final def Version() = factory.Version() // Model Version
   final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
   final def TempTransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tempTransId else null // tempTransId
-  
+
   def execute(outputDefault: Boolean): ModelResult // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 

@@ -89,7 +89,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
         })
       }
     })
-    
+
     // Looking for the Remaining stuff from s2
     s2.foreach(s2kv => {
       val fndValPairs = s1.getOrElse(s2kv._1, null)
@@ -399,47 +399,200 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])(implicit val kClassTag: ClassTag[K
   // def join[W](other: JavaPairRDD[K, W]): JavaPairRDD[K, (V, W)]
 }
 
-trait RDDObject[T <: Any] {
+abstract class RDDObject[T: ClassTag] {
   val LOG = Logger.getLogger(getClass);
 
+  private def getCurrentModelContext: ModelContext = null
+
+  // Methods needs to be override in inherited class -- Begin
   // get builder
   def build: T
   def build(from: T): T
+  def getFullName: String // Gets Message/Container Name
+  def toJavaRDDObject: JavaRDDObject[T]
+  // Methods needs to be override in inherited class -- End
+
+  final def toRDDObject: RDDObject[T] = this
 
   // First group of functions retrieve one object (either recent or for a given key & filter)
   // Get recent entry for the Current Key
-  def getRecent: Option[T]
-  def getRecentOrNew: T
+  final def getRecent: Option[T] = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRecent(getFullName, mdlCtxt.msg.PartitionKeyData.toList, null, null)
+      if (fndVal != None)
+        return Some(fndVal.get.asInstanceOf[T])
+    }
+    None
+  }
+
+  final def getRecentOrNew: T = {
+    val rcnt = getRecent
+    if (rcnt.isEmpty)
+      return build
+    rcnt.get
+  }
 
   // Get recent entry for the given key
-  def getRecent(key: Array[String]): Option[T]
-  def getRecentOrNew(key: Array[String]): T
+  final def getRecent(key: Array[String]): Option[T] = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRecent(getFullName, key.toList, null, null)
+      if (fndVal != None)
+        return Some(fndVal.get.asInstanceOf[T])
+    }
+    None
+  }
 
-  def getOne(tmRange: TimeRange, f: T => Boolean): Option[T]
-  def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T]
-  def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T
-  def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T
+  final def getRecentOrNew(key: Array[String]): T = {
+    val rcnt = getRecent(key)
+    if (rcnt.isEmpty) return build
+    rcnt.get
+  }
+
+  final def getOne(tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[T] = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRecent(getFullName, mdlCtxt.msg.PartitionKeyData.toList, tmRange, f)
+      if (fndVal != None)
+        return Some(fndVal.get.asInstanceOf[T])
+    }
+    None
+  }
+
+  final def getOneOrNew(tmRange: TimeRange, f: MessageContainerBase => Boolean): T = {
+    val one = getOne(tmRange, f)
+    if (one.isEmpty) return build
+    one.get
+  }
+
+  final def getOne(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[T] = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRecent(getFullName, key.toList, tmRange, f)
+      if (fndVal != None)
+        return Some(fndVal.get.asInstanceOf[T])
+    }
+    None
+  }
+
+  final def getOneOrNew(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): T = {
+    val one = getOne(key, tmRange, f)
+    if (one.isEmpty) return build
+    one.get
+  }
 
   // This group of functions retrieve collection of objects 
-  def getRDDForCurrKey(f: T => Boolean): RDD[T]
-  def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T]
+  final def getRDDForCurrKey(f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, mdlCtxt.msg.PartitionKeyData.toList, null, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
+  final def getRDDForCurrKey(tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, mdlCtxt.msg.PartitionKeyData.toList, tmRange, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
 
   // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  def getRDD(tmRange: TimeRange, f: T => Boolean): RDD[T]
-  def getRDD(tmRange: TimeRange): RDD[T]
-  def getRDD(f: T => Boolean): RDD[T]
+  final def getRDD(tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, null, tmRange, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
 
-  def getRDD(key: Array[String], tmRange: TimeRange, f: T => Boolean): RDD[T]
-  def getRDD(key: Array[String], f: T => Boolean): RDD[T]
-  def getRDD(key: Array[String], tmRange: TimeRange): RDD[T]
+  final def getRDD(tmRange: TimeRange): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, null, tmRange, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
+  final def getRDD(f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, null, null, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
+  final def getRDD(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, key.toList, tmRange, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
+  final def getRDD(key: Array[String], f: MessageContainerBase => Boolean): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, key.toList, null, f)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
+  final def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(getFullName, key.toList, tmRange, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
 
   // Saving data
-  def saveOne(inst: T): Unit = {}
-  def saveOne(key: Array[String], inst: T): Unit = {}
-  def saveRDD(data: RDD[T]): Unit = {}
+  final def saveOne(inst: T): Unit = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      // mdlCtxt.txnContext.gCtx.saveOne(getFullName, mdlCtxt.msg.PartitionKeyData.toList, inst)
+    }
+  }
 
-  def toJavaRDDObject: JavaRDDObject[T]
-  def toRDDObject: RDDObject[T] = this
+  final def saveOne(key: Array[String], inst: T): Unit = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      // mdlCtxt.txnContext.gCtx.saveOne(getFullName, key.toList, inst)
+    }
+  }
+
+  final def saveRDD(data: RDD[T]): Unit = {
+    val mdlCtxt = getCurrentModelContext
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      // mdlCtxt.txnContext.gCtx.saveList(getFullName, data.Collection.toList)
+    }
+  }
 }
 
 object JavaRDDObject {
