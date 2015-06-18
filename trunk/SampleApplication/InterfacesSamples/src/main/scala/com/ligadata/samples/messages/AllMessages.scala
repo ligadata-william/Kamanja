@@ -52,7 +52,7 @@ class CustAlertHistory extends BaseContainer {
   def withAlertType(alertType: String): CustAlertHistory = { this }
   def withNumDays(daysWithLessBalance: Int): CustAlertHistory = { this }
 
-  def save = {}
+  override def Save: Unit = { CustAlertHistory.saveOne(this) }
   override def PartitionKeyData: Array[String] = null
   override def PrimaryKeyData: Array[String] = null
   override def set(key: String, value: Any): Unit = {}
@@ -120,7 +120,7 @@ class CustPreferences extends BaseContainer {
   var overdraftlimit: Double = 0;
   var multiDayMinBalanceAlertOptout = false;
 
-  def save = {}
+  override def Save: Unit = { CustPreferences.saveOne(this) }
   override def PartitionKeyData: Array[String] = null
   override def PrimaryKeyData: Array[String] = null
   override def set(key: String, value: Any): Unit = {}
@@ -190,7 +190,7 @@ class CustTransaction extends BaseMsg {
   var locationid: Int = 0;
   var transtype: String = "";
 
-  def save = {}
+  override def Save: Unit = { CustTransaction.saveOne(this) }
   override def PartitionKeyData: Array[String] = null
   override def PrimaryKeyData: Array[String] = null
   override def set(key: String, value: Any): Unit = {}
@@ -254,7 +254,7 @@ class GlobalPreferences extends BaseContainer {
   var numLookbackDaysForMultiDayMinBalanceAlert: Int = 30;
   var maxNumDaysAllowedWithMinBalance: Int = 2;
 
-  def save = {}
+  override def Save: Unit = { GlobalPreferences.saveOne(this) }
   override def PartitionKeyData: Array[String] = null
   override def PrimaryKeyData: Array[String] = null
   override def set(key: String, value: Any): Unit = {}
