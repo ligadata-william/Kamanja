@@ -1994,8 +1994,8 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 	} """
 		
 		/**	EnvContext write access methods:
-		 * 	  def setObject(tempTransId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
-		 *	  def setObject(tempTransId: Long, containerName: String, key: Any, value: MessageContainerBase): Unit
+		 * 	  def setObject(transId: Long, containerName: String, key: String, value: MessageContainerBase): Unit
+		 *	  def setObject(transId: Long, containerName: String, key: Any, value: MessageContainerBase): Unit
 		 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
@@ -2533,12 +2533,12 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		/** 
 		    Catalog EnvContext read access macros.  Inject the transaction id as the first arg   
 
-			def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
-			def getObject(tempTransId: Long, containerName: String, key: String): MessageContainerBase
+			def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase]
+			def getObject(transId: Long, containerName: String, key: String): MessageContainerBase
 			
-			def contains(tempTransId: Long, containerName: String, key: String): Boolean
-			def containsAny(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
-			def containsAll(tempTransId: Long, containerName: String, keys: Array[String]): Boolean
+			def contains(transId: Long, containerName: String, key: String): Boolean
+			def containsAny(transId: Long, containerName: String, keys: Array[String]): Boolean
+			def containsAll(transId: Long, containerName: String, keys: Array[String]): Boolean
 		*/
 
 		val getAllObjectsMacroTemplate : String =   """GetArray(ctx.xId, %1%, %2%)"""

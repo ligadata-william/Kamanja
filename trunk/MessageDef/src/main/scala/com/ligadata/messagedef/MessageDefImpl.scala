@@ -91,13 +91,13 @@ class MessageDefImpl {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
 
     }
     cobj
@@ -1869,15 +1869,17 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     var objsb: StringBuilder = new StringBuilder()
     val ver = MdMgr.ConvertVersionToLong(msg.Version).toString
     val xtends: String = "extends"
+    val withStr = "with"
+    val rddObj = "RDDObject[" + msg.Name + "]"
     val space = " "
     val uscore = "_"
     val cls = "class"
     val obj = "object"
     if (msg.msgtype.equals("Message")) {
-      oname = "BaseMsgObj with RDDObject[" + msg.Name + "]{"
+      oname = "BaseMsgObj {"
       sname = "BaseMsg {"
     } else if (msg.msgtype.equals("Container")) {
-      oname = "BaseContainerObj with RDDObject[" + msg.Name + "]{"
+      oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
     //val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
@@ -1885,7 +1887,7 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     //val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
     val clsname = msg.Name
     val clsstr = cls + space + msg.Name + space + xtends + space + sname
-    val objstr = obj + space + msg.Name + space + xtends + space + oname
+    val objstr = obj + space + msg.Name + space + xtends + space + rddObj + space + withStr + space + oname
 
     (clssb.append(clsstr), objsb.append(objstr), clsname)
   }
@@ -2561,9 +2563,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val isFixed = getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport) = importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfFixed +" \n}")
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfFixed +" \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
 
     } catch {
       case e: Exception => {
@@ -2603,9 +2605,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val isFixed = getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport) = importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + " \n}")
+      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + " \n}")
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfMappedMsg(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMappedMsg(message) + " \n}")
 
     } catch {
       case e: Exception => {
@@ -3493,7 +3495,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   private def saveObject(msg: Message): String = {
 
     """
-    def save: Unit = {
+    override def Save: Unit = {
 		 """ + msg.Name + """.saveOne(this)
 	}
  	 """
@@ -3521,6 +3523,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
     """
 
+  }
+  
+  private def getFullName : String = {
+    """
+    override def getFullName = FullName    
+    """
   }
 
 }

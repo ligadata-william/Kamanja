@@ -85,20 +85,24 @@ class CompilerProxy{
 	     , sourceLanguage : String = "scala") : Int = 
   { 
     var srcFileName: String = ""
-    if (sourceLanguage.equals("java"))
+    var compileCommand: scala.collection.mutable.Seq[String] = null
+    if (sourceLanguage.equals("java")) {
       srcFileName = s"$moduleName.java"
-    else
-      srcFileName = s"$moduleName.scala"  
-      
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    else {
+      srcFileName = s"$moduleName.scala" 
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
+    }
     createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
-    val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
-println("compile command is "+scalacCmd)
-    logger.debug(s"scalac cmd used: $scalacCmd")
-    val compileRc = Process(scalacCmd).!
+  
+println("compile command is "+compileCommand)
+    logger.debug(s"scalac cmd used: $compileCommand")
+    val compileRc = Process(compileCommand).!
     if (compileRc != 0) {
       logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
-      logger.error(s"Command used: $scalacCmd")
+      logger.error(s"Command used: $compileCommand")
       compileRc
     }
     else{

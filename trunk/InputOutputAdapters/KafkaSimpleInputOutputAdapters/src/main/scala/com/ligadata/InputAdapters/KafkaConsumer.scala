@@ -147,7 +147,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
 
-            var tempTransId: Long = 0
+            var transId: Long = 0
             var ignoreOff: Long = -1
 
             try {
@@ -190,7 +190,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             }
 
                           }
-                          tempTransId = kv._3
+                          transId = kv._3
                           ignoreOff = if (ignoreFirstMsg) kv._4._1.Offset else kv._4._1.Offset - 1 
                           processingXformMsg = kv._4._2
                           totalXformMsg = kv._4._3
@@ -205,8 +205,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                             processingXformMsg = 0
                             totalXformMsg = 0
                           }
-                          execThread.execute(tempTransId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          tempTransId += 1
+                          execThread.execute(transId, msg, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
+                          transId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

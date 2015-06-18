@@ -187,7 +187,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             uniqueKey.QueueName = qc.queue_name
             uniqueKey.TopicName = qc.topic_name
 
-            var tempTransId: Long = 0
+            var transId: Long = 0
 
             try {
               breakable {
@@ -207,7 +207,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                       execThread = mkExecCtxt.CreateExecContext(input, 0, output, envCtxt)
                       val kv = kvs.head._2
                       if (kv != null) {
-                        tempTransId = kv._3
+                        transId = kv._3
                         processingXformMsg = kv._4._2
                         totalXformMsg = kv._4._3
                       }
@@ -235,8 +235,8 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           uniqueVal.MessageId = msgId
                           processingXformMsg = 0
                           totalXformMsg = 0
-                          execThread.execute(tempTransId, msgStr, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          tempTransId += 1
+                          execThread.execute(transId, msgStr, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
+                          transId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

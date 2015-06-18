@@ -78,7 +78,7 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
       return null
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").save
+    CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").Save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     ModelResult.builder.withResult(new LowBalanceAlertResult(mdlCtxt.txnContext)).build
   }
@@ -149,7 +149,7 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
       return null
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).save
+    CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).Save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     ModelResult.builder.withResult(new LowBalanceAlertResult2(mdlCtxt.txnContext)).build
   }
