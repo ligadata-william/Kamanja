@@ -38,7 +38,7 @@ public class LowBalanceAlertModel extends ModelBase {
         }
 
         // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-        CustAlertHistory.build().withAlertDt(curDt).withAlertType("lowBalanceAlert").save();
+        CustAlertHistory.build().withAlertDt(curDt).withAlertType("lowBalanceAlert").Save();
         
         // ... Prepare results here ... need to populate result object with appropriate attributes
         return ModelResult.builder().withResult(new LowBalanceAlertResult(txnContext)).build(); 
