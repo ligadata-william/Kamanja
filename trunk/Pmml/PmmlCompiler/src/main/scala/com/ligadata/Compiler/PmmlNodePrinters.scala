@@ -988,9 +988,8 @@ object NodePrinterHelpers extends LogTrait {
 		}
 
 
-		objBuffer.append(s"    def getModelName: String = $modelName\n")
-		objBuffer.append(s"    def getVersion: String = ${'"'}$versionNo${'"'}\n")
-		objBuffer.append(s"    def getModelVersion: String = getVersion\n")
+		objBuffer.append(s"    def ModelName: String = $modelName\n")
+		objBuffer.append(s"    def Version: String = ${'"'}$versionNo${'"'}\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
 			PmmlError.logError(ctx, "No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
@@ -1039,9 +1038,9 @@ object NodePrinterHelpers extends LogTrait {
 			val msgTypeStr : String = msgTypedef.typeString
 			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 			
-			objBuffer.append(s"    def CreateNewModel(tempTransId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
+			objBuffer.append(s"    def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
 			objBuffer.append(s"    {\n") 
-			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, tempTransId)\n")
+			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(mdlCtxt, this)\n")
 			objBuffer.append(s"    }\n") 	
 			objBuffer.append(s"\n")
 	
@@ -1066,11 +1065,13 @@ object NodePrinterHelpers extends LogTrait {
 			}
 		
 		/** 
-		 *  Add the class declaration to the the class body.  Spin thru the ctx's messageTypes to find those
-		 *  containers that are "messages" and to be part of the formal signature.
+		 *  Add the class declaration to the the class body.  Spin thru the ctx's containersInScope to find those
+		 *  containers that are to be included in the primary constructor... currently the gCtx and some message.
+		 *  Therefore there is a minimum of TWO of them.
 		 */
 		
-		val ctorMsgsBuffer : StringBuilder = new StringBuilder()
+		var msgdefTypes : ArrayBuffer[String] = ArrayBuffer[String]()
+		val ctorMsgsBuffer : StringBuilder = new StringBuilder
 		ctx.containersInScope.foreach( ctnr => {
 			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
 			if (isPrintedInCtor) {
@@ -1081,6 +1082,7 @@ object NodePrinterHelpers extends LogTrait {
 				ctorMsgsBuffer.append(varName)
 				ctorMsgsBuffer.append(" : " )
 				ctorMsgsBuffer.append(msgdef.typeString)
+				msgdefTypes += msgdef.typeString
 			}
 		})
 		val ctorGtxAndMessagesStr : String = ctorMsgsBuffer.toString
@@ -1088,24 +1090,39 @@ object NodePrinterHelpers extends LogTrait {
 		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
 		val versionNo : String = optVersion match {
 		  case Some(optVersion) => optVersion.toString
-		  case _ => "there is no class name for this model... incredible as it seems"
+		  case _ => {
+			  PmmlError.logError(ctx, s"there is no class name for this model... incredible as it seems")		
+			  "there is no class name for this model... incredible as it seems"
+		  }
 		}
 		val verNoStr : String = "_" + versionNo.toString
 
+		/**
+		 * FIXME: The following line constrains models to living in the System namespace.  This needs to be changed as
+		 * the full thrust of arbitrary namespaces via the NamespaceSearchPath are implemented.  The check here will 
+		 * be for an explicit namespace alias.  If that is present, we will print the alias value instead.  This will
+		 * correspond to the package name that is generated at the top of the code generation ... i.e., the namespace
+		 * corresponding to the detected namespace alias.
+		 * 
+		 * If no alias is given, the default is System_
+		 */
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname$verNoStr($ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long)\n")
+		clsBuffer.append(s"class $nmspc$classname$verNoStr(val modelContext: ModelContext, val factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long)\n")
 		if (ctx.injectLogging) {
-			clsBuffer.append(s"   extends ModelBase with LogTrait {\n") 
+			clsBuffer.append(s"   extends ModelBase(modelContext,factory) with LogTrait {\n") 
 		} else {
-			clsBuffer.append(s"   extends ModelBase {\n") 
+			clsBuffer.append(s"   extends ModelBase(modelContext,factory) {\n") 
 		}
+
+		/** Create the alternate ctor used by the CreateNewModel implementation.  Unpack its content and feed the 
+		 *  primary constructor as it is now, passing both the ModelContext and Model object along to satisfy the 
+		 *  ModelBase abstract class required parameters  
+		 */
+		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
+		clsBuffer.append(s"$alternateCtor\n") 
+		
 		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(tempTransId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
-		
-		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
-		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname$verNoStr.getVersion\n")
-		clsBuffer.append(s"    override def getTenantId : String = tenantId\n")
-		clsBuffer.append(s"    override def getTempTransId: Long = tempTransId\n")
 		
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
 		clsBuffer.append(s"    var ruleSetModel : RuleSetModel = null\n")
@@ -1119,13 +1136,14 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"    }\n")
 		clsBuffer.append(s"\n")		
 		
-		/** plan for the day when there are multiple messages present in the constructor */
+		/** plan for the day when there are multiple messages present in the constructor.  Should multiple messages
+		 *  be supported, the names for them would be msg, msg1, msg2, ..., msgN  */
 		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
 			val (msgName, isPrintedInCtor, msgdef, varName) : (String, Boolean, BaseTypeDef, String) = ctnr
 			isPrintedInCtor
 		}).toArray
 
-		/** pick the first one (and only one) AFTER the gCtx for now */
+		/** pick the first and only one for now AFTER the gCtx (also a container) */
 		val msgContainerInfoSize : Int = msgNameContainerInfo.size
 		if (msgContainerInfoSize <= 1) {
 			PmmlError.logError(ctx, s"unable to detect message to work with... there must be one")		
@@ -1323,15 +1341,65 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.toString
  	}
 
+	/** 
+	 *  Answer the alternate constructor string that the model object's CreateNewModel method uses.
+	 *  The alternate constructor is used to integrate the new traits developed to integrate with the
+	 *  current model generator.  Using this approach, very little of the compiler has changed to 
+	 *  support it.
+	 *  
+	 *  @param msgdefTypes : an Array[String] containing the message typedef strings that have been supplied
+	 *  	to the model. While we are currently only supporting one as far as the engine goes, the compiler
+	 *   	supports more than one in the event the multiple input messages become a feature.
+	 *  @return the "def this(val modelContext: ModelContext, val factory: ModelBaseObj){...}" constructor
+	 *  	string that will be included into the model being generated  
+	 */
+	def generateAlternateCtor(msgdefTypes : Array[String]) : String = { 
+		val ctorBuffer : StringBuilder = new StringBuilder
+		var cnt : Int = 0
+		/** generate one or more message parameter expressions for this function ... msg : someType, 
+		 *  msg1 : someOtherType, msg2 : yetSomeOtherType, ... msgN : nutherOne */
+		val msgDefTypeDecls : Array[String] = msgdefTypes.map( decl => {
+			val declExpr : String = if (cnt == 0) {
+				s"msg : $decl"
+			} else {
+				s"msg$cnt : $decl"
+			}
+			cnt += 1
+			declExpr
+		}).toArray
+		cnt = 0
+		/** generate one or more message expressions for function body ... msg, msg1, msg2, ... msgN */
+		val msgParameterNames : Array[String] = msgdefTypes.map( decl => {
+			val declExpr : String = if (cnt == 0) {
+				s"msg"
+			} else {
+				s"msg$cnt"
+			}
+			cnt += 1
+			declExpr
+		}).toArray
+		val msgdefListBuf : StringBuilder = new StringBuilder
+		msgDefTypeDecls.addString(msgdefListBuf, ",")   
+		val msgdefsList : String = msgdefListBuf.toString
+		msgdefListBuf.clear
+		msgParameterNames.addString(msgdefListBuf, ",")   		
+		val msgNameList : String = msgdefListBuf.toString
+		
+		ctorBuffer.append(s"    def this(val modelContext: ModelContext, val factory: ModelBaseObj) {\n")
+		ctorBuffer.append(s"        this(modelContext, factory\n")
+		ctorBuffer.append(s"            , gCtx\n")
+		ctorBuffer.append(s"            , $msgNameList\n")
+		ctorBuffer.append(s"            , factory.ModelName\n")
+		ctorBuffer.append(s"            , factory.Version\n")
+		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null)\n")
+		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null))\n")
+		ctorBuffer.append(s"     }\n")		
+		ctorBuffer.toString
+	}
+
 	/**
   		This function will add the "prepareResults" function to the model class being written.
-  		It will take the mining variables and prepare the following objects... and array of 
-  		
-			class Result(var resultType: MiningVarInfo, var result: Any) {
-			}
-			
-		from the mining prediction and supplementary variables and a statement to instantiate one 
-		of these:
+  		Using the mining variables an instantiation of this will be generated:
 		
 			class ModelResult(var eventDate: Long
 				, var executedTime: Long
@@ -1339,6 +1407,12 @@ object NodePrinterHelpers extends LogTrait {
 				, var mdlVersion: String
 				, results: Array[Result]) {
       		}
+      		
+      	@param ctx : the compiler global context 
+      	@param classname : the name of the model 
+      	@param generator : the pmml model generator controller that orchestrates the code generation
+      	@param clsBuffer : the buffer in which the prepareResults function will be written
+      	@return Unit
   	 */
 	
 	def preparePrepareResultsFunction(ctx : PmmlContext
@@ -1418,7 +1492,7 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		val verNoStr : String = "_" + versionNo.toString
 
-		prepResultBuffer.append(s"            new ModelResult(dateMillis, nowStr, $nmspc$classname$verNoStr.getModelName, $nmspc$classname$verNoStr.getModelVersion, results) \n")
+		prepResultBuffer.append(s"            new ModelResult(dateMillis, nowStr, $nmspc$classname$verNoStr.ModelName, $nmspc$classname$verNoStr.Version, results) \n")
 		prepResultBuffer.append(s"        } else { null }\n")
 		prepResultBuffer.append(s"\n")
 		prepResultBuffer.append(s"        modelResult\n")
@@ -1428,7 +1502,13 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(prepResultBuffer.toString)
 	}
 	
-	
+	/** 
+	 *  Answer a StringBuilder that contains a comment (info from the Header element), the model object
+	 *  and the model class.
+	 *  @param ctx : the pmml compiler global context
+	 *  @param generator : the pmml model generator controller that orchestrates the code generation
+	 *  @return a StringBuilder instance loaded with content 
+	 */
 	def modelClass(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder = {
 		val clsBuffer : StringBuilder = new StringBuilder()
 			
@@ -1445,15 +1525,20 @@ object NodePrinterHelpers extends LogTrait {
 	
 	
 	/**
-	 *      Declare the Transformation classes that compute the derived fields.  These classes are named 
-	 *      after their variable name and are all kinds of DerivedField instances.  They are executed
-	 *      by map dispatch table available in the context and filled in by the main ModelNameClass initialization
+	 *  Declare the Transformation classes that compute the derived fields.  These classes are named 
+	 *  after their variable name and are all kinds of DerivedField instances.  They are executed
+	 *  by map dispatch table available in the context and filled in by the main ModelNameClass initialization
 	 *      
-	 *      Declare the Rule classes.  These are all dispatched from the map in the RuleSet object. This could
-	 *      be parallelized later if desired when more than one rule is competing with its brothers and a 
-	 *      mitigation function is used to pick the winner.
+	 *  Declare the Rule classes.  These are all dispatched from the map in the RuleSet object. This could
+	 *  be parallelized later if desired when more than one rule is competing with its brothers and a 
+	 *  mitigation function is used to pick the winner.
 	 *      
-	 *      Declare the RuleSetModel class.
+	 *  Declare the RuleSetModel class.
+	 *      
+	 *  @param ctx : the pmml compiler global context
+	 *  @param generator : the pmml model generator controller that orchestrates the code generation
+	 *  @return a StringBuilder instance loaded with content 
+
 	 */
 
 	def classDecls(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder =  {
