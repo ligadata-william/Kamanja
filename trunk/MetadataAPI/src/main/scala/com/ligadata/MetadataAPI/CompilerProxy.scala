@@ -92,7 +92,7 @@ class CompilerProxy{
     }
     else {
       srcFileName = s"$moduleName.scala" 
-      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
     }
     createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
