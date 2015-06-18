@@ -5,7 +5,7 @@ import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, Env
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
-import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData }
+import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData, ThreadLocalStorage }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -38,7 +38,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
 
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-            val curMd = md.mdl.CreateNewModel(new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer))
+
+            val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
+            ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
+            val curMd = md.mdl.CreateNewModel(mdlCtxt)
+            ThreadLocalStorage.modelContextInfo.remove
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
@@ -52,7 +56,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } else {
           }
         } catch {
-          case e: Exception => { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+          case e: Exception =>
+            { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+            ThreadLocalStorage.modelContextInfo.remove
         }
       })
     }
@@ -96,6 +102,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
+
         val results = RunAllModels(transId, msg, envContext)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
