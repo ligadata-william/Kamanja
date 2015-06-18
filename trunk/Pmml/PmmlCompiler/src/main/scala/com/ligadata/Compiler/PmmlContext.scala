@@ -533,22 +533,22 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 					if (msgDef == null) {
 						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
 						if (containerDef == null) {
-							logger.error("The supplied message has no corresponding message definition.  Please add metadata for this message.")
+							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
 							if (containerDef.isInstanceOf[ContainerTypeDef]) {
 								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
 							} else {
-								logger.error(s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")	
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
 							}
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 							val implJar : String  = containerDef.JarName
 							val depJars : Array[String] = containerDef.DependencyJarNames
 							collectClassPathJars(implJar, depJars)
 						}
-					} else {
+					} else { /** a container ... not a message ... this is a bit crazy so far... we have not accepted these in the constructor */
 						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
 						if (containerDef == null) {
-							logger.error("The supplied message has no corresponding message definition.  Please add metadata for this message.")
+							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 							val implJar : String  = containerDef.JarName
@@ -558,12 +558,12 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 							if (containerDef.isInstanceOf[ContainerTypeDef]) {
 								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
 							} else {
-								logger.error(s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")	
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
 							}
 						}
 					}
 				} else {
-					logger.error("The input message referenced in the messages field has not been declared in the data dictionary.  Do that before proceeding.")
+					PmmlError.logError(this, "The input message referenced in the messages field has not been declared in the data dictionary.  Do that before proceeding.")
 				}
 			})
 		}
