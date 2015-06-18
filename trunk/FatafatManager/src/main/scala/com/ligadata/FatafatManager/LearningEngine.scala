@@ -5,7 +5,7 @@ import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, Env
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
-import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData }
+import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData, ThreadLocalStorage }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -24,7 +24,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   val rand = new Random(hashCode)
 
-  private def RunAllModels(tempTransId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
+  private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
     var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
 
     if (finalTopMsgOrContainer != null) {
@@ -38,7 +38,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         try {
 
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-            val curMd = md.mdl.CreateNewModel(new ModelContext(new TransactionContext(tempTransId, envContext, md.tenantId), finalTopMsgOrContainer))
+
+            val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
+            ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
+            val curMd = md.mdl.CreateNewModel(mdlCtxt)
+            ThreadLocalStorage.modelContextInfo.remove
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
@@ -52,7 +56,9 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } else {
           }
         } catch {
-          case e: Exception => { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+          case e: Exception =>
+            { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
+            ThreadLocalStorage.modelContextInfo.remove
         }
       })
     }
@@ -65,7 +71,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(tempTransId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
+  def execute(transId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
     // LOG.debug("LE => " + msgData)
     try {
       if (msgInfo != null && inputdata != null) {
@@ -77,7 +83,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
-          val fndmsg = envContext.getObject(tempTransId, msgType, partKeyDataList, primaryKeyList)
+          val fndmsg = envContext.getObject(transId, msgType, partKeyDataList, primaryKeyList)
           if (fndmsg != null)
             msg = fndmsg.asInstanceOf[BaseMsg]
         }
@@ -89,14 +95,15 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         msg.populate(inputdata)
         var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
         if (isValidPartitionKey) {
-          envContext.setObject(tempTransId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
-          allMdlsResults = envContext.getModelsResult(tempTransId, partKeyDataList)
+          envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
+          allMdlsResults = envContext.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
           allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
-        val results = RunAllModels(tempTransId, msg, envContext)
+
+        val results = RunAllModels(transId, msg, envContext)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
@@ -135,16 +142,16 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
                 ("uniqVal" -> res.uniqVal) ~
                 ("xformCntr" -> res.xformedMsgCntr) ~
                 ("xformTotl" -> res.totalXformedMsgs) ~
-                ("TxnId" -> tempTransId) ~
+                ("TxnId" -> transId) ~
                 ("output" -> res.results.toList.map(r =>
                   ("Name" -> r.name) ~
                     ("Type" -> r.usage.toString) ~
                     ("Value" -> ModelResult.ValueString(r.result))))))
           val resStr = compact(render(json))
 
-          envContext.saveStatus(tempTransId, "Start", true)
+          envContext.saveStatus(transId, "Start", true)
           if (isValidPartitionKey) {
-            envContext.saveModelsResult(tempTransId, partKeyDataList, allMdlsResults)
+            envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
           if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
             try {
@@ -174,12 +181,12 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               case e: Exception => {}
             }
           }
-          envContext.saveStatus(tempTransId, "OutAdap", false)
+          envContext.saveStatus(transId, "OutAdap", false)
         }
         var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
         if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
         totalLatencyFromReadToProcess += latencyFromReadToProcess
-        envContext.saveStatus(tempTransId, "SetData", false)
+        envContext.saveStatus(transId, "SetData", false)
         if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
           try {
             LOG.debug("====================================> Started Waiting in Step 3")

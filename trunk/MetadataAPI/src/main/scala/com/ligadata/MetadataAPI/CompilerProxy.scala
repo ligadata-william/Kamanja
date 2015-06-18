@@ -80,20 +80,30 @@ class CompilerProxy{
 	     , scalahome : String
 	     , moduleName : String
 	     , classpath : String
-	     , scalaGeneratedCode : String
+	     , sourceCode : String
 	     , clientName : String
-	     ) : Int = 
+	     , sourceLanguage : String = "scala") : Int = 
   { 
-    val scalaSrcFileName : String = s"$moduleName.scala"
-    createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
+    var srcFileName: String = ""
+    var compileCommand: scala.collection.mutable.Seq[String] = null
+    if (sourceLanguage.equals("java")) {
+      srcFileName = s"$moduleName.java"
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    else {
+      srcFileName = s"$moduleName.scala" 
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
-    val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$scalaSrcFileName")
-    logger.debug(s"scalac cmd used: $scalacCmd")
-    val scalaCompileRc = Process(scalacCmd).!
-    if (scalaCompileRc != 0) {
-      logger.error(s"Compile for $scalaSrcFileName has failed...rc = $scalaCompileRc")
-      logger.error(s"Command used: $scalacCmd")
-      scalaCompileRc
+  
+println("compile command is "+compileCommand)
+    logger.debug(s"scalac cmd used: $compileCommand")
+    val compileRc = Process(compileCommand).!
+    if (compileRc != 0) {
+      logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
+      logger.error(s"Command used: $compileCommand")
+      compileRc
     }
     else{
       //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir
@@ -110,15 +120,17 @@ class CompilerProxy{
   def jarCode ( moduleNamespace: String
 		, moduleName: String
 		, moduleVersion: String
-		, scalaGeneratedCode : String
+		, sourceCode : String
 		, classpath : String
 		, jarTargetDir : String
 		, clientName : String
 		, pmmlFilePath : String
 		, scalahome : String
 		, javahome : String
-    , isLocalOnly: Boolean = false) : (Int, String) =
+    , isLocalOnly: Boolean = false
+    , sourceLanguage: String = "scala") : (Int, String) =
   {   
+ println("Creating/removing directories")
     /* this is going to be called 2x to create a Versioned and non-Versioned (aka Local) jarFiles - Local call is always done second */   
     val killDir = s"rm -Rf $compiler_work_dir/$moduleName"
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
@@ -139,14 +151,19 @@ class CompilerProxy{
       return (cpRc, "")
     }
 
+println("Creating JAR / Compiling =====> "+ moduleName )
 
     /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
-    var rc: Int = 0
-    if (!isLocalOnly) {
-      rc = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName, classpath, scalaGeneratedCode, clientName)   
-    } else {
-      rc = compile(s"$compiler_work_dir/$moduleName", scalahome, moduleName+"_local", classpath, scalaGeneratedCode, clientName)
+    var sourceName: String = moduleName
+    var cHome: String = scalahome
+    if (sourceLanguage.equals("java")) 
+       cHome = javahome
+    else {
+      if (isLocalOnly) sourceName = moduleName+"_local" else sourceName = moduleName
     }
+    
+    val rc = compile(s"$compiler_work_dir/$moduleName", cHome, sourceName, classpath, sourceCode, clientName, sourceLanguage) 
+    
 
     // Bail if compilation filed.
     if (rc != 0) {
@@ -184,6 +201,88 @@ class CompilerProxy{
 		
     (0, s"$moduleNameJar")
   }
+  
+  
+  def compileJavaModel (javaCode: String): ModelDef = {
+    try {
+      var injectLoggingStmts : Boolean = false   
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef("System",
+                                                          "LowBalanceAlertModel",
+                                                          "System.SipmleModel",
+                                                          "RuleSet",
+                                                          List[(String, String, String, String, Boolean, String)](),
+                                                          List[(String, String, String)]() ,
+                                                          1,
+                                                          "LowBalanceAlertModel.jar",
+                                                          Array[String]("fatafatbase_2.10-1.0.jar"),
+                                                          false
+                                                 )
+ 
+ println("compileJavaModel ====> START")  
+  
+       // Save off the source Code in the working directories.
+       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".txt"
+       dumpStrTextToFile(javaCode,msgDefFilePath)
+       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".scala"
+       dumpStrTextToFile(javaCode,msgDefClassFilePath)
+
+println("compileJavaModel ====> Saved The sourcecode.")  
+      
+       // Need to have a java specific compiler ???
+       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
+                                      MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
+       // Get classpath and jarpath ready
+       var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+       if (classPath.size == 0) classPath = "."  
+       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+       
+       // Handle the Dependency Jar stuff
+       if (modDef.DependencyJarNames != null) {
+          val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+          if (classPath != null && classPath.size > 0) {
+            classPath = classPath + ":" + depJars 
+          } else {
+            classPath = depJars 
+          }
+       }
+
+println("compileJavaModel ===>  About to call createJar")   
+
+
+       var (status2,jarFileNoVersion) = jarCode("System",
+                                                "LowBalanceAlertModel",
+                                                "1.0",
+                                                javaCode,
+                                                classPath,
+                                                MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                                                "TestClient",
+                                                msgDefClassFilePath,
+                                                MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                                                MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                                                false,
+                                                "java")
+                    
+       /* The following check require cleanup at some point */
+       if (status2 > 1 ){
+         throw new ModelCompilationFailedException("Failed to produce the jar file")
+       }
+
+       // Return the ModDef - SUCCESS
+       modDef
+    }  catch {
+      case e:AlreadyExistsException =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw new ModelCompilationFailedException(e.getMessage())
+      }
+      case e:Exception =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw new ModelCompilationFailedException(e.getMessage())
+      }
+    }  
+    
+  }
+  
+  
 
   def compilePmml(pmmlStr: String, recompile: Boolean = false) : (String,ModelDef) = {
     try{
@@ -288,6 +387,8 @@ class CompilerProxy{
       dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
 
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+     
+     
 
       if (msgDef.DependencyJarNames != null) {
         val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet

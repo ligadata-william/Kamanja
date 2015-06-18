@@ -1357,17 +1357,17 @@ object TestMetadataAPI{
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if ( dirName == null  ){
-	dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-	logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+	      dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+ 	      logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
       if( ! IsValidDir(dirName) )
-	return
-
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
+	      return
+println("Checking in "+ dirName)
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
       if ( pmmlFiles.length == 0 ){
-	logger.error("No model files in the directory " + dirName)
-	return
+	      logger.error("No model files in the directory " + dirName)
+	      return
       }
 
       var pmmlFilePath = ""
@@ -1382,18 +1382,18 @@ object TestMetadataAPI{
       val choice:Int = readInt()
 
       if( choice == pmmlFiles.length + 1){
-	return
+	      return
       }
       if( choice < 1 || choice > pmmlFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+	      logger.error("Invalid Choice : " + choice)
+	      return
       }
 
       pmmlFilePath = pmmlFiles(choice-1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr,userid))
+      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr,userid))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
