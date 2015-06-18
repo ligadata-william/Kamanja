@@ -225,6 +225,59 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getAllModelsResult = _modelsResult.toMap
     def getAllStatusStrings = _statusStrings
 
+    def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+      val container = getMsgContainer(containerName.toLowerCase, false)
+      //BUGBUG:: tmRange is not yet handled
+      //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
+      if (container != null) {
+        if (partKey != null) {
+          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          if (fatafatData != null) {
+            /*
+            val data = fatafatData._2.GetAllData
+            var validRetVal: MessageContainerBase = null
+            var maxTxnId = 0
+            if (f != null) {
+              
+            } else {
+              
+            }
+            
+            data.foreach(v => {})
+*/
+
+            if (f != null) {
+              val filterddata = fatafatData._2.GetAllData.filter(v => f(v))
+              if (filterddata.size > 0)
+                return (filterddata(filterddata.size - 1), true)
+            } else {
+              val data = fatafatData._2.GetAllData
+              if (data.size > 0)
+                return (data(data.size - 1), true)
+            }
+          }
+        } else {
+          val dataAsArr = container.data.toArray
+          var idx = dataAsArr.size - 1
+          while (idx >= 0) {
+            val data = dataAsArr(idx)._2._2.GetAllData
+            if (f != null) {
+              val filterddata = data.filter(v => f(v))
+              if (filterddata.size > 0)
+                return (filterddata(filterddata.size - 1), true)
+            } else {
+              if (data.size > 0)
+                return (data(data.size - 1), true)
+            }
+            idx = idx - 1
+          }
+
+        }
+      }
+      (null, false)
+
+    }
+
   }
 
   private[this] val _buckets = 257 // Prime number
@@ -1289,6 +1342,44 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+    val txnCtxt = getTransactionContext(transId, false)
+    if (txnCtxt != null) {
+      val (v, foundPartKey) = txnCtxt.getRecent(containerName, partKey, tmRange, f)
+      if (foundPartKey) {
+        return Some(v)
+      }
+      if (v != null) return Some(v) // It must be null. Without finding partition key it should not find the primary key
+    }
+/*
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+    if (container != null) {
+      val partKeyStr = InMemoryKeyDataInJson(partKey)
+      val fatafatData = container.data.getOrElse(partKeyStr, null)
+      if (fatafatData != null) {
+        // Search for primary key match
+        val v = fatafatData._2.GetMessageContainerBase(primaryKey.toArray, false)
+        if (txnCtxt != null)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
+        return v;
+      }
+      // If not found in memory, try in DB
+      val loadedFfData = loadObjFromDb(transId, container, partKey)
+      if (loadedFfData != null) {
+        // Search for primary key match
+        val v = loadedFfData.GetMessageContainerBase(primaryKey.toArray, false)
+        if (txnCtxt != null)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, loadedFfData)
+        return v;
+      }
+      // If not found in DB, Create Empty and set to current transaction context
+      if (txnCtxt != null) {
+        val emptyFfData = new FatafatData
+        emptyFfData.SetKey(partKey.toArray)
+        emptyFfData.SetTypeName(containerName)
+        txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
+      }
+    }
+*/
     None
   }
 
