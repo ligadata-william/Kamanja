@@ -1,5 +1,4 @@
-
-package com.ligadata.messagescontainers
+package com.ligadata.outputmsgdef
 
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
@@ -13,6 +12,97 @@ import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
 
 import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase }
 
+import org.scalatest.FunSuite
+import com.ligadata.FatafatBase.BaseMsg
+import com.ligadata.FatafatBase.{ DelimitedData, InputData }
+import com.ligadata.fatafat.metadata._
+import scala.collection.mutable.ArrayBuffer
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.Suite
+import org.json4s.jackson.JsonMethods._
+import scala.xml.XML
+import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
+import com.ligadata.BaseTypes._
+import java.io.{ DataInputStream, DataOutputStream }
+import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, MdBaseResolveInfo }
+import com.ligadata.fatafat.metadataload.MetadataLoad
+
+trait MsgMdlInitialize extends BeforeAndAfterEach { this: Suite =>
+
+  //val builder = new StringBuilder
+
+  var ModelReslts: scala.collection.mutable.Map[String, Array[(String, Any)]] = scala.collection.mutable.Map[String, Array[(String, Any)]]()
+  var HL7Message: System_HL7_1000001_1430446865995 = new System_HL7_1000001_1430446865995();
+
+  var outputMsgDefs: ArrayBuffer[OutputMsgDef] = new ArrayBuffer[OutputMsgDef]()
+  var outputMsgDef: OutputMsgDef = new OutputMsgDef()
+  val namespace = "System".toLowerCase()
+  val name = "OutputMsg1".toLowerCase()
+  val version = MdMgr.ConvertVersionToLong("00.01.00")
+  val queue = "TestOutMq_1".toLowerCase()
+  var outputFormat: String = "{ \"claimid\": \"${system.hl7.clm_id}\", \"pufid\": \"${system.hl7.desynpuf_id}\", \"aatdeficiency\": \"${system.copdriskassessment.aatdeficiency}\"}"
+
+  override def beforeEach() {
+    //create message from msgdef 
+    val mdLoader: MetadataLoad = new MetadataLoad(MdMgr.GetMdMgr, "", "", "", "")
+    mdLoader.initialize
+    ModelReslts = scala.collection.mutable.Map("System.COPDRiskAssessment" -> Array(("AATDeficiency", "true"), ("COPDSymptoms", "false"), ("COPDSeverity", "1a"), ("ChronicSputum", "false"), ("AYearAgo", "20140126"), ("Age", "70"), ("Dyspnoea", "false")))
+
+    val hl7Format = "100,201,20140808,20140808,19230901,,2,2,0,10,260,12,12,0,0,1,1,1,1,2,1,1,1,1,2,1,86,7,4,19,12,11,9,63,14,11,17,,10,23,1,,34,10,31,1,1,,,4,,,,2,2,8,,3,9,,13,1,5,16,18,2,2,4,1,,,,,,173,75.7,159.6,57.6,172.3,161.7,153.2,,,1,0"
+    val inputData = new DelimitedData(hl7Format, ",")
+    inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
+    inputData.curPos = 0
+    var retInpData: InputData = null
+    retInpData = inputData
+    HL7Message.populate(retInpData)
+
+    //val partionFieldKeys = Array[(String, Array[(String, String)], String, String)]()//List("${System.HL7.clm_id}", "${System.HL7.desynpuf_id}")
+    var partionFieldKeys = Array(("system.hl7", Array(("clm_id", "system.long")), "fixedmessage", null), ("system.hl7", Array(("desynpuf_id", "system.string")), "fixedmessage", "15001"))
+    var dfaults = scala.collection.mutable.Map(("system.hl7.clm_id" -> "15001"))
+    var dataDeclrtion = scala.collection.mutable.Map(("delim" -> ","))
+    val value1 = scala.collection.mutable.Set((Array(("age", "system.int")), ""), (Array(("clm_id", "system.long")), null), (Array(("desynpuf_id", "system.string")), "15001"), (Array(("pulmonary_disease", "system.int")), null))
+    val value2 = scala.collection.mutable.Set((Array(("aatdeficiency", "system.int")), ""))
+
+    var Fields = scala.collection.mutable.Map((("system.hl7", "fixedmessage") -> value1), (("system.copdriskassessment", "model") -> value2))
+
+    outputMsgDef = MdMgr.GetMdMgr.MakeOutputMsg(namespace, name, version, queue, partionFieldKeys, dfaults, dataDeclrtion, Fields, outputFormat)
+
+    MdMgr.GetMdMgr.AddOutputMsg(outputMsgDef)
+    outputMsgDefs = outputMsgDefs :+ outputMsgDef
+
+    println("size  " + outputMsgDefs.size)
+    //builder.append("ScalaTest is ")
+    super.beforeEach() // To be stackable, must call super.beforeEach
+  }
+
+  override def afterEach() {
+    try super.afterEach() // To be stackable, must call super.afterEach
+    finally {
+      //   MdMgr.GetMdMgr.RemoveOutputMsg(namespace, name, version)
+    }
+  }
+}
+
+class OutputMsgDefTestSuite extends FunSuite with MsgMdlInitialize {
+
+  /** Test case 1 **/
+  test("check Output Msg Generator") {
+    var outputGen: com.ligadata.outputmsg.OutputMsgGenerator = new com.ligadata.outputmsg.OutputMsgGenerator()
+    val outputresult = outputGen.generateOutputMsg(HL7Message, ModelReslts, outputMsgDefs.toArray)
+    val claimid = HL7Message.clm_id.toString
+    val pufid = "100"
+    val aatdeficiency = "true"
+    val outputFrmtRslt = "{ \"claimid\": \"" + claimid + "\", \"pufid\": \"" + pufid + "\", \"aatdeficiency\": \"" + aatdeficiency + "\"}"
+    assert(outputresult.size === 1)
+    assert(outputresult(0)._1 === queue)
+    assert(outputresult(0)._2 === Array("100", claimid))
+    assert(outputresult(0)._3 === outputFrmtRslt)
+
+  }
+
+}
+
+
 object System_HL7_1000001_1430446865995 extends BaseMsgObj {
   override def TransformDataAttributes: TransformMessage = null
   override def NeedToTransformData: Boolean = false
@@ -23,6 +113,7 @@ object System_HL7_1000001_1430446865995 extends BaseMsgObj {
   override def CreateNewMessage: BaseMsg = new System_HL7_1000001_1430446865995()
   override def IsFixed: Boolean = true;
   override def IsKv: Boolean = false;
+  override def CanPersist: Boolean = true;
 
   val partitionKeys: Array[String] = Array("desynpuf_id")
   val partKeyPos = Array(0)
@@ -91,6 +182,7 @@ class System_HL7_1000001_1430446865995 extends BaseMsg {
   override def NameSpace: String = "System"
   override def Name: String = "HL7"
   override def Version: String = "000000.000001.000001"
+    override def CanPersist: Boolean = true;
 
   var desynpuf_id: String = _;
   var clm_id: Long = _;
