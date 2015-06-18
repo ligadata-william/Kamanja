@@ -2040,15 +2040,17 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     var objsb: StringBuilder = new StringBuilder()
     val ver = MdMgr.ConvertVersionToLong(msg.Version).toString
     val xtends: String = "extends"
+    val withStr = "with"
+    val rddObj = "RDDObject[" + msg.Name + "]"
     val space = " "
     val uscore = "_"
     val cls = "class"
     val obj = "object"
     if (msg.msgtype.equals("Message")) {
-      oname = "BaseMsgObj with RDDObject[" + msg.Name + "]{"
+      oname = "BaseMsgObj {"
       sname = "BaseMsg {"
     } else if (msg.msgtype.equals("Container")) {
-      oname = "BaseContainerObj with RDDObject[" + msg.Name + "]{"
+      oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
     //val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
@@ -2056,7 +2058,7 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     //val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
     val clsname = msg.Name
     val clsstr = cls + space + msg.Name + space + xtends + space + sname
-    val objstr = obj + space + msg.Name + space + xtends + space + oname
+    val objstr = obj + space + msg.Name + space + xtends + space + rddObj + space + withStr + space + oname
 
     (clssb.append(clsstr), objsb.append(objstr), clsname)
   }
