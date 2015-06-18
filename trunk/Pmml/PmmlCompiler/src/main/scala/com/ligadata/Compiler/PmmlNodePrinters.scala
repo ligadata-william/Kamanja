@@ -1047,6 +1047,19 @@ object NodePrinterHelpers extends LogTrait {
 			objBuffer.append(s"} \n")
 		}
 
+		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
+		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
+		val msgTypeStr : String = msgTypedef.typeString
+		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
+		
+		objBuffer.append(s"    def CreateNewModel(transId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
+		objBuffer.append(s"    {\n") 
+		objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, transId)\n")
+		objBuffer.append(s"    }\n") 	
+		objBuffer.append(s"\n")
+
+		objBuffer.append(s"} \n")
+
 		objBuffer.toString
 	}
 
@@ -1107,7 +1120,7 @@ object NodePrinterHelpers extends LogTrait {
 		 * If no alias is given, the default is System_
 		 */
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname$verNoStr(val modelContext: ModelContext, val factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val tempTransId: Long)\n")
+		clsBuffer.append(s"class $nmspc$classname$verNoStr(val modelContext: ModelContext, val factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelBase(modelContext,factory) with LogTrait {\n") 
 		} else {
@@ -1121,9 +1134,14 @@ object NodePrinterHelpers extends LogTrait {
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(tempTransId, gCtx)\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(transId)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
+		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
+		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname$verNoStr.getVersion\n")
+		clsBuffer.append(s"    override def getTenantId : String = tenantId\n")
+		clsBuffer.append(s"    override def getTempTransId: Long = transId\n")
+
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
 		clsBuffer.append(s"    var ruleSetModel : RuleSetModel = null\n")
 		clsBuffer.append(s"    var simpleRules : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]\n")

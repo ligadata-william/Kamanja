@@ -15,7 +15,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(transId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
@@ -28,8 +28,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          envCtxt.setAdapterUniqueKeyValue(tempTransId, uk, uv, xformedMsgCntr, totalXformedMsgs)
-          engine.execute(tempTransId, xformed._1, xformed._2, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
+          envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, xformedMsgCntr, totalXformedMsgs)
+          engine.execute(transId, xformed._1, xformed._2, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
         })
       } catch {
         case e: Exception => {
@@ -39,10 +39,10 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
         val commitStartTime = System.nanoTime
-        val containerData = envCtxt.getChangedData(tempTransId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
-        envCtxt.commitData(tempTransId)
+        val containerData = envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
+        envCtxt.commitData(transId)
         if (containerData != null && containerData.size > 0) {
-          val datachangedata = ("txnid" -> tempTransId.toString) ~
+          val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
               ("C" -> kv._1) ~
                 ("K" -> kv._2)))
@@ -138,7 +138,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
     results.toArray
   }
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(transId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       try {
         val json = parse(data)
@@ -181,7 +181,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        envCtxt.commitData(tempTransId)
+        envCtxt.commitData(transId)
       }
     } catch {
       case e: Exception => {

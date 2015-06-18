@@ -102,37 +102,37 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
 }
 
 trait EnvContext {
-  def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase]
-  def getRDD(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase]
-  def saveOne(containerName: String, partKey: List[String], value: MessageContainerBase): Unit
+  def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase]
+  def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase]
+  def saveOne(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
+  def saveRDD(transId: Long, containerName: String, values: Array[MessageContainerBase]): Unit
 
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
   def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, adapterSpecificConfig: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoadapterSpecificConfig: String): Unit
-  def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
-  def getObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
-  def getHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
-  def setObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
-
-  def contains(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean
-  def containsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size  
-  def containsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
+  def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase]
+  def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
+  def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
+  def setObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
+  def contains(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean
+  def containsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size  
+  def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean //partKeys.size should be same as primaryKeys.size
 
   // Adapters Keys & values
-  def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
-  def getAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int)
+  def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit
+  def getAdapterUniqueKeyValue(transId: Long, key: String): (String, Int, Int)
   def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] // Get all Status information from intermediate table. No Transaction required here.
   def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from intermediate table for given keys. No Transaction required here.
   def getAllFinalStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] // Get Status information from Final table. No Transaction required here.
-  def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
+  def saveStatus(transId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-  def saveModelsResult(tempTransId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit
-  def getModelsResult(tempTransId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult]
+  def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit
+  def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult]
 
   // Final Commit for the given transaction
-  def commitData(tempTransId: Long): Unit
+  def commitData(transId: Long): Unit
 
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
@@ -148,7 +148,7 @@ trait EnvContext {
   def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit
   
   // Set Reload Flag
-  def setReloadFlag(tempTransId: Long, containerName: String): Unit
+  def setReloadFlag(transId: Long, containerName: String): Unit
 
   def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit
   def GetValidateAdapterInformation: Array[(String, String)]
@@ -167,7 +167,7 @@ abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseO
   final def ModelName() = factory.ModelName() // Model Name
   final def Version() = factory.Version() // Model Version
   final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
-  final def TempTransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tempTransId else null // tempTransId
+  final def TransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
 
   def execute(outputDefault: Boolean): ModelResult // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
@@ -185,6 +185,6 @@ class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
 }
 
-class TransactionContext(val tempTransId: Long, val gCtx: EnvContext, val tenantId: String) {
+class TransactionContext(val transId: Long, val gCtx: EnvContext, val tenantId: String) {
 }
 
