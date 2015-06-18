@@ -91,13 +91,13 @@ class MessageDefImpl {
       // cobj.append(tattribs + newline + tdataexists + newline + getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + cbrace + newline)
 
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
 
     } else if (msg.msgtype.equals("Container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
-      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + cbrace + newline)
+      cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
 
     }
     cobj
@@ -3735,6 +3735,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
     """
 
+  }
+  
+  private def getFullName : String = {
+    """
+    override def getFullName = FullName    
+    """
   }
 
 }
