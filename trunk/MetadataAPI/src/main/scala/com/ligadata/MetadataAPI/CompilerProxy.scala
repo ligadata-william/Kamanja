@@ -40,7 +40,7 @@ object JarPathsUtils{
 // Generate jar files out of output of above compilers
 // Persist model definitions and corresponding jar files in Metadata Mgr
 // Persist message definitions, and corresponding jar files in Metadata Mgr
-class CompilerProxy{
+class CompilerProxy {
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
@@ -83,17 +83,26 @@ class CompilerProxy{
 	     , scalaGeneratedCode : String
 	     , clientName : String
 	     ) : Int = 
-  { 
-    val scalaSrcFileName : String = s"$moduleName.scala"
-    createScalaFile(s"$jarBuildDir", scalaSrcFileName, scalaGeneratedCode)
+  {
+    var srcFileName: String = ""
+    var compileCommand: scala.collection.mutable.Seq[String] = null
+    if (sourceLanguage.equals("java")) {
+      srcFileName = s"$moduleName.java"
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    else {
+      srcFileName = s"$moduleName.scala" 
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
-    val scalacCmd = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$scalaSrcFileName")
-    logger.debug(s"scalac cmd used: $scalacCmd")
-    val scalaCompileRc = Process(scalacCmd).!
-    if (scalaCompileRc != 0) {
-      logger.error(s"Compile for $scalaSrcFileName has failed...rc = $scalaCompileRc")
-      logger.error(s"Command used: $scalacCmd")
-      scalaCompileRc
+  
+    logger.debug(s"scalac cmd used: $compileCommand")
+    val compileRc = Process(compileCommand).!
+    if (compileRc != 0) {
+      logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
+      logger.error(s"Command used: $compileCommand")
+      compileRc
     }
     else{
       //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir

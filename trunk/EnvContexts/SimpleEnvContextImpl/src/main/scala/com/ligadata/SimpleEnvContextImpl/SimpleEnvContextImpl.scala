@@ -223,8 +223,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     def getAllMessagesAndContainers = _messagesOrContainers.toMap
+
     def getAllAdapterUniqKeyValData = _adapterUniqKeyValData.toMap
+
     def getAllModelsResult = _modelsResult.toMap
+
     def getAllStatusStrings = _statusStrings
 
   }
@@ -285,19 +288,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   /**
-   *  For the current container, load the values for each key, coercing it to the appropriate MessageContainerBase, and storing
-   *  each in the supplied map.
+   * For the current container, load the values for each key, coercing it to the appropriate MessageContainerBase, and storing
+   * each in the supplied map.
    *
-   *  @param containerType - a ContainerDef that describes the current container.  Its typeName is used to create an instance
-   *  	of the MessageContainerBase derivative.
-   *  @param keys : the keys to use on the dstore to extract a given element.
-   *  @param dstore : the mapdb handle
-   *  @param map : the map to be updated with key/MessageContainerBase pairs.
+   * @param containerType - a ContainerDef that describes the current container.  Its typeName is used to create an instance
+   *                      of the MessageContainerBase derivative.
+   * @param keys : the keys to use on the dstore to extract a given element.
+   * @param dstore : the mapdb handle
+   * @param map : the map to be updated with key/MessageContainerBase pairs.
    */
   private def loadMap(keys: Array[FatafatDataKey], msgOrCont: MsgContainerInfo): Unit = {
     var objs: Array[FatafatData] = new Array[FatafatData](1)
     var notFoundKeys = 0
-    val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
+    val buildOne = (tupleBytes: Value) => {
+      buildObject(tupleBytes, objs, msgOrCont.containerType)
+    }
     keys.foreach(key => {
       try {
         val StartDateRange = if (key.D.size == 2) key.D(0) else 0
@@ -527,7 +532,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private def loadObjFromDb(tempTransId: Long, msgOrCont: MsgContainerInfo, key: List[String]): FatafatData = {
     val partKeyStr = FatafatData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
     var objs: Array[FatafatData] = new Array[FatafatData](1)
-    val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
+    val buildOne = (tupleBytes: Value) => {
+      buildObject(tupleBytes, objs, msgOrCont.containerType)
+    }
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
@@ -661,7 +668,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (v != null) return v
     val partKeyStr = FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
-    val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
+    val buildAdapOne = (tupleBytes: Value) => {
+      buildAdapterUniqueValue(tupleBytes, objs)
+    }
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
@@ -688,7 +697,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val v = _modelsResult.getOrElse(keystr, null)
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, ModelResult]](1)
-    val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
+    val buildMdlOne = (tupleBytes: Value) => {
+      buildModelsResult(tupleBytes, objs)
+    }
     val partKeyStr = FatafatData.PrepareKey("ModelResults", key, 0, 0)
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
@@ -707,7 +718,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   /**
-   *   Does at least one of the supplied keys exist in a container with the supplied name?
+   * Does at least one of the supplied keys exist in a container with the supplied name?
    */
   private def localContainsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys = partKeys
@@ -748,7 +759,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   /**
-   *   Do all of the supplied keys exist in a container with the supplied name?
+   * Do all of the supplied keys exist in a container with the supplied name?
    */
   private def localContainsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys: Array[List[String]] = partKeys
@@ -906,7 +917,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           _messagesOrContainers(objFullName) = newMsgOrContainer
           if (loadAllData) {
             if (keysAlreadyLoaded == false) {
-              val keyCollector = (key: Key) => { collectKey(key, all_keys) }
+              val keyCollector = (key: Key) => {
+                collectKey(key, all_keys)
+              }
               _allDataDataStore.getAllKeys(keyCollector)
               keysAlreadyLoaded = true
             }
@@ -945,21 +958,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   /**
-   *   Does the supplied key exist in a container with the supplied name?
+   * Does the supplied key exist in a container with the supplied name?
    */
   override def contains(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
     localContainsAny(tempTransId, containerName, Array(partKey), Array(primaryKey))
   }
 
   /**
-   *   Does at least one of the supplied keys exist in a container with the supplied name?
+   * Does at least one of the supplied keys exist in a container with the supplied name?
    */
   override def containsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     localContainsAny(tempTransId, containerName, partKeys, primaryKeys)
   }
 
   /**
-   *   Do all of the supplied keys exist in a container with the supplied name?
+   * Do all of the supplied keys exist in a container with the supplied name?
    */
   override def containsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     localContainsAll(tempTransId, containerName, partKeys, primaryKeys)
@@ -991,19 +1004,22 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val mc = _messagesOrContainers.getOrElse(v._1, null)
       if (mc != null) {
         val savingKeys = new ArrayBuffer[List[String]]()
-        if (includeMessages && includeContainers) { // All the vlaues (includes messages & containers)
+        if (includeMessages && includeContainers) {
+          // All the vlaues (includes messages & containers)
           v._2.data.foreach(kv => {
             if (kv._2._1 && kv._2._2.DataSize > 0) {
               savingKeys += kv._2._2.GetKey.toList
             }
           })
-        } else if (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer == false && v._2.isContainer == false)) { // Msgs
+        } else if (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer == false && v._2.isContainer == false)) {
+          // Msgs
           v._2.data.foreach(kv => {
             if (kv._2._1 && kv._2._2.DataSize > 0) {
               savingKeys += kv._2._2.GetKey.toList
             }
           })
-        } else if (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer || v._2.isContainer)) { // Containers
+        } else if (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer || v._2.isContainer)) {
+          // Containers
           v._2.data.foreach(kv => {
             if (kv._2._1 && kv._2._2.DataSize > 0) {
               savingKeys += kv._2._2.GetKey.toList
@@ -1051,10 +1067,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             try {
               val serVal = kv._2._2.SerializeData
               object obj extends IStorage {
-                val k = makeKey(kv._2._2.SerializeKey) // FatafatData.PrepareKey(mc.objFullName, ka, 0, 0)
+                val k = makeKey(kv._2._2.SerializeKey)
+                // FatafatData.PrepareKey(mc.objFullName, ka, 0, 0)
                 val v = makeValue(serVal, "manual")
+
                 def Key = k
+
                 def Value = v
+
                 def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
               }
               storeObjects += obj
@@ -1086,7 +1106,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val v = makeValue(compjson.getBytes("UTF8"), "CSV")
 
           def Key = k
+
           def Value = v
+
           def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
         }
         storeObjects += obj
@@ -1109,7 +1131,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           val v = makeValue(serVal, "kryo")
 
           def Key = k
+
           def Value = v
+
           def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
         }
         storeObjects += obj
@@ -1158,7 +1182,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val txnCtxt = getTransactionContext(tempTransId, true)
     if (txnCtxt == null)
       return
-    if (persistIntermediateStatusInfo) { // Saving Intermediate Status Info
+    if (persistIntermediateStatusInfo) {
+      // Saving Intermediate Status Info
       val adapterUniqKeyValData = txnCtxt.getAllAdapterUniqKeyValData // Expecting only one value at this moment from here
       if (adapterUniqKeyValData.size > 0) {
         // Persists unique key & value here for this transactionId
@@ -1176,7 +1201,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             val v = makeValue(compjson.getBytes("UTF8"), "CSV")
 
             def Key = k
+
             def Value = v
+
             def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
           }
           storeObjects(cntr) = obj
@@ -1223,12 +1250,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     val keys = ArrayBuffer[FatafatDataKey]()
-    val keyCollector = (key: Key) => { collectKey(key, keys) }
+    val keyCollector = (key: Key) => {
+      collectKey(key, keys)
+    }
     _runningTxnsDataStore.getAllKeys(keyCollector)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
       try {
-        val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
+        val buildAdapOne = (tupleBytes: Value) => {
+          buildAdapterUniqueValue(tupleBytes, objs)
+        }
         _runningTxnsDataStore.get(makeKey(FatafatData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
         results += ((key.K(0), objs(0)))
       } catch {
@@ -1247,7 +1278,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
       try {
-        val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
+        val buildAdapOne = (tupleBytes: Value) => {
+          buildAdapterUniqueValue(tupleBytes, objs)
+        }
         _runningTxnsDataStore.get(makeKey(FatafatData.PrepareKey("UK", List(key), 0, 0)), buildAdapOne)
         results += ((key, objs(0)))
       } catch {
@@ -1266,7 +1299,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
       try {
-        val buildAdapOne = (tupleBytes: Value) => { buildAdapterUniqueValue(tupleBytes, objs) }
+        val buildAdapOne = (tupleBytes: Value) => {
+          buildAdapterUniqueValue(tupleBytes, objs)
+        }
         _allDataDataStore.get(makeKey(FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)), buildAdapOne)
         results += ((key, objs(0)))
       } catch {
@@ -1303,7 +1338,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val v = makeValue(value.getBytes("UTF8"), "CSV")
 
         def Key = key
+
         def Value = v
+
         def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
       }
       storeObjects(cntr) = obj
@@ -1331,12 +1368,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val results = ArrayBuffer[(String, String)]()
 
     val keys = ArrayBuffer[FatafatDataKey]()
-    val keyCollector = (key: Key) => { collectKey(key, keys) }
+    val keyCollector = (key: Key) => {
+      collectKey(key, keys)
+    }
     _checkPointAdapInfoDataStore.getAllKeys(keyCollector)
     var objs: Array[String] = new Array[String](1)
     keys.foreach(key => {
       try {
-        val buildAdapOne = (tupleBytes: Value) => { buildValidateAdapInfo(tupleBytes, objs) }
+        val buildAdapOne = (tupleBytes: Value) => {
+          buildValidateAdapInfo(tupleBytes, objs)
+        }
         _checkPointAdapInfoDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, 0, 0)), buildAdapOne)
         logger.debug(s"GetValidateAdapterInformation -- %s -> %s".format(key.K(0), objs(0).toString))
         results += ((key.K(0), objs(0)))
@@ -1353,7 +1394,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit = {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
-      val dataKeys = keys.map(partKey => { FatafatDataKey(container.objFullName, partKey, List[Int](), 0) }).toArray
+      val dataKeys = keys.map(partKey => {
+        FatafatDataKey(container.objFullName, partKey, List[Int](), 0)
+      }).toArray
       loadMap(dataKeys, container)
       /*
       keys.foreach(partKey => {
@@ -1362,6 +1405,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       })
       */
     }
+  }
 
   override def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
     None
@@ -1372,7 +1416,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def saveOne(containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
-    
+
   }
 }
 
