@@ -54,6 +54,90 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var objFullName: String = ""
   }
 
+  object TxnContextCommonFunctions {
+    def getRecentFromFatafatData(fatafatData: FatafatData, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+      // BUGBUG:: tmRange is not yet handled
+      if (fatafatData != null) {
+        /*
+            val data = fatafatData.GetAllData
+            var validRetVal: MessageContainerBase = null
+            var maxTxnId = 0
+            if (f != null) {
+              
+            } else {
+              
+            }
+            
+            data.foreach(v => {})
+*/
+
+        if (f != null) {
+          val filterddata = fatafatData.GetAllData.filter(v => f(v))
+          if (filterddata.size > 0)
+            return (filterddata(filterddata.size - 1), true)
+        } else {
+          val data = fatafatData.GetAllData
+          if (data.size > 0)
+            return (data(data.size - 1), true)
+        }
+      }
+      (null, false)
+    }
+
+    def getRddDataFromFatafatData(fatafatData: FatafatData, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+      // BUGBUG:: tmRange is not yet handled
+      if (fatafatData != null) {
+        if (f != null) {
+          return fatafatData.GetAllData.filter(v => f(v))
+        } else {
+          return fatafatData.GetAllData
+        }
+      }
+      Array[MessageContainerBase]()
+    }
+
+    def getRecent(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+      //BUGBUG:: tmRange is not yet handled
+      //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
+      if (container != null) {
+        if (partKey != null) {
+          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          if (fatafatData != null)
+            return getRecentFromFatafatData(fatafatData._2, partKey, tmRange, f)
+        } else {
+          val dataAsArr = container.data.toArray
+          var idx = dataAsArr.size - 1
+          while (idx >= 0) {
+            val (v, foundPartKey) = getRecentFromFatafatData(dataAsArr(idx)._2._2, partKey, tmRange, f)
+            if (foundPartKey)
+              return (v, foundPartKey)
+            idx = idx - 1
+          }
+        }
+      }
+      (null, false)
+    }
+
+    def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (Array[MessageContainerBase], Boolean) = {
+      val retResult = ArrayBuffer[MessageContainerBase]()
+      var foundPartition = false
+      if (container != null) {
+        if (partKey != null) {
+          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          if (fatafatData != null) {
+            foundPartition = true
+            retResult ++= getRddDataFromFatafatData(fatafatData._2, partKey, tmRange, f)
+          }
+        } else {
+          container.data.foreach(kv => {
+            retResult ++= getRddDataFromFatafatData(kv._2._2, partKey, tmRange, f)
+          })
+        }
+      }
+      (retResult.toArray, foundPartition)
+    }
+  }
+
   class TransactionContext(var txnId: Long) {
     private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
     private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (String, Int, Int)]()
@@ -231,58 +315,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getAllStatusStrings = _statusStrings
 
     def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
-      val container = getMsgContainer(containerName.toLowerCase, false)
-      //BUGBUG:: tmRange is not yet handled
-      //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
-      if (container != null) {
-        if (partKey != null) {
-          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (fatafatData != null) {
-            /*
-            val data = fatafatData._2.GetAllData
-            var validRetVal: MessageContainerBase = null
-            var maxTxnId = 0
-            if (f != null) {
-              
-            } else {
-              
-            }
-            
-            data.foreach(v => {})
-*/
-
-            if (f != null) {
-              val filterddata = fatafatData._2.GetAllData.filter(v => f(v))
-              if (filterddata.size > 0)
-                return (filterddata(filterddata.size - 1), true)
-            } else {
-              val data = fatafatData._2.GetAllData
-              if (data.size > 0)
-                return (data(data.size - 1), true)
-            }
-          }
-        } else {
-          val dataAsArr = container.data.toArray
-          var idx = dataAsArr.size - 1
-          while (idx >= 0) {
-            val data = dataAsArr(idx)._2._2.GetAllData
-            if (f != null) {
-              val filterddata = data.filter(v => f(v))
-              if (filterddata.size > 0)
-                return (filterddata(filterddata.size - 1), true)
-            } else {
-              if (data.size > 0)
-                return (data(data.size - 1), true)
-            }
-            idx = idx - 1
-          }
-
-        }
-      }
-      (null, false)
-
+      val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f)
+      (v, foundPartKey)
     }
 
+    def getRddData(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (Array[MessageContainerBase], Boolean) = {
+      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f)
+    }
   }
 
   private[this] val _buckets = 257 // Prime number
@@ -1469,41 +1508,60 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       if (v != null) return Some(v) // It must be null. Without finding partition key it should not find the primary key
     }
-/*
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (container != null) {
-      val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val fatafatData = container.data.getOrElse(partKeyStr, null)
-      if (fatafatData != null) {
-        // Search for primary key match
-        val v = fatafatData._2.GetMessageContainerBase(primaryKey.toArray, false)
-        if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
-        return v;
-      }
+
+    val (v, foundPartKey) = TxnContextCommonFunctions.getRecent(container, partKey, tmRange, f)
+
+    if (foundPartKey)
+      return Some(v)
+
+    if (container != null && partKey != null) { // Loading for partition id
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
-        // Search for primary key match
-        val v = loadedFfData.GetMessageContainerBase(primaryKey.toArray, false)
-        if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, loadedFfData)
-        return v;
+        val (v1, foundPartKey1) = TxnContextCommonFunctions.getRecentFromFatafatData(loadedFfData, partKey, tmRange, f)
+        if (foundPartKey1)
+          return Some(v1)
       }
-      // If not found in DB, Create Empty and set to current transaction context
-      if (txnCtxt != null) {
-        val emptyFfData = new FatafatData
-        emptyFfData.SetKey(partKey.toArray)
-        emptyFfData.SetTypeName(containerName)
-        txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
-      }
+      return None // If partition key exists, tried DB also, no need to go down
     }
-*/
+
+    // BUGBUG:: Need to get all keys for this message/container and see whether we can read any data and return 
+
     None
   }
 
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-    Array[MessageContainerBase]()
+    val retResult = ArrayBuffer[MessageContainerBase]()
+    val txnCtxt = getTransactionContext(transId, false)
+    if (txnCtxt != null) {
+      // (Array[MessageContainerBase], Boolean)     
+      val (res, foundPartKey) = txnCtxt.getRddData(containerName, partKey, tmRange, f)
+      retResult ++= res
+    }
+
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+    if (partKey != null) {
+      val (res1, foundPartKey1) = TxnContextCommonFunctions.getRddData(container, partKey, tmRange, f)
+      if (foundPartKey1) {
+        retResult ++= res1 // Add only if we find all here
+        return retResult.toArray
+      }
+    }
+
+    if (container != null && partKey != null) { // Loading for partition id
+      // If not found in memory, try in DB
+      val loadedFfData = loadObjFromDb(transId, container, partKey)
+      if (loadedFfData != null) {
+        val res2 = TxnContextCommonFunctions.getRddDataFromFatafatData(loadedFfData, partKey, tmRange, f)
+        retResult ++= res2
+        return retResult.toArray
+      }
+    }
+
+    // BUGBUG:: Need to get all keys for this message/container and take all the data 
+
+    return retResult.toArray
   }
 
   override def saveOne(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
