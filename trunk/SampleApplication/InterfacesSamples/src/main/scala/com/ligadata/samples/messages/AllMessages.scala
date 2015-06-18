@@ -6,7 +6,7 @@ import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{ DataInputStream, DataOutputStream }
 import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject }
 
-object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory] {
+object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerObj {
   type T = CustAlertHistory
 
   override def FullName: String = "com.ligadata.samples.messages.CustAlertHistory"
@@ -27,31 +27,7 @@ object CustAlertHistory extends BaseContainerObj with RDDObject[CustAlertHistory
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
-
-  // Get recent entry for the given key
-  override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrNew(key: Array[String]): T = null
-
-  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
-
-  // Get for Current Key
-  override def getRecent: Option[T] = { None }
-  override def getRecentOrNew: T = null
-  override def getRDDForCurrKey(f: CustAlertHistory => Boolean): RDD[T] = null
-  override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
-
-  // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  override def getRDD(tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(tmRange: TimeRange): RDD[T] = null
-  override def getRDD(func: T => Boolean): RDD[T] = null
-
-  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = null
-
+  override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
@@ -97,7 +73,7 @@ class CustAlertHistory extends BaseContainer {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 }
 
-object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences] {
+object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj {
   type T = CustPreferences
 
   override def FullName: String = "com.ligadata.samples.messages.CustPreferences"
@@ -119,35 +95,7 @@ object CustPreferences extends BaseContainerObj with RDDObject[CustPreferences] 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
-  // Get recent entry for the given key
-  override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrNew(key: Array[String]): T = null
-
-  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
-
-  // Get for Current Key
-  override def getRecent: Option[T] = { None }
-  override def getRecentOrNew: T = null
-  override def getRDDForCurrKey(f: CustPreferences => Boolean): RDD[T] = null
-  override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
-
-  // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  override def getRDD(tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(tmRange: TimeRange): RDD[T] = null
-  override def getRDD(func: T => Boolean): RDD[T] = null
-
-  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = null
-
-  // Saving data
-  override def saveOne(inst: T) = {}
-  override def saveOne(key: Array[String], inst: T) = {}
-  override def saveRDD(data: RDD[T]) = {}
-
+  override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
@@ -193,7 +141,7 @@ class CustPreferences extends BaseContainer {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 }
 
-object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction] {
+object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
   type T = CustTransaction
 
   override def TransformDataAttributes: TransformMessage = null
@@ -217,30 +165,7 @@ object CustTransaction extends BaseMsgObj with RDDObject[CustTransaction] {
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
-  // Get recent entry for the given key
-  override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrNew(key: Array[String]): T = null
-
-  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
-
-  // Get for Current Key
-  override def getRecent: Option[T] = { None }
-  override def getRecentOrNew: T = null
-  override def getRDDForCurrKey(f: CustTransaction => Boolean): RDD[T] = null
-  override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
-
-  // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  override def getRDD(tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(tmRange: TimeRange): RDD[T] = null
-  override def getRDD(func: T => Boolean): RDD[T] = null
-
-  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = null
-
+  override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
@@ -286,7 +211,7 @@ class CustTransaction extends BaseMsg {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 }
 
-object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferences] {
+object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainerObj {
   type T = GlobalPreferences
 
   override def FullName: String = "com.ligadata.samples.messages.GlobalPreferences"
@@ -308,30 +233,7 @@ object GlobalPreferences extends BaseContainerObj with RDDObject[GlobalPreferenc
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
 
-  // Get recent entry for the given key
-  override def getRecent(key: Array[String]): Option[T] = None
-  override def getRecentOrNew(key: Array[String]): T = null
-
-  override def getOne(tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOne(key: Array[String], tmRange: TimeRange, f: T => Boolean): Option[T] = None
-  override def getOneOrNew(key: Array[String], tmRange: TimeRange, f: T => Boolean): T = null
-  override def getOneOrNew(tmRange: TimeRange, f: T => Boolean): T = null
-
-  // Get for Current Key
-  override def getRecent: Option[T] = { None }
-  override def getRecentOrNew: T = null
-  override def getRDDForCurrKey(f: GlobalPreferences => Boolean): RDD[T] = null
-  override def getRDDForCurrKey(tmRange: TimeRange, f: T => Boolean): RDD[T] = null
-
-  // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  override def getRDD(tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(tmRange: TimeRange): RDD[T] = null
-  override def getRDD(func: T => Boolean): RDD[T] = null
-
-  override def getRDD(key: Array[String], tmRange: TimeRange, func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], func: T => Boolean): RDD[T] = null
-  override def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = null
-
+  override def getFullName = FullName
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 

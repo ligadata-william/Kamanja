@@ -562,12 +562,15 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	  
 		logger.debug("createJar begins")
 
+ println("scalaSrcTargetPath ====> "+scalaSrcTargetPath)    
 		if (scalaSrcTargetPath != null) {
 			logger.debug(s"write a copy of the generated source to $scalaSrcTargetPath")
 			writeSrcFile(srcCode, scalaSrcTargetPath)
 		}
-		
+	
+println("Starting JAR GENERATION ====> SUCCESS" )
 		val jarPath = if (! skipJar) {
+println("Not Skipping JAR  ====> YES" )
 			val (jarRc, jarpath) = jarCode(ctx, srcCode, classpath, jarTargetDir, manifestpath, clientName, pmmlFilePath, scalahome, javahome,workDir)
 			if (jarRc == 0) {
 				jarpath 
@@ -579,9 +582,15 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			"Not Set"
 		}
 		
-		
-		val (modelClassName, modelVersion) = deriveClassNameAndModelVersion(ctx, clientName)
-			
+println("So, finished calling JarCODE  ====> YES" )
+    var modelVersion: Long = 1
+    var modelClassName: String = "SimpleModel"
+    if (scalaSrcTargetPath != null) {
+      val (modelClassName1, modelVersion1) = deriveClassNameAndModelVersion(ctx, clientName)
+      modelClassName = modelClassName1
+      modelVersion= modelVersion1
+    }
+
 		logger.debug("#########################################################")
 		logger.debug("Dump model variables for diagnostic purposes:")
 		logger.debug("#########################################################")
