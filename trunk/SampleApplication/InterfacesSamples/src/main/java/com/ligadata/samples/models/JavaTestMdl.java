@@ -5,23 +5,6 @@ import com.ligadata.samples.messages.*;
 import com.google.common.base.Optional;
 
 public class JavaTestMdl extends ModelBase {
-	public static class JavaTestMdlObj implements ModelBaseObj {
-		public boolean IsValidMessage(MessageContainerBase msg) {
-			return (msg instanceof CustAlertHistory);
-		}
-
-		public ModelBase CreateNewModel(ModelContext mdlContext) {
-			return new JavaTestMdl(mdlContext);
-		}
-
-		public String ModelName() {
-			return "JavaTestMdl";
-		}
-
-		public String Version() {
-			return "0.0.1";
-		}
-	}
 
 	static JavaTestMdlObj objSignleton = new JavaTestMdlObj();
 
@@ -46,4 +29,22 @@ public class JavaTestMdl extends ModelBase {
 	public JavaTestMdl(ModelContext mdlContext) {
 		super(mdlContext, objSignleton);
 	}
+	
+	public static class JavaTestMdlObj implements ModelBaseObj {
+		public boolean IsValidMessage(MessageContainerBase msg) {
+			return (msg instanceof CustAlertHistory);
+		}
+
+		public ModelBase CreateNewModel(ModelContext mdlContext) {
+			return new JavaTestMdl(mdlContext);
+		}
+
+		public String ModelName() {
+			return "JavaTestMdl";
+		}
+
+		public String Version() {
+			return "0.0.1";
+		}
+	}	
 }

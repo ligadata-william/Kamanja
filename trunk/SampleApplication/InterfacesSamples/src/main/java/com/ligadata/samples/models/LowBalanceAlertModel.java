@@ -19,14 +19,14 @@ public class LowBalanceAlertModel extends ModelBase {
         CustAlertHistory alertHistory = null;
     
         // First check the preferences and decide whether to continue or not
-    	gPref = GlobalPreferences.getRecentOrNew();
-        pref = CustPreferences.getRecentOrNew();
+    	gPref = GlobalPreferences$.MODULE$.toJavaRDDObject().getRecentOrNew();
+        pref = CustPreferences$.MODULE$.toJavaRDDObject().getRecentOrNew();
         
         if (pref.minBalanceAlertOptout() == false)
           return null;
 
         // Check if at least min number of hours elapsed since last alert  
-        alertHistory = CustAlertHistory.getRecentOrNew();
+        alertHistory = CustAlertHistory$.MODULE$.toJavaRDDObject().getRecentOrNew();
         
         if (curDt.timeDiffInHrs(alertHistory.alertDt()) < gPref.minAlertDurationInHrs())
           return null;

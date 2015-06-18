@@ -3250,11 +3250,36 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  
+  def AddModelFromSource(javaCode: String, userid: Option[String]): String = {
+ 
+println("Adding a Java Model")
+    var compProxy = new CompilerProxy
+    val modDef : ModelDef =  compProxy.compileJavaModel(javaCode)
+    println("modDef Model created  ")
+    UploadJarsToDB(modDef)
+    println("Upload Jars for  Model called  ")
+    val apiResult = AddModel(modDef)
+    println("  Model ADDED  ")    
+
+    // Add all the objects and NOTIFY the world
+    var objectsAdded = new Array[BaseElemDef](0)
+    objectsAdded = objectsAdded :+ modDef
+    val operations = for (op <- objectsAdded) yield "Add"
+    logger.debug("Notify engine via zookeeper")
+    NotifyEngine(objectsAdded, operations) 
+    
+    apiResult
+  }    
+    
+
+  
   // Add Model (format XML)
   def AddModel(pmmlText: String, userid: Option[String]): String = {
     try {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
+      
       var (classStr, modDef) = compProxy.compilePmml(pmmlText)
 
       // ModelDef may be null if there were pmml compiler errors... act accordingly.  If modelDef present,
