@@ -2561,9 +2561,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val isFixed = getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport) = importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfFixed +" \n}")
+      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + csetters + addMsgStr + getMsgStr + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfFixed +" \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
 
     } catch {
       case e: Exception => {
@@ -2603,9 +2603,9 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val isFixed = getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport) = importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + " \n}")
+      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + " \n}")
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + saveObject(message) + fromFuncOfMappedMsg(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMappedMsg(message) + " \n}")
 
     } catch {
       case e: Exception => {
@@ -3493,7 +3493,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   private def saveObject(msg: Message): String = {
 
     """
-    def save: Unit = {
+    override def Save: Unit = {
 		 """ + msg.Name + """.saveOne(this)
 	}
  	 """

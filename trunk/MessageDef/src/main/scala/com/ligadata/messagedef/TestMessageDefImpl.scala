@@ -183,35 +183,39 @@ object TestMessageDefImpl extends LogTrait {
     //createScalaFile(classStr100, msgDef100.Version.toString, msgDef100.FullName)
 
     val json100: String = Source.fromFile("/tmp/testing/messages/hl7.json").getLines.mkString
-    val (classStr200: String, msgDef200: MessageDef, classStr200_1: String) = msg.processMsgDef(json100.toString(), "JSON", MdMgr.GetMdMgr, false)
-    MdMgr.GetMdMgr.AddMsg(msgDef200)
-    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 200)
+    val (classStr200: String, msgDef200: ContainerDef, classStr200_1: String) = msg.processMsgDef(json100.toString(), "JSON", MdMgr.GetMdMgr, false)
+    MdMgr.GetMdMgr.AddContainer(msgDef200)
+    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 100)
     createScalaFile(classStr200, msgDef200.Version.toString, msgDef200.FullName)
-    createScalaFile(classStr200_1, msgDef200.Version.toString+"_1", msgDef200.FullName+"_1")
+    createScalaFile(classStr200_1, msgDef200.Version.toString + "_1", msgDef200.FullName + "_1")
 
-    /*  val inpjson: String = Source.fromFile("/tmp/testing/messages/inpatientclaim.json").getLines.mkString
-    val (classStrIn: String, msgDefIn: MessageDef) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
-    MdMgr.GetMdMgr.AddMsg(msgDefIn)
+    val inpjson: String = Source.fromFile("/tmp/testing/messages/inpatientclaim.json").getLines.mkString
+    val (classStrIn: String, msgDefIn: ContainerDef, classStrIn1: String) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
+    MdMgr.GetMdMgr.AddContainer(msgDefIn)
     MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "inpatientclaim", 1, 100)
     createScalaFile(classStrIn, msgDefIn.Version.toString, msgDefIn.FullName)
+    createScalaFile(classStrIn1, msgDefIn.Version.toString + "_1", msgDefIn.FullName + "_1")
 
     val idjson: String = Source.fromFile("/tmp/testing/messages/outpatientclaim.json").getLines.mkString
-    val (classStrOut1: String, msgDefOut1: MessageDef) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
-    MdMgr.GetMdMgr.AddMsg(msgDefOut1)
+    val (classStrOut1: String, msgDefOut1: ContainerDef, classStrOut11: String) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
+    MdMgr.GetMdMgr.AddContainer(msgDefOut1)
     MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 100)
     createScalaFile(classStrOut1, msgDefOut1.Version.toString, msgDefOut1.FullName)
+    createScalaFile(classStrOut11, msgDefOut1.Version.toString+"_1", msgDefOut1.FullName+"_1")
 
     val benjson: String = Source.fromFile("/tmp/testing/messages/beneficiary.json").getLines.mkString
-    val (classStrBen: String, msgDefBen: MessageDef) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
-    MdMgr.GetMdMgr.AddMsg(msgDefBen)
+    val (classStrBen: String, msgDefBen: ContainerDef, classStrBen1: String) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
+    MdMgr.GetMdMgr.AddContainer(msgDefBen)
     createScalaFile(classStrBen, msgDefBen.Version.toString, msgDefBen.FullName)
-*/
-    /*  val json200: String = Source.fromFile("/tmp/testing/messages/hl7_201.json").getLines.mkString
-    val (classStr200: String, msgDef200: MessageDef) = msg.processMsgDef(json200.toString(), "JSON", MdMgr.GetMdMgr)
-    MdMgr.GetMdMgr.AddMsg(msgDef200)
-    MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 200)
-    createScalaFile(classStr200, msgDef200.Version.toString, msgDef200.FullName)
+    createScalaFile(classStrBen1, msgDefBen.Version.toString+"_1", msgDefBen.FullName+"_1")
 
+      val json200: String = Source.fromFile("/tmp/testing/messages/hl7_201.json").getLines.mkString
+    val (classStr200_2: String, msgDef200_1: ContainerDef, classStr2001_1: String) = msg.processMsgDef(json200.toString(), "JSON", MdMgr.GetMdMgr)
+   // MdMgr.GetMdMgr.AddContainer(msgDef200_1)
+   // MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 200)
+    createScalaFile(classStr200_2, msgDef200_1.Version.toString, msgDef200_1.FullName)
+    createScalaFile(classStr2001_1, msgDef200_1.Version.toString+"_2", msgDef200_1.FullName+"_2")
+/*
     val benjson200: String = Source.fromFile("/tmp/testing/messages/beneficiary201.json").getLines.mkString
     val (classStrBen200: String, msgDefBen200: ContainerDef) = msg.processMsgDef(benjson200.toString(), "JSON", MdMgr.GetMdMgr)
     createScalaFile(classStrBen200, msgDefBen200.Version.toString, msgDefBen200.FullName)
@@ -233,7 +237,7 @@ object TestMessageDefImpl extends LogTrait {
     //	mgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, baseTypesVer)
 
   }
-/*
+  /*
   private def processMappedBeneficiary(msg: MessageDefImpl): Unit = {
     val json: String = Source.fromFile("/tmp/Mapped/Messages/hl7.json").getLines.mkString
     val (classStr: String, msgDef: MessageDef) = msg.processMsgDef(json.toString(), "JSON", MdMgr.GetMdMgr)

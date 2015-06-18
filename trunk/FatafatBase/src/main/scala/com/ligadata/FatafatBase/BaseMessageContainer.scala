@@ -24,6 +24,7 @@ trait MessageContainerBase {
   def Name: String // Message or Container Name
   def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit
   def Serialize(dos: DataOutputStream): Unit
+  def Save(): Unit
 }
 
 trait MessageContainerObjBase {
