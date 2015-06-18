@@ -250,24 +250,24 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _locks(i) = new Object()
   }
 
-  private[this] def lockIdx(tempTransId: Long): Int = {
-    return (tempTransId % _buckets).toInt
+  private[this] def lockIdx(transId: Long): Int = {
+    return (transId % _buckets).toInt
   }
 
-  private[this] def getTransactionContext(tempTransId: Long, addIfMissing: Boolean): TransactionContext = {
-    _locks(lockIdx(tempTransId)).synchronized {
-      var txnCtxt = _txnContexts(lockIdx(tempTransId)).getOrElse(tempTransId, null)
+  private[this] def getTransactionContext(transId: Long, addIfMissing: Boolean): TransactionContext = {
+    _locks(lockIdx(transId)).synchronized {
+      var txnCtxt = _txnContexts(lockIdx(transId)).getOrElse(transId, null)
       if (txnCtxt == null && addIfMissing) {
-        txnCtxt = new TransactionContext(tempTransId)
-        _txnContexts(lockIdx(tempTransId))(tempTransId) = txnCtxt
+        txnCtxt = new TransactionContext(transId)
+        _txnContexts(lockIdx(transId))(transId) = txnCtxt
       }
       return txnCtxt
     }
   }
 
-  private[this] def removeTransactionContext(tempTransId: Long): Unit = {
-    _locks(lockIdx(tempTransId)).synchronized {
-      _txnContexts(lockIdx(tempTransId)) -= tempTransId
+  private[this] def removeTransactionContext(transId: Long): Unit = {
+    _locks(lockIdx(transId)).synchronized {
+      _txnContexts(lockIdx(transId)) -= transId
     }
   }
 
@@ -505,7 +505,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def loadObjFromDb(tempTransId: Long, msgOrCont: MsgContainerInfo, key: List[String]): FatafatData = {
+  private def loadObjFromDb(transId: Long, msgOrCont: MsgContainerInfo, key: List[String]): FatafatData = {
     val partKeyStr = FatafatData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
     var objs: Array[FatafatData] = new Array[FatafatData](1)
     val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
@@ -517,7 +517,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
     }
     if (objs(0) != null) {
-      val lockObj = if (msgOrCont.loadedAll) msgOrCont else _locks(lockIdx(tempTransId))
+      val lockObj = if (msgOrCont.loadedAll) msgOrCont else _locks(lockIdx(transId))
       lockObj.synchronized {
         msgOrCont.data(InMemoryKeyDataInJson(key)) = (false, objs(0))
       }
@@ -525,8 +525,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return objs(0)
   }
 
-  private def localGetObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    val txnCtxt = getTransactionContext(tempTransId, false)
+  private def localGetObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (v, foundPartKey) = txnCtxt.getObject(containerName, partKey, primaryKey)
       if (foundPartKey) {
@@ -547,7 +547,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         return v;
       }
       // If not found in memory, try in DB
-      val loadedFfData = loadObjFromDb(tempTransId, container, partKey)
+      val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
         // Search for primary key match
         val v = loadedFfData.GetMessageContainerBase(primaryKey.toArray, false)
@@ -566,9 +566,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     null
   }
 
-  private def localHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
+  private def localHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
     val retVals = ArrayBuffer[MessageContainerBase]()
-    val txnCtxt = getTransactionContext(tempTransId, false)
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (objs, foundPartKey) = txnCtxt.getObjects(containerName, partKey, appendCurrentChanges)
       retVals ++= objs
@@ -586,7 +586,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
         retVals ++= fatafatData._2.GetAllData
       } else {
-        val loadedFfData = loadObjFromDb(tempTransId, container, partKey)
+        val loadedFfData = loadObjFromDb(transId, container, partKey)
         if (loadedFfData != null) {
           // Search for primary key match
           if (txnCtxt != null)
@@ -607,7 +607,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     retVals.toArray
   }
 
-  private def localGetAllKeyValues(tempTransId: Long, containerName: String): Array[MessageContainerBase] = {
+  private def localGetAllKeyValues(transId: Long, containerName: String): Array[MessageContainerBase] = {
     val fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (fnd != null) {
       if (fnd.loadedAll) {
@@ -615,7 +615,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         fnd.data.foreach(kv => {
           allObjs ++= kv._2._2.GetAllData
         })
-        val txnCtxt = getTransactionContext(tempTransId, false)
+        val txnCtxt = getTransactionContext(transId, false)
         if (txnCtxt != null)
           allObjs ++= txnCtxt.getAllObjects(containerName)
         return allObjs.toArray
@@ -627,12 +627,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def localGetAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase] = {
-    return localGetAllKeyValues(tempTransId, containerName)
+  private def localGetAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
+    return localGetAllKeyValues(transId, containerName)
   }
 
-  private def localGetAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int) = {
-    val txnCtxt = getTransactionContext(tempTransId, false)
+  private def localGetAdapterUniqueKeyValue(transId: Long, key: String): (String, Int, Int) = {
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getAdapterUniqueKeyValue(key)
       if (v != null) return v
@@ -658,8 +658,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return objs(0)
   }
 
-  private def localGetModelsResult(tempTransId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
-    val txnCtxt = getTransactionContext(tempTransId, false)
+  private def localGetModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getModelsResult(key)
       if (v != null) return v
@@ -690,9 +690,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Does at least one of the supplied keys exist in a container with the supplied name?
    */
-  private def localContainsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+  private def localContainsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys = partKeys
-    val txnCtxt = getTransactionContext(tempTransId, false)
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (retval, notFoundPartKeys) = txnCtxt.containsAny(containerName, remainingPartKeys, primaryKeys)
       if (retval)
@@ -716,7 +716,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
 
       for (i <- 0 until reMainingForDb.size) {
-        val fatafatData = loadObjFromDb(tempTransId, container, reMainingForDb(i))
+        val fatafatData = loadObjFromDb(transId, container, reMainingForDb(i))
         if (fatafatData != null) {
           // Search for primary key match
           val fnd = fatafatData.GetMessageContainerBase(primaryKeys(i).toArray, false)
@@ -731,10 +731,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   /**
    *   Do all of the supplied keys exist in a container with the supplied name?
    */
-  private def localContainsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+  private def localContainsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
     var remainingPartKeys: Array[List[String]] = partKeys
     var remainingPrimaryKeys: Array[List[String]] = primaryKeys
-    val txnCtxt = getTransactionContext(tempTransId, false)
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (matchedPartKeys, unmatchedPartKeys, matchedPrimaryKeys, unmatchedPrimaryKeys) = txnCtxt.containsKeys(containerName, remainingPartKeys, remainingPrimaryKeys)
       remainingPartKeys = unmatchedPartKeys
@@ -789,22 +789,22 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     (remainingPartKeys.size == 0)
   }
 
-  private def localSetObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
-    var txnCtxt = getTransactionContext(tempTransId, true)
+  private def localSetObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
+    var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.setObject(containerName, partKey, value)
     }
   }
 
-  private def localSetAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
-    var txnCtxt = getTransactionContext(tempTransId, true)
+  private def localSetAdapterUniqueKeyValue(transId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
+    var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.setAdapterUniqueKeyValue(key, value, xformedMsgCntr, totalXformedMsgs)
     }
   }
 
-  private def localSaveModelsResult(tempTransId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
-    var txnCtxt = getTransactionContext(tempTransId, true)
+  private def localSaveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+    var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.saveModelsResult(key, value)
     }
@@ -904,63 +904,63 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
   }
 
-  override def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase] = {
-    localGetAllObjects(tempTransId, containerName)
+  override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
+    localGetAllObjects(transId, containerName)
   }
 
-  override def getObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    localGetObject(tempTransId, containerName, partKey, primaryKey)
+  override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    localGetObject(transId, containerName, partKey, primaryKey)
   }
 
-  override def getHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
-    localHistoryObjects(tempTransId, containerName, partKey, appendCurrentChanges)
+  override def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
+    localHistoryObjects(transId, containerName, partKey, appendCurrentChanges)
   }
 
-  override def getAdapterUniqueKeyValue(tempTransId: Long, key: String): (String, Int, Int) = {
-    localGetAdapterUniqueKeyValue(tempTransId, key)
+  override def getAdapterUniqueKeyValue(transId: Long, key: String): (String, Int, Int) = {
+    localGetAdapterUniqueKeyValue(transId, key)
   }
 
-  override def getModelsResult(tempTransId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
-    localGetModelsResult(tempTransId, key)
+  override def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
+    localGetModelsResult(transId, key)
   }
 
   /**
    *   Does the supplied key exist in a container with the supplied name?
    */
-  override def contains(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
-    localContainsAny(tempTransId, containerName, Array(partKey), Array(primaryKey))
+  override def contains(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): Boolean = {
+    localContainsAny(transId, containerName, Array(partKey), Array(primaryKey))
   }
 
   /**
    *   Does at least one of the supplied keys exist in a container with the supplied name?
    */
-  override def containsAny(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
-    localContainsAny(tempTransId, containerName, partKeys, primaryKeys)
+  override def containsAny(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    localContainsAny(transId, containerName, partKeys, primaryKeys)
   }
 
   /**
    *   Do all of the supplied keys exist in a container with the supplied name?
    */
-  override def containsAll(tempTransId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
-    localContainsAll(tempTransId, containerName, partKeys, primaryKeys)
+  override def containsAll(transId: Long, containerName: String, partKeys: Array[List[String]], primaryKeys: Array[List[String]]): Boolean = {
+    localContainsAll(transId, containerName, partKeys, primaryKeys)
   }
 
-  override def setObject(tempTransId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
-    localSetObject(tempTransId, containerName, partKey, value)
+  override def setObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
+    localSetObject(transId, containerName, partKey, value)
   }
 
-  override def setAdapterUniqueKeyValue(tempTransId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
-    localSetAdapterUniqueKeyValue(tempTransId, key, value, xformedMsgCntr, totalXformedMsgs)
+  override def setAdapterUniqueKeyValue(transId: Long, key: String, value: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Unit = {
+    localSetAdapterUniqueKeyValue(transId, key, value, xformedMsgCntr, totalXformedMsgs)
   }
 
-  override def saveModelsResult(tempTransId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
-    localSaveModelsResult(tempTransId, key, value)
+  override def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+    localSaveModelsResult(transId, key, value)
   }
 
   // Final Commit for the given transaction
-  override def commitData(tempTransId: Long): Unit = {
+  override def commitData(transId: Long): Unit = {
     // Commit Data and Removed Transaction information from status
-    val txnCtxt = getTransactionContext(tempTransId, false)
+    val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt == null)
       return
 
@@ -1079,21 +1079,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     // Remove the current transaction
-    removeTransactionContext(tempTransId)
+    removeTransactionContext(transId)
   }
 
   // Set Reload Flag
-  override def setReloadFlag(tempTransId: Long, containerName: String): Unit = {
+  override def setReloadFlag(transId: Long, containerName: String): Unit = {
     // BUGBUG:: Set Reload Flag
-    val txnCtxt = getTransactionContext(tempTransId, true)
+    val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.setReloadFlag(containerName)
     }
   }
 
   // Saving Status
-  override def saveStatus(tempTransId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit = {
-    val txnCtxt = getTransactionContext(tempTransId, true)
+  override def saveStatus(transId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit = {
+    val txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt == null)
       return
     if (persistIntermediateStatusInfo) { // Saving Intermediate Status Info
@@ -1287,17 +1287,28 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
   }
-  
-  override def getRecent(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+
+  override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
     None
   }
 
-  override def getRDD(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+  override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
     Array[MessageContainerBase]()
   }
 
-  override def saveOne(containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
-    
+  override def saveOne(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
+    if (value != null)
+      localSetObject(transId, containerName, partKey, value)
   }
+
+  override def saveRDD(transId: Long, containerName: String, values: Array[MessageContainerBase]): Unit = {
+    if (values == null)
+      return
+    //BUGBUG:: For now we are looping thru and saving on Partition key
+    values.foreach(v => {
+      localSetObject(transId, containerName, v.PartitionKeyData.toList, v)
+    })
+  }
+
 }
 
