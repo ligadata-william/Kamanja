@@ -15,6 +15,10 @@ import java.util.{ Comparator, List => JList, Iterator => JIterator }
 import java.lang.{ Iterable => JIterable, Long => JLong }
 import scala.collection.mutable.ArrayBuffer
 
+object ThreadLocalStorage {
+	final val modelContextInfo = new ThreadLocal[ModelContext]();
+}
+
 object FatafatUtils {
   def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
   def toScalaFunction1[T, R](fun: Function1[T, R]): T => R = x => fun.call(x)
@@ -402,7 +406,7 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])(implicit val kClassTag: ClassTag[K
 abstract class RDDObject[T: ClassTag] {
   val LOG = Logger.getLogger(getClass);
 
-  private def getCurrentModelContext: ModelContext = null
+  private def getCurrentModelContext: ModelContext = ThreadLocalStorage.modelContextInfo.get
 
   // Methods needs to be override in inherited class -- Begin
   // get builder
