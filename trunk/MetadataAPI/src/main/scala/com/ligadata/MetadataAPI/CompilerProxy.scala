@@ -104,8 +104,7 @@ println("compile command is "+compileCommand)
       logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
       logger.error(s"Command used: $compileCommand")
       compileRc
-    }
-    else{
+    } else {
       //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir
       val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
@@ -113,6 +112,7 @@ println("compile command is "+compileCommand)
 	      logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
 	      logger.error(s"cmd used : $mvCmd")
       }	
+      println("compile command RC is " + mvCmdRc)
       mvCmdRc
     }
   }
@@ -166,9 +166,9 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     
 
     // Bail if compilation filed.
-    if (rc != 0) {
-      return (rc, "")
-    }
+    //if (rc != 0) {
+    //  return (rc, "")
+   // }
     
     /** create the jar */
     var  moduleNameJar: String = ""
@@ -184,12 +184,19 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
+
+ println(s"jar cmd used: $jarCmd")
+ println(s"Jar $moduleNameJar produced.  Its contents:")
+
+    
     val jarRc : Int = Process(jarCmd).!
     if (jarRc != 0) {
+       println(s"unable to create jar $moduleNameJar ... rc = $jarRc")
       logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
       return (jarRc, "")
     }
-		
+	
+    
     /** move the new jar to the target dir where it is to live */
     val mvCmd : String = s"mv $jarPath $jarTargetDir/"
     logger.debug(s"mv cmd used: $mvCmd")
@@ -197,40 +204,54 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     if (mvCmdRc != 0) {
       logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
       logger.error(s"cmd used : $mvCmd")
+       println(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
+        println(s"cmd used : $mvCmd")
     }
-		
     (0, s"$moduleNameJar")
   }
   
   
-  def compileJavaModel (javaCode: String): ModelDef = {
+  def compileModelFromSource (sourceCode: String, metaProps: java.util.Properties , sourceLang: String = "scala"): ModelDef = {
     try {
       var injectLoggingStmts : Boolean = false   
-      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef("System",
-                                                          "LowBalanceAlertModel",
-                                                          "System.SipmleModel",
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(metaProps.getProperty("namespace"),
+                                                          metaProps.getProperty("name"),
+                                                          metaProps.getProperty("pname"),
                                                           "RuleSet",
                                                           List[(String, String, String, String, Boolean, String)](),
                                                           List[(String, String, String)]() ,
                                                           1,
                                                           "LowBalanceAlertModel.jar",
-                                                          Array[String]("fatafatbase_2.10-1.0.jar"),
+                                                          metaProps.getProperty("dep").asInstanceOf[Array[String]],
                                                           false
                                                  )
  
  println("compileJavaModel ====> START")  
+ 
+ 
+       //Adding the package name
+       val packageName = "package com.ligadata.models."+metaProps.getProperty("namespace") +".V"+ MdMgr.FormatVersion(metaProps.getProperty("version")).substring(0,6) + ";" 
+       
+       println("compileJavaModel ====> " + packageName)  
+       var firstImport = sourceCode.indexOf("import")
+       var packagedSource = ""
+       packagedSource = packageName + " " + sourceCode.substring(firstImport)
+       println("compileJavaModel ====> " + packagedSource.substring(0,packageName.length+10))  
+       
+       
+       
   
        // Save off the source Code in the working directories.
        val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".txt"
-       dumpStrTextToFile(javaCode,msgDefFilePath)
-       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".scala"
-       dumpStrTextToFile(javaCode,msgDefClassFilePath)
+       dumpStrTextToFile(packagedSource,msgDefFilePath)
+       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + "."+sourceLang
+       dumpStrTextToFile(packagedSource,msgDefClassFilePath)
 
 println("compileJavaModel ====> Saved The sourcecode.")  
       
        // Need to have a java specific compiler ???
-       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
-                                      MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
+    //   val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
+    //                                  MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
        // Get classpath and jarpath ready
        var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
        if (classPath.size == 0) classPath = "."  
@@ -246,13 +267,10 @@ println("compileJavaModel ====> Saved The sourcecode.")
           }
        }
 
-println("compileJavaModel ===>  About to call createJar")   
-
-
-       var (status2,jarFileNoVersion) = jarCode("System",
-                                                "LowBalanceAlertModel",
-                                                "1.0",
-                                                javaCode,
+       var (status2,jarFileNoVersion) = jarCode(metaProps.getProperty("namespace"),
+                                                metaProps.getProperty("name"),
+                                                metaProps.getProperty("version"),
+                                                packagedSource,
                                                 classPath,
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
                                                 "TestClient",
@@ -260,7 +278,7 @@ println("compileJavaModel ===>  About to call createJar")
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
                                                 false,
-                                                "java")
+                                                sourceLang)
                     
        /* The following check require cleanup at some point */
        if (status2 > 1 ){
@@ -268,6 +286,7 @@ println("compileJavaModel ===>  About to call createJar")
        }
 
        // Return the ModDef - SUCCESS
+       modDef.jarName = jarFileNoVersion
        modDef
     }  catch {
       case e:AlreadyExistsException =>{
