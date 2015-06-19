@@ -96,8 +96,6 @@ class CompilerProxy{
     }
     createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
-  
-println("compile command is "+compileCommand)
     logger.debug(s"scalac cmd used: $compileCommand")
     val compileRc = Process(compileCommand).!
     if (compileRc != 0) {
@@ -109,11 +107,11 @@ println("compile command is "+compileCommand)
       val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
-	      logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-	      logger.error(s"cmd used : $mvCmd")
+	      logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+	      logger.warn(s"cmd used : $mvCmd")
       }	
       println("compile command RC is " + mvCmdRc)
-      mvCmdRc
+      compileRc
     }
   }
 
@@ -166,9 +164,9 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     
 
     // Bail if compilation filed.
-    //if (rc != 0) {
-    //  return (rc, "")
-   // }
+    if (rc != 0) {
+      return (rc, "")
+    }
     
     /** create the jar */
     var  moduleNameJar: String = ""
@@ -248,10 +246,7 @@ println("Creating JAR / Compiling =====> "+ moduleName )
        dumpStrTextToFile(packagedSource,msgDefClassFilePath)
 
 println("compileJavaModel ====> Saved The sourcecode.")  
-      
-       // Need to have a java specific compiler ???
-    //   val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
-    //                                  MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
+     
        // Get classpath and jarpath ready
        var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
        if (classPath.size == 0) classPath = "."  
