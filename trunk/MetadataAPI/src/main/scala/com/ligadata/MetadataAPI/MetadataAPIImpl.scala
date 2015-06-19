@@ -1147,15 +1147,19 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetJarAsArrayOfBytes(jarName: String): Array[Byte] = {
     try {
+      
+      
+      
+println("---> 1")
       val iFile = new File(jarName)
       if (!iFile.exists) {
         throw new FileNotFoundException("Jar file (" + jarName + ") is not found: ")
       }
-
+println("---> 2")
       val bis = new BufferedInputStream(new FileInputStream(iFile));
       val baos = new ByteArrayOutputStream();
       var readBuf = new Array[Byte](1024) // buffer size
-
+println("---> 3")
       // read until a single byte is available
       while (bis.available() > 0) {
         val c = bis.read();
@@ -3251,11 +3255,11 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   
-  def AddModelFromSource(javaCode: String, userid: Option[String]): String = {
+  def AddModelFromSource(javaCode: String, sourceLang: String, metaProps: java.util.Properties, userid: Option[String]): String = {
  
 println("Adding a Java Model")
     var compProxy = new CompilerProxy
-    val modDef : ModelDef =  compProxy.compileJavaModel(javaCode)
+    val modDef : ModelDef =  compProxy.compileModelFromSource(javaCode, metaProps, sourceLang)
     println("modDef Model created  ")
     UploadJarsToDB(modDef)
     println("Upload Jars for  Model called  ")

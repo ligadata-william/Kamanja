@@ -17,6 +17,7 @@ import org.scalatest.Assertions._
 import scala.collection.mutable.ArrayBuffer
 import scala.io._
 import java.util.Date
+import java.util.Properties
 import com.ligadata.Exceptions._
 
 object TestMetadataAPI{
@@ -1353,6 +1354,128 @@ object TestMetadataAPI{
     }
   }
 
+  def AddModelSourceJava {
+    try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
+      if ( dirName == null  ){
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if( ! IsValidDir(dirName) )
+        return
+
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
+      if ( pmmlFiles.length == 0 ){
+        logger.error("No model files in the directory " + dirName)
+        return
+      }
+
+      var pmmlFilePath = ""
+      println("Pick a Model Definition file(pmml) from below choices")
+
+      var seq = 0
+      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == pmmlFiles.length + 1){
+        return
+      }
+      if( choice < 1 || choice > pmmlFiles.length + 1 ){
+        logger.error("Invalid Choice : " + choice)
+        return
+      }
+
+      pmmlFilePath = pmmlFiles(choice-1).toString
+      val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      // Save the model
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      
+      // Add the meta properties here for now...
+      var metaProps: Properties = new Properties
+      metaProps.put("namespace", "System")
+      metaProps.put("name", "allModels")
+      metaProps.put("version","1.0")
+      metaProps.put("pName","com.ligadata.models.samples.models")
+      metaProps.put("deps",Array[String]("fatafatbase_2.10-1.0.jar"))
+      
+      
+      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr,"java",metaProps,userid))
+    }catch {
+      case e: AlreadyExistsException => {
+    logger.error("Model Already in the metadata....")
+      }
+      case e: Exception => {
+  e.printStackTrace()
+      }
+    }    
+  }
+  
+  def AddModelSourceScala {
+     try{
+      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
+      if ( dirName == null  ){
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
+      }
+
+      if( ! IsValidDir(dirName) )
+        return
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".scala"))
+
+      if ( pmmlFiles.length == 0 ){
+        logger.error("No model files in the directory " + dirName)
+        return
+      }
+
+      var pmmlFilePath = ""
+      println("Pick a Model Definition file(pmml) from below choices")
+
+      var seq = 0
+      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice:Int = readInt()
+
+      if( choice == pmmlFiles.length + 1){
+        return
+      }
+      if( choice < 1 || choice > pmmlFiles.length + 1 ){
+        logger.error("Invalid Choice : " + choice)
+        return
+      }
+
+      pmmlFilePath = pmmlFiles(choice-1).toString
+      val pmmlStr = Source.fromFile(pmmlFilePath).mkString
+      // Save the model
+     // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+      
+      // Add the meta properties here for now...
+      var metaProps: Properties = new Properties
+      metaProps.put("namespace", "System")
+      metaProps.put("name", "allModels")
+      metaProps.put("version","1.0")
+      metaProps.put("pName","com.ligadata.models.samples.models")
+      metaProps.put("deps",Array[String]("fatafatbase_2.10-1.0.jar"))
+      
+      
+      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr,"scala",metaProps,userid))
+    }catch {
+      case e: AlreadyExistsException => {
+    logger.error("Model Already in the metadata....")
+      }
+      case e: Exception => {
+  e.printStackTrace()
+      }
+    }   
+  }
+  
   def AddModel {
     try{
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
@@ -1363,8 +1486,8 @@ object TestMetadataAPI{
 
       if( ! IsValidDir(dirName) )
 	      return
-println("Checking in "+ dirName)
-      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".java"))
+      val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
+
       if ( pmmlFiles.length == 0 ){
 	      logger.error("No model files in the directory " + dirName)
 	      return
@@ -1393,7 +1516,8 @@ println("Checking in "+ dirName)
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr,userid))
+      
+      println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr,userid))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
@@ -2078,8 +2202,12 @@ println("Checking in "+ dirName)
       val dumpAllAdapters = ()            => { DumpAllAdaptersAsJson }
       val dumpAllCfgObjects = ()          => { DumpAllCfgObjectsAsJson }
       val removeEngineConfig = ()         => { RemoveEngineConfig }
+      val addModelSourceJava = ()         => { AddModelSourceJava }
+      val addModelSourceScala = ()        => { AddModelSourceScala }
 
       val topLevelMenu = List(("Add Model",addModel),
+            ("Get Model - Java", addModelSourceJava),
+            ("Get Model - Scala", addModelSourceScala),          
 			      ("Get Model",getModel),
 			      ("Get All Models",getAllModels),
 			      ("Remove Model",removeModel),
