@@ -41,20 +41,24 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
   override def beforeAll = {
     try {
-      //logger.info("Initialize MetadataManager")
+
+      logger.info("resource dir => " + getClass.getResource("/").getPath)
+      System.exit(0);
+
+      logger.info("Initialize MetadataManager")
       mdMan.config.classPath = ConfigDefaults.metadataClasspath
       mdMan.initMetadataCfg
 
-      //logger.info("Initialize MdMgr")
+      logger.info("Initialize MdMgr")
       MdMgr.GetMdMgr.truncate
       val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
       mdLoader.initialize
 
 
-      //logger.info("Initialize zooKeeper connection")
+      logger.info("Initialize zooKeeper connection")
       MetadataAPIImpl.initZkListener
 
-      //logger.info("Initialize datastore")
+      logger.info("Initialize datastore")
       MetadataAPIImpl.OpenDbStore(MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE"))
       logger.info("Truncating dbstore")
       MetadataAPIImpl.TruncateDbStore
