@@ -1120,21 +1120,21 @@ object NodePrinterHelpers extends LogTrait {
 		 * If no alias is given, the default is System_
 		 */
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname$verNoStr(val modelContext: ModelContext, val factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
+		clsBuffer.append(s"class $nmspc$classname$verNoStr(modelContext: ModelContext, factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelBase(modelContext,factory) with LogTrait {\n") 
 		} else {
 			clsBuffer.append(s"   extends ModelBase(modelContext,factory) {\n") 
 		}
 
-		/** Create the alternate ctor used by the CreateNewModel implementation.  Unpack its content and feed the 
+		/** Create the alternate ctor used by the CreateNewModel implementation.  Unpack its content and feed the
 		 *  primary constructor as it is now, passing both the ModelContext and Model object along to satisfy the 
 		 *  ModelBase abstract class required parameters  
 		 */
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(transId)\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(transId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
@@ -1370,23 +1370,15 @@ object NodePrinterHelpers extends LogTrait {
 	 *   	supports more than one in the event the multiple input messages become a feature.
 	 *  @return the "def this(val modelContext: ModelContext, val factory: ModelBaseObj){...}" constructor
 	 *  	string that will be included into the model being generated  
+	 *   
+	 *  Note: Currently there is only one message supported.
 	 */
 	def generateAlternateCtor(msgdefTypes : Array[String]) : String = { 
 		val ctorBuffer : StringBuilder = new StringBuilder
 		var cnt : Int = 0
-		/** generate one or more message parameter expressions for this function ... msg : someType, 
-		 *  msg1 : someOtherType, msg2 : yetSomeOtherType, ... msgN : nutherOne */
-		val msgDefTypeDecls : Array[String] = msgdefTypes.map( decl => {
-			val declExpr : String = if (cnt == 0) {
-				s"msg : $decl"
-			} else {
-				s"msg$cnt : $decl"
-			}
-			cnt += 1
-			declExpr
-		}).toArray
-		cnt = 0
-		/** generate one or more message expressions for function body ... msg, msg1, msg2, ... msgN */
+
+		/** FIXME: generate one or more message expressions for function body ... msg, msg1, msg2, ... msgN
+		 *  ... something like this should more than one msg type be offered to the ctor ....
 		val msgParameterNames : Array[String] = msgdefTypes.map( decl => {
 			val declExpr : String = if (cnt == 0) {
 				s"msg"
@@ -1395,22 +1387,24 @@ object NodePrinterHelpers extends LogTrait {
 			}
 			cnt += 1
 			declExpr
-		}).toArray
-		val msgdefListBuf : StringBuilder = new StringBuilder
-		msgDefTypeDecls.addString(msgdefListBuf, ",")   
-		val msgdefsList : String = msgdefListBuf.toString
-		msgdefListBuf.clear
-		msgParameterNames.addString(msgdefListBuf, ",")   		
-		val msgNameList : String = msgdefListBuf.toString
+		}).toArray 
 		
-		ctorBuffer.append(s"    def this(val modelContext: ModelContext, val factory: ModelBaseObj) {\n")
+		val msgParameterNames : Array[String] = Array("msg")
+		val msgdefListBuf : StringBuilder = new StringBuilder
+		msgParameterNames.addString(msgdefListBuf, ",")   		
+		val msgNameList : String = msgdefListBuf.toString */
+		
+		/** the second type in the list is for the first message... the first one being the EnvContext */
+		val msgType : String = if (msgdefTypes != null && msgdefTypes.size > 1) msgdefTypes(1) else "Any"
+		
+		ctorBuffer.append(s"    def this(modelContext: ModelContext, factory: ModelBaseObj) {\n")
 		ctorBuffer.append(s"        this(modelContext, factory\n")
-		ctorBuffer.append(s"            , gCtx\n")
-		ctorBuffer.append(s"            , $msgNameList\n")
+		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.gCtx else null)\n")
+		ctorBuffer.append(s"            , (if (modelContext != null) modelContext.msg.asInstanceOf[$msgType] else null)\n")
 		ctorBuffer.append(s"            , factory.ModelName\n")
 		ctorBuffer.append(s"            , factory.Version\n")
 		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null)\n")
-		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null))\n")
+		ctorBuffer.append(s"            , (if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else 0L))\n")
 		ctorBuffer.append(s"     }\n")		
 		ctorBuffer.toString
 	}
