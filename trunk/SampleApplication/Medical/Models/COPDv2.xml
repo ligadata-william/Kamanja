@@ -1,12 +1,12 @@
 
 <!--
-COPDv1.xml 
+COPDv2.xml 
 -->
 
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
-	<Header copyright="LigaDATA 2014" description="COPD missingVals">
-		<Application name="missingValueTest" version="00.01.00"/>
+	<Header copyright="Edifecs Corp. Copyright 2014" description="COPD Risk Assessment">
+		<Application name="COPDRiskAssessment" version="00.01.00"/>
 	</Header>
 
 	<DataDictionary numberOfFields="8">
@@ -19,84 +19,14 @@ COPDv1.xml
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
 		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
 
-		<!-- date, dateTime, time fields -->
-		<DataField name="yyyyMMddDateMs" displayName="yyyyMMddDateMs" optype="categorical" dataType="date"/>
-		<DataField name="milDateMs" displayName="milDateMs" optype="categorical" dataType="date"/>
-
-		<DataField name="yyyyMMddHHmmssSSSDateTimeMs" displayName="yyyyMMDDHHmmssSSSDateTimeMs" optype="categorical" dataType="dateTime"/>
-		<DataField name="milDateTimeMs" displayName="milDateTimeMs" optype="categorical" dataType="dateTime"/>
-
-		<DataField name="morningTimeMs" displayName="morningTimeMs" optype="categorical" dataType="time"/>
-		<DataField name="eveningTimeMs" displayName="eveningTimeMs" optype="categorical" dataType="time"/>
-		<DataField name="milTimeMs" displayName="milTimeMs" optype="categorical" dataType="time"/>
-
-		<DataField name="someCostsByDate" displayName="someCostsByDate" optype="categorical" dataType="ImmutableMapOfIntDouble"/>
-
+		<!-- Not used -->
+		<DataField name="Inp_Clm_Thru_Dt" displayName="Inp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+		<DataField name="Outp_Clm_Thru_Dt" displayName="Outp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+		<DataField name="Hl7_Clm_Thru_Dt" displayName="Hl7_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
 
 	</DataDictionary>
 
 	<TransformationDictionary>
-
-		<!--
-			**********************************************************
-			*  Date/Time formatting for data fields that user their
-			*  missingValueReplacement for a value.
-			**********************************************************
-		-->
-
-	  	<!-- format a date -->
-		<DerivedField name="yyyyMMddDate" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">yyyy-MM-dd</Constant>
-				<FieldRef field="yyyyMMddDateMs"/>
-			</Apply>
-		</DerivedField>
-	  	<!-- format a date -->
-		<DerivedField name="milDate" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">dd-MMM-yyyy</Constant>
-				<FieldRef field="milDateMs"/>
-			</Apply>
-		</DerivedField>
-
-	  	<!-- format a dateTime -->
-		<DerivedField name="yyyyMMddHHmmssSSSDateTime" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">yyyy-MM-dd HH:mm:ss:SSS</Constant>
-				<FieldRef field="yyyyMMddHHmmssSSSDateTimeMs"/>
-			</Apply>
-		</DerivedField>
-	  	<!-- format a dateTime -->
-		<DerivedField name="milDateTime" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">dd-MMM-yyyy HH:mm:ss</Constant>
-				<FieldRef field="milDateTimeMs"/>
-			</Apply>
-		</DerivedField>
-
-
-	  	<!-- format a time -->
-		<DerivedField name="morningTime" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">HH:mm:ss:SSS</Constant>
-				<FieldRef field="morningTimeMs"/>
-			</Apply>
-		</DerivedField>
-	  	<!-- format a time -->
-		<DerivedField name="eveningTime" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">hh:mm:ss aa</Constant>
-				<FieldRef field="eveningTimeMs"/>
-			</Apply>
-		</DerivedField>
-	  	<!-- format a time -->
-		<DerivedField name="milTime" dataType="string" optype="categorical">
-			<Apply function="timestampFmt">
-				<Constant dataType="string">HH:mm:ss</Constant>
-				<FieldRef field="milTimeMs"/>
-			</Apply>
-		</DerivedField>
-
 	
 		<!--
 			**********************************************************
@@ -109,7 +39,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="SputumMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">system.SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -129,7 +59,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">system.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -149,8 +79,8 @@ COPDv1.xml
 		-->
 		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-                <Constant dataType="context">ctx</Constant>
-				<Constant dataType="string">system.EnvCodes</Constant>
+				<Constant dataType="context">ctx</Constant>
+			    <Constant dataType="string">system.EnvCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -169,8 +99,8 @@ COPDv1.xml
 		-->
 		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-                <Constant dataType="context">ctx</Constant>
-				<Constant dataType="string">system.CoughCodes</Constant>
+				<Constant dataType="context">ctx</Constant>
+			    <Constant dataType="string">system.CoughCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -189,7 +119,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">system.DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -308,7 +238,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="desynpuf_id_base_hl7s" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">System.HL7</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
@@ -385,7 +315,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="desynpuf_id_base_inpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">System.InpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
@@ -421,7 +351,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="desynpuf_id_base_outpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
-                <Constant dataType="context">ctx</Constant>
+				<Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">System.OutpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
@@ -837,7 +767,7 @@ COPDv1.xml
 		<DerivedField name="MaterializeOutputs" dataType="boolean" optype="categorical">
 			<Apply function="and">
 				<Apply function="Put">  
-                	<Constant dataType="context">ctx</Constant>
+					<Constant dataType="context">ctx</Constant>
 					<Constant dataType="string">Msg_Desynpuf_Id</Constant>
 					<FieldRef field="msg.desynpuf_id"/>
 				</Apply>
@@ -881,7 +811,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-                		<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">2</Constant> 
 					</Apply>
@@ -889,7 +819,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-	                	<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
@@ -913,7 +843,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-		              	<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">1b</Constant> 
 					</Apply>
@@ -921,7 +851,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-		              	<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
@@ -948,7 +878,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-		              	<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">1a</Constant> 
 					</Apply>
@@ -956,7 +886,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
-		              	<Constant dataType="context">ctx</Constant>
+						<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
@@ -972,9 +902,9 @@ COPDv1.xml
 	    <MiningSchema>
 			<!-- id info -->
 	    	<MiningField name="Msg_Desynpuf_Id" usageType="supplementary"/>
-	    	<MiningField name="Age" usageType="supplementary" missingValueReplacement="29"/>
-	    	<MiningField name="Today" usageType="supplementary" missingValueReplacement="20150401"/>
-	    	<MiningField name="AYearAgo" usageType="supplementary" missingValueReplacement="20140101"/>
+	    	<MiningField name="Age" usageType="supplementary"/>
+	    	<MiningField name="Today" usageType="supplementary"/>
+	    	<MiningField name="AYearAgo" usageType="supplementary"/>
 
 			<!-- the prediction ... 1a, 1b, 2 -->
 			<MiningField name="COPDSeverity" usageType="predicted"/>
@@ -984,46 +914,14 @@ COPDv1.xml
 			<MiningField name="AATDeficiency" usageType="supplementary"/>
 			<MiningField name="WithEnvironmentalExposures" usageType="supplementary"/>
 			<MiningField name="FamilyHistory" usageType="supplementary"/>			    	
-	    	<MiningField name="COPDSymptoms" usageType="supplementary" missingValueReplacement="false"/>
-			<MiningField name="Dyspnoea" usageType="supplementary" missingValueReplacement="false"/>
-			<MiningField name="ChronicCough" usageType="supplementary" missingValueReplacement="false"/>
-			<MiningField name="ChronicSputum" usageType="supplementary" missingValueReplacement="false"/>
+	    	<MiningField name="COPDSymptoms" usageType="supplementary"/>
+			<MiningField name="Dyspnoea" usageType="supplementary"/>
+			<MiningField name="ChronicCough" usageType="supplementary"/>
+			<MiningField name="ChronicSputum" usageType="supplementary"/>
 
 			<!-- aggregations -->
 			<MiningField name="inPatientClaimCostsByDate" usageType="supplementary"/>
-			<MiningField name="outPatientClaimCostsByDate" usageType="supplementary" missingValueReplacement="!compile:Map[Int,Double]()"/>
-			<MiningField name="someCostsByDate" usageType="supplementary" missingValueReplacement="!compile:Map[Int,Double]()"/>
-
-			<!-- missingValueReplacement for array ? -->
-			<MiningField name="inPatientClaimTotalCostEachDate" usageType="supplementary" missingValueReplacement="!compile:Array[Double]()"/>
-	
-			<!-- missingValueReplacement for *Ms fields below unfilled 
-			via model execution...The missingValueReplacement values initialize
-			their DataFields and the companion sans *Ms derived fields 
-			below will reformat them back to the original string 
-			representation ... see the sans *Ms derived fields in the transform
-			dict for more. -->
-
-	    	<MiningField name="yyyyMMddDateMs" usageType="supplementary" missingValueReplacement="2015-04-01"/>
-	    	<MiningField name="yyyyMMddDate" usageType="supplementary"/>
-
-	    	<MiningField name="milDateMs" usageType="supplementary" missingValueReplacement="01-Apr-2015"/>
-	    	<MiningField name="milDate" usageType="supplementary"/>
-
-	    	<MiningField name="yyyyMMddHHmmssSSSDateTimeMs" usageType="supplementary" missingValueReplacement="2015-04-01 23:59:59:999"/>
-	    	<MiningField name="yyyyMMddHHmmssSSSDateTime" usageType="supplementary"/>
-
-	    	<MiningField name="milDateTimeMs" usageType="supplementary" missingValueReplacement="15-Apr-2015 23:59:59"/>
-	    	<MiningField name="milDateTime" usageType="supplementary"/>
-
-	    	<MiningField name="morningTimeMs" usageType="supplementary" missingValueReplacement="3:59:59 AM"/>
-	    	<MiningField name="morningTime" usageType="supplementary"/>
-
-	    	<MiningField name="eveningTimeMs" usageType="supplementary" missingValueReplacement="6:59:59 PM"/>
-	    	<MiningField name="eveningTime" usageType="supplementary"/>
-
-	    	<MiningField name="milTimeMs" usageType="supplementary" missingValueReplacement="16:59:59"/>
-	    	<MiningField name="milTime" usageType="supplementary"/>
+			<MiningField name="outPatientClaimCostsByDate" usageType="supplementary"/>
 
 	    </MiningSchema>
 	

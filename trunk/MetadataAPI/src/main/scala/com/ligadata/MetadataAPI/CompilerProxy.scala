@@ -46,6 +46,7 @@ class CompilerProxy{
   lazy val logger = Logger.getLogger(loggerName)
 
   lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
+  println(compiler_work_dir)
 
   def setLoggerLevel(level: Level){
     logger.setLevel(level);
@@ -94,25 +95,25 @@ class CompilerProxy{
       srcFileName = s"$moduleName.scala" 
       compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
     }
+ println("--> Creating SOURCEFILE AGAIN ->" +jarBuildDir+" "+srcFileName)
     createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
 
-  
-println("compile command is "+compileCommand)
-    logger.debug(s"scalac cmd used: $compileCommand")
+    logger.debug(s"compile cmd used: $compileCommand")
+    
     val compileRc = Process(compileCommand).!
     if (compileRc != 0) {
       logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
       logger.error(s"Command used: $compileCommand")
       compileRc
-    }
-    else{
+    } else {
       //The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir
       val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
-	      logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-	      logger.error(s"cmd used : $mvCmd")
+	      logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+	      logger.warn(s"cmd used : $mvCmd")
       }	
+      println("compile command RC is " + mvCmdRc)
       mvCmdRc
     }
   }
@@ -131,21 +132,35 @@ println("compile command is "+compileCommand)
     , sourceLanguage: String = "scala") : (Int, String) =
   {   
  println("Creating/removing directories")
-    /* this is going to be called 2x to create a Versioned and non-Versioned (aka Local) jarFiles - Local call is always done second */   
-    val killDir = s"rm -Rf $compiler_work_dir/$moduleName"
+    
+    var currentWorkFolder: String = moduleName
+    if (isLocalOnly) {
+      currentWorkFolder = currentWorkFolder + "_local"
+    }  
+ 
+    // Remove this directory with all the junk if it already exists
+    val killDir = s"rm -Rf $compiler_work_dir/"+currentWorkFolder
+    
+    println(s"-> KILLING "+killDir)
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
     if (killDirRc != 0) {
       logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
       return (killDirRc, "")
     }
-    val buildDir = s"mkdir $compiler_work_dir/$moduleName"
+    
+    // Create a new clean directory
+    val buildDir = s"mkdir $compiler_work_dir/"+currentWorkFolder
+    println(s"-> BUILDING "+buildDir)
     val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
     if (tmpdirRc != 0) {
       logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
       return (tmpdirRc, "")
-    }     
+    }   
+    
     /** create a copy of the pmml source in the work directory */
-    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/$moduleName/").!
+    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/"+currentWorkFolder).!
+    
+    println(s"-> COPYING cp $pmmlFilePath $compiler_work_dir/"+currentWorkFolder)
     if (cpRc != 0) {
       logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
       return (cpRc, "")
@@ -162,7 +177,7 @@ println("Creating JAR / Compiling =====> "+ moduleName )
       if (isLocalOnly) sourceName = moduleName+"_local" else sourceName = moduleName
     }
     
-    val rc = compile(s"$compiler_work_dir/$moduleName", cHome, sourceName, classpath, sourceCode, clientName, sourceLanguage) 
+    val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, sourceLanguage) 
     
 
     // Bail if compilation filed.
@@ -181,15 +196,18 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     }
 
     val jarPath = compiler_work_dir + "/" + moduleNameJar      
-    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/$moduleName/ ."
+    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/ "+currentWorkFolder +"/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
+
     val jarRc : Int = Process(jarCmd).!
     if (jarRc != 0) {
+       println(s"unable to create jar $moduleNameJar ... rc = $jarRc")
       logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
       return (jarRc, "")
     }
-		
+	
+    
     /** move the new jar to the target dir where it is to live */
     val mvCmd : String = s"mv $jarPath $jarTargetDir/"
     logger.debug(s"mv cmd used: $mvCmd")
@@ -197,40 +215,53 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     if (mvCmdRc != 0) {
       logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
       logger.error(s"cmd used : $mvCmd")
+       println(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
+        println(s"cmd used : $mvCmd")
     }
-		
     (0, s"$moduleNameJar")
   }
   
   
-  def compileJavaModel (javaCode: String): ModelDef = {
+  def compileModelFromSource (sourceCode: String, metaProps: java.util.Properties , sourceLang: String = "scala"): ModelDef = {
     try {
       var injectLoggingStmts : Boolean = false   
-      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef("System",
-                                                          "LowBalanceAlertModel",
-                                                          "System.SipmleModel",
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(metaProps.getProperty("namespace"),
+                                                          metaProps.getProperty("name"),
+                                                          metaProps.getProperty("objName"),
                                                           "RuleSet",
                                                           List[(String, String, String, String, Boolean, String)](),
                                                           List[(String, String, String)]() ,
                                                           1,
                                                           "LowBalanceAlertModel.jar",
-                                                          Array[String]("fatafatbase_2.10-1.0.jar"),
+                                                          metaProps.getProperty("dep").asInstanceOf[Array[String]],
                                                           false
                                                  )
  
  println("compileJavaModel ====> START")  
+ 
+ 
+       //Adding the package name
+       val packageName = "com.ligadata.models."+metaProps.getProperty("namespace") +".V"+ MdMgr.FormatVersion(metaProps.getProperty("version")).substring(0,6)
+       
+       println("compileJavaModel ====> " + packageName)  
+       var firstImport = sourceCode.indexOf("import")
+       var packagedSource = ""
+       packagedSource = "package " +packageName + "; " + sourceCode.substring(firstImport)
+       println("compileJavaModel ====> " + packagedSource.substring(0,packageName.length+10))  
+       
+       
+       
   
        // Save off the source Code in the working directories.
-       val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".txt"
-       dumpStrTextToFile(javaCode,msgDefFilePath)
-       val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".scala"
-       dumpStrTextToFile(javaCode,msgDefClassFilePath)
+      // val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".txt"
+       val msgDefFilePath = compiler_work_dir + "/" + modDef.name + ".txt"
+      // dumpStrTextToFile(packagedSource,msgDefFilePath)
+     //  val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + "."+sourceLang
+       val msgDefClassFilePath = compiler_work_dir + "/" + modDef.name + "."+sourceLang
+       dumpStrTextToFile(packagedSource,msgDefClassFilePath)
 
-println("compileJavaModel ====> Saved The sourcecode.")  
-      
-       // Need to have a java specific compiler ???
-       val compiler  = new PmmlCompiler(MdMgr.GetMdMgr, "ligadata", logger, injectLoggingStmts, 
-                                      MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
+println("compileJavaModel ====> ..." + msgDefClassFilePath)  
+     
        // Get classpath and jarpath ready
        var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
        if (classPath.size == 0) classPath = "."  
@@ -246,13 +277,10 @@ println("compileJavaModel ====> Saved The sourcecode.")
           }
        }
 
-println("compileJavaModel ===>  About to call createJar")   
-
-
-       var (status2,jarFileNoVersion) = jarCode("System",
-                                                "LowBalanceAlertModel",
-                                                "1.0",
-                                                javaCode,
+       var (status2,jarFileName) = jarCode(metaProps.getProperty("namespace"),
+                                                metaProps.getProperty("name"),
+                                                metaProps.getProperty("version"),
+                                                packagedSource,
                                                 classPath,
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
                                                 "TestClient",
@@ -260,7 +288,7 @@ println("compileJavaModel ===>  About to call createJar")
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
                                                 MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
                                                 false,
-                                                "java")
+                                                sourceLang)
                     
        /* The following check require cleanup at some point */
        if (status2 > 1 ){
@@ -268,6 +296,8 @@ println("compileJavaModel ===>  About to call createJar")
        }
 
        // Return the ModDef - SUCCESS
+       modDef.jarName = jarFileName
+       modDef.PhysicalName(packageName+"."+ metaProps.getProperty("objName"))
        modDef
     }  catch {
       case e:AlreadyExistsException =>{
@@ -376,14 +406,18 @@ println("compileJavaModel ===>  About to call createJar")
       val(classStrVer, msgDef, classStrNoVer) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
 
-      
-      val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
+  println("*****************"+compiler_work_dir+"********************")    
+    //  val msgDefFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".txt"
+      val msgDefFilePath = compiler_work_dir + "/" + msgDef.name + ".txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePath)
-      val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
+    //  val msgDefClassFilePath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + ".scala"
+      val msgDefClassFilePath = compiler_work_dir + "/" + msgDef.name + ".scala"
       dumpStrTextToFile(classStrVer,msgDefClassFilePath)
-      val msgDefFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.txt"
+     // val msgDefFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.txt"
+      val msgDefFilePathLocal = compiler_work_dir + "/" + msgDef.name + "_local.txt"
       dumpStrTextToFile(msgDefStr,msgDefFilePathLocal)     
-      val msgDefClassFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.scala"
+//      val msgDefClassFilePathLocal = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + msgDef.name + "_local.scala"
+      val msgDefClassFilePathLocal = compiler_work_dir + "/" + msgDef.name + "_local.scala"
       dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
 
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim

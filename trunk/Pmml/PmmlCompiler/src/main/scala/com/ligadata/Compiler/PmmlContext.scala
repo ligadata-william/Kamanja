@@ -136,20 +136,80 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  especially used for iterable functions. */
 	val fcnTypeInfoStack : Stack[FcnTypeInfo] = Stack[FcnTypeInfo]()
 	
-	/** FIXME: This needs to be pulled from either the metadata manager or possibly specified
-	 *  in some way in the PMML model itself.  At the moment this is hard coded to get something
-	 *  working. 
+	/** 
+	 *  By default, these two namespaces are always present:  System, Pmml
 	 */
-	val namespaceSearchPath : Array[String] = Array[String](MdMgr.sysNS, "Pmml")
+	val namespaceSearchPathDefault : Array[(String,String)] = Array[(String,String)]((MdMgr.sysNS,MdMgr.sysNS), ("Pmml","Pmml"))
 	
 	
-	def NameSpaceSearchPath : String = {
+	def NameSpaceSearchPathDefaultAsStr : String = {
 		val buffer : StringBuilder = new StringBuilder
 		buffer.append("{")
-		namespaceSearchPath.addString(buffer, ",")
+		namespaceSearchPathDefault.addString(buffer, ",")
 		buffer.append("}")
 		buffer.toString
 	}
+	
+	def NameSpaceSearchPathAsStr : String = {
+		val buffer : StringBuilder = new StringBuilder
+		buffer.append("{")
+		nameSpcSearchPath.addString(buffer, ",")
+		buffer.append("}")
+		buffer.toString
+	}
+	
+	/** 
+	 * Answer the namespaceSearchPath for this model, an Array of namespace alias, namespace pairs.
+	 *
+	 * NOTE: The namespace search path is computed each call until it has been determined that all nodes have been parsed by the xml parser.
+	 * Ordinarily there are no calls made to this function until that is the case, but for safety sake, this precaution is made.
+	 * 
+	 * The namespaceSearchPath will answer an Array[(String,String)] where the first tuple item is the namespace alias and the second the full
+	 * package qualified namespace that will be used to look up metadata elements.  
+	 * 
+	 * As a side effect, a namespaceSearchMap is a also constructed where the key is the alias and the value the full package qualified 
+	 * namespace.  The map is used when the alias is explicitly used as part of the field reference expression to defeat the standard first found 
+	 * behavior of the list.
+	 * 
+	 * @return searchpath, an Array[(alias,fqnamespace)]
+	 * 
+	 */
+	var nodeXformComplete : Boolean = false /** When true, the nameSpcSearchPath is stable and will be returned as the namespaceSearchPath result */
+	def NodeXformComplete : Unit = { nodeXformComplete = true }
+	var namespaceSearchMap : Map[String,String] = Map[String,String]()
+	def NamespaceSearchMap : Map[String,String] = namespaceSearchMap
+	var nameSpcSearchPath : Array[(String,String)] = null
+	def namespaceSearchPath : Array[(String,String)] = {
+		val nmSpcs : Array[(String,String)] = if (nodeXformComplete && nameSpcSearchPath != null && nameSpcSearchPath.size > 0) {
+			nameSpcSearchPath
+		} else {
+			val pathDataField : xDataField = if (dDict.contains("NamespaceSearchPath")) dDict("NamespaceSearchPath") else null
+			nameSpcSearchPath = if (pathDataField != null) {
+		    	val aliasSpcPair : Array[String] = pathDataField.values.map( valPair => valPair._1).toArray
+		    	val pathLen : Int = aliasSpcPair.size
+		    	val legitSz : Int = aliasSpcPair.filter(each => each.split(',').size == 2).size /** insist on only 2 items in each commma-delimited string */
+		    	if (pathLen == legitSz) {
+		    		val userSupplied : Array[(String,String)] = aliasSpcPair.map(each => {
+		    			val pair : Array[String] = each.split('.')
+		    			namespaceSearchMap(pair(0).trim) = pair(1).trim
+		    			(pair(0).trim,pair(1).trim)
+		    		})
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
+		    		(Array[(String,String)]() ++ namespaceSearchPathDefault) ++ userSupplied
+		    	} else {
+		    		PmmlError.logError(this, s"Namespace specification is invalid ... either omit the NamespaceSearchPath DataField or provide one or more ${'"'}namespace alias , full.pkg.name.space${'"'} strings as NamespaceSearchPath's enumerated values")
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
+		    		Array[(String,String)]() ++ namespaceSearchPathDefault
+		    	}
+		  	} else {
+		  		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
+		    	Array[(String,String)]() ++ namespaceSearchPathDefault
+		  	}
+			nameSpcSearchPath
+		}
+	  	nmSpcs
+	}
+
 	
 	/** 
 	 *  When expandCompoundFieldTypes is specified, any container.subcontainer.field... reference has the type 
@@ -473,22 +533,22 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 					if (msgDef == null) {
 						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
 						if (containerDef == null) {
-							logger.error("The supplied message has no corresponding message definition.  Please add metadata for this message.")
+							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
 							if (containerDef.isInstanceOf[ContainerTypeDef]) {
 								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
 							} else {
-								logger.error(s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")	
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
 							}
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 							val implJar : String  = containerDef.JarName
 							val depJars : Array[String] = containerDef.DependencyJarNames
 							collectClassPathJars(implJar, depJars)
 						}
-					} else {
+					} else { /** a container ... not a message ... this is a bit crazy so far... we have not accepted these in the constructor */
 						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
 						if (containerDef == null) {
-							logger.error("The supplied message has no corresponding message definition.  Please add metadata for this message.")
+							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 							val implJar : String  = containerDef.JarName
@@ -498,12 +558,12 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 							if (containerDef.isInstanceOf[ContainerTypeDef]) {
 								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
 							} else {
-								logger.error(s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")	
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
 							}
 						}
 					}
 				} else {
-					logger.error("The input message referenced in the messages field has not been declared in the data dictionary.  Do that before proceeding.")
+					PmmlError.logError(this, "The input message referenced in the messages field has not been declared in the data dictionary.  Do that before proceeding.")
 				}
 			})
 		}

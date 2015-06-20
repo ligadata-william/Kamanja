@@ -54,7 +54,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="SputumMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-				<FieldRef field="gCtx"/>
+                <Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">system.SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -74,7 +74,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
-				<FieldRef field="gCtx"/>
+                <Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">system.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
@@ -93,10 +93,10 @@ COPDv1.xml
 			Obtain the EnvExposureCodes MessageContainerBase array 
 		-->
 		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
-				<Apply function="GetArray">
-					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">system.EnvCodes</Constant>
-				</Apply>
+			<Apply function="GetArray">
+                <Constant dataType="context">ctx</Constant>
+			    <Constant dataType="string">system.EnvCodes</Constant>
+			</Apply>
 		</DerivedField>
 
 		<!--
@@ -113,10 +113,10 @@ COPDv1.xml
 			Obtain the CoughCodes MessageContainerBase array 
 		-->
 		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
-				<Apply function="GetArray">
-					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">system.CoughCodes</Constant>
-				</Apply>
+			<Apply function="GetArray">
+                <Constant dataType="context">ctx</Constant>
+			    <Constant dataType="string">system.CoughCodes</Constant>
+			</Apply>
 		</DerivedField>
 
 		<!--
@@ -133,10 +133,10 @@ COPDv1.xml
 			Obtain the CoughCodes MessageContainerBase array 
 		-->
 		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
-				<Apply function="GetArray">
-					<FieldRef field="gCtx"/>
-				    <Constant dataType="string">system.DyspnoeaCodes</Constant>
-				</Apply>
+			<Apply function="GetArray">
+                <Constant dataType="context">ctx</Constant>
+			    <Constant dataType="string">system.DyspnoeaCodes</Constant>
+			</Apply>
 		</DerivedField>
 
 		<!--
@@ -164,7 +164,7 @@ COPDv1.xml
 
 		<DerivedField dataType="macrostate" name="modelstate" optype="categorical">
 	   		<Apply function="GetMsgContainerElseNew">
-	        	<FieldRef field="gCtx"/>
+                <Constant dataType="context">ctx</Constant>
 	        	<Constant dataType="typename">modelstate</Constant>
 	        	<Constant dataType="string">system.macrostate</Constant>
 	        	<FieldRef field="msgPartitionKey"/> 
@@ -354,7 +354,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="desynpuf_id_base_inpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
-				<FieldRef field="gCtx"/>
+                <Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">System.InpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
@@ -390,7 +390,7 @@ COPDv1.xml
 		-->
 		<DerivedField name="desynpuf_id_base_outpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
-				<FieldRef field="gCtx"/>
+                <Constant dataType="context">ctx</Constant>
 			    <Constant dataType="string">System.OutpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
@@ -823,6 +823,7 @@ COPDv1.xml
 					</Apply>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_FortyYearsOrOlder</Constant>
 	          		<FieldRef field="modelstate.fortyyrsorolder"/>
 	          	</Apply>
@@ -832,6 +833,7 @@ COPDv1.xml
 	            	<FieldRef field="WithSmokingHistory"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_SmokingHistory</Constant>
 	          		<FieldRef field="modelstate.withsmokinghistory"/>
 	          	</Apply>
@@ -841,6 +843,7 @@ COPDv1.xml
 	            	<FieldRef field="WithEnvironmentalExposures"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_WithEnvironmentalExposure</Constant>
 	          		<FieldRef field="modelstate.withenvironmentalexposures"/>
 	          	</Apply>
@@ -850,6 +853,7 @@ COPDv1.xml
 	            	<FieldRef field="Dyspnoea"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_Dyspnoea</Constant>
 	          		<FieldRef field="modelstate.dyspnoea"/>
 	          	</Apply>
@@ -859,6 +863,7 @@ COPDv1.xml
 	            	<FieldRef field="ChronicCough"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_ChronicCough</Constant>
 	          		<FieldRef field="modelstate.chroniccough"/>
 	          	</Apply>
@@ -868,6 +873,7 @@ COPDv1.xml
 	            	<FieldRef field="ChronicSputum"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_ChronicSputum</Constant>
 	          		<FieldRef field="modelstate.chronicsputum"/>
 	          	</Apply>
@@ -877,6 +883,7 @@ COPDv1.xml
 	            	<FieldRef field="COPDSymptoms"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_COPDSymptoms</Constant>
 	          		<FieldRef field="modelstate.copdsymptoms"/>
 	          	</Apply>
@@ -886,6 +893,7 @@ COPDv1.xml
 	            	<FieldRef field="FamilyHistory"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_FamilyHistory</Constant>
 	          		<FieldRef field="modelstate.familyhistory"/>
 	          	</Apply>
@@ -895,6 +903,7 @@ COPDv1.xml
 	            	<FieldRef field="modelstate.familyhistory"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_FamilyHistoryNull</Constant>
 	          		<FieldRef field="modelstate.familyhistory"/>
 	          	</Apply>
@@ -907,6 +916,7 @@ COPDv1.xml
 					</Apply>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_InpatientClaimCostsByDateKeysNested</Constant>
 	          		<FieldRef field="modelstate.inpatientclaimsbydatekeys"/>
 	          	</Apply>
@@ -922,6 +932,7 @@ COPDv1.xml
 					</Apply>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_InpatientClaimTotalCostEachDateNested</Constant>
 	          		<FieldRef field="modelstate.inpatientclaimtotalcosteachdate"/>
 	          	</Apply>
@@ -932,6 +943,7 @@ COPDv1.xml
 					<FieldRef field="outPatientClaimsByDateKeys"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_OutpatientClaimsByDateKeysStandard</Constant>
 	          		<FieldRef field="modelstate.outpatientclaimsbydatekeys"/>
 	          	</Apply>
@@ -949,6 +961,7 @@ COPDv1.xml
 	            	<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_OutpatientClaimTotalCostEachDateNull</Constant>
 	          		<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
 	          	</Apply>
@@ -965,6 +978,7 @@ COPDv1.xml
 					</Apply>
 	          	</Apply>
 	          	<Apply function="Put">
+                	<Constant dataType="context">ctx</Constant>
 	          		<Constant dataType="string">modelState_OutpatientClaimTotalCostEachDateNested</Constant>
 	          		<FieldRef field="modelstate.outpatientclaimtotalcosteachdate"/>
 	          	</Apply>
@@ -1011,6 +1025,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">2</Constant> 
 					</Apply>
@@ -1018,6 +1033,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
@@ -1041,6 +1057,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">1b</Constant> 
 					</Apply>
@@ -1048,6 +1065,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
@@ -1074,6 +1092,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">1a</Constant> 
 					</Apply>
@@ -1081,6 +1100,7 @@ COPDv1.xml
 				<Apply function="and">
 					<FieldRef field="MaterializeOutputs"/>
 					<Apply function="Put">  
+                		<Constant dataType="context">ctx</Constant>
 						<Constant dataType="string">COPDSeverity</Constant>
 						<Constant dataType="string">NotSet</Constant> 
 					</Apply>
