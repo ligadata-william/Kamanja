@@ -1461,7 +1461,7 @@ object TestMetadataAPI{
       metaProps.put("namespace", "System")
       metaProps.put("name", "allModels")
       metaProps.put("version","1.0")
-      metaProps.put("pName","com.ligadata.models.samples.models")
+      metaProps.put("objName","LowBalanceAlertModel.LowBalanceAlertModelObj")
       metaProps.put("deps",Array[String]("fatafatbase_2.10-1.0.jar"))
       
       
