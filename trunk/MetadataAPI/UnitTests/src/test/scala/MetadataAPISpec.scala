@@ -201,8 +201,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       assert(0 != contFiles.length)
 
-      fileList = List("CoughCodes.json","EnvCodes.json","DyspnoeaCodes.json","SmokeCodes.json","SputumCodes.json")
-      //fileList = List("CoughCodes.json")
+      //fileList = List("CoughCodes.json","EnvCodes.json","DyspnoeaCodes.json","SmokeCodes.json","SputumCodes.json")
+      fileList = List("EnvCodes.json")
       fileList.foreach(f1 => {
 	And("Add the Container From " + f1)
 	And("Make Sure " + f1 + " exist")
@@ -320,8 +320,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
       assert(0 != msgFiles.length)
 
-      fileList = List("outpatientclaim.json","inpatientclaim.json","hl7.json","beneficiary.json")
-      //fileList = List("outpatientclaim.json")
+      //fileList = List("outpatientclaim.json","inpatientclaim.json","hl7.json","beneficiary.json")
+      fileList = List("HelloWorld_Msg_Def.json")
       fileList.foreach(f1 => {
 	And("Add the Message From " + f1)
 	And("Make Sure " + f1 + " exist")
@@ -424,7 +424,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val modFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
       assert(0 != modFiles.length)
 
-      fileList = List("COPDv1.xml")
+      //fileList = List("COPDv1.xml")
+      fileList = List("HelloWorld_PMML.xml")
       fileList.foreach(f1 => {
 	And("Add the Model From " + f1)
 	And("Make Sure " + f1 + " exist")
@@ -853,6 +854,7 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       And("getAuditRec ")
       res = MetadataAPIImpl.getAuditRec(new Date((new Date).getTime() - 1500 * 60000),null,null,null,null)
       assert(res != null)
+      logger.info(res)
       res should include regex("\"Action\" : \"GetContainerDef\"")
       res should include regex("\"UserOrRole\" : \"lonestarr\"")
       res should include regex("\"Status\" : \"true\"")

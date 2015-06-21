@@ -17,15 +17,17 @@ object myBuild extends Build {
 
   parallelExecution := false
 
-  val wdir = new File("./target/scala-2.10/test-classes/jars/lib/workingdir")
-  if( !wdir.exists() ){
-    wdir.mkdir()
-  }
+  //val wdir = new File("./target/scala-2.10/test-classes/jars/lib/workingdir")
+  //val wdir = new File("./src/test/resources/jars/lib/workingdir")
+  //if( !wdir.exists() ){
+  //  wdir.mkdir()
+  //}
 
-  val appdir = new File("./target/scala-2.10/test-classes/jars/lib/application")
-  if( !appdir.exists() ){
-    appdir.mkdir()
-  }
+  //val appdir = new File("./target/scala-2.10/test-classes/jars/lib/application")
+  //val appdir = new File("./src/test/resources/jars/lib/application")
+  //if( !appdir.exists() ){
+  //  appdir.mkdir()
+  //}
 
   copy(new File("lib_managed"))
 
