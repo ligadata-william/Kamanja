@@ -17,12 +17,12 @@ object myBuild extends Build {
 
   parallelExecution := false
 
-  val wdir = new File("./target/scala-2.10/classes/jars/lib/workingdir")
+  val wdir = new File("./target/scala-2.10/test-classes/jars/lib/workingdir")
   if( !wdir.exists() ){
     wdir.mkdir()
   }
 
-  val appdir = new File("./target/scala-2.10/classes/jars/lib/application")
+  val appdir = new File("./target/scala-2.10/test-classes/jars/lib/application")
   if( !appdir.exists() ){
     appdir.mkdir()
   }
@@ -32,9 +32,9 @@ object myBuild extends Build {
   copy(new File("../.."))
 
   private def copy(path: File): Unit = {
-    val targetLibDir = "./target/scala-2.10/classes/jars/lib/system/"
+    val targetLibDir = "./target/scala-2.10/test-classes/jars/lib/system/"
     if(path.isDirectory ){
-      if( path.getPath.contains("MetadataAPI/UnitTests/target/scala-2.10/classes/jars/lib/system") ){
+      if( path.getPath.contains("MetadataAPI/UnitTests/target/scala-2.10/test-classes/jars/lib/system") ){
 	return
       }
       Option(path.listFiles).map(_.toList).getOrElse(Nil).foreach(f => {

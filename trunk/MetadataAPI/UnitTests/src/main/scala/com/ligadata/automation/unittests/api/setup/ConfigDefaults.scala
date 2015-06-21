@@ -20,7 +20,7 @@ object ConfigDefaults {
 
   def scalaJarsClasspath = s"$scala_home/lib/typesafe-config.jar:$scala_home/lib/scala-actors.jar:$scala_home/lib/akka-actors.jar:$scala_home/lib/scalap.jar:$scala_home/lib/jline.jar:$scala_home/lib/scala-swing.jar:$scala_home/lib/scala-library.jar:$scala_home/lib/scala-actors-migration.jar:$scala_home/lib/scala-reflect.jar:$scala_home/lib/scala-compiler.jar"
 
-//  def scalaJarsClasspath: String = jarResourceDir + "/akka-actors-2.10.4.jar:" + jarResourceDir + "/scala-library-2.10.4.jar:" + jarResourceDir + "/scala-reflect-2.10.4.jar:" + jarResourceDir + "/scala-compiler-2.10.4.jar:" + jarResourceDir + "/scalap-2.10.0.jar"
+  def dataDirectory = getClass.getResource("/Metadata").getPath
 
   def metadataClasspath: String = jarResourceDir + "/metadata_2.10-1.0.jar:" + jarResourceDir + "/basefunctions_2.10-0.1.0.jar:" + jarResourceDir + "/messagedef_2.10-1.0.jar:" + jarResourceDir + "/methodextractor_2.10-1.0.jar:" + jarResourceDir + "/pmmlcompiler_2.10-1.0.jar:" + jarResourceDir + "/fatafatbase_2.10-1.0.jar:" + jarResourceDir + "/bootstrap_2.10-1.0.jar:" + jarResourceDir + "/joda-time-2.3.jar:" + jarResourceDir + "/joda-convert-1.6.jar:" + jarResourceDir + "/basetypes_2.10-0.1.0.jar:" + jarResourceDir + "/pmmludfs_2.10-1.0.jar:" + jarResourceDir + "/pmmlruntime_2.10-1.0.jar:" + jarResourceDir + "/json4s-native_2.10-3.2.10.jar:" + jarResourceDir + "/json4s-core_2.10-3.2.10.jar:" + jarResourceDir + "/json4s-ast_2.10-3.2.10.jar:" + jarResourceDir + "/jackson-databind-2.3.1.jar:" + jarResourceDir + "/jackson-annotations-2.3.0.jar:" + jarResourceDir + "/json4s-jackson_2.10-3.2.10.jar:" + jarResourceDir + "/jackson-core-2.3.1.jar:" + jarResourceDir + "/log4j-1.2.17.jar"
 }

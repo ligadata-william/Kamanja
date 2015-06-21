@@ -43,7 +43,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     try {
 
       logger.info("resource dir => " + getClass.getResource("/").getPath)
-      System.exit(0);
 
       logger.info("Initialize MetadataManager")
       mdMan.config.classPath = ConfigDefaults.metadataClasspath

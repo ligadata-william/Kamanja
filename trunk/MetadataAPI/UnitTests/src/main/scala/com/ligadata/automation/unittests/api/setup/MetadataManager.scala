@@ -14,9 +14,10 @@ import scala.collection.mutable
 import scala.io.Source
 import org.apache.log4j._
 
-case class MetadataAPIProperties(var database: String = "cassandra", 
+case class MetadataAPIProperties(var database: String = "hashmap", 
 				 var databaseHost: String = "localhost", 
 				 var databaseSchema: String = "metadata",
+				 var dataDirectory: String = ConfigDefaults.dataDirectory,
                                  var classPath: String = ConfigDefaults.metadataClasspath, 
 				 var znodeBasePath: String = "/ligadata",
                                  var zkConnStr: String = "localhost:2181", 
@@ -73,7 +74,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("DATABASE", config.database)
     md.metadataAPIConfig.setProperty("DATABASE_HOST", config.databaseHost)
     md.metadataAPIConfig.setProperty("DATABASE_SCHEMA", config.databaseSchema)
-    md.metadataAPIConfig.setProperty("DATABASE_LOCATION", "")
+    md.metadataAPIConfig.setProperty("DATABASE_LOCATION", config.dataDirectory)
     md.metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarPathApp)
     md.metadataAPIConfig.setProperty("JAR_PATHS",  jarPathSystem + "," + jarPathApp)
     md.metadataAPIConfig.setProperty("MANIFEST_PATH", metadataDir.getAbsoluteFile + "/manifest.mf")
