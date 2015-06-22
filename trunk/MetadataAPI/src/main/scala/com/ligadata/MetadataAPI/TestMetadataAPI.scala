@@ -1462,7 +1462,7 @@ object TestMetadataAPI{
       metaProps.put("name", "allModels")
       metaProps.put("version","1.0")
       metaProps.put("objName","LowBalanceAlertModel.LowBalanceAlertModelObj")
-      metaProps.put("deps",Array[String]("fatafatbase_2.10-1.0.jar"))
+      metaProps.put("dep",Array[String]("fatafatbase_2.10-1.0.jar"))
       
       
       println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr,"scala",metaProps,userid))
