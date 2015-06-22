@@ -41,21 +41,34 @@ class TimeRange(startTime: Int, endTime: Int) {
 }
 
 // RDD traits/classes
+/**
+ * More functions available on RDDs of (key, value) pairs via an implicit conversion.
+ */
 class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null) {
   val LOG = Logger.getLogger(getClass);
 
   def count: Long = self.size
 
+  /**
+   * Count the number of elements for each key, and return the result as a Map.
+   */
   def countByKey: Map[K, Long] = {
     self.Collection.groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.size.toLong)
   }
 
+  /**
+   * Group the values for each key in the RDD into a iterable trait.
+   */
   def groupByKey: RDD[(K, Iterable[V])] = {
     val newrdd = RDD.makeRDD(self.Collection.groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2).asInstanceOf[Iterable[V]]).toArray)
     newrdd
   }
 
   // Join Functions
+  /**
+   * Return an RDD containing all pairs of elements with matching keys in this and other.
+   * Each pair of elements will be returned as a (k, (v1, v2)) tuple, where (k, v1) is in this and (k, v2) is in other.
+   */
   def join[W](other: RDD[(K, W)]): RDD[(K, (V, W))] = {
     val s1 = self.Collection.groupBy(t => t._1)
     val s2 = other.Collection.groupBy(t => t._1)
@@ -75,6 +88,10 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
     newrdd
   }
 
+  /**
+   * Return the Cartesian product of this and other, that is,
+   * the RDD of all pairs of elements (v, w) where v is in this and w is in other.
+   */
   def fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))] = {
     val s1 = self.Collection.groupBy(t => t._1)
     val s2 = other.Collection.groupBy(t => t._1)
@@ -108,6 +125,11 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
     newrdd
   }
 
+  /**
+   * Performs a left outer join of this and other.
+   * For each element (k, v) in this, the resulting RDD will either contain all pairs (k, (v, Some(w))) for w in other,
+   * or the pair (k, (v, None)) if no elements in other have key k.
+   */
   def leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))] = {
     val s1 = self.Collection.groupBy(t => t._1)
     val s2 = other.Collection.groupBy(t => t._1)
@@ -131,6 +153,11 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
     newrdd
   }
 
+  /**
+   * Performs a right outer join of this and other.
+   * For each element (k, w) in other, the resulting RDD will either contain all pairs (k, (Some(v), w)) for v in this,
+   * or the pair (k, (None, w)) if no elements in this have key k.
+   */
   def rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))] = {
     val s1 = self.Collection.groupBy(t => t._1)
     val s2 = other.Collection.groupBy(t => t._1)
@@ -154,6 +181,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
     newrdd
   }
 
+  /**
+   *Pass each value in the key-value pair RDD through a map function without changing the keys.
+   */
   def mapValues[U](f: V => U): RDD[(K, U)] = {
     val newrdd = RDD.makeRDD(self.Collection.map(v => (v._1, f(v._2))).toArray)
     newrdd
@@ -183,6 +213,9 @@ class RDD[T: ClassTag] {
 
   def elementClassTag: ClassTag[T] = classTag[T]
 
+  /**
+   * Return a new RDD by applying a function to all elements of this RDD.
+   */
   def map[U: ClassTag](f: T => U): RDD[U] = {
     val newrdd = new RDD[U]()
     newrdd.collection ++= collection.iterator.map(f)
@@ -196,12 +229,18 @@ class RDD[T: ClassTag] {
     newrdd
   }
 
+  /**
+   * Return a new RDD by first applying a function to all elements of this RDD, and then flattening the results.
+   */
   def flatMap[U: ClassTag](f: T => TraversableOnce[U]): RDD[U] = {
     val newrdd = new RDD[U]()
     newrdd.collection ++= collection.iterator.flatMap(f)
     newrdd
   }
 
+  /**
+   * Return a new RDD containing only the elements that satisfy a predicate.
+   */
   def filter(f: T => Boolean): RDD[T] = {
     val newrdd = new RDD[T]()
     newrdd.collection ++= collection.iterator.filter(f)
@@ -215,30 +254,48 @@ class RDD[T: ClassTag] {
     newrdd
   }
 
+  /**
+   * Return the union of this RDD and another one.
+   */
   def union(other: RDD[T]): RDD[T] = {
     val newrdd = new RDD[T]()
     newrdd.collection ++= (collection ++ other.iterator)
     newrdd
   }
 
+  /**
+   * Return the union of this RDD and another one. Any identical elements will appear multiple times.
+   */
   def ++(other: RDD[T]): RDD[T] = this.union(other)
 
   // def sortBy[K](f: (T) => K, ascending: Boolean = true) (implicit ord: Ordering[K], ctag: ClassTag[K]): RDD[T] = this.keyBy[K](f).sortByKey(ascending, numPartitions).values
 
+  /**
+   * Return the intersection of this RDD and another one.
+   */
   def intersection(other: RDD[T]): RDD[T] = {
     throw new Exception("Unhandled function intersection")
   }
 
+  /**
+   * Return an RDD of grouped elements. Each group consists of a key and a sequence of elements mapping to that key.
+   */
   def groupBy[K](f: T => K)(implicit kt: ClassTag[K]): RDD[(K, Iterable[T])] = {
     val newrdd = new RDD[(K, Iterable[T])]()
     newrdd.collection ++= collection.map(x => (f(x), x)).groupBy(t => t._1).mapValues(listOfPairs => listOfPairs.map(pair => pair._2))
     newrdd
   }
 
+  /**
+   * Applies a function f to all elements of this RDD.
+   */
   def foreach(f: T => Unit): Unit = {
     collection.iterator.foreach(f)
   }
 
+  /**
+   * Return an array that contains all of the elements in this RDD.
+   */
   def toArray: Array[T] = {
     collection.toArray
   }
@@ -247,27 +304,42 @@ class RDD[T: ClassTag] {
     throw new Exception("Unhandled function subtract")
   }
 
+  /**
+   * Return the number of elements in the RDD.
+   */
   def count(): Long = size()
 
   def size(): Long = collection.size
 
+  /**
+   * Return the first element in this RDD.
+   */
   def first(): Option[T] = {
     if (collection.size > 0)
       return Some(collection(0))
     None
   }
 
+  /**
+   * Return the last element in this RDD.
+   */
   def last(): Option[T] = {
     if (collection.size > 0)
       return Some(collection(collection.size - 1))
     None
   }
 
+  /**
+   * Sort the data in the array and than return the top N element(s).
+   */
   def top(num: Int): Array[T] = {
     // BUGBUG:: Order the data and select top N
     throw new Exception("Unhandled function top")
   }
 
+  /**
+   * Return the maximum element in this collection.
+   */
   def max[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
     var maxVal: Option[U] = None
     collection.foreach(c => {
@@ -276,6 +348,9 @@ class RDD[T: ClassTag] {
     maxVal
   }
 
+  /**
+   * Return the minimum element in this collection.
+   */
   def min[U: ClassTag](f: (Option[U], T) => U): Option[U] = {
     var minVal: Option[U] = None
     collection.foreach(c => {
@@ -284,6 +359,9 @@ class RDD[T: ClassTag] {
     minVal
   }
 
+  /**
+   * Check whether this collection is empty.
+   */
   def isEmpty(): Boolean = collection.isEmpty
 
   def keyBy[K](f: T => K): RDD[(K, T)] = {
@@ -312,6 +390,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
 
   def iterator: java.util.Iterator[T] = asJavaIterator(rdd.iterator)
 
+  /**
+   * Return a new RDD by applying the function to all elements of this RDD.
+   */
   def map[R](f: Function1[T, R]): JavaRDD[R] = {
     JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
@@ -321,11 +402,17 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
     JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
 
+  /**
+   * Return a new RDD by applying a function to all the elements of this RDD, and than flattening the results.
+   */
   def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = {
     def fn = (x: T) => f.call(x).asScala
     JavaRDD.fromRDD(rdd.flatMap(fn)(fakeClassTag[U]))(fakeClassTag[U])
   }
 
+  /**
+   * Return an RDD of grouped elements.
+   */
   def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = {
     // The type parameter is U instead of K in order to work around a compiler bug; see SPARK-4459
     implicit val ctagK: ClassTag[U] = fakeClassTag
@@ -333,14 +420,29 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
     JavaPairRDD.fromRDD(JavaPairRDD.groupByResultToJava(rdd.groupBy(FatafatUtils.toScalaFunction1(f))(fakeClassTag)))
   }
 
+  /**
+   * Return the bymber of elements in the RDD.
+   */
   def count(): Long = rdd.count()
 
+  /**
+   * Return the size of the RDD.
+   */
   def size(): Long = rdd.size()
 
+  /**
+   * Return the first element in this RDD.
+   */
   def first(): Optional[T] = Utils.optionToOptional(rdd.first)
 
+  /**
+   * Return the last element in this RDD.
+   */
   def last(): Optional[T] = Utils.optionToOptional(rdd.last)
 
+  /**
+   * True if and only if the RDD contains no elements at all.
+   */
   def isEmpty(): Boolean = rdd.isEmpty()
 }
 
@@ -349,18 +451,34 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
 
   override def wrapRDD(rdd: RDD[T]): JavaRDD[T] = JavaRDD.fromRDD(rdd)
 
+  /**
+   * Return a new RDD containing only the elements that satisfy the predicate.
+   */
   def filter(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rdd.filter((x => f.call(x).booleanValue())))
 
+  /**
+   * Return the union of this RDD and another one.
+   */
   def union(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.union(other.rdd))
 
+  /**
+   * Return the intersection of this RDD and another one. The output will not contain any duplicate elements.
+   */
   def intersection(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.intersection(other.rdd))
 
+  /**
+   * Return an RDD from this that are not in the other.
+   */
   def subtract(other: JavaRDD[T]): JavaRDD[T] = wrapRDD(rdd.subtract(other))
 
   // def sortBy[S](f: JFunction1[T, S], ascending: Boolean): JavaRDD[T]
 }
 
+
 object JavaPairRDD {
+  /**
+   * Return an iterable RDD of grouped elements. Each group consists of a key and a sequence of elements mapping to that key.
+   */
   def groupByResultToJava[K: ClassTag, T](rdd: RDD[(K, Iterable[T])]): RDD[(K, JIterable[T])] = {
     RDD.rddToPairRDDFunctions(rdd).mapValues(asJavaIterable)
   }
@@ -388,15 +506,27 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])(implicit val kClassTag: ClassTag[K
 
   import JavaPairRDD._
 
+  /**
+   * Return a new RDD containing only the elements that satisfy the predicate.
+   */
   def filter(f: Function1[(K, V), java.lang.Boolean]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.filter(x => f.call(x).booleanValue()))
 
+  /**
+   * Return the union of this RDD and another one.
+   */
   def union(other: JavaPairRDD[K, V]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.union(other.rdd))
 
+  /**
+   * Return the intersection of this RDD and another one. The output will not contain any duplicate elements.
+   */
   def intersection(other: JavaPairRDD[K, V]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.intersection(other.rdd))
 
+  /**
+   * Return an RDD from this that are not in the other.
+   */
   def subtract(other: JavaPairRDD[K, V]): JavaPairRDD[K, V] =
     fromRDD(rdd.subtract(other))
 
@@ -430,6 +560,9 @@ abstract class RDDObject[T: ClassTag] {
     None
   }
 
+  /**
+   * Get recent entry or if recent entry not present, return a new entry.
+   */
   final def getRecentOrNew: T = {
     val rcnt = getRecent
     if (rcnt.isEmpty)
@@ -448,12 +581,18 @@ abstract class RDDObject[T: ClassTag] {
     None
   }
 
+  /**
+   * Get recent entry or if recent entry not present, return a new entry.
+   */
   final def getRecentOrNew(key: Array[String]): T = {
     val rcnt = getRecent(key)
     if (rcnt.isEmpty) return build
     rcnt.get
   }
 
+  /**
+   * Find an entry for the given key.
+   */
   final def getOne(tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[T] = {
     val mdlCtxt = getCurrentModelContext
     if (mdlCtxt != null && mdlCtxt.txnContext != null) {
@@ -464,12 +603,18 @@ abstract class RDDObject[T: ClassTag] {
     None
   }
 
+  /**
+   * Find an entry for the given key or return a new one.
+   */
   final def getOneOrNew(tmRange: TimeRange, f: MessageContainerBase => Boolean): T = {
     val one = getOne(tmRange, f)
     if (one.isEmpty) return build
     one.get
   }
 
+  /**
+   * Find an entry for the given key.
+   */
   final def getOne(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[T] = {
     val mdlCtxt = getCurrentModelContext
     if (mdlCtxt != null && mdlCtxt.txnContext != null) {
@@ -480,6 +625,9 @@ abstract class RDDObject[T: ClassTag] {
     None
   }
 
+  /**
+   * Find an entry for the given key or return a new one.
+   */
   final def getOneOrNew(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): T = {
     val one = getOne(key, tmRange, f)
     if (one.isEmpty) return build
@@ -498,6 +646,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return a RDD for the current key.
+   */
   final def getRDDForCurrKey(tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -521,6 +672,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
   final def getRDD(tmRange: TimeRange): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -532,6 +686,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
   final def getRDD(f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -543,6 +700,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
   final def getRDD(key: Array[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -554,6 +714,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
   final def getRDD(key: Array[String], f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -565,6 +728,9 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
   final def getRDD(key: Array[String], tmRange: TimeRange): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -584,6 +750,9 @@ abstract class RDDObject[T: ClassTag] {
     }
   }
 
+  /**
+   * Saving data.
+   */
   final def saveOne(key: Array[String], inst: T): Unit = {
     val mdlCtxt = getCurrentModelContext
     if (mdlCtxt != null && mdlCtxt.txnContext != null) {
@@ -591,6 +760,9 @@ abstract class RDDObject[T: ClassTag] {
     }
   }
 
+  /**
+   * Save an RDD.
+   */
   final def saveRDD(data: RDD[T]): Unit = {
     val mdlCtxt = getCurrentModelContext
     if (mdlCtxt != null && mdlCtxt.txnContext != null) {
@@ -707,6 +879,9 @@ object StringUtils {
   // returns a new string with its first character in lower case  and rest unchanged (null or empty string returns the given string)
   def firstLower(str: String) = len(str) match { case 0 => str; case _ => firstLowerNoCheck(str) }
 
+  /**
+   * Add a new line character to each element.
+   */
   def AddAsLinesToBuf(buf: StringBuilder, lines: Array[String]) = lines.foreach(line => buf.append(line).append("\n"))
   def firstNonNull(args: String*): String = { if (args == null) return null; for (arg <- args) { if (arg != null) return arg }; null; }
 
@@ -716,6 +891,9 @@ object StringUtils {
     else str.substring(0, cnt)
   }
 
+  /**
+   * Return last non-empty element.
+   */
   def lastNonEmptyLine(strs: Array[String]): String = {
     var idx = strs.length
     while (idx > 0) { idx -= 1; val str = strs(idx); if (str.length > 0) return str; }
