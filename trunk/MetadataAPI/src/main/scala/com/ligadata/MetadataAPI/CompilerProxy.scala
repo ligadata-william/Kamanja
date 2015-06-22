@@ -196,7 +196,7 @@ println("Creating JAR / Compiling =====> "+ moduleName )
     }
 
     val jarPath = compiler_work_dir + "/" + moduleNameJar      
-    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/ "+currentWorkFolder +"/ ."
+    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/"+currentWorkFolder +"/ ."
     logger.debug(s"jar cmd used: $jarCmd")
     logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
 
