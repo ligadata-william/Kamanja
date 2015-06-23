@@ -67,9 +67,9 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
       return null
 
     // Check if at least min number of hours elapsed since last alert  
-    val curDt = RddDate.currentDateTime
+    val curDtTmInMs = RddDate.currentGmtDateTime
     val alertHistory = CustAlertHistory.getRecentOrNew
-    if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
+    if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertDtTmInMs)) < gPref.minAlertDurationInHrs)
       return null
 
     // continue with alert generation only if balance from current transaction is less than threshold
@@ -78,7 +78,7 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
       return null
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.build.withAlertDt(curDt).withAlertType("lowBalanceAlert").Save
+    CustAlertHistory.build.withAlertDtTmInMs(curDtTmInMs.getDateTimeInMs).withAlertType("lowBalanceAlert").Save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     ModelResult.builder.withResult(new LowBalanceAlertResult(mdlCtxt.txnContext)).build
   }
@@ -124,13 +124,13 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
       return null
 
     // Check if at least min number of hours elapsed since last alert  
-    val curDt = currentDateTime
+    val curDtTmInMs = RddDate.currentGmtDateTime
     val alertHistory = CustAlertHistory.getRecentOrNew
-    if (curDt.timeDiffInHrs(alertHistory.alertDt) < gPref.minAlertDurationInHrs)
+    if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertDtTmInMs)) < gPref.minAlertDurationInHrs)
       return null
 
     // get history of transaction whose balance is less than minAlertBalance in last N days
-    val lookBackTime = curDt.lastNdays(gPref.numLookbackDaysForMultiDayMinBalanceAlert)
+    val lookBackTime = curDtTmInMs.lastNdays(gPref.numLookbackDaysForMultiDayMinBalanceAlert)
     val rcntTxns = CustTransaction.getRDD(lookBackTime, { trnsaction: MessageContainerBase =>
       {
         val trn = trnsaction.asInstanceOf[CustTransaction]
@@ -149,7 +149,7 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
       return null
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.build.withAlertDt(curDt).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).Save
+    CustAlertHistory.build.withAlertDtTmInMs(curDtTmInMs.getDateTimeInMs).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).Save
     // ... Prepare results here ... need to populate result object with appropriate attributes
     ModelResult.builder.withResult(new LowBalanceAlertResult2(mdlCtxt.txnContext)).build
   }
