@@ -1470,7 +1470,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       obj match {
         case o: FunctionDef => {
-          updatedObject = mdMgr.ModifyFunction(o.nameSpace, o.name, o.ver, operation)
+          updatedObject = mdMgr.ModifyFunction(o,operation)
         }
         case o: ModelDef => {
           updatedObject = mdMgr.ModifyModel(o.nameSpace, o.name, o.ver, operation)
@@ -2157,10 +2157,11 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveFunction(functionDef: FunctionDef): String = {
+  def RemoveFunction(functionDef: FunctionDef,userid: Option[String]): String = {
     var key = functionDef.typeString
     val dispkey = functionDef.FullName + "." + MdMgr.Pad0s2Version(functionDef.Version)
     try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",key)
       DeleteObject(functionDef)
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
       apiResult.toString()
@@ -2173,12 +2174,24 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def RemoveFunction(nameSpace: String, functionName: String, version: Long, userid: Option[String]): String = {
+    var apiResult:String = ""
     var key = functionName + ":" + version
     val dispkey = functionName + "." + MdMgr.Pad0s2Version(version)
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+key)
     try {
-      DeleteObject(key, functionStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
+      val func = MdMgr.GetMdMgr.Functions(nameSpace, functionName, true, false)
+      func match {
+        case None =>
+          logger.trace("No Function with " + key + " is found in the cache ")
+	  var ar = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
+        case Some(fs) =>
+          val fa = fs.toArray
+	  fa.foreach( f => {
+            RemoveFunction(f,userid)
+	    var ar = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
+            apiResult = apiResult + ar.toString()
+	  })
+      }
       apiResult.toString()
     } catch {
       case e: Exception => {

@@ -260,33 +260,44 @@ object TestMetadataAPI{
     try {
       logger.setLevel(Level.TRACE);
 
-      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
-      if (fcnKeys.length == 0) {
+      val funcs = MdMgr.GetMdMgr.Functions(true,false)
+
+      //val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
+      if (funcs == None ){
         println("Sorry, there are no functions available in the Metadata")
         return
       }
 
+      val funcArray = funcs.get.toArray
+      if (funcArray.length == 0) {
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+
       println("\nPick the Function to be deleted from the following list: ")
       var seq = 0
-      fcnKeys.foreach(key => {
+      funcArray.foreach(f => {
         seq += 1;
-        println("[" + seq + "] " + key)
+        println("[" + seq + "] " + f.typeString)
       })
 
       print("\nEnter your choice: ")
       val choice: Int = readInt()
 
-      if (choice < 1 || choice > fcnKeys.length) {
+      if (choice < 1 || choice > funcArray.length) {
         println("Invalid choice " + choice + ",start with main menu...")
         return
       }
 
-      val fcnKey = fcnKeys(choice - 1)
-      val fcnKeyTokens = fcnKey.split("\\.")
-      val fcnNameSpace = fcnKeyTokens(0)
-      val fcnName = fcnKeyTokens(1)
-      val fcnVersion = fcnKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong,userid)
+      val func = funcArray(choice-1)
+      //val fcnKey = fcnKeys(choice - 1)
+      //val fcnKeyTokens = fcnKey.split("\\.")
+      //val fcnNameSpace = fcnKeyTokens(0)
+      //val fcnName = fcnKeyTokens(1)
+      //val fcnVersion = fcnKeyTokens(2)
+      //val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong,userid)
+      val apiResult = MetadataAPIImpl.RemoveFunction(func,userid)
 
       //val resultData = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)

@@ -812,6 +812,40 @@ class MdMgr {
     }
   }
 
+
+  @throws(classOf[ObjectNolongerExistsException])
+  def ModifyFunction(func: FunctionDef, operation: String): FunctionDef = {
+    val fcnSig = func.typeString
+    val fn = FunctionByTypeSig(fcnSig)
+    if( fn == null) {
+      throw new ObjectNolongerExistsException(s"Function ${fn.FullName} with signature \'${fcnSig}\' may have been removed already.")
+    }
+    val key = func.FullName
+    var versionMatch: FunctionDef = null
+    compilerFuncDefs.remove(fcnSig)
+    funcDefs(key).foreach(m =>
+        if (m.typeString == fcnSig) {
+          versionMatch = m
+          operation match {
+            case "Remove" => {
+              m.Deleted
+              m.Deactive
+              logger.debug("The function " + key + " is removed ")
+            }
+            case "Activate" => {
+              m.Active
+              logger.debug("The function " + key + " is activated ")
+            }
+            case "Deactivate" => {
+              m.Deactive
+              logger.debug("The function " + key + " is deactivated ")
+            }
+          }
+        })
+      versionMatch
+  }
+
+
   @throws(classOf[ObjectNolongerExistsException])
   def ModifyAttribute(nameSpace: String, name: String, ver: Long, operation: String): BaseAttributeDef = {
     val key = MdMgr.MkFullName(nameSpace, name)
