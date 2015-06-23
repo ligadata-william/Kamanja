@@ -1,9 +1,10 @@
 package com.ligadata.FatafatBase
 
 import scala.language.implicitConversions
+import java.util.{ Date, Calendar, TimeZone }
+
 // import scala.reflect.{ classTag, ClassTag }
 import org.apache.log4j.Logger
-import java.util.Date
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.reflect.{ classTag, ClassTag }
@@ -16,7 +17,7 @@ import java.lang.{ Iterable => JIterable, Long => JLong }
 import scala.collection.mutable.ArrayBuffer
 
 object ThreadLocalStorage {
-	final val modelContextInfo = new ThreadLocal[ModelContext]();
+  final val modelContextInfo = new ThreadLocal[ModelContext]();
 }
 
 object FatafatUtils {
@@ -36,9 +37,7 @@ object TimeRange {
 }
 
 // startTime & endTime are in the format of YYYYMMDDHH
-class TimeRange(startTime: Int, endTime: Int) {
-  // Methods
-}
+case class TimeRange(startTime: Int, endTime: Int) {}
 
 // RDD traits/classes
 /**
@@ -182,7 +181,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])(implicit kt: ClassTag[K], vt: Cl
   }
 
   /**
-   *Pass each value in the key-value pair RDD through a map function without changing the keys.
+   * Pass each value in the key-value pair RDD through a map function without changing the keys.
    */
   def mapValues[U](f: V => U): RDD[(K, U)] = {
     val newrdd = RDD.makeRDD(self.Collection.map(v => (v._1, f(v._2))).toArray)
@@ -473,7 +472,6 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
 
   // def sortBy[S](f: JFunction1[T, S], ascending: Boolean): JavaRDD[T]
 }
-
 
 object JavaPairRDD {
   /**
@@ -905,13 +903,48 @@ import StringUtils._
 import RddUtils._
 
 object RddDate {
-  def currentDateTime = RddDate(GetCurDtTmInMs)
+  val milliSecsPerHr = 3600 * 1000
+  val milliSecsPerDay = 24 * milliSecsPerHr
+  def currentDateTime = RddDate(currentDateTimeInMs)
+  def currentGmtDateTime = RddDate(currentGmtDateTimeInMs)
+  def currentDateTimeInMs = GetCurDtTmInMs
+  def currentGmtDateTimeInMs = GetCurGmtDtTmInMs
 }
 
-case class RddDate(tms: Long) extends Date(tms) {
-  def timeDiffInHrs(dt: Date): Int = 0
-  def timeDiffInHrs(dt: RddDate): Int = 0
-  def lastNdays(days: Int): TimeRange = null;
+case class RddDate(val dttmInMs: Long) {
+  def timeDiffInHrs(dt: RddDate): Int = {
+    if (dt.dttmInMs > dttmInMs)
+      return ((dt.dttmInMs - dttmInMs) / RddDate.milliSecsPerHr).toInt
+    ((dttmInMs - dt.dttmInMs) / RddDate.milliSecsPerHr).toInt
+  }
+
+  def timeDiffInDays(dt: RddDate): Int = {
+    if (dt.dttmInMs > dttmInMs)
+      return ((dt.dttmInMs - dttmInMs) / RddDate.milliSecsPerDay).toInt
+    ((dttmInMs - dt.dttmInMs) / RddDate.milliSecsPerDay).toInt
+  }
+
+  //BUGBUG:: Do we need to return in UTC??????
+  def lastNdays(days: Int): TimeRange = {
+    val cal = Calendar.getInstance()
+    cal.setTimeInMillis(dttmInMs)
+    val endTm =  cal.get(Calendar.YEAR) * 1000000 +  cal.get(Calendar.MONTH) * 10000 +  cal.get(Calendar.DAY_OF_MONTH) * 100 +  cal.get(Calendar.HOUR_OF_DAY)
+    cal.add(Calendar.DATE, days * -1)
+    val stTm =  cal.get(Calendar.YEAR) * 1000000 +  cal.get(Calendar.MONTH) * 10000 +  cal.get(Calendar.DAY_OF_MONTH) * 100 +  cal.get(Calendar.HOUR_OF_DAY)
+    return TimeRange(stTm, endTm)
+  }
+
+  //BUGBUG:: Do we need to return in UTC??????
+  def nextNdays(days: Int): TimeRange = {
+    val cal = Calendar.getInstance()
+    cal.setTimeInMillis(dttmInMs)
+    val stTm =  cal.get(Calendar.YEAR) * 1000000 +  cal.get(Calendar.MONTH) * 10000 +  cal.get(Calendar.DAY_OF_MONTH) * 100 +  cal.get(Calendar.HOUR_OF_DAY)
+    cal.add(Calendar.DATE, days)
+    val endTm =  cal.get(Calendar.YEAR) * 1000000 +  cal.get(Calendar.MONTH) * 10000 +  cal.get(Calendar.DAY_OF_MONTH) * 100 +  cal.get(Calendar.HOUR_OF_DAY)
+    return TimeRange(stTm, endTm)
+  }
+  
+  def getDateTimeInMs = dttmInMs
 }
 
 object RddUtils {
@@ -929,5 +962,6 @@ object RddUtils {
   def GetCurDtTmStr: String = { SimpDateFmtTimeFromMs(GetCurDtTmInMs, "yyyy:MM:dd HH:mm:ss.SSS") }
   def GetCurDtStr: String = { SimpDateFmtTimeFromMs(GetCurDtTmInMs, "yyyy:MM:dd") }
   def GetCurDtTmInMs: Long = { System.currentTimeMillis }
+  def GetCurGmtDtTmInMs: Long = { Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis() }
   def elapsed[A](f: => A): (Long, A) = { val s = System.nanoTime; val ret = f; ((System.nanoTime - s), ret); }
 }
