@@ -430,7 +430,9 @@ object DataValue {
 			    case "string" => StringDataValue.fromString(stringRep)
 			    case "int" => IntDataValue.fromString(stringRep)
 			    case "integer" => IntDataValue.fromString(stringRep) 
-			    case "long" => LongDataValue.fromString(stringRep)
+			    case "long" => {
+			    	LongDataValue.fromString(stringRep)			    	
+			    }
 			    case "float" => FloatDataValue.fromString(stringRep)
 			    case "double" => DoubleDataValue.fromString(stringRep)
 			    case "real" => DoubleDataValue.fromString(stringRep) 
@@ -521,9 +523,21 @@ class LongDataValue (var value : Long) extends DataValue("Long") {
 
 /** String => Long coercion is primitive to be kind */
 object LongDataValue {
-	private implicit def asLong(s: String) : Long = augmentString(s).toLong
-	private def fromString1(l: Long) = l
-	def fromString(s : String) : LongDataValue = new LongDataValue(fromString1(s))
+	implicit def asLong(s: String) : Long = augmentString(s).toLong
+	def fromString1(l: Long) = l
+	def fromString(s : String) : LongDataValue = {
+    	val strtoParse : String = if (s.endsWith("L")) {
+    		s.split('L').head
+    	} else {
+    		if (s.endsWith("l")) {
+    			s.split('l').head
+    		} else {
+    			s
+    		}
+    	}
+	  
+		new LongDataValue(fromString1(strtoParse))
+	}
 	def main(args: Array[String]) {
 		val n: LongDataValue = fromString("1")
 	}

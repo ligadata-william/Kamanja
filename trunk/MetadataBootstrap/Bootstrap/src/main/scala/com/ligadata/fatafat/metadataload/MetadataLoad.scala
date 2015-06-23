@@ -2008,188 +2008,25 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 						, ("value", MdMgr.sysNS, "BaseContainer"))
 					, fcnMacrofeatures
 					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-/*
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "String")
-						, ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "String")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+					
+					
+/**					
+		val putLongVariableMacroPmmlDict : String =    """
+	class %1%_%2%_PutLong(val ctx : Context, var %1% : %1_type%, val %2% : %2_type%)
+	{
+		 //resort to setting the Long value to local variable to insure scala compiler recognizes the appropriate coercion...
+		 // 	with a constant as the value present, it will match to Int and fail for large values
+	  	def Put  : Boolean = { val l : %2_type% = %2%; Put(ctx, %1%, l); true }
+	} """
 
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "String")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
+					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Long"))
 					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
+					, (putLongVariableMacroPmmlDict,putLongVariableMacroPmmlDict))	  
+ */		  
 
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "Long")
-					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Long")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Long")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "Int")
-					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Int")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Int")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "Double")
-					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Double")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Double")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "Float")
-					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-		  				
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Float")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Float")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-					    , ("containerName", MdMgr.sysNS, "String")
-					    , ("key", MdMgr.sysNS, "Any")
-					    , ("value", MdMgr.sysNS, "MessageContainerBase"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-		  				
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Any")
-						, ("value", MdMgr.sysNS, "BaseContainer"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-
-		mgr.AddMacro(MdMgr.sysNS
-					, "Put"
-					, (MdMgr.sysNS, "Boolean")
-					, List(("gCtx", MdMgr.sysNS, "EnvContext")
-						, ("containerName", MdMgr.sysNS, "String")
-						, ("key", MdMgr.sysNS, "Any")
-						, ("value", MdMgr.sysNS, "BaseMsg"))
-					, fcnMacrofeatures
-					, (putGlobalContainerFixedMacroTemplate,putGlobalContainerMappedMacroTemplate))	  
-*/
 
 		/** **************************************************************************************************************/
 
@@ -2335,7 +2172,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 					, List(("variableName", MdMgr.sysNS, "String"), ("value", MdMgr.sysNS, "Long"))
 					, fcnMacrofeatures
 					, (putVariableMacroPmmlDict,putVariableMacroPmmlDict))	  
-		  
+					
 		mgr.AddMacro(MdMgr.sysNS
 					, "Put"
 					, (MdMgr.sysNS, "Boolean")

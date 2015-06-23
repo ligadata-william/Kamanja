@@ -173,7 +173,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
 		val parameterValues : Array[String] = getArgValues
 
-		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues)
+		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues, argTypes)
 		(null,null,functionMacroExpr)
 	}
 	
@@ -416,6 +416,13 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 				buffer.append(s"ctx.valueFor(${'"'}$doesArgName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
 			} else {
 				buffer.append(exprStr)
+				if (typStr == "Long") {
+					/** check the exprStr... if all numeric (i.e., a long constant) suffix it with "L" to help the Scala compiler recognize this is a long */
+					val isAllNumeric : Boolean = exprStr.filter(ch => (ch >= '0' && ch <= '9')).size == exprStr.size
+					if (isAllNumeric) {
+						buffer.append('L')
+					}
+				}
 			}
 			cnt += 1
 			if (cnt < paramCnt) {
@@ -514,16 +521,17 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  simple function macro use.
 	 *  
 	 *  @param templateUsed one of the two templates from the function macro... 
-	 *  @param parametersUsed - these are indices into the fcnArgValues parameter (the 2nd arg) that are needed for the "does" arguments to 
-	 *  	be produced here.
+	 *  @param parametersUsed - these are indices into the parameterValues parameter (the 2nd arg) that are needed for the "does" arguments to 
+	 *  	be produced here (for sanity checking during debug)
 	 *  @param parameterValues - the substitution values that are available for the substitution.  Note that not all of them
 	 *  	necessarily need to be used.  The parametersUsed determines which will be used in the substitution map.
 	 *  @return the generated expression based upon the supplied template and substitution values.
 	 */
-	def generateDoes(templateUsed : String, parametersUsed : Array[Int], parameterValues : Array[String]) : String = {
+	def generateDoes(templateUsed : String, parametersUsed : Array[Int], parameterValues : Array[String], argTypes : Array[(String,Boolean,BaseTypeDef)] ) : String = {
 		val buffer : StringBuilder = new StringBuilder
 
 		val paramCnt : Int = parametersUsed.size
+		val argTypesSize : Int = argTypes.size
 		if (parameterValues.size == 5) {  /** little debug station */
 			val stopHere = 0
 		}
@@ -534,9 +542,22 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val argExpr : String = pair._1
   			val argidx : Int = pair._2 + 1
   			val argIdxName = argidx.toString 
+  			
+  			val (argType,isContainer,typedef) : (String,Boolean,BaseTypeDef) = if (pair._2 < argTypesSize) argTypes.apply(pair._2) else ("Any",false,null)
+  			val exprToUse : String = if (argType == "Long") {
+				/** check the argType... if all numeric (i.e., a long constant) suffix it with "L" to help the Scala compiler recognize this is a long */
+				val isAllNumeric : Boolean = argExpr.filter(ch => (ch >= '0' && ch <= '9')).size == argExpr.size
+				if (isAllNumeric) {
+					argExpr + "L"
+				} else {
+					argExpr
+				}
+  			} else {
+  				argExpr
+  			}
 
-  			ctx.logger.debug(s"%$argIdxName% = $argExpr")
-  			substitutionMap += s"%$argIdxName%" -> s"$argExpr"
+  			ctx.logger.trace(s"%$argIdxName% = $exprToUse")
+  			substitutionMap += s"%$argIdxName%" -> s"$exprToUse"
   		})
   		
   		

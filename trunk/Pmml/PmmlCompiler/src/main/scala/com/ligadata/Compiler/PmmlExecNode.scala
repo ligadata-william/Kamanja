@@ -1548,7 +1548,9 @@ object PmmlExecNode extends LogTrait {
  
 
 	def mkPmmlExecConstant(ctx : PmmlContext, c : PmmlConstant) : Option[xConstant] = {
-		var const : xConstant = new xConstant(c.lineNumber, c.columnNumber, c.dataType, PmmlTypes.dataValueFromString(c.dataType, c.Value()))
+		var const : xConstant = new xConstant(c.lineNumber, c.columnNumber
+											, c.dataType
+											, PmmlTypes.dataValueFromString(c.dataType, c.Value()))
 		
 		Some(const)
 	}
