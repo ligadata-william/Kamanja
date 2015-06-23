@@ -233,7 +233,7 @@ println("Creating JAR / Compiling =====> "+ moduleName )
                                                           List[(String, String, String)]() ,
                                                           1,
                                                           "LowBalanceAlertModel.jar",
-                                                          metaProps.getProperty("dep").asInstanceOf[Array[String]],
+                                                          metaProps.get("dep").asInstanceOf[Array[String]],
                                                           false
                                                  )
  
@@ -276,6 +276,7 @@ println("compileJavaModel ====> ..." + msgDefClassFilePath)
             classPath = depJars 
           }
        }
+
 
        var (status2,jarFileName) = jarCode(metaProps.getProperty("namespace"),
                                                 metaProps.getProperty("name"),
