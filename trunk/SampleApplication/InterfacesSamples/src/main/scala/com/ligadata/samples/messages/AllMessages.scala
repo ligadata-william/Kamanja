@@ -43,12 +43,12 @@ class CustAlertHistory extends BaseContainer {
   var custid: Long = 0;
   var branchid: Int = 0;
   var accno: Long = 0;
-  var alertDt: Date = _;
+  var alertDtTmInMs: Long = _;
   var alertType: String = ""
   var numDaysWithLessBalance: Int = 0
 
   def this(from: CustAlertHistory) = { this }
-  def withAlertDt(curDt: Date): CustAlertHistory = { this }
+  def withAlertDtTmInMs(curDtTmInMs: Long): CustAlertHistory = { this }
   def withAlertType(alertType: String): CustAlertHistory = { this }
   def withNumDays(daysWithLessBalance: Int): CustAlertHistory = { this }
 
