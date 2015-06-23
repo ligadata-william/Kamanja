@@ -32,12 +32,12 @@
   "Arguments" : [ {
     "ArgName" : "coll",
     "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
+    "ArgTypeName" : "string"
   },
   {
     "ArgName" : "coll1",
     "ArgTypeNameSpace" : "system",
-    "ArgTypeName" : "mapofanyany"
+    "ArgTypeName" : "string"
   }],
   "Version" : 100,
   "JarName" : "pmmludfs_2.10-1.0.jar",

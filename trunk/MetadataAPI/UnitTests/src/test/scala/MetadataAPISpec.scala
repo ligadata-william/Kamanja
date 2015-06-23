@@ -693,7 +693,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 	And("RemoveFunction API for all the functions that were just added")
 	funcList.Functions.foreach(fcn => {
 	  res = MetadataAPIImpl.RemoveFunction(fcn.NameSpace, fcn.Name, fcn.Version.toLong,None)
-	  res should include regex ("\"Status Code\" : 0")
 	})
 
 	And("Check whether all the functions are removed")

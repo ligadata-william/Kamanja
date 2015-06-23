@@ -1,7 +1,7 @@
 {
   "Message" : {
     "NameSpace" : "System",
-    "Name" : "msg1",
+    "Name" : "helloworld_msg_def",
     "Version" : "00.01.00",
     "Description" : "Hello World ",
     "Fixed" : "true",

@@ -5,7 +5,7 @@
         </Header>
 
         <DataDictionary numberOfFields="3">
-                <DataField name="msg" displayName="msg" optype="categorical" dataType="msg1"/>
+                <DataField name="msg" displayName="msg" optype="categorical" dataType="helloworld_msg_def"/>
                 <DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
                  <DataField name="parameters" displayName="parameters" dataType="container">
                         <Value value="gCtx" property="valid"/>
