@@ -1,0 +1,74 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "sampleboolean",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "boolean",
+  "PhysicalName" : "Boolean",
+  "Version" : 1,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.BoolImpl",
+  "TransactionId" : 0
+},
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "samplestring",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "string",
+  "PhysicalName" : "String",
+  "Version" : 1,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.StringImpl",
+  "TransactionId" : 0
+},
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "sampleany",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "any",
+  "PhysicalName" : "Any",
+  "Version" : 1,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.AnyImpl",
+  "TransactionId" : 0
+},
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "sampleint",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "int",
+  "PhysicalName" : "Int",
+  "Version" : 1,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.IntImpl",
+  "TransactionId" : 0
+},
+{
+  "MetadataType" : "ScalarTypeDef",
+  "NameSpace" : "system",
+  "Name" : "samplelong",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "System",
+  "TypeName" : "long",
+  "PhysicalName" : "Long",
+  "Version" : 1,
+  "JarName" : "basetypes_2.10-0.1.0.jar",
+  "DependencyJars" : [ "metadata_2.10-1.0.jar" ],
+  "Implementation" : "com.ligadata.BaseTypes.LongImpl",
+  "TransactionId" : 0
+} ]
+
+}

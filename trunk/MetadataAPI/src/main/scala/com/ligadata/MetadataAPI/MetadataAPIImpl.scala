@@ -2182,8 +2182,9 @@ object MetadataAPIImpl extends MetadataAPI {
       val func = MdMgr.GetMdMgr.Functions(nameSpace, functionName, true, false)
       func match {
         case None =>
-          logger.trace("No Function with " + key + " is found in the cache ")
-	  var ar = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
+          logger.warn("No Function with " + key + " is found in the cache, function may have been already removed ")
+	  var ar = new ApiResult(ErrorCodeConstants.Warning, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
+          apiResult = apiResult + ar.toString()
         case Some(fs) =>
           val fa = fs.toArray
 	  fa.foreach( f => {
@@ -2289,7 +2290,13 @@ object MetadataAPIImpl extends MetadataAPI {
         val missingJars = scala.collection.mutable.Set[String]()
         funcList.foreach(func => {
           logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionsText,AuditConstants.SUCCESS,"",func.FullNameWithVer)  
-          SaveObject(func, MdMgr.GetMdMgr)
+          var objectSaved = SaveObject(func, MdMgr.GetMdMgr)
+	  // gather failed objects as a csv string to include it in a warning message later
+	  if( objectSaved == false ){
+            if (!aggFailures.equalsIgnoreCase("")) 
+	      aggFailures = aggFailures + ","  
+            aggFailures = aggFailures + func.typeString
+	  }
           missingJars ++= CheckForMissingJar(func)
         })
         if (missingJars.size > 0) {
@@ -2299,16 +2306,7 @@ object MetadataAPIImpl extends MetadataAPI {
         val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
         funcList.foreach(func => {
           UploadJarsToDB(func, false, alreadyCheckedJars)
-          if (!SaveObject(func, MdMgr.GetMdMgr)) {
-            if (!aggFailures.equalsIgnoreCase("")) aggFailures = aggFailures + ","  
-            aggFailures = aggFailures + func.FullNameWithVer
-          }
         })
-/*
-        val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
-        val operations = funcList.map(f => "Add")
-        NotifyEngine(objectsAdded, operations)
-*/
         if (funcList.size > 0)
           PutTranId(funcList(0).tranId)
         if (!aggFailures.equalsIgnoreCase("")) {

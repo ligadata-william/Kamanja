@@ -253,7 +253,7 @@ object TestMetadataAPI{
     }
   }
 
-  def RemoveFunction: Unit = {
+  def RemoveFunctionBySignature: Unit = {
     val loggerName = this.getClass.getName
     lazy val logger = Logger.getLogger(loggerName)
 
@@ -261,8 +261,6 @@ object TestMetadataAPI{
       logger.setLevel(Level.TRACE);
 
       val funcs = MdMgr.GetMdMgr.Functions(true,false)
-
-      //val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
       if (funcs == None ){
         println("Sorry, there are no functions available in the Metadata")
         return
@@ -291,15 +289,51 @@ object TestMetadataAPI{
       }
 
       val func = funcArray(choice-1)
-      //val fcnKey = fcnKeys(choice - 1)
-      //val fcnKeyTokens = fcnKey.split("\\.")
-      //val fcnNameSpace = fcnKeyTokens(0)
-      //val fcnName = fcnKeyTokens(1)
-      //val fcnVersion = fcnKeyTokens(2)
-      //val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong,userid)
       val apiResult = MetadataAPIImpl.RemoveFunction(func,userid)
+      println("Result as Json String => \n" + apiResult)
+    }
+    catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
 
-      //val resultData = MetadataAPIImpl.getApiResult(apiResult)
+  def RemoveFunction: Unit = {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+
+    try {
+      logger.setLevel(Level.TRACE);
+
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
+      if (fcnKeys == None ){
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+      println("\nPick the Function to be deleted from the following list: ")
+      var seq = 0
+      fcnKeys.foreach(f => {
+        seq += 1;
+        println("[" + seq + "] " + f)
+      })
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > fcnKeys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
+      }
+
+      val fcnKey = fcnKeys(choice - 1)
+      val fcnKeyTokens = fcnKey.split("\\.")
+      val fcnNameSpace = fcnKeyTokens(0)
+      val fcnName = fcnKeyTokens(1)
+      val fcnVersion = fcnKeyTokens(2)
+      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong,userid)
+
       println("Result as Json String => \n" + apiResult)
     }
     catch {
@@ -2256,7 +2290,7 @@ object TestMetadataAPI{
       val removeType      = ()            => { RemoveType }
       val addFunction         = ()        => { AddFunction }
       val getFunction     =()             => { GetFunction }
-      val removeFunction      = ()        => { RemoveFunction }
+      val removeFunction      = ()        => { RemoveFunctionBySignature }
       val updateFunction         = ()     => { UpdateFunction }
       val addConcept         = ()         => { AddConcept }
       val removeConcept      = ()         => { RemoveConcept }
@@ -2400,8 +2434,8 @@ object TestMetadataAPI{
 
   def main(args: Array[String]){
     try{
-      //logger.setLevel(Level.TRACE);  //check again
-    //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+    //logger.setLevel(Level.TRACE);  //check again
+    //MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
     //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
     //  serializer.SetLoggerLevel(Level.TRACE)
     //  JsonSerializer.SetLoggerLevel(Level.TRACE)
