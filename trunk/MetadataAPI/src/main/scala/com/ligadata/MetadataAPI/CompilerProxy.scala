@@ -241,9 +241,9 @@ println("Creating JAR / Compiling =====> "+ moduleName )
  
  
        //Adding the package name
-       val packageName = "com.ligadata.models."+metaProps.getProperty("namespace") +".V"+ MdMgr.FormatVersion(metaProps.getProperty("version")).substring(0,6)
+       val packageName = "com.ligadata.models."+metaProps.getProperty("namespace") +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(metaProps.getProperty("version")))
        
-       println("compileJavaModel ====> " + packageName)  
+       println("compileJavaModel ====> " + packageName)
        var firstImport = sourceCode.indexOf("import")
        var packagedSource = ""
        packagedSource = "package " +packageName + "; " + sourceCode.substring(firstImport)
