@@ -307,7 +307,7 @@ object TestMetadataAPI{
       logger.setLevel(Level.TRACE);
 
       val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
-      if (fcnKeys == None ){
+      if (fcnKeys.length == 0 ){
         println("Sorry, there are no functions available in the Metadata")
         return
       }
