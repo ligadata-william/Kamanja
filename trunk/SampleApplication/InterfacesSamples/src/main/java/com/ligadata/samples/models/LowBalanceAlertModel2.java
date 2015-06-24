@@ -74,7 +74,7 @@ public class LowBalanceAlertModel2 extends ModelBase {
     class MinBalanceDeterminator implements Function1<CustTransaction, Boolean> {   	
       public Boolean call (CustTransaction ct) {
         //{ trn : CustTransaction => trn.balance < gPref.minAlertBalance }
-        if (ct.balance() < gPref.minAlertBalance()) {
+        if (ct.balance < gPref.minAlertBalance()) {
           return true;	  
         }
         return false;
