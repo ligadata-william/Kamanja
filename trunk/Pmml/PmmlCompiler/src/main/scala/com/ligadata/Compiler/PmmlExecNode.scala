@@ -48,7 +48,17 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 	
 	override def asString(ctx : PmmlContext) : String = {
 	  	val strRep : String = value.toString
-	  	dataType match {
+	  	val dtype : String = dataType.toLowerCase
+	  	dtype match {
+	  	  	case "long" => {
+				/** check the argType... if all numeric (i.e., a long constant) suffix it with "L" to help the Scala compiler recognize this is a long */
+				val isAllNumeric : Boolean = strRep.filter(ch => (ch >= '0' && ch <= '9')).size == strRep.size
+				if (isAllNumeric) {
+					s"${strRep}L"
+				} else {
+					strRep
+				}
+	  	  	}
 	  		case "string" | "date" | "time" | "dateTime" => s"${'"'}$strRep${'"'}"
 	  		case "ident"  => {
 	  			val constStrExpr : String = if (strRep == ctx.applyElementName) {
@@ -172,7 +182,7 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 	  			  typStr
 	  		  }
 	  		}
-	  		case "mbrTypename"  => { 
+	  		case "mbrtypename"  => { 
 	  		  /** 
 	  		   *  Only common single member collections are supported (no Maps yet) and no derived collection types.
 	  		   */ 
