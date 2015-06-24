@@ -19,16 +19,16 @@ public class LowBalanceAlertModel extends ModelBase {
         CustAlertHistory alertHistory = null;
     
         // First check the preferences and decide whether to continue or not
-    	gPref = GlobalPreferences.getRecentOrNew();
-        pref = CustPreferences.getRecentOrNew();
-        
+    	gPref = (GlobalPreferences)(GlobalPreferences$.MODULE$.toJavaRDDObject()).getRecentOrNew();
+        pref = (CustPreferences)(CustPreferences$.MODULE$.toJavaRDDObject()).getRecentOrNew();
+
         if (pref.minBalanceAlertOptout() == false)
           return null;
 
         // Check if at least min number of hours elapsed since last alert  
-        alertHistory = CustAlertHistory.getRecentOrNew();
-        
-        if (curDt.timeDiffInHrs(alertHistory.alertDt()) < gPref.minAlertDurationInHrs())
+        alertHistory = ((CustAlertHistory)CustAlertHistory$.MODULE$.toJavaRDDObject()).getRecentOrNew();
+
+        if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs())) < gPref.minAlertDurationInHrs())
           return null;
         
         // Getting Java RDD Object and performing operations on that
@@ -38,7 +38,7 @@ public class LowBalanceAlertModel extends ModelBase {
         }
 
         // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-        CustAlertHistory.build().withAlertDt(curDt).withAlertType("lowBalanceAlert").Save();
+        CustAlertHistory.build().withAlertDtTmInMs(curDt.getDateTimeInMs()).withAlertType("lowBalanceAlert").Save();
         
         // ... Prepare results here ... need to populate result object with appropriate attributes
         return ModelResult.builder().withResult(new LowBalanceAlertResult(txnContext)).build(); 
