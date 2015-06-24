@@ -27,7 +27,7 @@ public class LowBalanceAlertModel2 extends ModelBase {
         // Check if at least min number of hours elapsed since last alert  
         alertHistory = CustAlertHistory$.MODULE$.toJavaRDDObject().getRecentOrNew();
         
-        if (curDt.timeDiffInHrs(alertHistory.alertDt()) < gPref.minAlertDurationInHrs())
+        if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs())) < gPref.minAlertDurationInHrs())
           return null;
         
         // get history of transaction whose balance is less than minAlertBalance in last N days
@@ -48,7 +48,7 @@ public class LowBalanceAlertModel2 extends ModelBase {
           return null;
 
         // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-        CustAlertHistory.build().withAlertDt(curDt).withAlertType("lowBalanceAlert").Save();
+        CustAlertHistory.build().withAlertDtTmInMs(curDt.getDateTimeInMs()).withAlertType("lowBalanceAlert").Save();
         
         // ... Prepare results here ... need to populate result object with appropriate attributes
         return ModelResult.builder().withResult(new LowBalanceAlertResult2(txnContext)).build(); 

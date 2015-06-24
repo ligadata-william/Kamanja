@@ -19,18 +19,18 @@ public class LowBalanceAlertModel extends ModelBase {
         CustAlertHistory alertHistory = null;
     
         // First check the preferences and decide whether to continue or not
-    	gPref = (GlobalPreferences)(GlobalPreferences$.MODULE$.toJavaRDDObject()).getRecentOrNew();
-        pref = (CustPreferences)(CustPreferences$.MODULE$.toJavaRDDObject()).getRecentOrNew();
+    	gPref = GlobalPreferences$.MODULE$.toJavaRDDObject().getRecentOrNew();
+        pref = CustPreferences$.MODULE$.toJavaRDDObject().getRecentOrNew();
         
-        if (pref.minBalanceAlertOptout == false)
+        if (pref.minBalanceAlertOptout() == false)
           return null;
 
         // Check if at least min number of hours elapsed since last alert  
-        alertHistory = ((CustAlertHistory)CustAlertHistory$.MODULE$.toJavaRDDObject()).getRecentOrNew();
+        alertHistory = CustAlertHistory$.MODULE$.toJavaRDDObject().getRecentOrNew();
         
         
         
-        if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs)) < gPref.minAlertDurationInHrs)
+        if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs())) < gPref.minAlertDurationInHrs())
           return null;
         
         // Getting Java RDD Object and performing operations on that
