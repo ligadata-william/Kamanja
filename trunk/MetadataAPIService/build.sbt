@@ -59,7 +59,8 @@ scalaVersion := "2.10.4"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 resolvers ++= Seq(
-  "spray repo" at "http://repo.spray.io/"
+  "spray repo" at "http://repo.spray.io/",
+  "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
 )
 
 libraryDependencies ++= {
@@ -74,6 +75,13 @@ libraryDependencies ++= {
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
   "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
   "ch.qos.logback" % "logback-classic" % "1.0.12",
-  "org.apache.camel" % "camel-core" % "2.9.2"
+  "org.apache.camel" % "camel-core" % "2.9.2",
+  "com.typesafe.play" %% "play-json" % "2.2.1",
+  "com.github.dreamhead" % "moco-core" % "0.7",
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
+  "org.scalatest" % "scalatest_2.10" % "2.0"
   )
 }
+
+(testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/report")
+

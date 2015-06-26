@@ -1,0 +1,48 @@
+<PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
+
+        <Header copyright="LigaDATA. Copyright 2014" description="Hello World">
+                <Application name="HelloWordDelete" version="00.01.01"/>
+        </Header>
+
+        <DataDictionary numberOfFields="3">
+                <DataField name="msg" displayName="msg" optype="categorical" dataType="msg1"/>
+                <DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+                 <DataField name="parameters" displayName="parameters" dataType="container">
+                        <Value value="gCtx" property="valid"/>
+                        <Value value="msg" property="valid"/>
+                </DataField>
+		<DataField name="name" displayName="name" optype="categorical" dataType="string"/>
+                <DataField name="predictedField" displayName="predictedField" optype="categorical" dataType="integer"/>
+        </DataDictionary>
+
+        <TransformationDictionary>
+                <DerivedField name="ScoreCheck" dataType="boolean" optype="categorical">
+			<Apply function="and">
+                        	<Apply function="Equal">
+                                	<FieldRef field="msg.score"/>
+                                	<Constant dataType="integer">1</Constant>
+                        	</Apply>
+                        	<Apply function="Put">
+                                	<Constant dataType="string">name</Constant>
+                                	<FieldRef field="msg.name"/>
+                        	</Apply>
+			</Apply>
+                </DerivedField>
+        </TransformationDictionary>
+
+        <RuleSetModel modelName="HelloWorldModel" functionName="classification" algorithmName="RuleSet">
+
+            <MiningSchema>
+                <MiningField name="name" usageType="supplementary"/>
+                <MiningField name="predictedField" usageType="predicted"/>
+            </MiningSchema>
+
+                <RuleSet defaultScore="0">
+                        <RuleSelectionMethod criterion="firstHit"/>
+                        <SimpleRule id="ScoreCheck" score="1b">
+                                <SimplePredicate field="ScoreCheck" operator="equal" value="true"/>
+                        </SimpleRule>
+            </RuleSet>
+        </RuleSetModel>
+</PMML>
+
