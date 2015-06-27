@@ -6,10 +6,8 @@ class RDDHandler {
     """
  
   type T = """ + msgName + """     
-  def build = new T
-  def build(from: T) = new T(from)
-  val default = new """ + msgName + """
-
+  override def build = new T
+  override def build(from: T) = new T(from)
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
  
     """
