@@ -25,8 +25,8 @@ public class LowBalanceAlertModel2 extends ModelBase {
           return null;
 
         // Check if at least min number of hours elapsed since last alert  
-        alertHistory = CustAlertHistory.getRecentOrNew();
-        
+        alertHistory = CustAlertHistoryFactory.toJavaRDDObject().getRecentOrNew();
+
         if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs())) < gPref.minAlertDurationInHrs())
           return null;
         
