@@ -11,10 +11,10 @@ public class JavaTestMdl extends ModelBase {
 	public ModelResult execute(boolean emitAllResults) {
 		// Directly calling methods from Scala Singleton object. Not preferable
 		// to use direct scala.
-		CustAlertHistory custAlertHistory = (CustAlertHistory) CustAlertHistory$.MODULE$.getRecentOrNew();
+		CustAlertHistory custAlertHistory = CustAlertHistoryFactory.getRecentOrNew();
 
 		// Getting Java RDD Object and performing operations on that
-		JavaRDDObject<CustAlertHistory> javaRddObj = CustAlertHistory$.MODULE$.toJavaRDDObject();
+		JavaRDDObject<CustAlertHistory> javaRddObj = CustAlertHistoryFactory.toJavaRDDObject();
 		Optional<CustAlertHistory> obj = javaRddObj.getRecent();
 
 		if (obj.isPresent()) {

@@ -115,7 +115,7 @@ object LowBalanceAlert2 extends ModelBaseObj {
 class LowBalanceAlertResult2(ctxt: TransactionContext) {
 }
 
-class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
+class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert2) {
   override def execute(emitAllResults: Boolean): ModelResult = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew
