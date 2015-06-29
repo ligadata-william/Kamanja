@@ -1697,7 +1697,7 @@ def initTypesFor_com_ligadata_pmml_udfs_Udfs {
 		val SetFieldMacroStringMapped : String =  """
 	class %1%_%2%_%3%_setField(val ctx : Context, var %1% : %1_type%, val %3% : %3_type%)
 	{
-	  	def setField  : Boolean = { %1%.set("%2%", %3%.asInstanceOf[%2_type%); true }
+	  	def setField  : Boolean = { %1%.set("%2%", %3%.asInstanceOf[%2_type%]); true }
 	} """
 		
 		mgr.AddMacro(MdMgr.sysNS
