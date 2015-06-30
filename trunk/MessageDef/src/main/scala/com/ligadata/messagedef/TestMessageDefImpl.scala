@@ -37,11 +37,11 @@ object TestMessageDefImpl extends LogTrait {
   }
   private def processContainers(msg: MessageDefImpl): Unit = {
     val json1: String = Source.fromFile("/tmp/RichTesting/hl7history.json").getLines.mkString
-    val (classStr1: String, msgDef1: ContainerDef, classStr2: String) = msg.processMsgDef(json1.toString(), "JSON", MdMgr.GetMdMgr)
+    val ((classStr1: String, classStr1_java: String), msgDef1: ContainerDef, (classStr2: String, classStr2_java: String)) = msg.processMsgDef(json1.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDef1)
     MdMgr.GetMdMgr.AddArray(MdMgr.sysNS, "ArrayOfHL7History", MdMgr.sysNS, "HL7History", 1, 100)
-    createScalaFile(classStr1, msgDef1.Version.toString, msgDef1.FullName)
-    createScalaFile(classStr2, msgDef1.Version.toString, msgDef1.FullName)
+  //  createScalaFile(classStr1, msgDef1.Version.toString, msgDef1.FullName)
+   // createScalaFile(classStr2, msgDef1.Version.toString, msgDef1.FullName)
 
     /*  val json2: String = Source.fromFile("/tmp/RichTesting/inpatientclaimhistory.json").getLines.mkString
     val (classStr2: String, msgDef2: ContainerDef) = msg.processMsgDef(json2.toString(), "JSON", MdMgr.GetMdMgr)
@@ -183,39 +183,50 @@ object TestMessageDefImpl extends LogTrait {
     //createScalaFile(classStr100, msgDef100.Version.toString, msgDef100.FullName)
 
     val json100: String = Source.fromFile("/tmp/testing/messages/hl7.json").getLines.mkString
-    val (classStr200: String, msgDef200: ContainerDef, classStr200_1: String) = msg.processMsgDef(json100.toString(), "JSON", MdMgr.GetMdMgr, false)
+    val ((classStr200: String, classStr200_java: String), msgDef200: ContainerDef, (classStr200_1: String, classStr200_java_1: String)) = msg.processMsgDef(json100.toString(), "JSON", MdMgr.GetMdMgr, false)
     MdMgr.GetMdMgr.AddContainer(msgDef200)
     MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 100)
-    createScalaFile(classStr200, msgDef200.Version.toString, msgDef200.FullName)
-    createScalaFile(classStr200_1, msgDef200.Version.toString + "_1", msgDef200.FullName + "_1")
+    createScalaFile(classStr200, msgDef200.Version.toString, msgDef200.FullName, ".scala")
+    createScalaFile(classStr200_java, msgDef200.Version.toString, msgDef200.FullName + "_java", ".java")
+    createScalaFile(classStr200_1, "", msgDef200.FullName + "_1", ".scala")
+    createScalaFile(classStr200_java_1, "", msgDef200.FullName + "_1_java", ".java")
 
-    val inpjson: String = Source.fromFile("/tmp/testing/messages/inpatientclaim.json").getLines.mkString
-    val (classStrIn: String, msgDefIn: ContainerDef, classStrIn1: String) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
+   val inpjson: String = Source.fromFile("/tmp/testing/messages/inpatientclaim.json").getLines.mkString
+    val ((classStrIn: String, classStrInJava: String), msgDefIn: ContainerDef, (classStrIn1: String, classStrIn1_java: String)) = msg.processMsgDef(inpjson.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDefIn)
     MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfInpatientClaim", MdMgr.sysNS, "inpatientclaim", 1, 100)
-    createScalaFile(classStrIn, msgDefIn.Version.toString, msgDefIn.FullName)
-    createScalaFile(classStrIn1, msgDefIn.Version.toString + "_1", msgDefIn.FullName + "_1")
+    createScalaFile(classStrIn, msgDefIn.Version.toString, msgDefIn.FullName,  ".scala")
+    createScalaFile(classStrInJava, msgDefIn.Version.toString, msgDefIn.FullName + "_java", ".java")
+    createScalaFile(classStrIn1, "", msgDefIn.FullName + "_1" , ".scala")
+    createScalaFile(classStrIn1_java, "", msgDefIn.FullName + "_1_java", ".java")
 
     val idjson: String = Source.fromFile("/tmp/testing/messages/outpatientclaim.json").getLines.mkString
-    val (classStrOut1: String, msgDefOut1: ContainerDef, classStrOut11: String) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
+    val ((classStrOut1: String, classStrOut1_java: String), msgDefOut1: ContainerDef, (classStrOut11: String, classStrOut11_java: String)) = msg.processMsgDef(idjson.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDefOut1)
     MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfOutpatientClaim", MdMgr.sysNS, "OutpatientClaim", 1, 100)
-    createScalaFile(classStrOut1, msgDefOut1.Version.toString, msgDefOut1.FullName)
-    createScalaFile(classStrOut11, msgDefOut1.Version.toString+"_1", msgDefOut1.FullName+"_1")
+    createScalaFile(classStrOut1, msgDefOut1.Version.toString, msgDefOut1.FullName, ".scala")
+    createScalaFile(classStrOut1_java, msgDefOut1.Version.toString, msgDefOut1.FullName + "_java", ".java")
+    createScalaFile(classStrOut11, "", msgDefOut1.FullName + "_1",  ".scala")
+    createScalaFile(classStrOut11_java, "", msgDefOut1.FullName + "_1_java", ".java")
 
     val benjson: String = Source.fromFile("/tmp/testing/messages/beneficiary.json").getLines.mkString
-    val (classStrBen: String, msgDefBen: ContainerDef, classStrBen1: String) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
+    val ((classStrBen: String, classStrBen_java: String), msgDefBen: ContainerDef, (classStrBen1: String, classStrBen1_java: String)) = msg.processMsgDef(benjson.toString(), "JSON", MdMgr.GetMdMgr)
     MdMgr.GetMdMgr.AddContainer(msgDefBen)
-    createScalaFile(classStrBen, msgDefBen.Version.toString, msgDefBen.FullName)
-    createScalaFile(classStrBen1, msgDefBen.Version.toString+"_1", msgDefBen.FullName+"_1")
-
-      val json200: String = Source.fromFile("/tmp/testing/messages/hl7_201.json").getLines.mkString
-    val (classStr200_2: String, msgDef200_1: ContainerDef, classStr2001_1: String) = msg.processMsgDef(json200.toString(), "JSON", MdMgr.GetMdMgr)
-   // MdMgr.GetMdMgr.AddContainer(msgDef200_1)
-   // MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 200)
-    createScalaFile(classStr200_2, msgDef200_1.Version.toString, msgDef200_1.FullName)
-    createScalaFile(classStr2001_1, msgDef200_1.Version.toString+"_2", msgDef200_1.FullName+"_2")
+    createScalaFile(classStrBen, msgDefBen.Version.toString, msgDefBen.FullName,  ".scala")
+    createScalaFile(classStrBen_java, msgDefBen.Version.toString, msgDefBen.FullName + "_java", ".java")
+    createScalaFile(classStrBen1, "", msgDefBen.FullName + "_1",  ".scala")
+    createScalaFile(classStrBen1_java, "", msgDefBen.FullName + "_1_java", ".java")
 /*
+    val json200: String = Source.fromFile("/tmp/testing/messages/hl7_201.json").getLines.mkString
+    val ((classStr200_2: String, classStr200_2_java: String), msgDef200_1: ContainerDef, (classStr2001_1: String, classStr2001_1_java: String)) = msg.processMsgDef(json200.toString(), "JSON", MdMgr.GetMdMgr)
+    // MdMgr.GetMdMgr.AddContainer(msgDef200_1)
+    // MdMgr.GetMdMgr.AddArrayBuffer(MdMgr.sysNS, "ArrayBufferOfHL7", MdMgr.sysNS, "HL7", 1, 200)
+    createScalaFile(classStr200_2, msgDef200_1.Version.toString, msgDef200_1.FullName,  ".scala")
+    createScalaFile(classStr200_2, msgDef200_1.Version.toString, msgDef200_1.FullName + "_java", ".java")
+    createScalaFile(classStr2001_1, "", msgDef200_1.FullName + "_2",  ".scala")
+    createScalaFile(classStr2001_1_java, "", msgDef200_1.FullName + "_2_java", ".java")
+
+    
     val benjson200: String = Source.fromFile("/tmp/testing/messages/beneficiary201.json").getLines.mkString
     val (classStrBen200: String, msgDefBen200: ContainerDef) = msg.processMsgDef(benjson200.toString(), "JSON", MdMgr.GetMdMgr)
     createScalaFile(classStrBen200, msgDefBen200.Version.toString, msgDefBen200.FullName)
@@ -283,9 +294,9 @@ object TestMessageDefImpl extends LogTrait {
     */
   }
   */
-  private def createScalaFile(scalaClass: String, version: String, className: String): Unit = {
+  private def createScalaFile(scalaClass: String, version: String, className: String, clstype:String): Unit = {
     try {
-      val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + ".scala"))
+      val writer = new PrintWriter(new File("/tmp/" + className + "_" + version + clstype))
       writer.write(scalaClass.toString)
       writer.close()
     } catch {
