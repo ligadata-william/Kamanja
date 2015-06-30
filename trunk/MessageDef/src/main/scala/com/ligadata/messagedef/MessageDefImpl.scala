@@ -52,6 +52,7 @@ class MessageDefImpl {
   val logger = this.getClass.getName
   lazy val log = Logger.getLogger(logger)
   val pkg: String = "com.ligadata.messagescontainers"
+  val transactionid: String = "transactionid"
   var rddHandler = new RDDHandler
 
   private def error[T](prefix: String): Option[T] =
@@ -454,11 +455,15 @@ class MessageDefImpl {
       var baseTypId = -1
 
       if (fixed.toLowerCase().equals("true")) {
-        scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
-        assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-        assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
-        assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
 
+        if (f.Name.toLowerCase().equals(transactionid)) {
+          scalaclass = scalaclass.append("")
+        } else {
+          scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
+          assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
+          assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
+          assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
+        }
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
@@ -484,7 +489,7 @@ class MessageDefImpl {
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
 
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = value %s".format(pad1, f.Name, newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (%s, value) %s".format(pad1, f.Name,  mappedTypesABuf.indexOf(typstring), newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -615,9 +620,9 @@ class MessageDefImpl {
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
         fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
-      } else if (msg.Fixed.toLowerCase().equals("true")) {
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = value %s".format(pad1, f.Name, newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -787,9 +792,9 @@ class MessageDefImpl {
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
         fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
-      } else if (msg.Fixed.toLowerCase().equals("true")) {
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = value %s".format(pad1, f.Name, newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -856,9 +861,9 @@ class MessageDefImpl {
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
         fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
-      } else if (msg.Fixed.toLowerCase().equals("true")) {
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = value %s".format(pad1, f.Name, newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -1079,9 +1084,9 @@ class MessageDefImpl {
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
         fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
-      } else if (msg.Fixed.toLowerCase().equals("true")) {
+      } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = value %s".format(pad1, f.Name, newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (-1, value )%s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -1814,8 +1819,8 @@ class MessageDefImpl {
     "\toverride def FullName: String = " + msg.Name.trim() + ".FullName" + "\n" +
       "\toverride def NameSpace: String = " + msg.Name.trim() + ".NameSpace" + "\n" +
       "\toverride def Name: String = " + msg.Name.trim() + ".Name" + "\n" +
-      "\toverride def Version: String = " + msg.Name.trim() + ".Version" + "\n" +
-      "\tdef this(from: " + msg.Name.trim() + ") = { this}" + "\n"
+      "\toverride def Version: String = " + msg.Name.trim() + ".Version" + "\n"
+    //  "\tdef this(from: " + msg.Name.trim() + ") = { this}" + "\n"
 
   }
 
@@ -1836,14 +1841,14 @@ class MessageDefImpl {
     """
   }
 
-  private def importStmts(msg: Message): (String, String) = {
+  private def importStmts(msg: Message): (String, String, String, String) = {
     var imprt: String = ""
     if (msg.msgtype.equals("Message"))
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     else if (msg.msgtype.equals("Container"))
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
-    var nonVerPkg = "package " + msg.pkg + "." + msg.NameSpace + "\n"
-    var verPkg = "package " + msg.pkg + "." + msg.NameSpace + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + "\n"
+    var nonVerPkg = "package " + msg.pkg + "." + msg.NameSpace + ";\n"
+    var verPkg = "package " + msg.pkg + "." + msg.NameSpace + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
     var otherImprts = """
   
 import org.json4s.jackson.JsonMethods._
@@ -1859,7 +1864,7 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 """
     val versionPkgImport = verPkg + otherImprts + imprt
     val nonVerPkgImport = nonVerPkg + otherImprts + imprt
-    (versionPkgImport, nonVerPkgImport)
+    (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg)
   }
 
   private def classname(msg: Message, recompile: Boolean): (StringBuilder, StringBuilder, String) = {
@@ -1882,11 +1887,12 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
+    val transactionIdParam = "(var transactionId: Long, other: " + msg.Name + ")"
     //val clsname = msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr
     //val clsstr = cls + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + sname
     //val objstr = obj + space + msg.NameSpace + uscore + msg.Name + uscore + ver + uscore + msg.ClsNbr + space + xtends + space + oname
     val clsname = msg.Name
-    val clsstr = cls + space + msg.Name + space + xtends + space + sname
+    val clsstr = cls + space + msg.Name + transactionIdParam + space + xtends + space + sname
     val objstr = obj + space + msg.Name + space + xtends + space + rddObj + space + withStr + space + oname
 
     (clssb.append(clsstr), objsb.append(objstr), clsname)
@@ -2220,7 +2226,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	val list = inputdata.tokens
     val arrvaldelim = "~"
 	try{
-""" + "\t\tif(list.size < " + count + ") throw new Exception(\"Incorrect input data size\")" + """
+""" + "\t\tif(list.size < " + (count-1) + ") throw new Exception(\"Incorrect input data size\")" + """
   """ + assignCsvdata +
       """
  	}catch{
@@ -2240,7 +2246,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		val list = inputdata.tokens
 	    val arrvaldelim = "~"
 		try{
-	""" + "\t\tif(list.size < " + count + ") throw new Exception(\"Incorrect input data size\")" + """
+	""" + "\t\tif(list.size < " + (count-1) + ") throw new Exception(\"Incorrect input data size\")" + """
 	  """ + assignCsvdata +
       """
 	 	}catch{
@@ -2452,12 +2458,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
     }
   }
 
-  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef, String) = {
+  def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): ((String, String), ContainerDef, (String, String)) = {
     var classname: String = null
     var ver: String = null
     var classstr_1: String = null
     var nonVerClassStrVal_1: String = null
     var containerDef: ContainerDef = null
+    var javaFactoryClassstr_1: String = null
+    var nonVerJavaFactoryClassstr_1: String = null
     try {
       if (mdMgr == null)
         throw new Exception("MdMgr is not found")
@@ -2466,14 +2474,18 @@ class XmlData(var dataInput: String) extends InputData(){ }
         message = processJson(jsonstr, mdMgr, recompile).asInstanceOf[Message]
 
         if (message.Fixed.equals("true")) {
-          val (classStrVal, containerDefVal, nonVerClassStrVal) = createFixedMsgClass(message, mdMgr, recompile)
+          val ((classStrVal, javaFactoryClassstr), containerDefVal, (nonVerClassStrVal, nonVerJavaFactoryClassstr)) = createFixedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
+          javaFactoryClassstr_1 = javaFactoryClassstr
+          nonVerJavaFactoryClassstr_1 = nonVerJavaFactoryClassstr
           containerDef = containerDefVal
           nonVerClassStrVal_1 = nonVerClassStrVal
         } else if (message.Fixed.equals("false")) {
-          val (classStrVal, containerDefVal, nonVerClassStrVal) = createMappedMsgClass(message, mdMgr, recompile)
+          val ((classStrVal, javaFactoryClassstr), containerDefVal, (nonVerClassStrVal, nonVerJavaFactoryClassstr)) = createMappedMsgClass(message, mdMgr, recompile)
           classstr_1 = classStrVal
+          javaFactoryClassstr_1 = javaFactoryClassstr
           nonVerClassStrVal_1 = nonVerClassStrVal
+          nonVerJavaFactoryClassstr_1 = nonVerJavaFactoryClassstr
           containerDef = containerDefVal
         }
 
@@ -2484,17 +2496,21 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    (classstr_1, containerDef, nonVerClassStrVal_1)
+    ((classstr_1, javaFactoryClassstr_1), containerDef, (nonVerClassStrVal_1, nonVerJavaFactoryClassstr_1))
   }
 
-  private def createFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef, String) = {
+  private def createFixedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): ((String, String), ContainerDef, (String, String)) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     var nonVerScalaClassstr_1: String = null
+    var javaFactoryClassstr_1: String = null
+    var nonVerJavaFactoryClassstr_1: String = null
     try {
-      val (classname, ver, classstr, list, argsList, nonVerScalaClassstr) = createClassStr(message, mdMgr, recompile)
+      val (classname, ver, (classstr, javaFactoryClassstr), list, argsList, (nonVerScalaClassstr, nonVerJavaFactoryClassstr)) = createClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
+      javaFactoryClassstr_1 = javaFactoryClassstr
       nonVerScalaClassstr_1 = nonVerScalaClassstr
+      nonVerJavaFactoryClassstr_1 = nonVerJavaFactoryClassstr
       //createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
@@ -2508,17 +2524,21 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    (classstr_1, containerDef, nonVerScalaClassstr_1)
+    ((classstr_1, javaFactoryClassstr_1), containerDef, (nonVerScalaClassstr_1, nonVerJavaFactoryClassstr_1))
   }
 
-  private def createMappedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): (String, ContainerDef, String) = {
+  private def createMappedMsgClass(message: Message, mdMgr: MdMgr, recompile: Boolean = false): ((String, String), ContainerDef, (String, String)) = {
     var containerDef: ContainerDef = null
     var classstr_1: String = null
     var nonVerScalaClassstr_1: String = null
+    var javaFactoryClassstr_1: String = null
+    var nonVerJavaFactoryClassstr_1: String = null
     try {
-      val (classname, ver, classstr, list, argsList, nonVerScalaClassstr) = createMappedClassStr(message, mdMgr, recompile)
+      val (classname, ver, (classstr, javaFactoryClassstr), list, argsList, (nonVerScalaClassstr, nonVerJavaFactoryClassstr)) = createMappedClassStr(message, mdMgr, recompile)
       classstr_1 = classstr
+      javaFactoryClassstr_1 = javaFactoryClassstr
       nonVerScalaClassstr_1 = nonVerScalaClassstr
+      nonVerJavaFactoryClassstr_1 = nonVerJavaFactoryClassstr
       // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
@@ -2532,12 +2552,14 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    (classstr_1, containerDef, nonVerScalaClassstr_1)
+    ((classstr_1, javaFactoryClassstr_1), containerDef, (nonVerScalaClassstr_1, nonVerJavaFactoryClassstr_1))
   }
 
-  private def createClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def createClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, (String, String), List[(String, String)], List[(String, String, String, String, Boolean, String)], (String, String)) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var nonVerScalaCls = new StringBuilder(8 * 1024)
+    var verJavaFactory = new StringBuilder(8 * 1024)
+    var nonverJavaFactory = new StringBuilder(8 * 1024)
     val ver = MdMgr.ConvertVersionToLong(message.Version).toString
     val newline = "\n"
     var addMsgStr: String = ""
@@ -2561,24 +2583,30 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partkeyPos, primarykeyPos, clasname)
       val isFixed = getIsFixed(message)
-      val (versionPkgImport, nonVerPkgImport) = importStmts(message)
+      val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
-      nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods  + fromFuncOfFixed +" \n}")
+      scalaclass = scalaclass.append(transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
 
+      verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
+
+      nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
+      nonVerScalaCls = nonVerScalaCls.append(transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populatecsv(csvassignstr, count) + populateJson + assignJsonData(jsonstr) + assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
+
+      nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
     } catch {
       case e: Exception => {
         e.printStackTrace()
         throw e
       }
     }
-    (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg, nonVerScalaCls.toString)
+    (message.Name, ver.toString, (scalaclass.toString, verJavaFactory.toString), list_msg, argsList_msg, (nonVerScalaCls.toString, nonverJavaFactory.toString))
   }
 
-  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, List[(String, String)], List[(String, String, String, String, Boolean, String)], String) = {
+  private def createMappedClassStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, (String, String), List[(String, String)], List[(String, String, String, String, Boolean, String)], (String, String)) = {
     var scalaclass = new StringBuilder(8 * 1024)
     val ver = MdMgr.ConvertVersionToLong(message.Version).toString
+    var verJavaFactory = new StringBuilder(8 * 1024)
+    var nonverJavaFactory = new StringBuilder(8 * 1024)
     val newline = "\n"
     var addMsgStr: String = ""
     var getMsgStr: String = ""
@@ -2592,6 +2620,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
       addMsgStr = addMessage(addMsg, message)
       getMsgStr = getMessage(getMsg)
 
+      //val fromFuncOfFixed = fromFuncOfFixedMsgs(message, fromFunc)
       val getSerializedFuncStr = getSerializedFunction(serializedBuf)
       //println(deserializedBuf)
       mappedMsgPrevVerDeser
@@ -2603,11 +2632,17 @@ class XmlData(var dataInput: String) extends InputData(){ }
       val (clsstr, objstr, clasname) = classname(message, recompile)
       val cobj = createObj(message, partitionPos, primaryPos, clasname)
       val isFixed = getIsFixed(message)
-      val (versionPkgImport, nonVerPkgImport) = importStmts(message)
+      val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = importStmts(message)
+
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + " \n}")
+      scalaclass = scalaclass.append(transactionIdFuncs(message) + classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMappedMsg(message) + " \n}")
+
+      verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
+
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMappedMsg(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(transactionIdFuncs(message) + classstr + getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + saveObject(message) + populate + populateMappedCSV(csvassignstr, count) + populateJson + assignMappedJsonData(jsonstr) + assignMappedXmlData(xmlStr) + MappedMsgSerialize + MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMappedMsg(message) + " \n}")
+
+      nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
 
     } catch {
       case e: Exception => {
@@ -2615,7 +2650,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
-    (message.Name, ver.toString, scalaclass.toString, list_msg, argsList_msg, nonVerScalaCls.toString)
+    (message.Name, ver.toString, (scalaclass.toString, verJavaFactory.toString), list_msg, argsList_msg, (nonVerScalaCls.toString, nonverJavaFactory.toString))
 
   }
 
@@ -3108,6 +3143,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def getMsgorCntrObj(message: Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var ele: List[Element] = null
+    var elements: List[Element] = null
     var tdata: TransformData = null
     var tdataexists: Boolean = false
     var container: Message = null
@@ -3138,6 +3174,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         for (key: String <- message.keys) {
           if (key.equals("Elements") || key.equals("Fields") || key.equals("Concepts")) {
             ele = getElementsObj(message, key).asInstanceOf[List[Element]]
+
             // container = getElementsObj(message, key)._2.asInstanceOf[Message]
           }
 
@@ -3173,8 +3210,15 @@ class XmlData(var dataInput: String) extends InputData(){ }
             conceptsList = getConcepts(message, key)
           }
         }
-        if (ele == null)
-          throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+        // if (ele == null)
+        //   throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (ele != null)
+          ele = new Element("", "transactionId", "system.long", "", "Fields", null) :: ele
+        else
+          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
+
+       // ele.foreach(f => log.debug("====" + f.Name))
 
         if (recompile) {
           msgVersion = getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
@@ -3189,8 +3233,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
+
     val cur_time = System.currentTimeMillis
     //  val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "." + message.get("Name").get.toString() + "." + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
+    // val pkg =  message.get("NameSpace").get.toString.toLowerCase()
     val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
 
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
@@ -3247,6 +3293,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         throw e
       }
     }
+
     elist
   }
 
@@ -3468,6 +3515,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         }
 
       } else throw new Exception("Field Type do not exist in " + key)
+      //log.debug("key========" + key)
       fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
     } catch {
       case e: Exception => {
@@ -3503,7 +3551,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   private def fromFuncOfMappedMsg(msg: Message): String = {
     """ 
-     def from(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
 		 other.fields.foreach(field => {
 		 if(field._2._1 >= 0)       
 		  	fields(field._1) = (field._2._1, field._2._2);
@@ -3514,20 +3562,41 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   private def fromFuncOfFixedMsgs(msg: Message, fromFunc: String): String = {
-    var fronFnc: String = ""
-    if (fromFunc != null) fronFnc = fromFunc
+    var fromFnc: String = ""
+    if (fromFunc != null) fromFnc = fromFunc
     """ 
-     def from(other: """ + msg.Name + """): """ + msg.Name + """ = {
-	""" + fronFnc + """
+     private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+	""" + fromFnc + """
      	return this
     }
     """
 
   }
-  
-  private def getFullName : String = {
+
+  private def getFullName: String = {
     """
     override def getFullName = FullName    
+    """
+  }
+
+  private def transactionIdFuncs(message: Message): String = {
+
+    """
+  if (other != null && other != this) {
+    // call copying fields from other to local variables
+    //fromFunc(other)
+  }
+
+  def this(txnId: Long) = {
+    this(txnId, null)
+  }
+  def this(other: """ + message.Name + """) = {
+    this(0, other)
+  }
+  def this() = {
+    this(0, null)
+  }
+    
     """
   }
 
