@@ -404,7 +404,7 @@ println("compileJavaModel ====> ..." + msgDefClassFilePath)
       val mgr = MdMgr.GetMdMgr
       val msg = new MessageDefImpl()
       logger.debug("Call Message Compiler ....")
-      val(classStrVer, msgDef, classStrNoVer) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
+      val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
 
   println("*****************"+compiler_work_dir+"********************")    
