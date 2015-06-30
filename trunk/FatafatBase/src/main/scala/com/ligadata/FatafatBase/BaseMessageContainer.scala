@@ -5,6 +5,7 @@ import java.net.URLClassLoader
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 
 trait MessageContainerBase {
+  var transactionId: Long
   def isMessage: Boolean
   def isContainer: Boolean
   def IsFixed: Boolean

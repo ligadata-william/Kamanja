@@ -23,7 +23,6 @@ object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerOb
 
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
-  val default = new CustAlertHistory
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
@@ -31,7 +30,21 @@ object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerOb
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
-class CustAlertHistory extends BaseContainer {
+class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends BaseContainer {
+  if (other != null && other != this) {
+    // call copying fields from other to local variables
+  }
+
+  def this(txnId: Long) = {
+    this(txnId, null)
+  }
+  def this(other: CustAlertHistory) = {
+    this(0, other)
+  }
+  def this() = {
+    this(0, null)
+  }
+  
   override def IsFixed: Boolean = CustAlertHistory.IsFixed;
   override def IsKv: Boolean = CustAlertHistory.IsKv;
   override def CanPersist: Boolean = CustAlertHistory.CanPersist;
@@ -47,7 +60,6 @@ class CustAlertHistory extends BaseContainer {
   var alertType: String = ""
   var numDaysWithLessBalance: Int = 0
 
-  def this(from: CustAlertHistory) = { this }
   def withAlertDtTmInMs(curDtTmInMs: Long): CustAlertHistory = { this }
   def withAlertType(alertType: String): CustAlertHistory = { this }
   def withNumDays(daysWithLessBalance: Int): CustAlertHistory = { this }
@@ -90,7 +102,6 @@ object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj 
 
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
-  val default = new CustPreferences
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
@@ -99,7 +110,21 @@ object CustPreferences extends RDDObject[CustPreferences] with BaseContainerObj 
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
-class CustPreferences extends BaseContainer {
+class CustPreferences(var transactionId: Long, other: CustPreferences) extends BaseContainer {
+  if (other != null && other != this) {
+    // call copying fields from other to local variables
+  }
+
+  def this(txnId: Long) = {
+    this(txnId, null)
+  }
+  def this(other: CustPreferences) = {
+    this(0, other)
+  }
+  def this() = {
+    this(0, null)
+  }
+
   override def IsFixed: Boolean = CustPreferences.IsFixed;
   override def IsKv: Boolean = CustPreferences.IsKv;
   override def CanPersist: Boolean = CustPreferences.CanPersist;
@@ -108,7 +133,6 @@ class CustPreferences extends BaseContainer {
   override def Name: String = CustPreferences.Name
   override def Version: String = CustPreferences.Version
 
-  def this(from: CustPreferences) = { this }
   def withMinBalanceAlertOptout(curDt: Date): CustPreferences = { this }
   def withOverdraftlimit(alertType: String): CustPreferences = { this }
   def withMultiDayMinBalanceAlertOptout(daysWithLessBalance: Int): CustPreferences = { this }
@@ -157,7 +181,6 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
 
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
-  val default = new CustTransaction
 
   def build = new T
   def build(from: T) = new T(from)
@@ -169,7 +192,21 @@ object CustTransaction extends RDDObject[CustTransaction] with BaseMsgObj {
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
-class CustTransaction extends BaseMsg {
+class CustTransaction(var transactionId: Long, other: CustTransaction) extends BaseMsg {
+  if (other != null && other != this) {
+    // call copying fields from other to local variables
+  }
+
+  def this(txnId: Long) = {
+    this(txnId, null)
+  }
+  def this(other: CustTransaction) = {
+    this(0, other)
+  }
+  def this() = {
+    this(0, null)
+  }
+
   override def IsFixed: Boolean = CustTransaction.IsFixed;
   override def IsKv: Boolean = CustTransaction.IsKv;
   override def CanPersist: Boolean = CustTransaction.CanPersist;
@@ -177,8 +214,6 @@ class CustTransaction extends BaseMsg {
   override def NameSpace: String = CustTransaction.NameSpace
   override def Name: String = CustTransaction.Name
   override def Version: String = CustTransaction.Version
-
-  def this(from: CustTransaction) = { this }
 
   var custid: Long = 0;
   var branchid: Int = 0;
@@ -228,7 +263,6 @@ object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainer
 
   val partitionKeys: Array[String] = null
   val partKeyPos = Array(0)
-  val default = new GlobalPreferences
 
   override def PartitionKeyData(inputdata: InputData): Array[String] = Array[String]()
   override def PrimaryKeyData(inputdata: InputData): Array[String] = Array[String]()
@@ -237,7 +271,21 @@ object GlobalPreferences extends RDDObject[GlobalPreferences] with BaseContainer
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
 }
 
-class GlobalPreferences extends BaseContainer {
+class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) extends BaseContainer {
+  if (other != null && other != this) {
+    // call copying fields from other to local variables
+  }
+
+  def this(txnId: Long) = {
+    this(txnId, null)
+  }
+  def this(other: GlobalPreferences) = {
+    this(0, other)
+  }
+  def this() = {
+    this(0, null)
+  }
+
   override def IsFixed: Boolean = GlobalPreferences.IsFixed;
   override def IsKv: Boolean = GlobalPreferences.IsKv;
   override def CanPersist: Boolean = GlobalPreferences.CanPersist;
@@ -245,8 +293,6 @@ class GlobalPreferences extends BaseContainer {
   override def NameSpace: String = GlobalPreferences.NameSpace
   override def Name: String = GlobalPreferences.Name
   override def Version: String = GlobalPreferences.Version
-
-  def this(from: GlobalPreferences) = { this }
 
   var overDraftLimit: Double = 0.0;
   var minAlertBalance: Double = 0.0
