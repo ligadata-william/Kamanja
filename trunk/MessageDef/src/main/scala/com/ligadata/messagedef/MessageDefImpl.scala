@@ -492,7 +492,7 @@ class MessageDefImpl {
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
 
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = (%s, value) %s".format(pad1, f.Name,  mappedTypesABuf.indexOf(typstring), newline))
+        withMethod = withMethod.append("%s fields(\"%s\") = (%s, value) %s".format(pad1, f.Name, mappedTypesABuf.indexOf(typstring), newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
       }
@@ -734,6 +734,7 @@ class MessageDefImpl {
           scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
         if (f.ElemType.toLowerCase().equals("container")) {
+          scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
           assignCsvdata.append("%s//%s Implementation of Array Buffer of Container is not handled %s".format(pad2, f.Name, newline))
 
           if (typ.get.typeString.toString().split("\\[").size == 2) {
@@ -2435,7 +2436,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 	val list = inputdata.tokens
     val arrvaldelim = "~"
 	try{
-""" + "\t\tif(list.size < " + (count-1) + ") throw new Exception(\"Incorrect input data size\")" + """
+""" + "\t\tif(list.size < " + (count - 1) + ") throw new Exception(\"Incorrect input data size\")" + """
   """ + assignCsvdata +
       """
  	}catch{
@@ -2455,7 +2456,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		val list = inputdata.tokens
 	    val arrvaldelim = "~"
 		try{
-	""" + "\t\tif(list.size < " + (count-1) + ") throw new Exception(\"Incorrect input data size\")" + """
+	""" + "\t\tif(list.size < " + (count - 1) + ") throw new Exception(\"Incorrect input data size\")" + """
 	  """ + assignCsvdata +
       """
 	 	}catch{
@@ -3434,7 +3435,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
         else
           ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
 
-       // ele.foreach(f => log.debug("====" + f.Name))
+        // ele.foreach(f => log.debug("====" + f.Name))
 
         if (recompile) {
           msgVersion = getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
@@ -3813,6 +3814,11 @@ class XmlData(var dataInput: String) extends InputData(){ }
     this(0, null)
   }
     
+   def TransactionId(tranId: Long): Unit = {
+    this.transactionId = tranId
+  }
+
+  def TransactionId: Long = transactionId
     """
   }
 
