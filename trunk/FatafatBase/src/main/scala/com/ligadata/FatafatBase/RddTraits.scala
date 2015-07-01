@@ -659,6 +659,17 @@ abstract class RDDObject[T: ClassTag] {
   }
 
   // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
+  final def getRDD(): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(mdlCtxt.txnContext.transId, getFullName, null, null, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+
   final def getRDD(tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()
@@ -807,6 +818,7 @@ trait JavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]] {
   def getRDDForCurrKey(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
 
   // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
+  def getRDD(): JavaRDD[T] = null
   def getRDD(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
   def getRDD(tmRange: TimeRange): JavaRDD[T] = rddObj.getRDD(tmRange)
   def getRDD(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
