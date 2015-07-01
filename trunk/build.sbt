@@ -45,7 +45,7 @@ lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImp
 
 lazy val Storage = project.in(file("Storage")) dependsOn(Metadata, Exceptions)
 
-lazy val Metadata = project.in(file("Metadata")) dependsOn(Exceptions, Exceptions)
+lazy val Metadata = project.in(file("Metadata")) dependsOn(Exceptions)
 
 lazy val OutputMsgDef  = project.in(file("OutputMsgDef")) dependsOn(Metadata,FatafatBase,BaseTypes)
 
