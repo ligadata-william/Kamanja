@@ -124,8 +124,8 @@ object MetadataAPIImpl extends MetadataAPI {
   private var cacheOfOwnChanges: scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   private var currentTranLevel: Long = _
   private var passwd: String = null
+  private var compileCfg: String = ""
 
-  
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
   var pList: Set[String] = Set("ZK_SESSION_TIMEOUT_MS","ZK_CONNECTION_TIMEOUT_MS","DATABASE_SCHEMA","DATABASE","DATABASE_LOCATION","DATABASE_HOST","API_LEADER_SELECTION_ZK_NODE",
@@ -3291,11 +3291,11 @@ println("---> 3")
     }
   }
   
-  def AddModelFromSource(javaCode: String, sourceLang: String, metaProps: java.util.Properties, userid: Option[String]): String = {
+  def AddModelFromSource(javaCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
  
 println("Adding a Java Model")
     var compProxy = new CompilerProxy
-    val modDef : ModelDef =  compProxy.compileModelFromSource(javaCode, metaProps, sourceLang)
+    val modDef : ModelDef =  compProxy.compileModelFromSource(javaCode, modelName, sourceLang)
     println("modDef Model created  ")
     UploadJarsToDB(modDef)
     println("Upload Jars for  Model called  ")
@@ -5418,7 +5418,38 @@ println("Adding a Java Model")
       }
     }
   }
-
+ 
+  /**
+   * 
+   */
+  private var cfgmap: Map[String,Any] = null
+  def UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
+    
+    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]
+    
+    println(cfgmap)
+    println("------------")
+    var m1 = cfgmap("LowBalanceAlert")
+    println(m1) 
+    var m2 = cfgmap("LowBalanceAlertModel")
+    println(m2)
+    
+    return cfgStr
+  }
+  
+  def getModelDependencies (modelName: String): List[String] = {    
+   var modelCfg = cfgmap.getOrElse(modelName, null).asInstanceOf[Map[String,Any]]
+   modelCfg.getOrElse("Dependencies",null).asInstanceOf[List[String]]
+  }
+  
+  def getModelMessagesContainers (modelName: String): List[String]  = {   
+   var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
+   modelCfg.getOrElse("MessageAndContainers",null).asInstanceOf[List[String]]
+  }
+  
+  /**
+   * 
+   */
   def UploadConfig(cfgStr: String, userid:Option[String], objectList: String): String = {
     var keyList = new Array[String](0)
     var valueList = new Array[Array[Byte]](0)
@@ -5435,36 +5466,36 @@ println("Adding a Java Model")
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", null, ErrorCodeConstants.Upload_Config_Failed + ":" + cfgStr)
         apiResult.toString()
       }
-      else{
-  val ciList = clusters.get
-  logger.debug("Found " + ciList.length + " cluster objects ")
-  ciList.foreach(c1 => {
-    logger.debug("Processing the cluster => " + c1.ClusterId)
-    // save in memory
-    var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
-    MdMgr.GetMdMgr.AddCluster(ci)
-    var key = "ClusterInfo." + ci.clusterId
-    var value = serializer.SerializeObjectToByteArray(ci)
-    keyList   = keyList :+ key.toLowerCase
-    valueList = valueList :+ value
+      else {
+        val ciList = clusters.get
+        logger.debug("Found " + ciList.length + " cluster objects ")
+        ciList.foreach(c1 => {
+          logger.debug("Processing the cluster => " + c1.ClusterId)
+          // save in memory
+          var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
+          MdMgr.GetMdMgr.AddCluster(ci)
+          var key = "ClusterInfo." + ci.clusterId
+          var value = serializer.SerializeObjectToByteArray(ci)
+          keyList   = keyList :+ key.toLowerCase
+          valueList = valueList :+ value
 
-    // gather config name-value pairs
-    val cfgMap = new scala.collection.mutable.HashMap[String,String] 
-    cfgMap("DataStore") = c1.Config.DataStore
-    cfgMap("StatusInfo") = c1.Config.StatusInfo
-    cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
-    cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
+          // gather config name-value pairs
+          val cfgMap = new scala.collection.mutable.HashMap[String,String] 
+          cfgMap("DataStore") = c1.Config.DataStore
+          cfgMap("StatusInfo") = c1.Config.StatusInfo
+          cfgMap("ZooKeeperInfo") = c1.Config.ZooKeeperInfo
+          cfgMap("EnvironmentContext") = c1.Config.EnvironmentContext
 
-    // save in memory
-    val cic = MdMgr.GetMdMgr.MakeClusterCfg(c1.ClusterId,cfgMap,null,null)
-    MdMgr.GetMdMgr.AddClusterCfg(cic)
-    key = "ClusterCfgInfo." + cic.clusterId
-    value = serializer.SerializeObjectToByteArray(cic)
-    keyList   = keyList :+ key.toLowerCase
-    valueList = valueList :+ value
+          // save in memory
+          val cic = MdMgr.GetMdMgr.MakeClusterCfg(c1.ClusterId,cfgMap,null,null)
+          MdMgr.GetMdMgr.AddClusterCfg(cic)
+          key = "ClusterCfgInfo." + cic.clusterId
+          value = serializer.SerializeObjectToByteArray(cic)
+          keyList   = keyList :+ key.toLowerCase
+          valueList = valueList :+ value
 
-    val nodes = c1.Nodes
-    nodes.foreach(n => {
+          val nodes = c1.Nodes
+          nodes.foreach(n => {
             val validRoles = NodeRole.ValidRoles.map(r => r.toLowerCase).toSet
             val givenRoles = if (n.Roles == None) null else n.Roles.get
             var foundRoles = ArrayBuffer[String]()

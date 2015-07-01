@@ -1,4 +1,4 @@
-package com.ligadata.samples.models;
+/*package com.ligadata.samples.models;
 
 import com.ligadata.FatafatBase.*;
 import com.ligadata.FatafatBase.api.java.function.*;
@@ -53,12 +53,12 @@ public class LowBalanceAlertModel2 extends ModelBase {
         // ... Prepare results here ... need to populate result object with appropriate attributes
         return ModelResult.builder().withResult(new LowBalanceAlertResult2(txnContext)).build(); 
     }
-    
+    */
     
     /**
      * @param inTxnContext
      */
-    public LowBalanceAlertModel2 (ModelContext mdlContext) {
+ /*   public LowBalanceAlertModel2 (ModelContext mdlContext) {
     	super(mdlContext, objSignleton);
     }
 
@@ -105,6 +105,6 @@ public class LowBalanceAlertModel2 extends ModelBase {
     		return "0.0.1";
     	}
     }
+
 	
-	
-}
+}*/
