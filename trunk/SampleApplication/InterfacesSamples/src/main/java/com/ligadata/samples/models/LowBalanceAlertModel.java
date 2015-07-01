@@ -1,4 +1,4 @@
-package com.ligadata.samples.models;
+/*package com.ligadata.samples.models;
 
 import com.ligadata.FatafatBase.*;
 import com.ligadata.samples.messages.*;
@@ -28,8 +28,6 @@ public class LowBalanceAlertModel extends ModelBase {
         // Check if at least min number of hours elapsed since last alert  
         alertHistory = CustAlertHistoryFactory.toJavaRDDObject().getRecentOrNew();
         
-        
-        
         if (curDt.timeDiffInHrs(new RddDate(alertHistory.alertDtTmInMs())) < gPref.minAlertDurationInHrs())
           return null;
         
@@ -45,10 +43,10 @@ public class LowBalanceAlertModel extends ModelBase {
         // ... Prepare results here ... need to populate result object with appropriate attributes
         return ModelResult.builder().withResult(new LowBalanceAlertResult(txnContext)).build(); 
     }
-	
+	*/
     /**
      * @param inTxnContext
-     */
+     */ /*
     public LowBalanceAlertModel (ModelContext mdlContext) {
     	super(mdlContext, objSignleton);
     }
@@ -82,6 +80,6 @@ public class LowBalanceAlertModel extends ModelBase {
 
     }
 
-}
+}*/
 
 

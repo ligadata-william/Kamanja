@@ -5,6 +5,8 @@ import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResul
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
+import org.json4s.jackson.JsonMethods._
+import scala.io.Source
 
 // Implementation notes:
 //   There is no need to pass context in every call to Builder or getRecent as the context is stored
@@ -110,6 +112,114 @@ object LowBalanceAlert2 extends ModelBaseObj {
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
   override def ModelName: String = "LowBalanceAlert2" // Model Name
   override def Version: String = "0.0.1" // Model Version
+    
+  def main(args: Array[String]) {
+    
+    var configJson = Source.fromFile("/tmp/compileCfg.json").getLines().mkString   
+    println(configJson)
+    var cfgmap = parse(configJson).values.asInstanceOf[Map[String,Any]]
+    
+    println(cfgmap)
+    println("------------")
+    var m1 = cfgmap.getOrElse("LowBalanceModel",null).asInstanceOf[Map[String,Any]]
+    println(m1)
+    var m2 = m1.getOrElse("Dependencies",null).asInstanceOf[List[String]]
+    println(m2.mkString("/"))
+    
+  /*   println("Hello, world!")
+     var source = "package blah.bhal.* \n"
+     source = source +  "@ModelName     (\n"
+     source = source + "\tmodelname = \"LowBalanceAlert        \") \n"
+     source = source +  "@ModelVersion( version = \"1.0 \") \n"
+     source = source +  "@ModelNameSpace( modelNamespace = \"System.SHIT \") \n"
+     source = source + "@ModelDependencies  (modelDependencies = \n"
+     source = source + "\t\t\t {\"shit.shit\",\"shit2.shit2\"}\n"
+     source = source + "@MsgAndContainerDependencies (msgAndContainerDependencies = \n" 
+      source = source + "\t\t\t {\"fuck.fuck\",\"FUCKING.MOTHAFUCK\"}\n"
+     source = source +  "class LowBalanceAlertResult(ctx: Blah)"
+     
+     println()
+     println()
+     println()
+     println(source)
+     println()
+     println()
+     
+     // ModelName
+     // Single String Annotations
+     var ModelNameExpr = "@ModelName\\s*[(]\\s*modelname\\s*[=]\\s*[\"]".r
+     var VersionExpr = "@ModelVersion\\s*[(]\\s*version\\s*[=]\\s*[\"]".r
+     var NameSpaceExpr = "@ModelNameSpace\\s*[(]\\s*modelNamespace\\s*[=]\\s*[\"]".r
+     // Array[String] Annotations
+     //var Dependencies = newNames={"Jenkov", "Peterson"}
+     var DependenciesExpr = "@ModelDependencies\\s*[(]\\s*modelDependencies\\s*[=]\\s*[{]\\s*[\"]".r
+     var MsgContExpr = "@MsgAndContainerDependencies\\s*[(]\\s*msgAndContainerDependencies\\s*[=]\\s*[{]\\s*[\"]".r
+     
+     var endAnnotationValueExpr2 = "[^\"]*".r
+     var endAnnotationValueExpr3 = "[^}]*".r
+     var startOfClassExpr = "class ".r
+     
+     var indx1: Integer = 0
+     var indx2: Integer = 0
+     var indx3: Integer = 0
+     var tempSource: String = ""
+     var value: String = ""
+     
+     
+     var mnAn = ModelNameExpr.findFirstMatchIn(source).getOrElse(null)
+     if (mnAn != null){
+       indx2 = mnAn.end  
+       tempSource =  source.substring(indx2) 
+       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
+       value = tempSource.substring(0,indx3).trim
+       println("ModelName = "+value)     
+     }
+
+     
+     var mnVersion = VersionExpr.findFirstMatchIn(source).getOrElse(null)
+     if (mnVersion != null) {
+       indx2 = mnVersion.end
+       tempSource =  source.substring(indx2)
+       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
+       value = tempSource.substring(0,indx3).trim
+       println("ModelVersion = "+value)          
+     }
+
+    
+     var mnNamespace = NameSpaceExpr.findFirstMatchIn(source).getOrElse(null)
+     if (mnNamespace != null) {
+       indx2 = mnNamespace.end
+       tempSource =  source.substring(indx2)
+       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
+       value = tempSource.substring(0,indx3).trim
+       println("ModelNamespace = "+value)   
+     }
+     println("-----")
+     
+     var deps = DependenciesExpr.findFirstMatchIn(source).getOrElse(null)
+     if (deps != null) {
+       indx2 = deps.end
+       tempSource =  source.substring(indx2)
+       indx3 = endAnnotationValueExpr3.findFirstMatchIn(tempSource).get.end
+       value = tempSource.substring(0,indx3).trim
+       var indDeps = value.split(",").map(j => {j.replace('"', ' ').trim} )
+       println("Deps = "+indDeps.mkString(","))   
+     }
+     
+     var mcs = MsgContExpr.findFirstMatchIn(source).getOrElse(null)
+     if (deps != null) {
+       indx2 = mcs.end
+       tempSource =  source.substring(indx2)
+       indx3 = endAnnotationValueExpr3.findFirstMatchIn(tempSource).get.end
+       value = tempSource.substring(0,indx3).trim
+       var indDeps = value.split(",").map(j => {j.replace('"', ' ').trim} )
+       println("Deps = "+indDeps.mkString(","))   
+     } */
+     
+     
+     
+  } 
+    
 }
 
 class LowBalanceAlertResult2(ctxt: TransactionContext) {
