@@ -349,8 +349,11 @@ class CompilerProxy{
     var finalSourceCode = "package "+ packageName +".V0;\n" + typeImports +"\n" + repackagedCode.substring(repackagedCode.indexOf("import"))
     dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)    
      
-    // Need to determine the name of the class file in case of Java  
+    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
     var tempClassName: String = modelConfigName
+    if (sourceLang.equalsIgnoreCase("java")) {
+      tempClassName = getJavaClassName(sourceCode)
+    }
       
     // Create a temporary jarFile file so that we can figure out what the metadata info for this class is. 
     var (status,jarFileName) = jarCode(packageName+".V0",
@@ -373,27 +376,26 @@ class CompilerProxy{
      
      // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
      val classLoader: CompilerProxyLoader = new CompilerProxyLoader      
-     val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
+    // val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
+     var jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+     jarPaths0 = jarPaths0 + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
+
+     // Add this temp jar...
      val jarName0 = JarPathsUtils.GetValidJarFile(jarPaths0, jarFileName)
-     val fl = new File(jarName0)  
-     if (fl.exists) {
-       try {
-         classLoader.loader.addURL(fl.toURI().toURL())
-         classLoader.loadedJars += fl.getPath()
-       } catch {
-         case e: Exception => {
-           logger.error("Failed to add "+jarName0 + " due to internal exception " + e.printStackTrace)
-           return null
-         }
-       }
-     } else {
-       logger.error("Unable to locate Jar '"+jarName0+"'")
-       return ("","","","")
-     }  
-     var classNames = getClasseNamesInJar(jarName0)
+     loadJarFile(jarName0, classLoader)
+     elements.foreach(elem => {
+       val jarNameType =  JarPathsUtils.GetValidJarFile(jarPaths0, elem.JarName)
+       loadJarFile(jarNameType, classLoader)
+     })
      
+     
+     var classNames = getClasseNamesInJar(jarName0)
+     var tempCurClass: Class[_] = null    
+     println("COMPILER_PROXY: Generated a dummy jar file "+jarName0)
      classNames.foreach (clsName => {
+       println("COMPILER_PROXY: is "+clsName+" a ModelBaseObj????")
        var curClz = Class.forName(clsName, true, classLoader.loader)  
+       tempCurClass = curClz
        
        var isModel = false
        while (curClz != null && isModel == false) {
@@ -403,16 +405,24 @@ class CompilerProxy{
        }
        if (isModel) {     
          try {
-           // Trying Singleton Object
-           val module = classLoader.mirror.staticModule(clsName)
-           val obj = classLoader.mirror.reflectModule(module)
-           var objInst: Any = null
+           println("COMPILER_PROXY: Answer is YES")
            // If we are dealing with 
+           var objInst: Any = null
            try {
+             // Trying Singleton Object
+             val module = classLoader.mirror.staticModule(clsName)
+             val obj = classLoader.mirror.reflectModule(module)
+  
              objInst = obj.instance
+             println("COMPILER_PROXY: clsName is a Scala Class... ")
            } catch {
-              case e: Exception => {
-                 objInst = curClz.newInstance 
+             case e: java.lang.NoClassDefFoundError => {
+                e.printStackTrace
+                throw e
+             } 
+             case e: Exception => {
+                println("COMPILER_PROXY: clsName is a Java Class... ")
+                objInst = tempCurClass.newInstance 
               }
            }
              
@@ -423,7 +433,7 @@ class CompilerProxy{
            }
            else
               logger.error("Unable to load a class Object from "+jarName0)
-           ("","","","", "")
+           return ("","","","")
          } catch {
            case e: Exception => {
              // Trying Regular Object instantiation
@@ -436,7 +446,8 @@ class CompilerProxy{
      }) 
      ("","","","")
   }
-
+  
+  
   /**
    * compileModelFromSource - Generate a jarfile from a sourceCode.
    * 
@@ -555,30 +566,6 @@ class CompilerProxy{
        }
        (classPath,depElems, pName)
   }
-  
-  /**
-   * getDependencyElement - return a BaseElemDef of the element represented by the key.
-   */
-  private def getDependencyElement (key: String) : Option[BaseElemDef] = {
-     var elem: Option[BaseElemDef] = None
-     
-     // is it a container?
-     var contElemSet =  MdMgr.GetMdMgr.Containers(key, true, true).getOrElse(scala.collection.immutable.Set[ContainerDef]())
-     if (contElemSet.size > 0) {
-       elem = Some(contElemSet.last)
-       return elem
-     }
-     
-     // is it a message
-     var msgElemSet =  MdMgr.GetMdMgr.Messages(key, true, true).getOrElse(scala.collection.immutable.Set[MessageDef]())
-     if (msgElemSet.size > 0) {
-       elem = Some(msgElemSet.last)
-       return elem
-     }
-     // Return None if nothing found
-     None
-  }
-  
 
   /**
    * 
@@ -833,6 +820,67 @@ class CompilerProxy{
 
     isIt
   }   
+ 
+  /**
+   * 
+   */
+  private def getJavaClassName(sourceCode: String):String = {
+      var publicClassExpr = "\\s*public\\s*class\\s*\\S*\\s*extends".r  
+      var classMatchResult = publicClassExpr.findFirstMatchIn(sourceCode).getOrElse(null)
+      if (classMatchResult != null) {
+        var classSubString = sourceCode.substring(classMatchResult.start,classMatchResult.end) 
+        var bExpr = "\\s*public\\s*class\\s*".r
+        var eExpr = "\\s*extends".r
+        var match1 = bExpr.findFirstMatchIn(classSubString).get
+        var match2 = eExpr.findFirstMatchIn(classSubString).get
+        return classSubString.substring(match1.end,match2.start).trim
+      }
+      ""
+  }
+  
+  /**
+   * getDependencyElement - return a BaseElemDef of the element represented by the key.
+   */
+  private def getDependencyElement (key: String) : Option[BaseElemDef] = {
+     var elem: Option[BaseElemDef] = None
+     
+     // is it a container?
+     var contElemSet =  MdMgr.GetMdMgr.Containers(key, true, true).getOrElse(scala.collection.immutable.Set[ContainerDef]())
+     if (contElemSet.size > 0) {
+       elem = Some(contElemSet.last)
+       return elem
+     }
+     
+     // is it a message
+     var msgElemSet =  MdMgr.GetMdMgr.Messages(key, true, true).getOrElse(scala.collection.immutable.Set[MessageDef]())
+     if (msgElemSet.size > 0) {
+       elem = Some(msgElemSet.last)
+       return elem
+     }
+     // Return None if nothing found
+     None
+  }
+  
+  /**
+   *   
+   */
+  private def loadJarFile (jarName: String, classLoader: CompilerProxyLoader): Unit = {
+     val fl = new File(jarName)  
+     if (fl.exists) {
+       try {
+         classLoader.loader.addURL(fl.toURI().toURL())
+         classLoader.loadedJars += fl.getPath()
+       } catch {
+         case e: Exception => {
+           logger.error("Failed to add "+jarName + " due to internal exception " + e.printStackTrace)
+           return
+         }
+       }
+     } else {
+       logger.error("Unable to locate Jar '"+jarName+"'")
+       return
+     }     
+  }
   
   
 }
