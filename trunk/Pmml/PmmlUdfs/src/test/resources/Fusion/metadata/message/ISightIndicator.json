@@ -330,6 +330,12 @@
           "Type": "System.String"
         }
       }
+  ],
+  "PartitionKey": [
+      "reportId"
+  ],
+  "PrimaryKey": [
+      "reportId"
   ]
   }
 }
