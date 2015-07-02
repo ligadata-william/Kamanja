@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.compiler
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
