@@ -3291,11 +3291,10 @@ println("---> 3")
     }
   }
   
-  def AddModelFromSource(javaCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
- 
-println("Adding a Java Model")
+  def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+
     var compProxy = new CompilerProxy
-    val modDef : ModelDef =  compProxy.compileModelFromSource(javaCode, modelName, sourceLang)
+    val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
     println("modDef Model created  ")
     UploadJarsToDB(modDef)
     println("Upload Jars for  Model called  ")
@@ -5425,26 +5424,53 @@ println("Adding a Java Model")
   private var cfgmap: Map[String,Any] = null
   def UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
     
-    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]
-    
-    println(cfgmap)
-    println("------------")
-    var m1 = cfgmap("LowBalanceAlert")
-    println(m1) 
-    var m2 = cfgmap("LowBalanceAlertModel")
-    println(m2)
-    
+    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]    
     return cfgStr
   }
   
   def getModelDependencies (modelName: String): List[String] = {    
-   var modelCfg = cfgmap.getOrElse(modelName, null).asInstanceOf[Map[String,Any]]
-   modelCfg.getOrElse("Dependencies",null).asInstanceOf[List[String]]
+    var modelCfg = cfgmap.getOrElse(modelName, null).asInstanceOf[Map[String,Any]]
+    if (modelCfg != null) {
+        println("GetModelDeps++++++")
+      return modelCfg.getOrElse("Dependencies",null).asInstanceOf[List[String]] 
+    }
+    else  {
+      println("GetModelDeps------")
+      return List[String]()
+    }
   }
   
   def getModelMessagesContainers (modelName: String): List[String]  = {   
-   var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
-   modelCfg.getOrElse("MessageAndContainers",null).asInstanceOf[List[String]]
+    var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
+    
+    if (modelCfg != null) {
+        println("getModelMessagesContainers++++++")
+      return modelCfg.getOrElse("MessageAndContainers",null).asInstanceOf[List[String]] 
+    }
+    else  {
+      println("getModelMessagesContainers------")
+      return List[String]()
+    }
+    
+  }
+  
+  def getModelPhysicalName (modelName: String): String = {
+    println("+++++ requesting info on "+ modelName)
+    var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
+    if (modelCfg != null) {
+        println("PhysicalName++++++")
+      return modelCfg.getOrElse("PhysicalName",null).asInstanceOf[String] 
+    }
+    else  {
+      println("PhysicalName------")
+      return ""
+    }
+
+  }
+  
+  def getModelConfigNames (): Array[String] = {
+    if (cfgmap == null) return Array[String]()
+    return cfgmap.keySet.toArray
   }
   
   /**

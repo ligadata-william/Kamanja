@@ -1415,9 +1415,35 @@ object TestMetadataAPI {
       // Save the model
       // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
 
-      val metaProps = loadCfgsAndPrepareDeps("/tmp/scalamdlconfig.conf")
-
-      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "java", metaProps.getProperty("name"), userid))
+     // val metaProps = loadCfgsAndPrepareDeps("/tmp/scalamdlconfig.conf")
+      var modelConfigName = ""
+      var configToChoices: scala.collection.mutable.Map[Int,String] = scala.collection.mutable.Map[Int,String]()
+      var configsKeys = MetadataAPIImpl.getModelConfigNames
+      var i = 0
+      configsKeys.foreach (configName => {
+        configToChoices(i) = configName
+        i = i + 1
+      }) 
+      
+      println("Pick the Model Config from below choices")
+      seq = 0
+      configsKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      seq += 1
+      println("[" + seq + "] Main Menu")      
+      print("\nEnter your choice: ")
+      val choice2: Int = readInt()
+      if (choice == pmmlFiles.length + 1) {
+        return
+      }
+      if (choice2 < 1 || choice2 > pmmlFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
+      }
+      
+      modelConfigName =  configToChoices(choice2 - 1)
+      println("CHOSE " + (choice2-1) + "  "+modelConfigName)
+      
+      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "java", modelConfigName, userid))
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Model Already in the metadata....")
@@ -1469,13 +1495,38 @@ object TestMetadataAPI {
       // Save the model
       // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
 
-      var metaProps = loadCfgsAndPrepareDeps("/tmp/scalamdlconfig.conf")
+     // val metaProps = loadCfgsAndPrepareDeps("/tmp/scalamdlconfig.conf")
+      var modelConfigName = ""
+      var configToChoices: scala.collection.mutable.Map[Int,String] = scala.collection.mutable.Map[Int,String]()
+      var configsKeys = MetadataAPIImpl.getModelConfigNames
+       var i = 0
+      configsKeys.foreach (configName => {
+        println("Addding "+ configName + " at location "+i )
+        configToChoices(i) = configName
+        i = i + 1
+      }) 
       
-      println("--->"+metaProps.getProperty("name"))
-      
+      println("Pick the Model Config from below choices")
+      seq = 0
+      configsKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      seq += 1
+      println("[" + seq + "] Main Menu")      
+      print("\nEnter your choice: ")
+      val choice2: Int = readInt()
+ 
+      if (choice2 == configsKeys.length + 1) {
+        return
+      }
+      if (choice2 < 1 || choice2 > configsKeys.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
+      }    
+      modelConfigName =  configToChoices(choice2 - 1)
+    
+      println("CHOSE " + (choice2-1) + "  "+modelConfigName)
      
 
-      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "scala", metaProps.getProperty("name"), userid))
+      println("Results as json string => \n" + MetadataAPIImpl.AddModelFromSource(pmmlStr, "scala", modelConfigName, userid))
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Model Already in the metadata....")

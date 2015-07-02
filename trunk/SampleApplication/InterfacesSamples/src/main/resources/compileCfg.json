@@ -1,14 +1,12 @@
 {
     "LowBalanceAlert":{
+        "PhysicalName":"LowBalanceAlert",
         "Dependencies":["fatafatbase_2.10-1.0.jar"],
         "MessageAndContainers":["system.custalerthistory","system.alerthistory","system.customerpreferences","system.globalpreferences","system.customerinfo", "system.transactionmsg","system.custpreferences"]
     },
     "LowBalanceAlertModel":{
+        "PhysicalName":"LowBalanceAlertModel.LowBalanceAlertModelObj",
         "Dependencies":["fatafatbase_2.10-1.0.jar"],
         "MessageAndContainers":["system.custalerthistory","system.alerthistory","system.customerpreferences","system.globalpreferences","system.customerinfo", "system.transactionmsg","system.custpreferences"]
     }
 }
-
-
-
-
