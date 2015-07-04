@@ -53,6 +53,8 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
       mdLoader.initialize
 
+      val zkServer = EmbeddedZookeeper
+      zkServer.instance.startup
 
       logger.info("Initialize zooKeeper connection")
       MetadataAPIImpl.initZkListener
@@ -71,6 +73,9 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
    }
     catch {
+      case e: EmbeddedZookeeperException => {
+        throw new EmbeddedZookeeperException("EmbeddedZookeeperException detected\n" + e)
+      }
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
     }
   }
@@ -880,6 +885,9 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
     }
   }
   override def afterAll = {
+    if (zkServer != null) {
+      zkServer.instance.shutdown
+    }
     MetadataAPIImpl.shutdown
   }
 }

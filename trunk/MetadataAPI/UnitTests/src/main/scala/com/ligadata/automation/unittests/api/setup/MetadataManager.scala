@@ -89,7 +89,7 @@ class MetadataManager(var config: MetadataAPIProperties) {
     md.metadataAPIConfig.setProperty("SECURITY_IMPL_CLASS", "com.ligadata.Security.SimpleApacheShiroAdapter")
     md.metadataAPIConfig.setProperty("DO_AUTH", "YES")
     md.metadataAPIConfig.setProperty("AUDIT_IMPL_JAR", jarPathSystem + "/auditadapters_2.10-1.0.jar")
-    md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditCassandraAdapter")
+    md.metadataAPIConfig.setProperty("AUDIT_IMPL_CLASS", "com.ligadata.audit.adapters.AuditHashMapAdapter")
     md.metadataAPIConfig.setProperty("DO_AUDIT", "YES")
     md.metadataAPIConfig.setProperty("SSL_CERTIFICATE","/media/home2/installFatafat/certs/keystore.jks")
 

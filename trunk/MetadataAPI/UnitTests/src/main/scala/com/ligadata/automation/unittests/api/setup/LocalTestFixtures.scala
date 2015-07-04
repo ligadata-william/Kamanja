@@ -13,4 +13,5 @@ trait CommonResources {
 
 trait LocalTestFixtures extends CommonResources {
   val mdMan: MetadataManager = new MetadataManager(new MetadataAPIProperties)
+  val zkServer = EmbeddedZookeeper
 }
