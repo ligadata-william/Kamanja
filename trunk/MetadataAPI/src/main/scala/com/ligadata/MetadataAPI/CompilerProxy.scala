@@ -23,6 +23,9 @@ import com.ligadata.Exceptions._
 import java.util.jar.JarInputStream
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 import java.net.URL
 import java.net.URLClassLoader
@@ -498,12 +501,19 @@ class CompilerProxy{
                                                           List[(String, String, String, String, Boolean, String)](),
                                                           List[(String, String, String)]() ,
                                                           MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-                                                          MetadataAPIImpl.getModelDependencies(modelName).toArray[String],
+                                                          MetadataAPIImpl.getModelDependencies(modelConfigName).toArray[String],
                                                           false
                                                  )     
-                                  
+              
+      // Need to set some values by hand here.                                                   
        modDef.jarName = jarFileName
        modDef.physicalName = packageName + "." + pname
+       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = ObjFormatType.fSCALA else modDef.objectFormat = ObjFormatType.fJAVA
+       modDef.ObjectDefinition(createSavedSourceCode(sourceCode, 
+                                                     MetadataAPIImpl.getModelDependencies(modelConfigName),
+                                                     MetadataAPIImpl.getModelMessagesContainers(modelConfigName),
+                                                     MetadataAPIImpl.getModelPhysicalName(modelConfigName)))
+                                                                                     
        modDef
     } catch {
       case e:AlreadyExistsException =>{
@@ -519,7 +529,24 @@ class CompilerProxy{
     
   }
   
-  
+  /**
+   * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type
+   *                         like a message or container changes. The format is going to be JSON strings as follows:
+   *                         { "source":"sourcecode",
+   *                           "dependencies":List[String],
+   *                           "messagescontainers":List[String],
+   *                           "physicalname":"physicalName"
+   *                         }  
+   */
+  private def createSavedSourceCode(source: String, deps: List[String], typeDeps: List[String], pName: String): String = {
+    
+    val json = (("source" -> source) ~
+                      ("dependencies" -> deps) ~
+                      ("types" -> typeDeps) ~
+                      ("physicalname" -> pName))
+    
+    return compact(render(json))
+  }
   /**
    * getClassPath - 
    * 
