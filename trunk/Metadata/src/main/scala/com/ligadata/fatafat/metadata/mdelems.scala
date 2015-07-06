@@ -11,19 +11,20 @@ import java.io.{ DataOutputStream, DataInputStream }
 // define some enumerations 
 object ObjFormatType extends Enumeration {
   type FormatType = Value
-  val fCSV, fJSON, fXML, fSERIALIZED = Value
+  val fCSV, fJSON, fXML, fSERIALIZED, fJAVA, fSCALA = Value
 
-  def asString(typ: FormatType): String = {
-    val str = typ.toString match {
-      case "fCSV" => "CSV"
-      case "fJSON" => "JSON"
-      case "fXML" => "XML"
-      case "fSERIALIZED" => "SERIALIZED"
-      case _ => "Unknown"
-    }
+  def asString(typ : FormatType) : String = {
+     val str = typ.toString match {
+       case "fCSV" =>  "CSV"
+       case "fJSON" => "JSON"
+       case "fXML" => "XML"
+       case "fSERIALIZED" => "SERIALIZED"
+       case "fJAVA" => "JAVA"
+       case "fSCALA" => "SCALA"
+       case _ => "Unknown"
+      }
     str
   }
-
 }
 import ObjFormatType._
 
