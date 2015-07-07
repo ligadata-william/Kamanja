@@ -30,20 +30,5 @@ minimal downtime.
 13. **Vibrant Community**. Easy to deploy, test samples, developer guides and community to answer your
 questions and make contributions.
 
-###Getting Started
-
-####Prerequisites:
-
-* CentOS/RedHat/OS X (virtual machine for Windows)
-
-* ~ 400 MB for installation (3 GB if building from source)
- 
-* Have sudoer access
-
-* JDK 1.7.1 or higher ([download](http://www.oracle.com/technetwork/java/javase/downloads/index.html))
-
-* Scala v2.10.4 ([download] (http://www.scala-lang.org/download/2.10.4.html). Be sure to add scala to $PATH)
-
-* On Linux [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and [download kafka 2.10-0.8.1.1](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/Fatafat/wiki/Appendix-A-SetupGuide)]
 
 
