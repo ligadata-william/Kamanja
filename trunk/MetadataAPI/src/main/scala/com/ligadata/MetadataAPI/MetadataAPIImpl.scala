@@ -2202,6 +2202,32 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+
+  def RemoveFunction(signature: String, userid: Option[String]): String = {
+    var apiResult:String = ""
+    val dispkey = signature
+    if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",dispkey)
+    try {
+      val f = MdMgr.GetMdMgr.FunctionByTypeSig(signature)
+      if( f == null ){
+          logger.warn("No Function with " + signature + " is found in the cache, function may have been already removed ")
+	  var ar = new ApiResult(ErrorCodeConstants.Warning, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
+          apiResult = apiResult + ar.toString()
+      }
+      else{
+        RemoveFunction(f,userid)
+	var ar = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
+        apiResult = apiResult + ar.toString()
+      }
+      apiResult.toString()
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
+        apiResult.toString()
+      }
+    }
+  }
+
   def DumpFunctionDef(funcDef: FunctionDef) {
     logger.debug("Name => " + funcDef.Name)
     for (arg <- funcDef.args) {

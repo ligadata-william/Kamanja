@@ -221,6 +221,23 @@ trait MetadataAPI {
    */
   def RemoveFunction(nameSpace:String, functionName:String, version:Long, userid: Option[String]): String
 
+  /** Remove function for given signature
+   * @signature of the version functionFullNameWithVersion(comma separated list of function argument types)
+   *                           Example: pmml.min.1000000(int,int)
+   * @return the result as a JSON String of object ApiResult where ApiResult.statusCode
+   * indicates success or failure of operation: 0 for success, Non-zero for failure. The Value of
+   * ApiResult.statusDescription and ApiResult.resultData indicate the nature of the error in case of failure
+   *
+   * Example:
+   * {{{
+   * val apiResult = MetadataAPIImpl.RemoveFunction(MdMgr.sysNS,"my_min","int,int",100)
+   * val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
+   * println("Result as Json String => \n" + resultData)
+   *}}}
+   * 
+   */
+  def RemoveFunction(signature: String, userid: Option[String]): String
+
   /** Add new concepts 
    * @param conceptsText an input String of concepts in a format defined by the next parameter formatType
    * @param formatType format of conceptsText ( JSON or XML)

@@ -78,6 +78,10 @@ class RemoveObjectsService(requestContext: RequestContext, userid: Option[String
       case "function" => {
 	      return MetadataAPIImpl.RemoveFunction(nameSpace,arg.Name,version.toLong, userid)
       }
+      case "functionsignature" => {
+	      val signature = nameSpace + "." + arg.Name
+	      return MetadataAPIImpl.RemoveFunction(signature, userid)
+      }
       case "concept" => {
 	      return MetadataAPIImpl.RemoveConcept(nameSpace,arg.Name,version.toLong, userid)
       }

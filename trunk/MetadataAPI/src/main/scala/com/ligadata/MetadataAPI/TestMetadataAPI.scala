@@ -289,7 +289,7 @@ object TestMetadataAPI{
       }
 
       val func = funcArray(choice-1)
-      val apiResult = MetadataAPIImpl.RemoveFunction(func,userid)
+      val apiResult = MetadataAPIImpl.RemoveFunction(func.typeString,userid)
       println("Result as Json String => \n" + apiResult)
     }
     catch {

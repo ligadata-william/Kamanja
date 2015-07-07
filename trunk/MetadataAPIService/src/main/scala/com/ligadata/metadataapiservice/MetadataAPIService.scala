@@ -34,7 +34,7 @@ trait MetadataAPIService extends HttpService {
       
       // Make sure that the Audit knows the difference between No User specified and an None (request originates within the engine)
       if(userId == None) user = Some("")
-      logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role)
+      logger.debug("userid => " + userId.get + ",password => xxxxx" + ",role => " + role)
       get {     
         path("api" / Rest) {str => 
           {  
@@ -312,7 +312,9 @@ trait MetadataAPIService extends HttpService {
     val nameSpace = keyTokens(0)
     val name = keyTokens(1)
     val version = keyTokens(2)
-    val lVersion = version.toLong
+    if( ! objectType.equalsIgnoreCase("functionsignature") ){
+      val lVersion = version.toLong
+    }
     val mdArg = new MetadataApiArg(objectType, nameSpace, name, version, "JSON")
     val argList = new Array[MetadataApiArg](1)
     argList(0) = mdArg
