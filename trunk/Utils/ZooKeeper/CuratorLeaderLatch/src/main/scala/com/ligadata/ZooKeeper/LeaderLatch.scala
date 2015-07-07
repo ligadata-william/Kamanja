@@ -29,7 +29,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
 
   class ZkLeaderLatchListener extends LeaderLatchListener {
     override def isLeader() {
-      LOG.debug("Got leadership");
+      LOG.info("Got leadership");
       updateClusterStatus
     }
 
@@ -52,6 +52,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   def getClsuterStatus = clstStatus
 
   def SelectLeader = {
+    LOG.debug("SelectLeader")
     try {
       // Make sure we have the path created before we execute this
       CreateClient.CreateNodeIfNotExists(zkcConnectString, leaderPath)
@@ -73,8 +74,11 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   }
 
   private def updateClusterStatus {
+    LOG.debug("updateClusterStatus")
     try {
       val participants = leaderLatch.getParticipants.asScala
+
+      LOG.debug("participants => " + participants.mkString(","))
 
       clstStatus = ClusterStatus(leaderLatch.getId, leaderLatch.hasLeadership, leaderLatch.getLeader.getId, participants.map(_.getId))
 

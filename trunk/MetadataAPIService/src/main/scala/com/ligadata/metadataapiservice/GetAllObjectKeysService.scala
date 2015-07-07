@@ -64,6 +64,9 @@ class GetAllObjectKeysService(requestContext: RequestContext, userid:Option[Stri
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetAllFunctionsFromCache(true,userid)
       }
+      case "functionsignature" => {
+	      apiResult = MetadataAPIImpl.GetAllFunctionsBySignatureFromCache(true,userid)
+      }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetAllConceptsFromCache(true,userid)
       }

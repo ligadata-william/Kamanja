@@ -343,6 +343,52 @@ object TestMetadataAPI{
     }
   }
 
+  def GetFunctionBySignature: Unit = {
+    val loggerName = this.getClass.getName
+    lazy val logger = Logger.getLogger(loggerName)
+
+    try{
+      logger.setLevel(Level.TRACE)
+
+      val funcs = MdMgr.GetMdMgr.Functions(true,false)
+      if (funcs == None ){
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+      val funcArray = funcs.get.toArray
+      if (funcArray.length == 0) {
+        println("Sorry, there are no functions available in the Metadata")
+        return
+      }
+
+
+      println("\nPick the Function to be presented from the following list: ")
+      var seq = 0
+      funcArray.foreach(f => {
+        seq += 1;
+        println("[" + seq + "] " + f.typeString)
+      })
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > funcArray.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
+      }
+
+      val func = funcArray(choice-1)
+      val apiResult = MetadataAPIImpl.GetFunctionDef(func.typeString,userid)
+      println("Result as Json String => \n" + apiResult)
+
+    }catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+  
   def GetFunction: Unit = {
     val loggerName = this.getClass.getName
     lazy val logger = Logger.getLogger(loggerName)
@@ -2290,6 +2336,7 @@ object TestMetadataAPI{
       val removeType      = ()            => { RemoveType }
       val addFunction         = ()        => { AddFunction }
       val getFunction     =()             => { GetFunction }
+      val getFunctionBySignature     =()  => { GetFunctionBySignature }
       val removeFunction      = ()        => { RemoveFunctionBySignature }
       val updateFunction         = ()     => { UpdateFunction }
       val addConcept         = ()         => { AddConcept }
@@ -2337,6 +2384,7 @@ object TestMetadataAPI{
 			      ("Remove Type",removeType),
 			      ("Add Function",addFunction),
             ("Get Function", getFunction),
+			      ("Get Function By Signature", getFunctionBySignature),
 			      ("Remove Function",removeFunction),
 			      ("Update Function",updateFunction),
 			      ("Add Concept",addConcept),

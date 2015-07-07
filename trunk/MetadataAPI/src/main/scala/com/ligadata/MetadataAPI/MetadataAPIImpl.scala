@@ -3728,6 +3728,33 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def GetAllFunctionsBySignatureFromCache(active: Boolean, userid: Option[String]): Array[String] = {
+    var functionList: Array[String] = new Array[String](0)
+    logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETKEYS,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",AuditConstants.FUNCTION)
+    try {
+      val contDefs = MdMgr.GetMdMgr.Functions(active, true)
+      contDefs match {
+        case None =>
+          None
+          logger.debug("No Functions found ")
+          functionList
+        case Some(ms) =>
+          val msa = ms.toArray
+          val contCount = msa.length
+          functionList = new Array[String](contCount)
+          for (i <- 0 to contCount - 1) {
+            functionList(i) = msa(i).typeString
+          }
+          functionList
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+        throw new UnexpectedMetadataAPIException("Failed to fetch all the functions by signature:" + e.toString)
+      }
+    }
+  }
+
 
   def GetAllConceptsFromCache(active: Boolean, userid: Option[String]): Array[String] = {
     var conceptList: Array[String] = new Array[String](0)
@@ -4885,6 +4912,26 @@ object MetadataAPIImpl extends MetadataAPI {
       case e: Exception => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetAllFunctionDefs", null, "Error :" + e.toString() + ErrorCodeConstants.Get_All_Functions_Failed)
         (0, apiResult.toString())
+      }
+    }
+  }
+
+  def GetFunctionDef(signature: String,userid: Option[String]): String = {
+    try {
+      if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",signature)
+      val f = MdMgr.GetMdMgr.FunctionByTypeSig(signature)
+      if( f == null ){
+        logger.debug("No Functions found ")
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetFunctionDef", null, ErrorCodeConstants.Get_Function_Failed + ":" + signature)
+        apiResult.toString()
+      } else {
+        var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetFunctionDef", JsonSerializer.SerializeObjectToJson(f), ErrorCodeConstants.Get_Function_Successful)
+        apiResult.toString()
+      }
+    } catch {
+      case e: Exception => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetFunctionDef", null, "Error :" + e.toString() + ErrorCodeConstants.Get_Function_Failed + ":" + signature)
+        apiResult.toString()
       }
     }
   }

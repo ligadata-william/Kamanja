@@ -79,6 +79,10 @@ class GetObjectsService(requestContext: RequestContext, userid:Option[String], p
       case "function" => {
 	      apiResult = MetadataAPIImpl.GetFunctionDef(nameSpace,arg.Name,formatType,version,userid)
       }
+      case "functionsignature" => {
+	      val signature = nameSpace + "." + arg.Name
+	      return MetadataAPIImpl.GetFunctionDef(signature, userid)
+      }
       case "concept" => {
 	      apiResult = MetadataAPIImpl.GetConceptDef(nameSpace,arg.Name,formatType,version,userid)
       }

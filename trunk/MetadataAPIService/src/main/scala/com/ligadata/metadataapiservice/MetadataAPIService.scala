@@ -33,8 +33,10 @@ trait MetadataAPIService extends HttpService {
       var user: Option[String] = None
       
       // Make sure that the Audit knows the difference between No User specified and an None (request originates within the engine)
-      if(userId == None) user = Some("")
-      logger.debug("userid => " + userId.get + ",password => xxxxx" + ",role => " + role)
+      user = userId
+      if(userId == None) 
+	user = Some("")
+      logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role)
       get {     
         path("api" / Rest) {str => 
           {  
@@ -233,7 +235,7 @@ trait MetadataAPIService extends HttpService {
 
   private def processGetKeysRequest(objtype: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") || objtype.equalsIgnoreCase("Function") ||
-      objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg")) {
+      objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg") || objtype.equalsIgnoreCase("functionsignature")) {
       val allObjectKeysService = actorRefFactory.actorOf(Props(new GetAllObjectKeysService(rContext, userid, password, role)))
       allObjectKeysService ! GetAllObjectKeysService.Process(objtype)
     } else {
@@ -257,7 +259,7 @@ trait MetadataAPIService extends HttpService {
       val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext, userid, password, role)))
       allObjectsService ! GetConfigObjectsService.Process(objKey)
     } else if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
-      objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg")) {
+      objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg") || objtype.equalsIgnoreCase("functionsignature")) {
       val getObjectsService = actorRefFactory.actorOf(Props(new GetObjectsService(rContext, userid, password, role)))
       getObjectsService ! GetObjectsService.Process(argParm)
     } else {
@@ -275,7 +277,7 @@ trait MetadataAPIService extends HttpService {
     if (argParm == null) return
 
     if (objtype.equalsIgnoreCase("Container") || objtype.equalsIgnoreCase("Model") || objtype.equalsIgnoreCase("Message") ||
-      objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg")) {
+      objtype.equalsIgnoreCase("Function") || objtype.equalsIgnoreCase("Concept") || objtype.equalsIgnoreCase("Type") || objtype.equalsIgnoreCase("OutputMsg") || objtype.equalsIgnoreCase("functionsignature")) {
       val removeObjectsService = actorRefFactory.actorOf(Props(new RemoveObjectsService(rContext, userid, password, role)))
       removeObjectsService ! RemoveObjectsService.Process(argParm)
     } else if (objtype.equalsIgnoreCase("Config")) {
@@ -308,11 +310,24 @@ trait MetadataAPIService extends HttpService {
    * MakeJsonStrForArgList
    */
   private def createGetArg(objKey: String, objectType: String): String = {
+    var nameSpace:String = null
+    var name:String = null
+    var version:String = null
     val keyTokens = objKey.split("\\.")
-    val nameSpace = keyTokens(0)
-    val name = keyTokens(1)
-    val version = keyTokens(2)
-    if( ! objectType.equalsIgnoreCase("functionsignature") ){
+    if( objectType.equalsIgnoreCase("functionsignature") ){
+      nameSpace = keyTokens(0)
+      name = keyTokens(1)
+      if(keyTokens.length > 2){
+	version = keyTokens(2)
+      }
+      else{
+	version = "-1" // latest version assumed
+      }
+    }
+    else{
+      nameSpace = keyTokens(0)
+      name = keyTokens(1)
+      version = keyTokens(2)
       val lVersion = version.toLong
     }
     val mdArg = new MetadataApiArg(objectType, nameSpace, name, version, "JSON")
