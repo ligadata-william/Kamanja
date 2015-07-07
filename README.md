@@ -46,17 +46,4 @@ questions and make contributions.
 
 * On Linux [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and [download kafka 2.10-0.8.1.1](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/Fatafat/wiki/Appendix-A-SetupGuide)]
 
-####Quick Start
 
-1. [DOWNLOAD](http://goo.gl/forms/IOpB8qMU9n) latest Fatafat binaries
-
-2. Uncompress the downloaded file
-
-    tar -zxf fatafat_v1.0.4.tar.gz
-    
-3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/Fatafat/wiki/Installing-and-Running-Fatafat)
-
-###[Getting Involved](https://github.com/ligaDATA/Fatafat/wiki/Getting-Involved)
-
-     
-###[Documentation](https://github.com/ligaDATA/Fatafat/wiki/Documentation)
