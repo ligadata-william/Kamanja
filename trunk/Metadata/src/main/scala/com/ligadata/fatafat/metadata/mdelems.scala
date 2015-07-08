@@ -774,3 +774,11 @@ class AuditRecord
   override def toString : String = 
     "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
 }
+
+
+object ModelCompilationConstants {
+  val DEPENDENCIES: String = "dependencies"
+  val TYPES_DEPENDENCIES: String = "types"
+  val SOURCECODE: String = "source"
+  val PHYSICALNAME: String = "pName"
+}
