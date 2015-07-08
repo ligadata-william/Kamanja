@@ -81,518 +81,52 @@ class CompilerProxy{
   def setLoggerLevel(level: Level){
     logger.setLevel(level);
   }
-
-  def dumpStrTextToFile(strText : String, filePath : String) {
-    val file = new File(filePath);
-    val bufferedWriter = new BufferedWriter(new FileWriter(file))
-    bufferedWriter.write(strText)
-    bufferedWriter.close
-  }
-
-  def writeSrcFile(scalaGeneratedCode : String, scalaSrcTargetPath : String) {
-    val file = new File(scalaSrcTargetPath);
-    val bufferedWriter = new BufferedWriter(new FileWriter(file))
-    bufferedWriter.write(scalaGeneratedCode)
-    bufferedWriter.close
-  }
-
-  def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
-    val scalaTargetPath = s"$targPath/$moduleSrcName"
-    writeSrcFile(scalaGeneratedCode, scalaTargetPath)
-  }
-
-  /* 
-   * Compile the supplied generated code and jar it, the originating pmml model, and the class output from the 
-   * compile.  Add a registration module as well.  Note the classpath dependencies in the manifest.mf file
-   * that is also included in the jar.
-   */
-
-  def compile (jarBuildDir : String
-	     , scalahome : String
-	     , moduleName : String
-	     , classpath : String
-	     , sourceCode : String
-	     , clientName : String
-       , targetClassFolder: String
-	     , sourceLanguage : String = "scala") : Int = 
-  { 
-
-    var srcFileName: String = ""
-    var compileCommand: scala.collection.mutable.Seq[String] = null
-    
-    // See what is the source language the source code is in.
-    if (sourceLanguage.equals("java")) {
-      srcFileName = s"$moduleName.java"
-      // need to add the -d option to the JAVAC
-      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -d $jarBuildDir -cp $classpath $jarBuildDir/$srcFileName") 
-    }
-    else {
-      srcFileName = s"$moduleName.scala" 
-      compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
-    }
-    logger.info ("COMPILER_PROXY: Compiling "+srcFileName+ "  source code is in "+ jarBuildDir)
-    // Save the source file in the correct directory.
-    createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
-
-    logger.info(s"compile cmd used: $compileCommand")
-    
-    val compileRc = Process(compileCommand).!
-    if (compileRc != 0) {
-      logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
-      logger.error(s"Command used: $compileCommand")
-      compileRc
-    } else {
-      //  The compiled scala class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir.  We 
-      //  use the -d option on the java compiler command...  so no need to move anything if java.
-      if (sourceLanguage.equalsIgnoreCase("java")) {
-        return compileRc 
-      } 
-      val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
-      val mvCmdRc : Int = Process(mvCmd).!
-      if (mvCmdRc != 0) {
-	      logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
-	      logger.warn(s"cmd used : $mvCmd")
-      }	
-      mvCmdRc
-
-    }
-  }
-
-  
-  /**
-   * 
-   */
-   private def jarCode ( moduleNamespace: String
-		, moduleName: String
-		, moduleVersion: String
-		, sourceCode : String
-		, classpath : String
-		, jarTargetDir : String
-		, clientName : String
-		, pmmlFilePath : String
-		, scalahome : String
-		, javahome : String
-    , isLocalOnly: Boolean = false
-    , sourceLanguage: String = "scala"
-    , helperJavaSource: String = null
-    , helperJavaSourcePath: String = null) : (Int, String) =
-  {   
-    var currentWorkFolder: String = moduleName
-    if (isLocalOnly) {
-      currentWorkFolder = currentWorkFolder + "_local"
-    }
  
-    // Remove this directory with all the junk if it already exists
-    val killDir = s"rm -Rf $compiler_work_dir/"+currentWorkFolder
-    val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
-    if (killDirRc != 0) {
-      logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
-      return (killDirRc, "")
-    }
-    
-    // Create a new clean directory
-    val buildDir = s"mkdir $compiler_work_dir/"+currentWorkFolder
-    val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
-    if (tmpdirRc != 0) {
-      logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
-      return (tmpdirRc, "")
-    }   
-    
-    /** create a copy of the pmml source in the work directory */
-    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/"+currentWorkFolder).!
-    if (cpRc != 0) {
-      logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
-      return (cpRc, "")
-    }
-
-    /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
-    var sourceName: String = moduleName
-    var cHome: String = scalahome
-    if (sourceLanguage.equalsIgnoreCase("java")) 
-       cHome = javahome
-    else {
-      if (isLocalOnly) sourceName = moduleName+"_local"
-    }
-
-    // Compile 
-    val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, null, sourceLanguage) 
-
-    // Bail if compilation filed.
-    if (rc != 0) {
-      return (rc, "")
-    }
-    
-    // if helperJavaSource is not null, means we are generating Factory java files.
-    if (helperJavaSource != null) {
-      val tempClassPath = classpath+":"+s"$compiler_work_dir/$currentWorkFolder"
-      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, moduleName+"Factory", tempClassPath, helperJavaSource, clientName, moduleName, "java")  
-      // Bail if compilation filed.
-      if (rc != 0) {
-        return (rc, "")
-      }
-    }
-    
-    // Ok, all the compilation has been done, all the class files are present, so start the JARING process.
-    var  moduleNameJar: String = ""
-    if (!isLocalOnly) {
-      var d = new java.util.Date()
-      var epochTime = d.getTime
-      moduleNameJar = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
-    } else {
-      moduleNameJar = moduleNamespace + "_" + moduleName + ".jar"
-    }
-
-    val jarPath = compiler_work_dir + "/" + moduleNameJar      
-    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/"+currentWorkFolder +"/ ."
-    logger.debug(s"jar cmd used: $jarCmd")
-    logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
-
-    // Issue the Jar Command - Jar file will be created in the Work Directory.
-    val jarRc : Int = Process(jarCmd).!
-    if (jarRc != 0) {
-      logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
-      return (jarRc, "")
-    }
-
-    // If this is a dummy jar, then don't move it into the application dir.
-    if (moduleVersion.trim.equalsIgnoreCase("V0")) {
-      return (0, s"$moduleNameJar")
-    }  
-    
-    // Move the jar to Application Jar directory
-    val mvCmd : String = s"mv $jarPath $jarTargetDir/"
-    logger.debug(s"mv cmd used: $mvCmd")
-    val mvCmdRc : Int = Process(mvCmd).!
-    if (mvCmdRc != 0) {
-      logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
-      logger.error(s"cmd used : $mvCmd")
-    }
-    (0, s"$moduleNameJar")
-  }
-  
-  
-  
-  /**
-   * 
-   * parseSourceForMetadata - this method will parse the source code of a custom scala or java
-   *                          model for model metadata.
-   * 
+ /**
+   * compileModelFromSource - This gets called from the mainline AddModel... we just know the modelConfigName, and need
+   *                          to figure out the build dependencies.
    * 
    */
-  
-  private def parseSourceForMetadata (sourceCode: String,
-                                      modelConfigName: String,
-                                      sourceLang: String,
-                                      msgDefClassFilePath: String,
-                                      classPath: String,
-                                      elements: Set[BaseElemDef]): (String, String, String, String) = {
-    
-    // We have to create a dummy jar file for this so that we can interrogate the generated Object for Modelname
-    // and Model Version.  To do this, we create a dummy source with V0 in the package name.
-    val packageExpression = "\\s*package\\s*".r
-    val endPackageEpression = "[\t\n\r\f;]".r
-    var indx1: Integer = -1
-    var indx2: Integer = -1
-
-    var packageName: String = ""
-    var codeBeginIndx = sourceCode.indexOf("import")
-    var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (sMatchResult != null) indx1 = sMatchResult.end
-    var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
-    if (eMatchResult != null) indx2 = eMatchResult.end
-
-    // If there are no package present, we will not compile this.
-    if (indx1 != -1 && indx2 > indx1)
-      packageName = sourceCode.substring(indx1,indx2).trim 
-    else {
-      logger.error("COMPILER_PROXY: Missing package statement")
-      return  ("","","","")
-    }
- 
-    // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
-    // class.
-    var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
-
-    
-    // We need to add the imports to the actual TypeDependency Jars...  All the Message,Container, etc Elements
-    // have been passed into this def.  
-    var typeNamespace: Array[String] = null
-    var typeImports: String = ""
-    
-    // Create the IMPORT satements for all the dependent Types
-    elements.foreach (elem =>{
-      typeImports = typeImports + "\nimport "+ elem.physicalName +";"
-      // Java Models need to import the Factory Classes as well.
-      if (sourceLang.equalsIgnoreCase("java"))
-        typeImports = typeImports + "\nimport "+ elem.physicalName +"Factory;"
-    })
-    
-    // Remove all the existing reference to the dependent types code, they are not really valid
-    elements.foreach(elem => {
-      var eName: Array[String] = elem.PhysicalName.split('.').map(_.trim)
-      if ((eName.length - 1) > 0) {
-        typeNamespace = new Array[String](eName.length - 1)      
-        for (i <- 0 until typeNamespace.length ) {
-          typeNamespace(i) = eName(i)
-        }
-        var typeClassName: String = eName(eName.length - 1)
-        // Replace the "import com...ClassName" import statement
-        repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+typeClassName + "\\;*"), "")            
-      }
-    })
-    //Replace the "import com....*;" statement - JAVA STYLE IMPORT ALL
-    repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"\\*\\;*"), "")
-    // Replace the "import com...._;" type of statement  - SCALA STYLE IMPORT ALL
-    repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"_\\;*"), "")
-     // Replace the "import com....{xxx};" type of statement  - SCALA STYLE IMPORT SPECIFIC CLASSES IN BATCH
-    repackagedCode = repackagedCode.replaceAll( "\\s*import\\s*"+typeNamespace.mkString(".")+"\\.\\{.*?\\}", "")
-  
-    // Add all the needed imports - have to recalculate the beginning of the imports in the original source code, since a bunch of imports were
-    // removed.
-    var finalSourceCode = "package "+ packageName +".V0;\n" + typeImports +"\n" + repackagedCode.substring(repackagedCode.indexOf("import"))
-    dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)    
-     
-    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
-    var tempClassName: String = modelConfigName
-    if (sourceLang.equalsIgnoreCase("java")) {
-      tempClassName = getJavaClassName(sourceCode)
-    }
-      
-    // Create a temporary jarFile file so that we can figure out what the metadata info for this class is. 
-    var (status,jarFileName) = jarCode(packageName+".V0",
-                                       tempClassName,
-                                       "V0",
-                                       finalSourceCode,
-                                       classPath,
-                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-                                       "TestClient",
-                                       msgDefClassFilePath,
-                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-                                       false,
-                                       sourceLang)    
-                                       
-     if (status != 0) {
-       logger.error("Unable to create Jar RC = "+status)
-       return ("","","","")
-     }
-     
-     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
-     val classLoader: CompilerProxyLoader = new CompilerProxyLoader      
-    // val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
-     var jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-     jarPaths0 = jarPaths0 + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
-
-     // Add this temp jar...
-     val jarName0 = JarPathsUtils.GetValidJarFile(jarPaths0, jarFileName)
-     loadJarFile(jarName0, classLoader)
-     elements.foreach(elem => {
-       val jarNameType =  JarPathsUtils.GetValidJarFile(jarPaths0, elem.JarName)
-       loadJarFile(jarNameType, classLoader)
-     })
-     
-     
-     var classNames = getClasseNamesInJar(jarName0)
-     var tempCurClass: Class[_] = null    
-     println("COMPILER_PROXY: Generated a dummy jar file "+jarName0)
-     classNames.foreach (clsName => {
-       println("COMPILER_PROXY: is "+clsName+" a ModelBaseObj????")
-       var curClz = Class.forName(clsName, true, classLoader.loader)  
-       tempCurClass = curClz
-       
-       var isModel = false
-       while (curClz != null && isModel == false) {
-        isModel = isDerivedFrom(curClz, "com.ligadata.FatafatBase.ModelBaseObj")
-        if (isModel == false)
-          curClz = curClz.getSuperclass()
-       }
-       if (isModel) {     
-         try {
-           println("COMPILER_PROXY: Answer is YES")
-           // If we are dealing with 
-           var objInst: Any = null
-           try {
-             // Trying Singleton Object
-             val module = classLoader.mirror.staticModule(clsName)
-             val obj = classLoader.mirror.reflectModule(module)
-  
-             objInst = obj.instance
-             println("COMPILER_PROXY: clsName is a Scala Class... ")
-           } catch {
-             case e: java.lang.NoClassDefFoundError => {
-                e.printStackTrace
-                throw e
-             } 
-             case e: Exception => {
-                println("COMPILER_PROXY: clsName is a Java Class... ")
-                objInst = tempCurClass.newInstance 
-              }
-           }
-             
-           var baseModelTrait: com.ligadata.FatafatBase.ModelBaseObj = null
-           if (objInst.isInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]) {
-              baseModelTrait = objInst.asInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]
-               return (packageName, baseModelTrait.ModelName, baseModelTrait.Version, finalSourceCode)
-           }
-           else
-              logger.error("Unable to load a class Object from "+jarName0)
-           return ("","","","")
-         } catch {
-           case e: Exception => {
-             // Trying Regular Object instantiation
-             e.printStackTrace()
-             logger.error("Unable figure out model object name"+e.getMessage +"\n"+e.getStackTraceString)
-             return ("","","","")
-           }
-         }
-       }
-     }) 
-     ("","","","")
-  }
-  
-  
-  /**
-   * compileModelFromSource - Generate a jarfile from a sourceCode.
-   * 
-   */
-  def compileModelFromSource (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {
-
-      var injectLoggingStmts : Boolean = false  
-      var versionString: String = ""
-      var trueModelName: String = ""
-
-      try {  
-       val (classPath, elements, pname) =  getClassPath(modelConfigName) 
-       val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang   
-       val (modelNamespace, modelName, modelVersion, repackagedCode) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)
-       
-       println("=-=-=-=-=-=-=-=-=>>>> "+modelNamespace +"."+ modelName +"."+ modelVersion+ "     ver is "+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)))
-                             
-       // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
-       val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
-       var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
-       dumpStrTextToFile(packagedSource,msgDefClassFilePath)
-
-      
-       //Classpath is set by now.
-       var (status2,jarFileName) = jarCode(modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),
-                                           modelName,
-                                           modelVersion,
-                                           packagedSource,
-                                           classPath,
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-                                           "TestClient",
-                                           msgDefClassFilePath,
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-                                           false,
-                                           sourceLang)
-                    
-       /* The following check require cleanup at some point */
-       if (status2 > 1 ){
-         throw new ModelCompilationFailedException("Failed to produce the jar file")
-       }
-
-      // Create the ModelDef object
-       
-      // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
-      var modelNamespaceTemp = "System"
-      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
-                                                          List[(String, String, String, String, Boolean, String)](),
-                                                          List[(String, String, String)]() ,
-                                                          MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-                                                          MetadataAPIImpl.getModelDependencies(modelConfigName).toArray[String],
-                                                          false
-                                                 )     
-              
-      // Need to set some values by hand here.                                                   
-       modDef.jarName = jarFileName
-       modDef.physicalName = packageName + "." + pname
-       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = ObjFormatType.fSCALA else modDef.objectFormat = ObjFormatType.fJAVA
-       modDef.ObjectDefinition(createSavedSourceCode(sourceCode, 
-                                                     MetadataAPIImpl.getModelDependencies(modelConfigName),
-                                                     MetadataAPIImpl.getModelMessagesContainers(modelConfigName),
-                                                     MetadataAPIImpl.getModelPhysicalName(modelConfigName)))
-                                                                                     
-       modDef
+  def compileModelFromSource (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {  
+    try {
+      // Figure out the metadata information needed for 
+      val (classPath, elements, pname) =  getClassPathFromModelConfig(modelConfigName) 
+      val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang 
+      val (modelNamespace, modelName, modelVersion, repackagedCode) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)    
+      return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
+                              modelVersion, msgDefClassFilePath, elements, sourceCode,
+                              MetadataAPIImpl.getModelDependencies(modelConfigName),  
+                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName))   
     } catch {
-      case e:AlreadyExistsException =>{
-        logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
-      }
-      case e:Exception =>{
+      case e: Exception => {
+        logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
+        logger.error(e.getStackTraceString) 
         throw e
-        logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
       }
-    } 
-    
+    }
   }
   
-  /**
-   * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type
-   *                         like a message or container changes. The format is going to be JSON strings as follows:
-   *                         { "source":"sourcecode",
-   *                           "dependencies":List[String],
-   *                           "messagescontainers":List[String],
-   *                           "physicalname":"physicalName"
-   *                         }  
-   */
-  private def createSavedSourceCode(source: String, deps: List[String], typeDeps: List[String], pName: String): String = {
-    
-    val json = (("source" -> source) ~
-                      ("dependencies" -> deps) ~
-                      ("types" -> typeDeps) ~
-                      ("physicalname" -> pName))
-    
-    return compact(render(json))
-  }
-  /**
-   * getClassPath - 
+ /**
+   * compileModelFromSource - This will get called from the recompile path due to a message/container change.  All the info 
+   *                          is available.. so just generate the new ModelDef
    * 
    */
-  private def getClassPath(modelName: String): (String,Set[BaseElemDef],String) = {
-    
-       var inDeps = MetadataAPIImpl.getModelDependencies(modelName)
-       var inMC = MetadataAPIImpl.getModelMessagesContainers(modelName)
-       var pName = MetadataAPIImpl.getModelPhysicalName(modelName)
-       var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
-       
-      // Get classpath and jarpath ready
-       var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
-       if (classPath.size == 0) classPath = "."  
-       val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-
-       var msgContDepSet: Set[String] = Set[String]()
-       var msgJars: String = ""
-       if (inMC == null)  
-         logger.warn("Dependant message/containers were not provided into Model Compiler")
-       else {  
-         inMC.foreach (dep => {
-           val elem: BaseElemDef = getDependencyElement(dep).getOrElse(null)
-           if (elem == null)
-             logger.warn("Unknown dependency "+dep)
-           else {
-             depElems += elem
-             logger.warn("Resolved dependency "+dep+ " to "+ elem.jarName)
-             msgContDepSet = msgContDepSet + elem.jarName
-           }            
-         })
-         msgJars = msgContDepSet.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")    
-       }  
-       
-       // Handle the Dependency Jar stuff
-       if (inDeps != null) {
-          var depJars = inDeps.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")  
-          if (depJars != null && depJars.length > 0) depJars = depJars + ":" + msgJars else depJars = msgJars    
-          if (classPath != null && classPath.size > 0) {
-            classPath = classPath + ":" + depJars 
-          } else {
-            classPath = depJars 
-          }
-       }
-       (classPath,depElems, pName)
-  }
+  def recompileModelFromSource (sourceCode: String, pName: String, deps: List[String], typeDeps: List[String], sourceLang: String = "scala"): ModelDef = {   
+    try {
+      val (classPath, elements, pname) =  buildClassPath(deps, typeDeps, pName) 
+      val msgDefClassFilePath = compiler_work_dir + "/tempCode."+sourceLang 
+      val (modelNamespace, modelName, modelVersion, repackagedCode) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang,msgDefClassFilePath,classPath,elements)
+      return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
+                              modelVersion, msgDefClassFilePath, elements, sourceCode, deps, typeDeps)
+    }  catch {
+      case e: Exception => {
+        logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
+        logger.error(e.getStackTraceString) 
+        throw e
+      }
+    }
+  }  
+  
 
   /**
    * 
@@ -798,6 +332,424 @@ class CompilerProxy{
     }
   }
   
+  
+  /* 
+   * Compile the supplied generated code and jar it, the originating pmml model, and the class output from the 
+   * compile.  Add a registration module as well.  Note the classpath dependencies in the manifest.mf file
+   * that is also included in the jar.
+   */
+
+  private def compile (jarBuildDir : String
+       , scalahome : String
+       , moduleName : String
+       , classpath : String
+       , sourceCode : String
+       , clientName : String
+       , targetClassFolder: String
+       , sourceLanguage : String = "scala") : Int = 
+  { 
+
+    var srcFileName: String = ""
+    var compileCommand: scala.collection.mutable.Seq[String] = null
+    
+    // See what is the source language the source code is in.
+    if (sourceLanguage.equals("java")) {
+      srcFileName = s"$moduleName.java"
+      // need to add the -d option to the JAVAC
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/javac -d $jarBuildDir -cp $classpath $jarBuildDir/$srcFileName") 
+    }
+    else {
+      srcFileName = s"$moduleName.scala" 
+      compileCommand = Seq("sh", "-c", s"$scalahome/bin/scalac -cp $classpath $jarBuildDir/$srcFileName")
+    }
+    logger.info ("COMPILER_PROXY: Compiling "+srcFileName+ "  source code is in "+ jarBuildDir)
+    // Save the source file in the correct directory.
+    createScalaFile(s"$jarBuildDir", srcFileName, sourceCode)
+
+    logger.info(s"compile cmd used: $compileCommand")
+    
+    val compileRc = Process(compileCommand).!
+    if (compileRc != 0) {
+      logger.error(s"Compile for $srcFileName has failed...rc = $compileRc")
+      logger.error(s"Command used: $compileCommand")
+      compileRc
+    } else {
+      //  The compiled scala class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir.  We 
+      //  use the -d option on the java compiler command...  so no need to move anything if java.
+      if (sourceLanguage.equalsIgnoreCase("java")) {
+        return compileRc 
+      } 
+      val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
+      val mvCmdRc : Int = Process(mvCmd).!
+      if (mvCmdRc != 0) {
+        logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
+        logger.warn(s"cmd used : $mvCmd")
+      } 
+      mvCmdRc
+
+    }
+  }
+ 
+  
+  /**
+   * 
+   */
+   private def jarCode ( moduleNamespace: String
+    , moduleName: String
+    , moduleVersion: String
+    , sourceCode : String
+    , classpath : String
+    , jarTargetDir : String
+    , clientName : String
+    , pmmlFilePath : String
+    , scalahome : String
+    , javahome : String
+    , isLocalOnly: Boolean = false
+    , sourceLanguage: String = "scala"
+    , helperJavaSource: String = null
+    , helperJavaSourcePath: String = null) : (Int, String) =
+  {   
+    var currentWorkFolder: String = moduleName
+    if (isLocalOnly) {
+      currentWorkFolder = currentWorkFolder + "_local"
+    }
+ 
+    // Remove this directory with all the junk if it already exists
+    val killDir = s"rm -Rf $compiler_work_dir/"+currentWorkFolder
+    val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
+    if (killDirRc != 0) {
+      logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
+      return (killDirRc, "")
+    }
+    
+    // Create a new clean directory
+    val buildDir = s"mkdir $compiler_work_dir/"+currentWorkFolder
+    val tmpdirRc = Process(buildDir).! /** create a clean space to work in */
+    if (tmpdirRc != 0) {
+      logger.error(s"The compilation of the generated source has failed because $buildDir could not be created ... rc = $tmpdirRc")
+      return (tmpdirRc, "")
+    }   
+    
+    /** create a copy of the pmml source in the work directory */
+    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/"+currentWorkFolder).!
+    if (cpRc != 0) {
+      logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
+      return (cpRc, "")
+    }
+
+    /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
+    var sourceName: String = moduleName
+    var cHome: String = scalahome
+    if (sourceLanguage.equalsIgnoreCase("java")) 
+       cHome = javahome
+    else {
+      if (isLocalOnly) sourceName = moduleName+"_local"
+    }
+
+    // Compile 
+    val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, null, sourceLanguage) 
+
+    // Bail if compilation filed.
+    if (rc != 0) {
+      return (rc, "")
+    }
+    
+    // if helperJavaSource is not null, means we are generating Factory java files.
+    if (helperJavaSource != null) {
+      val tempClassPath = classpath+":"+s"$compiler_work_dir/$currentWorkFolder"
+      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, moduleName+"Factory", tempClassPath, helperJavaSource, clientName, moduleName, "java")  
+      // Bail if compilation filed.
+      if (rc != 0) {
+        return (rc, "")
+      }
+    }
+    
+    // Ok, all the compilation has been done, all the class files are present, so start the JARING process.
+    var  moduleNameJar: String = ""
+    if (!isLocalOnly) {
+      var d = new java.util.Date()
+      var epochTime = d.getTime
+      moduleNameJar = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
+    } else {
+      moduleNameJar = moduleNamespace + "_" + moduleName + ".jar"
+    }
+
+    val jarPath = compiler_work_dir + "/" + moduleNameJar      
+    val jarCmd : String = s"$javahome/bin/jar cvf $jarPath -C $compiler_work_dir/"+currentWorkFolder +"/ ."
+    logger.debug(s"jar cmd used: $jarCmd")
+    logger.debug(s"Jar $moduleNameJar produced.  Its contents:")
+
+    // Issue the Jar Command - Jar file will be created in the Work Directory.
+    val jarRc : Int = Process(jarCmd).!
+    if (jarRc != 0) {
+      logger.error(s"unable to create jar $moduleNameJar ... rc = $jarRc")
+      return (jarRc, "")
+    }
+
+    // If this is a dummy jar, then don't move it into the application dir.
+    if (moduleVersion.trim.equalsIgnoreCase("V0")) {
+      return (0, s"$moduleNameJar")
+    }  
+    
+    // Move the jar to Application Jar directory
+    val mvCmd : String = s"mv $jarPath $jarTargetDir/"
+    logger.debug(s"mv cmd used: $mvCmd")
+    val mvCmdRc : Int = Process(mvCmd).!
+    if (mvCmdRc != 0) {
+      logger.error(s"unable to move new jar $moduleNameJar to target directory, $jarTargetDir ... rc = $mvCmdRc")
+      logger.error(s"cmd used : $mvCmd")
+    }
+    (0, s"$moduleNameJar")
+  }
+  
+    
+  
+  /**
+   * compileModelFromSource - Generate a jarfile from a sourceCode.
+   * 
+   */
+  //private def generateModelDef (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {
+  private def generateModelDef (repackagedCode: String, sourceLang: String , pname: String, classPath: String, modelNamespace: String, modelName: String, 
+                                modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
+                                deps: List[String], typeDeps: List[String]): ModelDef = {
+      try {  
+       
+       println("=-=-=-=-=-=-=-=-=>>>> "+modelNamespace +"."+ modelName +"."+ modelVersion+ "     ver is "+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)))
+                             
+       // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
+       val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
+       var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
+       dumpStrTextToFile(packagedSource,msgDefClassFilePath)
+
+      
+       //Classpath is set by now.
+       var (status2,jarFileName) = jarCode(modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),
+                                           modelName,
+                                           modelVersion,
+                                           packagedSource,
+                                           classPath,
+                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                                           "TestClient",
+                                           msgDefClassFilePath,
+                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                                           false,
+                                           sourceLang)
+                    
+       /* The following check require cleanup at some point */
+       if (status2 > 1 ){
+         throw new ModelCompilationFailedException("Failed to produce the jar file")
+       }
+
+      // Create the ModelDef object
+       
+      // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
+      var modelNamespaceTemp = "System"
+      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
+                                                          List[(String, String, String, String, Boolean, String)](),
+                                                          List[(String, String, String)]() ,
+                                                          MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
+                                                          deps.toArray[String],
+                                                          false
+                                                 )     
+              
+      // Need to set some values by hand here.                                                   
+       modDef.jarName = jarFileName
+       modDef.physicalName = packageName + "." + pname
+       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = ObjFormatType.fSCALA else modDef.objectFormat = ObjFormatType.fJAVA
+       modDef.ObjectDefinition(createSavedSourceCode(originalSource, deps, typeDeps, pname))                                                                                  
+       modDef
+    } catch {
+      case e:AlreadyExistsException =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw e
+      }
+      case e:Exception =>{
+        logger.error("Failed to compile the model definition " + e.toString)
+        throw new ModelCompilationFailedException(e.getMessage())
+      }
+    } 
+    
+  }  
+  
+ /**
+   * 
+   * parseSourceForMetadata - this method will parse the source code of a custom scala or java
+   *                          model for model metadata.
+   * 
+   * 
+   */
+  
+  private def parseSourceForMetadata (sourceCode: String,
+                                      modelConfigName: String,
+                                      sourceLang: String,
+                                      msgDefClassFilePath: String,
+                                      classPath: String,
+                                      elements: Set[BaseElemDef]): (String, String, String, String) = {
+    
+    // We have to create a dummy jar file for this so that we can interrogate the generated Object for Modelname
+    // and Model Version.  To do this, we create a dummy source with V0 in the package name.
+    val packageExpression = "\\s*package\\s*".r
+    val endPackageEpression = "[\t\n\r\f;]".r
+    var indx1: Integer = -1
+    var indx2: Integer = -1
+
+    var packageName: String = ""
+    var codeBeginIndx = sourceCode.indexOf("import")
+    var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
+    if (sMatchResult != null) indx1 = sMatchResult.end
+    var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
+    if (eMatchResult != null) indx2 = eMatchResult.end
+
+    // If there are no package present, we will not compile this.
+    if (indx1 != -1 && indx2 > indx1)
+      packageName = sourceCode.substring(indx1,indx2).trim 
+    else {
+      logger.error("COMPILER_PROXY: Missing package statement")
+      return  ("","","","")
+    }
+ 
+    // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
+    // class.
+    var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
+
+    
+    // We need to add the imports to the actual TypeDependency Jars...  All the Message,Container, etc Elements
+    // have been passed into this def.  
+    var typeNamespace: Array[String] = null
+    var typeImports: String = ""
+    
+    // Create the IMPORT satements for all the dependent Types
+    elements.foreach (elem =>{
+      typeImports = typeImports + "\nimport "+ elem.physicalName +";"
+      // Java Models need to import the Factory Classes as well.
+      if (sourceLang.equalsIgnoreCase("java"))
+        typeImports = typeImports + "\nimport "+ elem.physicalName +"Factory;"
+    })
+    
+    // Remove all the existing reference to the dependent types code, they are not really valid
+    elements.foreach(elem => {
+      var eName: Array[String] = elem.PhysicalName.split('.').map(_.trim)
+      if ((eName.length - 1) > 0) {
+        typeNamespace = new Array[String](eName.length - 1)      
+        for (i <- 0 until typeNamespace.length ) {
+          typeNamespace(i) = eName(i)
+        }
+        var typeClassName: String = eName(eName.length - 1)
+        // Replace the "import com...ClassName" import statement
+        repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+typeClassName + "\\;*"), "")            
+      }
+    })
+    //Replace the "import com....*;" statement - JAVA STYLE IMPORT ALL
+    repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"\\*\\;*"), "")
+    // Replace the "import com...._;" type of statement  - SCALA STYLE IMPORT ALL
+    repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"_\\;*"), "")
+     // Replace the "import com....{xxx};" type of statement  - SCALA STYLE IMPORT SPECIFIC CLASSES IN BATCH
+    repackagedCode = repackagedCode.replaceAll( "\\s*import\\s*"+typeNamespace.mkString(".")+"\\.\\{.*?\\}", "")
+  
+    // Add all the needed imports - have to recalculate the beginning of the imports in the original source code, since a bunch of imports were
+    // removed.
+    var finalSourceCode = "package "+ packageName +".V0;\n" + typeImports +"\n" + repackagedCode.substring(repackagedCode.indexOf("import"))
+    dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)    
+     
+    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
+    var tempClassName: String = modelConfigName
+    if (sourceLang.equalsIgnoreCase("java")) {
+      tempClassName = getJavaClassName(sourceCode)
+    }
+      
+    // Create a temporary jarFile file so that we can figure out what the metadata info for this class is. 
+    var (status,jarFileName) = jarCode(packageName+".V0",
+                                       tempClassName,
+                                       "V0",
+                                       finalSourceCode,
+                                       classPath,
+                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                                       "TestClient",
+                                       msgDefClassFilePath,
+                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                                       false,
+                                       sourceLang)    
+                                       
+     if (status != 0) {
+       logger.error("Unable to create Jar RC = "+status)
+       return ("","","","")
+     }
+     
+     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
+     val classLoader: CompilerProxyLoader = new CompilerProxyLoader      
+    // val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
+     var jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+     jarPaths0 = jarPaths0 + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
+
+     // Add this temp jar...
+     val jarName0 = JarPathsUtils.GetValidJarFile(jarPaths0, jarFileName)
+     loadJarFile(jarName0, classLoader)
+     elements.foreach(elem => {
+       val jarNameType =  JarPathsUtils.GetValidJarFile(jarPaths0, elem.JarName)
+       loadJarFile(jarNameType, classLoader)
+     })
+     
+     
+     var classNames = getClasseNamesInJar(jarName0)
+     var tempCurClass: Class[_] = null    
+     println("COMPILER_PROXY: Generated a dummy jar file "+jarName0)
+     classNames.foreach (clsName => {
+       println("COMPILER_PROXY: is "+clsName+" a ModelBaseObj????")
+       var curClz = Class.forName(clsName, true, classLoader.loader)  
+       tempCurClass = curClz
+       
+       var isModel = false
+       while (curClz != null && isModel == false) {
+        isModel = isDerivedFrom(curClz, "com.ligadata.FatafatBase.ModelBaseObj")
+        if (isModel == false)
+          curClz = curClz.getSuperclass()
+       }
+       if (isModel) {     
+         try {
+           println("COMPILER_PROXY: Answer is YES")
+           // If we are dealing with 
+           var objInst: Any = null
+           try {
+             // Trying Singleton Object
+             val module = classLoader.mirror.staticModule(clsName)
+             val obj = classLoader.mirror.reflectModule(module)
+  
+             objInst = obj.instance
+             println("COMPILER_PROXY: clsName is a Scala Class... ")
+           } catch {
+             case e: java.lang.NoClassDefFoundError => {
+                e.printStackTrace
+                throw e
+             } 
+             case e: Exception => {
+                println("COMPILER_PROXY: clsName is a Java Class... ")
+                objInst = tempCurClass.newInstance 
+              }
+           }
+             
+           var baseModelTrait: com.ligadata.FatafatBase.ModelBaseObj = null
+           if (objInst.isInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]) {
+              baseModelTrait = objInst.asInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]
+               return (packageName, baseModelTrait.ModelName, baseModelTrait.Version, finalSourceCode)
+           }
+           else
+              logger.error("Unable to load a class Object from "+jarName0)
+           return ("","","","")
+         } catch {
+           case e: Exception => {
+             // Trying Regular Object instantiation
+             e.printStackTrace()
+             logger.error("Unable figure out model object name"+e.getMessage +"\n"+e.getStackTraceString)
+             return ("","","","")
+           }
+         }
+       }
+     }) 
+     ("","","","")
+  }
+  
     
   /**
    * getClasseNamesInJar - A utility method to grab all class files from the jarfile
@@ -909,6 +861,90 @@ class CompilerProxy{
      }     
   }
   
-  
-}
+  /**
+   *  buildClassPath 
+   */
+  private def buildClassPath(inDeps: List[String], inMC: List[String], pName: String ):(String,Set[BaseElemDef],String) = {
+    var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
+    // Get classpath and jarpath ready
+     var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
+     if (classPath.size == 0) classPath = "."  
+     val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
 
+     var msgContDepSet: Set[String] = Set[String]()
+     var msgJars: String = ""
+     if (inMC == null)  
+       logger.warn("Dependant message/containers were not provided into Model Compiler")
+     else {  
+       inMC.foreach (dep => {
+         val elem: BaseElemDef = getDependencyElement(dep).getOrElse(null)
+         if (elem == null)
+           logger.warn("Unknown dependency "+dep)
+         else {
+           depElems += elem
+           logger.warn("Resolved dependency "+dep+ " to "+ elem.jarName)
+           msgContDepSet = msgContDepSet + elem.jarName
+         }            
+       })
+       msgJars = msgContDepSet.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")    
+     }  
+       
+     // Handle the Dependency Jar stuff
+     if (inDeps != null) {
+        var depJars = inDeps.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")  
+        if (depJars != null && depJars.length > 0) depJars = depJars + ":" + msgJars else depJars = msgJars    
+        if (classPath != null && classPath.size > 0) {
+          classPath = classPath + ":" + depJars 
+        } else {
+          classPath = depJars 
+        }
+     }
+     (classPath,depElems, pName)    
+  }
+ 
+  /**
+   * getClassPath - 
+   * 
+   */
+  private def getClassPathFromModelConfig(modelName: String): (String,Set[BaseElemDef],String) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), MetadataAPIImpl.getModelMessagesContainers(modelName), MetadataAPIImpl.getModelPhysicalName(modelName))
+
+  /**
+   * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type
+   *                         like a message or container changes. The format is going to be JSON strings as follows:
+   *                         { "source":"sourcecode",
+   *                           "dependencies":List[String],
+   *                           "messagescontainers":List[String],
+   *                           "physicalname":"physicalName"
+   *                         }  
+   */
+  private def createSavedSourceCode(source: String, deps: List[String], typeDeps: List[String], pName: String): String = {
+    
+    val json = ((ModelCompilationConstants.SOURCECODE -> source) ~
+                (ModelCompilationConstants.DEPENDENCIES -> deps) ~
+                (ModelCompilationConstants.TYPES_DEPENDENCIES -> typeDeps) ~
+                (ModelCompilationConstants.PHYSICALNAME -> pName))
+    
+    return compact(render(json))
+  }
+  
+
+  private def dumpStrTextToFile(strText : String, filePath : String) {
+    val file = new File(filePath);
+    val bufferedWriter = new BufferedWriter(new FileWriter(file))
+    bufferedWriter.write(strText)
+    bufferedWriter.close
+  }
+
+  private def writeSrcFile(scalaGeneratedCode : String, scalaSrcTargetPath : String) {
+    val file = new File(scalaSrcTargetPath);
+    val bufferedWriter = new BufferedWriter(new FileWriter(file))
+    bufferedWriter.write(scalaGeneratedCode)
+    bufferedWriter.close
+  }
+
+  private def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
+    val scalaTargetPath = s"$targPath/$moduleSrcName"
+    writeSrcFile(scalaGeneratedCode, scalaTargetPath)
+  }
+   
+}
