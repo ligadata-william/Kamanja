@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# StartFataFatCluster.sh
+# StatusFataFatCluster.sh
 #
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StartFataFatCluster.sh --ClusterId <cluster name identifer> "
-    echo "                           --MetadataAPIConfig  <metadataAPICfgPath> "
+    echo "      StatusFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo 
-    echo "  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
-    echo "         the appropriate metadata store.  For "
+    echo "  NOTES: Get status on the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to "
+    echo "         locate the appropriate metadata store.   "
     echo 
 }
 
@@ -78,7 +78,7 @@ fi
 # Start the cluster nodes using the information extracted from the metadata and supplied config.  Remember the jvm's pid in the $installDir/run
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
 # config directory where the FataFat engine config file is located.
-echo "...start the FataFat cluster $clusterName"
+echo "...get stuatus for the FataFat cluster $clusterName"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -95,29 +95,63 @@ while read LINE; do
     restapi_cnt=`echo $roles_lc | grep "restapi" | grep -v "grep" | wc -l`
     processingengine_cnt=`echo $roles_lc | grep "processingengine" | grep -v "grep" | wc -l`
     echo "NodeInfo = $machine, $id, $cfgFile, $targetPath, $roles"
-    echo "...On machine $machine, starting FataFat node with configuration $cfgFile for NodeId $id to $machine:$targetPath"
-    nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+    #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
+    # 
+    # FIXME: something more graceful than killing the jvm is desirable.
+    #
     pidfile=node$id.pid
-     #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
-	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
-                ulimit -u 8192
-		cd $targetPath
-		echo "nodeCfg=$nodeCfg"
-        if [ "$processingengine_cnt" -gt 0 ]; then
-		java -Xmx50g -Xms50g -Dlog4j.configuration=file:$targetPath/engine_log4j.properties -Djavax.net.ssl.trustStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStorePassword=fc2appKey16app -Djavax.net.ssl.trustStorePassword=fc2appKey16app -jar "$installDir/bin/FatafatManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
-        fi
-        if [ "$restapi_cnt" -gt 0 ]; then
-		java -Dlog4j.configuration=file:$targetPath/restapi_log4j.properties  -jar "$installDir/bin/MetadataAPIService-1.0" --config "$targetPath/MetadataAPIConfig_${id}.properties" < /dev/null > /dev/null 2>&1 & 
-        fi
-		if [ ! -d "$installDir/run" ]; then
-			mkdir "$installDir/run"
-		fi
-			ps aux | egrep "FatafatManager|MetadataAPIService" | grep -v "grep" | tr -s " " | cut -d " " -f2 | tr "\\n" "," | sed "s/,$//"   > "$installDir/run/$pidfile"
-#		sleep 5
+    statusfile=ndstatus$id.txt
+    scp -o StrictHostKeyChecking=no "$machine:$installDir/run/$pidfile" "$workDir/$pidfile"
+    pidvals=`head -1 "$workDir/$pidfile"`
+
+    enginestatuspidcnt=0
+    metadatastatuspidcnt=0
+
+    # FIXME: We can check whether we really have pidvals or not and do ssh
+
+    rm -rf "$workDir/$statusfile"
+
+    # Checking whether the PID is valid & our service
+    if [ ! -z "$pidvals" ]; then
+       if [ -n "$pidvals" ]; then
+          ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
+             if [ ! -d "$installDir/run" ]; then
+                mkdir "$installDir/run"
+             fi
+             ps u -p $pidvals | grep "FatafatManager-1.0" | grep -v "grep" | wc -l > "$installDir/run/$statusfile"
+             ps u -p $pidvals | grep "MetadataAPIService-1.0" | grep -v "grep" | wc -l >> "$installDir/run/$statusfile"
+
 EOF
 
-# ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "FatafatManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
-# scp  -o StrictHostKeyChecking=no   $workDir/temppid.pid "$machine:$installDir/run/node$id.pid"
+          scp -o StrictHostKeyChecking=no "$machine:$installDir/run/$statusfile" "$workDir/$statusfile"
+          enginestatuspidcnt=`head -1 "$workDir/$statusfile"`
+          metadatastatuspidcnt=`head -2 "$workDir/$statusfile" | tail -1`
+        fi
+    fi
+
+    if [ "$processingengine_cnt" -gt 0 ]; then
+    if [ ! -z "$enginestatuspidcnt" ]; then
+        if [[ -n "$enginestatuspidcnt" ]] && [[ "$enginestatuspidcnt" -gt 0 ]]; then
+            echo "Status:UP, Node:$machine, Service:FatafatManager"
+        else
+            echo "Status:DOWN, Node:$machine, Service:FatafatManager"
+         fi
+    else
+         echo "Status:DOWN, Node:$machine, Service:FatafatManager"
+    fi
+    fi
+
+    if [ "$restapi_cnt" -gt 0 ]; then
+    if [ ! -z "$metadatastatuspidcnt" ]; then
+        if [[ -n "$metadatastatuspidcnt" ]] && [[ "$metadatastatuspidcnt" -gt 0 ]]; then
+            echo "Status:UP, Node:$machine, Service:MetadataAPIService"
+        else
+            echo "Status:DOWN, Node:$machine, Service:MetadataAPIService"
+         fi
+    else
+         echo "Status:DOWN, Node:$machine, Service:MetadataAPIService"
+    fi
+    fi
 
 done
 exec 0<&12 12<&-
