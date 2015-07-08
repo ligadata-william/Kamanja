@@ -5372,8 +5372,10 @@ println("---> 3")
   private var cfgmap: Map[String,Any] = null
   def UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
     
-    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]    
-    return cfgStr
+    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", 0.toString, "Upload of model config successful")
+    apiResult.toString()
+    //return cfgStr
   }
   
   def getModelDependencies (modelName: String): List[String] = {    
