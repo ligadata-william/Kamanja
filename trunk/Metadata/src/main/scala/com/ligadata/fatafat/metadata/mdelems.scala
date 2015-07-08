@@ -771,6 +771,7 @@ class AuditRecord {
   override def toString: String =
     "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
 }
+
 class OutputMsgDef extends BaseElemDef {
   var Queue: String = _
   var ParitionKeys: Array[(String, Array[(String, String)], String, String)] = _ // Output Partition Key. Message/Model Full Qualified Name as first value in tuple, Rest of the field name as second value in tuple and "Mdl" Or "Msg" String as the third value in tuple.
@@ -780,4 +781,9 @@ class OutputMsgDef extends BaseElemDef {
   var OutputFormat: String = _ // Format String
 }
 
-
+object ModelCompilationConstants {
+  val DEPENDENCIES: String = "dependencies"
+  val TYPES_DEPENDENCIES: String = "types"
+  val SOURCECODE: String = "source"
+  val PHYSICALNAME: String = "pName"
+}
