@@ -367,11 +367,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, databasePrincipal: String, databaseKeytab: String): DataStore = {
+  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
+      if (adapterSpecificConfig != null)
+        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
@@ -393,8 +395,6 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         case "hbase" => {
           connectinfo += ("hostlist" -> dataLocation)
           connectinfo += ("schema" -> storeName)
-          connectinfo += ("principal" -> databasePrincipal)
-          connectinfo += ("keytab" -> databaseKeytab)
         }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
@@ -846,17 +846,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Adding new messages or Containers
   //BUGBUG:: May be we need to lock before we do anything here
-  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, databasePrincipal: String, databaseKeytab: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoPrincipal: String, statusInfoKeytab: String): Unit = {
+  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, adapterSpecificConfig: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoadapterSpecificConfig: String): Unit = {
     logger.debug("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     if (_allDataDataStore == null) {
       logger.debug("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
-      _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation, databasePrincipal, databaseKeytab)
+      _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation, adapterSpecificConfig)
     }
     if (_runningTxnsDataStore == null) {
-      _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation, statusInfoPrincipal, statusInfoKeytab)
+      _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation, statusInfoadapterSpecificConfig)
     }
     if (_checkPointAdapInfoDataStore == null) {
-      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation, statusInfoPrincipal, statusInfoKeytab)
+      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation, statusInfoadapterSpecificConfig)
     }
 
     val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now

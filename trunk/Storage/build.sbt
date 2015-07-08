@@ -44,6 +44,10 @@ libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.4.1"
 
 libraryDependencies += "org.mapdb" % "mapdb" % "1.0.6"
 
+libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.9" 
+
+libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9" 
+
 libraryDependencies ++= Seq("net.debasishg" %% "redisclient" % "2.13")
 
 scalacOptions += "-deprecation"
