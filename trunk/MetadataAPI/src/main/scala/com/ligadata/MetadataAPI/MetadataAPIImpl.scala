@@ -3303,8 +3303,8 @@ println("---> 3")
     objectsAdded = objectsAdded :+ modDef
     val operations = for (op <- objectsAdded) yield "Add"
     logger.debug("Notify engine via zookeeper")
-    NotifyEngine(objectsAdded, operations) 
-    
+    NotifyEngine(objectsAdded, operations)
+
     apiResult
   }    
 

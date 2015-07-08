@@ -2,7 +2,7 @@ package com.ligadata.metadataapiservice
 
 import akka.actor._
 import akka.event.Logging
-import com.ligadata.metadataapiservice.UploadModelConfigService
+import com.ligadata.metadataapiservice._
 import spray.routing._
 import spray.http._
 import MediaTypes._
@@ -10,12 +10,19 @@ import org.apache.log4j._
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
 
+object ModelType extends Enumeration {
+  val PMML = Value("pmml") toString
+  val JAVA = Value("java") toString
+  val SCALA = Value("scala") toString
+}
+
 class MetadataAPIServiceActor extends Actor with MetadataAPIService {
 
   def actorRefFactory = context
 
   def receive = runRoute(metadataAPIRoute)
 }
+
 
 trait MetadataAPIService extends HttpService {
 
@@ -102,7 +109,26 @@ trait MetadataAPIService extends HttpService {
                   logger.debug("POST reqeust : api/" + str)
                   if (toknRoute.size == 1) {
                     entity(as[String]) { reqBody => { requestContext => processPostRequest(toknRoute(0), reqBody, requestContext, user, password, role)}}
+                  } else if (toknRoute.size == 2 && toknRoute(0) == "model") {
+                    toknRoute(1).toString match {
+                      case ModelType.PMML => {
+                        val objectType=toknRoute(0)+toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+
+                      }
+                      case ModelType.JAVA => {
+                        val objectType=toknRoute(0)+toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+                      }
+
+                      case ModelType.SCALA => {
+                        val objectType=toknRoute(0)+toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+                      }
+                    }
+
                   }
+
                   else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)}
                 }
                 }
@@ -217,6 +243,22 @@ trait MetadataAPIService extends HttpService {
       logger.debug("In post request process of UploadModelConfig")
       val addModelDefsService = actorRefFactory.actorOf(Props(new UploadModelConfigService(rContext, userid, password, role)))
       addModelDefsService ! UploadModelConfigService.Process(body)
+    } else if (objtype.equalsIgnoreCase("modeljava")) {
+      //TODO
+      logger.debug("In post request process of model java")
+      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role)))
+      addSourceModelService ! AddSourceModelService.Process(body)
+      //rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromJavaSource", body.toString, "Upload of java model successful").toString)
+    }
+    else if (objtype.equalsIgnoreCase("modelscala")) {
+      //TODO
+      logger.debug("In post request process of model scala")
+      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+    }
+    else if (objtype.equalsIgnoreCase("modelpmml")) {
+      //TODO
+      logger.debug("In post request process of model pmml")
+      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromPMMLSource", body.toString, "Upload of java model successful").toString)
     }
     else {
       rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)
