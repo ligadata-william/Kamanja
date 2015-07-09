@@ -49,6 +49,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     var containerType: BaseTypeDef = null
     var loadedAll: Boolean = false
     var reload: Boolean = false
+    var isContainer: Boolean = false
     var objFullName: String = ""
   }
 
@@ -294,9 +295,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    */
   private def loadMap(keys: Array[FatafatDataKey], msgOrCont: MsgContainerInfo): Unit = {
     var objs: Array[FatafatData] = new Array[FatafatData](1)
+    var notFoundKeys = 0
+    val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
     keys.foreach(key => {
       try {
-        val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, msgOrCont.containerType) }
         val StartDateRange = if (key.D.size == 2) key.D(0) else 0
         val EndDateRange = if (key.D.size == 2) key.D(1) else 0
         _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
@@ -305,16 +307,32 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       } catch {
         case e: ClassNotFoundException => {
-          logger.error(s"unable to create a container named ${msgOrCont.containerType.typeString}... is it defined in the metadata?")
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
           e.printStackTrace()
-          throw e
+          notFoundKeys += 1
+        }
+        case e: KeyNotFoundException => {
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
+          e.printStackTrace()
+          notFoundKeys += 1
+        }
+        case e: Exception => {
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
+          e.printStackTrace()
+          notFoundKeys += 1
         }
         case ooh: Throwable => {
-          logger.error(s"unknown error encountered while processing ${msgOrCont.containerType.typeString}.. stack trace = ${ooh.printStackTrace}")
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
           throw ooh
         }
       }
     })
+
+    if (notFoundKeys > 0) {
+      logger.error("Not found some keys to load")
+      throw new Exception("Not found some keys to load")
+    }
+
     logger.debug("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
   }
 
@@ -881,6 +899,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           newMsgOrContainer.containerType = containerType
           newMsgOrContainer.objFullName = objFullName
+          newMsgOrContainer.isContainer = (mgr.ActiveContainer(namespace, name) != null)
 
           /** create a map to cache the entries to be resurrected from the mapdb */
           _messagesOrContainers(objFullName) = newMsgOrContainer
@@ -957,6 +976,47 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localSaveModelsResult(tempTransId, key, value)
   }
 
+  override def getChangedData(tempTransId: Long, includeMessages: Boolean, includeContainers: Boolean): scala.collection.immutable.Map[String, List[List[String]]] = {
+    val changedContainersData = scala.collection.mutable.Map[String, List[List[String]]]()
+
+    // Commit Data and Removed Transaction information from status
+    val txnCtxt = getTransactionContext(tempTransId, false)
+    if (txnCtxt == null)
+      return changedContainersData.toMap
+
+    val messagesOrContainers = txnCtxt.getAllMessagesAndContainers
+
+    messagesOrContainers.foreach(v => {
+      val mc = _messagesOrContainers.getOrElse(v._1, null)
+      if (mc != null) {
+        val savingKeys = new ArrayBuffer[List[String]]()
+        if (includeMessages && includeContainers) { // All the vlaues (includes messages & containers)
+          v._2.data.foreach(kv => {
+            if (kv._2._1 && kv._2._2.DataSize > 0) {
+              savingKeys += kv._2._2.GetKey.toList
+            }
+          })
+        } else if (includeMessages && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer == false && v._2.isContainer == false)) { // Msgs
+          v._2.data.foreach(kv => {
+            if (kv._2._1 && kv._2._2.DataSize > 0) {
+              savingKeys += kv._2._2.GetKey.toList
+            }
+          })
+        } else if (includeContainers && /* v._2.containerType.tTypeType == ObjTypeType.tContainer && */ (mc.isContainer || v._2.isContainer)) { // Containers
+          v._2.data.foreach(kv => {
+            if (kv._2._1 && kv._2._2.DataSize > 0) {
+              savingKeys += kv._2._2.GetKey.toList
+            }
+          })
+        }
+        if (savingKeys.size > 0)
+          changedContainersData(v._2.containerType.FullName.toLowerCase) = savingKeys.toList
+      }
+    })
+
+    return changedContainersData.toMap
+  }
+
   // Final Commit for the given transaction
   override def commitData(tempTransId: Long): Unit = {
     // Commit Data and Removed Transaction information from status
@@ -1007,6 +1067,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             }
           }
         })
+
         v._2.current_msg_cont_data.clear
       }
     })
@@ -1286,6 +1347,20 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
     logger.debug("Loaded %d Validate (Check Point) Adapter Information".format(results.size))
     results.toArray
+  }
+
+  override def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit = {
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+    if (container != null) {
+      val dataKeys = keys.map(partKey => { FatafatDataKey(container.objFullName, partKey, List[Int](), 0) }).toArray
+      loadMap(dataKeys, container)
+      /*
+      keys.foreach(partKey => {
+        // Loading full Partition key for now.
+        loadObjFromDb(tempTransId, container, partKey)
+      })
+      */
+    }
   }
 }
 

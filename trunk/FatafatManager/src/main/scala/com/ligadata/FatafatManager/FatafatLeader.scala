@@ -48,6 +48,7 @@ object FatafatLeader {
   private[this] var zkAdapterStatusNodeListener: ZooKeeperListener = _
   private[this] var zkDataChangeNodeListener: ZooKeeperListener = _
   private[this] var zkcForSetData: CuratorFramework = null
+  private[this] val setDataLockObj = new Object()
   private[this] var distributionMap = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ArrayBuffer[(String, Long)]]]() // Nodeid & Unique Keys (adapter unique name & unique key)
   private[this] var foundKeysInValidation: scala.collection.immutable.Map[String, (String, Int, Int, Long)] = _
   private[this] var adapterMaxPartitions = scala.collection.mutable.Map[String, Int]() // Adapters & Max Partitions
@@ -143,7 +144,7 @@ object FatafatLeader {
                         ("V3" -> kv._2._3) ~
                         ("V4" -> kv._2._4)))
                 val sendJson = compact(render(distribute))
-                zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
+                SetNewDataToZkc(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
               }
             } else {
               val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
@@ -313,7 +314,7 @@ object FatafatLeader {
         // Set STOP Action on engineDistributionZkNodePath
         val act = ("action" -> "stop")
         val sendJson = compact(render(act))
-        zkcForSetData.setData().forPath(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
+        SetNewDataToZkc(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
       }
     } catch {
       case e: Exception => {}
@@ -547,7 +548,7 @@ object FatafatLeader {
               val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
               val act = ("action" -> "stopped")
               val sendJson = compact(render(act))
-              zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+              SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
             }
           } catch {
             case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
@@ -588,7 +589,7 @@ object FatafatLeader {
               // Set DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
               val act = ("action" -> "distributed")
               val sendJson = compact(render(act))
-              zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+              SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
               sentDistributed = true
             } catch {
               case e: Exception => {
@@ -601,7 +602,7 @@ object FatafatLeader {
             // Set RE-DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
             val act = ("action" -> "re-distribute")
             val sendJson = compact(render(act))
-            zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+            SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
           }
         }
         case _ => {
@@ -641,6 +642,7 @@ object FatafatLeader {
 
       val values = json.values.asInstanceOf[Map[String, Any]]
       val changedMsgsContainers = values.getOrElse("changeddata", null)
+      val tmpChngdContainersAndKeys = values.getOrElse("changeddatakeys", null)
 
       if (changedMsgsContainers != null) {
         // Expecting List/Array of String here
@@ -657,8 +659,51 @@ object FatafatLeader {
         }
 
         if (changedVals != null) {
-              envCtxt.clearIntermediateResults
           envCtxt.clearIntermediateResults(changedVals)
+        }
+      }
+
+      if (tmpChngdContainersAndKeys != null) {
+        val changedContainersAndKeys = if (tmpChngdContainersAndKeys.isInstanceOf[List[_]]) tmpChngdContainersAndKeys.asInstanceOf[List[_]] else if (tmpChngdContainersAndKeys.isInstanceOf[Array[_]]) tmpChngdContainersAndKeys.asInstanceOf[Array[_]].toList else null
+        if (changedContainersAndKeys.size > 0) {
+          val txnid = values.getOrElse("txnid", "0").toString.trim.toLong // txnid is 0, if it is not passed
+          changedContainersAndKeys.foreach(CK => {
+            if (CK != null && CK.isInstanceOf[Map[_, _]]) {
+              val contAndKeys = CK.asInstanceOf[Map[String, Any]]
+              val contName = contAndKeys.getOrElse("C", "").toString.trim
+              val tmpKeys = contAndKeys.getOrElse("K", null)
+              if (contName.size > 0 && tmpKeys != null) {
+                // Expecting List/Array of Keys
+                var keys: List[List[String]] = null
+                if (tmpKeys.isInstanceOf[List[_]]) {
+                  try {
+                    keys = tmpKeys.asInstanceOf[List[List[String]]]
+                  }
+                }
+                if (tmpKeys.isInstanceOf[Array[_]]) {
+                  try {
+                    keys = tmpKeys.asInstanceOf[Array[List[String]]].toList
+                  }
+                }
+
+                if (keys != null && keys.size > 0) {
+                  logger.debug("Txnid:%d, ContainerName:%s, Key:%s".format(txnid, contName, keys.mkString(",")))
+                  try {
+                    envCtxt.ReloadKeys(txnid, contName, keys)
+                  } catch {
+                    case e: Exception => {
+                      logger.error("Failed to reload keys for container:" + contName)
+                      e.printStackTrace()
+                    }
+                    case t: Throwable => {
+                      logger.error("Failed to reload keys for container:" + contName)
+                      t.printStackTrace()
+                    }
+                  }
+                }
+              }
+            } // else // not handling
+          })
         }
       }
 
@@ -836,7 +881,7 @@ object FatafatLeader {
         // Set RE-DISTRIBUTED action in adaptersStatusPath + "/" + nodeId path
         val act = ("action" -> "re-distribute")
         val sendJson = compact(render(act))
-        zkcForSetData.setData().forPath(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
+        SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
         */
       } catch {
         case e: Exception => {
@@ -846,6 +891,21 @@ object FatafatLeader {
       }
     } else {
       LOG.error("Not connected to elect Leader and not distributing data between nodes.")
+    }
+  }
+
+  private def CloseSetDataZkc: Unit = {
+    setDataLockObj.synchronized {
+      if (zkcForSetData != null)
+        zkcForSetData.close
+      zkcForSetData = null
+    }
+  }
+
+  def SetNewDataToZkc(zkNodePath: String, data: Array[Byte]): Unit = {
+    setDataLockObj.synchronized {
+      if (zkcForSetData != null)
+        zkcForSetData.setData().forPath(zkNodePath, data)
     }
   }
 
@@ -863,9 +923,7 @@ object FatafatLeader {
     if (zkAdapterStatusNodeListener != null)
       zkAdapterStatusNodeListener.Shutdown
     zkAdapterStatusNodeListener = null
-    if (zkcForSetData != null)
-      zkcForSetData.close
-    zkcForSetData = null
+    CloseSetDataZkc
   }
 }
 

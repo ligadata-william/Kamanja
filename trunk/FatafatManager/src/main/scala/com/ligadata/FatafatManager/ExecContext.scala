@@ -38,7 +38,16 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
         val commitStartTime = System.nanoTime
+        val containerData = envCtxt.getChangedData(tempTransId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         envCtxt.commitData(tempTransId)
+        if (containerData != null && containerData.size > 0) {
+          val datachangedata = ("txnid" -> tempTransId.toString) ~
+            ("changeddatakeys" -> containerData.map(kv =>
+              ("C" -> kv._1) ~
+                ("K" -> kv._2)))
+          val sendJson = compact(render(datachangedata))
+          FatafatLeader.SetNewDataToZkc(FatafatConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
+        }
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
       }
     } catch {
