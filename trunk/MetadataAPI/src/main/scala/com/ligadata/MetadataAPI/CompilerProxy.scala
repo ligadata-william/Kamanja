@@ -512,10 +512,7 @@ class CompilerProxy{
   private def generateModelDef (repackagedCode: String, sourceLang: String , pname: String, classPath: String, modelNamespace: String, modelName: String, 
                                 modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
                                 deps: List[String], typeDeps: List[String]): ModelDef = {
-      try {  
-       
-       println("=-=-=-=-=-=-=-=-=>>>> "+modelNamespace +"."+ modelName +"."+ modelVersion+ "     ver is "+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)))
-                             
+      try {                             
        // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
        val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
        var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
@@ -540,23 +537,22 @@ class CompilerProxy{
        if (status2 > 1 ){
          throw new ModelCompilationFailedException("Failed to produce the jar file")
        }
-
+      
       // Create the ModelDef object
-       
       // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
       var modelNamespaceTemp = "System"
       val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
-                                                          List[(String, String, String, String, Boolean, String)](),
+                                                          getInputVarsFromElements(elements),
                                                           List[(String, String, String)]() ,
                                                           MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
                                                           deps.toArray[String],
                                                           false
-                                                 )     
+                                                 )                                           
               
       // Need to set some values by hand here.                                                   
        modDef.jarName = jarFileName
        modDef.physicalName = packageName + "." + pname
-       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = ObjFormatType.fSCALA else modDef.objectFormat = ObjFormatType.fJAVA
+       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
        modDef.ObjectDefinition(createSavedSourceCode(originalSource, deps, typeDeps, pname))                                                                                  
        modDef
     } catch {
@@ -565,12 +561,31 @@ class CompilerProxy{
         throw e
       }
       case e:Exception =>{
+        e.printStackTrace()
         logger.error("Failed to compile the model definition " + e.toString)
         throw new ModelCompilationFailedException(e.getMessage())
       }
     } 
     
   }  
+  
+  /**
+   * getInputVarsFromElements
+   */
+  private def getInputVarsFromElements(elements: Set[BaseElemDef]): List[(String, String, String, String, Boolean, String)] = {
+      // Input Vars are just Message and Containers here... so the element array has them all!  Create the List of them to be used
+      // in modelCreation.
+      var inVars: List[(String, String, String, String, Boolean, String)] = List[(String, String, String, String, Boolean, String)]()
+      elements.foreach (elem => {    
+        if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[StructTypeDef]) { 
+          elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[StructTypeDef].memberDefs.foreach (attr => {inVars = (attr.NameSpace,attr.Name,elem.NameSpace,elem.Name,false,null) :: inVars })
+        }
+        else if (elem.asInstanceOf[ContainerDef].containerType.isInstanceOf[MappedMsgTypeDef]) {
+          elem.asInstanceOf[ContainerDef].containerType.asInstanceOf[MappedMsgTypeDef].attrMap.foreach (attr => {inVars = (elem.NameSpace,elem.Name,attr._2.NameSpace,attr._2.Name,false,null) :: inVars })            
+        }
+      })
+      inVars
+  }
   
  /**
    * 
@@ -801,7 +816,8 @@ class CompilerProxy{
   }   
  
   /**
-   * 
+   * getJavaClassName - pull the java class name fromt he source code so that we can name the 
+   *                    saved file appropriately.  
    */
   private def getJavaClassName(sourceCode: String):String = {
       var publicClassExpr = "\\s*public\\s*class\\s*\\S*\\s*extends".r  
