@@ -1,10 +1,10 @@
-Fatafat Home
+Kamanja Home
 ===
-###What is Fatafat?
+###What is Kamanja?
 
-Fatafat is a real-time processing and decisioning (Fatafat) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
+Kamanja is a real-time processing and decisioning framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
 
-The FatafatTM framework is open source with many features that support use cases for developers:
+The Kamanja framework is open source with many features that support use cases for developers:
 
 1. **Built bottom-up in Scala**; a concise powerful, language.
 2. **Compiles predictive models** saved as PMML into Scala and JAR files, then saves into data store.
