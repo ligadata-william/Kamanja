@@ -11,19 +11,20 @@ import java.io.{ DataOutputStream, DataInputStream }
 // define some enumerations 
 object ObjFormatType extends Enumeration {
   type FormatType = Value
-  val fCSV, fJSON, fXML, fSERIALIZED = Value
+  val fCSV, fJSON, fXML, fSERIALIZED, fJAVA, fSCALA = Value
 
   def asString(typ : FormatType) : String = {
      val str = typ.toString match {
-	case "fCSV" =>  "CSV"
-	case "fJSON" => "JSON"
-	case "fXML" => "XML"
-	case "fSERIALIZED" => "SERIALIZED"
-	case _ => "Unknown"
+       case "fCSV" =>  "CSV"
+       case "fJSON" => "JSON"
+       case "fXML" => "XML"
+       case "fSERIALIZED" => "SERIALIZED"
+       case "fJAVA" => "JAVA"
+       case "fSCALA" => "SCALA"
+       case _ => "Unknown"
       }
-      str
+    str
   }
-
 }
 import ObjFormatType._
 
@@ -772,4 +773,12 @@ class AuditRecord
 
   override def toString : String = 
     "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
+}
+
+
+object ModelCompilationConstants {
+  val DEPENDENCIES: String = "dependencies"
+  val TYPES_DEPENDENCIES: String = "types"
+  val SOURCECODE: String = "source"
+  val PHYSICALNAME: String = "pName"
 }

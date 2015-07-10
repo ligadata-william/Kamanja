@@ -3260,19 +3260,16 @@ println("---> 3")
 
     var compProxy = new CompilerProxy
     val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
-    println("modDef Model created  ")
     UploadJarsToDB(modDef)
-    println("Upload Jars for  Model called  ")
-    val apiResult = AddModel(modDef)
-    println("  Model ADDED  ")    
+    val apiResult = AddModel(modDef)  
 
     // Add all the objects and NOTIFY the world
     var objectsAdded = new Array[BaseElemDef](0)
     objectsAdded = objectsAdded :+ modDef
     val operations = for (op <- objectsAdded) yield "Add"
     logger.debug("Notify engine via zookeeper")
-    NotifyEngine(objectsAdded, operations) 
-    
+    NotifyEngine(objectsAdded, operations)
+
     apiResult
   }    
     
@@ -3331,8 +3328,24 @@ println("---> 3")
     try {
       var compProxy = new CompilerProxy
       compProxy.setLoggerLevel(Level.TRACE)
-      val pmmlText = mod.ObjectDefinition
-      var (classStr, modDef) = compProxy.compilePmml(pmmlText,true)
+      var modDef: ModelDef = null
+      
+      // Models can be either PMML or Custom Sourced.  See which one we are dealing with
+      // here.
+      if (mod.objectFormat == ObjFormatType.fXML) {
+         val pmmlText = mod.ObjectDefinition
+         var (classStrTemp, modDefTemp) = compProxy.compilePmml(pmmlText,true) 
+         modDef = modDefTemp
+      } else {
+         val saveModelParms =  parse(mod.ObjectDefinition).values.asInstanceOf[Map[String,Any]]
+         //val souce = mod.ObjectDefinition
+         modDef = compProxy.recompileModelFromSource(saveModelParms.getOrElse(ModelCompilationConstants.SOURCECODE,"").asInstanceOf[String],
+                                                     saveModelParms.getOrElse(ModelCompilationConstants.PHYSICALNAME,"").asInstanceOf[String],
+                                                     saveModelParms.getOrElse(ModelCompilationConstants.DEPENDENCIES,List[String]()).asInstanceOf[List[String]],
+                                                     saveModelParms.getOrElse(ModelCompilationConstants.TYPES_DEPENDENCIES,List[String]()).asInstanceOf[List[String]],
+                                                     mod.ObjectFormat.toString)
+      }
+      
       val latestVersion = if (modDef == null) None else GetLatestModel(modDef)
       val isValid : Boolean = (modDef != null)
       if (isValid) {
@@ -5359,8 +5372,10 @@ println("---> 3")
   private var cfgmap: Map[String,Any] = null
   def UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
     
-    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]    
-    return cfgStr
+    cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", 0.toString, "Upload of model config successful")
+    apiResult.toString()
+    //return cfgStr
   }
   
   def getModelDependencies (modelName: String): List[String] = {    
