@@ -545,10 +545,10 @@ class CompilerProxy{
                                                           getInputVarsFromElements(elements),
                                                           List[(String, String, String)]() ,
                                                           MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-                                                          deps.toArray[String],
+                                                          deps.toArray[String] ++ elements.map(e=>{e.JarName}).toArray[String],
                                                           false
-                                                 )                                           
-              
+                                                 )    
+                                                 
       // Need to set some values by hand here.                                                   
        modDef.jarName = jarFileName
        modDef.physicalName = packageName + "." + pname
