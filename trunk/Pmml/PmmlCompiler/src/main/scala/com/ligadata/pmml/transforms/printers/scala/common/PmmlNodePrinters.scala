@@ -7,8 +7,6 @@ import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
 
-//import com.ligadata.Pmml.Runtime._
-
 
 object NodePrinterHelpers extends LogTrait {
 

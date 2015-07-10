@@ -432,4 +432,35 @@ class PmmlModelGenerator(ctx : PmmlContext) extends LogTrait {
 			case _ => PmmlError.logError(ctx, s"pmml model generate ... UnknownNode ... name = $node.qName")
 		}
 	}
+	
+    val  pmmlElementVistitorMap = Map[String, CodePrinter](
+	      ("Constant" -> PmmlNode.mkPmmlConstant)
+	    , ("Header" -> PmmlNode.mkPmmlHeader)
+	    , ("Application" -> PmmlNode.mkPmmlApplication)
+	    , ("DataDictionary" -> PmmlNode.mkPmmlDataDictionary)
+	    , ("DataField" -> PmmlNode.mkPmmlDataField)
+	    , ("Interval" -> PmmlNode.mkPmmlInterval)
+	    , ("Value" -> PmmlNode.mkPmmlValue)
+	    , ("TransformationDictionary" -> PmmlNode.mkPmmlTransformationDictionary)
+	    , ("DerivedField" -> PmmlNode.mkPmmlDerivedField)
+	    , ("Apply" -> PmmlNode.mkPmmlApply)
+	    , ("FieldRef" -> PmmlNode.mkPmmlFieldRef)
+	    , ("MapValues" -> PmmlNode.mkPmmlMapValues)
+	    , ("FieldColumnPair" -> PmmlNode.mkPmmlFieldColumnPair)
+	    , ("InlineTable" -> PmmlNode.mkPmmlInlineTable)
+	    , ("row" -> PmmlNode.mkPmmlrow)
+	    , ("RuleSetModel" -> PmmlNode.mkPmmlRuleSetModel)
+	    , ("SimpleRule" -> PmmlNode.mkPmmlSimpleRule)
+	    , ("ScoreDistribution" -> PmmlNode.mkPmmlScoreDistribution)
+	    , ("CompoundPredicate" -> PmmlNode.mkPmmlCompoundPredicate)
+	    , ("SimpleSetPredicate" -> PmmlNode.mkPmmlSimpleSetPredicate)
+	    , ("SimplePredicate" -> PmmlNode.mkPmmlSimplePredicate)
+	    , ("MiningSchema" -> PmmlNode.mkPmmlMiningSchema)
+	    , ("MiningField" -> PmmlNode.mkPmmlMiningField)
+	    , ("RuleSet" -> PmmlNode.mkPmmlRuleSet)
+	    , ("RuleSelectionMethod" -> PmmlNode.mkPmmlRuleSelectionMethod)
+	    , ("DefineFunction" -> PmmlNode.mkPmmlDefineFunction)
+	    , ("ParameterField" -> PmmlNode.mkPmmlParameterField)
+	    , ("Array" -> PmmlNode.mkPmmlArray))
+	
 }
