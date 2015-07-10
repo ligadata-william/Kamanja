@@ -2,7 +2,11 @@ import AssemblyKeys._ // put this at the top of the file
 import sbt._
 import Keys._
 
+sbtPlugin := true
+
 shellPrompt := { state =>  "sbt (%s)> ".format(Project.extract(state).currentProject.id) }
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 assemblySettings
 
@@ -67,6 +71,12 @@ libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9"
 
 libraryDependencies += "org.apache.zookeeper" % "zookeeper" % "3.4.6"
 
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.1" % "test"
+
+libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.10"
+
+libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.10"
+
 libraryDependencies += "org.apache.curator" % "apache-curator" % "2.0.0-incubating"
 
 libraryDependencies ++= Seq(
@@ -77,3 +87,7 @@ libraryDependencies ++= Seq(
 )
 
 scalacOptions += "-deprecation"
+
+retrieveManaged := true
+
+parallelExecution := false

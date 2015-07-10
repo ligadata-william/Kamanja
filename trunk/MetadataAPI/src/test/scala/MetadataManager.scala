@@ -31,6 +31,14 @@ case class MetadataManagerException(message: String) extends Exception(message)
 class MetadataManager(var config: MetadataAPIProperties) {
 
   private val logger = org.apache.log4j.Logger.getLogger(this.getClass)
+
+  logger.setLevel(Level.INFO)
+
+  private val metadataDirResource = getClass.getResource("/Metadata")
+  if( metadataDirResource == null ){
+      throw new MetadataManagerException("Failed to retrieve resource value for '/Metadata'.");
+  }
+
   private val metadataDir = new File(getClass.getResource("/Metadata").getPath)
 
   logger.info("metadataDir => " + metadataDir)

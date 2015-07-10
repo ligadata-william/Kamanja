@@ -1,4 +1,5 @@
 package com.ligadata.automation.unittests.api
+import sbt.IO._
 
 import com.ligadata.automation.unittests.api.setup._
 import org.scalatest._
@@ -38,9 +39,12 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
 
   private val loggerName = this.getClass.getName
   private val logger = Logger.getLogger(loggerName)
+  logger.setLevel(Level.INFO)
 
   override def beforeAll = {
     try {
+
+      logger.info("starting...");
 
       logger.info("resource dir => " + getClass.getResource("/").getPath)
 
@@ -79,7 +83,6 @@ class MetadataAPISpec extends FunSpec with LocalTestFixtures with BeforeAndAfter
       case e: Exception => throw new Exception("Failed to execute set up properly\n" + e)
     }
   }
-
 
   /**
    * extractNameFromPMML - pull the Application name="xxx" from the PMML doc and construct

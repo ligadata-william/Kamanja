@@ -94,4 +94,3 @@ lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) depen
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage)
 
 lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
-
