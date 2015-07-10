@@ -35,7 +35,7 @@ import org.joda.time.chrono.JulianChronology
 
 import org.apache.log4j.Logger
 
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 import com.ligadata.FatafatBase._
 
 /**

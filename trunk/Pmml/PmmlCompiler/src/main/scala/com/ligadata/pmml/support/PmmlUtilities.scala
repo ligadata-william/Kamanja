@@ -15,7 +15,7 @@ import org.joda.time.tz
 import org.joda.time.LocalDate
 import org.joda.time.Years
 
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 
 object PmmlError extends LogTrait {
   

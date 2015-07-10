@@ -1,4 +1,4 @@
-package com.ligadata.Pmml.Runtime
+package com.ligadata.pmml.runtime
 
 import scala.collection.mutable._
 import scala.math._

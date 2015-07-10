@@ -19,7 +19,7 @@ class PmmlNode(namespaceURI: String, localName: String , qName:String
 	
 	/** By default only element names found in the map are collected.  There are cases where 
 	 *  the children are self defined and at the collection time not understood by the 
-	 *  element collection tools.  See the Pmmlrow for an example.  The row tuples are 
+	 *  element collection tools.  See the PmmlRow for an example.  The row tuples are 
 	 *  blindly collected when the following function answers true
 	 */
 	def CollectChildTuples : Boolean = { false }
@@ -82,9 +82,9 @@ class PmmlInterval(namespaceURI: String
 			    , qName:String
 				, lineNumber : Int
 				, columnNumber : Int
-			    , closure : String
-			    , leftMargin : String
-			    , rightMargin : String) extends PmmlNode(namespaceURI, localName, qName, lineNumber, columnNumber) {
+			    , val closure : String
+			    , val leftMargin : String
+			    , val rightMargin : String) extends PmmlNode(namespaceURI, localName, qName, lineNumber, columnNumber) {
 }
 
 class PmmlValue(  namespaceURI: String
@@ -239,7 +239,7 @@ class PmmlInlineTable (namespaceURI: String
 				, columnNumber : Int)  extends PmmlNode(namespaceURI, localName, qName, lineNumber, columnNumber) {
 } 
 
-class Pmmlrow(namespaceURI: String
+class PmmlRow(namespaceURI: String
 				, localName: String 
 				, qName:String
 				, lineNumber : Int
@@ -392,10 +392,14 @@ object PmmlNode {
 	/** 
 	 *  hlpOrganizeAttributes is called from each of the mkPmml* 'make' fcns in order to get 
 	 *  the attributes from the PMML in the order of the constructor.  If the attribute, especially
-	 *  common on the optional attributes, is not present, a value of 'None' is returned in its place.
+	 *  common on the optional attributes, is not present, a value of "" is returned in its place.
 	 *  
 	 *  At some point, we can dress this up by utilizing the defaults from the xsd instead (meaning that 
 	 *  another ArrayBuffer would be supplied here with the appropriate defaults for each attribute).
+	 *  
+	 *  @param atts the attributes collected from the xml
+	 *  @param ofInterest those attributes that are needed for the constructor in the order they are needed
+	 *  @return the array buffer of constructor values to be used
 	 */
 	def hlpOrganizeAttributes(atts: Attributes, ofInterest : ArrayBuffer[String]) : Any = {
 
@@ -421,7 +425,7 @@ object PmmlNode {
 		val ofInterest : ArrayBuffer[String] = ArrayBuffer("dataType")
 		val selectedValues = hlpOrganizeAttributes(atts, ofInterest).asInstanceOf[ArrayBuffer[_]]
 		var dataType : String = selectedValues.apply(0).asInstanceOf[String]
-		if (dataType == None) dataType = "string"
+		if (dataType == "") dataType = "string"
 		new PmmlConstant(namespaceURI, localName , qName, lineNumber, columnNumber, dataType)
 	}
 
@@ -565,8 +569,8 @@ object PmmlNode {
 	}
 	
 	def mkPmmlrow(namespaceURI: String, localName: String , qName:String , atts: Attributes
-					, lineNumber : Int, columnNumber : Int) : Pmmlrow = {
-		new Pmmlrow(namespaceURI, localName , qName, lineNumber, columnNumber)
+					, lineNumber : Int, columnNumber : Int) : PmmlRow = {
+		new PmmlRow(namespaceURI, localName , qName, lineNumber, columnNumber)
 	}
 
 	def mkPmmlRowTuple(namespaceURI: String, localName: String , qName:String , atts: Attributes

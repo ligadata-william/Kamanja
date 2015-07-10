@@ -4,7 +4,7 @@ import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
 import org.xml.sax.Attributes
 import com.ligadata.fatafat.metadata._
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 import com.ligadata.FatafatBase._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
@@ -772,7 +772,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			case "FieldRef" => PmmlExecNode.mkPmmlExecFieldRef(this, currentNode.asInstanceOf[PmmlFieldRef])
 			case "MapValues" => PmmlExecNode.mkPmmlExecMapValues(this, currentNode.asInstanceOf[PmmlMapValues])
 			case "FieldColumnPair" => PmmlExecNode.mkPmmlExecFieldColumnPair(this, currentNode.asInstanceOf[PmmlFieldColumnPair])
-			case "row" => PmmlExecNode.mkPmmlExecrow(this, currentNode.asInstanceOf[Pmmlrow])
+			case "row" => PmmlExecNode.mkPmmlExecrow(this, currentNode.asInstanceOf[PmmlRow])
 			case "TableLocator" => PmmlExecNode.mkPmmlExecTableLocator(this, currentNode.asInstanceOf[PmmlTableLocator])
 			case "InlineTable" => PmmlExecNode.mkPmmlExecInlineTable(this, currentNode.asInstanceOf[PmmlInlineTable])
 			case "RuleSetModel" => PmmlExecNode.mkPmmlExecRuleSetModel(this, currentNode.asInstanceOf[PmmlRuleSetModel])

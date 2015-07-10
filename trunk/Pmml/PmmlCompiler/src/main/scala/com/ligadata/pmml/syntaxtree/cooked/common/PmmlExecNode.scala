@@ -4,7 +4,7 @@ import scala.collection.mutable._
 import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
 
@@ -311,17 +311,7 @@ class xDataField(lineNumber : Int, columnNumber : Int
 					}
 					case CodeFragment.FUNCCALL => {
 						/** generate the code to fetch the value */ 
-						
-						/** FIXME:  HACK ALERT!!! When the field refers to "beneficiary... " we really don't want to retrieve a value 
-						 *  from the dictionaries.  Instead this field reference refers to a the extracted data found in ctx.Beneficiary... 
-						 *  With this in mind, we don't do the lookup for the value.  Instead, we simply return the beneficiary reference as a string.
-						 */
-		
-						if (name.startsWith("beneficiary")) {
-							name
-						} else {
-							s"ctx.valueFor(${'"'}$name${'"'})"			  
-						}
+						s"ctx.valueFor(${'"'}$name${'"'})"
 					} 
 					case _ => { 
 						PmmlError.logError(ctx, "DataField node - unsupported CodeFragment.Kind") 
@@ -457,14 +447,7 @@ class xDerivedField(lineNumber : Int, columnNumber : Int
 						NodePrinterHelpers.derivedFieldFcnHelper(this, ctx, generator, kind, order)
 					}
 					case CodeFragment.FUNCCALL => {
-						/** generate the code to fetch the value  
-						
-						if (name.startsWith("beneficiary")) {
-							name
-						} else {
-							s"ctx.valueFor(${'"'}$name${'"'})"			  
-						}*/
-					  ""
+					   ""
 					} 
 					case _ => { 
 						PmmlError.logError(ctx, "DerivedField node - unsupported CodeFragment.Kind") 
@@ -1738,7 +1721,7 @@ object PmmlExecNode extends LogTrait {
 		None
 	}
 	
-	def mkPmmlExecrow(ctx : PmmlContext, d : Pmmlrow) : Option[PmmlExecNode] = {
+	def mkPmmlExecrow(ctx : PmmlContext, d : PmmlRow) : Option[PmmlExecNode] = {
 		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
 		top match {
 		  case Some(top) => {

@@ -331,7 +331,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 
 		mgr.AddFixedContainer(MdMgr.sysNS
 						    , "Context"
-						    , "com.ligadata.Pmml.Runtime.Context"
+						    , "com.ligadata.pmml.runtime.Context"
 					  		, List()) 
 		 		  		
 		mgr.AddFixedContainer(MdMgr.sysNS
