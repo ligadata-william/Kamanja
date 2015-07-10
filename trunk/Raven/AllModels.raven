@@ -1,0 +1,59 @@
+import com.ligadata.raven.database.*;
+import com.ligadata.samples.messages;
+
+
+// Model: LowBalanceAlert
+// Description: Generate low balance alerts based on current balance after each transaction performed by a customer
+// Conditions: Generate an alert 
+//   if current balance < 100 (configurable) and 
+//   if low balance alert hasn't been issued in 48 hours and 
+//   if customer preferences has minBalanceAlertOptOut is false.
+//
+// Inputs:
+//   CustPreferences     - one record for each customer
+//   CustAlertHistory    - one record for each customer (no history accessed even if system maintains)
+//   ModelPreferences    - one global record where model level constants are configured
+//   CustTransaction     - current transaction message on which this model makes decision
+//                         no transaction history is used to make alert decision
+//                         balance attribute in transaction reflects the current balance after this transaction
+// Output:
+//   CustAlertHistory    - a new entry is created - system decides on how to store/how many to keep based on policies
+//   LowBalanceAlertRslt - a new entry is created - system decides what to do with the generated object
+//
+
+CREATE FUNCTION make_lowbalancealertresult (needed data)
+  RETURNS low_balance_alert_result
+AS $$
+  class low_balance_alert_result:
+    def __init__ (self, data):
+      self.data = data
+  return low_balance_alert_result(data)
+
+$$
+
+CREATE FUNCTION LowBalanceAlert(mdlCtxt ModelContext) RETURNS LowBalanceAlertResult AS $$
+try:
+with dbobj.subtransaction():
+tuple<GlobalPreferences> gPref = dbobj.executeGet(GlobalPreferences, "MAKENEW") // can set batch mode
+tuple<CustPreferences> pref = dbobj.executeGet(CustPreferences, "MAKENEW") // can set batch mode
+
+if (gPref.minBalanceAlertOutput == false)
+  return None
+
+tuple<DateAndTime> curDtTmInMs = dbobj.executeGet(RddDate, "currentGmtDateTime")
+tuple<CustAlertHistory> alertHistory = dbobj.executeGet(CustAlertHistory, "MAKENEW")
+
+if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertDtTmInMs)) < gPref.minAlertDurationInHrs)
+  return None
+
+// continue with alert generation only if balance from current transaction is less than threshold
+tuple<CustTransaction> rcntTxn = dbobj.executeGet(CustTransaction, "LATEST")
+
+if (rcntTxn.isEmpty || rcntTxn.get.balance >= gPref.minAlertBalance)
+  return None
+
+// create new alert history record and persist (if policy is to keep only one, this will replace existing one)
+dbobj.executeInsert(CustAlertHistory, make_custalerthistory(make_time_dttmms(curDtTmInMs.getDateTimeInMs), "lowBalanceAlert")
+
+// ... Prepare results here ... need to populate result object with appropriate attributes
+return make_modelresult(make_low_balance_alert(mdlContext))
