@@ -66,8 +66,8 @@ object JarPathsUtils{
 }
 
 // CompilerProxy has utility functions to:
-// Call MessageDefinitionCompiler,
-// Call PmmlCompiler,
+// Call MessageDefinitionCompiler, 
+// Call PmmlCompiler, 
 // Generate jar files out of output of above compilers
 // Persist model definitions and corresponding jar files in Metadata Mgr
 // Persist message definitions, and corresponding jar files in Metadata Mgr
@@ -90,7 +90,7 @@ class CompilerProxy{
    */
   def compileModelFromSource (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {
     try {
-      // Figure out the metadata information needed for
+      // Figure out the metadata information needed for 
       val additinalDeps = addDepsFromClassPath
       val (classPath, elements, totalDeps, nonTypeDeps) =  getClassPathFromModelConfig(modelConfigName, additinalDeps)
       val msgDefClassFilePath = compiler_work_dir + "/" + removeUserid(modelConfigName) + "."+sourceLang
@@ -110,7 +110,7 @@ class CompilerProxy{
   }
 
   /**
-   * compileModelFromSource - This will get called from the recompile path due to a message/container change.  All the info
+   * compileModelFromSource - This will get called from the recompile path due to a message/container change.  All the info 
    *                          is available.. so just generate the new ModelDef
    *
    */
@@ -336,8 +336,8 @@ class CompilerProxy{
   }
 
 
-  /*
-   * Compile the supplied generated code and jar it, the originating pmml model, and the class output from the
+  /* 
+   * Compile the supplied generated code and jar it, the originating pmml model, and the class output from the 
    * compile.  Add a registration module as well.  Note the classpath dependencies in the manifest.mf file
    * that is also included in the jar.
    */
@@ -377,7 +377,7 @@ class CompilerProxy{
       logger.error(s"Command used: $compileCommand")
       compileRc
     } else {
-      //  The compiled scala class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir.  We
+      //  The compiled scala class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir.  We 
       //  use the -d option on the java compiler command...  so no need to move anything if java.
       if (sourceLanguage.equalsIgnoreCase("java")) {
         return compileRc
@@ -449,7 +449,7 @@ class CompilerProxy{
       if (isLocalOnly) sourceName = moduleName+"_local"
     }
 
-    // Compile
+    // Compile 
     val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, null, sourceLanguage)
 
     // Bail if compilation filed.
@@ -639,7 +639,7 @@ class CompilerProxy{
 
 
     // We need to add the imports to the actual TypeDependency Jars...  All the Message,Container, etc Elements
-    // have been passed into this def.
+    // have been passed into this def.  
     var typeNamespace: Array[String] = null
     var typeImports: String = ""
 
@@ -676,13 +676,13 @@ class CompilerProxy{
     var finalSourceCode = "package "+ packageName +".V0;\n" + typeImports +"\n" + repackagedCode.substring(repackagedCode.indexOf("import"))
     dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)
 
-    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name.
+    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
     var tempClassName: String = removeUserid(modelConfigName)
     if (sourceLang.equalsIgnoreCase("java")) {
       tempClassName = getJavaClassName(sourceCode)
     }
 
-    // Create a temporary jarFile file so that we can figure out what the metadata info for this class is.
+    // Create a temporary jarFile file so that we can figure out what the metadata info for this class is. 
     var (status,jarFileName) = jarCode(packageName+".V0",
       tempClassName,
       "V0",
@@ -832,8 +832,8 @@ class CompilerProxy{
   }
 
   /**
-   * getJavaClassName - pull the java class name fromt he source code so that we can name the
-   *                    saved file appropriately.
+   * getJavaClassName - pull the java class name fromt he source code so that we can name the 
+   *                    saved file appropriately.  
    */
   private def getJavaClassName(sourceCode: String):String = {
     var publicClassExpr = "\\s*public\\s*class\\s*\\S*\\s*extends".r
@@ -913,7 +913,7 @@ class CompilerProxy{
 
 
   /**
-   *  buildClassPath
+   *  buildClassPath 
    */
   private def buildClassPath(inDeps: List[String], inMC: List[String], cpDeps: List[String] = null):(String,Set[BaseElemDef],scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) = {
     var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
@@ -968,7 +968,7 @@ class CompilerProxy{
   }
 
   /**
-   * getClassPath -
+   * getClassPath - 
    *
    */
   private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName,userId),
@@ -982,7 +982,7 @@ class CompilerProxy{
    *                           "dependencies":List[String],
    *                           "messagescontainers":List[String],
    *                           "physicalname":"physicalName"
-   *                         }
+   *                         }  
    */
   private def createSavedSourceCode(source: String, deps: scala.collection.immutable.Set[String], typeDeps: List[String], pName: String): String = {
     println("COMILER_PROXY: recording for future recompile of the model")
