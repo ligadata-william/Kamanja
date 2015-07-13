@@ -1512,7 +1512,7 @@ class MessageDefImpl {
       var prmryKeys: String = ""
       if (message.Fixed.toLowerCase().equals("false")) {
 
-        if (keysStr != null && keysStr.toString.trim != "")
+        //if (keysStr != null && keysStr.toString.trim != "")
           keysVarStr = getKeysStr(keysStr.toString)
         MsgsAndCntrsVarStr = getMsgAndCntnrs(msgAndCntnrsStr.toString)
         //typeImplStr = getTypeImplStr(typeImpl.toString)
@@ -1810,6 +1810,7 @@ class MessageDefImpl {
   }
 
   private def getKeysStr(keysStr: String) = {
+    println("keysStrkeysStrkeysStrkeysStr    "+keysStr)
     if (keysStr != null && keysStr.trim() != "") {
 
       """ 
