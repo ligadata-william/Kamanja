@@ -221,7 +221,17 @@ class CompilerProxy{
       logger.debug("Call Message Compiler ....")
       val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
+      
+      logger.debug("**** Message DEBUGGIN ******")
 
+      logger.debug("pname = "+msgDef.PhysicalName)
+      logger.debug("fullName = "+msgDef.FullName)
+      logger.debug("fullNameVersion = "+msgDef.FullNameWithVer)
+      logger.debug("NameSpace = "+msgDef.NameSpace)
+      logger.debug("Name = "+msgDef.Name)
+      
+      logger.debug("**** Message DEBUGGIN ******")
+      
       val nameArray = msgDef.PhysicalName.split('.')
       var realClassName: String = ""
       if (nameArray.length > 0) {
@@ -512,7 +522,9 @@ class CompilerProxy{
   private def generateModelDef (repackagedCode: String, sourceLang: String , pname: String, classPath: String, modelNamespace: String, modelName: String, 
                                 modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
                                 deps: List[String], typeDeps: List[String]): ModelDef = {
-      try {                             
+      try {    
+        
+        println(pname+"-"+modelNamespace+"-"+modelName+"-"+modelVersion)
         // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
         val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
         var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
@@ -544,7 +556,7 @@ class CompilerProxy{
         // Create the ModelDef object
         // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
         var modelNamespaceTemp = "System"
-        val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
+        val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespace, modelName,"","RuleSet",
                                                            getInputVarsFromElements(elements),
                                                            List[(String, String, String)]() ,
                                                            MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
@@ -617,18 +629,22 @@ class CompilerProxy{
     var packageName: String = ""
     var codeBeginIndx = sourceCode.indexOf("import")
     var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (sMatchResult != null) indx1 = sMatchResult.end
+    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("NOTHING HERE 1... "+ sourceCode.subSequence(0, 100))
     var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
-    if (eMatchResult != null) indx2 = eMatchResult.end
+    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("NOTHING HERE 2... "+ sourceCode.subSequence(0, 100))
 
+    logger.error("Package string is "+sourceCode.subSequence(0, indx1))
+    logger.error("Package value string is "+sourceCode.subSequence(indx2, indx1+indx2))
+    
     // If there are no package present, we will not compile this.
-    if (indx1 != -1 && indx2 > indx1)
-      packageName = sourceCode.substring(indx1,indx2).trim 
+    if (indx1 != -1 && (indx2 + indx1) > indx1)
+      packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim 
     else {
-      logger.error("COMPILER_PROXY: Missing package statement")
+      logger.error("COMPILER_PROXY: Missing package statement "+ indx1 + " "+indx2)
       return  (("","","",""),"")
     }
  
+    logger.error(packageName)
     // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
     // class.
     var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
@@ -957,7 +973,7 @@ class CompilerProxy{
                 (ModelCompilationConstants.TYPES_DEPENDENCIES -> typeDeps) ~
                 (ModelCompilationConstants.PHYSICALNAME -> pName))
     
-    return compact(render(json))
+    compact(render(json))
   }
   
 
