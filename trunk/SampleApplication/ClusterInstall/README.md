@@ -1,10 +1,12 @@
 *******************************************
-Install the FataFatClusterInstall installer 
+Fatafat Install and Administration Scripts 
 *******************************************
 
 The current trunk/SampleApplication/ClusterInstall scripts should be copied to a directory on your PATH.  Verify they are executable and if not perform the appropriate 'chmod' command on them.  
 
-The NodeInfoExtract-1.0 application, used by the FataFatClusterInstall.sh script, also mus be on your PATH.  It can be found in the trunk/Utils/NodeInfoExtract/target/scala-2.10 directory.
+The NodeInfoExtract-1.0 application, used by the FataFatClusterInstall.sh script, also must be on your PATH.  It can be found in the trunk/Utils/NodeInfoExtract/target/scala-2.10 directory.
+
+In addition if you plan to use the RecentLogErrorsFromFataFatCluster.sh script, the DateCalc-1.0 application should also be on your path.  It is used to calculate a timestamp some seconds or minutes or hours ago that will be used determine the first record and those more recent to examine for ERRORs.  Its project is in trunk/Utils/DateCalc.
 
 *******************************************
 Pre-requisites before using the installer 
@@ -26,18 +28,19 @@ Install a New Cluster (from source)
 	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --KafkaInstallPath <kafka location>
-	                               [ --NodeConfigPath <engine config path> ]
+	                               --NodeConfigPath <engine config path> 
 	                               [ --WorkingDir <alt working dir>  ]
 	Usage if deploying tarball:
 	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --TarballPath <tarball path>
-	                               [ --NodeConfigPath <engine config path> ]
+	                               --NodeConfigPath <engine config path>
 	                               [ --WorkingDir <alt working dir>  ]
 
 	  NOTES: Only tar'd gzip files are supported for the tarballs at the moment.
-	         If the NodeConfigPath is not supplied, the MetadataAPIConfig will be assumed to already have the cluster information
-	         in it.  The working directory, by default, is /tmp.  If such a public location is abhorrent, chose a private one.  It
+	         The NodeConfigPath must be supplied always.  
+	         The working directory, by default, is /tmp.  
+	         If such a public location is abhorrent, chose a private one.  It
 	         must be an existing directory and readable by this script, however
 	         If both the KafkaInstallPath and the TarballPath are specified, the script fails.
 	         If neither the KafkaInstallPath or TarballPath  is supplied, the script will fail. 
@@ -46,7 +49,7 @@ Install a New Cluster (from source)
 	         In addition, the NodeInfoExtract application that is used by this installer to fetch cluster node configuration  
 	         information must be on the PATH.  It is found in the trunk/Utils/NodeInfoExtract/target/scala-2.10/ 
 
-That is the message you will get.  As you can see, there were insufficient arguments submitted.  What will be required for building the cluster from source will be a ClusterId of one of the cluster's defined in the metadata cache OR if that has not yet been accomplished, one can specifty the cluster configuration json file to use that describes the cluster.  In the latter case (when cluster metadata not present), the NodeConfigPath file's cluster identifier MUST be the same as the one you mention on the command line via the ClusterId parameter value.
+That is the message you will get.  As you can see, there were insufficient arguments submitted.  What will be required for building the cluster from source will be a ClusterId of one of the cluster's defined in the metadata cache OR if that has not yet been accomplished, one can specifty the cluster configuration json file to use that describes the cluster.  
 
 Since this is a source build, the kafka installation must be specified.  This is required by the easyinstaller script that is used to build a single instance of the installation on the local (build) machine.  Unless you are particularly paranoid, the WorkingDir parameter may be omitted as it defaults to /tmp, available on all linux boxes.
 
@@ -62,13 +65,17 @@ Note that when the NodeConfigPath is not specified, the installer expects to fin
 	MetadataStoreType=cassandra
 	MetadataLocation=localhost
 
-Clearly the location could be specified as something other than localhost.  You can use an ip4 address there that locates the cassandra data store.  For Cassandra installations that run on multiple clusters, just choose one of the ips for now.  We may allow multiple ip addresses for the Metadata location in the future.
+Clearly the location could be specified as something other than localhost.  You can use an ip4 address there that locates the cassandra data store.  For Cassandra installations that run on a cluster, just choose one of the ips for now.  We may allow multiple ip addresses for the Metadata location in the future. For example:
+
+	MetadataSchemaName=metadata
+	MetadataStoreType=cassandra
+	MetadataLocation=192.168.200.216
 
 The easy installer project has several sample template configuration files, including one that uses HashMap, appropriate for simple test clusters, and one that uses Cassandra where the metadata is assumed to be on the localhost.  See trunk/SampleApplication//EasyInstall/template/config "properties" files ... ClusterCfgMetadataAPIConfig_ Cassandra _ Template.properties and ClusterCfgMetadataAPIConfig_Template.properties for examples.  You could take a copy of one of these and fill it with the appropriate location information for your MetadataAPIConfig parameter.
 
 3) About the NodeConfigPath file
 
-If the MetadataAPIConfig can supply all of that information, why would we need a file that explicitly describes the node configuration (i.e., the NodeConfigPath value)?  Flexibility mostly.  It is possible to bootstrap a cluster, including the metadata cache content itself.  It is not necessary to have the cluster definition or anything else in a pre-existing metadata cache if desired.
+While there may be some installations that can predefine the cluster config in a shared Metadata cache, for this installer, the node config is supplied and expected not to be present in the Metadata cache.  
 
 There is an example in trunk/SampleApplication//EasyInstall/template/config/ClusterConfig _ Template.json.  Like the metadata configuration file, a copy of this could be made and configured for a NodeConfigPath parameter.  If this is done, the substutions done for {InstallDirectory} in particular need to match your ROOT_DIR parameter in the MetadataAPIConfig.  There are other {variables} that need to have legitimate values for the nodes participating in your installation as well, like {ScalaInstallDirectory} and {JavaInstallDirectory}.  
 
@@ -97,7 +104,7 @@ Install a New Cluster (from tarball)
 	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --TarballPath <tarball path>
-	                               [ --NodeConfigPath <engine config path> ]
+	                               --NodeConfigPath <engine config path>
 	                               [ --WorkingDir <alt working dir>  ]
 
 All of the parameter descriptions common with the "source" installation in the previous section are sufficiently explained there.  Refer to those descriptions.  The only new one is the TarballPath.  It will be considered in the next several points.
@@ -141,3 +148,146 @@ What can go wrong?
 9) This list will be augmented with additional issues as this software is experienced by others and they report them.
 
 10) The script can't find NodeInfoExtract-1.0.  What should I do?  Be sure that this application is on your PATH.  See the "Install the FataFatClusterInstall installer" section above for more details.
+
+*******************************************
+Before Starting a Newly Installed Fatafat Cluster
+*******************************************
+
+Once the installation of the cluster is accomplished, it is necessary to add all application metadata to the Metadata cache.
+The installation doesn't install any application messages, containers, types, function defs, or models as part of the installation.  That is left to do with explicit interaction with the MetadataAPI service.
+
+See <the appropriate MetadataAPI user wiki reference> for more information.
+
+*******************************************
+Start a FataFatCluster
+*******************************************
+
+To start a cluster is a bit simpler than the install script.  There are two familiar arguments.  Running the StartFataFatCluster.sh with no arguments produces this:
+
+Problem: Incorrect number of arguments
+
+	Usage:
+	      StartFataFatCluster.sh --ClusterId <cluster name identifer> 
+	                           --MetadataAPIConfig  <metadataAPICfgPath> 
+
+	  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate
+	         the appropriate metadata store.  
+
+	The ClusterId is the string identifier for the cluster.  It should refer to legitimate cluster metadata in the Metadata cache found in the MetadataAPIConfig file given.
+
+The script will read the cluster metadata, contact each of the nodes described by it, and start the Fatafat engine at that location.  A Process Identifier (PID) is recorded and written to the installation directory's run directory for each of the nodes started.  This PID file will be used by the StatusFataFatCluster.sh script to verify that a process is alive on each respective cluster node.  The StopFataFatCluster.sh script uses the PID to stop respective cluster nodes that are running.
+
+
+*******************************************
+Stop a FataFatCluster
+*******************************************
+
+The stop cluster script takes the same arguments as the start script.  Running the StopFataFatCluster.sh script without arguments produces:
+
+	Problem: Incorrect number of arguments
+
+	Usage:
+	      StopFataFatCluster.sh --ClusterId <cluster name identifer> 
+	                           --MetadataAPIConfig  <metadataAPICfgPath>  
+
+	  NOTES: Stop the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate
+	         the appropriate metadata store.  
+
+Like start, the stop script contacts each node in the cluster and stops the process with the PID value that was written by the start script.
+
+*******************************************
+Getting Status a FataFatCluster
+*******************************************
+
+To see if nodes of a cluster are alive, one can use the StatusFataFatCluster.sh.  Again, there are two familiar arguments.  Running the StatusFataFatCluster.sh with no arguments produces this:
+
+	Problem: Incorrect number of arguments
+
+
+	Usage:
+	      StatusFataFatCluster.sh --ClusterId <cluster name identifer> 
+	                           --MetadataAPIConfig  <metadataAPICfgPath>  
+
+	  NOTES: Get status on the cluster specified by the cluster identifier parameter.  Use the metadata api 
+	  		configuration to locate the appropriate metadata store.   
+
+The ClusterId is the string identifier for the cluster.  It should refer to legitimate cluster metadata in the Metadata cache found in the MetadataAPIConfig file given.
+
+The script will read the cluster metadata, contact each of the nodes described by it, retrieve the respective PIDs and issue a ps command to see the status of the Fatafat engine that is running.  The script will report the health of each node (whether it is up or down).
+
+*******************************************
+Findout What is Wrong - Using Fatafat Log tools
+*******************************************
+
+In an ideal world, there are never problems with the software running on the system.  The software to be described in this section is not for that utopian view.  It is to find out why things are going bad.  The "devil is in the details" they say, and for Fatafat, the details are found in the system logs on each node in a given cluster.
+
+You have two log scraper choices.  Both look for '- ERROR -' messages in the logs on a given cluster.  
+
+1) The first of the two is called LogErrorsFromFataFatCluster.sh.  It will search an entire log.  Running it without arguments tells what is required for arguments:
+
+	Problem: Incorrect number of arguments
+
+	Answer any errors from the Fatafat cluster log
+
+	Usage:
+	      LogErrorsFromFataFatCluster.sh --ClusterId <cluster name identifer> 
+	                                     --MetadataAPIConfig  <metadataAPICfgPath>  
+	                                     --FatafatLogPath <fatafat system log path>
+	                                     [--ErrLogPath <where errors are collected> ] 
+
+	  NOTES: Logs for the cluster specified by the cluster identifier parameter found in the metadata api 
+	         configuration.  
+	         Default error log path is "/tmp/errorLog.log" .. errors collected in this file 
+
+
+If your practice is to roll logs every hour, this is probably the script for you.  The error log path will receive just the error lines found in the log.  Because the system log can be moved about with log4j configuration options, the script insists that you give the location of the Fatafat logs.  As written, only the current log will be searched.  If one were to schedule a job that runs every five minutes, the script will nominally run 12 times before log roll over.  The errors of course would repeatedly be emitted for each of the runs during the hour, however, this is satisfactory behvavior for simple console dash board applications.
+
+Note that all nodes errors are logged to the error log on the administation machine that has issued the script.  Output currently looks like this:
+
+	Node 1 (Errors detected at 2015-04-17 21:16:47)  :
+	file /tmp/drdigital/logs/testlog.log not found
+	No ERRORs found for this period
+	Node 2 (Errors detected at 2015-04-17 21:16:47) :
+	2015-04-17 21:12:44,467 - com.ligadata.MetadataAPI.MetadataAPIImpl$ - ERROR - Closing datastore failed
+	2015-04-17 23:22:41,484 - com.ligadata.MetadataAPI.MetadataAPIImpl$ - ERROR - metdatastore is corrupt
+	2015-04-17 24:02:14,493 - com.ligadata.MetadataAPI.MetadataAPIImpl$ - ERROR - transStore died
+	2015-04-17 24:12:34,500 - com.ligadata.MetadataAPI.MetadataAPIImpl$ - ERROR - jarStore has no beans
+	2015-04-17 24:22:54,508 - com.ligadata.MetadataAPI.MetadataAPIImpl$ - ERROR - configStore hammered
+
+
+In this example, there is no log found for Node 1.  Node 2 has had a very bad 4 minutes.
+
+2) The second option is the script, RecentLogErrorsFromFataFatCluster.sh.  This script produces the same sort of output at the other.  It, however, is designed not to read the entire log.  Instead the script invocation can be configured to only examine log records written to the log in the last "InLast" units, where the unit can be minute, second, hour, or day.
+
+Running without arguments shows the semantics:
+
+	Problem: Incorrect number of arguments
+
+	Answer any errors from the Fatafat cluster in the past N time units
+
+	Usage:
+	      RecentLogErrorsFromFataFatCluster.sh --ClusterId <cluster name identifer> 
+	                                           --MetadataAPIConfig  <metadataAPICfgPath>  
+	                                           --InLast <unit count>
+	                                           --FatafatLogPath <fatafat system log path>
+	                                          [--ErrLogPath <where errors are collected> ] 
+	                                          [--Unit <time unit ... any of {minute, second, hour, day}> ] 
+
+	  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api 
+	         configuration to locate the appropriate metadata store.  
+	         Default time unit is "minute". 
+	         Default error log path is "/tmp/errorLog.log" .. errors collected in this file 
+
+One might choose this script over the other for any of the following reasons:
+
+1) the Fatafat clusters is heavily used with lots of transactions both in terms of metadata and model processing traffic
+2) the high volume dictates more frequent log queries for the admin screen updates.
+3) the log rolling is dictated by logs reaching a substantial size before rolling; this would either make log scanning prohibitively expensive or cause too much output to be provided to the admin screen to be manageable to monitor (if not both).
+
+*************************
+Configuration Issues
+
+If possible, use the simple full log scanner.  If your organization policy and/or Fatafat use is substantial and you think you need the second log scanner, it is recommended that the LOG_TICK=1 be set in your engine startup configuration template.  This will guarantee that each log in the cluster will get a "tick" record each second such that there is no activity on that cluster node.  This guarantees that the simple csplit log '/beginning time/' regular expression will find a record to split upon.
+
+A better scanner that is more sophisticated than csplit is planned.
+

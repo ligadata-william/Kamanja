@@ -55,9 +55,7 @@ import util.control.Breaks._
 
 import java.util.Date
 
-case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
-
-case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
+case class ParameterMap(RootDir: String, GitRootDir: String, MetadataStoreType: String, MetadataSchemaName: Option[String], /* MetadataAdapterSpecificConfig: Option[String], */ MetadataLocation: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZnodePath: String, ZooKeeperConnectString: String, MODEL_FILES_DIR: Option[String], TYPE_FILES_DIR: Option[String], FUNCTION_FILES_DIR: Option[String], CONCEPT_FILES_DIR: Option[String], MESSAGE_FILES_DIR: Option[String], CONTAINER_FILES_DIR: Option[String], COMPILER_WORK_DIR: Option[String], MODEL_EXEC_FLAG: Option[String], OUTPUTMESSAGE_FILES_DIR: Option[String])
 
 case class MetadataAPIConfig(APIConfigParameters: ParameterMap)
 
@@ -137,7 +135,7 @@ object MetadataAPIImpl extends MetadataAPI {
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
                                "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","SSL_PASSWD", "DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "DATABASE_PRINCIPAL", "DATABASE_KEYTAB")
+                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -624,7 +622,8 @@ object MetadataAPIImpl extends MetadataAPI {
       store.commitTx(t)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to insert/update object for : " + key)
+        logger.error("Failed to insert/update object for : " + key + ", Reason:" + e.getCause + ", Message:" + e.getMessage)
+        e.printStackTrace
         store.endTx(t)
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + key)
       }
@@ -1731,21 +1730,19 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   @throws(classOf[CreateStoreFailedException])
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String): DataStore = {
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, adapterSpecificConfig: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
+      if (adapterSpecificConfig != null)
+        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
       storeType match {
         case "hbase" => {
           val databaseHost = GetMetadataAPIConfig.getProperty("DATABASE_HOST")
           val databaseSchema = GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-          val principal = GetMetadataAPIConfig.getProperty("DATABASE_PRINCIPAL")
-          val keytab = GetMetadataAPIConfig.getProperty("DATABASE_KEYTAB")
           connectinfo += ("hostlist" -> databaseHost)
           connectinfo += ("schema" -> databaseSchema)
-          connectinfo += ("principal" -> principal)
-          connectinfo += ("keytab" -> keytab)
         }
         case "hashmap" => {
           var databaseLocation = GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
@@ -1782,13 +1779,13 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   @throws(classOf[CreateStoreFailedException])
-  def OpenDbStore(storeType: String) {
+  def OpenDbStore(storeType: String, adapterSpecificConfig: String) {
     try {
       logger.debug("Opening datastore")
-      metadataStore = GetDataStoreHandle(storeType, "metadata_store", "metadata_objects")
-      configStore = GetDataStoreHandle(storeType, "config_store", "config_objects")
-      jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store")
-      transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id")
+      metadataStore = GetDataStoreHandle(storeType, "metadata_store", "metadata_objects", adapterSpecificConfig)
+      configStore = GetDataStoreHandle(storeType, "config_store", "config_objects", adapterSpecificConfig)
+      jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store", adapterSpecificConfig)
+      transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id", adapterSpecificConfig)
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -5742,12 +5739,8 @@ object MetadataAPIImpl extends MetadataAPI {
       finalKey = "DATABASE_SCHEMA"
     }
 
-    if (key.equalsIgnoreCase("MetadataPrincipal")) {
-      finalKey = "DATABASE_PRINCIPAL"
-    }
-
-    if (key.equalsIgnoreCase("MetadataKeytab")) {
-      finalKey = "DATABASE_KEYTAB"
+    if (key.equalsIgnoreCase("MetadataAdapterSpecificConfig")) {
+      finalKey = "ADAPTER_SPECIFIC_CONFIG"
     }
 
     // Special case 4: DATABASE can come under DATABASE or MetaDataStoreType
@@ -5801,7 +5794,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
-    val zKInfo = parse(zooKeeperInfo).extract[ZooKeeperInfo]
+    val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
     val zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
     metadataAPIConfig.setProperty("ZOOKEEPER_CONNECT_STRING", zkConnectString)
@@ -5914,20 +5907,14 @@ object MetadataAPIImpl extends MetadataAPI {
       }
       logger.debug("DatabaseHost => " + databaseHost + ", DatabaseLocation(applicable to treemap or hashmap databases only) => " + databaseLocation)
 
-      var databasePrincipal = ""
-      var databaseKeytab = ""
-      /*
-      var tmpMdPrincipal = configMap.APIConfigParameters.MetadataPrincipal
-      if (tmpMdPrincipal != null) {
-        databasePrincipal = tmpMdPrincipal
-      }
-
-      var tmpMdKeytab = configMap.APIConfigParameters.MetadataKeytab
-      if (tmpMdKeytab != null) {
-        databaseKeytab = tmpMdKeytab
+      var databaseAdapterSpecificConfig = ""
+/*
+      var tmpMdAdapSpecCfg = configMap.APIConfigParameters.MetadataAdapterSpecificConfig
+      if (tmpMdAdapSpecCfg != null && tmpMdAdapSpecCfg != None) {
+        databaseAdapterSpecificConfig = tmpMdAdapSpecCfg
       }
 */
-      logger.debug("DatabasePrincipal => " + databasePrincipal + ", DatabaseKeytab => " + databaseKeytab)
+      logger.debug("DatabaseAdapterSpecificConfig => " + databaseAdapterSpecificConfig)
 
       var databaseSchema = "metadata"
       val databaseSchemaOpt = configMap.APIConfigParameters.MetadataSchemaName
@@ -6075,8 +6062,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("DATABASE_HOST", databaseHost)
       metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
       metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
-      metadataAPIConfig.setProperty("DATABASE_PRINCIPAL", databasePrincipal)
-      metadataAPIConfig.setProperty("DATABASE_KEYTAB", databaseKeytab)
+      metadataAPIConfig.setProperty("ADAPTER_SPECIFIC_CONFIG", databaseAdapterSpecificConfig)
       metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarTargetDir)
       val jp = if (jarPaths != null) jarPaths else jarTargetDir
       val j_paths = jp.split(",").map(s => s.trim).filter(s => s.size > 0)
@@ -6120,7 +6106,7 @@ object MetadataAPIImpl extends MetadataAPI {
     } else {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
@@ -6138,7 +6124,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
 
     initZkListener
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
     isInitilized = true
@@ -6217,7 +6203,7 @@ object MetadataAPIImpl extends MetadataAPI {
   /**
    *  InitMdMgr - 
    */
-  def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String, databasePrincipal: String, databaseKeytab: String) {
+  def InitMdMgr(mgr: MdMgr, database: String, databaseHost: String, databaseSchema: String, databaseLocation: String, databaseAdapterSpecificConfig: String) {
 
     SetLoggerLevel(Level.TRACE)
     val mdLoader = new MetadataLoad(mgr, "", "", "", "")
@@ -6227,10 +6213,9 @@ object MetadataAPIImpl extends MetadataAPI {
     metadataAPIConfig.setProperty("DATABASE_HOST", databaseHost)
     metadataAPIConfig.setProperty("DATABASE_SCHEMA", databaseSchema)
     metadataAPIConfig.setProperty("DATABASE_LOCATION", databaseLocation)
-    metadataAPIConfig.setProperty("DATABASE_PRINCIPAL", databasePrincipal)
-    metadataAPIConfig.setProperty("DATABASE_KEYTAB", databaseKeytab)
+    metadataAPIConfig.setProperty("ADAPTER_SPECIFIC_CONFIG", databaseAdapterSpecificConfig)
 
-    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"))
+    MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
   }
 }

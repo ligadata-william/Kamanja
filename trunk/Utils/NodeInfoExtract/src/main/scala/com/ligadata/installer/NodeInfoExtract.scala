@@ -15,16 +15,14 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 	val metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
 	val metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
 	val metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-	val metadataPrincipal : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_PRINCIPAL")
-	val metadataKeytab : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_KEYTAB")
+	val mdAdapterSpecificConfig : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG")
 	
 	//println(result)
 	
 	def MetadataStoreType : String = metadataStoreType
 	def MetadataSchemaName : String = metadataSchemaName
 	def MetadataLocation : String = metadataLocation
-	def MetadataPrincipal : String = metadataPrincipal
-	def MetadataKeytab : String = metadataKeytab
+	def MetadataAdapterSpecificConfig : String = mdAdapterSpecificConfig
 	
 	/** 
 	 *  Optionally called when an EngineConfig file with cluster decl in it is supplied as an argument, this
@@ -190,8 +188,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
 	    val storeType : String = extractor.MetadataStoreType
 		val schemaName : String = extractor.MetadataSchemaName
 		val mdLoc : String = extractor.MetadataLocation
-		val mdPrincipal : String = extractor.MetadataPrincipal
-		val mdKeytab : String = extractor.MetadataKeytab
+		val metadataAdapterSpecificConfig : String = extractor.MetadataAdapterSpecificConfig
 		
 	    ipIdTargs.foreach(ipIdTargQuad => {
 			val (_,id,_,_) : (String,String,String,String) = ipIdTargQuad
@@ -207,8 +204,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
 			bufferedWriter.write(s"MetadataStoreType=$storeType\n")
 			bufferedWriter.write(s"MetadataSchemaName=$schemaName\n")
 			bufferedWriter.write(s"MetadataLocation=$mdLoc\n")
-			bufferedWriter.write(s"MetadataPrincipal=$mdPrincipal\n")
-			bufferedWriter.write(s"MetadataKeytab=$mdKeytab\n")
+			bufferedWriter.write(s"MetadataAdapterSpecificConfig=$metadataAdapterSpecificConfig\n")
 			
 			bufferedWriter.close
 	    })

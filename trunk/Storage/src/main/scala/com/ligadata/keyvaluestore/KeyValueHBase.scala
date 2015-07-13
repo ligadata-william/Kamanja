@@ -20,6 +20,9 @@ import org.apache.log4j._
 import java.nio.ByteBuffer
 import java.io.IOException
 import org.apache.hadoop.security.UserGroupInformation;
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -32,68 +35,97 @@ import org.apache.hadoop.security.UserGroupInformation;
  */
 
 class KeyValueHBaseTx(owner: DataStore) extends Transaction {
-	var parent :DataStore = owner
+  var parent: DataStore = owner
 
-	def add(source: IStorage) = { owner.add(source) }
-	def put(source: IStorage) = { owner.put(source) }
-	def get(key: Key, target: IStorage) = { owner.get(key, target) }
-	def get( key: Key, handler : (Value) => Unit) = { owner.get(key, handler) }
-	def del(key: Key) = { owner.del(key) }
-	def del(source: IStorage) = { owner.del(source) }
-	def getAllKeys( handler : (Key) => Unit) = { owner.getAllKeys(handler) }
-	def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
-	def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
+  def add(source: IStorage) = { owner.add(source) }
+  def put(source: IStorage) = { owner.put(source) }
+  def get(key: Key, target: IStorage) = { owner.get(key, target) }
+  def get(key: Key, handler: (Value) => Unit) = { owner.get(key, handler) }
+  def del(key: Key) = { owner.del(key) }
+  def del(source: IStorage) = { owner.del(source) }
+  def getAllKeys(handler: (Key) => Unit) = { owner.getAllKeys(handler) }
+  def putBatch(sourceArray: Array[IStorage]) = { owner.putBatch(sourceArray) }
+  def delBatch(keyArray: Array[Key]) = { owner.delBatch(keyArray) }
 }
 
 class KeyValueHBase(parameter: PropertyMap) extends DataStore {
-	val loggerName = this.getClass.getName
-	val logger = Logger.getLogger(loggerName)
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 
-	var keyspace = parameter.getOrElse("schema", "default") ;
-	var hostnames = parameter.getOrElse("hostlist", "localhost") ;
+  var keyspace = parameter.getOrElse("schema", "default");
+  var hostnames = parameter.getOrElse("hostlist", "localhost");
 
-	var table = keyspace + ":" + parameter.getOrElse("table", "default")
+  var table = keyspace + ":" + parameter.getOrElse("table", "default")
+  val config = HBaseConfiguration.create();
 
-	var config = new org.apache.hadoop.conf.Configuration
-	// val config = HBaseConfiguration.create();
+  config.setInt("zookeeper.session.timeout", 5000);
+  config.setInt("zookeeper.recovery.retry", 1);
+  config.setInt("hbase.client.retries.number", 3);
+  config.setInt("hbase.client.pause", 5000);
+  config.set("hbase.zookeeper.quorum", hostnames);
+  config.setInt("hbase.client.keyvalue.maxsize", 104857600);
 
-	config.setInt("zookeeper.session.timeout", 5000);
-	config.setInt("zookeeper.recovery.retry", 1);
-	config.setInt("hbase.client.retries.number", 3);
-	config.setInt("hbase.client.pause", 5000);
-	
-	config.set("hbase.zookeeper.quorum", hostnames);
-/*
-  config.set("hadoop.proxyuser.hdfs.groups", "*")
-  config.set("hadoop.security.authorization", "true")
-  config.set("hbase.security.authentication", "kerberos")
-  config.set("hadoop.security.authentication", "kerberos")
-  config.set("hbase.regionserver.kerberos.principal", "hbase/_HOST@INTRANET.LIGADATA.COM")
-  config.set("hbase.master.kerberos.principal", "hbase/_HOST@INTRANET.LIGADATA.COM")
+  val adapterspecificconfig = parameter.getOrElse("adapterspecificconfig", "").trim
+  var isKerberos: Boolean = false
+  var ugi: UserGroupInformation = null
 
-  org.apache.hadoop.security.UserGroupInformation.setConfiguration(config);
+  if (adapterspecificconfig.size > 0) {
+    try {
+      logger.debug("HBase adapterspecificconfig:" + adapterspecificconfig)
+      val json = parse(adapterspecificconfig)
+      if (json == null || json.values == null) {
+        logger.error("Failed to parse JSON string AdapterSpecificConfig:" + adapterspecificconfig)
+        throw new Exception("Failed to parse JSON string AdapterSpecificConfig:" + adapterspecificconfig)
+      }
+      val parsed_json = json.values.asInstanceOf[Map[String, Any]]
+      val auth = parsed_json.getOrElse("authentication", "").toString.trim
+      isKerberos = auth.compareToIgnoreCase("kerberos") == 0
+      if (isKerberos) {
+        val regionserver_principal = parsed_json.getOrElse("regionserver_principal", "").toString.trim
+        val master_principal = parsed_json.getOrElse("master_principal", "").toString.trim
+        val principal = parsed_json.getOrElse("principal", "").toString.trim
+        val keytab = parsed_json.getOrElse("keytab", "").toString.trim
 
-  val principal = parameter.getOrElse("principal", "").trim
-  val keytab = parameter.getOrElse("keytab", "").trim
+        logger.debug("HBase info => Hosts:" + hostnames + ", Keyspace:" + keyspace + ", Principal:" + principal + ", Keytab:" + keytab + ", hbase.regionserver.kerberos.principal:" + regionserver_principal + ", hbase.master.kerberos.principal:" + master_principal)
 
-  UserGroupInformation.loginUserFromKeytab(principal, keytab);
+        config.set("hadoop.proxyuser.hdfs.groups", "*")
+        config.set("hadoop.security.authorization", "true")
+        config.set("hbase.security.authentication", "kerberos")
+        config.set("hadoop.security.authentication", "kerberos")
+        config.set("hbase.regionserver.kerberos.principal", regionserver_principal)
+        config.set("hbase.master.kerberos.principal", master_principal)
 
-  val ugi = UserGroupInformation.getLoginUser
-*/
-	var connection:HConnection = _
-	try{
-	  connection = HConnectionManager.createConnection(config);
+        org.apache.hadoop.security.UserGroupInformation.setConfiguration(config);
+
+        UserGroupInformation.loginUserFromKeytab(principal, keytab);
+
+        ugi = UserGroupInformation.getLoginUser
+      } else {
+        logger.error("Not handling any authentication other than KERBEROS. AdapterSpecificConfig:" + adapterspecificconfig)
+        throw new Exception("Not handling any authentication other than KERBEROS. AdapterSpecificConfig:" + adapterspecificconfig)
+      }
+    } catch {
+      case e: Exception => {
+        throw e
+      }
+    }
+  } else {
+    logger.debug("HBase info => Hosts:" + hostnames + ", Keyspace:" + keyspace)
+  }
+
+  var connection: HConnection = _
+  try {
+    connection = HConnectionManager.createConnection(config);
   } catch {
-	  case e:Exception => {
-	     throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
-	  }
-	}
-	
-	createTable(table)
-	var tableHBase = connection.getTable(table);
+    case e: Exception => {
+      throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+    }
+  }
+
+  createTable(table)
+  var tableHBase = connection.getTable(table);
 
   private def relogin: Unit = {
-/*
     try {
       if (ugi != null)
         ugi.checkTGTAndReloginFromKeytab
@@ -103,29 +135,28 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
         // Not throwing exception from here
       }
     }
-*/
   }
 
-        def createTable(tableName:String) : Unit = {
+  def createTable(tableName: String): Unit = {
     relogin
-	  val  admin = new HBaseAdmin(config);
-	  if (! admin.tableExists(tableName)) {
-	    val  tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
-	    val  colDesc1 =  new HColumnDescriptor("key".getBytes())
-	    val  colDesc2 =  new HColumnDescriptor("value".getBytes())
-	    tableDesc.addFamily(colDesc1)
-	    tableDesc.addFamily(colDesc2)
-	    admin.createTable(tableDesc);
-	  }
-	}
+    val admin = new HBaseAdmin(config);
+    if (!admin.tableExists(tableName)) {
+      val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
+      val colDesc1 = new HColumnDescriptor("key".getBytes())
+      val colDesc2 = new HColumnDescriptor("value".getBytes())
+      tableDesc.addFamily(colDesc1)
+      tableDesc.addFamily(colDesc2)
+      admin.createTable(tableDesc);
+    }
+  }
 
   def add(source: IStorage) = {
     relogin
-		var p = new Put(source.Key.toArray[Byte])
+    var p = new Put(source.Key.toArray[Byte])
 
-		p.add(Bytes.toBytes("value"), Bytes.toBytes("base"),source.Value.toArray[Byte] )
+    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
 
-		val succeeded = tableHBase.checkAndPut(p.getRow(), Bytes.toBytes("value"), Bytes.toBytes("base"), null, p)
+    val succeeded = tableHBase.checkAndPut(p.getRow(), Bytes.toBytes("value"), Bytes.toBytes("base"), null, p)
     if (!succeeded) {
       throw new Exception("not applied")
     }
@@ -144,11 +175,11 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
   def putBatch(sourceArray: Array[IStorage]) = {
     relogin
     sourceArray.foreach(source => {
-	    var p = new Put(source.Key.toArray[Byte])
-	    p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte] )
-	    tableHBase.put(p)
-	  })
-	}
+      var p = new Put(source.Key.toArray[Byte])
+      p.add(Bytes.toBytes("value"), Bytes.toBytes("base"), source.Value.toArray[Byte])
+      tableHBase.put(p)
+    })
+  }
 
   def delBatch(keyArray: Array[Key]) = {
     relogin
@@ -161,61 +192,61 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
   def get(key: Key, handler: (Value) => Unit) = {
     relogin
     try {
-		var p = new Get(key.toArray[Byte])
+      var p = new Get(key.toArray[Byte])
 
-		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
+      p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
-		val result = tableHBase.get(p)
+      val result = tableHBase.get(p)
 
-		val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base") )
+      val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
-		val value = new Value
-		for(b <- v)
-			value+=b
+      val value = new Value
+      for (b <- v)
+        value += b
 
-		handler(value)
-	  } catch {
-	    case e:Exception => {
-	      throw new KeyNotFoundException(e.getMessage())
-	    }
-	  }
-	}
-	
+      handler(value)
+    } catch {
+      case e: Exception => {
+        throw new KeyNotFoundException(e.getMessage())
+      }
+    }
+  }
+
   def get(key: Key, target: IStorage) = {
     relogin
     try {
-		var p = new Get(key.toArray[Byte])
+      var p = new Get(key.toArray[Byte])
 
-		p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base") )
+      p.addColumn(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
-		val result = tableHBase.get(p)
+      val result = tableHBase.get(p)
 
-		val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base") )
+      val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
-		val value = new Value
-		for(b <- v)
-			value+=b
+      val value = new Value
+      for (b <- v)
+        value += b
 
-		target.Construct(key, value)
-	  } catch {
-	    case e:Exception => {
-	      throw new KeyNotFoundException(e.getMessage())
-	    }
-	  }
-	}
+      target.Construct(key, value)
+    } catch {
+      case e: Exception => {
+        throw new KeyNotFoundException(e.getMessage())
+      }
+    }
+  }
 
   def del(key: Key) = {
     relogin
     val p = new Delete(key.toArray[Byte])
 
-		val result = tableHBase.delete(p)
-	}
+    val result = tableHBase.delete(p)
+  }
 
-	def del(source: IStorage) = { del(source.Key) }
+  def del(source: IStorage) = { del(source.Key) }
 
-	def beginTx() : Transaction = { new KeyValueHBaseTx(this) }
+  def beginTx(): Transaction = { new KeyValueHBaseTx(this) }
 
-	def endTx(tx : Transaction) = {}
+  def endTx(tx: Transaction) = {}
 
   def commitTx(tx: Transaction) = {
     relogin
@@ -223,19 +254,19 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
   }
 
   override def Shutdown() = {
-	  if(tableHBase != null ){
-	    tableHBase.close()
-	    tableHBase = null
-	  }
-	  if( connection != null ){
-	    connection.close()
-	    connection = null
-	  }
-	}
+    if (tableHBase != null) {
+      tableHBase.close()
+      tableHBase = null
+    }
+    if (connection != null) {
+      connection.close()
+      connection = null
+    }
+  }
 
   def TruncateStore() = {
     relogin
-/*
+    /*
 		val a = new HBaseAdmin(connection)
 
 		if (a.isTableEnabled(table))
@@ -247,15 +278,15 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
 
 		a.close()
 */
-		getAllKeys( {(key : Key) => del(key) } )
+    getAllKeys({ (key: Key) => del(key) })
 
-	}
+  }
 
   def getAllKeys(handler: (Key) => Unit) {
     relogin
-		var p = new Scan()
+    var p = new Scan()
 
-		val iter = tableHBase.getScanner(p)
+    val iter = tableHBase.getScanner(p)
 
     try {
       var fContinue = true
@@ -276,8 +307,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
 
     } finally {
       iter.close()
-		}
+    }
 
-	}
+  }
 }
 

@@ -39,9 +39,7 @@ import java.io.InputStreamReader
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
-
-case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String, Principal: Option[String], Keytab: Option[String])
-case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
+import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -146,7 +144,7 @@ Sample uses:
       val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldnames, delimiterString, keyseparator, ignoreerrors)
       if (kvmaker.isOk) {
         if (dump != null && dump.toLowerCase().startsWith("y")) {
-          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation, kvmaker.dataPrincipal, kvmaker.dataKeytab)
+          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation, kvmaker.adapterSpecificConfig)
           kvmaker.dump(dstore)
           dstore.Shutdown()
         } else {
@@ -290,8 +288,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   var dataStoreType: String = null
   var dataSchemaName: String = null
   var dataLocation: String = null
-  var dataPrincipal: String = null
-  var dataKeytab: String = null
+  var adapterSpecificConfig: String = null
   var zkConnectString: String = null
   var zkNodeBasePath: String = null
   var zkSessionTimeoutMs: Int = 0
@@ -299,8 +296,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
   if (isOk) {
     implicit val jsonFormats: Formats = DefaultFormats
-    val dataStoreInfo = parse(dataStore).extract[DataStoreInfo]
-    val zKInfo = parse(zooKeeperInfo).extract[ZooKeeperInfo]
+    val dataStoreInfo = parse(dataStore).extract[JDataStore]
+    val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
     if (isOk) {
       dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
@@ -325,9 +322,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         isOk = false
       }
     }
-
-    dataPrincipal = if (dataStoreInfo.Principal == None || dataStoreInfo.Principal == null) "" else dataStoreInfo.Principal.get.replace("\"", "").trim
-    dataKeytab = if (dataStoreInfo.Keytab == None || dataStoreInfo.Keytab == null) "" else dataStoreInfo.Keytab.get.replace("\"", "").trim
+    
+    adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
 
     if (isOk) {
       zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
@@ -503,11 +499,13 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     true
   }
 
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, databasePrincipal: String, databaseKeytab: String): DataStore = {
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
+      if (adapterSpecificConfig != null)
+        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
@@ -529,8 +527,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         case "hbase" => {
           connectinfo += ("hostlist" -> dataLocation)
           connectinfo += ("schema" -> storeName)
-          connectinfo += ("principal" -> databasePrincipal)
-          connectinfo += ("keytab" -> databaseKeytab)
         }
         case _ => {
           throw new Exception("The database type " + storeType + " is not supported yet ")
@@ -589,7 +585,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   def buildContainerOrMessage: DataStore = {
     if (!isOk) return null
 
-    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, dataPrincipal, dataKeytab)
+    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, adapterSpecificConfig)
     // kvstore.TruncateStore
 
     locateKeyPos
