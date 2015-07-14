@@ -235,7 +235,6 @@ cp $ivyPath/cache/voldemort/voldemort/jars/voldemort-0.96.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-http/bundles/spray-http-1.3.1.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26-sources.jar $systemlib
 cp $ivyPath/cache/uk.co.bigbeeconsultants/bee-client_2.10/jars/bee-client_2.10-0.28.0.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.7.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26.jar $systemlib
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2.3.1.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpclient/jars/httpclient-4.2.5.jar $systemlib
@@ -297,7 +296,6 @@ cp $ivyPath/cache/commons-beanutils/commons-beanutils/jars/commons-beanutils-1.7
 cp $ivyPath/cache/org.apache.avro/avro/jars/avro-1.7.4.jar $systemlib
 cp $srcPath/Pmml/PmmlCompiler/target/scala-2.10/pmmlcompiler_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-core/jars/logback-core-1.0.13.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.7-javadoc.jar $systemlib
 cp $srcPath/EnvContexts/SimpleEnvContextImpl/target/scala-2.10/simpleenvcontextimpl_2.10-1.0.jar $systemlib
 cp $srcPath/Utils/ZooKeeper/CuratorListener/target/scala-2.10/zookeeperlistener_2.10-1.0.jar $systemlib
 cp $srcPath/Utils/Audit/target/scala-2.10/auditadapters_2.10-1.0.jar $systemlib
