@@ -90,13 +90,15 @@ class CompilerProxy{
   def compileModelFromSource (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {  
     try {
       // Figure out the metadata information needed for 
-      val (classPath, elements) =  getClassPathFromModelConfig(modelConfigName) 
+      val additinalDeps = addDepsFromClassPath
+      val (classPath, elements, totalDeps, nonTypeDeps) =  getClassPathFromModelConfig(modelConfigName, additinalDeps)
       val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang 
-      val ((modelNamespace, modelName, modelVersion, pname),repackagedCode) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)  
-      return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
+      val ((modelNamespace, modelName, modelVersion, pname),repackagedCode,tempPackage) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)  
+      return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode,
-                              MetadataAPIImpl.getModelDependencies(modelConfigName),  
-                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName))   
+                              totalDeps,  
+                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName),
+                              nonTypeDeps)   
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
@@ -113,11 +115,11 @@ class CompilerProxy{
    */
   def recompileModelFromSource (sourceCode: String, pName: String, deps: List[String], typeDeps: List[String], sourceLang: String = "scala"): ModelDef = {   
     try {
-      val (classPath, elements) =  buildClassPath(deps, typeDeps) 
+      val (classPath, elements, totalDeps, nonTypeDeps) =  buildClassPath(deps, typeDeps) 
       val msgDefClassFilePath = compiler_work_dir + "/tempCode."+sourceLang 
-      val ((modelNamespace, modelName, modelVersion,pname),repackagedCode) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang,msgDefClassFilePath,classPath,elements)
-      return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
-                              modelVersion, msgDefClassFilePath, elements, sourceCode, deps, typeDeps)
+      val ((modelNamespace, modelName, modelVersion,pname),repackagedCode,tempPackage) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang,msgDefClassFilePath,classPath,elements)
+      return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName, 
+                              modelVersion, msgDefClassFilePath, elements, sourceCode, totalDeps, typeDeps, nonTypeDeps)
     }  catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
@@ -221,16 +223,6 @@ class CompilerProxy{
       logger.debug("Call Message Compiler ....")
       val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
-      
-      logger.debug("**** Message DEBUGGIN ******")
-
-      logger.debug("pname = "+msgDef.PhysicalName)
-      logger.debug("fullName = "+msgDef.FullName)
-      logger.debug("fullNameVersion = "+msgDef.FullNameWithVer)
-      logger.debug("NameSpace = "+msgDef.NameSpace)
-      logger.debug("Name = "+msgDef.Name)
-      
-      logger.debug("**** Message DEBUGGIN ******")
       
       val nameArray = msgDef.PhysicalName.split('.')
       var realClassName: String = ""
@@ -521,10 +513,9 @@ class CompilerProxy{
   //private def generateModelDef (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {
   private def generateModelDef (repackagedCode: String, sourceLang: String , pname: String, classPath: String, modelNamespace: String, modelName: String, 
                                 modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
-                                deps: List[String], typeDeps: List[String]): ModelDef = {
+                                deps: scala.collection.immutable.Set[String], typeDeps: List[String], notTypeDeps: scala.collection.immutable.Set[String]): ModelDef = {
       try {    
         
-        println(pname+"-"+modelNamespace+"-"+modelName+"-"+modelVersion)
         // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
         val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
         var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
@@ -556,11 +547,12 @@ class CompilerProxy{
         // Create the ModelDef object
         // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
         var modelNamespaceTemp = "System"
-        val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespace, modelName,"","RuleSet",
+        val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
                                                            getInputVarsFromElements(elements),
                                                            List[(String, String, String)]() ,
                                                            MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-                                                           deps.toArray[String] ++ elements.map(e=>{e.JarName}).toArray[String],
+                                                           //deps.toArray[String] ++ elements.map(e=>{e.JarName}).toArray[String],
+                                                           deps.toArray[String],
                                                            false
                                                   )    
                                                  
@@ -568,7 +560,7 @@ class CompilerProxy{
         modDef.jarName = jarFileName
         modDef.physicalName = pName
         if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
-        modDef.ObjectDefinition(createSavedSourceCode(originalSource, deps, typeDeps, pname))   
+        modDef.ObjectDefinition(createSavedSourceCode(originalSource, notTypeDeps, typeDeps, pname))   
         
         println("Generated "+modDef.NameSpace+"."+modDef.Name+"/"+modDef.FullNameWithVer+"   at "+modDef.PhysicalName)
         modDef
@@ -617,7 +609,7 @@ class CompilerProxy{
                                       sourceLang: String,
                                       msgDefClassFilePath: String,
                                       classPath: String,
-                                      elements: Set[BaseElemDef]): ((String, String, String, String), String) = {
+                                      elements: Set[BaseElemDef]): ((String, String, String, String), String,String) = {
     
     // We have to create a dummy jar file for this so that we can interrogate the generated Object for Modelname
     // and Model Version.  To do this, we create a dummy source with V0 in the package name.
@@ -629,22 +621,19 @@ class CompilerProxy{
     var packageName: String = ""
     var codeBeginIndx = sourceCode.indexOf("import")
     var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("NOTHING HERE 1... "+ sourceCode.subSequence(0, 100))
+    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))
     var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
-    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("NOTHING HERE 2... "+ sourceCode.subSequence(0, 100))
-
-    logger.error("Package string is "+sourceCode.subSequence(0, indx1))
-    logger.error("Package value string is "+sourceCode.subSequence(indx2, indx1+indx2))
+    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))
     
     // If there are no package present, we will not compile this.
     if (indx1 != -1 && (indx2 + indx1) > indx1)
       packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim 
     else {
       logger.error("COMPILER_PROXY: Missing package statement "+ indx1 + " "+indx2)
-      return  (("","","",""),"")
+      return  (("","","",""),"","")
     }
  
-    logger.error(packageName)
+    println("COMPILER_PROXY: packageName at the top of the source is ->"+packageName)
     // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
     // class.
     var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
@@ -710,10 +699,10 @@ class CompilerProxy{
                                        
      if (status != 0) {
        logger.error("Unable to create Jar RC = "+status)
-       return (("","","",""),"")
+       return (("","","",""),"","")
      }
  
-     ( getModelMetadataFromJar(jarFileName, elements),finalSourceCode)
+     ( getModelMetadataFromJar(jarFileName, elements),finalSourceCode, packageName)
     
   }
   
@@ -737,9 +726,7 @@ class CompilerProxy{
      
      var classNames = getClasseNamesInJar(jarName0)
      var tempCurClass: Class[_] = null    
-     println("COMPILER_PROXY: Generated a dummy jar file "+jarName0)
      classNames.foreach (clsName => {
-       println("COMPILER_PROXY: is "+clsName+" a ModelBaseObj????")
        var curClz = Class.forName(clsName, true, classLoader.loader)  
        tempCurClass = curClz
        
@@ -751,7 +738,6 @@ class CompilerProxy{
        }
        if (isModel) {     
          try {
-           println("COMPILER_PROXY: Answer is YES")
            // If we are dealing with 
            var objInst: Any = null
            try {
@@ -910,15 +896,39 @@ class CompilerProxy{
      }     
   }
   
+  private def addDepsFromClassPath(): List[String] = {
+    // Pull all the jar files in the classpath into a set...  THIS WILL CHANGE IN A FUTURE since we
+    // dont want to allow developers using the classpath to pass in dependencies.
+    var returnList: List[String] = List[String]()
+    var depArray: Array[String] = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim.split(":")
+    depArray.foreach(dep => {
+      var parsedJarpath = dep.split("/")
+      var tempSanity = parsedJarpath(parsedJarpath.length - 1).split('.')
+      if (tempSanity(tempSanity.length-1).trim.equalsIgnoreCase("jar")) 
+        returnList = returnList ::: List[String](tempSanity.mkString(".").trim)
+    })
+    returnList   
+  }
+     
+  
   /**
    *  buildClassPath 
    */
-  private def buildClassPath(inDeps: List[String], inMC: List[String] ):(String,Set[BaseElemDef]) = {
+  private def buildClassPath(inDeps: List[String], inMC: List[String], cpDeps: List[String] = null):(String,Set[BaseElemDef],scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) = {
     var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
+    var totalDeps: Set[String] = Set[String]()
+    var classPathDeps: Set[String] = Set[String]()
     // Get classpath and jarpath ready
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
      if (classPath.size == 0) classPath = "."  
      val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
+     
+     var combinedDeps: scala.collection.immutable.Set[String] = scala.collection.immutable.Set[String]()
+     var nonTypeDeps: scala.collection.immutable.Set[String] = scala.collection.immutable.Set[String]()
+     if (cpDeps != null) {
+       combinedDeps = inDeps.toSet[String] ++ cpDeps.toSet[String]
+       nonTypeDeps = inDeps.toSet[String] ++ cpDeps.toSet[String]
+     }
 
      var msgContDepSet: Set[String] = Set[String]()
      var msgJars: String = ""
@@ -935,6 +945,7 @@ class CompilerProxy{
            msgContDepSet = msgContDepSet + elem.jarName
          }            
        })
+       combinedDeps = combinedDeps ++ msgContDepSet
        msgJars = msgContDepSet.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")    
      }  
        
@@ -948,14 +959,20 @@ class CompilerProxy{
           classPath = depJars 
         }
      }
-     (classPath,depElems)    
+     println("COMPILER_PROXY: List of all the dependencies needed to compile this model")
+     println("==========================================")
+     combinedDeps.foreach (x=>println(x))
+     println("=============End Of list==================")
+     (classPath,depElems,combinedDeps,nonTypeDeps)    
   }
  
   /**
    * getClassPath - 
    * 
    */
-  private def getClassPathFromModelConfig(modelName: String): (String,Set[BaseElemDef]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), MetadataAPIImpl.getModelMessagesContainers(modelName))
+  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), 
+                                                                                                                                                                        MetadataAPIImpl.getModelMessagesContainers(modelName),
+                                                                                                                                                                        cpDeps)
 
   /**
    * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type
@@ -966,13 +983,20 @@ class CompilerProxy{
    *                           "physicalname":"physicalName"
    *                         }  
    */
-  private def createSavedSourceCode(source: String, deps: List[String], typeDeps: List[String], pName: String): String = {
+  private def createSavedSourceCode(source: String, deps: scala.collection.immutable.Set[String], typeDeps: List[String], pName: String): String = {
+    println("COMILER_PROXY: recording for future recompile of the model")
+    println("==========================================")
+    println("Dependencies:")
+    deps.foreach(x=>{println(x)})
+    println("==========================================")
+    println("Types:")
+    typeDeps.foreach(x=>{println(x)})  
+    println("==========================================")
     
     val json = ((ModelCompilationConstants.SOURCECODE -> source) ~
-                (ModelCompilationConstants.DEPENDENCIES -> deps) ~
+                (ModelCompilationConstants.DEPENDENCIES -> deps.toList) ~
                 (ModelCompilationConstants.TYPES_DEPENDENCIES -> typeDeps) ~
                 (ModelCompilationConstants.PHYSICALNAME -> pName))
-    
     compact(render(json))
   }
   
