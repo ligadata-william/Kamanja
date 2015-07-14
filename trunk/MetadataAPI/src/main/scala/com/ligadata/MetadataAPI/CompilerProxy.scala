@@ -403,7 +403,7 @@ class CompilerProxy{
     , classpath : String
     , jarTargetDir : String
     , clientName : String
-    , pmmlFilePath : String
+    , sourceFilePath : String
     , scalahome : String
     , javahome : String
     , isLocalOnly: Boolean = false
@@ -433,7 +433,7 @@ class CompilerProxy{
     }   
     
     /** create a copy of the pmml source in the work directory */
-    val cpRc = Process(s"cp $pmmlFilePath $compiler_work_dir/"+currentWorkFolder).!
+    val cpRc = Process(s"cp $sourceFilePath $compiler_work_dir/"+currentWorkFolder).!
     if (cpRc != 0) {
       logger.error(s"Unable to create a copy of the pmml source xml for inclusion in jar ... rc = $cpRc")
       return (cpRc, "")
@@ -629,11 +629,11 @@ class CompilerProxy{
     if (indx1 != -1 && (indx2 + indx1) > indx1)
       packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim 
     else {
-      logger.error("COMPILER_PROXY: Missing package statement "+ indx1 + " "+indx2)
-      return  (("","","",""),"","")
+       logger.error("COMPILER_PROXY: Error compiling model source. unable to find package")
+       throw new MsgCompilationFailedException(modelConfigName)
     }
  
-    println("COMPILER_PROXY: packageName at the top of the source is ->"+packageName)
+    logger.debug("COMPILER_PROXY: packageName at the top of the source is ->"+packageName)
     // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
     // class.
     var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
@@ -698,8 +698,8 @@ class CompilerProxy{
                                        sourceLang)    
                                        
      if (status != 0) {
-       logger.error("Unable to create Jar RC = "+status)
-       return (("","","",""),"","")
+       logger.error("COMPILER_PROXY: Error compiling model source. Unable to create Jar RC = "+status)
+       throw new MsgCompilationFailedException(modelConfigName)
      }
  
      ( getModelMetadataFromJar(jarFileName, elements),finalSourceCode, packageName)
@@ -746,14 +746,14 @@ class CompilerProxy{
              val obj = classLoader.mirror.reflectModule(module)
   
              objInst = obj.instance
-             println("COMPILER_PROXY: clsName is a Scala Class... ")
+             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
            } catch {
              case e: java.lang.NoClassDefFoundError => {
                 e.printStackTrace
                 throw e
              } 
              case e: Exception => {
-                println("COMPILER_PROXY: clsName is a Java Class... ")
+                logger.debug("COMPILER_PROXY: "+clsName+" is a Java Class... ")
                 objInst = tempCurClass.newInstance 
               }
            }
@@ -765,21 +765,20 @@ class CompilerProxy{
               var fullName = baseModelTrait.ModelName.split('.')
               return (fullName.dropRight(1).mkString("."), fullName(fullName.length-1), baseModelTrait.Version, clsName)
            }
-           else
-              logger.error("Unable to load a class Object from "+jarName0)
-           return ("","","","")
+           logger.error("COMPILER_PROXY: Unable to resolve a class Object from "+jarName0)
+           throw new MsgCompilationFailedException(clsName)
          } catch {
            case e: Exception => {
              // Trying Regular Object instantiation
+             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName)
              e.printStackTrace()
-             logger.error("Unable figure out model object name"+e.getMessage +"\n"+e.getStackTraceString)
-             return ("","","","")
+             throw new MsgCompilationFailedException(clsName)
            }
          }
        }
      }) 
-     ("","","","")    
-    
+     logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.FatafatBase.ModelBaseObj was found in the jarred source "+jarFileName)
+     throw new MsgCompilationFailedException(jarFileName) 
   }
   
   
@@ -808,7 +807,7 @@ class CompilerProxy{
     } catch {
       case e: Exception =>
         e.printStackTrace();
-        return null
+        return Array[String]()
     }
   }
    
@@ -830,7 +829,6 @@ class CompilerProxy{
         }
       }
     }
-
     isIt
   }   
  
@@ -896,6 +894,10 @@ class CompilerProxy{
      }     
   }
   
+  /**
+   * addDepsFromClassPath - this is probably a temporary metho here for now.  THIS WILL CHANGE IN A FUTURE since we
+   * dont want to allow developers using the classpath to pass in dependencies.
+   */
   private def addDepsFromClassPath(): List[String] = {
     // Pull all the jar files in the classpath into a set...  THIS WILL CHANGE IN A FUTURE since we
     // dont want to allow developers using the classpath to pass in dependencies.
