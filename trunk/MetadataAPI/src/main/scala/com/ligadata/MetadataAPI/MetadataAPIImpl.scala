@@ -1163,6 +1163,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val iFile = new File(jarName)
       if (!iFile.exists) {
+        logger.error("Jar file (" + jarName + ") is not found: ")
         throw new FileNotFoundException("Jar file (" + jarName + ") is not found: ")
       }
       val bis = new BufferedInputStream(new FileInputStream(iFile));
