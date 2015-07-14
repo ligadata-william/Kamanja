@@ -2698,7 +2698,6 @@ class XmlData(var dataInput: String) extends InputData(){ }
           nonVerJavaFactoryClassstr_1 = nonVerJavaFactoryClassstr
           containerDef = containerDefVal
         }
-
       } else throw new Exception("MsgDef Type JSON is only supported")
     } catch {
       case e: Exception => {
