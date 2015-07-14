@@ -764,9 +764,10 @@ object TestMetadataAPI {
 
       val modKey = modKeys(choice - 1)
       val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      //val modNameSpace = modKeyTokens(0)
+      val modNameSpace = modKeyTokens.dropRight(2).mkString(".")
+      val modName = modKeyTokens(modKeyTokens.length - 2)
+      val modVersion = modKeyTokens(modKeyTokens.length - 1)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)

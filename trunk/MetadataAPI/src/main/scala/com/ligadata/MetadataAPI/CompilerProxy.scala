@@ -90,9 +90,9 @@ class CompilerProxy{
   def compileModelFromSource (sourceCode: String, modelConfigName: String , sourceLang: String = "scala"): ModelDef = {  
     try {
       // Figure out the metadata information needed for 
-      val (classPath, elements, pname) =  getClassPathFromModelConfig(modelConfigName) 
+      val (classPath, elements) =  getClassPathFromModelConfig(modelConfigName) 
       val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang 
-      val (modelNamespace, modelName, modelVersion, repackagedCode) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)    
+      val ((modelNamespace, modelName, modelVersion, pname),repackagedCode) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)  
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode,
                               MetadataAPIImpl.getModelDependencies(modelConfigName),  
@@ -113,9 +113,9 @@ class CompilerProxy{
    */
   def recompileModelFromSource (sourceCode: String, pName: String, deps: List[String], typeDeps: List[String], sourceLang: String = "scala"): ModelDef = {   
     try {
-      val (classPath, elements, pname) =  buildClassPath(deps, typeDeps, pName) 
+      val (classPath, elements) =  buildClassPath(deps, typeDeps) 
       val msgDefClassFilePath = compiler_work_dir + "/tempCode."+sourceLang 
-      val (modelNamespace, modelName, modelVersion, repackagedCode) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang,msgDefClassFilePath,classPath,elements)
+      val ((modelNamespace, modelName, modelVersion,pname),repackagedCode) = parseSourceForMetadata(sourceCode, "tempCode", sourceLang,msgDefClassFilePath,classPath,elements)
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, modelNamespace, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode, deps, typeDeps)
     }  catch {
@@ -221,7 +221,17 @@ class CompilerProxy{
       logger.debug("Call Message Compiler ....")
       val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)    
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
+      
+      logger.debug("**** Message DEBUGGIN ******")
 
+      logger.debug("pname = "+msgDef.PhysicalName)
+      logger.debug("fullName = "+msgDef.FullName)
+      logger.debug("fullNameVersion = "+msgDef.FullNameWithVer)
+      logger.debug("NameSpace = "+msgDef.NameSpace)
+      logger.debug("Name = "+msgDef.Name)
+      
+      logger.debug("**** Message DEBUGGIN ******")
+      
       val nameArray = msgDef.PhysicalName.split('.')
       var realClassName: String = ""
       if (nameArray.length > 0) {
@@ -512,49 +522,56 @@ class CompilerProxy{
   private def generateModelDef (repackagedCode: String, sourceLang: String , pname: String, classPath: String, modelNamespace: String, modelName: String, 
                                 modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
                                 deps: List[String], typeDeps: List[String]): ModelDef = {
-      try {                             
-       // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
-       val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
-       var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
-       dumpStrTextToFile(packagedSource,msgDefClassFilePath)
+      try {    
+        
+        println(pname+"-"+modelNamespace+"-"+modelName+"-"+modelVersion)
+        // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
+        val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))    
+        var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
+        dumpStrTextToFile(packagedSource,msgDefClassFilePath)
 
       
-       //Classpath is set by now.
-       var (status2,jarFileName) = jarCode(modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),
-                                           modelName,
-                                           modelVersion,
-                                           packagedSource,
-                                           classPath,
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-                                           "TestClient",
-                                           msgDefClassFilePath,
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-                                           MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-                                           false,
-                                           sourceLang)
+        //Classpath is set by now.
+        var (status2,jarFileName) = jarCode(modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),
+                                            modelName,
+                                            modelVersion,
+                                            packagedSource,
+                                            classPath,
+                                            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                                            "TestClient",
+                                            msgDefClassFilePath,
+                                            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                                            MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                                            false,
+                                            sourceLang)
                     
-       /* The following check require cleanup at some point */
-       if (status2 > 1 ){
-         throw new ModelCompilationFailedException("Failed to produce the jar file")
-       }
+        /* The following check require cleanup at some point */
+        if (status2 > 1 ){
+          throw new ModelCompilationFailedException("Failed to produce the jar file")
+        }
+       
+        // figure out the Physical Model Name
+        var (dummy1,dummy2, dummy3, pName) = getModelMetadataFromJar(jarFileName,elements)
       
-      // Create the ModelDef object
-      // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
-      var modelNamespaceTemp = "System"
-      val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
-                                                          getInputVarsFromElements(elements),
-                                                          List[(String, String, String)]() ,
-                                                          MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-                                                          deps.toArray[String],
-                                                          false
-                                                 )                                           
-              
-      // Need to set some values by hand here.                                                   
-       modDef.jarName = jarFileName
-       modDef.physicalName = packageName + "." + pname
-       if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
-       modDef.ObjectDefinition(createSavedSourceCode(originalSource, deps, typeDeps, pname))                                                                                  
-       modDef
+        // Create the ModelDef object
+        // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name 
+        var modelNamespaceTemp = "System"
+        val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespace, modelName,"","RuleSet",
+                                                           getInputVarsFromElements(elements),
+                                                           List[(String, String, String)]() ,
+                                                           MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
+                                                           deps.toArray[String] ++ elements.map(e=>{e.JarName}).toArray[String],
+                                                           false
+                                                  )    
+                                                 
+        // Need to set some values by hand here.                                                   
+        modDef.jarName = jarFileName
+        modDef.physicalName = pName
+        if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
+        modDef.ObjectDefinition(createSavedSourceCode(originalSource, deps, typeDeps, pname))   
+        
+        println("Generated "+modDef.NameSpace+"."+modDef.Name+"/"+modDef.FullNameWithVer+"   at "+modDef.PhysicalName)
+        modDef
     } catch {
       case e:AlreadyExistsException =>{
         logger.error("Failed to compile the model definition " + e.toString)
@@ -600,7 +617,7 @@ class CompilerProxy{
                                       sourceLang: String,
                                       msgDefClassFilePath: String,
                                       classPath: String,
-                                      elements: Set[BaseElemDef]): (String, String, String, String) = {
+                                      elements: Set[BaseElemDef]): ((String, String, String, String), String) = {
     
     // We have to create a dummy jar file for this so that we can interrogate the generated Object for Modelname
     // and Model Version.  To do this, we create a dummy source with V0 in the package name.
@@ -612,18 +629,22 @@ class CompilerProxy{
     var packageName: String = ""
     var codeBeginIndx = sourceCode.indexOf("import")
     var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (sMatchResult != null) indx1 = sMatchResult.end
+    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("NOTHING HERE 1... "+ sourceCode.subSequence(0, 100))
     var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
-    if (eMatchResult != null) indx2 = eMatchResult.end
+    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("NOTHING HERE 2... "+ sourceCode.subSequence(0, 100))
 
+    logger.error("Package string is "+sourceCode.subSequence(0, indx1))
+    logger.error("Package value string is "+sourceCode.subSequence(indx2, indx1+indx2))
+    
     // If there are no package present, we will not compile this.
-    if (indx1 != -1 && indx2 > indx1)
-      packageName = sourceCode.substring(indx1,indx2).trim 
+    if (indx1 != -1 && (indx2 + indx1) > indx1)
+      packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim 
     else {
-      logger.error("COMPILER_PROXY: Missing package statement")
-      return  ("","","","")
+      logger.error("COMPILER_PROXY: Missing package statement "+ indx1 + " "+indx2)
+      return  (("","","",""),"")
     }
  
+    logger.error(packageName)
     // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
     // class.
     var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)   
@@ -689,10 +710,17 @@ class CompilerProxy{
                                        
      if (status != 0) {
        logger.error("Unable to create Jar RC = "+status)
-       return ("","","","")
+       return (("","","",""),"")
      }
-     
-     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
+ 
+     ( getModelMetadataFromJar(jarFileName, elements),finalSourceCode)
+    
+  }
+  
+  
+  private def getModelMetadataFromJar(jarFileName: String, elements: Set[BaseElemDef]): (String, String, String, String) = {
+    
+    // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
      val classLoader: CompilerProxyLoader = new CompilerProxyLoader      
     // val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
      var jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
@@ -743,11 +771,13 @@ class CompilerProxy{
                 objInst = tempCurClass.newInstance 
               }
            }
-             
+           // Pull the Model metadata out of the actual object here... NameSpace,Name, and Version all come from 
+           // this temporary class
            var baseModelTrait: com.ligadata.FatafatBase.ModelBaseObj = null
            if (objInst.isInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]) {
               baseModelTrait = objInst.asInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]
-               return (packageName, baseModelTrait.ModelName, baseModelTrait.Version, finalSourceCode)
+              var fullName = baseModelTrait.ModelName.split('.')
+              return (fullName.dropRight(1).mkString("."), fullName(fullName.length-1), baseModelTrait.Version, clsName)
            }
            else
               logger.error("Unable to load a class Object from "+jarName0)
@@ -762,8 +792,11 @@ class CompilerProxy{
          }
        }
      }) 
-     ("","","","")
+     ("","","","")    
+    
   }
+  
+  
   
     
   /**
@@ -880,7 +913,7 @@ class CompilerProxy{
   /**
    *  buildClassPath 
    */
-  private def buildClassPath(inDeps: List[String], inMC: List[String], pName: String ):(String,Set[BaseElemDef],String) = {
+  private def buildClassPath(inDeps: List[String], inMC: List[String] ):(String,Set[BaseElemDef]) = {
     var depElems: Set[BaseElemDef] = Set[BaseElemDef]()
     // Get classpath and jarpath ready
      var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
@@ -915,14 +948,14 @@ class CompilerProxy{
           classPath = depJars 
         }
      }
-     (classPath,depElems, pName)    
+     (classPath,depElems)    
   }
  
   /**
    * getClassPath - 
    * 
    */
-  private def getClassPathFromModelConfig(modelName: String): (String,Set[BaseElemDef],String) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), MetadataAPIImpl.getModelMessagesContainers(modelName), MetadataAPIImpl.getModelPhysicalName(modelName))
+  private def getClassPathFromModelConfig(modelName: String): (String,Set[BaseElemDef]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), MetadataAPIImpl.getModelMessagesContainers(modelName))
 
   /**
    * createSavedSourceCode - use this to create a string that a recompile model can use for recompile when a dependent type
@@ -940,7 +973,7 @@ class CompilerProxy{
                 (ModelCompilationConstants.TYPES_DEPENDENCIES -> typeDeps) ~
                 (ModelCompilationConstants.PHYSICALNAME -> pName))
     
-    return compact(render(json))
+    compact(render(json))
   }
   
 
