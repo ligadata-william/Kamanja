@@ -1010,7 +1010,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           })
         }
         if (savingKeys.size > 0)
-          changedContainersData(v._2.containerType.FullName.toLowerCase) = savingKeys.toList
+          changedContainersData(v._1) = savingKeys.toList
       }
     })
 
