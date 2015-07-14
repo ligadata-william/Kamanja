@@ -230,7 +230,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
-/*
+  /*
   val metadataPrincipal = loadConfigs.getProperty("MetadataPrincipal".toLowerCase, "").replace("\"", "").trim
   val metadataKeytab = loadConfigs.getProperty("MetadataKeytab".toLowerCase, "").replace("\"", "").trim
 */
@@ -322,7 +322,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         isOk = false
       }
     }
-    
+
     adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
 
     if (isOk) {
@@ -595,6 +595,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     var errsCnt: Int = 0
 
     val csvdataRecs: List[String] = csvdata.tail
+    val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
+
     csvdataRecs.foreach(tuples => {
       if (tuples.size > 0) {
         /** if we can make one ... we add the data to the store. This will crash if the data is bad */
@@ -630,6 +632,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
             datarec.AddMessageContainerBase(messageOrContainer, true, true)
             SaveObject(datarec.SerializeKey, datarec.SerializeData, kvstore, "manual")
+            savedKeys += keyData.toList
             processedRows += 1
           } catch {
             case e: Exception => {
@@ -656,8 +659,12 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         val dataChangeZkNodePath = zkNodeBasePath + "/datachange"
         CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
-        val containers = List[String](kvname)
-        val datachangedata = ("changeddata" -> containers)
+        val changedContainersData = Map[String, List[List[String]]]()
+        changedContainersData(kvname) = savedKeys.toList
+        val datachangedata = ("txnid" -> "0") ~
+          ("changeddatakeys" -> changedContainersData.map(kv =>
+            ("C" -> kv._1) ~
+              ("K" -> kv._2)))
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {

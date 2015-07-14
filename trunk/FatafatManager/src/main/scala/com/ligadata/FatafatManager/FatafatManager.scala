@@ -320,6 +320,7 @@ class FatafatManager {
 
       if (FatafatConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
+        FatafatConfiguration.zkNodeBasePath = zkNodeBasePath
         engineLeaderZkNodePath = zkNodeBasePath + "/engineleader"
         engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
