@@ -159,9 +159,6 @@ class FatafatMetadata {
           return false
         }
       }
-    } else {
-      LOG.error("Failed to instantiate message object :" + clsName)
-      return false
     }
     return false
   }
@@ -172,6 +169,7 @@ class FatafatMetadata {
     // else Assuming we are already loaded all the required jars
 
     var clsName = msg.PhysicalName.trim
+    var orgClsName = clsName
 
     var foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
 
@@ -180,6 +178,9 @@ class FatafatMetadata {
         clsName = clsName + "$"
         foundFlg = CheckAndPrepMessage(clsName, loadedJars, loader, mirror, msg)
       }
+    }
+    if (foundFlg == false) {
+      LOG.error("Failed to instantiate message object :" + orgClsName)
     }
   }
 
@@ -242,9 +243,6 @@ class FatafatMetadata {
           return false
         }
       }
-    } else {
-      LOG.error("Failed to instantiate containerObjects object :" + clsName)
-      return false
     }
     return false
   }
@@ -264,6 +262,7 @@ class FatafatMetadata {
     }
 
     var clsName = container.PhysicalName.trim
+    var orgClsName = clsName
 
     var foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
     if (foundFlg == false) {
@@ -271,6 +270,9 @@ class FatafatMetadata {
         clsName = clsName + "$"
         foundFlg = CheckAndPrepContainer(clsName, loadedJars, loader, mirror, container)
       }
+    }
+    if (foundFlg == false) {
+      LOG.error("Failed to instantiate container object :" + orgClsName)
     }
   }
 
@@ -334,9 +336,6 @@ class FatafatMetadata {
           LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           return false
       }
-    } else {
-      LOG.error("Failed to instantiate model object :" + clsName)
-      return false
     }
     return false
   }
@@ -347,6 +346,7 @@ class FatafatMetadata {
     // else Assuming we are already loaded all the required jars
 
     var clsName = mdl.PhysicalName.trim
+    var orgClsName = clsName
 
     var foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
 
@@ -355,6 +355,9 @@ class FatafatMetadata {
         clsName = clsName + "$"
         foundFlg = CheckAndPrepModel(clsName, loadedJars, loader, mirror, mdl)
       }
+    }
+    if (foundFlg == false) {
+      LOG.error("Failed to instantiate model object :" + orgClsName)
     }
   }
 
