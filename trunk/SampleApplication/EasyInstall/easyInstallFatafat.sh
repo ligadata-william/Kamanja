@@ -135,6 +135,7 @@ cp $srcPath/Metadata/target/scala-2.10/metadata_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.codehaus.jackson/jackson-core-asl/jars/jackson-core-asl-1.8.8.jar $systemlib
 cp $ivyPath/cache/javax.xml.bind/jaxb-api/jars/jaxb-api-2.2.2.jar $systemlib
 cp $ivyPath/cache/com.sun.jersey/jersey-core/bundles/jersey-core-1.9.jar $systemlib
+cp $ivyPath/cache/com.google.guava/guava/bundles/guava-18.0.jar $systemlib
 cp $ivyPath/cache/com.google.guava/guava/bundles/guava-16.0.1.jar $systemlib
 cp $srcPath/Utils/KVInit/target/scala-2.10/kvinit_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/commons-digester/commons-digester/jars/commons-digester-1.8.jar $systemlib
