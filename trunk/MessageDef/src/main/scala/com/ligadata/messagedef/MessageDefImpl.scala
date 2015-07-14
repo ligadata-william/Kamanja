@@ -3238,7 +3238,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val cur_time = System.currentTimeMillis
     //  val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "." + message.get("Name").get.toString() + "." + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
     // val pkg =  message.get("NameSpace").get.toString.toLowerCase()
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
+    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()+"$"
 
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
