@@ -63,6 +63,7 @@ class MdMgr {
   private var clusters = new HashMap[String, ClusterInfo]
   private var nodes = new HashMap[String, NodeInfo]
   private var adapters = new HashMap[String, AdapterInfo]
+  private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
 
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
@@ -499,14 +500,23 @@ class MdMgr {
   }
 
   /** Get All Versions of Messages */
-  def Messages(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = { GetImmutableSet(Some(msgDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
+  def Messages(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = { 
+    GetImmutableSet(Some(msgDefs.flatMap(x => x._2)), onlyActive, latestVersion) 
+  }
 
   /** Get All Versions of Messages for Key */
-  def Messages(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = { GetImmutableSet(msgDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
-  def Messages(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = Messages(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
+  def Messages(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = { 
+    GetImmutableSet(msgDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) 
+  }
+  def Messages(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[MessageDef]] = {
+    Messages(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
+  }
 
   /** Answer the MessageDef with the supplied namespace and name  */
-  def Message(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  def Message(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = {
+    Message(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+  }
+  
   /** Answer the ACTIVE and CURRENT MessageDef with the supplied namespace and name  */
   def ActiveMessage(nameSpace: String, name: String): MessageDef = {
     val optMsg: Option[MessageDef] = Message(MdMgr.MkFullName(nameSpace, name), -1, true)
@@ -518,7 +528,9 @@ class MdMgr {
   }
 
   /** Answer the MessageDef with the supplied key. */
-  def Message(key: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = GetReqValue(Messages(key, onlyActive, false), ver)
+  def Message(key: String, ver: Long, onlyActive: Boolean): Option[MessageDef] = {
+    GetReqValue(Messages(key, onlyActive, false), ver)
+  }
 
   /** Get All Versions of Containers for Key */
   def Containers(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ContainerDef]] = { GetImmutableSet(Some(containerDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
@@ -2663,6 +2675,26 @@ class MdMgr {
     }
   }
 
+  def DumpModelConfigs: Unit = {
+    modelConfigs.keys.foreach (key => {
+      logger.debug("----"+key+"-----")
+      logger.debug(modelConfigs(key))
+    })
+    logger.debug("----")
+  }
+  
+  def GetModelConfigKeys: Array[String] = {
+    modelConfigs.keySet.toArray[String]
+  }
+  
+  def AddModelConfig(key: String ,inCfg: scala.collection.immutable.Map[String,List[String]] ): Unit = {
+    modelConfigs(key.toLowerCase) = inCfg 
+  }
+  
+  def GetModelConfig(key: String): scala.collection.immutable.Map[String,List[String]] = {
+    modelConfigs.getOrElse(key.toLowerCase, scala.collection.immutable.Map[String,List[String]]())
+  }
+  
   def MakeCluster(clusterId: String, description: String, privilges: String): ClusterInfo = {
     val ci = new ClusterInfo
     ci.clusterId = clusterId
