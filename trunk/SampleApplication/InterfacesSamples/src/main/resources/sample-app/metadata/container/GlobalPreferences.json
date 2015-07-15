@@ -1,0 +1,39 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "GlobalPreferences",
+	"Version": "00.01.00",
+	"Description": "Global Preferences",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "PrefType",
+		"Type": "System.String"
+	  },
+	  {
+		"Name": "overDraftLimit",
+		"Type": "System.Double"
+	  },
+	  {
+		"Name": "minAlertBalance",
+		"Type": "System.Double"
+	  },
+	  {
+		"Name": "minAlertDurationInHrs",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "numLookbackDaysForMultiDayMinBalanceAlert",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "maxNumDaysAllowedWithMinBalance",
+		"Type": "System.Int"
+	  }
+	],
+	"PartitionKey": [
+	  "PrefType"
+	]
+  }
+}
