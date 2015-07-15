@@ -92,19 +92,19 @@ class SavedMdlResult {
     xformedMsgCntr = xfrmedMsgCntr
     this
   }
-  
+
   def withTotalXformedMsgs(totalXfrmedMsgs: Int): SavedMdlResult = {
     totalXformedMsgs = totalXfrmedMsgs
     this
   }
-  
+
   def withMdlResult(mdl_Res: ModelResultBase): SavedMdlResult = {
     mdlRes = mdl_Res
     this
   }
-  
-  override def toString: String = {
-    val output = if (mdlRes == null) "" else mdlRes.toString
+
+  def toJson: org.json4s.JsonAST.JObject = {
+    val output = if (mdlRes == null) List[org.json4s.JsonAST.JObject]() else mdlRes.toJson
     val json =
       ("ModelName" -> mdlName) ~
         ("ModelVersion" -> mdlVersion) ~
@@ -113,11 +113,16 @@ class SavedMdlResult {
         ("xformedMsgCntr" -> xformedMsgCntr) ~
         ("totalXformedMsgs" -> totalXformedMsgs) ~
         ("output" -> output)
-    compact(render(json))
+    return json
+  }
+  
+  override def toString: String = {
+    compact(render(toJson))
   }
 }
 
 trait ModelResultBase {
+  def toJson: List[org.json4s.JsonAST.JObject]
   def toString: String // Returns JSON string
   def get(key: String): Any // Get the value for the given key, if exists, otherwise NULL
   def asKeyValuesMap: Map[String, Any] // Return all key & values as Map of KeyValue pairs
@@ -132,14 +137,19 @@ class MappedModelResults extends ModelResultBase {
     results = res
     this
   }
-  
-  override def toString: String = {
-    if (results == null) return ""
+
+  override def toJson: List[org.json4s.JsonAST.JObject] = {
+    if (results == null) return List[org.json4s.JsonAST.JObject]()
     val json =
       results.toList.map(r =>
         (("Name" -> r.name) ~
           ("Value" -> ModelsResults.ValueString(r.result))))
-    compact(render(json))
+    return json
+  }
+
+  override def toString: String = {
+    if (results == null) return ""
+    compact(render(toJson))
   }
 
   override def get(key: String): Any = {
@@ -153,7 +163,7 @@ class MappedModelResults extends ModelResultBase {
 
   override def asKeyValuesMap: Map[String, Any] = {
     if (results == null) return Map[String, Any]()
-    
+
     val map = results.foldLeft(scala.collection.mutable.Map[String, Any]()) { (m, s) => m(s.name) = s.result; m }
     map.toMap
   }

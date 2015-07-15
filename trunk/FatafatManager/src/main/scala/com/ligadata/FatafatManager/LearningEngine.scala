@@ -142,7 +142,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             resStr = resultedoutput.map(resout => resout._3).mkString("\n")
           } else {
 
-          val json = ("ModelsResult" -> results.toList.map(res => res.toString))
+          val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
           val resStr = compact(render(json))
 
           envContext.saveStatus(transId, "Start", true)

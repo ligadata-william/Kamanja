@@ -98,15 +98,19 @@ class LowBalanceAlertResult extends ModelResultBase {
     this
   }
 
-  override def toString: String = {
-    val json =
+  override def toJson: List[org.json4s.JsonAST.JObject] = {
+    val json = List(
       ("CustId" -> custId) ~
         ("BranchId" -> branchId) ~
         ("AccNo" -> accNo) ~
         ("CurBalance" -> curBalance) ~
         ("AlertType" -> alertType) ~
-        ("TriggerTime" -> triggerTime)
-    compact(render(json))
+        ("TriggerTime" -> triggerTime))
+    return json
+  }
+
+  override def toString: String = {
+    compact(render(toJson))
   }
 
   override def get(key: String): Any = {
@@ -233,15 +237,19 @@ class LowBalanceAlertResult2 extends ModelResultBase {
     this
   }
 
-  override def toString: String = {
-    val json =
+  override def toJson: List[org.json4s.JsonAST.JObject] = {
+    val json = List(
       ("CustId" -> custId) ~
         ("BranchId" -> branchId) ~
         ("AccNo" -> accNo) ~
         ("CurBalance" -> curBalance) ~
         ("AlertType" -> alertType) ~
-        ("TriggerTime" -> triggerTime)
-    compact(render(json))
+        ("TriggerTime" -> triggerTime))
+    return json
+  }
+
+  override def toString: String = {
+    compact(render(toJson))
   }
 
   override def get(key: String): Any = {
@@ -312,7 +320,7 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
 
     val rcntTxn = CustTransaction.getRecent
     val curTmInMs = curDtTmInMs.getDateTimeInMs
-    
+
     // results
     new LowBalanceAlertResult2().withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }
