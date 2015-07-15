@@ -46,5 +46,9 @@ public class JavaTestMdl extends ModelBase {
 		public String Version() {
 			return "0.0.1";
 		}
+		
+		public ModelResultBase CreateResultObject() {
+			return new MappedModelResults();
+		}
 	}	
 }

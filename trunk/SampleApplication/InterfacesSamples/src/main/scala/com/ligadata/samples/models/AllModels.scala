@@ -56,8 +56,9 @@ import java.io.{ DataInputStream, DataOutputStream }
 object LowBalanceAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
-  override def ModelName: String = "LowBalanceAlert" // Model Name
-  override def Version: String = "0.0.1" // Model Version
+  override def ModelName(): String = "LowBalanceAlert" // Model Name
+  override def Version(): String = "0.0.1" // Model Version
+  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult()
 }
 
 class LowBalanceAlertResult extends ModelResultBase {
@@ -146,7 +147,7 @@ class LowBalanceAlertResult extends ModelResultBase {
 class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrNew
+    val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
     if (pref.minBalanceAlertOptout == false)
       return null
@@ -166,7 +167,7 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDtTmInMs(curTmInMs).withAlertType("lowBalanceAlert").Save
     // results
-    new LowBalanceAlertResult().withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
+    LowBalanceAlert.CreateResultObject().asInstanceOf[LowBalanceAlertResult].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
   }
 }
 
@@ -194,9 +195,9 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
 object LowBalanceAlert2 extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
-  override def ModelName: String = "LowBalanceAlert2" // Model Name
-  override def Version: String = "0.0.1" // Model Version
-
+  override def ModelName(): String = "LowBalanceAlert2" // Model Name
+  override def Version(): String = "0.0.1" // Model Version
+  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult2()
 }
 
 class LowBalanceAlertResult2 extends ModelResultBase {
@@ -285,7 +286,7 @@ class LowBalanceAlertResult2 extends ModelResultBase {
 class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert2) {
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrNew
+    val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
     if (pref.multiDayMinBalanceAlertOptout == false)
       return null
@@ -322,7 +323,7 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
     val curTmInMs = curDtTmInMs.getDateTimeInMs
 
     // results
-    new LowBalanceAlertResult2().withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
+    LowBalanceAlert2.CreateResultObject().asInstanceOf[LowBalanceAlertResult2].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }
 }
 
