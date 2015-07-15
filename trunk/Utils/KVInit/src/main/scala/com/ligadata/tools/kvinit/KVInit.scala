@@ -31,8 +31,15 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.FatafatData.FatafatData
-
-case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
+import java.io.FileInputStream
+import java.util.zip.GZIPInputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
+//import scala.util.control.Breaks._
+import scala.collection.mutable.ArrayBuffer
+import com.ligadata.ZooKeeper._
+import org.apache.curator.framework._
+import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -86,6 +93,12 @@ Sample uses:
           nextOption(map ++ Map('keyfieldname -> value), tail)
         case "--dump" :: value :: tail =>
           nextOption(map ++ Map('dump -> value), tail)
+        case "--delimiter" :: value :: tail =>
+          nextOption(map ++ Map('delimiter -> value), tail)
+        case "--keyseparator" :: value :: tail =>
+          nextOption(map ++ Map('keyseparator -> value), tail)
+        case "--ignoreerrors" :: value :: tail =>
+          nextOption(map ++ Map('ignoreerrors -> value), tail)
         case option :: tail =>
           logger.error("Unknown option " + option)
           sys.exit(1)
@@ -97,17 +110,23 @@ Sample uses:
     var cfgfile = if (options.contains('config)) options.apply('config) else null
     var kvname = if (options.contains('kvname)) options.apply('kvname) else null
     var csvpath = if (options.contains('csvpath)) options.apply('csvpath) else null
-    var keyfieldname = if (options.contains('keyfieldname)) options.apply('keyfieldname) else null
+    val tmpkeyfieldnames = (if (options.contains('keyfieldname)) options.apply('keyfieldname) else "")
     val dump = if (options.contains('dump)) options.apply('dump) else null
+    val delimiterString = if (options.contains('delimiter)) options.apply('delimiter) else null
+    var keyseparator = if (options.contains('keyseparator)) options.apply('keyseparator) else ","
+    var ignoreerrors = (if (options.contains('ignoreerrors)) options.apply('ignoreerrors) else "0").trim
+    if (keyseparator.size == 0) keyseparator = ","
+    if (ignoreerrors.size == 0) ignoreerrors = "0"
 
-    var valid: Boolean = (cfgfile != null && csvpath != null && keyfieldname != null && kvname != null)
+    val keyfieldnames = tmpkeyfieldnames.split(",").map(_.trim).filter(_.length() > 0)
+
+    var valid: Boolean = (cfgfile != null && csvpath != null && keyfieldnames.size > 0 && kvname != null)
 
     if (valid) {
       cfgfile = cfgfile.trim
       csvpath = csvpath.trim
-      keyfieldname = keyfieldname.trim
       kvname = kvname.trim
-      valid = (cfgfile.size != 0 && csvpath.size != 0 && keyfieldname.size != 0 && kvname.size != 0)
+      valid = (cfgfile.size != 0 && csvpath.size != 0 && keyfieldnames.size > 0 && kvname.size != 0)
     }
 
     if (valid) {
@@ -122,10 +141,10 @@ Sample uses:
       }
 
       KvInitConfiguration.configFile = cfgfile.toString
-      val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldname)
+      val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldnames, delimiterString, keyseparator, ignoreerrors)
       if (kvmaker.isOk) {
         if (dump != null && dump.toLowerCase().startsWith("y")) {
-          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation)
+          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation, kvmaker.adapterSpecificConfig)
           kvmaker.dump(dstore)
           dstore.Shutdown()
         } else {
@@ -176,12 +195,20 @@ object KvInitConfiguration {
   }
 }
 
-class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: String, val keyfieldname: String) extends LogTrait {
+class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: String, val keyfieldnames: Array[String], delimiterString: String, keyseparator: String, ignoreerrors: String) extends LogTrait {
 
-  val csvdata: List[String] = Source.fromFile(csvpath).mkString.split("\n", -1).toList
-  val header: Array[String] = csvdata.head.split(",", -1).map(_.trim.toLowerCase)
-  var isOk: Boolean = header.contains(keyfieldname.toLowerCase())
-  var keyPos: Int = 0
+  val dataDelim = if (delimiterString != null && delimiterString.size > 0) delimiterString else ","
+  var ignoreErrsCount = if (ignoreerrors != null && ignoreerrors.size > 0) ignoreerrors.toInt else 0
+  if (ignoreErrsCount < 0) ignoreErrsCount = 0
+  //  val csvdata: List[String] = Source.fromFile(csvpath).mkString.split("\n", -1).toList
+  val csvdata: List[String] = fileData(csvpath)
+  val header: Array[String] = csvdata.head.split(dataDelim, -1).map(_.trim.toLowerCase)
+  var isOk: Boolean = true
+  var keyPositions = new Array[Int](keyfieldnames.size)
+
+  keyfieldnames.foreach(keynm => {
+    isOk = isOk && header.contains(keynm.toLowerCase())
+  })
 
   val kvInitLoader = new KvInitLoaderInfo
 
@@ -202,6 +229,11 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     logger.error("Not found valid MetadataLocation.")
     isOk = false
   }
+
+  /*
+  val metadataPrincipal = loadConfigs.getProperty("MetadataPrincipal".toLowerCase, "").replace("\"", "").trim
+  val metadataKeytab = loadConfigs.getProperty("MetadataKeytab".toLowerCase, "").replace("\"", "").trim
+*/
 
   KvInitConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
   if (KvInitConfiguration.nodeId <= 0) {
@@ -247,13 +279,25 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
+  val zooKeeperInfo = if (isOk) cluster.cfgMap.getOrElse("ZooKeeperInfo", null) else null
+  if (isOk && dataStore == null) {
+    logger.error("ZooKeeperInfo not found for Node %d  & ClusterId : %s".format(KvInitConfiguration.nodeId, nodeInfo.ClusterId))
+    isOk = false
+  }
+
   var dataStoreType: String = null
   var dataSchemaName: String = null
   var dataLocation: String = null
+  var adapterSpecificConfig: String = null
+  var zkConnectString: String = null
+  var zkNodeBasePath: String = null
+  var zkSessionTimeoutMs: Int = 0
+  var zkConnectionTimeoutMs: Int = 0
 
   if (isOk) {
     implicit val jsonFormats: Formats = DefaultFormats
-    val dataStoreInfo = parse(dataStore).extract[DataStoreInfo]
+    val dataStoreInfo = parse(dataStore).extract[JDataStore]
+    val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
     if (isOk) {
       dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
@@ -277,6 +321,29 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         logger.error("Not found valid DataLocation.")
         isOk = false
       }
+    }
+
+    adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
+
+    if (isOk) {
+      zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
+      zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
+      zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
+      zkConnectionTimeoutMs = if (zKInfo.ZooKeeperConnectionTimeoutMs == None || zKInfo.ZooKeeperConnectionTimeoutMs == null) 0 else zKInfo.ZooKeeperConnectionTimeoutMs.get.toString.toInt
+
+      // Taking minimum values in case if needed
+      if (zkSessionTimeoutMs <= 0)
+        zkSessionTimeoutMs = 30000
+      if (zkConnectionTimeoutMs <= 0)
+        zkConnectionTimeoutMs = 30000
+    }
+
+    if (zkConnectString.size == 0) {
+      logger.warn("Not found valid Zookeeper connection string.")
+    }
+
+    if (zkConnectString.size > 0 && zkNodeBasePath.size == 0) {
+      logger.warn("Not found valid Zookeeper ZNode Base Path.")
     }
   }
 
@@ -432,11 +499,13 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     true
   }
 
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
+  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
+      if (adapterSpecificConfig != null)
+        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
@@ -475,16 +544,23 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
   def locateKeyPos: Unit = {
     /** locate the key position */
-    keyPos = 0
-    breakable {
-      val kvKey: String = keyfieldname.trim.toLowerCase()
-      header.foreach(datum => {
-        if (datum.trim.toLowerCase() == kvKey) {
-          break
-        }
-        keyPos += 1
-      })
-    }
+    for (i <- 0 until keyfieldnames.size)
+      keyPositions(i) = -1 // By default -1
+    var i: Int = 0
+    keyfieldnames.foreach(keynm => {
+      var keyPos = 0
+      val kvKey = keynm.trim.toLowerCase()
+      breakable {
+        header.foreach(datum => {
+          if (datum.trim.toLowerCase() == kvKey) {
+            keyPositions(i) = keyPos
+            break
+          }
+          keyPos += 1
+        })
+      }
+      i += 1
+    })
   }
 
   def isDerivedFrom(clz: Class[_], clsName: String): Boolean = {
@@ -509,19 +585,22 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   def buildContainerOrMessage: DataStore = {
     if (!isOk) return null
 
-    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation)
+    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, adapterSpecificConfig)
     // kvstore.TruncateStore
 
     locateKeyPos
     /** locate key idx */
 
     var processedRows: Int = 0
+    var errsCnt: Int = 0
 
     val csvdataRecs: List[String] = csvdata.tail
+    val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
+
     csvdataRecs.foreach(tuples => {
       if (tuples.size > 0) {
         /** if we can make one ... we add the data to the store. This will crash if the data is bad */
-        val inputData = new DelimitedData(tuples, ",")
+        val inputData = new DelimitedData(tuples, dataDelim)
         inputData.tokens = inputData.dataInput.split(inputData.dataDelim, -1)
         inputData.curPos = 0
 
@@ -536,27 +615,67 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
 
         if (messageOrContainer != null) {
-          messageOrContainer.populate(inputData)
+          try {
+            messageOrContainer.populate(inputData)
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to populate message/container.")
+              e.printStackTrace
+              errsCnt += 1
+            }
+          }
           try {
             val datarec = new FatafatData
             // var keyData = messageOrContainer.PartitionKeyData
-            val keyData = Array(inputData.tokens(keyPos)) // We should take messageOrContainer.PartitionKeyData instead of this. That way we have proper value convertion before giving keys to us.
+            val keyData = keyPositions.map(kp => inputData.tokens(kp)) // We should take messageOrContainer.PartitionKeyData instead of this. That way we have proper value convertion before giving keys to us.
             datarec.SetKey(keyData)
             datarec.SetTypeName(objFullName) // objFullName should be messageOrContainer.FullName.toString
             datarec.AddMessageContainerBase(messageOrContainer, true, true)
             SaveObject(datarec.SerializeKey, datarec.SerializeData, kvstore, "manual")
+            savedKeys += keyData.toList
             processedRows += 1
           } catch {
             case e: Exception => {
               logger.error("Failed to serialize/write data.")
               e.printStackTrace
+              errsCnt += 1
             }
           }
         }
       }
+      if (errsCnt > ignoreErrsCount) {
+        val errStr = "Populate/Serialize errors (%d) exceed the given count(%d)." format (errsCnt, ignoreErrsCount)
+        logger.error(errStr)
+        throw new Exception(errStr)
+      }
     })
 
     logger.debug("Inserted %d values in KVName %s".format(processedRows, kvname))
+
+    if (zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
+      logger.debug("Notifying Engines after updating is done through Zookeeper.")
+      var zkcForSetData: CuratorFramework = null
+      try {
+        val dataChangeZkNodePath = zkNodeBasePath + "/datachange"
+        CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 
+        zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
+        val changedContainersData = Map[String, List[List[String]]]()
+        changedContainersData(kvname) = savedKeys.toList
+        val datachangedata = ("txnid" -> "0") ~
+          ("changeddatakeys" -> changedContainersData.map(kv =>
+            ("C" -> kv._1) ~
+              ("K" -> kv._2)))
+        val sendJson = compact(render(datachangedata))
+        zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
+      } catch {
+        case e: Exception => logger.error("Failed to send update notification to engine.")
+      } finally {
+        if (zkcForSetData != null)
+          zkcForSetData.close
+      }
+    } else {
+      logger.error("Failed to send update notification to engine.")
+    }
 
     kvstore
   }
@@ -611,9 +730,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     csvdataRecs.foreach(tuples => {
       /** if we can make one ... we add the data to the store. This will crash if the data is bad */
 
-      val data: Array[String] = tuples.split(",", -1).map(_.trim)
-      val partkey: String = data(keyPos)
-      datastore.get(makeKey(FatafatData.PrepareKey(objFullName, List(partkey), 0, 0)), printOne)
+      val data: Array[String] = tuples.split(dataDelim, -1).map(_.trim)
+      val partkey = keyPositions.map(kp => data(kp)).toList
+      datastore.get(makeKey(FatafatData.PrepareKey(objFullName, partkey, 0, 0)), printOne)
     })
   }
 
@@ -679,6 +798,57 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
     }
     store.put(i)
+  }
+
+  private def fileData(inputeventfile: String): List[String] = {
+    var br: BufferedReader = null
+    try {
+      if (isCompressed(inputeventfile)) {
+        br = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(inputeventfile))))
+      } else {
+        br = new BufferedReader(new InputStreamReader(new FileInputStream(inputeventfile)))
+      }
+    } catch {
+      case e: Exception => {
+        logger.error("Failed to open Input File %s. Message:%s".format(inputeventfile, e.getMessage))
+        throw e
+      }
+    }
+    var fileContentsArray = ArrayBuffer[String]()
+    var line: String = ""
+    while ({ line = br.readLine(); line != null }) {
+      fileContentsArray += line
+    }
+    br.close();
+
+    return fileContentsArray.toList
+  }
+
+  private def isCompressed(inputfile: String): Boolean = {
+    var is: FileInputStream = null
+    try {
+      is = new FileInputStream(inputfile)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        return false
+    }
+
+    val maxlen = 2
+    val buffer = new Array[Byte](maxlen)
+    val readlen = is.read(buffer, 0, maxlen)
+
+    is.close() // Close before we really check and return the data
+
+    if (readlen < 2)
+      return false;
+
+    val b0: Int = buffer(0)
+    val b1: Int = buffer(1)
+
+    val head = (b0 & 0xff) | ((b1 << 8) & 0xff00)
+
+    return (head == GZIPInputStream.GZIP_MAGIC);
   }
 
 }

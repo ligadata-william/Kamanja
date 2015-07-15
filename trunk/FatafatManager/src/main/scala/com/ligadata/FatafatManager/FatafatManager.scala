@@ -78,9 +78,11 @@ object FatafatConfiguration {
   var dataStoreType: String = _
   var dataSchemaName: String = _
   var dataLocation: String = _
+  var adapterSpecificConfig: String = _
   var statusInfoStoreType: String = _
   var statusInfoSchemaName: String = _
   var statusInfoLocation: String = _
+  var statusInfoAdapterSpecificConfig: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var clusterId: String = _
@@ -95,6 +97,9 @@ object FatafatConfiguration {
   var waitProcessingTime = 0
   // Debugging info configs -- End
 
+  var shutdown = false
+  var participentsChangedCntr: Long = 0
+
   def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
     if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
     jarPaths.foreach(jPath => {
@@ -104,6 +109,38 @@ object FatafatConfiguration {
       }
     })
     return jarName // Returning base jarName if not found in jar paths
+  }
+
+  def Reset: Unit = {
+    configFile = null
+    allConfigs = null
+    metadataStoreType = null
+    metadataSchemaName = null
+    metadataLocation = null
+    dataStoreType = null
+    dataSchemaName = null
+    dataLocation = null
+    adapterSpecificConfig = null
+    statusInfoStoreType = null
+    statusInfoSchemaName = null
+    statusInfoLocation = null
+    statusInfoAdapterSpecificConfig = null
+    jarPaths = null
+    nodeId = 0
+    clusterId = null
+    nodePort = 0
+    zkConnectString = null
+    zkNodeBasePath = null
+    zkSessionTimeoutMs = 0
+    zkConnectionTimeoutMs = 0
+
+    // Debugging info configs -- Begin
+    waitProcessingSteps = null
+    waitProcessingTime = 0
+    // Debugging info configs -- End
+
+    shutdown = false
+    participentsChangedCntr = 0
   }
 }
 
@@ -149,7 +186,7 @@ class FatafatManager {
     LOG.warn("    --config <configfilename>")
   }
 
-  private def Shutdown(exitCode: Int): Unit = {
+  private def Shutdown(exitCode: Int): Int = {
     if (FatafatMetadata.envCtxt != null)
       FatafatMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
     FatafatLeader.Shutdown
@@ -159,7 +196,7 @@ class FatafatManager {
       FatafatMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
-    sys.exit(exitCode)
+    return exitCode
   }
 
   private def nextOption(map: OptionMap, list: List[String]): OptionMap = {
@@ -170,7 +207,7 @@ class FatafatManager {
         nextOption(map ++ Map('config -> value), tail)
       case option :: tail => {
         LOG.error("Unknown option " + option)
-        sys.exit(1)
+        throw new Exception("Unknown option " + option)
       }
     }
   }
@@ -279,13 +316,16 @@ class FatafatManager {
       var engineDistributionZkNodePath = ""
       var metadataUpdatesZkNodePath = ""
       var adaptersStatusPath = ""
+      var dataChangeZkNodePath = ""
 
       if (FatafatConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
+        FatafatConfiguration.zkNodeBasePath = zkNodeBasePath
         engineLeaderZkNodePath = zkNodeBasePath + "/engineleader"
         engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
+        dataChangeZkNodePath = zkNodeBasePath + "/datachange"
       }
 
       FatafatMdCfg.ValidateAllRequiredJars
@@ -299,7 +339,7 @@ class FatafatManager {
 
       if (retval) {
         FatafatMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, FatafatConfiguration.zkConnectString, metadataUpdatesZkNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
-        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
+        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
       /*
@@ -319,7 +359,7 @@ class FatafatManager {
     } catch {
       case e: Exception => {
         LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        // LOG.info("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
+        // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }
     } finally {
@@ -331,37 +371,36 @@ class FatafatManager {
 
   def execCmd(ln: String): Boolean = {
     if (ln.length() > 0) {
-      if (ln.compareToIgnoreCase("Quit") == 0)
+      val trmln = ln.trim
+      if (trmln.length() > 0 && (trmln.compareToIgnoreCase("Quit") == 0 || trmln.compareToIgnoreCase("Exit") == 0))
         return true
     }
     return false;
   }
 
-  def run(args: Array[String]): Unit = {
+  def run(args: Array[String]): Int = {
+    FatafatConfiguration.Reset
+    FatafatLeader.Reset
     if (args.length == 0) {
       PrintUsage()
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     val options = nextOption(Map(), args.toList)
     val cfgfile = options.getOrElse('config, null)
     if (cfgfile == null) {
       LOG.error("Need configuration file as parameter")
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     FatafatConfiguration.configFile = cfgfile.toString
     val (loadConfigs, failStr) = Utils.loadConfiguration(FatafatConfiguration.configFile, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
     if (loadConfigs == null) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     FatafatConfiguration.allConfigs = loadConfigs
@@ -379,20 +418,11 @@ class FatafatManager {
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
-    /*
     if (initialize == false) {
-      Shutdown(1)
-      return
-    }
-*/
-
-    if (initialize == false) {
-      Shutdown(1)
-      return
+      return Shutdown(1)
     }
 
     val statusPrint_PD = new Runnable {
@@ -427,8 +457,52 @@ class FatafatManager {
     }
 **/
 
-    print("Waiting till user kills the process")
-    while (true) { // Infinite wait for now
+
+    var timeOutEndTime: Long = 0
+    var participentsChangedCntr: Long = 0
+    var lookingForDups = false
+
+    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C")
+    while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
+      if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
+        lookingForDups = false
+        timeOutEndTime = 0
+        participentsChangedCntr = FatafatConfiguration.participentsChangedCntr
+        val cs = FatafatLeader.GetClusterStatus
+        if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+          val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+          if (isNotLeader) {
+            val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+            if (sameNodeIds.size > 1) {
+              lookingForDups = true
+              var mxTm = if (FatafatConfiguration.zkSessionTimeoutMs > FatafatConfiguration.zkConnectionTimeoutMs) FatafatConfiguration.zkSessionTimeoutMs else FatafatConfiguration.zkConnectionTimeoutMs
+              if (mxTm < 5000) // if the value is < 5secs, we are taking 5 secs
+                mxTm = 5000
+              timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
+              LOG.error("Found more than one of NodeId:%s in Participents:{%s}. Waiting for %d milli seconds to check whether it is real duplicate or not.".format(cs.nodeId, cs.participants.mkString(","), mxTm))
+            }
+          }
+        }
+      }
+
+      if (lookingForDups && timeOutEndTime > 0) {
+        if (timeOutEndTime < System.currentTimeMillis) {
+          lookingForDups = false
+          timeOutEndTime = 0
+          val cs = FatafatLeader.GetClusterStatus
+          if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+            val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
+            if (isNotLeader) {
+              val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
+              if (sameNodeIds.size > 1) {
+                LOG.error("Found more than one of NodeId:%s in Participents:{%s} for ever. Shutting down this node.".format(cs.nodeId, cs.participants.mkString(",")))
+                FatafatConfiguration.shutdown = true
+              }
+            }
+          }
+        }
+      }
+
       try {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
@@ -438,7 +512,7 @@ class FatafatManager {
     }
 
     scheduledThreadPool.shutdownNow()
-    Shutdown(0)
+    return Shutdown(0)
   }
 
 }
@@ -446,7 +520,7 @@ class FatafatManager {
 object OleService {
   def main(args: Array[String]): Unit = {
     val mgr = new FatafatManager
-    mgr.run(args)
+    sys.exit(mgr.run(args))
   }
 }
 

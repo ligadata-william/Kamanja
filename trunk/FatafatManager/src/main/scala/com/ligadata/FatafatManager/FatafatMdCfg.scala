@@ -7,15 +7,12 @@ import com.ligadata.fatafat.metadata.MdMgr._
 import com.ligadata.FatafatBase.{ EnvContext, InputAdapterObj, InputAdapter, OutputAdapterObj, OutputAdapter, AdapterConfiguration, MakeExecContext }
 import com.ligadata.Utils.Utils
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
 
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
-
-case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
-case class ZooKeeperInfo(ZooKeeperNodeBasePath: String, ZooKeeperConnectString: String, ZooKeeperSessionTimeoutMs: Option[String], ZooKeeperConnectionTimeoutMs: Option[String])
-case class EnvCtxtJsonStr(classname: String, jarname: String, dependencyjars: Option[List[String]])
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 object FatafatMdCfg {
@@ -68,9 +65,9 @@ object FatafatMdCfg {
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
-    val dataStoreInfo = parse(dataStore).extract[DataStoreInfo]
-    val statusStoreInfo = parse(statusInfo).extract[DataStoreInfo]
-    val zKInfo = parse(zooKeeperInfo).extract[ZooKeeperInfo]
+    val dataStoreInfo = parse(dataStore).extract[JDataStore]
+    val statusStoreInfo = parse(statusInfo).extract[JDataStore]
+    val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
     FatafatConfiguration.dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
     if (FatafatConfiguration.dataStoreType.size == 0) {
@@ -90,6 +87,8 @@ object FatafatMdCfg {
       return false
     }
 
+    FatafatConfiguration.adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.trim
+
     FatafatConfiguration.statusInfoStoreType = statusStoreInfo.StoreType.replace("\"", "").trim
     if (FatafatConfiguration.statusInfoStoreType.size == 0) {
       LOG.error("Not found valid Status Information StoreType.")
@@ -108,13 +107,15 @@ object FatafatMdCfg {
       return false
     }
 
+    FatafatConfiguration.statusInfoAdapterSpecificConfig = if (statusStoreInfo.AdapterSpecificConfig == None || statusStoreInfo.AdapterSpecificConfig == null) "" else statusStoreInfo.AdapterSpecificConfig.get.trim
+    
     FatafatConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
     FatafatConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     FatafatConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
     FatafatConfiguration.zkConnectionTimeoutMs = if (zKInfo.ZooKeeperConnectionTimeoutMs == None || zKInfo.ZooKeeperConnectionTimeoutMs == null) 0 else zKInfo.ZooKeeperConnectionTimeoutMs.get.toString.toInt
 
     // Taking minimum values in case if needed
-    FatafatConfiguration.zkSessionTimeoutMs = if (FatafatConfiguration.zkSessionTimeoutMs <= 0) 1000 else FatafatConfiguration.zkSessionTimeoutMs
+    FatafatConfiguration.zkSessionTimeoutMs = if (FatafatConfiguration.zkSessionTimeoutMs <= 0) 30000 else FatafatConfiguration.zkSessionTimeoutMs
     FatafatConfiguration.zkConnectionTimeoutMs = if (FatafatConfiguration.zkConnectionTimeoutMs <= 0) 30000 else FatafatConfiguration.zkConnectionTimeoutMs
 
     return true
@@ -150,7 +151,7 @@ object FatafatMdCfg {
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
-    val evnCtxtJson = parse(envCtxtStr).extract[EnvCtxtJsonStr]
+    val evnCtxtJson = parse(envCtxtStr).extract[JEnvCtxtJsonStr]
 
     val jarName = evnCtxtJson.jarname.replace("\"", "").trim
     val dependencyJars = if (evnCtxtJson.dependencyjars == None || evnCtxtJson.dependencyjars == null) null else evnCtxtJson.dependencyjars.get.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
@@ -214,7 +215,7 @@ object FatafatMdCfg {
     }
 
     implicit val jsonFormats: Formats = DefaultFormats
-    val evnCtxtJson = parse(envCtxtStr).extract[EnvCtxtJsonStr]
+    val evnCtxtJson = parse(envCtxtStr).extract[JEnvCtxtJsonStr]
 
     //BUGBUG:: Not yet validating required fields 
     val className = evnCtxtJson.classname.replace("\"", "").trim
@@ -259,8 +260,8 @@ object FatafatMdCfg {
           envCtxt.SetMetadataResolveInfo(FatafatMetadata)
           val containerNames = FatafatMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = FatafatMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Containers
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Messages
+          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Containers
+          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Messages
           LOG.debug("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -402,6 +403,8 @@ object FatafatMdCfg {
         conf.formatOrInputAdapterName = adap.InputAdapterToVerify
       conf.className = adap.ClassName
       conf.jarName = adap.JarName
+      conf.delimiterString = adap.DelimiterString
+      conf.associatedMsg = adap.AssociatedMessage
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
 
@@ -488,6 +491,8 @@ object FatafatMdCfg {
       conf.jarName = adap.JarName
       conf.dependencyJars = if (adap.DependencyJars != null) adap.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
       conf.adapterSpecificCfg = adap.AdapterSpecificCfg
+      conf.delimiterString = adap.DelimiterString
+      conf.associatedMsg = adap.AssociatedMessage
 
       try {
         val adapter = CreateInputAdapterFromConfig(conf, outputAdapters, envCtxt, loaderInfo, mkExecCtxt)

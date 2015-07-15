@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# StartFatafatCluster.sh
+# StartFataFatCluster.sh
 #
-#	NOTE: This script must currently be run from a trunk directory that contains the build installed on the cluster to be run.
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StartFatafatCluster.sh --ClusterId <cluster name identifer> "
-    echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
+    echo "      StartFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "                           --MetadataAPIConfig  <metadataAPICfgPath> "
     echo 
     echo "  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
     echo "         the appropriate metadata store.  For "
@@ -62,7 +61,7 @@ workDir="/tmp"
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"
 ipIdCfgTargPathQuartetFileName="ipIdCfgTarg.txt"
-installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g'`
+installDir=`cat $metadataAPIConfig | grep '[Rr][Oo][Oo][Tt]_[Dd][Ii][Rr]' | sed 's/.*=\(.*\)$/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
 
 echo "...extract node information for the cluster to be started from the Metadata configuration information supplied"
 
@@ -90,20 +89,36 @@ while read LINE; do
     cfgFile=$LINE
     read LINE
     targetPath=$LINE
-    echo "quartet = $machine, $id, $cfgFile, $targetPath"
-    echo "...On machine $machine, starting FataFat node with configuration $cfgFile for nodeId $id to $machine:$targetPath"
-    #scp "$cfgFile" "$machine:$targetPath/"
-	ssh -T $machine  <<-EOF
-	        cd $targetPath
-	        nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g'`
-	        java -jar "$installDir/lib/system/FatafatManager-1.0" --config "./$nodeCfg" & 
-            sleep 5
-            fatafatpid = $!
-            if [ ! -d "$installDir/run" ]; then
-                mkdir "$installDir/run"
-            fi
-            echo "$fatafatpid" > "$installDir/run/node$id.pid"
+    read LINE
+    roles=$LINE
+    roles_lc=`echo $roles | tr '[:upper:]' '[:lower:]'`
+    restapi_cnt=`echo $roles_lc | grep "restapi" | grep -v "grep" | wc -l`
+    processingengine_cnt=`echo $roles_lc | grep "processingengine" | grep -v "grep" | wc -l`
+    echo "NodeInfo = $machine, $id, $cfgFile, $targetPath, $roles"
+    echo "...On machine $machine, starting FataFat node with configuration $cfgFile for NodeId $id to $machine:$targetPath"
+    nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
+    pidfile=node$id.pid
+     #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
+	ssh -o StrictHostKeyChecking=no -T $machine  <<-EOF
+                ulimit -u 8192
+		cd $targetPath
+		echo "nodeCfg=$nodeCfg"
+        if [ "$processingengine_cnt" -gt 0 ]; then
+		java -Xmx50g -Xms50g -Dlog4j.configuration=file:$targetPath/engine_log4j.properties -Djavax.net.ssl.trustStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStorePassword=fc2appKey16app -Djavax.net.ssl.trustStorePassword=fc2appKey16app -jar "$installDir/bin/FatafatManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
+        fi
+        if [ "$restapi_cnt" -gt 0 ]; then
+		java -Dlog4j.configuration=file:$targetPath/restapi_log4j.properties  -jar "$installDir/bin/MetadataAPIService-1.0" --config "$targetPath/MetadataAPIConfig_${id}.properties" < /dev/null > /dev/null 2>&1 & 
+        fi
+		if [ ! -d "$installDir/run" ]; then
+			mkdir "$installDir/run"
+		fi
+			ps aux | egrep "FatafatManager|MetadataAPIService" | grep -v "grep" | tr -s " " | cut -d " " -f2 | tr "\\n" "," | sed "s/,$//"   > "$installDir/run/$pidfile"
+#		sleep 5
 EOF
+
+# ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "FatafatManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
+# scp  -o StrictHostKeyChecking=no   $workDir/temppid.pid "$machine:$installDir/run/node$id.pid"
+
 done
 exec 0<&12 12<&-
 

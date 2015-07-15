@@ -33,6 +33,8 @@ lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata,
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
+lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase)
+
 lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/FileSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(FatafatBase, FatafatData, Storage, Serialize)
@@ -42,6 +44,8 @@ lazy val Storage = project.in(file("Storage")) dependsOn("Metadata")
 lazy val Metadata = project.in(file("Metadata")) 
 
 lazy val MessageDef = project.in(file("MessageDef")) dependsOn(Metadata,MetadataBootstrap)
+
+lazy val OutputMsgDef  = project.in(file("OutputMsgDef")) dependsOn(Metadata,FatafatBase,BaseTypes)
 
 lazy val LoadtestCommon = project.in(file("Tools/LoadtestCommon")) dependsOn(Storage)
 
@@ -61,7 +65,7 @@ lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(Pm
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, FatafatBase, BaseTypes)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef)
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(FatafatBase,MetadataAPI,ZooKeeperLeaderLatch)
 
@@ -88,4 +92,6 @@ lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase)
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs)
 
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage)
+
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
 

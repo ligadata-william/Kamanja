@@ -252,7 +252,7 @@ class FatafatMetadata {
       }
     }
 
-    // LOG.info("Loading Model:" + mdl.FullName + ". ClassName: " + clsName + ". IsModel:" + isModel)
+    // LOG.debug("Loading Model:" + mdl.FullName + ". ClassName: " + clsName + ". IsModel:" + isModel)
 
     if (isModel) {
       try {
@@ -336,7 +336,7 @@ class FatafatMetadata {
 
     // Load all jars first
     msgDefs.foreach(msg => {
-      // LOG.info("Loading msg:" + msg.FullName)
+      // LOG.debug("Loading msg:" + msg.FullName)
       LoadJarIfNeeded(msg, loadedJars, loader)
     })
 
@@ -455,7 +455,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Containers
+        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Containers
       }
     }
 
@@ -464,7 +464,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation) // Messages
+        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Messages
       }
     }
 
@@ -575,7 +575,6 @@ object FatafatMetadata extends MdBaseResolveInfo {
     }
 
     val zkTransaction = JsonSerializer.parseZkTransaction(receivedJsonStr, "JSON")
-    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
 
     if (zkTransaction == null || zkTransaction.Notifications.size == 0) {
       // nothing to do
@@ -587,6 +586,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
       return
     }
 
+    MetadataAPIImpl.UpdateMdMgr(zkTransaction)
+
     val obj = new FatafatMetadata
 
     // BUGBUG:: Not expecting added element & Removed element will happen in same transaction at this moment
@@ -597,6 +598,8 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
     //// Check for Jars -- Begin
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
+
+    val unloadMsgsContainers = scala.collection.mutable.Set[String]()
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
@@ -618,6 +621,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
           }
         }
         case "MessageDef" => {
+          unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name)
           zkMessage.Operation match {
             case "Add" => {
               try {
@@ -633,6 +637,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
           }
         }
         case "ContainerDef" => {
+          // unloadMsgsContainers += (zkMessage.NameSpace + "." + zkMessage.Name) // Can we clear Container also?
           zkMessage.Operation match {
             case "Add" => {
               try {
@@ -651,6 +656,9 @@ object FatafatMetadata extends MdBaseResolveInfo {
       }
     })
 
+    if (unloadMsgsContainers.size > 0)
+      envCtxt.clearIntermediateResults(unloadMsgsContainers.toArray)
+
     val nonExistsJars = FatafatMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
@@ -660,12 +668,12 @@ object FatafatMetadata extends MdBaseResolveInfo {
     //// Check for Jars -- End
 
     zkTransaction.Notifications.foreach(zkMessage => {
-      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version
+      val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong
       LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {
-            case "Add" => {
+            case "Add" | "Activate" => {
               try {
                 val mdl = mdMgr.Model(zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong, true)
                 if (mdl != None) {
@@ -679,7 +687,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               }
             }
-            case "Remove" => {
+            case "Remove" | "Deactivate" => {
               try {
                 removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
@@ -752,6 +760,9 @@ object FatafatMetadata extends MdBaseResolveInfo {
               LOG.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")
             }
           }
+        }
+        case "OutputMsgDef" => {
+
         }
         case _ => {
           LOG.warn("Unknown objectType " + zkMessage.ObjectType + " in zookeeper notification, notification is not processed ..")

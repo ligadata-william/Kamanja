@@ -1,66 +1,28 @@
-Fatafat Home
-===
-###What is Fatafat?
+######What is Kamanja&#8482;?
 
-Fatafat is a real-time processing and decisioning (Fatafat) framework. It is built natively on several open-source, Apache projects. It comprises a real-time computation engine, ingestion streaming operators, DAG rules as PMML models, a console for interfaces, search and resource management, REST APIs and pre-built connectors, and out-of-the-box integration with Hadoop, data stores like HBase or Cassandra and messaging systems like Kafka or MQ.
+Kamanja&#8482; is a real-time processing and decisioning (RTD) framework. It is built natively on several open-source, Apache&#8482; projects. It comprises a real-time computation engine, ingestion streaming operators, [DAG](https://github.com/ligaDATA/Kamanja/wiki/Glossary#d) rules as [PMML](http://www.ibm.com/developerworks/library/ba-ind-PMML1/) models, a console for interfaces, search and resource management, [REST](http://rest.elkstein.org/2008/02/what-is-rest.html) [API](https://github.com/ligaDATA/Kamanja/wiki/Glossary#a)s and pre-built connectors, and out-of-the-box integration with [Apache&#8482; Hadoop&#174;](https://hadoop.apache.org/), data stores such as [Apache HBase&#8482;](http://hbase.apache.org/) or [Apache Cassandra&#8482;](http://cassandra.apache.org/), and messaging systems such as [Apache Kafka](http://kafka.apache.org/) or [IBM&#174; MQ](http://www-03.ibm.com/software/products/en/ibm-mq).
 
-The FatafatTM framework is open source with many features that support use cases for developers:
+The Kamanja framework is open source with many features that support your use cases:
 
-1. **Built bottom-up in Scala**; a concise powerful, language.
-2. **Compiles predictive models** saved as PMML into Scala and JAR files, then saves into data store.
-Move complex analytic models into production from weeks to days.
-3. **Performs real-time message processing** (i.e. from Kafka), **real-time scoring** with PMML models,
-and feeds outputs to application or messaging systems. It provides the benefits of both Storm’s
-stateless, event streaming and Spark Streaming’s stateful, distributed processing.
-4. **Performance and Scale**. Delivers 100% more message throughput than Storm with DAG execution
-of PMML models on a single node. Runs hundreds of models concurrently on the same node.
-5. **Run event processing one-time only by enforcing concurrency and frequency**. Eliminates errors
+1. **Built bottom-up in [Scala](http://www.scala-lang.org/what-is-scala.html)**; a concise, powerful, language.
+2. **Compiles predictive models**; saves as PMML into Scala and [JAR](https://github.com/ligaDATA/Kamanja/wiki/Glossary#j) files, then saves into data store.
+Moves complex analytic models into production from weeks to days.
+3. **Performs real-time message processing** (that is, from Kafka), **real-time scoring** with PMML models,
+and feeds outputs to application or messaging systems. It provides the benefits of both [Apache Storm](https://storm.apache.org/)’s stateless, event streaming, and [Apache Spark Streaming](https://spark.apache.org/streaming/)’s stateful, distributed processing.
+4. **Performance and Scale**. Delivers 100% more message throughput than Storm with DAG execution of PMML models on a single node. Runs hundreds of models concurrently on the same node.
+5. **Runs event processing one-time only by enforcing concurrency and frequency**. Eliminates errors
 and false alerts from running the same transactions at once or running transactions repeatedly.
-6. **Fault tolerant**. Uses Apache Kafka for messaging, and Apache Zookeeper to provide fault
-tolerance, processor isolation, cluster coordination service, and resource management.
+6. **Fault tolerant**. Uses Kafka for messaging and [Apache ZooKeeper](https://zookeeper.apache.org/) to provide fault tolerance, processor isolation, cluster coordination service, and resource management.
 7. **Handles complex record routing** in large parallelized implementations.
-8. **Find and fix problems fast** with DevOps. View service logs to troubleshoot.
-9. **Pluggable**. Provides pluggable APIs that enables FatafatTM to run with other messaging systems and
+8. **Finds and fixes problems fast** with [DevOps](http://theagileadmin.com/what-is-devops/). Views service logs to troubleshoot.
+9. **Pluggable**. Provides pluggable APIs that enable Kamanja to run with other messaging systems and
 execution environments.
-10. **Analytics**. FatafatTM exposes services and data for analytic, reporting and scheduling tools.
-11. **Supports other high level languages and abstractions** for implementation (PMML, Cassandra,
-Hbase, DSL)
-12. **Quickly deploy on multi-node clusters**. Build, ship and run applications with
+10. **Analytics**. Kamanja exposes services and data for analytic, reporting, and scheduling tools.
+11. **Supports other high-level languages and abstractions** for implementation (PMML, Cassandra,
+Hbase, [DSL](https://github.com/ligaDATA/Kamanja/wiki/Glossary#d)).
+12. **Quickly deploys on multi-node clusters**. Builds, ships, and runs applications with
 minimal downtime.
-13. **Vibrant Community**. Easy to deploy, test samples, developer guides and community to answer your
-questions and make contributions.
+13. **Vibrant Community**. Easy to deploy, provides test samples, developer guides, and community forums to answer your questions and make contributions.
 
-###Getting Started
 
-####Prerequisites:
 
-* CentOS/RedHat/OS X (virtual machine for Windows)
-
-* ~ 400 MB for installation (3 GB if building from source)
- 
-* Have sudoer access
-
-* JDK 1.7.1 or higher ([download](http://www.oracle.com/technetwork/java/javase/downloads/index.html))
-
-* Scala v2.10.4 ([download] (http://www.scala-lang.org/download/2.10.4.html). Be sure to add scala to $PATH)
-
-* On Linux [download sbt](http://www.scala-sbt.org/download.html), [download zookeeper](http://zookeeper.apache.org/releases.html#download), and [download kafka 2.10-0.8.1.1](http://kafka.apache.org/) [for Mac OS see instructions [here](https://github.com/ligaDATA/Fatafat/wiki/Appendix-A-SetupGuide)]
-
-####Quick Start
-
-1. [DOWNLOAD](http://goo.gl/forms/IOpB8qMU9n) latest Fatafat binaries
-
-2. Unzip the downloaded file
-
-    a. On Mac OS, double click the zip file if it’s not already unzipped
-    
-    b. On Windows, use ‘winrar’ or ‘winzip’ to unzip it 
-    
-    c. On Linux, use 'unzip fatafat_install_v103.zip -d destination_folder'. (Use “sudo apt-get install unzip” if unzip not found)
-    
-3. Start with [Installing and Running Fatafat] (https://github.com/ligaDATA/Fatafat/wiki/Installing-and-Running-Fatafat)
-
-###[Getting Involved](https://github.com/ligaDATA/Fatafat/wiki/Getting-Involved)
-
-     
-###[Documentation](https://github.com/ligaDATA/Fatafat/wiki/Documentation)

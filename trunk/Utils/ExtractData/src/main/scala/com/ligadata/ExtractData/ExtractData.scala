@@ -22,8 +22,8 @@ import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.FatafatBase._
 import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
+import com.ligadata.Serialize.{ JDataStore }
 
-case class DataStoreInfo(StoreType: String, SchemaName: String, Location: String)
 case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
 // ClassLoader
@@ -290,11 +290,13 @@ object ExtractData extends MdBaseResolveInfo {
     }
   }
 
-  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String): DataStore = {
+  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
     try {
       var connectinfo = new PropertyMap
       connectinfo += ("connectiontype" -> storeType)
       connectinfo += ("table" -> tableName)
+      if (adapterSpecificConfig != null)
+        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
       storeType match {
         case "hashmap" => {
           connectinfo += ("path" -> dataLocation)
@@ -495,11 +497,11 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         sys.exit(1)
       }
 
-      var dataStoreInfo: DataStoreInfo = null
+      var dataStoreInfo: JDataStore = null
 
       {
         implicit val jsonFormats = org.json4s.DefaultFormats
-        dataStoreInfo = org.json4s.jackson.JsonMethods.parse(dataStore).extract[DataStoreInfo]
+        dataStoreInfo = org.json4s.jackson.JsonMethods.parse(dataStore).extract[JDataStore]
       }
 
       val dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
@@ -519,10 +521,12 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         LOG.error("Not found valid DataLocation.")
         sys.exit(1)
       }
+      
+      val adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
 
       resolveCurretType(typName)
 
-      _allDataDataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation)
+      _allDataDataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, adapterSpecificConfig)
 
       val partKey = loadConfigs.getProperty("PartitionKey".toLowerCase, "").replace("\"", "").trim.split(",").map(_.trim.toLowerCase).filter(_.size > 0).toList
       val primaryKey = loadConfigs.getProperty("PrimaryKey".toLowerCase, "").replace("\"", "").trim.split(",").map(_.trim).filter(_.size > 0).toList

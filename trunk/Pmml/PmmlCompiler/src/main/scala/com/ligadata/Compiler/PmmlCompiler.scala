@@ -412,12 +412,14 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		xformObject(ctx)
 		val srcCode : String = generateCode(ctx)
 		
-		logger.debug("compile ends")
-
-		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
-		logger.debug("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
-		
-		val modelDef : ModelDef = constructModelDef(ctx)
+		val modelDef : ModelDef = if (ctx.ErrorCount > 0) {
+			logger.error(s"Pmml compile completes... error count = ${ctx.ErrorCount}... Scala compile abandoned... model definition will NOT be produced.")
+			null
+		} else {
+			val modlDef : ModelDef = constructModelDef(ctx)
+			modlDef
+		}
+				
 		(srcCode, modelDef)
 	}
 	
@@ -446,8 +448,6 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		xformObject(ctx)
 		val srcCode : String = generateCode(ctx)
 		
-		logger.debug("compile ends")
-		
 		if (srcCode != null) {
 			/** save a copy of the original xml that was sent as a string to this function.  It is to be included
 			 *  in the jar, should that method be called.  Anticipate that possibility.  Use a file name based 
@@ -461,18 +461,23 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			writeSrcFile(pmmlString, xmlFileName)
 			pmmlFilePath = xmlFileName
 		}
-
-		/** traverse the tree: 1) find the input variables 2) find output variables, 3) construct model def */
-		logger.debug("create model definition...1) find the input variables 2) find output variables, 3) construct model def")
 		
-		val modelDef : ModelDef = constructModelDef(ctx,recompile)
+		val modelDef : ModelDef = if (ctx.ErrorCount > 0) {
+			logger.error(s"Pmml compile completes... error count = ${ctx.ErrorCount}... Scala compile abandoned... model definition will NOT be produced.")
+			null
+		} else {
+			val modlDef : ModelDef = constructModelDef(ctx,recompile)
+			modlDef
+		}
+		
 		(srcCode, modelDef)
 	}
 	//
 	
 	private def constructModelDef(ctx : PmmlContext,recompile:Boolean = false) : ModelDef = {
 		/**
-			val modelPkg = s"com.$clientName.$classname.pmml"
+			val curTmInMilli = System.currentTimeMillis
+			val modelPkg = s"com.$clientName.$classname_$curTmInMilli.pmml"
 			ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
 			ctx.pmmlTerms("ClassName") = Some(classname)
 			ctx.modelInputs(fldRef.field.toLowerCase()) = (cName, fieldName, baseType.NameSpace, baseType.Name, isGlobal, null) // BUGBUG:: We need to fill collectionType properly instead of null

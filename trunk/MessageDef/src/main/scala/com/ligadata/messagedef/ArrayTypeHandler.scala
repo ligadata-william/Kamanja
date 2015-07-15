@@ -14,12 +14,12 @@ object ArrayTypeHandler {
     serialize(typ, fixed, f)
   }
 
-  def deSerializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
-    deSerialize(typ, fixed, f)
+  def deSerializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
+    deSerialize(typ, fixed, f, isArayBuf)
   }
 
-  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
-    prevObjDeserialize(typ, fixed, f, childs)
+  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
+    prevObjDeserialize(typ, fixed, f, childs, isArayBuf)
   }
 
   //serialize String for array of messages or containers
@@ -55,7 +55,7 @@ object ArrayTypeHandler {
   }
 
   //Deserialize String for array of messages or containers
-  private def deSerialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  private def deSerialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
     var deserializedBuf = new StringBuilder(8 * 1024)
 
     try {
@@ -75,17 +75,24 @@ object ArrayTypeHandler {
       if (fixed.toLowerCase().equals("true")) {
 
         deserializedBuf.append("%s{%s%s%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis);%s".format(pad1, newline, pad1, pad2, newline))
+        if (!isArayBuf)
+          deserializedBuf.append("%s %s %s = new %s(arraySize) %s".format(pad2, newline, f.Name, typ.get.typeString, newline))
         deserializedBuf.append("%sval i:Int = 0;%s".format(pad2, newline))
         deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
         deserializedBuf.append("%svar bytes = new Array[Byte](com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis))%s".format(pad2, newline))
         deserializedBuf.append("%sdis.read(bytes);%s".format(pad2, newline))
         deserializedBuf.append("%sval inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, childType, newline))
-        deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
-
+        if (isArayBuf)
+          deserializedBuf.append("%s%s += inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
+        else
+          deserializedBuf.append("%s%s(i) = inst.asInstanceOf[%s;%s%s}%s%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline, newline, pad2, newline))
       } else if (fixed.toLowerCase().equals("false")) {
+        deserializedBuf.append("%s{ var arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis)%s".format(pad2, newline))
 
-        deserializedBuf.append("%s{%s var %s = new %s %s".format(pad2, newline, f.Name, typ.get.typeString, newline))
-        deserializedBuf.append("%svar arraySize = com.ligadata.BaseTypes.IntImpl.DeserializeFromDataInputStream(dis)%s".format(pad2, newline))
+        if (isArayBuf)
+          deserializedBuf.append("%s%s var %s = new %s %s".format(pad2, newline, f.Name, typ.get.typeString, newline))
+        else
+          deserializedBuf.append("%s %s var %s = new %s(arraySize) %s".format(pad2, newline, f.Name, typ.get.typeString, newline))
         // deserializedBuf.append("%sval %s = new %s %s".format(pad2, f.Name, typ.get.typeString.toString(), newline))
         deserializedBuf.append("%s val i:Int = 0;%s".format(pad2, newline))
         deserializedBuf.append("%s for (i <- 0 until arraySize) {%s".format(pad2, newline))
@@ -93,7 +100,10 @@ object ArrayTypeHandler {
         deserializedBuf.append("%s var bytes = new Array[Byte](byteslength)%s".format(pad2, newline))
         deserializedBuf.append("%s dis.read(bytes);%s".format(pad2, newline))
         deserializedBuf.append("%s val inst = SerializeDeserialize.Deserialize(bytes, mdResolver, loader, false, \"%s\");%s".format(pad2, childType, newline))
-        deserializedBuf.append("%s%s += inst.asInstanceOf[%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline))
+        if (isArayBuf)
+          deserializedBuf.append("%s%s += inst.asInstanceOf[%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline))
+        else
+          deserializedBuf.append("%s%s(i) = inst.asInstanceOf[%s%s}%s".format(pad2, f.Name, typ.get.typeString.toString().split("\\[")(1), newline, pad2, newline))
         deserializedBuf.append("%s%s fields(\"%s\") = (-1, %s)}%s".format(newline, pad2, f.Name, f.Name, newline))
 
       }
@@ -104,7 +114,7 @@ object ArrayTypeHandler {
   }
 
   //Previous object Deserialize String and Convert Old object to new Object for array of messages or containers
-  private def prevObjDeserialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any]): (String, String, String, String) = {
+  private def prevObjDeserialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
     var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
@@ -148,39 +158,79 @@ object ArrayTypeHandler {
         }
       }
       if (fixed.toLowerCase().equals("true")) {
-        if (memberExists) {
-          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
-          if (sameType)
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child})%s".format(pad2, f.Name, newline))
-          else {
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
+        if (isArayBuf) {
+          if (memberExists) {
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
+            if (sameType)
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child})%s".format(pad2, f.Name, newline))
+            else {
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
+            }
           }
+        } else {
+          if (memberExists) {
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s for(i <- 0 until prevVerObj.%s.length) { %s".format(pad2, f.Name, newline))
+            if (sameType)
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s(i) = prevVerObj.%s(i)}%s".format(pad2, f.Name, f.Name, newline))
+            else {
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s(i)= curVerObj}%s".format(pad2, f.Name, newline))
+            }
+          }
+
         }
       } else if (fixed.toLowerCase().equals("false")) {
-        if (memberExists) {
-          mappedPrevVerMatchkeys.append("\"" + f.Name + "\",")
+        if (isArayBuf) {
+          if (memberExists) {
+            mappedPrevVerMatchkeys.append("\"" + f.Name + "\",")
 
-          // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s{var obj =  prevVerObj.getOrElse(\"%s\", null)%s".format(newline, pad2, f.Name, newline))
-          prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s case \"%s\" => { %s".format(pad2, f.Name, newline))
+            // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s{var obj =  prevVerObj.getOrElse(\"%s\", null)%s".format(newline, pad2, f.Name, newline))
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s case \"%s\" => { %s".format(pad2, f.Name, newline))
 
-          if (sameType)
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sif(prevObjfield._2._2 != null){ fields(\"%s\") = (-1, prevObjfield._2._2)}}%s".format(pad2, f.Name, newline))
-          else {
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s type typ = scala.collection.mutable.ArrayBuffer[%s]%s".format(pad2, childName, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s var %s : %s = new %s;%s".format(pad2, f.Name, curObjtype, curObjtype, newline))
+            if (sameType)
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sif(prevObjfield._2._2 != null){ fields(\"%s\") = (-1, prevObjfield._2._2)}}%s".format(pad2, f.Name, newline))
+            else {
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s type typ = scala.collection.mutable.ArrayBuffer[%s]%s".format(pad2, childName, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s var %s : %s = new %s;%s".format(pad2, f.Name, curObjtype, curObjtype, newline))
 
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s if(prevObjfield._2._2 != null  && prevObjfield._2._2.isInstanceOf[typ]){%s%s prevObjfield._2._2.asInstanceOf[typ].foreach(child => {%s".format(pad2, newline, pad2, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s val curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s curVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s %s += curVerObj})}%s".format(pad2, f.Name, newline))
-            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s fields(\"%s\") = (-1, %s)}%s".format(pad2, f.Name, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s if(prevObjfield._2._2 != null  && prevObjfield._2._2.isInstanceOf[typ]){%s%s prevObjfield._2._2.asInstanceOf[typ].foreach(child => {%s".format(pad2, newline, pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s val curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s curVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s %s += curVerObj})}%s".format(pad2, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s fields(\"%s\") = (-1, %s)}%s".format(pad2, f.Name, f.Name, newline))
 
+            }
+
+          } else if (membrMatchTypeNotMatch) {
+            mappedPrevTypNotrMatchkeys = mappedPrevTypNotrMatchkeys.append("\"" + f.Name + "\",")
           }
+        } else {
+          if (memberExists) {
+            mappedPrevVerMatchkeys.append("\"" + f.Name + "\",")
 
-        } else if (membrMatchTypeNotMatch) {
-          mappedPrevTypNotrMatchkeys = mappedPrevTypNotrMatchkeys.append("\"" + f.Name + "\",")
+            // prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s{var obj =  prevVerObj.getOrElse(\"%s\", null)%s".format(newline, pad2, f.Name, newline))
+            prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s case \"%s\" => { %s".format(pad2, f.Name, newline))
+
+            if (sameType)
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sif(prevObjfield._2._2 != null){ fields(\"%s\") = (-1, prevObjfield._2._2)}}%s".format(pad2, f.Name, newline))
+            else {
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s type typ = scala.Array[%s]%s".format(pad2, childName, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s var %s : %s = %s();%s".format(pad2, f.Name, curObjtype, curObjtype, newline))
+
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s if(prevObjfield._2._2 != null  && prevObjfield._2._2.isInstanceOf[typ]){%s%s for (i <- 0 until prevObjfield._2._2.length) {%s".format(pad2, newline, pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s val curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s curVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s %s(i) = curVerObj}}%s".format(pad2, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s fields(\"%s\") = (-1, %s)}%s".format(pad2, f.Name, f.Name, newline))
+
+            }
+
+          } else if (membrMatchTypeNotMatch) {
+            mappedPrevTypNotrMatchkeys = mappedPrevTypNotrMatchkeys.append("\"" + f.Name + "\",")
+          }
         }
       }
     } catch {
@@ -225,7 +275,7 @@ object ArrayTypeHandler {
       if (isArayBuf)
         deserializedBuf.append("%s%s :+= inst;%s%s}%s%s%s} }%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
       else {
-       // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
+        // deserializedBuf.append("%sif(inst != null)%s".format(pad2, newline))
         deserializedBuf.append("%s%s(i) = inst;%s%s}%s%s%s}}%s".format(pad2, fieldName, newline, pad2, newline, newline, pad2, newline))
       }
 
@@ -242,7 +292,10 @@ object ArrayTypeHandler {
       deserializedBuf.append("%sval i:Int = 0%s".format(pad2, newline))
       deserializedBuf.append("%sif(arraySize > 0){ var arrValue = new %s(arraySize)%s".format(pad2, typeString, newline))
       deserializedBuf.append("%sfor (i <- 0 until arraySize) { val inst = %s(dis)%s".format(pad2, deserType, newline))
-      deserializedBuf.append("%sarrValue(i) = inst }%s".format(pad2, newline))
+      if (isArayBuf)
+        deserializedBuf.append("%s arrValue :+= inst }%s".format(pad2, newline))
+      else
+        deserializedBuf.append("%sarrValue(i) = inst }%s".format(pad2, newline))
       deserializedBuf.append("%s fields(\"%s\") = (-1, arrValue)}}%s".format(pad2, fieldName, newline))
 
     }

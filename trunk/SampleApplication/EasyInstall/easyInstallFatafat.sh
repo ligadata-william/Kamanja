@@ -100,7 +100,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly
+sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -117,6 +117,9 @@ cp FatafatManager/target/scala-2.10/FatafatManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
 cp Utils/ExtractData/target/scala-2.10/ExtractData* $bin
+cp Utils/NodeInfoExtract/target/scala-2.10/NodeInfoExtract* $bin
+cp Utils/JdbcDataCollector/target/scala-2.10/JdbcDataCollector* $bin
+cp MetadataAPIService/target/scala-2.10/MetadataAPIService* $bin
 
 # *******************************
 # Copy jars required (more than required if the fat jars are used)
@@ -211,6 +214,7 @@ cp $ivyPath/cache/commons-logging/commons-logging/jars/commons-logging-1.1.3.jar
 cp $ivyPath/cache/com.github.stephenc.findbugs/findbugs-annotations/jars/findbugs-annotations-1.3.9-1.jar $systemlib
 cp $ivyPath/cache/asm/asm/jars/asm-3.1.jar $systemlib
 cp $srcPath/InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/filesimpleinputoutputadapters_2.10-1.0.jar $systemlib
+cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/target/scala-2.10/ibmmqsimpleinputoutputadapters_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/commons-cli/commons-cli/jars/commons-cli-1.2.jar $systemlib
 cp $srcPath/Utils/SimpleKafkaProducer/target/scala-2.10/simplekafkaproducer_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/com.yammer.metrics/metrics-core/jars/metrics-core-2.2.0.jar $systemlib
@@ -231,7 +235,6 @@ cp $ivyPath/cache/voldemort/voldemort/jars/voldemort-0.96.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-http/bundles/spray-http-1.3.1.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26-sources.jar $systemlib
 cp $ivyPath/cache/uk.co.bigbeeconsultants/bee-client_2.10/jars/bee-client_2.10-0.28.0.jar $systemlib
-cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.8.1.jar $systemlib
 cp $ivyPath/cache/org.mortbay.jetty/jetty-embedded/jars/jetty-embedded-6.1.26.jar $systemlib
 cp $ivyPath/cache/com.fasterxml.jackson.core/jackson-core/bundles/jackson-core-2.3.1.jar $systemlib
 cp $ivyPath/cache/org.apache.httpcomponents/httpclient/jars/httpclient-4.2.5.jar $systemlib
@@ -320,6 +323,8 @@ cp $ivyPath/cache/commons-codec/commons-codec/jars/commons-codec-1.4.jar $system
 cp $ivyPath/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar $systemlib
 cp $ivyPath/cache/joda-time/joda-time/jars/joda-time-2.3.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-testkit/jars/spray-testkit-1.3.1.jar $systemlib
+
+cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
 
 # sample configs
 #echo "copy sample configs..."

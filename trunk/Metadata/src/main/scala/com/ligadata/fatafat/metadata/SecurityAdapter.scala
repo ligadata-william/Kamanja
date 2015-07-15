@@ -28,7 +28,6 @@ trait SecurityAdapter {
  * call the ADD method when
  */
 trait AuditAdapter {
-  var adapterProperties: Map[String,String] = null
   def Shutdown() = {}
   
   // Implement these methods
@@ -40,7 +39,7 @@ trait AuditAdapter {
   def getAuditRecord(startTime: Date, endTime: Date, userOrRole: String, action: String, objectAccessed: String): Array[AuditRecord]
   
   // Set the desired properties for this adapter
-  def init: Unit
+  def init(parmFile: String): Unit
 }
 
 object AuditConstants {
@@ -60,6 +59,7 @@ object AuditConstants {
   
   // Objects
   val MESSAGE = "Message"
+  val OUTPUTMSG = "OutputMsg"
   val MODEL = "Model"
   val CONTAINER = "Container"
   val FUNCTION = "Function"

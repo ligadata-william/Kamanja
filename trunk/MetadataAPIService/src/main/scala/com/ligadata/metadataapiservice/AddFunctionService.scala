@@ -33,7 +33,7 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
   
   def process(functionJson:String, formatType:String): Unit = {
     
-    log.info("Requesting AddFunction {},{}",functionJson,formatType)
+    log.debug("Requesting AddFunction {},{}",functionJson,formatType)
     
     var nameVal: String = null
     if (formatType.equalsIgnoreCase("json")) {
@@ -47,8 +47,7 @@ class AddFunctionService(requestContext: RequestContext, userid:Option[String], 
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType)
-      MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionJson,AuditConstants.SUCCESS,"",nameVal)       
+      val apiResult = MetadataAPIImpl.AddFunctions(functionJson,formatType,userid)    
       requestContext.complete(apiResult)     
     }
   }

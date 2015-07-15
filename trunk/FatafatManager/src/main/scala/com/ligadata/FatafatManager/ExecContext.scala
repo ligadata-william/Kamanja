@@ -15,26 +15,40 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
+
       try {
-        val xformedmsgs = xform.execute(data, format)
+        val transformStartTime = System.nanoTime
+        val xformedmsgs = xform.execute(data, format, associatedMsg, delimiterString)
+        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Transform", uv, readTmNanoSecs, transformStartTime))
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
           envCtxt.setAdapterUniqueKeyValue(tempTransId, uk, uv, xformedMsgCntr, totalXformedMsgs)
-          engine.execute(tempTransId, xformed._2, xformed._1, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
+          engine.execute(tempTransId, xformed._1, xformed._2, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
         })
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         }
       } finally {
-        // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
+        // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
+        val commitStartTime = System.nanoTime
+        val containerData = envCtxt.getChangedData(tempTransId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         envCtxt.commitData(tempTransId)
+        if (containerData != null && containerData.size > 0) {
+          val datachangedata = ("txnid" -> tempTransId.toString) ~
+            ("changeddatakeys" -> containerData.map(kv =>
+              ("C" -> kv._1) ~
+                ("K" -> kv._2)))
+          val sendJson = compact(render(datachangedata))
+          FatafatLeader.SetNewDataToZkc(FatafatConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
+        }
+        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
       }
     } catch {
       case e: Exception => {
@@ -123,7 +137,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
     results.toArray
   }
 
-  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int): Unit = {
+  def execute(tempTransId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       try {
         val json = parse(data)
@@ -165,7 +179,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         }
       } finally {
-        // LOG.info("UniqueKeyValue:%s => %s".format(uk, uv))
+        // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
         envCtxt.commitData(tempTransId)
       }
     } catch {

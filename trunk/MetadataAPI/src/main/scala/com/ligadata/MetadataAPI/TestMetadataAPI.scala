@@ -23,6 +23,7 @@ case class MissingArgumentException(e: String) extends Throwable(e)
 object TestMetadataAPI{
 
   private type OptionMap = Map[Symbol, Any]
+  private val userid: Option[String] = Some("someUser")
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
@@ -85,7 +86,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val typStr = Source.fromFile(typDefFile).mkString
     //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddTypes(typStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddTypes(typStr, "JSON",userid))
     }
     catch {
       case e: AlreadyExistsException => {
@@ -101,7 +102,7 @@ object TestMetadataAPI{
     try{
       //logger.setLevel(Level.TRACE);  //check again
 
-      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
+      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef",None)
       if( typKeys.length == 0 ){
 	      println("Sorry, No types available in the Metadata")
 	      return
@@ -125,7 +126,7 @@ object TestMetadataAPI{
       val typNameSpace = typKeyTokens(0)
       val typName = typKeyTokens(1)
       val typVersion = typKeyTokens(2)
-      val typOpt = MetadataAPIImpl.GetType(typNameSpace,typName,typVersion,"JSON")
+      val typOpt = MetadataAPIImpl.GetType(typNameSpace,typName,typVersion,"JSON",userid)
 
       typOpt match {
         case None => None
@@ -142,7 +143,7 @@ object TestMetadataAPI{
   }
 
   def GetAllTypes{
-    val apiResult = MetadataAPIImpl.GetAllTypes("JSON")
+    val apiResult = MetadataAPIImpl.GetAllTypes("JSON",userid)
     //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
@@ -154,7 +155,7 @@ object TestMetadataAPI{
     try {
      // logger.setLevel(Level.TRACE); //check again
 
-      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef")
+      val typKeys = MetadataAPIImpl.GetAllKeys("TypeDef",None)
       if( typKeys.length == 0 ){
         println("Sorry, there are no types available in the Metadata")
 	      return
@@ -177,7 +178,7 @@ object TestMetadataAPI{
       val typNameSpace = typKeyTokens(0)
       val typName = typKeyTokens(1)
       val typVersion = typKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveType(typNameSpace,typName,typVersion.toLong, userid)
 
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -194,7 +195,7 @@ object TestMetadataAPI{
 
   // TODO: Rewrite Update Type to allow a user to pick the file they wish to update a type from.
   def UpdateType = {
-    val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON")
+    val apiResult = MetadataAPIImpl.UpdateType(SampleData.sampleNewScalarTypeStr,"JSON",userid)
     //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
@@ -240,7 +241,7 @@ object TestMetadataAPI{
       //logger.setLevel(Level.DEBUG); //check again
       val fcnStr = Source.fromFile(fcnDefFile).mkString
       //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE) //check again
-      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON"))
+      println("Results as json string => \n" + MetadataAPIImpl.AddFunctions(fcnStr, "JSON",userid))
     }
     catch {
       case e: AlreadyExistsException => {
@@ -259,7 +260,7 @@ object TestMetadataAPI{
     try {
       logger.setLevel(Level.TRACE);
 
-      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
       if (fcnKeys.length == 0) {
         println("Sorry, there are no functions available in the Metadata")
         return
@@ -285,9 +286,9 @@ object TestMetadataAPI{
       val fcnNameSpace = fcnKeyTokens(0)
       val fcnName = fcnKeyTokens(1)
       val fcnVersion = fcnKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong,userid)
 
-      val resultData = MetadataAPIImpl.getApiResult(apiResult)
+      //val resultData = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }
     catch {
@@ -297,14 +298,14 @@ object TestMetadataAPI{
     }
   }
 
-    def GetFunction: Unit = {
+  def GetFunction: Unit = {
     val loggerName = this.getClass.getName
     lazy val logger = Logger.getLogger(loggerName)
 
     try{
       logger.setLevel(Level.TRACE)
 
-      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true)
+      val fcnKeys = MetadataAPIImpl.GetAllFunctionsFromCache(true,None)
       if( fcnKeys.length == 0 ){
         println("Sorry, No functions available in the Metadata")
         return
@@ -329,7 +330,7 @@ object TestMetadataAPI{
       val fcnNameSpace = fcnKeyTokens(0)
       val fcnName= fcnKeyTokens(1)
       //val fcnVersion = fcnKeyTokens(2)
-      val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace,fcnName,"JSON")
+      val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace,fcnName,"JSON",userid)
 
    //   val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -342,31 +343,31 @@ object TestMetadataAPI{
   }
   
   def UpdateFunction = {
-    val apiResult = MetadataAPIImpl.UpdateFunctions(SampleData.sampleFunctionStr,"JSON")
+    val apiResult = MetadataAPIImpl.UpdateFunctions(SampleData.sampleFunctionStr,"JSON", userid)
   //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
 
   def AddConcept = {
-    val apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON")
+    val apiResult = MetadataAPIImpl.AddConcepts(SampleData.sampleConceptStr,"JSON",userid)
  //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcept = {
-    val apiResult = MetadataAPIImpl.RemoveConcept("Ligadata.ProviderId.100")
+    val apiResult = MetadataAPIImpl.RemoveConcept("Ligadata.ProviderId.100",userid)
  //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
 
   def RemoveConcepts = {
-    val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"))
+    val apiResult = MetadataAPIImpl.RemoveConcepts(Array("Ligadata.ProviderId.100"),userid)
     //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
 
   def UpdateConcept = {
-    val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON")
+    val apiResult = MetadataAPIImpl.UpdateConcepts(SampleData.sampleConceptStr,"JSON",userid)
   //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
     println("Result as Json String => \n" + apiResult)
   }
@@ -403,7 +404,7 @@ object TestMetadataAPI{
     try{
   //    logger.setLevel(Level.TRACE); //check again
 
-      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef",None)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -430,11 +431,11 @@ object TestMetadataAPI{
       val msgVersion = msgKeyTokens(2)
 
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace,msgName,msgVersion.toLong)
-      logger.trace("DependentModels => " + depModels)
+      logger.debug("DependentModels => " + depModels)
 
       logger.debug("DependentModels => " + depModels)
 	
-      val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion)
+      val apiResult = MetadataAPIImpl.GetMessageDef(msgNameSpace,msgName,"JSON",msgVersion,userid)
 
  //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -449,7 +450,7 @@ object TestMetadataAPI{
     try{
     //  logger.setLevel(Level.TRACE); //check again
 
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true,None)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -482,7 +483,7 @@ object TestMetadataAPI{
 	})
       }
 
-      val apiResult = MetadataAPIImpl.GetMessageDefFromCache(msgNameSpace,msgName,"JSON",msgVersion)
+      val apiResult = MetadataAPIImpl.GetMessageDefFromCache(msgNameSpace,msgName,"JSON",msgVersion,userid)
       println("Result as Json String => \n" + apiResult)
       
     }catch {
@@ -496,7 +497,7 @@ object TestMetadataAPI{
     try{
      // logger.setLevel(Level.TRACE); //check again
 
-      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
+      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true,None)
 
       if( contKeys.length == 0 ){
 	          println("Sorry, No containers available in the Metadata")
@@ -521,7 +522,7 @@ object TestMetadataAPI{
       val contNameSpace = contKeyTokens(0)
       val contName = contKeyTokens(1)
       val contVersion = contKeyTokens(2)
-      val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace,contName,"JSON",contVersion)
+      val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace,contName,"JSON",contVersion,userid)
      println("Result as Json String => \n" + apiResult)
 
     }catch {
@@ -539,7 +540,7 @@ object TestMetadataAPI{
     try{
     //  logger.setLevel(Level.TRACE); //check again
 
-      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
+      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef",None)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -563,7 +564,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace,modName,"JSON",modVersion)
+      val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace,modName,"JSON",modVersion,userid)
 
  //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -583,7 +584,7 @@ object TestMetadataAPI{
     try{
   //    logger.setLevel(Level.TRACE); //check again
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true,None)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -607,7 +608,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace,modName,"JSON",modVersion)
+      val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace,modName,"JSON",modVersion,userid)
 
  //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -623,7 +624,7 @@ object TestMetadataAPI{
     try{
      // logger.setLevel(Level.TRACE); //check again
 
-      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef",None)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -648,7 +649,7 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong,userid)
 
       //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -664,7 +665,7 @@ object TestMetadataAPI{
     try{
     //  logger.setLevel(Level.TRACE);  //check again
 
-      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
+      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true,None)
 
       if( contKeys.length == 0 ){
 	println("Sorry, No containers available in the Metadata")
@@ -689,7 +690,7 @@ object TestMetadataAPI{
       val contNameSpace = contKeyTokens(0)
       val contName = contKeyTokens(1)
       val contVersion = contKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace,contName,contVersion.toLong, userid)
 
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -708,7 +709,7 @@ object TestMetadataAPI{
     try{
     //  logger.setLevel(Level.TRACE); //check again
 
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true,None)
 
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
@@ -733,7 +734,7 @@ object TestMetadataAPI{
       val msgNameSpace = msgKeyTokens(0)
       val msgName = msgKeyTokens(1)
       val msgVersion = msgKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace,msgName,msgVersion.toLong,userid)
 
     //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -749,7 +750,7 @@ object TestMetadataAPI{
     try{
       //logger.setLevel(Level.TRACE);  //check again
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true,None)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -773,7 +774,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong,userid)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -790,7 +791,7 @@ object TestMetadataAPI{
     try{
       //logger.setLevel(Level.TRACE);  //check again
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true,None)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -814,7 +815,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toLong)
+      val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace,modName,modVersion.toLong,userid)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -831,7 +832,7 @@ object TestMetadataAPI{
     try{
       //logger.setLevel(Level.TRACE);  //check again
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(false)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(false,None)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -855,7 +856,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toLong)
+      val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace,modName,modVersion.toLong,userid)
 
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -871,7 +872,7 @@ object TestMetadataAPI{
     try{
       //logger.setLevel(Level.TRACE);  //check again
 
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true,None)
 
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
@@ -895,7 +896,7 @@ object TestMetadataAPI{
       val modNameSpace = modKeyTokens(0)
       val modName = modKeyTokens(1)
       val modVersion = modKeyTokens(2)
-      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong)
+      val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace,modName,modVersion.toLong, userid)
 
   //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
@@ -910,7 +911,7 @@ object TestMetadataAPI{
   def GetAllMessagesFromStore{
     try{
       //logger.setLevel(Level.TRACE);  //check again
-      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef")
+      val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef",userid)
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages available in the Metadata")
 	return
@@ -928,7 +929,7 @@ object TestMetadataAPI{
   def GetAllModelsFromCache{
     try{
       //logger.setLevel(Level.TRACE);  //check again
-      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true)
+      val modKeys = MetadataAPIImpl.GetAllModelsFromCache(true,userid)
       if( modKeys.length == 0 ){
 	println("Sorry, No models available in the Metadata")
 	return
@@ -946,7 +947,7 @@ object TestMetadataAPI{
   def GetAllMessagesFromCache{
     try{
       //logger.setLevel(Level.TRACE);  //check again
-      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true)
+      val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true,userid)
       if( msgKeys.length == 0 ){
 	println("Sorry, No messages are available in the Metadata")
 	return
@@ -964,7 +965,7 @@ object TestMetadataAPI{
   def GetAllContainersFromCache{
     try{
       //logger.setLevel(Level.TRACE);  //check again
-      val msgKeys = MetadataAPIImpl.GetAllContainersFromCache(true)
+      val msgKeys = MetadataAPIImpl.GetAllContainersFromCache(true,userid)
       if( msgKeys.length == 0 ){
 	println("Sorry, No containers are available in the Metadata")
 	return
@@ -982,7 +983,7 @@ object TestMetadataAPI{
   def GetAllModelsFromStore{
     try{
       //logger.setLevel(Level.TRACE);  //check again
-      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef")
+      val modKeys = MetadataAPIImpl.GetAllKeys("ModelDef",userid)
       if( modKeys.length == 0 ){
 	println("Sorry, No models are available in the Metadata")
 	return
@@ -1048,7 +1049,7 @@ object TestMetadataAPI{
           //logger.setLevel(Level.TRACE);  //check again
           val contStr = Source.fromFile(contDefFile).mkString
         //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-          val res : String = MetadataAPIImpl.UpdateContainer(contStr,"JSON")
+          val res : String = MetadataAPIImpl.UpdateContainer(contStr,"JSON",userid)
           results += Tuple3(choice.toString, contDefFile, res)
         })
       } else {
@@ -1122,7 +1123,7 @@ object TestMetadataAPI{
     		   //logger.setLevel(Level.TRACE);  //check again
 		       val contStr = Source.fromFile(contDefFile).mkString
     		  // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    		   val res : String = MetadataAPIImpl.AddContainer(contStr,"JSON")
+    		   val res : String = MetadataAPIImpl.AddContainer(contStr,"JSON",userid)
     		   results += Tuple3(choice.toString, contDefFile, res)
     	  })
       } else {
@@ -1210,7 +1211,7 @@ object TestMetadataAPI{
           //logger.setLevel(Level.TRACE);  //check again
           val msgStr = Source.fromFile(msgDefFile).mkString
        //   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-          val res : String = MetadataAPIImpl.UpdateMessage(msgStr,"JSON")
+          val res : String = MetadataAPIImpl.UpdateMessage(msgStr,"JSON",userid)
           results += Tuple3(choice.toString, msgDefFile, res)
         })
       } else {
@@ -1281,7 +1282,7 @@ object TestMetadataAPI{
     		   //logger.setLevel(Level.TRACE);  //check again
 		       val msgStr = Source.fromFile(msgDefFile).mkString
     		//   MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-    		   val res : String = MetadataAPIImpl.AddContainer(msgStr,"JSON")
+    		   val res : String = MetadataAPIImpl.AddContainer(msgStr,"JSON",userid)
     		   results += Tuple3(choice.toString, msgDefFile, res)
     	  })
       } else {
@@ -1345,7 +1346,7 @@ object TestMetadataAPI{
       println(pmmlStr)
       // Save the model
   //    MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr))
+      println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr,userid))
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1393,7 +1394,7 @@ object TestMetadataAPI{
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr))
+      println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr,userid))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
@@ -1445,7 +1446,7 @@ object TestMetadataAPI{
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
     //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr))
+      println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr,userid,"testConf"))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Object Already in the metadata....")
@@ -1497,7 +1498,7 @@ object TestMetadataAPI{
       val cfgStr = Source.fromFile(cfgFilePath).mkString
       // Save the model
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr))
+      println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr,userid,"n/a"))
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Object Already in the metadata....")
@@ -1548,7 +1549,7 @@ object TestMetadataAPI{
       jarFilePath = jarFiles(choice-1).toString
       // Save the jar
      // MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath))
+      println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath),userid)
     }catch {
       case e: AlreadyExistsException => {
 	  logger.error("Model Already in the metadata....")
@@ -1600,7 +1601,7 @@ object TestMetadataAPI{
 
       val functionStr = Source.fromFile(functionFilePath).mkString
       //MdMgr.GetMdMgr.truncate("FunctionDef")
-      val apiResult = MetadataAPIImpl.AddFunctions(functionStr,"JSON")
+      val apiResult = MetadataAPIImpl.AddFunctions(functionStr,"JSON",userid)
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }catch {
@@ -1615,7 +1616,7 @@ object TestMetadataAPI{
 
   def DumpAllFunctionsAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllFunctionDefs("JSON")
+      val apiResult = MetadataAPIImpl.GetAllFunctionDefs("JSON",userid)
     //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1668,7 +1669,7 @@ object TestMetadataAPI{
 
       val conceptStr = Source.fromFile(conceptFilePath).mkString
       MdMgr.GetMdMgr.truncate("ConceptDef")
-      val apiResult = MetadataAPIImpl.AddConcepts(conceptStr,"JSON")
+      val apiResult = MetadataAPIImpl.AddConcepts(conceptStr,"JSON",userid)
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }catch {
@@ -1684,7 +1685,7 @@ object TestMetadataAPI{
 
   def DumpAllConceptsAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllConcepts("JSON")
+      val apiResult = MetadataAPIImpl.GetAllConcepts("JSON",userid)
     //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1734,7 +1735,7 @@ object TestMetadataAPI{
 
       val typeStr = Source.fromFile(typeFilePath).mkString
       //MdMgr.GetMdMgr.truncate("TypeDef")
-      val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON")
+      val apiResult = MetadataAPIImpl.AddTypes(typeStr,"JSON",userid)
    //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     }catch {
@@ -1797,7 +1798,7 @@ object TestMetadataAPI{
 
   def DumpAllNodesAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllNodes("JSON")
+      val apiResult = MetadataAPIImpl.GetAllNodes("JSON",userid)
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1809,7 +1810,7 @@ object TestMetadataAPI{
 
   def DumpAllClusterCfgsAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON")
+      val apiResult = MetadataAPIImpl.GetAllClusterCfgs("JSON",userid)
   //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1821,7 +1822,7 @@ object TestMetadataAPI{
 
   def DumpAllClustersAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllClusters("JSON")
+      val apiResult = MetadataAPIImpl.GetAllClusters("JSON",userid)
      // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1833,7 +1834,7 @@ object TestMetadataAPI{
 
   def DumpAllAdaptersAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllAdapters("JSON")
+      val apiResult = MetadataAPIImpl.GetAllAdapters("JSON",userid)
     //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -1845,7 +1846,7 @@ object TestMetadataAPI{
 
   def DumpAllCfgObjectsAsJson{
     try{
-      val apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON")
+      val apiResult = MetadataAPIImpl.GetAllCfgObjects("JSON",userid)
   //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
       println("Result as Json String => \n" + apiResult)
     } catch{
@@ -2032,6 +2033,191 @@ object TestMetadataAPI{
       }
     }
   }
+  
+  def AddOutputMessage {
+	    try {
+	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+	      if (dirName == null) {
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        logger.info("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
+	      }
+
+	      if (!IsValidDir(dirName))
+	        return
+
+	      val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (cfgFiles.length == 0) {
+	        logger.fatal("No config files in the directory " + dirName)
+	        return
+	      }
+
+	      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (outputmsgFiles.length == 0) {
+	        logger.fatal("No json message files in the directory " + dirName)
+	        return
+	      }
+	      println("\nPick a Message Definition file(s) from below choices\n")
+
+	      var seq = 0
+	      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	      seq += 1
+	      println("[" + seq + "] Main Menu")
+
+	      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+	      //val choice:Int = readInt()
+	      val choicesStr: String = readLine()
+
+	      var valid: Boolean = true
+	      var choices: List[Int] = List[Int]()
+	      var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
+	      try {
+	        choices = choicesStr.filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+	      } catch {
+	        case _: Throwable => valid = false
+	      }
+
+	      if (valid) {
+
+	        choices.foreach(choice => {
+	          if (choice == outputmsgFiles.length + 1) {
+	            return
+	          }
+	          if (choice < 1 || choice > outputmsgFiles.length + 1) {
+	            logger.fatal("Invalid Choice : " + choice)
+	            return
+	          }
+
+	          val outputmsgDefFile = outputmsgFiles(choice - 1).toString
+	          logger.setLevel(Level.TRACE);
+	          val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
+	          MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
+	          val res: String = MetadataAPIOutputMsg.AddOutputMessage(outputmsgStr, "JSON", userid)
+	          results += Tuple3(choice.toString, outputmsgDefFile, res)
+	        })
+	      } else {
+	        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+	        return
+	      }
+
+	      results.foreach(triple => {
+	        val (choice, filePath, result): (String, String, String) = triple
+	        println(s"Results for output message [$choice] $filePath => \n$result")
+	      })
+
+	    } catch {
+	      case e: AlreadyExistsException => {
+	        logger.error("Object Already in the metadata....")
+	      }
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def UpdateOutputMsg: Unit = {
+	    try {
+	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+	      if (dirName == null) {
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        logger.debug("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, the directory defaults to " + dirName)
+	      }
+
+	      if (!IsValidDir(dirName))
+	        return
+
+	      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+	      if (outputmsgFiles.length == 0) {
+	        logger.error("No output message files in the directory " + dirName)
+	        return
+	      }
+
+	      var outputmsgFilePath = ""
+	      println("Pick a Output Message Definition file from the below choice")
+
+	      var seq = 0
+	      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	      seq += 1
+	      println("[" + seq + "] Main Menu")
+
+	      print("\nEnter your choice: ")
+	      val choice: Int = readInt()
+
+	      if (choice == outputmsgFiles.length + 1)
+	        return
+
+	      if (choice < 1 || choice > outputmsgFiles.length + 1) {
+	        logger.error("Invalid Choice: " + choice)
+	        return
+	      }
+
+	      outputmsgFilePath = outputmsgFiles(choice - 1).toString
+	      val outputmsgStr = Source.fromFile(outputmsgFilePath).mkString
+	      println(outputmsgStr)
+	      println("Results as json string => \n" + MetadataAPIOutputMsg.UpdateOutputMsg(outputmsgStr, userid))
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def RemoveOutputMsg {
+	    try {
+	      //logger.setLevel(Level.TRACE);  //check again
+
+	      val outputMsgKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
+
+	      if (outputMsgKeys.length == 0) {
+	        println("Sorry, No output messages available in the Metadata")
+	        return
+	      }
+
+	      println("\nPick the output message to be deleted from the following list: ")
+	      var seq = 0
+	      outputMsgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+
+	      print("\nEnter your choice: ")
+	      val choice: Int = readInt()
+
+	      if (choice < 1 || choice > outputMsgKeys.length) {
+	        println("Invalid choice " + choice + ",start with main menu...")
+	        return
+	      }
+
+	      val outputMsgKey = outputMsgKeys(choice - 1)
+	      val outputTokens = outputMsgKey.split("\\.")
+	      val outputNameSpace = outputTokens(0)
+	      val outputName = outputTokens(1)
+	      val outputVersion = outputTokens(2)
+	      val apiResult = MetadataAPIOutputMsg.RemoveOutputMsg(outputNameSpace, outputName, outputVersion.toLong, userid)
+
+	      //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
+	      println("Result as Json String => \n" + apiResult)
+
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
+
+	  def GetAllOutputMsgsFromCache {
+	    try {
+	      //logger.setLevel(Level.TRACE);  //check again
+	      val outputMsgsKeys = MetadataAPIOutputMsg.GetAllOutputMsgsFromCache(true, userid)
+	      if (outputMsgsKeys.length == 0) {
+	        println("Sorry, No Output Msgs available in the Metadata")
+	        return
+	      }
+
+	      var seq = 0
+	      outputMsgsKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+	    } catch {
+	      case e: Exception => {
+	        e.printStackTrace()
+	      }
+	    }
+	  }
 
   def StartTest{
     try{
@@ -2078,6 +2264,10 @@ object TestMetadataAPI{
       val dumpAllAdapters = ()            => { DumpAllAdaptersAsJson }
       val dumpAllCfgObjects = ()          => { DumpAllCfgObjectsAsJson }
       val removeEngineConfig = ()         => { RemoveEngineConfig }
+      val addOutputMessage = () 		  => { AddOutputMessage }
+      val getAllOutputMsgs = () 		  => { GetAllOutputMsgsFromCache }
+      val removeOutputMsg = () 			  => { RemoveOutputMsg }
+      val updateOutputMsg = () 			  => { UpdateOutputMsg }
 
       val topLevelMenu = List(("Add Model",addModel),
 			      ("Get Model",getModel),
@@ -2121,7 +2311,11 @@ object TestMetadataAPI{
 			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),
 			      ("Dump Adapter Node Objects",dumpAllAdapters),
 			      ("Dump All Config Objects",dumpAllCfgObjects),
-			      ("Remove Engine Config",removeEngineConfig))
+			      ("Remove Engine Config",removeEngineConfig),
+			      ("Add Output Message", addOutputMessage),
+			      ("Get All Output Messages", getAllOutputMsgs),
+			      ("Remove Output Message", removeOutputMsg),
+			      ("Update Output Message", updateOutputMsg))
 
       var done = false
       while ( done == false ){

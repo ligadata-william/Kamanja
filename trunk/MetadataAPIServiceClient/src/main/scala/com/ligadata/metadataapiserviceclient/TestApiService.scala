@@ -1,7 +1,7 @@
 package com.ligadata.metadataapiserviceclient
 
 import org.scalatest.Assertions._
-import scala.collection.mutable.{ArrayBuffer}
+import scala.collection.mutable.{ ArrayBuffer }
 import uk.co.bigbeeconsultants.http._
 import uk.co.bigbeeconsultants.http.response._
 import uk.co.bigbeeconsultants.http.request._
@@ -21,8 +21,7 @@ import java.util.Properties
 import scala.io._
 import com.ligadata.Serialize._
 
-
-case class ApiResultInfo(statusCode:Int, statusDescription: String, resultData: String)
+case class ApiResultInfo(statusCode: Int, statusDescription: String, resultData: String)
 case class ApiResultJsonProxy(ApiResults: ApiResultInfo)
 
 case class ApiResultParsingException(e: String) extends Throwable(e)
@@ -41,11 +40,11 @@ object TestApiService {
   lazy val logger = Logger.getLogger(loggerName)
 
   lazy val metadataAPIConfig = new Properties()
-  var host_url:String = ""
+  var host_url: String = ""
 
   var propertiesAlreadyLoaded = false;
 
-  val config = Config(connectTimeout = 120000,readTimeout = 120000)
+  val config = Config(connectTimeout = 120000, readTimeout = 120000)
 
   def loadConfiguration(configFile: String, keysLowerCase: Boolean): (Properties, String) = {
     var configs: Properties = null
@@ -85,7 +84,6 @@ object TestApiService {
     }
     return (configs, failStr)
   }
-
 
   @throws(classOf[MissingPropertyException])
   @throws(classOf[InvalidPropertyException])
@@ -148,6 +146,7 @@ object TestApiService {
       var function_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
       var concept_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       var type_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+      var outputmessage_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
       var compiler_work_dir = root_dir + "/tmp"
       var model_exec_log = "false"
 
@@ -237,6 +236,9 @@ object TestApiService {
         } else if (key.equalsIgnoreCase("MODEL_EXEC_LOG")) {
           model_exec_log = value
           logger.debug("MODEL_EXEC_LOG => " + model_exec_log)
+        } else if (key.equalsIgnoreCase("OUTPUTMESSAGE_FILES_DIR")) {
+          outputmessage_files_dir = value
+          logger.debug("OUTPUTMESSAGE_FILES_DIR => " + outputmessage_files_dir)
         }
       }
 
@@ -269,6 +271,7 @@ object TestApiService {
       metadataAPIConfig.setProperty("CONTAINER_FILES_DIR", container_files_dir)
       metadataAPIConfig.setProperty("COMPILER_WORK_DIR", compiler_work_dir)
       metadataAPIConfig.setProperty("MODEL_EXEC_LOG", model_exec_log)
+      metadataAPIConfig.setProperty("OUTPUTMESSAGE_FILES_DIR", outputmessage_files_dir)
 
       propertiesAlreadyLoaded = true;
 
@@ -309,71 +312,69 @@ object TestApiService {
     }
   }
 
-  def GetHttpResponse(reqType:String, url:String,body: Option[String], bodyType: MediaType ): String = {
-    var response:Response = null
+  def GetHttpResponse(reqType: String, url: String, body: Option[String], bodyType: MediaType): String = {
+    var response: Response = null
 
-    try{
+    try {
       val httpClient = new HttpClient(config)
-      if( body == None){
-        logger.debug(reqType+":URL => " + url)
+      if (body == None) {
+        logger.debug(reqType + ":URL => " + url)
         if (reqType.equalsIgnoreCase("get")) {
-	  val request = Request.get(new URL(url))
-	  response = httpClient.makeRequest(request)
-	  //response = httpClient.get(new URL(url))
+          val request = Request.get(new URL(url))
+          response = httpClient.makeRequest(request)
+          //response = httpClient.get(new URL(url))
           //println(response.toString)
           return response.body.asString
-        }
-	else{
+        } else {
           response = httpClient.delete(new URL(url))
           //println(response.toString)
           return response.body.asString
-	}
-      }
-      else{
-	      logger.debug(reqType+"URL => " + url + ", parameter => " + body.get)
-	      bodyType match {
-	         case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
-             if (reqType.equalsIgnoreCase("put")) {
-	             val requestBody = new StringRequestBody(body.get,bodyType)
-	             response = httpClient.put(new URL(url),requestBody)
-             } else {
-               val requestBody = new StringRequestBody(body.get,bodyType)
-               response = httpClient.post(new URL(url),Some(requestBody))
-             }
-	         }
-	         case APPLICATION_OCTET_STREAM => {
-	           // assuming the parameter is name of the binary file such as jar file
-	           val ba = GetJarAsArrayOfBytes(body.get)
-	           val requestBody = new BinaryRequestBody(ba,bodyType)
-	           response = httpClient.put(new URL(url),requestBody)
-	        }
-	        case _ => {
-	          val errStr = "The MediaType " + bodyType + " is not supported yet"
-	          throw new Exception(errStr)
-	        }
-	      }
+        }
+      } else {
+        logger.debug(reqType + "URL => " + url + ", parameter => " + body.get)
+        bodyType match {
+          case TEXT_PLAIN | TEXT_XML | APPLICATION_JSON => {
+            if (reqType.equalsIgnoreCase("put")) {
+              val requestBody = new StringRequestBody(body.get, bodyType)
+              response = httpClient.put(new URL(url), requestBody)
+            } else {
+              val requestBody = new StringRequestBody(body.get, bodyType)
+              response = httpClient.post(new URL(url), Some(requestBody))
+            }
+          }
+          case APPLICATION_OCTET_STREAM => {
+            // assuming the parameter is name of the binary file such as jar file
+            val ba = GetJarAsArrayOfBytes(body.get)
+            val requestBody = new BinaryRequestBody(ba, bodyType)
+            response = httpClient.put(new URL(url), requestBody)
+          }
+          case _ => {
+            val errStr = "The MediaType " + bodyType + " is not supported yet"
+            throw new Exception(errStr)
+          }
+        }
       }
       response.body.asString
     } catch {
       case e: Exception =>
-	      val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status
-	      throw new Exception(errStr)
+        val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status
+        throw new Exception(errStr)
     }
   }
 
-  def MakeHttpRequest(reqType: String, host_url:String, apiFunctionName: String, parameterType:String, parameterValue:String) :String = {
-    try{
+  def MakeHttpRequest(reqType: String, host_url: String, apiFunctionName: String, parameterType: String, parameterValue: String): String = {
+    try {
       var url = host_url + "/api/" + apiFunctionName
-      logger.debug(url+"   "+parameterType+ " "+parameterValue)
-      var bodyType:MediaType = TEXT_PLAIN
+      logger.debug(url + "   " + parameterType + " " + parameterValue)
+      var bodyType: MediaType = TEXT_PLAIN
       parameterType match {
-	      case "STR"  => bodyType = TEXT_PLAIN
-	      case "XML"  => bodyType = TEXT_XML
-	      case "JSON" => bodyType = APPLICATION_JSON
-	      case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
-	      case _      => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
+        case "STR" => bodyType = TEXT_PLAIN
+        case "XML" => bodyType = TEXT_XML
+        case "JSON" => bodyType = APPLICATION_JSON
+        case "BINARY_FILE" => bodyType = APPLICATION_OCTET_STREAM
+        case _ => throw new InvalidArgumentException("Invalid Argument in MakeHttpRequest: " + parameterType)
       }
-      var apiParameters: Option[String] = None 
+      var apiParameters: Option[String] = None
       if (parameterValue != null) {
         apiParameters = Some(parameterValue)
       }
@@ -381,1118 +382,1224 @@ object TestApiService {
       GetHttpResponse(reqType, url, apiParameters, bodyType)
     } catch {
       case e: Exception =>
-	    throw new Exception(e.getMessage())
+        throw new Exception(e.getMessage())
     }
   }
 
-  def IsValidDir(dirName:String) : Boolean = {
+  def IsValidDir(dirName: String): Boolean = {
     val iFile = new File(dirName)
-    if ( ! iFile.exists ){
+    if (!iFile.exists) {
       logger.error("The File Path (" + dirName + ") is not found: ")
       false
-    }
-    else if ( ! iFile.isDirectory ){
+    } else if (!iFile.isDirectory) {
       logger.error("The File Path (" + dirName + ") is not a directory: ")
       false
-    }
-    else
+    } else
       true
   }
 
-  def GetAllObjectKeys(objectType:String): Array[String] = {
-    var objKeys:Array[String] = new Array[String](0)
-    try{
-     // val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR",objectType)
-      val objKeysJson = MakeHttpRequest("get",host_url,"keys/"+objectType,"STR",null)
+  def GetAllObjectKeys(objectType: String): Array[String] = {
+    var objKeys: Array[String] = new Array[String](0)
+    try {
+      // val objKeysJson = MakeHttpRequest(host_url,"GetAllObjectKeys","STR",objectType)
+      val objKeysJson = MakeHttpRequest("get", host_url, "keys/" + objectType, "STR", null)
       implicit val jsonFormats: Formats = DefaultFormats
       logger.debug("result => " + objKeysJson)
-      val json1 = parse(objKeysJson).values.asInstanceOf[Map[String,Any]]
-      val allValues = json1.getOrElse("APIResults",null).asInstanceOf[Map[String,Any]]
+      val json1 = parse(objKeysJson).values.asInstanceOf[Map[String, Any]]
+      val allValues = json1.getOrElse("APIResults", null).asInstanceOf[Map[String, Any]]
       if (allValues == null) {
         logger.error("BAD MESSAGE: No Results, need to investigate")
         return new Array[String](0)
       }
-      
-      val resultsValues = allValues.getOrElse("resultData",null).asInstanceOf[String]
+
+      val resultsValues = allValues.getOrElse("resultData", null).asInstanceOf[String]
       if (resultsValues == null) {
         logger.debug("No Objects Found")
         return new Array[String](0)
       }
-        
-      val objKeys:Array[String] = resultsValues.split(",")
+
+      val objKeys: Array[String] = resultsValues.split(",")
       return objKeys
-    }catch {
+    } catch {
       case e: Exception => {
-        	e.printStackTrace()
-          return null
+        e.printStackTrace()
+        return null
       }
     }
   }
-  
-  
+
   def GetAllMetadataObjects = {
-    var objKeys:Array[String] = new Array[String](0)
-    try{
+    var objKeys: Array[String] = new Array[String](0)
+    try {
       //  val objKeysJson = MakeHttpRequest("get",host_url,"GetAllObjectKeys/ALL","STR",null)
-       val objKeysJson = MakeHttpRequest("get",host_url,"keys/ALL","STR",null)
-       implicit val jsonFormats: Formats = DefaultFormats
-       val json = parse(objKeysJson)
-       objKeys = json.extract[Array[String]]
-       objKeys.foreach( k => { println(k)});
-     }catch {
-       case e: Exception => {
-          e.printStackTrace()
-       }
-     }
-   }
-
-  def GetConfigObjects(objectType:String) = {
-    try{
-      println("---->"+objectType+"<---------")
-      val objJson = MakeHttpRequest("get",host_url,"Config/"+objectType,"STR",null)
-      logger.debug(objJson)
-    }catch {
+      val objKeysJson = MakeHttpRequest("get", host_url, "keys/ALL", "STR", null)
+      implicit val jsonFormats: Formats = DefaultFormats
+      val json = parse(objKeysJson)
+      objKeys = json.extract[Array[String]]
+      objKeys.foreach(k => { println(k) });
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def MakeJsonStrForArgList(objKey:String,objectType:String): String = {
-    try{
+  def GetConfigObjects(objectType: String) = {
+    try {
+      println("---->" + objectType + "<---------")
+      val objJson = MakeHttpRequest("get", host_url, "Config/" + objectType, "STR", null)
+      logger.debug(objJson)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+
+  def MakeJsonStrForArgList(objKey: String, objectType: String): String = {
+    try {
       val keyTokens = objKey.split("\\.")
       val nameSpace = keyTokens(0)
       val name = keyTokens(1)
       val version = keyTokens(2)
-      val mdArg = new MetadataApiArg(objectType,nameSpace,name,version,"JSON")
+      val mdArg = new MetadataApiArg(objectType, nameSpace, name, version, "JSON")
       val argList = new Array[MetadataApiArg](1)
       argList(0) = mdArg
       val mdArgList = new MetadataApiArgList(argList.toList)
       val apiArgJson = JsonSerializer.SerializeApiArgListToJson(mdArgList)
       apiArgJson
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
-	throw new Exception("Failed to convert given object key into json string" + e.getMessage())
+        e.printStackTrace()
+        throw new Exception("Failed to convert given object key into json string" + e.getMessage())
       }
     }
   }
 
-  def GetObjects(objectType: String){
-    try{
+  def GetObjects(objectType: String) {
+    try {
       val keys = GetAllObjectKeys(objectType)
-      if( keys.length == 0 ){
-	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	      return
+      if (keys.length == 0) {
+        println("Sorry, No objects of type " + objectType + " available in the Metadata")
+        return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
       var seq = 0
-      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if ( choice < 1 || choice > keys.length ){
-	      println("Invalid choice " + choice + ",start with main menu...")
-	      return
+      if (choice < 1 || choice > keys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
       }
 
-      val key = keys(choice-1)
-     // val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val key = keys(choice - 1)
+      // val apiArgJson = MakeJsonStrForArgList(key,objectType)
       val apiName = "GetObjects"
-      val apiResult = MakeHttpRequest("get",host_url,objectType+"/"+key,"JSON",null)
+      val apiResult = MakeHttpRequest("get", host_url, objectType + "/" + key, "JSON", null)
       println("Result as Json String => \n" + apiResult)
 
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def GetModel{
+  def GetModel {
     GetObjects("Model")
   }
 
-  def GetMessage{
+  def GetMessage {
     GetObjects("Message")
   }
 
-  def GetContainer{
+  def GetContainer {
     GetObjects("Container")
   }
 
-  def GetFunction{
+  def GetFunction {
     GetObjects("Function")
   }
-  def GetType{
+  def GetType {
     GetObjects("Type")
   }
-  def GetConcept{
+  def GetConcept {
     GetObjects("Concept")
   }
 
-  def GetAllObjects(objectType: String){
-    try{
+  def GetAllObjects(objectType: String) {
+    try {
       val keys = GetAllObjectKeys(objectType)
-      if( keys.length == 0 ){
-	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	      return
+      if (keys.length == 0) {
+        println("Sorry, No objects of type " + objectType + " available in the Metadata")
+        return
       }
 
       var seq = 0
-      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
-       case e: Exception => {
-	       e.printStackTrace()
-       }
+      case e: Exception => {
+        e.printStackTrace()
+      }
     }
   }
 
-  def GetAllModels{
+  def GetAllModels {
     GetAllObjects("Model")
   }
 
-  def GetAllMessages{
+  def GetAllMessages {
     GetAllObjects("Message")
   }
 
-  def GetAllContainers{
+  def GetAllContainers {
     GetAllObjects("Container")
   }
 
-  def GetAllFunctions{
+  def GetAllFunctions {
     GetAllObjects("Function")
   }
 
-  def GetAllTypes{
+  def GetAllTypes {
     GetAllObjects("Type")
   }
 
-  def GetAllConcepts{
+  def GetAllConcepts {
     GetAllObjects("Concept")
   }
 
-  def GetAllNodes{
+  def GetAllNodes {
     GetConfigObjects("Node")
   }
 
-  def GetAllClusters{
+  def GetAllClusters {
     GetConfigObjects("Cluster")
   }
 
-  def GetAllClusterCfgs{
+  def GetAllClusterCfgs {
     GetConfigObjects("ClusterCfg")
   }
 
-  def GetAllAdapters{
+  def GetAllAdapters {
     GetConfigObjects("Adapter")
   }
 
-  def GetAllConfigObjects{
+  def GetAllConfigObjects {
     GetConfigObjects("ALL")
   }
 
-  def ActivateObjects(objectType: String){
-    try{
+  def GetAllOutputMsgs {
+    GetAllObjects("OutputMsg")
+  }
+  def ActivateObjects(objectType: String) {
+    try {
 
       val keys = GetAllObjectKeys(objectType)
-      if( keys.length == 0 ){
-	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	      return
+      if (keys.length == 0) {
+        println("Sorry, No objects of type " + objectType + " available in the Metadata")
+        return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
       var seq = 0
-      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if ( choice < 1 || choice > keys.length ){
-	      println("Invalid choice " + choice + ",start with main menu...")
-	      return
+      if (choice < 1 || choice > keys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
       }
 
-      val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val key = keys(choice - 1)
+      val apiArgJson = MakeJsonStrForArgList(key, objectType)
       val apiName = "ActivateObjects"
-      println("Activating Objects ->"+objectType+"/activate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/activate","JSON",apiArgJson)
+      println("Activating Objects ->" + objectType + "/activate " + apiArgJson)
+      val apiResult = MakeHttpRequest("put", host_url, objectType + "/activate", "JSON", apiArgJson)
       println("Result as Json String => \n" + apiResult)
 
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def ActivateModel{
+  def ActivateModel {
     ActivateObjects("Model")
   }
 
-  def ActivateMessage{
+  def ActivateMessage {
     ActivateObjects("Message")
   }
 
-  def ActivateContainer{
+  def ActivateContainer {
     ActivateObjects("Container")
   }
 
-  def ActivateFunction{
+  def ActivateFunction {
     ActivateObjects("Function")
   }
-  def ActivateType{
+  def ActivateType {
     ActivateObjects("Type")
   }
-  def ActivateConcept{
+  def ActivateConcept {
     ActivateObjects("Concept")
   }
 
+  def DeactivateObjects(objectType: String) {
+    try {
 
-  def DeactivateObjects(objectType: String){
-    try{
-         
       val keys = GetAllObjectKeys(objectType)
-      if( keys.length == 0 ){
-	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	      return
+      if (keys.length == 0) {
+        println("Sorry, No objects of type " + objectType + " available in the Metadata")
+        return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
       var seq = 0
-      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if ( choice < 1 || choice > keys.length ){
-	      println("Invalid choice " + choice + ",start with main menu...")
-	      return
+      if (choice < 1 || choice > keys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
       }
 
-      val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val key = keys(choice - 1)
+      val apiArgJson = MakeJsonStrForArgList(key, objectType)
       val apiName = "DeactivateObjects"
-      println("DE-Activating Objects ->"+objectType+"/deactivate " +apiArgJson )
-      val apiResult = MakeHttpRequest("put",host_url,objectType+"/deactivate","JSON",apiArgJson)
+      println("DE-Activating Objects ->" + objectType + "/deactivate " + apiArgJson)
+      val apiResult = MakeHttpRequest("put", host_url, objectType + "/deactivate", "JSON", apiArgJson)
       println("Result as Json String => \n" + apiResult)
 
-    }catch {
+    } catch {
       case e: Exception => {
-	      e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def DeactivateModel{
+  def DeactivateModel {
     DeactivateObjects("Model")
   }
 
-  def DeactivateMessage{
+  def DeactivateMessage {
     DeactivateObjects("Message")
   }
 
-  def DeactivateContainer{
+  def DeactivateContainer {
     DeactivateObjects("Container")
   }
 
-  def DeactivateFunction{
+  def DeactivateFunction {
     DeactivateObjects("Function")
   }
-  def DeactivateType{
+  def DeactivateType {
     DeactivateObjects("Type")
   }
-  def DeactivateConcept{
+  def DeactivateConcept {
     DeactivateObjects("Concept")
   }
 
-
-  def RemoveObjects(objectType: String){
-    try{
+  def RemoveObjects(objectType: String) {
+    try {
       println("*&^*&^*&^*&^*&^*&^*")
       val keys = GetAllObjectKeys(objectType)
-      if( keys.length == 0 ){
-	      println("Sorry, No objects of type " + objectType + " available in the Metadata")
-	      return
+      if (keys.length == 0) {
+        println("Sorry, No objects of type " + objectType + " available in the Metadata")
+        return
       }
 
       println("\nPick the object of type " + objectType + " to be presented from the following list: ")
       var seq = 0
-      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      keys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if ( choice < 1 || choice > keys.length ){
-	      println("Invalid choice " + choice + ",start with main menu...")
-	      return
+      if (choice < 1 || choice > keys.length) {
+        println("Invalid choice " + choice + ",start with main menu...")
+        return
       }
 
-      val key = keys(choice-1)
-      val apiArgJson = MakeJsonStrForArgList(key,objectType)
+      val key = keys(choice - 1)
+      val apiArgJson = MakeJsonStrForArgList(key, objectType)
       val apiName = "RemoveObjects"
-      println("---->"+ objectType + "/"+key)
-      val apiResult = MakeHttpRequest("delete",host_url,objectType+"/"+key,"JSON",null)
+      println("---->" + objectType + "/" + key)
+      val apiResult = MakeHttpRequest("delete", host_url, objectType + "/" + key, "JSON", null)
       println("Result as Json String => \n" + apiResult)
 
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def RemoveModel{
+  def RemoveModel {
     RemoveObjects("Model")
   }
 
-  def RemoveMessage{
+  def RemoveMessage {
     RemoveObjects("Message")
   }
 
-  def RemoveContainer{
+  def RemoveContainer {
     RemoveObjects("Container")
   }
 
-  def RemoveFunction{
+  def RemoveFunction {
     RemoveObjects("Function")
   }
-  def RemoveType{
+  def RemoveType {
     RemoveObjects("Type")
   }
-  def RemoveConcept{
+  def RemoveConcept {
     RemoveObjects("Concept")
+  }
+  def RemoveOutputMsg {
+    RemoveObjects("OutputMsg")
   }
 
   def AddModel {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("MODEL_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val pmmlFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".xml"))
-      if ( pmmlFiles.length == 0 ){
-	logger.error("No model files in the directory " + dirName)
-	return
+      if (pmmlFiles.length == 0) {
+        logger.error("No model files in the directory " + dirName)
+        return
       }
 
       var pmmlFilePath = ""
       println("Pick a Model Definition file(pmml) from below choices")
 
       var seq = 0
-      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      pmmlFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == pmmlFiles.length + 1){
-	       return
+      if (choice == pmmlFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > pmmlFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+      if (choice < 1 || choice > pmmlFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      pmmlFilePath = pmmlFiles(choice-1).toString
+      pmmlFilePath = pmmlFiles(choice - 1).toString
       val pmmlStr = Source.fromFile(pmmlFilePath).mkString
       // Save the model
-      var res = MakeHttpRequest("post",host_url, "Model","XML",pmmlStr)
+      var res = MakeHttpRequest("post", host_url, "Model", "XML", pmmlStr)
       logger.debug("Results of AddModel Operation => " + res)
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def AddContainer{
-    try{
+  def AddContainer {
+    try {
       var dirName = metadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
-      if ( ! IsValidDir(dirName) ){
-	return
+      if (!IsValidDir(dirName)) {
+        return
       }
       val contFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( contFiles.length == 0 ){
-	logger.error("No json container files in the directory " + dirName)
-	return
+      if (contFiles.length == 0) {
+        logger.error("No json container files in the directory " + dirName)
+        return
       }
 
       println("\nPick a Container Definition file(s) from below choices\n")
 
       var seq = 0
-      contFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      contFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
       //val choice:Int = readInt()
-      val choicesStr:String = readLine()
+      val choicesStr: String = readLine()
 
-      var valid : Boolean = true
-      var choices : List [Int] = List[Int]()
-      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
+      var valid: Boolean = true
+      var choices: List[Int] = List[Int]()
+      var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
       try {
-    	  choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+        choices = choicesStr.filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
       } catch {
-        case _:Throwable => valid = false
+        case _: Throwable => valid = false
       }
-      
+
       if (valid) {
-    	choices.foreach(choice => {
-	  if( choice == contFiles.length + 1){
-	    return
-	  }
-	  if( choice < 1 || choice > contFiles.length + 1 ){
-	    logger.error("Invalid Choice : " + choice)
-	    return
-	  }
-	  val contDefFile = contFiles(choice-1).toString
-    	//  logger.setLevel(Level.TRACE);
-	  val contStr = Source.fromFile(contDefFile).mkString
-    	  //val res : String =  MakeHttpRequest("put",host_url, "AddContainerDef","JSON",contStr)
-        val res : String =  MakeHttpRequest("post",host_url, "Container","JSON",contStr)
-    	  results += Tuple3(choice.toString, contDefFile, res)
-    	})
-      } else {
-          logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
-          return
-      }
-      
-      results.foreach(triple => {
-    	  val (choice,filePath,result) : (String,String,String) = triple
-    	  println(s"Results for container [$choice] $filePath => \n$result")
-      })
-    }catch {
-      case e: AlreadyExistsException => {
-	  logger.error("Container Already in the metadata...." + e.getMessage())
-      }
-      case e: Exception => {
-	e.printStackTrace()
-      }
-    }
-  }
-
-  def AddMessage{
-    try{
-      var dirName = metadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	return
-
-      val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( msgFiles.length == 0 ){
-	logger.error("No json message files in the directory " + dirName)
-	return
-      }
-      println("\nPick a Message Definition file(s) from below choices\n")
-
-      var seq = 0
-      msgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
-      seq += 1
-      println("[" + seq + "] Main Menu")
-
-      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
-      //val choice:Int = readInt()
-      val choicesStr:String = readLine()
-
-      var valid : Boolean = true
-      var choices : List [Int] = List[Int]()
-      var results : ArrayBuffer [(String,String,String)] = ArrayBuffer[(String,String,String)]()
-      try {
-    	choices = choicesStr.filter(_!='\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
-      } catch {
-        case _:Throwable => valid = false
-      }
-      
-      if (valid) {
-    	choices.foreach(choice => {
-	  if( choice == msgFiles.length + 1){
-	    return
-	  }
-	  if( choice < 1 || choice > msgFiles.length + 1 ){
-	    logger.error("Invalid Choice : " + choice)
-	    return
-	  }
-	  val msgDefFile = msgFiles(choice-1).toString
-	  val msgStr = Source.fromFile(msgDefFile).mkString
-    	  val res : String = MakeHttpRequest("post",host_url, "Message","JSON",msgStr)
-    	  results += Tuple3(choice.toString, msgDefFile, res)
-    	})
+        choices.foreach(choice => {
+          if (choice == contFiles.length + 1) {
+            return
+          }
+          if (choice < 1 || choice > contFiles.length + 1) {
+            logger.error("Invalid Choice : " + choice)
+            return
+          }
+          val contDefFile = contFiles(choice - 1).toString
+          //  logger.setLevel(Level.TRACE);
+          val contStr = Source.fromFile(contDefFile).mkString
+          //val res : String =  MakeHttpRequest("put",host_url, "AddContainerDef","JSON",contStr)
+          val res: String = MakeHttpRequest("post", host_url, "Container", "JSON", contStr)
+          results += Tuple3(choice.toString, contDefFile, res)
+        })
       } else {
         logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
         return
       }
-      
+
       results.foreach(triple => {
-    	val (choice,filePath,result) : (String,String,String) = triple
-    	println(s"Results for message [$choice] $filePath => \n$result")
+        val (choice, filePath, result): (String, String, String) = triple
+        println(s"Results for container [$choice] $filePath => \n$result")
       })
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Message Already in the metadata....")
+        logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
+  def AddMessage {
+    try {
+      var dirName = metadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
+      if (!IsValidDir(dirName))
+        return
+
+      val msgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (msgFiles.length == 0) {
+        logger.error("No json message files in the directory " + dirName)
+        return
+      }
+      println("\nPick a Message Definition file(s) from below choices\n")
+
+      var seq = 0
+      msgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr: String = readLine()
+
+      var valid: Boolean = true
+      var choices: List[Int] = List[Int]()
+      var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
+      try {
+        choices = choicesStr.filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _: Throwable => valid = false
+      }
+
+      if (valid) {
+        choices.foreach(choice => {
+          if (choice == msgFiles.length + 1) {
+            return
+          }
+          if (choice < 1 || choice > msgFiles.length + 1) {
+            logger.error("Invalid Choice : " + choice)
+            return
+          }
+          val msgDefFile = msgFiles(choice - 1).toString
+          val msgStr = Source.fromFile(msgDefFile).mkString
+          val res: String = MakeHttpRequest("post", host_url, "Message", "JSON", msgStr)
+          results += Tuple3(choice.toString, msgDefFile, res)
+        })
+      } else {
+        logger.error("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        return
+      }
+
+      results.foreach(triple => {
+        val (choice, filePath, result): (String, String, String) = triple
+        println(s"Results for message [$choice] $filePath => \n$result")
+      })
+    } catch {
+      case e: AlreadyExistsException => {
+        logger.error("Message Already in the metadata....")
+      }
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
 
   def UploadEngineConfig {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("CONFIG_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( cfgFiles.length == 0 ){
-	logger.error("No config files in the directory " + dirName)
-	return
+      if (cfgFiles.length == 0) {
+        logger.error("No config files in the directory " + dirName)
+        return
       }
 
       var cfgFilePath = ""
       println("Pick a Config file(cfg) from below choices")
 
       var seq = 0
-      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == cfgFiles.length + 1){
-	return
+      if (choice == cfgFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > cfgFiles.length + 1 ){
-	logger.error("Invalid Choice : " + choice)
-	return
+      if (choice < 1 || choice > cfgFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      cfgFilePath = cfgFiles(choice-1).toString
+      cfgFilePath = cfgFiles(choice - 1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
-      val res : String = MakeHttpRequest("put",host_url, "UploadConfig","JSON",cfgStr)
+      val res: String = MakeHttpRequest("put", host_url, "UploadConfig", "JSON", cfgStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	logger.error("Object Already in the metadata....")
+        logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
-
 
   def RemoveEngineConfig {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("CONFIG_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	      return
+      if (!IsValidDir(dirName))
+        return
 
       val cfgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( cfgFiles.length == 0 ){
-	      logger.error("No config files in the directory " + dirName)
-	      return
+      if (cfgFiles.length == 0) {
+        logger.error("No config files in the directory " + dirName)
+        return
       }
 
       var cfgFilePath = ""
       println("Pick a Config file(cfg) from below choices")
 
       var seq = 0
-      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      cfgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == cfgFiles.length + 1){
-	      return
+      if (choice == cfgFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > cfgFiles.length + 1 ){
-	      logger.error("Invalid Choice : " + choice)
-	      return
+      if (choice < 1 || choice > cfgFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      cfgFilePath = cfgFiles(choice-1).toString
+      cfgFilePath = cfgFiles(choice - 1).toString
       val cfgStr = Source.fromFile(cfgFilePath).mkString
-      val res : String = MakeHttpRequest("put",host_url, "RemoveConfig","JSON",cfgStr)
+      val res: String = MakeHttpRequest("put", host_url, "RemoveConfig", "JSON", cfgStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-
-
   def UploadJarFile {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("JAR_TARGET_DIR")
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val jarFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".jar"))
-      if ( jarFiles.length == 0 ){
-	logger.error("No jar files in the directory " + dirName)
-	return
+      if (jarFiles.length == 0) {
+        logger.error("No jar files in the directory " + dirName)
+        return
       }
 
       var jarFilePath = ""
       println("Pick a Jar file(xxxx.jar) from below choices")
 
       var seq = 0
-      jarFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      jarFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == jarFiles.length + 1){
-	return
+      if (choice == jarFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > jarFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+      if (choice < 1 || choice > jarFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      jarFilePath = jarFiles(choice-1).toString
-      val jarUrl = "UploadJars?name="+jarFilePath
-      val res : String = MakeHttpRequest("put",host_url, jarUrl,"BINARY_FILE",jarFilePath)
+      jarFilePath = jarFiles(choice - 1).toString
+      val jarUrl = "UploadJars?name=" + jarFilePath
+      val res: String = MakeHttpRequest("put", host_url, jarUrl, "BINARY_FILE", jarFilePath)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Model Already in the metadata....")
+        logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
-
 
   def AddFunction {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( functionFiles.length == 0 ){
-	logger.error("No function files in the directory " + dirName)
-	return
+      if (functionFiles.length == 0) {
+        logger.error("No function files in the directory " + dirName)
+        return
       }
 
       var functionFilePath = ""
       println("Pick a Function Definition file(function) from below choices")
 
       var seq = 0
-      functionFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      functionFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == functionFiles.length + 1){
-	return
+      if (choice == functionFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > functionFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+      if (choice < 1 || choice > functionFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      functionFilePath = functionFiles(choice-1).toString
+      functionFilePath = functionFiles(choice - 1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest("post",host_url, "Function","JSON",functionStr)
+      val res = MakeHttpRequest("post", host_url, "Function", "JSON", functionStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Function Already in the metadata....")
+        logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-
   def UpdateFunction {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	      return
+      if (!IsValidDir(dirName))
+        return
 
       val functionFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( functionFiles.length == 0 ){
-	      logger.error("No function files in the directory " + dirName)
-	      return
+      if (functionFiles.length == 0) {
+        logger.error("No function files in the directory " + dirName)
+        return
       }
 
       var functionFilePath = ""
       println("Pick a Function Definition file(function) from below choices")
 
       var seq = 0
-      functionFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      functionFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == functionFiles.length + 1){
-	      return
+      if (choice == functionFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > functionFiles.length + 1 ){
-	      logger.error("Invalid Choice : " + choice)
-	      return
+      if (choice < 1 || choice > functionFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      functionFilePath = functionFiles(choice-1).toString
+      functionFilePath = functionFiles(choice - 1).toString
 
       val functionStr = Source.fromFile(functionFilePath).mkString
-      val res = MakeHttpRequest("put",host_url, "Function","JSON",functionStr)
+      val res = MakeHttpRequest("put", host_url, "Function", "JSON", functionStr)
       println("Results as json string => \n" + res)
-      
-    }catch {
+
+    } catch {
       case e: AlreadyExistsException => {
-	      logger.error("Function Already in the metadata....")
+        logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
-	      e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
   def AddConcept {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( conceptFiles.length == 0 ){
-	logger.error("No concept files in the directory " + dirName)
-	return
+      if (conceptFiles.length == 0) {
+        logger.error("No concept files in the directory " + dirName)
+        return
       }
 
       var conceptFilePath = ""
       println("Pick a Concept Definition file(concept) from below choices")
 
       var seq = 0
-      conceptFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      conceptFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == conceptFiles.length + 1){
-	return
+      if (choice == conceptFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > conceptFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+      if (choice < 1 || choice > conceptFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      conceptFilePath = conceptFiles(choice-1).toString
+      conceptFilePath = conceptFiles(choice - 1).toString
 
       val conceptStr = Source.fromFile(conceptFilePath).mkString
-      val res = MakeHttpRequest("post",host_url, "Concept","JSON",conceptStr)
+      val res = MakeHttpRequest("post", host_url, "Concept", "JSON", conceptStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Concept Already in the metadata....")
+        logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-
   def UpdateConcept {
-    try{
-      
-     // val res = MakeHttpRequest("put",host_url, "Concept","JSON","conceptStr")
-      
-     // println("Results as json string => \n" + res)
-      
+    try {
+
+      // val res = MakeHttpRequest("put",host_url, "Concept","JSON","conceptStr")
+
+      // println("Results as json string => \n" + res)
+
       var dirName = metadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
-      if( ! IsValidDir(dirName) )
-	      return
+      if (!IsValidDir(dirName))
+        return
 
       val conceptFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( conceptFiles.length == 0 ){
-	      logger.error("No concept files in the directory " + dirName)
-	      return
+      if (conceptFiles.length == 0) {
+        logger.error("No concept files in the directory " + dirName)
+        return
       }
 
       var conceptFilePath = ""
       println("Pick a Concept Definition file(concept) from below choices")
 
       var seq = 0
-      conceptFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      conceptFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == conceptFiles.length + 1){
-	      return
+      if (choice == conceptFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > conceptFiles.length + 1 ){
-	       logger.error("Invalid Choice : " + choice)
-	       return
+      if (choice < 1 || choice > conceptFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      conceptFilePath = conceptFiles(choice-1).toString
+      conceptFilePath = conceptFiles(choice - 1).toString
 
       val conceptStr = Source.fromFile(conceptFilePath).mkString
-      val res = MakeHttpRequest("put",host_url, "Concept","JSON",conceptStr)
+      val res = MakeHttpRequest("put", host_url, "Concept", "JSON", conceptStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Concept Already in the metadata....")
+        logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
   def AddType {
-    try{
+    try {
       var dirName = metadataAPIConfig.getProperty("TYPE_FILES_DIR")
 
-      if( ! IsValidDir(dirName) )
-	return
+      if (!IsValidDir(dirName))
+        return
 
       val typeFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
-      if ( typeFiles.length == 0 ){
-	logger.error("No type files in the directory " + dirName)
-	return
+      if (typeFiles.length == 0) {
+        logger.error("No type files in the directory " + dirName)
+        return
       }
 
       var typeFilePath = ""
       println("Pick a Type Definition file(type) from below choices")
 
       var seq = 0
-      typeFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key)})
+      typeFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
       seq += 1
       println("[" + seq + "] Main Menu")
 
       print("\nEnter your choice: ")
-      val choice:Int = readInt()
+      val choice: Int = readInt()
 
-      if( choice == typeFiles.length + 1){
-	return
+      if (choice == typeFiles.length + 1) {
+        return
       }
-      if( choice < 1 || choice > typeFiles.length + 1 ){
-	  logger.error("Invalid Choice : " + choice)
-	  return
+      if (choice < 1 || choice > typeFiles.length + 1) {
+        logger.error("Invalid Choice : " + choice)
+        return
       }
 
-      typeFilePath = typeFiles(choice-1).toString
+      typeFilePath = typeFiles(choice - 1).toString
 
       val typeStr = Source.fromFile(typeFilePath).mkString
-      val res = MakeHttpRequest("post",host_url, "Type","JSON",typeStr)
+      val res = MakeHttpRequest("post", host_url, "Type", "JSON", typeStr)
       println("Results as json string => \n" + res)
-    }catch {
+    } catch {
       case e: AlreadyExistsException => {
-	  logger.error("Type Already in the metadata....")
+        logger.error("Type Already in the metadata....")
       }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-
-  def GetAllTypesByObjType{
-    try{
-      val typeMenu = Map( 1 ->  "ScalarTypeDef",
-			  2 ->  "ArrayTypeDef",
-			  3 ->  "ArrayBufTypeDef",
-			  4 ->  "SetTypeDef",
-			  5 ->  "TreeSetTypeDef",
-			  6 ->  "AnyTypeDef",
-			  7 ->  "SortedSetTypeDef",
-			  8 ->  "MapTypeDef",
-			  9 ->  "HashMapTypeDef",
-			  10 ->  "ImmutableMapTypeDef",
-			  11 ->  "ListTypeDef",
-			  12 ->  "QueueTypeDef",
-			  13 ->  "TupleTypeDef")
+  def GetAllTypesByObjType {
+    try {
+      val typeMenu = Map(1 -> "ScalarTypeDef",
+        2 -> "ArrayTypeDef",
+        3 -> "ArrayBufTypeDef",
+        4 -> "SetTypeDef",
+        5 -> "TreeSetTypeDef",
+        6 -> "AnyTypeDef",
+        7 -> "SortedSetTypeDef",
+        8 -> "MapTypeDef",
+        9 -> "HashMapTypeDef",
+        10 -> "ImmutableMapTypeDef",
+        11 -> "ListTypeDef",
+        12 -> "QueueTypeDef",
+        13 -> "TupleTypeDef")
       var selectedType = "com.ligadata.fatafat.metadata.ScalarTypeDef"
       var done = false
-      while ( done == false ){
-	println("\n\nPick a Type ")
-	var seq = 0
-	typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq))})
-	seq += 1
-	println("[" + seq + "] Main Menu")
-	print("\nEnter your choice: ")
-	val choice:Int = readInt()
-	if( choice <= typeMenu.size ){
-	  selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
-	  done = true
-	}
-	else if( choice == typeMenu.size + 1 ){
-	  done = true
-	}
-	else{
-	  logger.error("Invalid Choice : " + choice)
-	}
+      while (done == false) {
+        println("\n\nPick a Type ")
+        var seq = 0
+        typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq)) })
+        seq += 1
+        println("[" + seq + "] Main Menu")
+        print("\nEnter your choice: ")
+        val choice: Int = readInt()
+        if (choice <= typeMenu.size) {
+          selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
+          done = true
+        } else if (choice == typeMenu.size + 1) {
+          done = true
+        } else {
+          logger.error("Invalid Choice : " + choice)
+        }
       }
 
-      val res = MakeHttpRequest("get",host_url, "GetAllTypesByObjType","JSON",selectedType)
+      val res = MakeHttpRequest("get", host_url, "GetAllTypesByObjType", "JSON", selectedType)
       println("Results as json string => \n" + res)
 
-    } catch{
+    } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
   }
 
-  def StartTest{
-    try{
-      val dumpMetadata = ()               => { GetAllMetadataObjects }
-      val addModel = ()                   => { AddModel }
-      val getModel = ()                   => { GetModel }
-      val getAllModels = ()               => { GetAllModels }
-      val removeModel = ()                => { RemoveModel }
-      val deactivateModel = ()            => { DeactivateModel }
-      val activateModel = ()              => { ActivateModel }
-      val addMessage = ()                 => { AddMessage }
-      val getMessage = ()                 => { GetMessage }
-      val getAllMessages = ()             => { GetAllMessages }
-      val removeMessage = ()              => { RemoveMessage }
-      val activateMessage = ()            => { ActivateMessage }
-      val deactivateMessage = ()          => { DeactivateMessage }
-      val addContainer = ()               => { AddContainer }
-      val getContainer = ()               => { GetContainer }
-      val getAllContainers = ()           => { GetAllContainers }
-      val removeContainer = ()            => { RemoveContainer }
-      val addType         = ()            => { AddType }
-      val getType         = ()            => { GetType }
-      val getAllTypes     = ()            => { GetAllTypes }
-      val removeType      = ()            => { RemoveType }
-      val addFunction         = ()        => { AddFunction }
-      val removeFunction      = ()        => { RemoveFunction }
-      val updateFunction         = ()     => { UpdateFunction }
-      val addConcept         = ()         => { AddConcept }
-      val removeConcept      = ()         => { RemoveConcept }
-      val updateConcept         = ()      => { UpdateConcept }
-      val dumpAllFunctionsAsJson = ()     => { GetAllFunctions }
-      val loadFunctionsFromAFile = ()     => { AddFunction }
-      val dumpAllConceptsAsJson = ()      => { GetAllConcepts }
-      val loadConceptsFromAFile = ()      => { AddConcept }
-      val dumpAllTypesByObjTypeAsJson = ()=> { GetAllTypesByObjType }
-      val loadTypesFromAFile = ()         => { AddType }
-      val uploadJarFile = ()              => { UploadJarFile }
-      val uploadEngineConfig = ()         => { UploadEngineConfig }
-      val dumpAllNodes = ()               => { GetAllNodes }
-      val dumpAllClusters = ()            => { GetAllClusters }
-      val dumpAllClusterCfgs = ()         => { GetAllClusterCfgs }
-      val dumpAllAdapters = ()            => { GetAllAdapters }
-      val dumpAllCfgObjects = ()          => { GetAllConfigObjects }
-      val removeEngineConfig = ()         => { RemoveEngineConfig }
+  def AddOutputMessage {
+    try {
+      var dirName = metadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+      if (!IsValidDir(dirName))
+        return
 
-      val topLevelMenu = List(("Add Model",addModel),
-			      ("Get Model",getModel),
-			      ("Get All Models",getAllModels),
-			      ("Remove Model",removeModel),
-			      ("Deactivate Model",deactivateModel),
-			      ("Activate Model",activateModel),
-			      ("Add Message",addMessage),
-			      ("Get Message",getMessage),
-			      ("Get All Messages",getAllMessages),
-			      ("Remove Message",removeMessage),
-            ("Activate Message",activateMessage),
-            ("Deactivate Message",deactivateMessage),
-			      ("Add Container",addContainer),
-			      ("Get Container",getContainer),
-			      ("Get All Containers",getAllContainers),
-			      ("Remove Container",removeContainer),
-			      ("Add Type",addType),
-			      ("Get Type",getType),
-			      ("Get All Types",getAllTypes),
-			      ("Remove Type",removeType),
-			      ("Add Function",addFunction),
-			      ("Remove Function",removeFunction),
-			      ("Update Function",updateFunction),
-			      ("Add Concept",addConcept),
-			      ("Remove Concept",removeConcept),
-			      ("Update Concept",updateConcept),
-			      ("Load Concepts from a file",loadConceptsFromAFile),
-			      ("Load Functions from a file",loadFunctionsFromAFile),
-			      ("Load Types from a file",loadTypesFromAFile),
-			      ("Dump All Metadata Keys",dumpMetadata),
-			      ("Dump All Functions",dumpAllFunctionsAsJson),
-			      ("Dump All Concepts",dumpAllConceptsAsJson),
-			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson),
-			      ("Upload Any Jar",uploadJarFile),
-			      ("Upload Engine Config",uploadEngineConfig),
-			      ("Dump Node Objects",dumpAllNodes),
-			      ("Dump Cluster Objects",dumpAllClusters),
-			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),
-			      ("Dump Adapter Node Objects",dumpAllAdapters),
-			      ("Dump All Config Objects",dumpAllCfgObjects),
-			      ("Remove Engine Config",removeEngineConfig))
-
-      var done = false
-      while ( done == false ){
-	println("\n\nPick an API ")
-	for((key,idx) <- topLevelMenu.zipWithIndex){println("[" + (idx+1) + "] " + key._1)}
-	println("[" + (topLevelMenu.size+1) + "] Exit")
-	print("\nEnter your choice: ")
-	val choice:Int = readInt()
-	if( choice <= topLevelMenu.size ){
-	  topLevelMenu(choice-1)._2.apply
-	}
-	else if( choice == topLevelMenu.size + 1 ){
-	  done = true
-	}
-	else{
-	  logger.error("Invalid Choice : " + choice)
-	}
+      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (outputmsgFiles.length == 0) {
+        logger.fatal("No json output message files in the directory " + dirName)
+        return
       }
-    }catch {
+      println("\nPick a Output Message Definition file(s) from below choices\n")
+
+      var seq = 0
+      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choices (separate with commas if more than 1 choice given): ")
+      //val choice:Int = readInt()
+      val choicesStr: String = readLine()
+
+      var valid: Boolean = true
+      var choices: List[Int] = List[Int]()
+      var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
+      try {
+        choices = choicesStr.filter(_ != '\n').split(',').filter(ch => (ch != null && ch != "")).map(_.trim.toInt).toList
+      } catch {
+        case _: Throwable => valid = false
+      }
+
+      if (valid) {
+
+        choices.foreach(choice => {
+          if (choice == outputmsgFiles.length + 1) {
+            return
+          }
+          if (choice < 1 || choice > outputmsgFiles.length + 1) {
+            logger.fatal("Invalid Choice : " + choice)
+            return
+          }
+
+          val outputmsgDefFile = outputmsgFiles(choice - 1).toString
+          logger.setLevel(Level.TRACE);
+          val outputmsgStr = Source.fromFile(outputmsgDefFile).mkString
+          val res: String = MakeHttpRequest("post", host_url, "OutputMsg", "JSON", outputmsgStr)
+          results += Tuple3(choice.toString, outputmsgDefFile, res)
+        })
+      } else {
+        logger.fatal("Invalid Choices... choose 1 or more integers from list separating multiple entries with a comma")
+        return
+      }
+
+      results.foreach(triple => {
+        val (choice, filePath, result): (String, String, String) = triple
+        println(s"Results for output message [$choice] $filePath => \n$result")
+      })
+
+    } catch {
+      case e: AlreadyExistsException => {
+        logger.error("Object Already in the metadata....")
+      }
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
     }
-  }    
+  }
+
+  def UpdateOutputMsg: Unit = {
+    try {
+      var dirName = metadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
+      if (!IsValidDir(dirName))
+        return
+
+      val outputmsgFiles = new java.io.File(dirName).listFiles.filter(_.getName.endsWith(".json"))
+      if (outputmsgFiles.length == 0) {
+        logger.error("No output message files in the directory " + dirName)
+        return
+      }
+
+      var outputmsgFilePath = ""
+      println("Pick a Output Message Definition file from the below choice")
+
+      var seq = 0
+      outputmsgFiles.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+      seq += 1
+      println("[" + seq + "] Main Menu")
+
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice == outputmsgFiles.length + 1)
+        return
+
+      if (choice < 1 || choice > outputmsgFiles.length + 1) {
+        logger.error("Invalid Choice: " + choice)
+        return
+      }
+
+      outputmsgFilePath = outputmsgFiles(choice - 1).toString
+      val outputmsgStr = Source.fromFile(outputmsgFilePath).mkString
+      val res: String = MakeHttpRequest("put", host_url, "OutputMsg", "JSON", outputmsgStr)
+      println("Results as json string => \n" + res)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
+
+  def StartTest {
+    try {
+      val dumpMetadata = () => { GetAllMetadataObjects }
+      val addModel = () => { AddModel }
+      val getModel = () => { GetModel }
+      val getAllModels = () => { GetAllModels }
+      val removeModel = () => { RemoveModel }
+      val deactivateModel = () => { DeactivateModel }
+      val activateModel = () => { ActivateModel }
+      val addMessage = () => { AddMessage }
+      val getMessage = () => { GetMessage }
+      val getAllMessages = () => { GetAllMessages }
+      val removeMessage = () => { RemoveMessage }
+      val activateMessage = () => { ActivateMessage }
+      val deactivateMessage = () => { DeactivateMessage }
+      val addContainer = () => { AddContainer }
+      val getContainer = () => { GetContainer }
+      val getAllContainers = () => { GetAllContainers }
+      val removeContainer = () => { RemoveContainer }
+      val addType = () => { AddType }
+      val getType = () => { GetType }
+      val getAllTypes = () => { GetAllTypes }
+      val removeType = () => { RemoveType }
+      val addFunction = () => { AddFunction }
+      val removeFunction = () => { RemoveFunction }
+      val updateFunction = () => { UpdateFunction }
+      val addConcept = () => { AddConcept }
+      val removeConcept = () => { RemoveConcept }
+      val updateConcept = () => { UpdateConcept }
+      val dumpAllFunctionsAsJson = () => { GetAllFunctions }
+      val loadFunctionsFromAFile = () => { AddFunction }
+      val dumpAllConceptsAsJson = () => { GetAllConcepts }
+      val loadConceptsFromAFile = () => { AddConcept }
+      val dumpAllTypesByObjTypeAsJson = () => { GetAllTypesByObjType }
+      val loadTypesFromAFile = () => { AddType }
+      val uploadJarFile = () => { UploadJarFile }
+      val uploadEngineConfig = () => { UploadEngineConfig }
+      val dumpAllNodes = () => { GetAllNodes }
+      val dumpAllClusters = () => { GetAllClusters }
+      val dumpAllClusterCfgs = () => { GetAllClusterCfgs }
+      val dumpAllAdapters = () => { GetAllAdapters }
+      val dumpAllCfgObjects = () => { GetAllConfigObjects }
+      val removeEngineConfig = () => { RemoveEngineConfig }
+      val addOutputMessage = () => { AddOutputMessage }
+      val getAllOutputMsgs = () => { GetAllOutputMsgs }
+      val removeOutputMsg = () 	=> { RemoveOutputMsg }
+      val updateOutputMsg = () 	=> { UpdateOutputMsg }
+
+      val topLevelMenu = List(("Add Model", addModel),
+        ("Get Model", getModel),
+        ("Get All Models", getAllModels),
+        ("Remove Model", removeModel),
+        ("Deactivate Model", deactivateModel),
+        ("Activate Model", activateModel),
+        ("Add Message", addMessage),
+        ("Get Message", getMessage),
+        ("Get All Messages", getAllMessages),
+        ("Remove Message", removeMessage),
+        ("Activate Message", activateMessage),
+        ("Deactivate Message", deactivateMessage),
+        ("Add Container", addContainer),
+        ("Get Container", getContainer),
+        ("Get All Containers", getAllContainers),
+        ("Remove Container", removeContainer),
+        ("Add Type", addType),
+        ("Get Type", getType),
+        ("Get All Types", getAllTypes),
+        ("Remove Type", removeType),
+        ("Add Function", addFunction),
+        ("Remove Function", removeFunction),
+        ("Update Function", updateFunction),
+        ("Add Concept", addConcept),
+        ("Remove Concept", removeConcept),
+        ("Update Concept", updateConcept),
+        ("Load Concepts from a file", loadConceptsFromAFile),
+        ("Load Functions from a file", loadFunctionsFromAFile),
+        ("Load Types from a file", loadTypesFromAFile),
+        ("Dump All Metadata Keys", dumpMetadata),
+        ("Dump All Functions", dumpAllFunctionsAsJson),
+        ("Dump All Concepts", dumpAllConceptsAsJson),
+        ("Dump All Types By Object Type", dumpAllTypesByObjTypeAsJson),
+        ("Upload Any Jar", uploadJarFile),
+        ("Upload Engine Config", uploadEngineConfig),
+        ("Dump Node Objects", dumpAllNodes),
+        ("Dump Cluster Objects", dumpAllClusters),
+        ("Dump ClusterCfg Node Objects", dumpAllClusterCfgs),
+        ("Dump Adapter Node Objects", dumpAllAdapters),
+        ("Dump All Config Objects", dumpAllCfgObjects),
+        ("Remove Engine Config", removeEngineConfig),
+        ("Add Output Message", addOutputMessage),
+		("Get All Output Messages", getAllOutputMsgs),
+		("Remove Output Message", removeOutputMsg),
+		("Update Output Message", updateOutputMsg))
+
+      var done = false
+      while (done == false) {
+        println("\n\nPick an API ")
+        for ((key, idx) <- topLevelMenu.zipWithIndex) { println("[" + (idx + 1) + "] " + key._1) }
+        println("[" + (topLevelMenu.size + 1) + "] Exit")
+        print("\nEnter your choice: ")
+        val choice: Int = readInt()
+        if (choice <= topLevelMenu.size) {
+          topLevelMenu(choice - 1)._2.apply
+        } else if (choice == topLevelMenu.size + 1) {
+          done = true
+        } else {
+          logger.error("Invalid Choice : " + choice)
+        }
+      }
+    } catch {
+      case e: Exception => {
+        e.printStackTrace()
+      }
+    }
+  }
 
   def main(args: Array[String]) {
-   // logger.setLevel(Level.TRACE);
+    // logger.setLevel(Level.TRACE);
     val httpClient = new HttpClient
 
-    try{
+    try {
       var myConfigFile = System.getenv("HOME") + "/MetadataAPIConfig.properties"
       if (args.length == 0) {
-	logger.warn("Config File defaults to " + myConfigFile)
-	logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-	logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
-      }
-      else{
-	val cfgfile = args(0)
-	if (cfgfile == null) {
-	  logger.error("Need configuration file as parameter")
-	  throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
-	}
-	myConfigFile = cfgfile
+        logger.warn("Config File defaults to " + myConfigFile)
+        logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
+        logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+      } else {
+        val cfgfile = args(0)
+        if (cfgfile == null) {
+          logger.error("Need configuration file as parameter")
+          throw new MissingArgumentException("Usage: configFile  supplied as --config myConfig.json")
+        }
+        myConfigFile = cfgfile
       }
       // read properties file
       readMetadataAPIConfigFromPropertiesFile(myConfigFile)
@@ -1502,10 +1609,9 @@ object TestApiService {
       StartTest
     } catch {
       case e: Exception => {
-	e.printStackTrace()
+        e.printStackTrace()
       }
-    }
-    finally{
+    } finally {
       // Cleanup and exit
       logger.debug("Done");
     }

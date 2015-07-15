@@ -12,16 +12,17 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 	MetadataAPIImpl.InitMdMgr(metadataAPIConfig)
 	
 	/** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
-	var metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
-	var metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
-	var metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
-	
+	val metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
+	val metadataSchemaName : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_SCHEMA")
+	val metadataLocation : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE_LOCATION")
+	val mdAdapterSpecificConfig : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG")
 	
 	//println(result)
 	
 	def MetadataStoreType : String = metadataStoreType
 	def MetadataSchemaName : String = metadataSchemaName
 	def MetadataLocation : String = metadataLocation
+	def MetadataAdapterSpecificConfig : String = mdAdapterSpecificConfig
 	
 	/** 
 	 *  Optionally called when an EngineConfig file with cluster decl in it is supplied as an argument, this
@@ -29,14 +30,14 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 	 */
 	def initializeEngineConfig : Unit = {
 		if (nodeConfigPath != null) {
-			val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString)
+			val result : String = MetadataAPIImpl.UploadConfig(Source.fromFile(nodeConfigPath).mkString, None, "NodeInfoExtract")
 			//println(result)
 		} else {
 			throw new RuntimeException("initializeEngineConfig erroneously called... logic error ")
 		}
 	}
 	
-	def extract : (Array[String], Array[(String,String,String)],Array[(String,String)]) = {
+	def extract : (Array[String], Array[(String,String,String,String)],Array[(String,String)]) = {
 		val nodeInfos : Array[NodeInfo] = MdMgr.GetMdMgr.NodesForCluster(clusterId)
 		val ok : Boolean = (nodeInfos != null && nodeInfos.size > 0)
 		if (! ok) {
@@ -48,8 +49,8 @@ class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : Strin
 		 */	
 		val configDir : String = installDir + "/config"
 	    val ips : Array[String] = nodeInfos.map(info => info.nodeIpAddr).toSet.toSeq.sorted.toArray 
-	    val ipIdTargPaths : Array[(String,String,String)] = nodeInfos.map(info => {
-		      	(info.nodeIpAddr, info.nodeId, configDir)}
+	    val ipIdTargPaths : Array[(String,String,String,String)] = nodeInfos.map(info => {
+		      	(info.nodeIpAddr, info.nodeId, configDir, info.roles.mkString(","))}
 		    ).toSet.toSeq.sorted.toArray 
 	   
 	    val uniqueNodePaths : Set[String] = nodeInfos.map(info => info.nodeIpAddr + "~" + installDir).toSet 
@@ -141,7 +142,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
    		if (nodeConfigPath != null) {
    			extractor.initializeEngineConfig
    		}
-   		val (ips, ipIdTargPaths, ipPathPairs) : (Array[String], Array[(String,String,String)], Array[(String,String)]) = extractor.extract 
+   		val (ips, ipIdTargPaths, ipPathPairs) : (Array[String], Array[(String,String,String,String)], Array[(String,String)]) = extractor.extract 
 		
 	    writeFileIps(s"$workDir/$ipFileName", ips)
 	    writeFilePairs(s"$workDir/$ipPathPairFileName" , ipPathPairs)
@@ -182,14 +183,15 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
 	 *  @param extractor the NodeInfoExtract instance containing most of the config info.
 	 *  @param ipIdTargs the (ip,id, targetPath) triple values for the cluster being processed 
 	 */
-	private def writeNodeIdConfigs(workDir : String, ipIdCfgTargPathQuartetFileName : String, extractor : NodeInfoExtract, ipIdTargs : Array[(String,String,String)]) {
+	private def writeNodeIdConfigs(workDir : String, ipIdCfgTargPathQuartetFileName : String, extractor : NodeInfoExtract, ipIdTargs : Array[(String,String,String,String)]) {
 	    
 	    val storeType : String = extractor.MetadataStoreType
 		val schemaName : String = extractor.MetadataSchemaName
 		val mdLoc : String = extractor.MetadataLocation
+		val metadataAdapterSpecificConfig : String = extractor.MetadataAdapterSpecificConfig
 		
-	    ipIdTargs.foreach(ipIdTargTriple => {
-			val (_,id,_) : (String,String,String) = ipIdTargTriple
+	    ipIdTargs.foreach(ipIdTargQuad => {
+			val (_,id,_,_) : (String,String,String,String) = ipIdTargQuad
 			
 	    	val nodeCfgPath : String = s"$workDir/node$id.cfg"
 	    	val file = new File(nodeCfgPath);
@@ -202,6 +204,7 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
 			bufferedWriter.write(s"MetadataStoreType=$storeType\n")
 			bufferedWriter.write(s"MetadataSchemaName=$schemaName\n")
 			bufferedWriter.write(s"MetadataLocation=$mdLoc\n")
+			bufferedWriter.write(s"MetadataAdapterSpecificConfig=$metadataAdapterSpecificConfig\n")
 			
 			bufferedWriter.close
 	    })
@@ -209,12 +212,13 @@ NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
     	val nodeCfgPath : String = s"$workDir/$ipIdCfgTargPathQuartetFileName"
     	val file = new File(nodeCfgPath);
 		val bufferedWriter = new BufferedWriter(new FileWriter(file))
-		ipIdTargs.foreach(ipIdTargTriple => {
-			val (ip,id,targPath) : (String,String,String) = ipIdTargTriple
+		ipIdTargs.foreach(ipIdTargQuad => {
+			val (ip,id,targPath,roles) : (String,String,String,String) = ipIdTargQuad
 		    bufferedWriter.write(s"$ip\n")
 		    bufferedWriter.write(s"$id\n")
 		    bufferedWriter.write(s"$workDir/node$id.cfg\n")
 		    bufferedWriter.write(s"$targPath\n")
+		    bufferedWriter.write(s"$roles\n")
 		})
 		bufferedWriter.close
 	    

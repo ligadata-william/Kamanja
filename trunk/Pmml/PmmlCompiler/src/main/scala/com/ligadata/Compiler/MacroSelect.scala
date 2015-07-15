@@ -22,6 +22,12 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	if (fcnSelector.isIterableFcn) {
 	  		return (null,null)
 	  	}
+
+	  	/** debug helper */
+	  	val ofInterest : Boolean = (node.function == "setField")
+	  	if (ofInterest) {
+	  		val stop : Int = 0
+	  	}
 	  	
 	  	var returnedArgs : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
 	  			= fcnSelector.collectArgKeys(expandingContainerFields)
@@ -34,74 +40,77 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  	val returnTypes : Array[String] = returnedArgs.map( tuple => tuple._5)  	
 	  	
 	  	/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
-	  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
-	  	
-	  	/** debug helper */
-	  	val ofInterest : Boolean = (node.function == "Put")
-	  	if (ofInterest) {
-	  		val stop : Int = 0
-	  	}
-	  	
-	  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
-	  	var winningKey : String = simpleKey
-	  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-	  	logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
-	  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
-	  	if (macroDef == null) {
-	  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
-	  		breakable {
-	  		  	simpleKeysToTry.foreach( key => {
-	  		  		logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
-	  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
-	  		  		if (macroDef != null) {
-	  		  			logger.debug(s"selectMacro ...found macroDef with $key")
-	  		  			winningKey = key
-	  		  			break
-	  		  		}
-	  		  	})	  		  
-	  		}
-	  	}
-	  	
-	  	if (macroDef == null) {
-	  		val expandingContainerFields = false
-	  		var returnedArgsNoExp : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
-	  			= fcnSelector.collectArgKeys(expandingContainerFields)
-
-	  		val argTypesNoExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgsNoExp.map( tuple => tuple._1)
-	  		val returnTypes : Array[String] = returnedArgsNoExp.map( tuple => tuple._5)
+	  	/** Check for legitimate type info here before flatten.. avoiding null ptr exception */
+	  	val hasNulls : Boolean = (argTypesExp == null || argTypesExp.filter(_ == null).size > 0)
+	  	val (macroDefRet, argTypesRet) : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) =  if (hasNulls) {
+	  		PmmlError.logError(ctx, s"Macro selection cannot continue... unable to find type information for one or more function/macro arguments")
+	  		(null,null)
+	  	} else {
+		  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesExp.flatten
 		  	
-	  		/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
-		  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesNoExp.flatten
-	  	  
-		  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
-		  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, argTypesNoExp.map( argPair => argPair._1))
-		  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, returnTypes)
+		  	var simpleKey : String = fcnSelector.buildSimpleKey(node.function, argTypes.map( argPair => argPair._1))
+		  	var winningKey : String = simpleKey
 		  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
-		  	ctx.logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
-		  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
+		  	logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKey'...")
+		  	var macroDef : MacroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKey)
 		  	if (macroDef == null) {
 		  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
 		  		breakable {
 		  		  	simpleKeysToTry.foreach( key => {
-		  		  		ctx.logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+		  		  		logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
 		  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
 		  		  		if (macroDef != null) {
-		  		  			ctx.logger.debug(s"selectMacro ...found macroDef with $key")
+		  		  			logger.debug(s"selectMacro ...found macroDef with $key")
 		  		  			winningKey = key
 		  		  			break
 		  		  		}
 		  		  	})	  		  
 		  		}
 		  	}
-	  	  
+		  	
+		  	if (macroDef == null) {
+		  		val expandingContainerFields = false
+		  		var returnedArgsNoExp : Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]
+		  			= fcnSelector.collectArgKeys(expandingContainerFields)
+
+		  		val argTypesNoExp : Array[Array[(String,Boolean,BaseTypeDef)]] = returnedArgsNoExp.map( tuple => tuple._1)
+		  		val returnTypes : Array[String] = returnedArgsNoExp.map( tuple => tuple._5)
+			  	
+		  		/** There is no support for iterables in the macros.. grab the outer function args (note in expanded form) */
+			  	val argTypes : Array[(String,Boolean,BaseTypeDef)] = argTypesNoExp.flatten
+		  	  
+			  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(argTypesNoExp.map( argPair => argPair._1))
+			  	//var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, argTypesNoExp.map( argPair => argPair._1))
+			  	var simpleKeyNoExp : String = fcnSelector.buildSimpleKey(node.function, returnTypes)
+			  	val nmspcsSearched : String = ctx.NameSpaceSearchPath
+			  	ctx.logger.debug(s"selectMacro ... key used for mdmgr search = '$nmspcsSearched.$simpleKeyNoExp'...")
+			  	macroDef = ctx.MetadataHelper.MacroByTypeSig(simpleKeyNoExp)
+			  	if (macroDef == null) {
+			  		val simpleKeysToTry : Array[String] = fcnSelector.relaxSimpleKey(node.function, argTypes, returnTypes)
+			  		breakable {
+			  		  	simpleKeysToTry.foreach( key => {
+			  		  		ctx.logger.debug(s"selectMacro ...searching mdmgr with a relaxed key ... $key")
+			  		  		macroDef = ctx.MetadataHelper.MacroByTypeSig(key)
+			  		  		if (macroDef != null) {
+			  		  			ctx.logger.debug(s"selectMacro ...found macroDef with $key")
+			  		  			winningKey = key
+			  		  			break
+			  		  		}
+			  		  	})	  		  
+			  		}
+			  	}
+		  	  
+		  	}
+		  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
+		  	if (macroDef != null) { 
+		  		logger.debug(s"selectMacro ...macroDef produced?  $foundDef")
+		  	} else {
+		  		PmmlError.logError(ctx, s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
+		  	}
+		  	(macroDef, argTypes)
 	  	}
-	  	val foundDef : String = if (macroDef != null)  s"YES ...$winningKey found ${node.function}" else "NO!!"
-	  	if (macroDef != null) { 
-	  		logger.debug(s"selectMacro ...macroDef produced?  $foundDef")
-	  	} else {
-	  		PmmlError.logError(ctx, s"selectMacro ...macroDef produced?  $foundDef Either a function or a macro by this name must exist or perhaps the spelling or function signature is incorrect")
-	  	}
-	  	(macroDef, argTypes)
+	  	(macroDefRet, argTypesRet)
+
 	}
 	
 	/**
@@ -164,7 +173,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		val parametersUsed : Array[Int] = getArgParameterIndices(templateUsed)
 		val parameterValues : Array[String] = getArgValues
 
-		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues)
+		val functionMacroExpr : String = generateDoes(templateUsed, parametersUsed, parameterValues, argTypes)
 		(null,null,functionMacroExpr)
 	}
 	
@@ -271,9 +280,12 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	  			val (argNams,argTyp) : ((String,String),String) = if (child.isInstanceOf[xConstant]) {
 	  							val uniqNo : Int = ctx.Counter()
 			  					val constNm = "value" + uniqNo.toString 
-			  					((constNm,constNm),argTypeStr)
+			  					((constNm,constNm), argTypeStr)
 				  			} else {
 				  				if (child.isInstanceOf[xApply]) {
+				  					val fcnArg : xApply = child.asInstanceOf[xApply]
+				  					val fcnTypeInfo : FcnTypeInfo = fcnArg.GetTypeInfo
+				  					val fcnDef : FunctionDef = if (fcnTypeInfo != null) fcnTypeInfo.fcnDef else null
 									val fcnArgNm = child.asInstanceOf[xApply].function + "Result" +  idx.toString
 									((fcnArgNm,fcnArgNm), argTypeStr)
 					  			} else {
@@ -397,13 +409,20 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 			val ((buildsArgName, doesArgName), exprStr, isContainer) : ((String,String),String,Boolean) = fcnArgValues(idx)
 			//val childNode = if (! isContainer) node.Children.apply(cnt) else null
 			val childNode = if (! elemdef.isInstanceOf[ContainerTypeDef]) node.Children.apply(cnt) else null
-			if (elemdef.isInstanceOf[ContainerTypeDef]) {
+			if (ctx.MetadataHelper.isContainerWithFieldOrKeyNames(elemdef)) { //elemdef.isInstanceOf[ContainerTypeDef]) {
 				val appropriateTypeArgs = argTypes(cnt)
 				val (typeStr, isCtnr, elem) : (String,Boolean,BaseTypeDef) = appropriateTypeArgs
 				val whichType : String = typStr
 				buffer.append(s"ctx.valueFor(${'"'}$doesArgName${'"'}).asInstanceOf[AnyDataValue].Value.asInstanceOf[$whichType]")
 			} else {
 				buffer.append(exprStr)
+				if (typStr == "Long") {
+					/** check the exprStr... if all numeric (i.e., a long constant) suffix it with "L" to help the Scala compiler recognize this is a long */
+					val isAllNumeric : Boolean = exprStr.filter(ch => (ch >= '0' && ch <= '9')).size == exprStr.size
+					if (isAllNumeric) {
+						buffer.append('L')
+					}
+				}
 			}
 			cnt += 1
 			if (cnt < paramCnt) {
@@ -502,16 +521,17 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 	 *  simple function macro use.
 	 *  
 	 *  @param templateUsed one of the two templates from the function macro... 
-	 *  @param parametersUsed - these are indices into the fcnArgValues parameter (the 2nd arg) that are needed for the "does" arguments to 
-	 *  	be produced here.
+	 *  @param parametersUsed - these are indices into the parameterValues parameter (the 2nd arg) that are needed for the "does" arguments to 
+	 *  	be produced here (for sanity checking during debug)
 	 *  @param parameterValues - the substitution values that are available for the substitution.  Note that not all of them
 	 *  	necessarily need to be used.  The parametersUsed determines which will be used in the substitution map.
 	 *  @return the generated expression based upon the supplied template and substitution values.
 	 */
-	def generateDoes(templateUsed : String, parametersUsed : Array[Int], parameterValues : Array[String]) : String = {
+	def generateDoes(templateUsed : String, parametersUsed : Array[Int], parameterValues : Array[String], argTypes : Array[(String,Boolean,BaseTypeDef)] ) : String = {
 		val buffer : StringBuilder = new StringBuilder
 
 		val paramCnt : Int = parametersUsed.size
+		val argTypesSize : Int = argTypes.size
 		if (parameterValues.size == 5) {  /** little debug station */
 			val stopHere = 0
 		}
@@ -522,9 +542,22 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
   			val argExpr : String = pair._1
   			val argidx : Int = pair._2 + 1
   			val argIdxName = argidx.toString 
+  			
+  			val (argType,isContainer,typedef) : (String,Boolean,BaseTypeDef) = if (pair._2 < argTypesSize) argTypes.apply(pair._2) else ("Any",false,null)
+  			val exprToUse : String = if (argType == "Long") {
+				/** check the argType... if all numeric (i.e., a long constant) suffix it with "L" to help the Scala compiler recognize this is a long */
+				val isAllNumeric : Boolean = argExpr.filter(ch => (ch >= '0' && ch <= '9')).size == argExpr.size
+				if (isAllNumeric) {
+					argExpr + "L"
+				} else {
+					argExpr
+				}
+  			} else {
+  				argExpr
+  			}
 
-  			ctx.logger.debug(s"%$argIdxName% = $argExpr")
-  			substitutionMap += s"%$argIdxName%" -> s"$argExpr"
+  			ctx.logger.trace(s"%$argIdxName% = $exprToUse")
+  			substitutionMap += s"%$argIdxName%" -> s"$exprToUse"
   		})
   		
   		

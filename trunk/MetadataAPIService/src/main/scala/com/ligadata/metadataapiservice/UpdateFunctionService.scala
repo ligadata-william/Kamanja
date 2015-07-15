@@ -31,7 +31,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
   
   def process(functionJson:String) = {
     
-    log.info("Requesting UpdateFunction {}",functionJson)
+    log.debug("Requesting UpdateFunction {}",functionJson)
 
     var nameVal = APIService.extractNameFromJson(functionJson, AuditConstants.FUNCTION) 
 
@@ -39,7 +39,7 @@ class UpdateFunctionService(requestContext: RequestContext, userid:Option[String
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,functionJson,AuditConstants.FAIL,"",nameVal) 
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON")
+      val apiResult = MetadataAPIImpl.UpdateFunctions(functionJson,"JSON",userid)
       MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,functionJson,AuditConstants.SUCCESS,"",nameVal)            
       requestContext.complete(apiResult)    
     }

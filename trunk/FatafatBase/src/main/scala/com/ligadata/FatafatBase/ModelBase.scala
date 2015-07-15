@@ -27,12 +27,11 @@ import MinVarType._
 class Result(val name: String, val usage: MinVarType, val result: Any) {
 }
 
-class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: String, val mdlVersion: String, val results: Array[Result]) {
-  var uniqKey: String = ""
-  var uniqVal: String = ""
-  var xformedMsgCntr = 0 // Current message Index, In case if we have multiple Transformed messages for a given input message
-  var totalXformedMsgs = 0 // Total transformed messages, In case if we have multiple Transformed messages for a given input message
+object ModelResult {
   def ValueString(v: Any): String = {
+    if (v == null) {
+    	return "null"
+    }
     if (v.isInstanceOf[Set[_]]) {
       return v.asInstanceOf[Set[_]].mkString(",")
     }
@@ -44,6 +43,13 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
     }
     v.toString
   }
+}
+
+class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: String, val mdlVersion: String, val results: Array[Result]) {
+  var uniqKey: String = ""
+  var uniqVal: String = ""
+  var xformedMsgCntr = 0 // Current message Index, In case if we have multiple Transformed messages for a given input message
+  var totalXformedMsgs = 0 // Total transformed messages, In case if we have multiple Transformed messages for a given input message
 
   override def toString: String = {
     val json =
@@ -59,7 +65,7 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
           results.toList.map(r =>
             (("Name" -> r.name) ~
               ("Type" -> r.usage.toString) ~
-              ("Value" -> ValueString(r.result)))))
+              ("Value" -> ModelResult.ValueString(r.result)))))
     compact(render(json))
   }
 
@@ -83,7 +89,7 @@ class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: St
         ("output" -> results.toList.map(r =>
           ("Name" -> r.name) ~
             ("Type" -> r.usage.toString) ~
-            ("Value" -> ValueString(r.result))))
+            ("Value" -> ModelResult.ValueString(r.result))))
     compact(render(json))
   }
 }
@@ -92,7 +98,7 @@ trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
-  def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String): Unit
+  def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, adapterSpecificConfig: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoadapterSpecificConfig: String): Unit
   def getAllObjects(tempTransId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(tempTransId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
   def getHistoryObjects(tempTransId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
@@ -124,6 +130,12 @@ trait EnvContext {
   // Clear Intermediate results before Restart processing
   def clearIntermediateResults: Unit
 
+  // Clear Intermediate results After updating them on different node or different component (like KVInit), etc
+  def clearIntermediateResults(unloadMsgsContainers: Array[String]): Unit
+
+  def getChangedData(tempTransId: Long, includeMessages:Boolean, includeContainers:Boolean): scala.collection.immutable.Map[String, List[List[String]]]
+  def ReloadKeys(tempTransId: Long, containerName: String, keys: List[List[String]]): Unit
+  
   // Set Reload Flag
   def setReloadFlag(tempTransId: Long, containerName: String): Unit
 

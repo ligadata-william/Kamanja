@@ -577,6 +577,25 @@ class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
 		(scalaType,fldTypedef)
 	}
 
+	/** 
+	 *  Search the dictionaries for the supplied field....  Answer (scala typestring, BaseTypeDef) or (null,null) if not found.
+	 *  Note: Precautions have been taken to guarantee that the Union(xdict names, ddict names) == Intersect (xdict names, ddict names)
+	 *  
+	 *  @param nm : String the field name 
+	 *  @return pair (scala type string, baseTypeDef for named field's type)
+	 */
+		
+	def getDictFieldType(nm : String) : (String,BaseTypeDef) = {
+	  
+		val (typeStr, typedef) : (String,BaseTypeDef) = if (ctx.TransformDict.contains(nm)) {
+			getXDictFieldType(nm)
+		} else {
+			getDDictFieldType(nm)
+		}
+
+		(typeStr,typedef)
+	}
+
 
 	/** Answer the typedef string and typedef for the supplied typename.
 	 *  @param typename the name of the transformation dictionary derived field

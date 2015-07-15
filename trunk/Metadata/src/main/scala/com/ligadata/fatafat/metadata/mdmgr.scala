@@ -53,6 +53,7 @@ class MdMgr {
   private var containerDefs = new HashMap[String, Set[ContainerDef]] with MultiMap[String, ContainerDef]
   private var attrbDefs = new HashMap[String, Set[BaseAttributeDef]] with MultiMap[String, BaseAttributeDef]
   private var modelDefs = new HashMap[String, Set[ModelDef]] with MultiMap[String, ModelDef]
+  private var outputMsgDefs = new HashMap[String, Set[OutputMsgDef]] with MultiMap[String, OutputMsgDef]
 
   // FunctionDefs keyed by function signature nmspc.name(argtyp1,argtyp2,...) map 
   private var compilerFuncDefs = scala.collection.mutable.Map[String, FunctionDef]()
@@ -84,6 +85,7 @@ class MdMgr {
     clusterCfgs.clear
     nodes.clear
     adapters.clear
+    outputMsgDefs.clear
   }
 
   def truncate(objectType: String) {
@@ -126,6 +128,9 @@ class MdMgr {
       case "Adapters" => {
         adapters.clear
       }
+      case "OutputMsgDef" => {
+    	  outputMsgDefs.clear
+        }
       case _ => {
         logger.error("Unknown object type " + objectType + " in truncate function")
       }
@@ -133,19 +138,20 @@ class MdMgr {
   }
 
   def dump {
-    typeDefs.foreach(obj => { logger.trace("Type Key = " + obj._1) })
-    funcDefs.foreach(obj => { logger.trace("Function Key = " + obj._1) })
-    msgDefs.foreach(obj => { logger.trace("Message Key = " + obj._1) })
-    containerDefs.foreach(obj => { logger.trace("Container Key = " + obj._1) })
-    attrbDefs.foreach(obj => { logger.trace("Attribute Key = " + obj._1) })
-    modelDefs.foreach(obj => { logger.trace("Model Key = " + obj._1) })
-    compilerFuncDefs.foreach(obj => { logger.trace("CompilerFunction Key = " + obj._1) })
-    macroDefs.foreach(obj => { logger.trace("Macro Key = " + obj._1) })
-    macroDefSets.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    clusters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    clusterCfgs.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    nodes.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
-    adapters.foreach(obj => { logger.trace("MacroSet Key = " + obj._1) })
+    typeDefs.foreach(obj => { logger.debug("Type Key = " + obj._1) })
+    funcDefs.foreach(obj => { logger.debug("Function Key = " + obj._1) })
+    msgDefs.foreach(obj => { logger.debug("Message Key = " + obj._1) })
+    containerDefs.foreach(obj => { logger.debug("Container Key = " + obj._1) })
+    attrbDefs.foreach(obj => { logger.debug("Attribute Key = " + obj._1) })
+    modelDefs.foreach(obj => { logger.debug("Model Key = " + obj._1) })
+    compilerFuncDefs.foreach(obj => { logger.debug("CompilerFunction Key = " + obj._1) })
+    macroDefs.foreach(obj => { logger.debug("Macro Key = " + obj._1) })
+    macroDefSets.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    clusters.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    clusterCfgs.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    nodes.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    adapters.foreach(obj => { logger.debug("MacroSet Key = " + obj._1) })
+    outputMsgDefs.foreach(obj => { logger.trace("outputMsgDef Key = " + obj._1) })
   }
 
   private def GetExactVersion[T <: BaseElemDef](elems: Option[scala.collection.immutable.Set[T]], ver: Long): Option[T] = {
@@ -594,10 +600,10 @@ class MdMgr {
         case Some(fs) => {
           // val signature = key.trim.toLowerCase + "(" + args.foldLeft("")((sig, elem) => sig + "," + elem.trim.toLowerCase) + ")"
           val signature = key.trim.toLowerCase + "(" + args.map(elem => elem.trim.toLowerCase).mkString(",") + ")"
-          //logger.trace("signature => " + signature)
-          //logger.trace("fs => " + fs.size)
+          //logger.debug("signature => " + signature)
+          //logger.debug("fs => " + fs.size)
           val matches = fs.filter(f => (onlyActive == false || (onlyActive && f.IsActive)) && (signature == f.typeString))
-          //logger.trace("matches => " + matches.toSet.size)
+          //logger.debug("matches => " + matches.toSet.size)
           if (matches.size > 0) Some(matches.toSet) else None
         }
       }
@@ -683,7 +689,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val model = modelDefs.getOrElse(key, null)
     if (model == null) {
-      logger.trace("The model " + key + " doesn't exist ")
+      logger.debug("The model " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The model $key may have been removed already")
     } else {
       var versionMatch: ModelDef = null
@@ -694,15 +700,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The model " + key + " is removed ")
+              logger.debug("The model " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The model " + key + " is activated ")
+              logger.debug("The model " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The model " + key + " is deactivated ")
+              logger.debug("The model " + key + " is deactivated ")
             }
           }
         })
@@ -715,7 +721,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val message = msgDefs.getOrElse(key, null)
     if (message == null) {
-      logger.trace("The message " + key + " doesn't exist ")
+      logger.debug("The message " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The message $key may have been removed already")
     } else {
       var versionMatch: MessageDef = null
@@ -726,15 +732,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The message " + key + " is removed ")
+              logger.debug("The message " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The message " + key + " is activated ")
+              logger.debug("The message " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The message " + key + " is deactivated ")
+              logger.debug("The message " + key + " is deactivated ")
             }
           }
         })
@@ -747,7 +753,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val container = containerDefs.getOrElse(key, null)
     if (container == null) {
-      logger.trace("The container " + key + " doesn't exist ")
+      logger.debug("The container " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The container $key may have been removed already")
     } else {
       var versionMatch: ContainerDef = null
@@ -758,15 +764,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The container " + key + " is removed ")
+              logger.debug("The container " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The container " + key + " is activated ")
+              logger.debug("The container " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The container " + key + " is deactivated ")
+              logger.debug("The container " + key + " is deactivated ")
             }
           }
         })
@@ -779,7 +785,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val function = funcDefs.getOrElse(key, null)
     if (function == null) {
-      logger.trace("The function " + key + " doesn't exist ")
+      logger.debug("The function " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The function $key may have been removed already")
     } else {
       var versionMatch: FunctionDef = null
@@ -790,15 +796,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The function " + key + " is removed ")
+              logger.debug("The function " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The function " + key + " is activated ")
+              logger.debug("The function " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The function " + key + " is deactivated ")
+              logger.debug("The function " + key + " is deactivated ")
             }
           }
         })
@@ -811,7 +817,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val attribute = attrbDefs.getOrElse(key, null)
     if (attribute == null) {
-      logger.trace("The attribute " + key + " doesn't exist ")
+      logger.debug("The attribute " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The attribute $key may have been removed already")
     } else {
       var versionMatch: BaseAttributeDef = null
@@ -822,15 +828,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The attribute " + key + " is removed ")
+              logger.debug("The attribute " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The attribute " + key + " is activated ")
+              logger.debug("The attribute " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The attribute " + key + " is deactivated ")
+              logger.debug("The attribute " + key + " is deactivated ")
             }
           }
         })
@@ -843,7 +849,7 @@ class MdMgr {
     val key = MdMgr.MkFullName(nameSpace, name)
     val typ = typeDefs.getOrElse(key, null)
     if (typ == null) {
-      logger.trace("The type " + key + " doesn't exist ")
+      logger.debug("The type " + key + " doesn't exist ")
       throw new ObjectNolongerExistsException(s"The type $key may have been removed already")
     } else {
       var versionMatch: BaseTypeDef = null
@@ -854,15 +860,15 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
-              logger.info("The type " + key + " is removed ")
+              logger.debug("The type " + key + " is removed ")
             }
             case "Activate" => {
               m.Active
-              logger.info("The type " + key + " is activated ")
+              logger.debug("The type " + key + " is activated ")
             }
             case "Deactivate" => {
               m.Deactive
-              logger.info("The type " + key + " is deactivated ")
+              logger.debug("The type " + key + " is deactivated ")
             }
           }
         })
@@ -2580,17 +2586,24 @@ class MdMgr {
    *
    */
   def AddModelDef(nameSpace: String, name: String, physicalName: String, modelType: String, inputVars: List[(String, String, String, String, Boolean, String)], outputVars: List[(String, String, String)], ver: Long = 1, jarNm: String = null, depJars: Array[String] = Array[String]()): Unit = {
-    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars))
+    AddModelDef(MakeModelDef(nameSpace, name, physicalName, modelType, inputVars, outputVars, ver, jarNm, depJars), false)
   }
 
-  def AddModelDef(mdl: ModelDef): Unit = {
+  def AddModelDef(mdl: ModelDef, allowLatestVersion: Boolean): Unit = {
 
     var modelExists: Boolean = false
     val existingModel = Model(mdl.FullName, -1, false)
     if (existingModel != None) {
       val latesmodel = existingModel.get.asInstanceOf[ModelDef]
-      if (mdl.Version <= latesmodel.Version) {
-        modelExists = true
+      if (allowLatestVersion) {
+        if (mdl.Version < latesmodel.Version) {
+          modelExists = true
+        }
+      }
+      else {
+        if (mdl.Version <= latesmodel.Version) {
+          modelExists = true
+        }
       }
     }
 
@@ -2620,7 +2633,7 @@ class MdMgr {
     classpath: String,
     clusterId: String,
     power: Int,
-    roles: Int,
+    roles: Array[String],
     description: String): NodeInfo = {
     val ni = new NodeInfo
     ni.nodeId = nodeId
@@ -2695,7 +2708,7 @@ class MdMgr {
 
   def MakeAdapter(name: String, typeString: String, dataFormat: String, className: String,
     jarName: String, dependencyJars: List[String],
-    adapterSpecificCfg: String, inputAdapterToVerify: String): AdapterInfo = {
+    adapterSpecificCfg: String, inputAdapterToVerify: String, delimiterString: String, associatedMsg: String): AdapterInfo = {
     val ai = new AdapterInfo
     ai.name = name
     ai.typeString = typeString
@@ -2705,6 +2718,8 @@ class MdMgr {
     if (dependencyJars != null) {
       ai.dependencyJars = dependencyJars.toArray
     }
+    ai.delimiterString = delimiterString // Delimiter String for CSV
+    ai.associatedMsg = associatedMsg // Queue Associated Message
     ai.adapterSpecificCfg = adapterSpecificCfg
     ai.inputAdapterToVerify = inputAdapterToVerify
     ai
@@ -2751,6 +2766,136 @@ class MdMgr {
     clusterCfgs.toMap
   }
 
+    /** Get All Versions of Output Messages */
+    def OutputMessages(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = { GetImmutableSet(Some(outputMsgDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
+
+    /** Get All Versions of Output Messages for Key */
+    def OutputMessages(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = { GetImmutableSet(outputMsgDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
+    def OutputMessages(nameSpace: String, name: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[OutputMsgDef]] = OutputMessages(MdMgr.MkFullName(nameSpace, name), onlyActive, latestVersion)
+
+    /** Answer the OutputMessageDef with the supplied namespace and name  */
+    def OutputMessage(nameSpace: String, name: String, ver: Long, onlyActive: Boolean): Option[OutputMsgDef] = OutputMessage(MdMgr.MkFullName(nameSpace, name), ver, onlyActive)
+    /** Answer the ACTIVE and CURRENT Output Message with the supplied namespace and name  */
+    def ActiveOutputMessage(nameSpace: String, name: String): OutputMsgDef = {
+      val optMsg: Option[OutputMsgDef] = OutputMessage(MdMgr.MkFullName(nameSpace, name), -1, true)
+      val outputMsg: OutputMsgDef = optMsg match {
+        case Some(optOutputMsg) => optOutputMsg
+        case _ => null
+      }
+      outputMsg
+    }
+
+    /** Answer the Output Message with the supplied key. */
+    def OutputMessage(key: String, ver: Long, onlyActive: Boolean): Option[OutputMsgDef] = GetReqValue(OutputMessages(key, onlyActive, false), ver)
+
+    @throws(classOf[AlreadyExistsException])
+    @throws(classOf[NoSuchElementException])
+    def AddOutputMsg(outputMsg: OutputMsgDef): Unit = {
+
+      if (OutputMessage(outputMsg.FullName, -1, false) != None) {
+        throw new AlreadyExistsException(s"Output Message ${outputMsg.FullName} already exists.")
+      }
+      outputMsgDefs.addBinding(outputMsg.FullName, outputMsg)
+    }
+
+    /**
+     *  Construct and catalog a output message with the supplied named attributes. They may be of arbitrary
+     *  types.
+     *
+     *  @param nameSpace - the namespace in which this output message should be cataloged
+     *  @param name - the name of the output message.
+     *  @param queue - the name of the queue the output message need to puclished to
+     *  @param partionKeys - partition keys
+     *  @param defaults - default value
+     *  @param dataDeclrtion - delimeter value
+     *  @param fields - all the fields of the output message
+     *  @param outputFormat - output format string
+     */
+
+    @throws(classOf[AlreadyExistsException])
+    @throws(classOf[NoSuchElementException])
+    def AddOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String): Unit = {
+      AddOutputMsg(MakeOutputMsg(nameSpace, name, ver, queue, partionKeys, defaults, dataDeclrtion, fields, outputFormat))
+    }
+
+    /**
+     *  Construct and catalog a output message with the supplied named attributes. They may be of arbitrary
+     *  types.
+     *
+     *  @param nameSpace - the namespace in which this output message should be cataloged
+     *  @param name - the name of the output message.
+     *  @param queue - the name of the queue the output message need to puclished to
+     *  @param partionKeys - partition keys
+     *  @param defaults - default value
+     *  @param dataDeclrtion - delimeter value
+     *  @param fields - all the fields of the output message
+     *  @param outputFormat - output format string
+     *  @return OutputMsgDef
+     */
+
+    def MakeOutputMsg(nameSpace: String, name: String, ver: Long, queue: String, partionKeys: Array[(String, Array[(String, String)], String, String)], defaults: Map[String, String], dataDeclrtion: Map[String, String], fields: Map[(String, String), Set[(Array[(String, String)], String)]], outputFormat: String): OutputMsgDef = {
+
+      val latestActiveMessage = OutputMessage(nameSpace, name, -1, false)
+      if (latestActiveMessage != None) {
+        //Only make a message if the version is greater then the last known version already in the system.
+        if (latestActiveMessage.get.Version >= ver) {
+          throw new AlreadyExistsException(s"Higher active version of Output Message $nameSpace.$name already exists in the system")
+        }
+      }
+      val physicalName: String = nameSpace+"_"+name+"_"+ver+"_"+System.currentTimeMillis
+      var od = new OutputMsgDef
+      val outputMsgNm = MdMgr.MkFullName(nameSpace, name)
+      od.nameSpace = nameSpace
+      od.name = name
+      od.ver = ver
+      od.Queue = queue
+      od.ParitionKeys = partionKeys
+      od.Defaults = defaults
+      od.DataDeclaration = dataDeclrtion
+      od.Fields = fields
+      od.OutputFormat = outputFormat
+      od.PhysicalName(physicalName)
+      SetBaseElem(od, nameSpace, name, ver, null, null)
+      od
+    }
+
+    @throws(classOf[ObjectNolongerExistsException])
+    def ModifyOutputMsg(nameSpace: String, name: String, ver: Long, operation: String): OutputMsgDef = {
+      val key = MdMgr.MkFullName(nameSpace, name)
+      val outputMsg = outputMsgDefs.getOrElse(key, null)
+      if (outputMsg == null) {
+        logger.trace("The output message " + key + " doesn't exist ")
+        throw new ObjectNolongerExistsException(s"The output message $key may have been removed already")
+      } else {
+        var versionMatch: OutputMsgDef = null
+        outputMsgDefs(key).foreach(o =>
+          if (o.ver == ver) {
+            versionMatch = o
+            operation match {
+              case "Remove" => {
+                o.Deleted
+                o.Deactive
+                logger.info("The output message " + key + " is removed ")
+              }
+              case "Activate" => {
+                o.Active
+                logger.info("The output message " + key + " is activated ")
+              }
+              case "Deactivate" => {
+                o.Deactive
+                logger.info("The output message " + key + " is deactivated ")
+              }
+            }
+          })
+        versionMatch
+      }
+    }
+
+    def RemoveOutputMsg(nameSpace: String, name: String, ver: Long): BaseElemDef = {
+      ModifyOutputMsg(nameSpace, name, ver, "Remove")
+    }
+      
+  
   // External Functions -- End 
 
 }
@@ -2842,6 +2987,8 @@ object MdMgr extends LogTrait {
     val retVerInfo = "%06d.%06d.%06d".format(major, mini, micro)
     retVerInfo
   }
+  
+  def UnknownVersion : String = "000000000000000000000"
 
   def Pad0s2Version(verInfo: Long): String = {
     var remVer = verInfo
