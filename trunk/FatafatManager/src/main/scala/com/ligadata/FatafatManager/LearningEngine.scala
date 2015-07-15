@@ -98,7 +98,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         // Run all models
         val mdlsStartTime = System.nanoTime
         val results = RunAllModels(tempTransId, msg, envContext)
-        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
           var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
@@ -178,7 +178,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             output.foreach(o => {
               o.send(resStr, cntr.toString)
             })
-            LOG.debug(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
+            LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
           }
           if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
             try {

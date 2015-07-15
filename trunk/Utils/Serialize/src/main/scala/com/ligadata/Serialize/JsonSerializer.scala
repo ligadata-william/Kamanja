@@ -113,7 +113,7 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
 	    val funcName = funcDef.mkString(",")
-	    logger.debug("Failed to add the func: " + funcName  + ": " + e.getMessage())
+	    logger.error("Failed to add the func: " + funcName  + ": " + e.getMessage())
 	  }
 	}
       })
@@ -208,13 +208,13 @@ object JsonSerializer {
       case e:AlreadyExistsException => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	throw new AlreadyExistsException(e.getMessage())
       }
       case e:Exception => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	throw new TypeDefProcessingException(e.getMessage())
       }
     }
@@ -241,12 +241,12 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	  }
 	  case e:TypeDefProcessingException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.debug("Failed to add the type: " + typeName  + ": " + e.getMessage())
+	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
 	  }
 	}
       })
@@ -290,7 +290,7 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(o.NameSpace,o.Name,o.Version)
 	    val fullName  = keyValues.mkString(",")
-	    logger.debug("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
+	    logger.error("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
 	  }
 	}
       })
@@ -360,7 +360,7 @@ object JsonSerializer {
       //val derivedConcept = MdMgr.GetMdMgr.MakeDerivedAttr(func,attrList)
     }catch {
       case e:AlreadyExistsException => {
-	logger.debug("Failed to add the DerivedConcept: : " + e.getMessage())
+	logger.error("Failed to add the DerivedConcept: : " + e.getMessage())
       }
       case e: MappingException => {
         e.printStackTrace()
@@ -421,7 +421,7 @@ object JsonSerializer {
         throw Json4sParsingException(e.getMessage())
       }
       case e:AlreadyExistsException => {
-	logger.debug("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
+	logger.error("Failed to add the type, json => " + typeJson  + "\nError => " + e.getMessage())
 	throw new AlreadyExistsException(e.getMessage())
       }
       case e: Exception => {

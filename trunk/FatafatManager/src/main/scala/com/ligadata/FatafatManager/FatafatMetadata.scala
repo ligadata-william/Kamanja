@@ -75,9 +75,9 @@ class FatafatMetadata {
     PrepareContainers(loadedJars, loader, mirror, tmpContainerDefs)
     PrepareModels(loadedJars, loader, mirror, tmpModelDefs)
 
-    LOG.debug("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
-    LOG.debug("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
-    LOG.debug("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
+    LOG.info("Loaded Metadata Messages:" + messageObjects.map(container => container._1).mkString(","))
+    LOG.info("Loaded Metadata Containers:" + containerObjects.map(container => container._1).mkString(","))
+    LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
   def PrepareMessage(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
@@ -143,7 +143,7 @@ class FatafatMetadata {
           GetChildsFromEntity(msg.containerType, mgsObj.childs)
           messageObjects(msgName) = mgsObj
 
-          LOG.debug("Created Message:" + msgName)
+          LOG.info("Created Message:" + msgName)
         } else {
           LOG.error("Failed to instantiate message object :" + clsName)
         }
@@ -208,7 +208,7 @@ class FatafatMetadata {
           GetChildsFromEntity(container.containerType, contObj.childs)
           containerObjects(contName) = contObj
 
-          LOG.debug("Created Container:" + contName)
+          LOG.info("Created Container:" + contName)
         } else {
           LOG.error("Failed to instantiate container object :" + clsName)
         }
@@ -265,10 +265,10 @@ class FatafatMetadata {
           val modelobj = objinst.asInstanceOf[ModelBaseObj]
           val mdlName = (mdl.NameSpace.trim + "." + mdl.Name.trim).toLowerCase
           modelObjects(mdlName) = new MdlInfo(modelobj, mdl.jarName, mdl.dependencyJarNames, "Ligadata")
-          LOG.debug("Created Model:" + mdlName)
+          LOG.info("Created Model:" + mdlName)
         } else {
-          LOG.error("Failed to instantiate model object :" + clsName)
-          LOG.debug("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
+          // LOG.error("Failed to instantiate model object :" + clsName)
+          LOG.error("Failed to instantiate model object :" + clsName + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
         }
       } catch {
         case e: Exception => LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
@@ -567,7 +567,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
   // Assuming mdMgr is locked at this moment for not to update while doing this operation
   def UpdateMetadata(receivedJsonStr: String): Unit = {
 
-    LOG.debug("Process ZooKeeper notification " + receivedJsonStr)
+    LOG.info("Process ZooKeeper notification " + receivedJsonStr)
 
     if (receivedJsonStr == null || receivedJsonStr.size == 0) {
       // nothing to do
@@ -669,7 +669,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
     zkTransaction.Notifications.foreach(zkMessage => {
       val key = zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong
-      LOG.debug("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
+      LOG.info("Processing ZooKeeperNotification, the object => " + key + ",objectType => " + zkMessage.ObjectType + ",Operation => " + zkMessage.Operation)
       zkMessage.ObjectType match {
         case "ModelDef" => {
           zkMessage.Operation match {

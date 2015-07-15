@@ -319,12 +319,12 @@ class CompilerProxy{
     }
     catch{
       case e:Exception =>{
-	logger.debug("Failed to compile the message definition " + e.toString)
+	logger.error("Failed to compile the message definition " + e.toString)
 	e.printStackTrace
 	throw new MsgCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
-	logger.debug("Failed to compile the message definition " + e.toString)
+	logger.error("Failed to compile the message definition " + e.toString)
 	//e.printStackTrace
 	throw new MsgCompilationFailedException(e.getMessage())
       }

@@ -105,7 +105,7 @@ object FatafatLeader {
     try {
       val evntPthData = if (eventPathData != null) (new String(eventPathData)) else "{}"
       val extractedNode = ZKPaths.getNodeFromPath(eventPath)
-      LOG.debug("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s".format(eventType, eventPath, evntPthData, extractedNode))
+      LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s".format(eventType, eventPath, evntPthData, extractedNode))
 
       if (eventType.compareToIgnoreCase("CHILD_UPDATED") == 0) {
         if (curParticipents(extractedNode)) { // If this node is one of the participent, then work on this, otherwise ignore
@@ -149,7 +149,7 @@ object FatafatLeader {
             } else {
               val redStr = if (canRedistribute) "canRedistribute is true, Redistributing" else "canRedistribute is false, waiting until next call"
               // Got different action. May be re-distribute. For now any non-expected action we will redistribute
-              LOG.debug("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
+              LOG.info("UpdatePartitionsNodeData => eventType: %s, eventPath: %s, eventPathData: %s, Extracted Node:%s. Expected Action:%s, Recieved Action:%s %s.".format(eventType, eventPath, evntPthData, extractedNode, expectedNodesAction, action, redStr))
               if (canRedistribute)
                 SetUpdatePartitionsFlag
             }
@@ -177,7 +177,7 @@ object FatafatLeader {
     val cs = GetClusterStatus
     if (cs.isLeader == false || cs.leader != cs.nodeId) return // This is not leader, just return from here. This is same as (cs.leader != cs.nodeId)
 
-    LOG.debug("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.info("Distribution NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
 
     // Clear Previous Distribution Map
     distributionMap.clear
@@ -372,7 +372,7 @@ object FatafatLeader {
     LOG.debug("EventChangeCallback => Enter")
     FatafatConfiguration.participentsChangedCntr += 1
     SetClusterStatus(cs)
-    LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
+    LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
     LOG.debug("EventChangeCallback => Exit")
   }
 
@@ -396,7 +396,7 @@ object FatafatLeader {
             processingKVs(kv._1.toLowerCase) = kv._2
           })
           val maxParts = adapMaxPartsMap.getOrElse(name, 0)
-          LOG.debug("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
+          LOG.info("On Node %s for Adapter %s with Max Partitions %d UniqueKeys %s, UniqueValues %s".format(nodeId, name, maxParts, uAK.mkString(","), uKV.mkString(",")))
 
           LOG.debug("Deserializing Keys")
           val keys = uAK.map(k => ia.DeserializeKey(k._1))
@@ -451,7 +451,7 @@ object FatafatLeader {
             quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
           }
 
-          LOG.debug(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
+          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
           ia.StartProcessing(maxParts, quads.toArray, true)
         }
       } catch {
@@ -507,7 +507,7 @@ object FatafatLeader {
       return
     }
 
-    LOG.debug("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
+    LOG.info("ActionOnAdaptersDistImpl => receivedJsonStr: " + receivedJsonStr)
 
     try {
       // Perform the action here (STOP or DISTRIBUTE for now)
@@ -613,7 +613,7 @@ object FatafatLeader {
       // 
     } catch {
       case e: Exception => {
-        LOG.debug("Found invalid JSON: %s".format(receivedJsonStr))
+        LOG.error("Found invalid JSON: %s".format(receivedJsonStr))
       }
     }
 
@@ -687,7 +687,7 @@ object FatafatLeader {
                 }
 
                 if (keys != null && keys.size > 0) {
-                  logger.debug("Txnid:%d, ContainerName:%s, Key:%s".format(txnid, contName, keys.mkString(",")))
+                  logger.info("Txnid:%d, ContainerName:%s, Keys:%s".format(txnid, contName, keys.mkString(",")))
                   try {
                     envCtxt.ReloadKeys(txnid, contName, keys)
                   } catch {
@@ -710,7 +710,7 @@ object FatafatLeader {
       // 
     } catch {
       case e: Exception => {
-        LOG.debug("Found invalid JSON: %s".format(receivedJsonStr))
+        LOG.error("Found invalid JSON: %s".format(receivedJsonStr))
       }
     }
 
@@ -804,7 +804,7 @@ object FatafatLeader {
     if (zkConnectString != null && zkConnectString.isEmpty() == false && engineLeaderZkNodePath != null && engineLeaderZkNodePath.isEmpty() == false && engineDistributionZkNodePath != null && engineDistributionZkNodePath.isEmpty() == false && dataChangeZkNodePath != null && dataChangeZkNodePath.isEmpty() == false) {
       try {
         val adaptrStatusPathForNode = adaptersStatusPath + "/" + nodeId
-        LOG.debug("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s, dataChangeZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, dataChangeZkNodePath))
+        LOG.info("ZK Connecting. adaptrStatusPathForNode:%s, zkConnectString:%s, engineLeaderZkNodePath:%s, engineDistributionZkNodePath:%s, dataChangeZkNodePath:%s".format(adaptrStatusPathForNode, zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, dataChangeZkNodePath))
         CreateClient.CreateNodeIfNotExists(zkConnectString, engineDistributionZkNodePath) // Creating 
         CreateClient.CreateNodeIfNotExists(zkConnectString, adaptrStatusPathForNode) // Creating path for Adapter Statues
         CreateClient.CreateNodeIfNotExists(zkConnectString, dataChangeZkNodePath) // Creating 

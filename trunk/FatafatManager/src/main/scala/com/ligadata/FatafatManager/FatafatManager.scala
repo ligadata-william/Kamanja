@@ -304,7 +304,7 @@ class FatafatManager {
             FatafatConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => LOG.debug("Failed to load Wait Processing Info.")
+        case e: Exception => LOG.error("Failed to load Wait Processing Info.")
       }
 
       FatafatMetadata.InitBootstrap
@@ -407,14 +407,14 @@ class FatafatManager {
 
     {
       // Printing all configuration
-      LOG.debug("Configurations:")
+      LOG.info("Configurations:")
       val it = loadConfigs.entrySet().iterator()
       val lowercaseconfigs = new Properties()
       while (it.hasNext()) {
         val entry = it.next();
-        LOG.debug("\t" + entry.getKey().asInstanceOf[String] + " -> " + entry.getValue().asInstanceOf[String])
+        LOG.info("\t" + entry.getKey().asInstanceOf[String] + " -> " + entry.getValue().asInstanceOf[String])
       }
-      LOG.debug("\n")
+      LOG.info("\n")
     }
 
     if (LoadDynamicJarsIfRequired(loadConfigs) == false) {
@@ -436,7 +436,7 @@ class FatafatManager {
             sa.send(dispStr, "1")
           })
         } else {
-          LOG.debug(dispStr)
+          LOG.info(dispStr)
         }
       }
     }

@@ -23,7 +23,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       try {
         val transformStartTime = System.nanoTime
         val xformedmsgs = xform.execute(data, format, associatedMsg, delimiterString)
-        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Transform", uv, readTmNanoSecs, transformStartTime))
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Transform", uv, readTmNanoSecs, transformStartTime))
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
@@ -48,7 +48,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
           val sendJson = compact(render(datachangedata))
           FatafatLeader.SetNewDataToZkc(FatafatConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
-        LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
       }
     } catch {
       case e: Exception => {
