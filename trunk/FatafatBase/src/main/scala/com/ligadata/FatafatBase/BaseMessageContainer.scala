@@ -26,6 +26,8 @@ trait MessageContainerBase {
   def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit
   def Serialize(dos: DataOutputStream): Unit
   def Save(): Unit  
+  final def TransactionId(transId: Long): Unit = { transactionId = transId }
+  final def TransactionId(): Long = transactionId
 }
 
 trait MessageContainerObjBase {
