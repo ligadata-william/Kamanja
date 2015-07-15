@@ -75,9 +75,10 @@ class CompilerProxy{
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-
+  private var userId: Option[String] = _
   lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
 
+  def setSessionUserId(id: Option[String]): Unit = {userId=id}
   def setLoggerLevel(level: Level){
     logger.setLevel(level);
   }
@@ -97,7 +98,7 @@ class CompilerProxy{
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode,
                               totalDeps,  
-                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName),
+                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName,None),
                               nonTypeDeps)   
     } catch {
       case e: Exception => {
@@ -561,8 +562,6 @@ class CompilerProxy{
         modDef.physicalName = pName
         if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
         modDef.ObjectDefinition(createSavedSourceCode(originalSource, notTypeDeps, typeDeps, pname))   
-        
-        println("Generated "+modDef.NameSpace+"."+modDef.Name+"/"+modDef.FullNameWithVer+"   at "+modDef.PhysicalName)
         modDef
     } catch {
       case e:AlreadyExistsException =>{
@@ -972,8 +971,8 @@ class CompilerProxy{
    * getClassPath - 
    * 
    */
-  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), 
-                                                                                                                                                                        MetadataAPIImpl.getModelMessagesContainers(modelName),
+  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName,userId), 
+                                                                                                                                                                        MetadataAPIImpl.getModelMessagesContainers(modelName,userId),
                                                                                                                                                                         cpDeps)
 
   /**

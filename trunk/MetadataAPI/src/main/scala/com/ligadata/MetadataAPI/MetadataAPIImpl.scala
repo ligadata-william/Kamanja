@@ -545,6 +545,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private var otherStore: DataStore = _
   private var jarStore: DataStore = _
   private var configStore: DataStore = _
+  private var modelConfigStore: DataStore = _
 
   def oStore = otherStore
 
@@ -1762,6 +1763,7 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Opening datastore")
       metadataStore = GetDataStoreHandle(storeType, "metadata_store", "metadata_objects")
       configStore = GetDataStoreHandle(storeType, "config_store", "config_objects")
+      modelConfigStore = GetDataStoreHandle(storeType, "model_config_store","model_config_objects")
       jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store")
       transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id")
       modelStore = metadataStore
@@ -1778,8 +1780,9 @@ object MetadataAPIImpl extends MetadataAPI {
         "concepts" -> conceptStore,
         "types" -> typeStore,
         "others" -> otherStore,
-  "jar_store" -> jarStore,
-  "config_objects" -> configStore,
+        "jar_store" -> jarStore,
+        "config_objects" -> configStore,
+        "model_config_objects" -> modelConfigStore,
         "transaction_id" -> transStore)
     } catch {
       case e: CreateStoreFailedException => {
@@ -1815,6 +1818,11 @@ object MetadataAPIImpl extends MetadataAPI {
         configStore.Shutdown()
         configStore = null
         logger.debug("configStore closed")
+      }
+      if (modelConfigStore != null) {
+        modelConfigStore.Shutdown()
+        modelConfigStore = null
+        logger.debug("modelConfigStore closed")       
       }
     } catch {
       case e: Exception => {
@@ -3254,6 +3262,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
 
     var compProxy = new CompilerProxy
+    compProxy.setSessionUserId(userid)
     val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
     UploadJarsToDB(modDef)
     val apiResult = AddModel(modDef)  
@@ -4307,7 +4316,23 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
-
+  
+  private def LoadAllModelConfigsIntoChache: Unit = {
+      var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
+      modelConfigStore.getAllKeys({ (key: Key) => keys.add(key) })  
+      val keyArray = keys.toArray
+      if (keyArray.length == 0) {
+        logger.debug("No model config objects available in the Database")
+        return
+      }
+      keyArray.foreach (key => {
+        val obj = GetObject(key, modelConfigStore)
+        val conf = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[Map[String,List[String]]]
+        MdMgr.GetMdMgr.AddModelConfig(KeyAsStr(key),conf)
+      })
+      MdMgr.GetMdMgr.DumpModelConfigs
+  }
+  
   def LoadAllObjectsIntoCache {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
@@ -4317,6 +4342,9 @@ object MetadataAPIImpl extends MetadataAPI {
       else{
         logger.debug("Assuming bootstrap... No config objects in persistent store")
       }
+      
+      // Load All the Model Configs here... 
+      LoadAllModelConfigsIntoChache
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
@@ -5361,61 +5389,46 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
  
+  
+  def getModelDependencies (modelConfigName: String, userid:Option[String] ): List[String] = { 
+    var config:  scala.collection.immutable.Map[String,List[String]] =  MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
+    config.getOrElse(ModelCompilationConstants.DEPENDENCIES, List[String]())
+  }
+  
+  def getModelMessagesContainers (modelConfigName: String, userid:Option[String]): List[String]  = {   
+    var config:  scala.collection.immutable.Map[String,List[String]] = MdMgr.GetMdMgr.GetModelConfig(modelConfigName)
+    config.getOrElse(ModelCompilationConstants.TYPES_DEPENDENCIES, List[String]())
+  }
+  
+  def getModelConfigNames (): Array[String] = {
+    MdMgr.GetMdMgr.GetModelConfigKeys
+  }
+  
   /**
    * 
    */
   private var cfgmap: Map[String,Any] = null
   def UploadModelsConfig (cfgStr: String,userid:Option[String], objectList: String): String = {
-    
+    var keyList = new Array[String](0)
+    var valueList = new Array[Array[Byte]](0)
     cfgmap = parse(cfgStr).values.asInstanceOf[Map[String,Any]]
+    
+    cfgmap.keys.foreach (key => {
+      var mdl = cfgmap(key).asInstanceOf[Map[String,List[String]]]
+      // Prepare KEY/VALUE for persistent insertion
+      var modelKey = userid.getOrElse("")+"."+key
+      var value = serializer.SerializeObjectToByteArray(mdl)
+      keyList   = keyList :+ modelKey.toLowerCase
+      valueList = valueList :+ value
+      // Save inmemory
+      MdMgr.GetMdMgr.AddModelConfig(modelKey,mdl)  
+    })
+    // Save in Databae
+    SaveObjectList(keyList,valueList,modelConfigStore)  
+    
+    // return reuslts
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", 0.toString, "Upload of model config successful")
     apiResult.toString()
-    //return cfgStr
-  }
-  
-  def getModelDependencies (modelName: String): List[String] = {    
-    var modelCfg = cfgmap.getOrElse(modelName, null).asInstanceOf[Map[String,Any]]
-    if (modelCfg != null) {
-        println("GetModelDeps++++++")
-      return modelCfg.getOrElse("Dependencies",null).asInstanceOf[List[String]] 
-    }
-    else  {
-      println("GetModelDeps------")
-      return List[String]()
-    }
-  }
-  
-  def getModelMessagesContainers (modelName: String): List[String]  = {   
-    var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
-    
-    if (modelCfg != null) {
-        println("getModelMessagesContainers++++++")
-      return modelCfg.getOrElse("MessageAndContainers",null).asInstanceOf[List[String]] 
-    }
-    else  {
-      println("getModelMessagesContainers------")
-      return List[String]()
-    }
-    
-  }
-  
-  def getModelPhysicalName (modelName: String): String = {
-    println("+++++ requesting info on "+ modelName)
-    var modelCfg = cfgmap.getOrElse(modelName,null).asInstanceOf[Map[String,Any]]
-    if (modelCfg != null) {
-        println("PhysicalName++++++")
-      return modelCfg.getOrElse("PhysicalName",null).asInstanceOf[String] 
-    }
-    else  {
-      println("PhysicalName------")
-      return ""
-    }
-
-  }
-  
-  def getModelConfigNames (): Array[String] = {
-    if (cfgmap == null) return Array[String]()
-    return cfgmap.keySet.toArray
   }
   
   /**
