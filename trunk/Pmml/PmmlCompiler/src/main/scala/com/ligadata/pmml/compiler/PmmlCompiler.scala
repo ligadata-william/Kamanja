@@ -19,10 +19,15 @@ import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata.MdMgr._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.pmml.transforms.printers.scala.common._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.xmlingestion._
+import com.ligadata.pmml.transforms.rawtocooked.common._
+import com.ligadata.pmml.transforms.xmltoraw.common._
 
 
 /** 
-	Original Notes:
+	Original Notes (of historical interest only):
     This object manages the parse, transform, and source code generation and compilation of pmml models.  
 	
 	Basic idea - xml parsing
@@ -308,7 +313,7 @@ As such, it must be simple name with alphanumerics and ideally all lower case.
 			val msgCtnPath : String = ""
 			val mgr : MdMgr = MdMgr.GetMdMgr
 			
-			val mdLoader = new com.ligadata.fatafat.metadataload.MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
+			val mdLoader = new MetadataLoad (mgr, typesPath, fcnPath, attrPath, msgCtnPath)
 			mdLoader.initialize
 			
 			val compiler : PmmlCompiler = new PmmlCompiler(mgr, clientName, logger, injectLogging, Array("."))
@@ -610,7 +615,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	private def parseObject( ctx: PmmlContext, is :InputSource )  = {
 		try {
 			val xmlreader = initializeReader();
-			val handler = new PmmlParseEventParser(ctx)
+			val handler = new PmmlParseEventParser(ctx, new PmmlNodeGeneratorDispatcher(ctx))
 			xmlreader.setContentHandler(handler);
 			xmlreader.parse(is);
 		} catch {
@@ -621,8 +626,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 	/** Transform the queue of PmmlNodes in the ctx to a queue of PmmlExecNodes */
 	private def xformObject( ctx: PmmlContext )  = {
 		try {
-			val xform : PmmlXform = new PmmlXform(ctx);
-			xform.transform();
+			val xform : PmmlExecNodeGeneratorDispatcher = new PmmlExecNodeGeneratorDispatcher(ctx);
+			xform.transform;
 		} catch {
 			case t: Throwable => t.printStackTrace()
 		}
@@ -633,11 +638,8 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		var srcCode = "No Source Code"
 		try {
 			val generator : PmmlModelGenerator = new PmmlModelGenerator(ctx);
-			/** dump the nodes constructed to see what they look like */
-			//generator.generateDiagnostics()
-			//generator.generateCode()
-			srcCode = generator.ComposePmmlModelSource
-			
+			srcCode = generator.ComposePmmlRuleSetModelSource
+
 		} catch {
 			case t: Throwable => {
 			  /** 

@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.fcnmacro
 
 import scala.collection.mutable._
 import scala.math._
@@ -6,13 +6,21 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.support._
 
 /**
  * class MacroSelect retrieves a MacroDef from the mdmgr based upon the function signature.
  * Since the Macro is so similar to the function, a FunctionSelect is supplied to service
  * key formation and relaxation.
  */
-class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,generator : PmmlModelGenerator, val fcnSelector : FunctionSelect)  extends LogTrait {
+class MacroSelect(val ctx : PmmlContext
+				, val mgr : MdMgr
+				, val node : xApply
+				, val generator : CodePrinterDispatch
+				, val fcnSelector : FunctionSelect)  extends com.ligadata.pmml.compiler.LogTrait {
 							    
   
 	def selectMacro : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = {
@@ -186,7 +194,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 
 	  	node.Children.foreach(child => {
 	  		fcnBuffer.clear
-	  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+	  		generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
 	  		val argPrint : String = fcnBuffer.toString
 	  		substitutionValues += argPrint
   		})
@@ -259,7 +267,7 @@ class MacroSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply,gene
 		var nmSet : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
   		node.Children.foreach((child) => {
   			val (argTypeStr, isContainer, argElem) : (String,Boolean,BaseTypeDef) = argTypes(idx)
-	  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+	  		generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
 	  		val argPrint : String = fcnBuffer.toString
 	  		/** Note: to support multiple level containers ... e.g., container.container.field... recursion needs to be introduced here */
 	  		if (isContainer && child.asInstanceOf[xFieldRef].field.contains('.')) {

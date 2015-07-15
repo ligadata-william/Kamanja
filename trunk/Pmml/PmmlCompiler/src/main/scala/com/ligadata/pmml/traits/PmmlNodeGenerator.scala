@@ -1,6 +1,7 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.traits
 
 import org.xml.sax.Attributes
+import com.ligadata.pmml.syntaxtree.raw.common._
 
 
 /**
@@ -12,8 +13,8 @@ trait PmmlNodeGeneratorDispatch {
 
 	/** 
 		Select the appropriate PmmlNode generator for the supplied xml values, locate its
-	    PmmlNodeGenerator (the 'qName' is the key), and dispatch it. The returned node is added to the syntax tree
-	    being constructed.
+	    PmmlNodeGenerator (the 'qName' is the key), and dispatch it. The returned node is added to the 
+	    syntax tree owned by (or addressable by) the PmmlNodeGeneratorDispatch implementation.
  	    
  	    @param namespaceURI: String
  	    @param localName: String 
@@ -30,7 +31,7 @@ trait PmmlNodeGeneratorDispatch {
 
 /**
  * The PmmlNodeGenerator is an an interface that consumes the xml content supplied in the parameter list
- * of the generator itself (e.g., will a scala code fragment be generated or a c++ one?).
+ * of the generator itself 
  * 
  */
 trait PmmlNodeGenerator {

@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class SimplePredicateCodePrinter(ctx : PmmlContext) {
+class SimplePredicateCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class SimplePredicateCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xSimplePredicate... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xSimplePredicate... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -50,7 +54,7 @@ class SimplePredicateCodePrinter(ctx : PmmlContext) {
 							, traversalOrder : Traversal.Order) : String = 	{
 
 	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val simplePredStr : String = order match {
+		val simplePredStr : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
@@ -67,7 +71,7 @@ class SimplePredicateCodePrinter(ctx : PmmlContext) {
 					case "String" | "LocalDate" | "LocalTime" | "DateTime" => s"${'"'}"
 					case _ => ""
 				} 
-				val fieldRefConstPair : String = s"$fldRef,$quotes$value$quotes"
+				val fieldRefConstPair : String = s"$fldRef,$quotes${node.value}$quotes"
 				fcnBuffer.append(fieldRefConstPair)
 		  		val closingParen : String = s")"
 		  		fcnBuffer.append(closingParen)

@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class SimpleSetPredicateCodePrinter(ctx : PmmlContext) {
+class SimpleSetPredicateCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class SimpleSetPredicateCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xSimpleSetPredicate... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xSimpleSetPredicate... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -50,7 +54,7 @@ class SimpleSetPredicateCodePrinter(ctx : PmmlContext) {
 							, traversalOrder : Traversal.Order) : String = 	{
 
 	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val simplePredStr : String = order match {
+		val simplePredStr : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
@@ -61,7 +65,7 @@ class SimpleSetPredicateCodePrinter(ctx : PmmlContext) {
 				node.Children.foreach((child : PmmlExecNode) => {
 			  		generator.generate(child.asInstanceOf[Option[PmmlExecNode]], fcnBuffer, CodeFragment.FUNCCALL)
 			  		cnt += 1
-			  		if (cnt < Children.length) { 
+			  		if (cnt < node.Children.length) { 
 			  			fcnBuffer.append(", ")
 			  		}
 		  		})

@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class CompoundPredicateCodePrinter(ctx : PmmlContext) {
+class CompoundPredicateCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class CompoundPredicateCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xCompoundPredicate... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xCompoundPredicate... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -50,11 +54,11 @@ class CompoundPredicateCodePrinter(ctx : PmmlContext) {
 							, traversalOrder : Traversal.Order) : String = 	{
 
 	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val compoundPredStr : String = order match {
+		val compoundPredStr : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
-				val boolOpFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(booleanOperator)
+				val boolOpFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(node.booleanOperator)
 				val isShortCircuitOp = (boolOpFcn == "or" || boolOpFcn == "and")
 				if (isShortCircuitOp) {
 					val op : String = if (boolOpFcn == "or") "||" else "&&"
@@ -63,7 +67,7 @@ class CompoundPredicateCodePrinter(ctx : PmmlContext) {
 													, node
 												    , ctx
 												    , generator
-												    , fragmentKind
+												    , kind 
 												    , Traversal.INORDER
 												    , fcnBuffer
 												    , null)		    
@@ -74,10 +78,10 @@ class CompoundPredicateCodePrinter(ctx : PmmlContext) {
 					fcnBuffer.append(cPred)
 					var i : Int = 0
 	
-			  		Children.foreach((child) => {
+			  		node.Children.foreach((child) => {
 			  			i += 1
 				  		generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
-				  		if (i < Children.length) fcnBuffer.append(", ")
+				  		if (i < node.Children.length) fcnBuffer.append(", ")
 			  		})
 	
 			  		val closingParen : String = s")"

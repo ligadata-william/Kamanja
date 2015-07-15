@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class MiningFieldCodePrinter(ctx : PmmlContext) {
+class MiningFieldCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class MiningFieldCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xMiningField... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xMiningField... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -55,7 +59,7 @@ class MiningFieldCodePrinter(ctx : PmmlContext) {
 			case Traversal.PREORDER => { /** arguments for the add mining field function in RuleSetModel */
 			    kind match {
 			      case CodeFragment.MININGFIELD => {
-			    	  s"ruleSet.AddMiningField(${'"'}${node.name}${'"'}, new MiningField(${'"'}${node.name}${'"'},${'"'}${node.usageType}${'"'},${'"'}${node.opType}${'"'},${'"'}${node.importance}${'"'},${'"'}${node.outliers}${'"'},${'"'}${node.lowValue}${'"'},${'"'}${node.highValue}{'"'},${'"'}${node.missingValueReplacement}${'"'},${'"'}${node.missingValueTreatment}${'"'},${'"'}${node.invalidValueTreatment}${'"'}))\n"
+			    	  s"ruleSet.AddMiningField(${'"'}${node.name}${'"'}, new MiningField(${'"'}${node.name}${'"'},${'"'}${node.usageType}${'"'},${'"'}${node.opType}${'"'},${'"'}${node.importance}${'"'},${'"'}${node.outliers}${'"'},${'"'}${node.lowValue}${'"'},${'"'}${node.highValue}${'"'},${'"'}${node.missingValueReplacement}${'"'},${'"'}${node.missingValueTreatment}${'"'},${'"'}${node.invalidValueTreatment}${'"'}))\n"
 			      }
 			      case _ => {
 			    	  PmmlError.logError(ctx, "MiningField .. Only CodeFragment.MININGFIELD is supported")

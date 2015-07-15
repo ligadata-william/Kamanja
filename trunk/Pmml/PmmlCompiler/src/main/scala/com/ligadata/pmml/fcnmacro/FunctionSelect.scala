@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.fcnmacro
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
@@ -14,6 +14,9 @@ import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
 //import java.nio.file.{ Paths, Files }
 import java.io.{ File }
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.support._
 
 
 /** 
@@ -51,7 +54,7 @@ import java.io.{ File }
  *		c) When the function is not iterable all arguments are treated as arguments to the named apply function 
  */
 
-class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) extends LogTrait {
+class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) extends com.ligadata.pmml.compiler.LogTrait {
 
 	/** Assess whether function has the ITERABLE feature.  The rule here is that if any function with this
 	 *  name has the ITERABLE feature, they ALL MUST HAVE it.   */

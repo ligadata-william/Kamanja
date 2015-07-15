@@ -1,5 +1,8 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.traits
 
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.syntaxtree.raw.common._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
 
 /**

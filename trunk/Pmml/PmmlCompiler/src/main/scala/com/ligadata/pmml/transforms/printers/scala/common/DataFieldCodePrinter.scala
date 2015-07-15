@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class DataFieldCodePrinter(ctx : PmmlContext) {
+class DataFieldCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class DataFieldCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xDataField... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xDataField... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -50,11 +54,11 @@ class DataFieldCodePrinter(ctx : PmmlContext) {
 	{
 		val typeStr : String = PmmlTypes.scalaDataType(node.dataType)
 		
-		val fieldDecl : String = order match {
+		val fieldDecl : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
-				generate match {
+				kind match {
 					case CodeFragment.VARDECL => {
 						s"val ${node.name} : $typeStr "
 					}

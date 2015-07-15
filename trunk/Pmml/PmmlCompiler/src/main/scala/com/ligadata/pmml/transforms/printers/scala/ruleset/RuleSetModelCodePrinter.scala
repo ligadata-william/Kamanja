@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.ruleset
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,13 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.transforms.printers.scala.common._
 
-class RuleSetModelCodePrinter(ctx : PmmlContext) {
+class RuleSetModelCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +41,7 @@ class RuleSetModelCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xRuleSetModel... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xRuleSetModel... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -49,17 +54,17 @@ class RuleSetModelCodePrinter(ctx : PmmlContext) {
 							, kind : CodeFragment.Kind
 							, traversalOrder : Traversal.Order) : String = 	{
 
-		val rsm : String = order match {
+		val rsm : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
 				kind match {
 					case CodeFragment.RULESETCLASS => {
-						NodePrinterHelpers.ruleSetModelHelper(this, ctx, generator, kind, order)						
+						NodePrinterHelpers.ruleSetModelHelper(node, ctx, generator, kind, traversalOrder)						
 					}
 					case CodeFragment.RULECLASS | CodeFragment.MININGFIELD => {  /** continue diving for the RULECLASS and MININGFIELD generators */
 						val clsBuffer : StringBuilder = new StringBuilder()
-						Children.foreach((child) => {
+						node.Children.foreach((child) => {
 							generator.generate(Some(child), clsBuffer, kind)
 						})
 					   	clsBuffer.toString
