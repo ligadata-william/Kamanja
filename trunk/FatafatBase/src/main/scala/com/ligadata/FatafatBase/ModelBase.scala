@@ -7,6 +7,7 @@ import com.ligadata.fatafat.metadata.MdMgr
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import java.io.{ DataInputStream, DataOutputStream }
 
 object MinVarType extends Enumeration {
   type MinVarType = Value
@@ -24,12 +25,9 @@ object MinVarType extends Enumeration {
 
 import MinVarType._
 
-class Result(val name: String, val usage: MinVarType, val result: Any) {
-}
+case class Result(val name: String, val result: Any)
 
-// Need to properly define ModelResult related objects..
-object ModelResult {
-  def builder: ModelResultBuilder = null
+object ModelsResults {
   def ValueString(v: Any): String = {
     if (v == null) {
       return "null"
@@ -45,59 +43,127 @@ object ModelResult {
     }
     v.toString
   }
+
+  def Deserialize(modelResults: Array[SavedMdlResult], dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit = {
+
+  }
+
+  def Serialize(dos: DataOutputStream): Array[SavedMdlResult] = {
+    null
+  }
 }
 
-class ModelResultBuilder {
-  def build: ModelResult = null;
-  def withResult(obj: Any): ModelResultBuilder = null;
-}
-
-class ModelResult(val eventDate: Long, val executedTime: String, val mdlName: String, val mdlVersion: String, val results: Array[Result]) {
+class SavedMdlResult {
+  var mdlName: String = ""
+  var mdlVersion: String = ""
   var uniqKey: String = ""
   var uniqVal: String = ""
-  var xformedMsgCntr = 0 // Current message Index, In case if we have multiple Transformed messages for a given input message
-  var totalXformedMsgs = 0 // Total transformed messages, In case if we have multiple Transformed messages for a given input message
+  var txnId: Long = 0
+  var xformedMsgCntr: Int = 0 // Current message Index, In case if we have multiple Transformed messages for a given input message
+  var totalXformedMsgs: Int = 0 // Total transformed messages, In case if we have multiple Transformed messages for a given input message
+  var mdlRes: ModelResultBase = null
 
+  def withMdlName(mdl_Name: String): SavedMdlResult = {
+    mdlName = mdl_Name
+    this
+  }
+
+  def withMdlVersion(mdl_Version: String): SavedMdlResult = {
+    mdlVersion = mdl_Version
+    this
+  }
+
+  def withUniqKey(uniq_Key: String): SavedMdlResult = {
+    uniqKey = uniq_Key
+    this
+  }
+
+  def withUniqVal(uniq_Val: String): SavedMdlResult = {
+    uniqVal = uniq_Val
+    this
+  }
+
+  def withTxnId(txn_Id: Long): SavedMdlResult = {
+    txnId = txn_Id
+    this
+  }
+
+  def withXformedMsgCntr(xfrmedMsgCntr: Int): SavedMdlResult = {
+    xformedMsgCntr = xfrmedMsgCntr
+    this
+  }
+  
+  def withTotalXformedMsgs(totalXfrmedMsgs: Int): SavedMdlResult = {
+    totalXformedMsgs = totalXfrmedMsgs
+    this
+  }
+  
+  def withMdlResult(mdl_Res: ModelResultBase): SavedMdlResult = {
+    mdlRes = mdl_Res
+    this
+  }
+  
   override def toString: String = {
+    val output = if (mdlRes == null) "" else mdlRes.toString
     val json =
-      ("EventDate" -> eventDate) ~
-        ("ExecutionTime" -> executedTime) ~
-        ("ModelName" -> mdlName) ~
+      ("ModelName" -> mdlName) ~
         ("ModelVersion" -> mdlVersion) ~
         ("uniqKey" -> uniqKey) ~
         ("uniqVal" -> uniqVal) ~
         ("xformedMsgCntr" -> xformedMsgCntr) ~
         ("totalXformedMsgs" -> totalXformedMsgs) ~
-        ("output" ->
-          results.toList.map(r =>
-            (("Name" -> r.name) ~
-              ("Type" -> r.usage.toString) ~
-              ("Value" -> ModelResult.ValueString(r.result)))))
+        ("output" -> output)
+    compact(render(json))
+  }
+}
+
+trait ModelResultBase {
+  def toString: String // Returns JSON string
+  def get(key: String): Any // Get the value for the given key, if exists, otherwise NULL
+  def asKeyValuesMap: Map[String, Any] // Return all key & values as Map of KeyValue pairs
+  def Deserialize(dis: DataInputStream): Unit // Serialize this object
+  def Serialize(dos: DataOutputStream): Unit // Deserialize this object
+}
+
+class MappedModelResults extends ModelResultBase {
+  var results: Array[Result] = null
+
+  def withResults(res: Array[Result]): MappedModelResults = {
+    results = res
+    this
+  }
+  
+  override def toString: String = {
+    if (results == null) return ""
+    val json =
+      results.toList.map(r =>
+        (("Name" -> r.name) ~
+          ("Value" -> ModelsResults.ValueString(r.result))))
     compact(render(json))
   }
 
-  def toJsonString(readTmNs: Long, rdTmMs: Long): String = {
-    var elapseTmFromRead = (System.nanoTime - readTmNs) / 1000
+  override def get(key: String): Any = {
+    if (results == null) return null
 
-    if (elapseTmFromRead < 0)
-      elapseTmFromRead = 1
+    results.foreach(res => {
+      if (res.name.compareToIgnoreCase(key) == 0)
+        return res.result
+    })
+  }
 
-    val json =
-      ("EventDate" -> eventDate) ~
-        ("ExecutionTime" -> executedTime) ~
-        ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
-        ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
-        ("ModelName" -> mdlName) ~
-        ("ModelVersion" -> mdlVersion) ~
-        ("uniqKey" -> uniqKey) ~
-        ("uniqVal" -> uniqVal) ~
-        ("xformedMsgCntr" -> xformedMsgCntr) ~
-        ("totalXformedMsgs" -> totalXformedMsgs) ~
-        ("output" -> results.toList.map(r =>
-          ("Name" -> r.name) ~
-            ("Type" -> r.usage.toString) ~
-            ("Value" -> ModelResult.ValueString(r.result))))
-    compact(render(json))
+  override def asKeyValuesMap: Map[String, Any] = {
+    if (results == null) return Map[String, Any]()
+    
+    val map = results.foldLeft(scala.collection.mutable.Map[String, Any]()) { (m, s) => m(s.name) = s.result; m }
+    map.toMap
+  }
+
+  override def Deserialize(dis: DataInputStream): Unit = {
+    // BUGBUG:: Yet to implement
+  }
+
+  override def Serialize(dos: DataOutputStream): Unit = {
+    // BUGBUG:: Yet to implement
   }
 }
 
@@ -128,8 +194,8 @@ trait EnvContext {
   def saveStatus(transId: Long, status: String, persistIntermediateStatusInfo: Boolean): Unit // Saving Status
 
   // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-  def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit
-  def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult]
+  def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit
+  def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult]
 
   // Final Commit for the given transaction
   def commitData(transId: Long): Unit
@@ -169,7 +235,7 @@ abstract class ModelBase(val modelContext: ModelContext, val factory: ModelBaseO
   final def TenantId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.tenantId else null // Tenant Id
   final def TransId() = if (modelContext != null && modelContext.txnContext != null) modelContext.txnContext.transId else null // transId
 
-  def execute(outputDefault: Boolean): ModelResult // if outputDefault is true we will output the default value if nothing matches, otherwise null 
+  def execute(outputDefault: Boolean): ModelResultBase // if outputDefault is true we will output the default value if nothing matches, otherwise null 
 }
 
 trait ModelBaseObj {
