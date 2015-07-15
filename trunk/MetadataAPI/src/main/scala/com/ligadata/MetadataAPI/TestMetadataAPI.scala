@@ -2007,7 +2007,7 @@ object TestMetadataAPI{
     }
     catch{
       case e:Exception => {
-	logger.debug("Failed to save the object : " + e.getMessage())
+	logger.error("Failed to save the object : " + e.getMessage())
       }
     }
   }
