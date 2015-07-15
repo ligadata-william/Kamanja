@@ -1,0 +1,39 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "CustPreferences",
+	"Version": "00.01.00",
+	"Description": "Customer Preferences",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "custId",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "branchId",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "accNo",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "minBalanceAlertOptOut",
+		"Type": "System.Boolean"
+	  },
+	  {
+		"Name": "overdraftLimit",
+		"Type": "System.Double"
+	  },
+	  {
+		"Name": "multiDayMinBalanceAlertOptout",
+		"Type": "System.Boolean"
+	  }
+	],
+	"PartitionKey": [
+	  "custId"
+	]
+  }
+}

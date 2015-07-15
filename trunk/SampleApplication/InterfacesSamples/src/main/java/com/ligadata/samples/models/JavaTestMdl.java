@@ -8,7 +8,7 @@ public class JavaTestMdl extends ModelBase {
 
 	static JavaTestMdlObj objSignleton = new JavaTestMdlObj();
 
-	public ModelResult execute(boolean emitAllResults) {
+	public ModelResultBase execute(boolean emitAllResults) {
 		// Directly calling methods from Scala Singleton object. Not preferable
 		// to use direct scala.
 		CustAlertHistory custAlertHistory = CustAlertHistoryFactory.getRecentOrNew();
@@ -45,6 +45,10 @@ public class JavaTestMdl extends ModelBase {
 
 		public String Version() {
 			return "0.0.1";
+		}
+		
+		public ModelResultBase CreateResultObject() {
+			return new MappedModelResults();
 		}
 	}	
 }

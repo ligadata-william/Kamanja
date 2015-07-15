@@ -1148,19 +1148,14 @@ object MetadataAPIImpl extends MetadataAPI {
 
   def GetJarAsArrayOfBytes(jarName: String): Array[Byte] = {
     try {
-      
-      
-      
-println("---> 1")
       val iFile = new File(jarName)
       if (!iFile.exists) {
+        logger.error("Jar file (" + jarName + ") is not found: ")
         throw new FileNotFoundException("Jar file (" + jarName + ") is not found: ")
       }
-println("---> 2")
       val bis = new BufferedInputStream(new FileInputStream(iFile));
       val baos = new ByteArrayOutputStream();
       var readBuf = new Array[Byte](1024) // buffer size
-println("---> 3")
       // read until a single byte is available
       while (bis.available() > 0) {
         val c = bis.read();

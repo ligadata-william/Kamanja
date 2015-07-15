@@ -1,12 +1,15 @@
 package com.ligadata.models.samples.models
 
 import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResult, TransactionContext, ModelContext }
+import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
 import com.ligadata.samples.messages.{ CustAlertHistory, GlobalPreferences, CustPreferences, CustTransaction }
 import RddUtils._
 import RddDate._
+import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.io.Source
+import java.io.{ DataInputStream, DataOutputStream }
 
 // Implementation notes:
 //   There is no need to pass context in every call to Builder or getRecent as the context is stored
@@ -53,17 +56,98 @@ import scala.io.Source
 object LowBalanceAlert extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert(mdlCtxt)
-  override def ModelName: String = "LowBalanceAlert" // Model Name
-  override def Version: String = "0.0.1" // Model Version
+  override def ModelName(): String = "LowBalanceAlert" // Model Name
+  override def Version(): String = "0.0.1" // Model Version
+  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult()
 }
 
-class LowBalanceAlertResult(ctxt: TransactionContext) {
+class LowBalanceAlertResult extends ModelResultBase {
+  var custId: Long = 0;
+  var branchId: Int = 0;
+  var accNo: Long = 0;
+  var curBalance: Double = 0
+  var alertType: String = ""
+  var triggerTime: Long = 0
+
+  def withCustId(cId: Long): LowBalanceAlertResult = {
+    custId = cId
+    this
+  }
+
+  def withBranchId(bId: Int): LowBalanceAlertResult = {
+    branchId = bId
+    this
+  }
+
+  def withAccNo(aNo: Long): LowBalanceAlertResult = {
+    accNo = aNo
+    this
+  }
+
+  def withCurBalance(curBal: Double): LowBalanceAlertResult = {
+    curBalance = curBal
+    this
+  }
+
+  def withAlertType(alertTyp: String): LowBalanceAlertResult = {
+    alertType = alertTyp
+    this
+  }
+
+  def withTriggerTime(triggerTm: Long): LowBalanceAlertResult = {
+    triggerTime = triggerTm
+    this
+  }
+
+  override def toJson: List[org.json4s.JsonAST.JObject] = {
+    val json = List(
+      ("CustId" -> custId) ~
+        ("BranchId" -> branchId) ~
+        ("AccNo" -> accNo) ~
+        ("CurBalance" -> curBalance) ~
+        ("AlertType" -> alertType) ~
+        ("TriggerTime" -> triggerTime))
+    return json
+  }
+
+  override def toString: String = {
+    compact(render(toJson))
+  }
+
+  override def get(key: String): Any = {
+    if (key.compareToIgnoreCase("custId") == 0) return custId
+    if (key.compareToIgnoreCase("branchId") == 0) return branchId
+    if (key.compareToIgnoreCase("accNo") == 0) return accNo
+    if (key.compareToIgnoreCase("curBalance") == 0) return curBalance
+    if (key.compareToIgnoreCase("alertType") == 0) return alertType
+    if (key.compareToIgnoreCase("triggerTime") == 0) return triggerTime
+    return null
+  }
+
+  override def asKeyValuesMap: Map[String, Any] = {
+    val map = scala.collection.mutable.Map[String, Any]()
+    map("custid") = custId
+    map("branchid") = branchId
+    map("accno") = accNo
+    map("curbalance") = curBalance
+    map("alerttype") = alertType
+    map("triggertime") = triggerTime
+    map.toMap
+  }
+
+  override def Deserialize(dis: DataInputStream): Unit = {
+    // BUGBUG:: Yet to implement
+  }
+
+  override def Serialize(dos: DataOutputStream): Unit = {
+    // BUGBUG:: Yet to implement
+  }
 }
 
 class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
-  override def execute(emitAllResults: Boolean): ModelResult = {
+  override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrNew
+    val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
     if (pref.minBalanceAlertOptout == false)
       return null
@@ -79,10 +163,11 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
     if (rcntTxn.isEmpty || rcntTxn.get.balance >= gPref.minAlertBalance)
       return null
 
+    val curTmInMs = curDtTmInMs.getDateTimeInMs
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
-    CustAlertHistory.build.withAlertDtTmInMs(curDtTmInMs.getDateTimeInMs).withAlertType("lowBalanceAlert").Save
-    // ... Prepare results here ... need to populate result object with appropriate attributes
-    ModelResult.builder.withResult(new LowBalanceAlertResult(mdlCtxt.txnContext)).build
+    CustAlertHistory.build.withAlertDtTmInMs(curTmInMs).withAlertType("lowBalanceAlert").Save
+    // results
+    LowBalanceAlert.CreateResultObject().asInstanceOf[LowBalanceAlertResult].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
   }
 }
 
@@ -110,125 +195,98 @@ class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalan
 object LowBalanceAlert2 extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[CustTransaction]
   override def CreateNewModel(mdlCtxt: ModelContext): ModelBase = return new LowBalanceAlert2(mdlCtxt)
-  override def ModelName: String = "LowBalanceAlert2" // Model Name
-  override def Version: String = "0.0.1" // Model Version
-    
-  def main(args: Array[String]) {
-    
-    var configJson = Source.fromFile("/tmp/compileCfg.json").getLines().mkString   
-    println(configJson)
-    var cfgmap = parse(configJson).values.asInstanceOf[Map[String,Any]]
-    
-    println(cfgmap)
-    println("------------")
-    var m1 = cfgmap.getOrElse("LowBalanceModel",null).asInstanceOf[Map[String,Any]]
-    println(m1)
-    var m2 = m1.getOrElse("Dependencies",null).asInstanceOf[List[String]]
-    println(m2.mkString("/"))
-    
-  /*   println("Hello, world!")
-     var source = "package blah.bhal.* \n"
-     source = source +  "@ModelName     (\n"
-     source = source + "\tmodelname = \"LowBalanceAlert        \") \n"
-     source = source +  "@ModelVersion( version = \"1.0 \") \n"
-     source = source +  "@ModelNameSpace( modelNamespace = \"System.SHIT \") \n"
-     source = source + "@ModelDependencies  (modelDependencies = \n"
-     source = source + "\t\t\t {\"shit.shit\",\"shit2.shit2\"}\n"
-     source = source + "@MsgAndContainerDependencies (msgAndContainerDependencies = \n" 
-      source = source + "\t\t\t {\"fuck.fuck\",\"FUCKING.MOTHAFUCK\"}\n"
-     source = source +  "class LowBalanceAlertResult(ctx: Blah)"
-     
-     println()
-     println()
-     println()
-     println(source)
-     println()
-     println()
-     
-     // ModelName
-     // Single String Annotations
-     var ModelNameExpr = "@ModelName\\s*[(]\\s*modelname\\s*[=]\\s*[\"]".r
-     var VersionExpr = "@ModelVersion\\s*[(]\\s*version\\s*[=]\\s*[\"]".r
-     var NameSpaceExpr = "@ModelNameSpace\\s*[(]\\s*modelNamespace\\s*[=]\\s*[\"]".r
-     // Array[String] Annotations
-     //var Dependencies = newNames={"Jenkov", "Peterson"}
-     var DependenciesExpr = "@ModelDependencies\\s*[(]\\s*modelDependencies\\s*[=]\\s*[{]\\s*[\"]".r
-     var MsgContExpr = "@MsgAndContainerDependencies\\s*[(]\\s*msgAndContainerDependencies\\s*[=]\\s*[{]\\s*[\"]".r
-     
-     var endAnnotationValueExpr2 = "[^\"]*".r
-     var endAnnotationValueExpr3 = "[^}]*".r
-     var startOfClassExpr = "class ".r
-     
-     var indx1: Integer = 0
-     var indx2: Integer = 0
-     var indx3: Integer = 0
-     var tempSource: String = ""
-     var value: String = ""
-     
-     
-     var mnAn = ModelNameExpr.findFirstMatchIn(source).getOrElse(null)
-     if (mnAn != null){
-       indx2 = mnAn.end  
-       tempSource =  source.substring(indx2) 
-       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
-       value = tempSource.substring(0,indx3).trim
-       println("ModelName = "+value)     
-     }
-
-     
-     var mnVersion = VersionExpr.findFirstMatchIn(source).getOrElse(null)
-     if (mnVersion != null) {
-       indx2 = mnVersion.end
-       tempSource =  source.substring(indx2)
-       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
-       value = tempSource.substring(0,indx3).trim
-       println("ModelVersion = "+value)          
-     }
-
-    
-     var mnNamespace = NameSpaceExpr.findFirstMatchIn(source).getOrElse(null)
-     if (mnNamespace != null) {
-       indx2 = mnNamespace.end
-       tempSource =  source.substring(indx2)
-       indx3 = endAnnotationValueExpr2.findFirstMatchIn(tempSource).get.end
-       value = tempSource.substring(0,indx3).trim
-       println("ModelNamespace = "+value)   
-     }
-     println("-----")
-     
-     var deps = DependenciesExpr.findFirstMatchIn(source).getOrElse(null)
-     if (deps != null) {
-       indx2 = deps.end
-       tempSource =  source.substring(indx2)
-       indx3 = endAnnotationValueExpr3.findFirstMatchIn(tempSource).get.end
-       value = tempSource.substring(0,indx3).trim
-       var indDeps = value.split(",").map(j => {j.replace('"', ' ').trim} )
-       println("Deps = "+indDeps.mkString(","))   
-     }
-     
-     var mcs = MsgContExpr.findFirstMatchIn(source).getOrElse(null)
-     if (deps != null) {
-       indx2 = mcs.end
-       tempSource =  source.substring(indx2)
-       indx3 = endAnnotationValueExpr3.findFirstMatchIn(tempSource).get.end
-       value = tempSource.substring(0,indx3).trim
-       var indDeps = value.split(",").map(j => {j.replace('"', ' ').trim} )
-       println("Deps = "+indDeps.mkString(","))   
-     } */
-     
-     
-     
-  } 
-    
+  override def ModelName(): String = "LowBalanceAlert2" // Model Name
+  override def Version(): String = "0.0.1" // Model Version
+  override def CreateResultObject(): ModelResultBase = new LowBalanceAlertResult2()
 }
 
-class LowBalanceAlertResult2(ctxt: TransactionContext) {
+class LowBalanceAlertResult2 extends ModelResultBase {
+  var custId: Long = 0;
+  var branchId: Int = 0;
+  var accNo: Long = 0;
+  var curBalance: Double = 0
+  var alertType: String = ""
+  var triggerTime: Long = 0
+
+  def withCustId(cId: Long): LowBalanceAlertResult2 = {
+    custId = cId
+    this
+  }
+
+  def withBranchId(bId: Int): LowBalanceAlertResult2 = {
+    branchId = bId
+    this
+  }
+
+  def withAccNo(aNo: Long): LowBalanceAlertResult2 = {
+    accNo = aNo
+    this
+  }
+
+  def withCurBalance(curBal: Double): LowBalanceAlertResult2 = {
+    curBalance = curBal
+    this
+  }
+
+  def withAlertType(alertTyp: String): LowBalanceAlertResult2 = {
+    alertType = alertTyp
+    this
+  }
+
+  def withTriggerTime(triggerTm: Long): LowBalanceAlertResult2 = {
+    triggerTime = triggerTm
+    this
+  }
+
+  override def toJson: List[org.json4s.JsonAST.JObject] = {
+    val json = List(
+      ("CustId" -> custId) ~
+        ("BranchId" -> branchId) ~
+        ("AccNo" -> accNo) ~
+        ("CurBalance" -> curBalance) ~
+        ("AlertType" -> alertType) ~
+        ("TriggerTime" -> triggerTime))
+    return json
+  }
+
+  override def toString: String = {
+    compact(render(toJson))
+  }
+
+  override def get(key: String): Any = {
+    if (key.compareToIgnoreCase("custId") == 0) return custId
+    if (key.compareToIgnoreCase("branchId") == 0) return branchId
+    if (key.compareToIgnoreCase("accNo") == 0) return accNo
+    if (key.compareToIgnoreCase("curBalance") == 0) return curBalance
+    if (key.compareToIgnoreCase("alertType") == 0) return alertType
+    if (key.compareToIgnoreCase("triggerTime") == 0) return triggerTime
+    return null
+  }
+
+  override def asKeyValuesMap: Map[String, Any] = {
+    val map = scala.collection.mutable.Map[String, Any]()
+    map("custid") = custId
+    map("branchid") = branchId
+    map("accno") = accNo
+    map("curbalance") = curBalance
+    map("alerttype") = alertType
+    map("triggertime") = triggerTime
+    map.toMap
+  }
+
+  override def Deserialize(dis: DataInputStream): Unit = {
+    // BUGBUG:: Yet to implement
+  }
+
+  override def Serialize(dos: DataOutputStream): Unit = {
+    // BUGBUG:: Yet to implement
+  }
 }
 
 class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert2) {
-  override def execute(emitAllResults: Boolean): ModelResult = {
+  override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
-    val gPref = GlobalPreferences.getRecentOrNew
+    val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
     if (pref.multiDayMinBalanceAlertOptout == false)
       return null
@@ -260,8 +318,12 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withAlertDtTmInMs(curDtTmInMs.getDateTimeInMs).withAlertType("tooManyMinBalanceDays").withNumDays(daysWhenBalanceIsLessThanMin).Save
-    // ... Prepare results here ... need to populate result object with appropriate attributes
-    ModelResult.builder.withResult(new LowBalanceAlertResult2(mdlCtxt.txnContext)).build
+
+    val rcntTxn = CustTransaction.getRecent
+    val curTmInMs = curDtTmInMs.getDateTimeInMs
+
+    // results
+    LowBalanceAlert2.CreateResultObject().asInstanceOf[LowBalanceAlertResult2].withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }
 }
 

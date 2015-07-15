@@ -123,8 +123,14 @@ object DoubleImpl extends TypeImplementation[Double] {
 
 object BoolImpl extends TypeImplementation[Boolean] {
   def Input(value: String): Boolean = { // Converts String to Type T
-    val i = value.trim.toInt
-    (i != 0)
+    val v = value.trim
+    if (v.compareToIgnoreCase("t") == 0 || v.compareToIgnoreCase("y") == 0 || v.compareToIgnoreCase("1") == 0 ||
+      v.compareToIgnoreCase("on") == 0 || v.compareToIgnoreCase("yes") == 0 || v.compareToIgnoreCase("true") == 0)
+      return true
+    if (v.compareToIgnoreCase("f") == 0 || v.compareToIgnoreCase("n") == 0 || v.compareToIgnoreCase("0") == 0 ||
+      v.compareToIgnoreCase("no") == 0 || v.compareToIgnoreCase("off") == 0 || v.compareToIgnoreCase("false") == 0)
+      return false
+    throw new Exception("Invalid boolean value:" + value)
   }
   def Serialize(value: Boolean): Array[Byte] = { // Convert Type T to Array[Byte]
     ByteBuffer.allocate(1).putInt(if (value) 1 else 0).array()

@@ -139,7 +139,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   class TransactionContext(var txnId: Long) {
     private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
     private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (String, Int, Int)]()
-    private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ModelResult]]()
+    private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
     private[this] val _statusStrings = new ArrayBuffer[String]()
 
     private[this] def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
@@ -285,11 +285,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     // Model Results Saving & retrieving. Don't return null, always return empty, if we don't find
-    def saveModelsResult(key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+    def saveModelsResult(key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit = {
       _modelsResult(InMemoryKeyDataInJson(key)) = value
     }
 
-    def getModelsResult(key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
+    def getModelsResult(key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
       val keystr = InMemoryKeyDataInJson(key)
       _modelsResult.getOrElse(keystr, null)
     }
@@ -326,7 +326,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] val _messagesOrContainers = scala.collection.mutable.Map[String, MsgContainerInfo]()
   private[this] val _txnContexts = new Array[scala.collection.mutable.Map[Long, TransactionContext]](_buckets)
   private[this] val _adapterUniqKeyValData = scala.collection.mutable.Map[String, (String, Int, Int)]()
-  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, ModelResult]]()
+  private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
 
   private[this] var _serInfoBufBytes = 32
 
@@ -568,7 +568,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     objs(0) = (uniqVal.Val, uniqVal.xidx, uniqVal.xtot)
   }
 
-  private def buildModelsResult(tupleBytes: Value, objs: Array[scala.collection.mutable.Map[String, ModelResult]]) {
+  private def buildModelsResult(tupleBytes: Value, objs: Array[scala.collection.mutable.Map[String, SavedMdlResult]]) {
     // Get first _serInfoBufBytes bytes
     if (tupleBytes.size < _serInfoBufBytes) {
       val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
@@ -588,7 +588,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[scala.collection.mutable.Map[String, ModelResult]]
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[scala.collection.mutable.Map[String, SavedMdlResult]]
         }
       }
       case _ => {
@@ -750,7 +750,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     return objs(0)
   }
 
-  private def localGetModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
+  private def localGetModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val v = txnCtxt.getModelsResult(key)
@@ -760,7 +760,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val keystr = InMemoryKeyDataInJson(key)
     val v = _modelsResult.getOrElse(keystr, null)
     if (v != null) return v
-    var objs = new Array[scala.collection.mutable.Map[String, ModelResult]](1)
+    var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
     val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
     val partKeyStr = FatafatData.PrepareKey("ModelResults", key, 0, 0)
     try {
@@ -776,7 +776,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       return objs(0)
     }
-    return scala.collection.mutable.Map[String, ModelResult]()
+    return scala.collection.mutable.Map[String, SavedMdlResult]()
   }
 
   /**
@@ -895,7 +895,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def localSaveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+  private def localSaveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit = {
     var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
       txnCtxt.saveModelsResult(key, value)
@@ -1012,7 +1012,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localGetAdapterUniqueKeyValue(transId, key)
   }
 
-  override def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, ModelResult] = {
+  override def getModelsResult(transId: Long, key: List[String]): scala.collection.mutable.Map[String, SavedMdlResult] = {
     localGetModelsResult(transId, key)
   }
 
@@ -1045,7 +1045,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     localSetAdapterUniqueKeyValue(transId, key, value, xformedMsgCntr, totalXformedMsgs)
   }
 
-  override def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, ModelResult]): Unit = {
+  override def saveModelsResult(transId: Long, key: List[String], value: scala.collection.mutable.Map[String, SavedMdlResult]): Unit = {
     localSaveModelsResult(transId, key, value)
   }
 
