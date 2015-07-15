@@ -987,8 +987,8 @@ object NodePrinterHelpers extends LogTrait {
 		}
 
 
-		objBuffer.append(s"    def ModelName: String = $modelName\n")
-		objBuffer.append(s"    def Version: String = ${'"'}$versionNo${'"'}\n")
+		objBuffer.append(s"    override def ModelName(): String = $modelName\n")
+		objBuffer.append(s"    override def Version(): String = ${'"'}$versionNo${'"'}\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
 			PmmlError.logError(ctx, "No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
@@ -1015,10 +1015,13 @@ object NodePrinterHelpers extends LogTrait {
 		
 		/** Add the IsValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
-		objBuffer.append(s"    def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
+		objBuffer.append(s"    override def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
+
+		/** Add the CreateResultObject function  */
+		objBuffer.append(s"    override def CreateResultObject(): ModelResultBase = new MappedModelResults(); \n\n")
 
 		/** plan for the day when there are multiple messages present in the constructor */
 		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
@@ -1037,7 +1040,7 @@ object NodePrinterHelpers extends LogTrait {
 			val msgTypeStr : String = msgTypedef.typeString
 			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 			
-			objBuffer.append(s"    def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
+			objBuffer.append(s"    override def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
 			objBuffer.append(s"    {\n") 
 			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(mdlCtxt, this)\n")
 			objBuffer.append(s"    }\n") 	
@@ -1329,7 +1332,7 @@ object NodePrinterHelpers extends LogTrait {
 			 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
 			 */
 			clsBuffer.append(s"    /** provide access to the ruleset model's execute function */\n")
-			clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResult = {\n")
+			clsBuffer.append(s"    def execute(emitAllResults : Boolean) : ModelResultBase = {\n")
 			clsBuffer.append(s"        ctx.GetRuleSetModel.execute(ctx)\n")
 			clsBuffer.append(s"        prepareResults(emitAllResults)\n")
 			clsBuffer.append(s"    }\n")
@@ -1394,13 +1397,6 @@ object NodePrinterHelpers extends LogTrait {
   		This function will add the "prepareResults" function to the model class being written.
   		Using the mining variables an instantiation of this will be generated:
 		
-			class ModelResult(var eventDate: Long
-				, var executedTime: Long
-				, var mdlName: String
-				, var mdlVersion: String
-				, results: Array[Result]) {
-      		}
-      		
       	@param ctx : the compiler global context 
       	@param classname : the name of the model 
       	@param generator : the pmml model generator controller that orchestrates the code generation
@@ -1416,7 +1412,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		prepResultBuffer.append(s"\n")
 		prepResultBuffer.append(s"    /** prepare output results scored by the rules. */\n")
-		prepResultBuffer.append(s"    def prepareResults(emitAllResults : Boolean) : ModelResult = {\n")
+		prepResultBuffer.append(s"    def prepareResults(emitAllResults : Boolean) : ModelResultBase = {\n")
 		prepResultBuffer.append(s"\n")
 		
 		/** NOTE: The mining field values need to be duplicated here so as to not foul the "retain" in the next step... this mining map is a variable
@@ -1448,7 +1444,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		prepResultBuffer.append(s"\n")                       
 		
-		prepResultBuffer.append(s"        val modelResult : ModelResult = if (modelProducedResult) {\n")                       
+		prepResultBuffer.append(s"        val modelResult : ModelResultBase = if (modelProducedResult) {\n")                       
 
 		prepResultBuffer.append(s"            val results : Array[Result] = GetContext.GetRuleSetModel.MiningSchemaMap().retain((k,v) => \n")
 		prepResultBuffer.append(s"    	  		    v.usageType == ${'"'}predicted${'"'} || v.usageType == ${'"'}supplementary${'"'}).values.toArray.map(mCol => \n")
@@ -1469,7 +1465,7 @@ object NodePrinterHelpers extends LogTrait {
 		prepResultBuffer.append(s"    	  		  	        case _ => someValue.asInstanceOf[AnyDataValue].Value \n")
 		prepResultBuffer.append(s"    	  		  	    } \n")
 		prepResultBuffer.append(s"\n")                       
-		prepResultBuffer.append(s"    	  		  	    new Result(mCol.name, MinVarType.StrToMinVarType(mCol.usageType), value)  \n")
+		prepResultBuffer.append(s"    	  		  	    new Result(mCol.name, value)  \n")
 		prepResultBuffer.append(s"\n")                       
 		prepResultBuffer.append(s"    	  		  	}) \n")
 		prepResultBuffer.append(s"            val millisecsSinceMidnight: Long = dateMilliSecondsSinceMidnight().toLong \n")
@@ -1485,7 +1481,7 @@ object NodePrinterHelpers extends LogTrait {
 		}
 		val verNoStr : String = "_" + versionNo.toString
 
-		prepResultBuffer.append(s"            new ModelResult(dateMillis, nowStr, $nmspc$classname$verNoStr.ModelName, $nmspc$classname$verNoStr.Version, results) \n")
+		prepResultBuffer.append(s"            new MappedModelResults().withResults(results) \n")
 		prepResultBuffer.append(s"        } else { null }\n")
 		prepResultBuffer.append(s"\n")
 		prepResultBuffer.append(s"        modelResult\n")

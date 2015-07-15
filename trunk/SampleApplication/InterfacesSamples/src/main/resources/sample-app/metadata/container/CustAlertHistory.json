@@ -1,0 +1,39 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "CustAlertHistory",
+	"Version": "00.01.00",
+	"Description": "Customer Alert History",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "custId",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "branchId",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "accNo",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "alertDtTmInMs",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "alertType",
+		"Type": "System.String"
+	  },
+	  {
+		"Name": "numDaysWithLessBalance",
+		"Type": "System.Int"
+	  }
+	],
+	"PartitionKey": [
+	  "custId"
+	]
+  }
+}

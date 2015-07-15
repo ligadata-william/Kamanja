@@ -1,0 +1,32 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "CustomerInfo",
+	"Version": "00.01.00",
+	"Description": "Customer Information",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "custId",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "cellnum",
+		"Type": "System.String"
+	  },
+	  {
+		"Name": "branchId",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "accNo",
+		"Type": "System.Long"
+	  }
+	],
+	"PartitionKey": [
+	  "custId"
+	]
+  }
+}
+
