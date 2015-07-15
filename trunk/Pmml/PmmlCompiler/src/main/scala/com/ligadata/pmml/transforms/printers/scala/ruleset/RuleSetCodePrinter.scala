@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.ruleset
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class RuleSetCodePrinter(ctx : PmmlContext) {
+class RuleSetCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class RuleSetCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xRuleSet... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xRuleSet... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -49,7 +53,7 @@ class RuleSetCodePrinter(ctx : PmmlContext) {
 							, kind : CodeFragment.Kind
 							, traversalOrder : Traversal.Order) : String = 	{
 
-		val rs : String = order match {
+		val rs : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
@@ -58,7 +62,7 @@ class RuleSetCodePrinter(ctx : PmmlContext) {
 
 				val clsBuffer : StringBuilder = new StringBuilder()
 				node.Children.foreach((child) => {
-					generator.generateCode1(Some(child), clsBuffer, generator, kind)
+					generator.generate(Some(child), clsBuffer, kind)
 				})
 			   	clsBuffer.toString
 			}

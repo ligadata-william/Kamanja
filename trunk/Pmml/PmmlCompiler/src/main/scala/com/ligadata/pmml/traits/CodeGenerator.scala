@@ -1,5 +1,8 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.traits
 
+import com.ligadata.pmml.compiler
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
 /**
  * The CodePrinterDispatch interface accepts some kind of PmmlExecNode, a buffer to fill 
@@ -51,7 +54,7 @@ trait CodePrinter {
 	 *  @param the CodePrinterDispatch to use should recursion to child nodes be required.
  	 *  @param the kind of code fragment to generate...any 
  	 *  	{VARDECL, VALDECL, FUNCCALL, DERIVEDCLASS, RULECLASS, RULESETCLASS , MININGFIELD, MAPVALUE, AGGREGATE, USERFUNCTION}
-	 *  @order the order to traverse this node...any {INORDER, PREORDER, POSTORDER} 
+	 *  @order the order to traverse this node...any {Traversal.INORDER, Traversal.PREORDER, Traversal.POSTORDER} 
 	 *  
 	 *  @return some string representation of this node appropriate for the code fragment requested.
 	 */

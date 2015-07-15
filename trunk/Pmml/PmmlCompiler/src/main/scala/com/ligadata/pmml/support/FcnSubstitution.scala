@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import java.util.regex.Pattern

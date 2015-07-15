@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.ruleset
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,13 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.transforms.printers.scala.common._
 
-class SimpleRuleCodePrinter(ctx : PmmlContext) {
+class SimpleRuleCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +41,7 @@ class SimpleRuleCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xSimpleRule... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xSimpleRule... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -49,13 +54,13 @@ class SimpleRuleCodePrinter(ctx : PmmlContext) {
 							, kind : CodeFragment.Kind
 							, traversalOrder : Traversal.Order) : String = 	{
 
-		val simpRule : String = order match {
+		val simpRule : String = traversalOrder match {
 			case Traversal.INORDER => { "" }
 			case Traversal.POSTORDER => { "" }
 			case Traversal.PREORDER => {
-				generate match {
+				kind match {
 					case CodeFragment.RULECLASS => {
-						NodePrinterHelpers.simpleRuleHelper(this, ctx, generator, generate, order)
+						NodePrinterHelpers.simpleRuleHelper(node, ctx, generator, kind, traversalOrder)
 					}
 					case CodeFragment.MININGFIELD => {
 						/** 
@@ -65,7 +70,7 @@ class SimpleRuleCodePrinter(ctx : PmmlContext) {
 						""
 					}
 					case _ => { 
-						val kindStr : String = generate.toString
+						val kindStr : String = kind.toString
 						PmmlError.logError(ctx, s"SimpleRule node - unsupported CodeFragment.Kind - $kindStr") 
 						""
 					}

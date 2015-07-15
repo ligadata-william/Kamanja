@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,13 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class ArrayCodePrinter(ctx : PmmlContext) {
+
+class ArrayCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +41,7 @@ class ArrayCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xArray... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xArray... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -49,7 +54,7 @@ class ArrayCodePrinter(ctx : PmmlContext) {
 							, kind : CodeFragment.Kind
 							, traversalOrder : Traversal.Order) : String = 	{
 
-		val arrayStr : String = order match {
+		val arrayStr : String = traversalOrder match {
 			case Traversal.INORDER => { "INORDER Not Used" }
 			case Traversal.POSTORDER => { "POSTORDER Not Used" }
 			case Traversal.PREORDER => {			  

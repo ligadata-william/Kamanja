@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -7,8 +7,12 @@ import scala.util.control.Breaks._
 import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
-class DerivedFieldCodePrinter(ctx : PmmlContext) {
+class DerivedFieldCodePrinter(ctx : PmmlContext) extends CodePrinter with com.ligadata.pmml.compiler.LogTrait {
 
 	/**
 	 *  Answer a string (code representation) for the supplied node.
@@ -36,7 +40,7 @@ class DerivedFieldCodePrinter(ctx : PmmlContext) {
 			codeGenerator(xnode, generator, kind, traversalOrder)
 		} else {
 			if (node != null) {
-				PmmlError.logError(ctx, s"For ${node.qName}, expecting an xDerivedField... got a ${node.getClass.getName}... check CodePrinter dispatch map initialization")
+				PmmlError.logError(ctx, s"For ${xnode.qName}, expecting an xDerivedField... got a ${xnode.getClass.getName}... check CodePrinter dispatch map initialization")
 			}
 			""
 		}
@@ -44,7 +48,7 @@ class DerivedFieldCodePrinter(ctx : PmmlContext) {
 	}
 	
 
-	private def codeGenerator(node : DerivedField
+	private def codeGenerator(node : xDerivedField
 							, generator : CodePrinterDispatch
 							, kind : CodeFragment.Kind
 							, traversalOrder : Traversal.Order) : String = 	{
@@ -59,7 +63,7 @@ class DerivedFieldCodePrinter(ctx : PmmlContext) {
 				kind match {
 					case CodeFragment.DERIVEDCLASS => {
 						ctx.fcnTypeInfoStack.clear /** if there is cruft, kill it now as we prep for dive into derived field and its function hierarchy*/
-						NodePrinterHelpers.derivedFieldFcnHelper(node, ctx, generator, kind, order)
+						NodePrinterHelpers.derivedFieldFcnHelper(node, ctx, generator, kind, traversalOrder)
 					}
 					case _ => { 
 						PmmlError.logError(ctx, "DerivedField node - unsupported CodeFragment.Kind") 

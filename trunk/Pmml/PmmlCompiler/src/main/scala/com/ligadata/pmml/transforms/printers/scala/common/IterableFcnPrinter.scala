@@ -1,4 +1,4 @@
-package com.ligadata.pmml.compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -6,6 +6,10 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
 /** 
  *	Print an iterable function.  General print form is 
@@ -40,10 +44,10 @@ import com.ligadata.fatafat.metadata._
 class IterableFcnPrinter(val fcnName : String
 						, val node : xApply
 					    , val ctx : PmmlContext
-					    , val generator : PmmlModelGenerator
+					    , val generator : CodePrinterDispatch
 					    , val generate : CodeFragment.Kind
 					    , val order : Traversal.Order
-					    , val fcnTypeInfo :  FcnTypeInfo) extends LogTrait {
+					    , val fcnTypeInfo :  FcnTypeInfo) extends com.ligadata.pmml.compiler.LogTrait {
 					    
 	/** 
 	 *  Iterable functions are comprised of three pieces:
@@ -105,7 +109,7 @@ class IterableFcnPrinter(val fcnName : String
 		val iterArgBuffer : StringBuilder = new StringBuilder
 		val iterChild : PmmlExecNode = node.Children.head
 		
-		generator.generateCode1(Some(iterChild), iterArgBuffer, generator, CodeFragment.FUNCCALL)
+		generator.generate(Some(iterChild), iterArgBuffer, CodeFragment.FUNCCALL)
 		iterArgBuffer.append(s".$scalaFcnName( ${ctx.applyElementName} => ")
 		
 		iterArgBuffer.toString
@@ -140,7 +144,7 @@ class IterableFcnPrinter(val fcnName : String
 			if ((lastElemArgIdx - firstElemArgIdxActually) >= 0) { 
 				for (i <- firstElemArgIdxActually to lastElemArgIdx) {
 					val child : PmmlExecNode = node.Children.apply(i)
-					generator.generateCode1(Some(child), mbrFcnBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(child), mbrFcnBuffer, CodeFragment.FUNCCALL)
 					if (i < lastElemArgIdx) {
 						mbrFcnBuffer.append(", ")
 					}
@@ -165,7 +169,7 @@ class IterableFcnPrinter(val fcnName : String
 				
 				for (i <- firstElemArgIdx to lastElemArgIdx) {
 					val child : PmmlExecNode = node.Children.apply(i)
-					generator.generateCode1(Some(child), mbrFcnBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(child), mbrFcnBuffer, CodeFragment.FUNCCALL)
 					if (i < lastElemArgIdx) {
 						mbrFcnBuffer.append(", ")
 					}
