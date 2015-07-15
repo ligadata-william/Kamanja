@@ -3212,9 +3212,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
         }
         // if (ele == null)
         //   throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
-
         if (ele != null)
-          ele = new Element("", "transactionId", "system.long", "", "Fields", null) :: ele
+          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)   // :: ele
         else
           ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
 
@@ -3596,13 +3595,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def this() = {
     this(0, null)
   }
-    
-   def TransactionId(tranId: Long): Unit = {
-    this.transactionId = tranId
-  }
-
-  def TransactionId: Long = transactionId
-    """
+ 
+   """
   }
 
 }
