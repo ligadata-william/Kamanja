@@ -1,7 +1,7 @@
 
 package com.ligadata.FatafatManager
 
-import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, ModelResult, TransactionContext, ModelContext }
+import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, SavedMdlResult, ModelResultBase, TransactionContext, ModelContext }
 import com.ligadata.Utils.Utils
 import java.util.Map
 import scala.util.Random
@@ -24,8 +24,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   val rand = new Random(hashCode)
 
-  private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext): Array[ModelResult] = {
-    var results: ArrayBuffer[ModelResult] = new ArrayBuffer[ModelResult]()
+  private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
+    var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
 
     if (finalTopMsgOrContainer != null) {
 
@@ -36,17 +36,14 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       // Execute all modes here
       models.foreach(md => {
         try {
-
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
-
             val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
             val curMd = md.mdl.CreateNewModel(mdlCtxt)
-            ThreadLocalStorage.modelContextInfo.remove
             if (curMd != null) {
               val res = curMd.execute(outputAlways)
               if (res != null) {
-                results += res
+                results += new SavedMdlResult().withMdlName(md.mdl.ModelName).withMdlVersion(md.mdl.Version).withUniqKey(uk).withUniqVal(uv).withTxnId(transId).withXformedMsgCntr(xformedMsgCntr).withTotalXformedMsgs(totalXformedMsgs).withMdlResult(res)
               } else {
                 // Nothing to output
               }
@@ -56,9 +53,14 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } else {
           }
         } catch {
-          case e: Exception =>
-            { LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace()) }
-            ThreadLocalStorage.modelContextInfo.remove
+          case e: Exception => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace())
+            }
+          case t: Throwable => {
+              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + t.printStackTrace())
+            }
+        } finally {
+          ThreadLocalStorage.modelContextInfo.remove
         }
       })
     }
@@ -93,17 +95,17 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
         }
         msg.populate(inputdata)
-        var allMdlsResults: scala.collection.mutable.Map[String, ModelResult] = null
+        var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
           envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
           allMdlsResults = envContext.getModelsResult(transId, partKeyDataList)
         }
         if (allMdlsResults == null)
-          allMdlsResults = scala.collection.mutable.Map[String, ModelResult]()
+          allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
 
-        val results = RunAllModels(transId, msg, envContext)
+        val results = RunAllModels(transId, msg, envContext, uk, uv, xformedMsgCntr, totalXformedMsgs)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
         if (results.size > 0) {
@@ -115,11 +117,6 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           try {
             // Prepare final output and update the models persistance map
             results.foreach(res => {
-              // Update uniqKey, uniqVal, xformedMsgCntr & totalXformedMsgs
-              res.uniqKey = uk
-              res.uniqVal = uv
-              res.xformedMsgCntr = xformedMsgCntr
-              res.totalXformedMsgs = totalXformedMsgs
               allMdlsResults(res.mdlName) = res
             })
           } catch {
@@ -130,23 +127,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               }
           }
 
-          val json =
-            ("ModelsResult" -> results.toList.map(res =>
-              ("EventDate" -> res.eventDate) ~
-                ("ExecutionTime" -> res.executedTime) ~
-                ("DataReadTime" -> Utils.SimpDateFmtTimeFromMs(rdTmMs)) ~
-                ("ElapsedTimeFromDataRead" -> elapseTmFromRead) ~
-                ("ModelName" -> res.mdlName) ~
-                ("ModelVersion" -> res.mdlVersion) ~
-                ("uniqKey" -> res.uniqKey) ~
-                ("uniqVal" -> res.uniqVal) ~
-                ("xformCntr" -> res.xformedMsgCntr) ~
-                ("xformTotl" -> res.totalXformedMsgs) ~
-                ("TxnId" -> transId) ~
-                ("output" -> res.results.toList.map(r =>
-                  ("Name" -> r.name) ~
-                    ("Type" -> r.usage.toString) ~
-                    ("Value" -> ModelResult.ValueString(r.result))))))
+          val json = ("ModelsResult" -> results.toList.map(res => res.toString))
           val resStr = compact(render(json))
 
           envContext.saveStatus(transId, "Start", true)
