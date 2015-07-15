@@ -262,7 +262,7 @@ object FatafatMdCfg {
           val topMessageNames = FatafatMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Containers
           envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Messages
-          LOG.debug("Created EnvironmentContext for Class:" + className)
+          LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". ObjType0:" + objinst.getClass.getSimpleName + ". ObjType1:" + objinst.getClass.getCanonicalName)
@@ -280,7 +280,7 @@ object FatafatMdCfg {
   }
 
   def LoadAdapters(loaderInfo: FatafatLoaderInfo, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: ArrayBuffer[OutputAdapter], statusAdapters: ArrayBuffer[OutputAdapter], validateInputAdapters: ArrayBuffer[InputAdapter]): Boolean = {
-    LOG.debug("Loading Adapters started @ " + Utils.GetCurDtTmStr)
+    LOG.info("Loading Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
 
     val allAdapters = mdMgr.Adapters
@@ -330,7 +330,7 @@ object FatafatMdCfg {
       return false
 
     val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
-    LOG.debug("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
+    LOG.info("Loading Adapters done @ " + Utils.GetCurDtTmStr + totaltm)
 
     true
   }
@@ -372,7 +372,7 @@ object FatafatMdCfg {
         if (objinst.isInstanceOf[OutputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[OutputAdapterObj]
           val adapter = adapterObj.CreateOutputAdapter(statusAdapterCfg, SimpleStats)
-          LOG.debug("Created Output Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
+          LOG.info("Created Output Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
           LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -459,7 +459,7 @@ object FatafatMdCfg {
         if (objinst.isInstanceOf[InputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[InputAdapterObj]
           val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, mkExecCtxt, SimpleStats)
-          LOG.debug("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
+          LOG.info("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)

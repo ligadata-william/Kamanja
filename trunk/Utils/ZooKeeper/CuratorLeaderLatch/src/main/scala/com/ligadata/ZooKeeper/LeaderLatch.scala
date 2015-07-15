@@ -81,7 +81,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
       val isLeader = if (clstStatus.isLeader) "true" else "false"
 
       // Do something with cluster status (log leadership change, etc)
-      LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
+      LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(clstStatus.nodeId, isLeader, clstStatus.leader, clstStatus.participants.mkString(",")))
       if (EventChangeCallback != null)
         EventChangeCallback(clstStatus)
     } catch {

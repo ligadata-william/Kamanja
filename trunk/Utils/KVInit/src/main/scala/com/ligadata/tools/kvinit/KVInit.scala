@@ -650,10 +650,10 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       }
     })
 
-    logger.debug("Inserted %d values in KVName %s".format(processedRows, kvname))
+    logger.info("Inserted %d values in KVName %s".format(processedRows, kvname))
 
     if (zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
-      logger.debug("Notifying Engines after updating is done through Zookeeper.")
+      logger.info("Notifying Engines after updating is done through Zookeeper.")
       var zkcForSetData: CuratorFramework = null
       try {
         val dataChangeZkNodePath = zkNodeBasePath + "/datachange"

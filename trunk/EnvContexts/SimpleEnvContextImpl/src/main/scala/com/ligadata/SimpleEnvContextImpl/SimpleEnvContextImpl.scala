@@ -333,7 +333,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       throw new Exception("Not found some keys to load")
     }
 
-    logger.debug("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
+    logger.info("Loaded %d objects for %s".format(msgOrCont.data.size, msgOrCont.objFullName))
   }
 
   private def getSerializeInfo(tupleBytes: Value): String = {
@@ -531,7 +531,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("1. Data not found for key:" + partKeyStr)
+        logger.error("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -665,7 +665,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.debug("2. Data not found for key:" + partKeyStr)
+        logger.error("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -693,7 +693,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.debug("3. Data not found for key:" + partKeyStr)
+        logger.error("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -865,7 +865,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Adding new messages or Containers
   //BUGBUG:: May be we need to lock before we do anything here
   override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, adapterSpecificConfig: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoadapterSpecificConfig: String): Unit = {
-    logger.debug("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
+    logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     if (_allDataDataStore == null) {
       logger.debug("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
       _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation, adapterSpecificConfig)
@@ -1232,7 +1232,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.error(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1251,7 +1251,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.debug(s"getIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.error(s"getIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1270,7 +1270,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.debug(s"getAllFinalStatusInfo() -- Unable to load Status Info")
+          logger.error(s"getAllFinalStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1341,7 +1341,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.debug(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
+          logger.error(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
