@@ -253,6 +253,7 @@ trait ModelBaseObj {
   def CreateNewModel(mdlCtxt: ModelContext): ModelBase // Creating same type of object with given values 
   def ModelName(): String // Model Name
   def Version(): String // Model Version
+  def CreateResultObject(): ModelResultBase // ResultClass associated the model. Mainly used for Returning results as well as Deserialization
 }
 
 class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames: Array[String], val tenantId: String) {

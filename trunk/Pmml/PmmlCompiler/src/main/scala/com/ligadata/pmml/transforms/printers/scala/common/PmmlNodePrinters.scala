@@ -986,8 +986,8 @@ object NodePrinterHelpers extends LogTrait {
 		}
 
 
-		objBuffer.append(s"    def ModelName: String = $modelName\n")
-		objBuffer.append(s"    def Version: String = ${'"'}$versionNo${'"'}\n")
+		objBuffer.append(s"    override def ModelName(): String = $modelName\n")
+		objBuffer.append(s"    override def Version(): String = ${'"'}$versionNo${'"'}\n")
 
 		val msgs : ArrayBuffer[(String, Boolean, BaseTypeDef, String)] = if (ctx.containersInScope == null || ctx.containersInScope.size == 0) {
 			PmmlError.logError(ctx, "No input message(s) specified for this model. Please specify messages variable with one or more message names as values.")
@@ -1014,10 +1014,13 @@ object NodePrinterHelpers extends LogTrait {
 		
 		/** Add the IsValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
-		objBuffer.append(s"    def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
+		objBuffer.append(s"    override def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
+
+		/** Add the CreateResultObject function  */
+		objBuffer.append(s"    override def CreateResultObject(): ModelResultBase = new MappedModelResults(); \n\n")
 
 		/** plan for the day when there are multiple messages present in the constructor */
 		val msgNameContainerInfo : Array[(String, Boolean, BaseTypeDef, String)] = ctx.containersInScope.filter( ctnr => {
@@ -1036,7 +1039,7 @@ object NodePrinterHelpers extends LogTrait {
 			val msgTypeStr : String = msgTypedef.typeString
 			val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
 			
-			objBuffer.append(s"    def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
+			objBuffer.append(s"    override def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
 			objBuffer.append(s"    {\n") 
 			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(mdlCtxt, this)\n")
 			objBuffer.append(s"    }\n") 	
