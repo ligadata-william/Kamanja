@@ -1,3 +1,4 @@
+/*
 import java.io.File
 
 import dispatch._, Defaults._
@@ -274,4 +275,4 @@ class MetadataAPIServiceUnitTest extends MetadataAPIServiceUnitSpec {
         }
     }
   }
-}
+}*/
