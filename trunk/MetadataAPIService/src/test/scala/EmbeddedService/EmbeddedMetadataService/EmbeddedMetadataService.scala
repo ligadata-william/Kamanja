@@ -7,9 +7,9 @@ import com.ligadata.metadataapiservice.APIService
  */
  class EmbeddedMetadataService(){
   var apiServiceThread:Thread=null
-  def run() {
+  def run(config: String) {
     // start the APIService runnable thread
-    val args: Array[String]=Array("--config","/Users/dhaval/MetadataAPIConfig.properties")
+    val args: Array[String]=Array("--config",config)
     apiServiceThread=new Thread(new APIService(args))
     println("api service: "+apiServiceThread.getName)
     apiServiceThread.start()
@@ -29,10 +29,6 @@ object EmbeddedMetadataService {
       ems = new EmbeddedMetadataService()
     }
     return ems
-  }
-
-  def main(args: Array[String]) {
-    EmbeddedMetadataService.instance.run()
   }
 }
 
