@@ -55,11 +55,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           }
         } catch {
           case e: Exception => {
-              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace())
-            }
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace())
+          }
           case t: Throwable => {
-              LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + t.printStackTrace())
-            }
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + t.printStackTrace())
+          }
         } finally {
           ThreadLocalStorage.modelContextInfo.remove
         }
@@ -82,13 +82,14 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
         val isValidPartitionKey = (partKeyData != null && partKeyData.size > 0)
         val partKeyDataList = if (isValidPartitionKey) partKeyData.toList else null
         val primaryKey = if (isValidPartitionKey) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PrimaryKeyData(inputdata) else null
-        val primaryKeyList = if (primaryKey != null) primaryKey.toList else null
+        val primaryKeyList = if (primaryKey != null && primaryKey.size > 0) primaryKey.toList else null
 
         var msg: BaseMsg = null
         if (isValidPartitionKey && primaryKeyList != null) {
           val fndmsg = envContext.getObject(transId, msgType, partKeyDataList, primaryKeyList)
-          if (fndmsg != null)
+          if (fndmsg != null) {
             msg = fndmsg.asInstanceOf[BaseMsg]
+          }
         }
         var createdNewMsg = false
         if (msg == null) {

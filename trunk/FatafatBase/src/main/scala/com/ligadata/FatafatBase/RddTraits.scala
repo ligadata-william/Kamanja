@@ -299,6 +299,13 @@ class RDD[T: ClassTag] {
     collection.toArray
   }
 
+  /**
+   * Return the list that contains all of the elements in this RDD.
+   */
+  def toList: List[T] = {
+    collection.toList
+  }
+
   def subtract(other: RDD[T]): RDD[T] = {
     throw new Exception("Unhandled function subtract")
   }
