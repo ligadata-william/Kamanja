@@ -115,7 +115,7 @@ class SavedMdlResult {
         ("output" -> output)
     return json
   }
-  
+
   override def toString: String = {
     compact(render(toJson))
   }
@@ -130,42 +130,76 @@ trait ModelResultBase {
   def Serialize(dos: DataOutputStream): Unit // Deserialize this object
 }
 
+// Keys are handled as case sensitive
 class MappedModelResults extends ModelResultBase {
-  var results: Array[Result] = null
+  val results = scala.collection.mutable.Map[String, Any]()
 
   def withResults(res: Array[Result]): MappedModelResults = {
-    results = res
+    if (res != null) {
+      res.foreach(r => {
+        results(r.name) = r.result
+      })
+
+    }
+    this
+  }
+
+  def withResults(res: Array[(String, Any)]): MappedModelResults = {
+    if (res != null) {
+      res.foreach(r => {
+        results(r._1) = r._2
+      })
+    }
+    this
+  }
+
+  def withResults(res: scala.collection.immutable.Map[String, Any]): MappedModelResults = {
+    if (res != null) {
+      res.foreach(r => {
+        results(r._1) = r._2
+      })
+    }
+    this
+  }
+
+  def withResult(res: Result): MappedModelResults = {
+    if (res != null) {
+      results(res.name) = res.result
+    }
+    this
+  }
+
+  def withResult(res: (String, Any)): MappedModelResults = {
+    if (res != null) {
+      results(res._1) = res._2
+    }
+    this
+  }
+
+  def withResult(key: String, value: Any): MappedModelResults = {
+    if (key != null)
+      results(key) = value
     this
   }
 
   override def toJson: List[org.json4s.JsonAST.JObject] = {
-    if (results == null) return List[org.json4s.JsonAST.JObject]()
     val json =
       results.toList.map(r =>
-        (("Name" -> r.name) ~
-          ("Value" -> ModelsResults.ValueString(r.result))))
+        (("Name" -> r._1) ~
+          ("Value" -> ModelsResults.ValueString(r._2))))
     return json
   }
 
   override def toString: String = {
-    if (results == null) return ""
     compact(render(toJson))
   }
 
   override def get(key: String): Any = {
-    if (results == null) return null
-
-    results.foreach(res => {
-      if (res.name.compareToIgnoreCase(key) == 0)
-        return res.result
-    })
+    results.getOrElse(key, null)
   }
 
   override def asKeyValuesMap: Map[String, Any] = {
-    if (results == null) return Map[String, Any]()
-
-    val map = results.foldLeft(scala.collection.mutable.Map[String, Any]()) { (m, s) => m(s.name) = s.result; m }
-    map.toMap
+    results.toMap
   }
 
   override def Deserialize(dis: DataInputStream): Unit = {

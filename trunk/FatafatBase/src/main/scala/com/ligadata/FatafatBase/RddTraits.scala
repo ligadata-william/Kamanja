@@ -299,6 +299,13 @@ class RDD[T: ClassTag] {
     collection.toArray
   }
 
+  /**
+   * Return the list that contains all of the elements in this RDD.
+   */
+  def toList: List[T] = {
+    collection.toList
+  }
+
   def subtract(other: RDD[T]): RDD[T] = {
     throw new Exception("Unhandled function subtract")
   }
@@ -644,6 +651,20 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return a RDD for the current key.
+   */
+  final def getRDDForCurrKey(tmRange: TimeRange): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(mdlCtxt.txnContext.transId, getFullName, mdlCtxt.msg.PartitionKeyData.toList, tmRange, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+  
   /**
    * Return a RDD for the current key.
    */

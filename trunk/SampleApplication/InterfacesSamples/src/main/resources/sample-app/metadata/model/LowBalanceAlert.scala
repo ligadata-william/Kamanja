@@ -105,43 +105,33 @@ class LowBalanceAlertResult extends ModelResultBase {
 class LowBalanceAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert) {
   private[this] val LOG = Logger.getLogger(getClass);
   override def execute(emitAllResults: Boolean): ModelResultBase = {
-    LOG.warn("01.Entered")
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
-    LOG.warn("02.val gPref = GlobalPreferences.getRecentOrNew")
     val pref = CustPreferences.getRecentOrNew
-    LOG.warn("03.val pref = CustPreferences.getRecentOrNew")
     if (pref.minbalancealertoptout == true) {
-      LOG.warn("04.pref.minbalancealertoptout == true")
       return null
     }
 
     // Check if at least min number of hours elapsed since last alert  
     val curDtTmInMs = RddDate.currentGmtDateTime
     val alertHistory = CustAlertHistory.getRecentOrNew
-    LOG.warn("05.val curDtTmInMs = RddDate.currentGmtDateTime & val alertHistory = CustAlertHistory.getRecentOrNew")
     if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertdttminms)) < gPref.minalertdurationinhrs) {
-      LOG.warn("06.curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertdttminms)) < gPref.minalertdurationinhrs")
       return null
     }
 
     // continue with alert generation only if balance from current transaction is less than threshold
     val rcntTxn = TransactionMsg.getRecent
-    LOG.warn("07.val rcntTxn = TransactionMsg.getRecent")
     if (rcntTxn.isEmpty) {
-      LOG.warn("07_1.rcntTxn.isEmpty is true")
       return null
     }
     
     if (rcntTxn.isEmpty || rcntTxn.get.balance >= gPref.minalertbalance) {
-      LOG.warn("08.rcntTxn.isEmpty || rcntTxn.get.balance >= gPref.minalertbalance")
       return null
     }
 
     val curTmInMs = curDtTmInMs.getDateTimeInMs
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withalertdttminms(curTmInMs).withalerttype("lowbalancealert").Save
-    LOG.warn("09.CustAlertHistory.build.....Save")
     // results
     new LowBalanceAlertResult().withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert").withTriggerTime(curTmInMs)
   }
