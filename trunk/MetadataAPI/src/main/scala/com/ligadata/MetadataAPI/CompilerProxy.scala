@@ -75,9 +75,10 @@ class CompilerProxy{
 
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
-
+  private var userId: Option[String] = _
   lazy val compiler_work_dir = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
 
+  def setSessionUserId(id: Option[String]): Unit = {userId=id}
   def setLoggerLevel(level: Level){
     logger.setLevel(level);
   }
@@ -92,12 +93,12 @@ class CompilerProxy{
       // Figure out the metadata information needed for 
       val additinalDeps = addDepsFromClassPath
       val (classPath, elements, totalDeps, nonTypeDeps) =  getClassPathFromModelConfig(modelConfigName, additinalDeps)
-      val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang 
+      val msgDefClassFilePath = compiler_work_dir + "/" + removeUserid(modelConfigName) + "."+sourceLang 
       val ((modelNamespace, modelName, modelVersion, pname),repackagedCode,tempPackage) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)  
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode,
                               totalDeps,  
-                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName),
+                              MetadataAPIImpl.getModelMessagesContainers(modelConfigName,None),
                               nonTypeDeps)   
     } catch {
       case e: Exception => {
@@ -561,8 +562,6 @@ class CompilerProxy{
         modDef.physicalName = pName
         if (sourceLang.equalsIgnoreCase("scala")) modDef.objectFormat = fSCALA else modDef.objectFormat = fJAVA
         modDef.ObjectDefinition(createSavedSourceCode(originalSource, notTypeDeps, typeDeps, pname))   
-        
-        println("Generated "+modDef.NameSpace+"."+modDef.Name+"/"+modDef.FullNameWithVer+"   at "+modDef.PhysicalName)
         modDef
     } catch {
       case e:AlreadyExistsException =>{
@@ -678,7 +677,7 @@ class CompilerProxy{
     dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)    
      
     // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
-    var tempClassName: String = modelConfigName
+    var tempClassName: String = removeUserid(modelConfigName)
     if (sourceLang.equalsIgnoreCase("java")) {
       tempClassName = getJavaClassName(sourceCode)
     }
@@ -972,8 +971,8 @@ class CompilerProxy{
    * getClassPath - 
    * 
    */
-  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName), 
-                                                                                                                                                                        MetadataAPIImpl.getModelMessagesContainers(modelName),
+  private def getClassPathFromModelConfig(modelName: String, cpDeps: List[String]): (String,Set[BaseElemDef], scala.collection.immutable.Set[String],scala.collection.immutable.Set[String]) =  buildClassPath(MetadataAPIImpl.getModelDependencies(modelName,userId), 
+                                                                                                                                                                        MetadataAPIImpl.getModelMessagesContainers(modelName,userId),
                                                                                                                                                                         cpDeps)
 
   /**
@@ -1017,6 +1016,12 @@ class CompilerProxy{
     bufferedWriter.close
   }
 
+  private def removeUserid (in:String) : String = {
+      var tempNameArray = in.split('.')
+      var fileName: String = tempNameArray(tempNameArray.length - 1)
+      fileName
+  }
+  
   private def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
     val scalaTargetPath = s"$targPath/$moduleSrcName"
     writeSrcFile(scalaGeneratedCode, scalaTargetPath)

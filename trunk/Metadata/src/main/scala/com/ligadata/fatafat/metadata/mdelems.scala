@@ -778,7 +778,7 @@ class AuditRecord
 
 object ModelCompilationConstants {
   val DEPENDENCIES: String = "dependencies"
-  val TYPES_DEPENDENCIES: String = "types"
+  val TYPES_DEPENDENCIES: String = "MessageAndContainers"
   val SOURCECODE: String = "source"
   val PHYSICALNAME: String = "pName"
 }
