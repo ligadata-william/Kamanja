@@ -46,10 +46,6 @@
 	],
 	"PartitionKey": [
 	  "custId"
-	],
-	"PrimaryKey": [
-	  "branchId",
-	  "accNo"
 	]
   }
 }
