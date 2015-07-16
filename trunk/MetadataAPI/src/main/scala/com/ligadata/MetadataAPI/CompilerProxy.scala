@@ -93,7 +93,7 @@ class CompilerProxy{
       // Figure out the metadata information needed for 
       val additinalDeps = addDepsFromClassPath
       val (classPath, elements, totalDeps, nonTypeDeps) =  getClassPathFromModelConfig(modelConfigName, additinalDeps)
-      val msgDefClassFilePath = compiler_work_dir + "/" + modelConfigName + "."+sourceLang 
+      val msgDefClassFilePath = compiler_work_dir + "/" + removeUserid(modelConfigName) + "."+sourceLang 
       val ((modelNamespace, modelName, modelVersion, pname),repackagedCode,tempPackage) = parseSourceForMetadata(sourceCode, modelConfigName,sourceLang,msgDefClassFilePath,classPath,elements)  
       return generateModelDef(repackagedCode, sourceLang, pname, classPath, tempPackage, modelName, 
                               modelVersion, msgDefClassFilePath, elements, sourceCode,
@@ -677,7 +677,7 @@ class CompilerProxy{
     dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)    
      
     // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
-    var tempClassName: String = modelConfigName
+    var tempClassName: String = removeUserid(modelConfigName)
     if (sourceLang.equalsIgnoreCase("java")) {
       tempClassName = getJavaClassName(sourceCode)
     }
@@ -1016,6 +1016,12 @@ class CompilerProxy{
     bufferedWriter.close
   }
 
+  private def removeUserid (in:String) : String = {
+      var tempNameArray = in.split('.')
+      var fileName: String = tempNameArray(tempNameArray.length - 1)
+      fileName
+  }
+  
   private def createScalaFile(targPath : String, moduleSrcName : String, scalaGeneratedCode : String) {
     val scalaTargetPath = s"$targPath/$moduleSrcName"
     writeSrcFile(scalaGeneratedCode, scalaTargetPath)
