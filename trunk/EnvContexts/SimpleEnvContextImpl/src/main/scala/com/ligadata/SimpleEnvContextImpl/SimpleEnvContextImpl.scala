@@ -142,7 +142,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     private[this] val _modelsResult = scala.collection.mutable.Map[String, scala.collection.mutable.Map[String, SavedMdlResult]]()
     private[this] val _statusStrings = new ArrayBuffer[String]()
 
-    private[this] def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
+    def getMsgContainer(containerName: String, addIfMissing: Boolean): MsgContainerInfo = {
       var fnd = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
       if (fnd == null && addIfMissing) {
         fnd = new MsgContainerInfo
@@ -881,9 +881,42 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     (remainingPartKeys.size == 0)
   }
 
+  // Same kind of code is there in localGetObject
+  private def loadBeforeSetObject(txnCtxt: TransactionContext, transId: Long, containerName: String, partKey: List[String]): Unit = {
+    val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
+    if (container != null) {
+      val partKeyStr = InMemoryKeyDataInJson(partKey)
+      val fatafatData = container.data.getOrElse(partKeyStr, null)
+      if (fatafatData != null) {
+        if (txnCtxt != null)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
+        return ;
+      }
+      // If not found in memory, try in DB
+      val loadedFfData = loadObjFromDb(transId, container, partKey)
+      if (loadedFfData != null) {
+        if (txnCtxt != null)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, loadedFfData)
+        return ;
+      }
+      // If not found in DB, Create Empty and set to current transaction context
+      if (txnCtxt != null) {
+        val emptyFfData = new FatafatData
+        emptyFfData.SetKey(partKey.toArray)
+        emptyFfData.SetTypeName(containerName)
+        txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
+      }
+    }
+  }
+
   private def localSetObject(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
     var txnCtxt = getTransactionContext(transId, true)
     if (txnCtxt != null) {
+      val container = txnCtxt.getMsgContainer(containerName.toLowerCase, false)
+      if (container == null) {
+        // Try to load the key if they exists in global storage.
+        loadBeforeSetObject(txnCtxt, transId, containerName, partKey)
+      }
       txnCtxt.setObject(containerName, partKey, value)
     }
   }
