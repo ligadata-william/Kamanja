@@ -654,6 +654,20 @@ abstract class RDDObject[T: ClassTag] {
   /**
    * Return a RDD for the current key.
    */
+  final def getRDDForCurrKey(tmRange: TimeRange): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(mdlCtxt.txnContext.transId, getFullName, mdlCtxt.msg.PartitionKeyData.toList, tmRange, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+  
+  /**
+   * Return a RDD for the current key.
+   */
   final def getRDDForCurrKey(tmRange: TimeRange, f: MessageContainerBase => Boolean): RDD[T] = {
     val mdlCtxt = getCurrentModelContext
     var values: Array[T] = Array[T]()

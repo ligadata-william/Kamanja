@@ -19,60 +19,113 @@ object RddTest1 extends ModelBaseObj {
 }
 
 class RddTest1Result extends ModelResultBase {
-  var one_count: Long = 0;
-  var one_map: List[(Long, Int, Long, Double, String)] = null
-  var one_filter1_5: List[(Long, Int, Long, Double, String)] = null
-  var one_flatMap: List[Double] = null
-  // var one_groupBy: List[(Long, Int, Long, Double, String)] = null
-  var one_foreach: List[(Long, Int, Long, Double, String)] = null
-  var one_first: (Long, Int, Long, Double, String) = null
-  var one_last: (Long, Int, Long, Double, String) = null
-  var one_maxAccNo: Long = 0
-  var one_minAccNo: Long = 0
-  var one_maxBalance: Double = 0
-  var one_minBalance: Double = 0
-  var one_isEmpty: Boolean = false
+  var allrdd_count: Long = 0;
+  var allrdd_map: List[(Long, Int, Long, Double, String)] = null
+  var allrdd_filter1_5: List[(Long, Int, Long, Double, String)] = null
+  var allrdd_flatMap: List[Double] = null
+  // var allrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+  var allrdd_foreach: List[(Long, Int, Long, Double, String)] = null
+  var allrdd_first: (Long, Int, Long, Double, String) = null
+  var allrdd_last: (Long, Int, Long, Double, String) = null
+  var allrdd_maxAccNo: Long = 0
+  var allrdd_minAccNo: Long = 0
+  var allrdd_maxBalance: Double = 0
+  var allrdd_minBalance: Double = 0
+  var allrdd_isEmpty: Boolean = false
 
-  var two_size: Long = 0;
-  var two_map: List[(Long, Int, Long, Double, String)] = null
-  var two_filter1_5: List[(Long, Int, Long, Double, String)] = null
-  var two_flatMap: List[Double] = null
-  // var two_groupBy: List[(Long, Int, Long, Double, String)] = null
-  var two_foreach: List[(Long, Int, Long, Double, String)] = null
-  var two_first: (Long, Int, Long, Double, String) = null
-  var two_last: (Long, Int, Long, Double, String) = null
-  var two_maxAccNo: Long = 0
-  var two_minAccNo: Long = 0
-  var two_maxBalance: Double = 0
-  var two_minBalance: Double = 0
-  var two_isEmpty: Boolean = false
+  var filterrdd_size: Long = 0;
+  var filterrdd_map: List[(Long, Int, Long, Double, String)] = null
+  var filterrdd_filter1_5: List[(Long, Int, Long, Double, String)] = null
+  var filterrdd_flatMap: List[Double] = null
+  // var filterrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+  var filterrdd_foreach: List[(Long, Int, Long, Double, String)] = null
+  var filterrdd_first: (Long, Int, Long, Double, String) = null
+  var filterrdd_last: (Long, Int, Long, Double, String) = null
+  var filterrdd_maxAccNo: Long = 0
+  var filterrdd_minAccNo: Long = 0
+  var filterrdd_maxBalance: Double = 0
+  var filterrdd_minBalance: Double = 0
+  var filterrdd_isEmpty: Boolean = false
+
+  var currdd_count: Long = 0;
+  var currdd_map: List[(Long, Int, Long, Double, String)] = null
+  var currdd_filter1_5: List[(Long, Int, Long, Double, String)] = null
+  var currdd_flatMap: List[Double] = null
+  // var currdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+  var currdd_foreach: List[(Long, Int, Long, Double, String)] = null
+  var currdd_first: (Long, Int, Long, Double, String) = null
+  var currdd_last: (Long, Int, Long, Double, String) = null
+  var currdd_maxAccNo: Long = 0
+  var currdd_minAccNo: Long = 0
+  var currdd_maxBalance: Double = 0
+  var currdd_minBalance: Double = 0
+  var currdd_isEmpty: Boolean = false
+
+  var curfltrrdd_size: Long = 0;
+  var curfltrrdd_map: List[(Long, Int, Long, Double, String)] = null
+  var curfltrrdd_filter1_5: List[(Long, Int, Long, Double, String)] = null
+  var curfltrrdd_flatMap: List[Double] = null
+  // var curfltrrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+  var curfltrrdd_foreach: List[(Long, Int, Long, Double, String)] = null
+  var curfltrrdd_first: (Long, Int, Long, Double, String) = null
+  var curfltrrdd_last: (Long, Int, Long, Double, String) = null
+  var curfltrrdd_maxAccNo: Long = 0
+  var curfltrrdd_minAccNo: Long = 0
+  var curfltrrdd_maxBalance: Double = 0
+  var curfltrrdd_minBalance: Double = 0
+  var curfltrrdd_isEmpty: Boolean = false
+
 
   override def toJson: List[org.json4s.JsonAST.JObject] = {
     val json = List(
-      ("one_count" -> one_count) ~
-        ("one_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_map)) ~
-        ("one_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_filter1_5)) ~
-        ("one_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_flatMap)) ~
-        ("one_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_foreach)) ~
-        ("one_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_first)) ~
-        ("one_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(one_last)) ~
-        ("one_maxAccNo" -> one_maxAccNo) ~
-        ("one_minAccNo" -> one_minAccNo) ~
-        ("one_maxBalance" -> one_maxBalance) ~
-        ("one_minBalance" -> one_minBalance) ~
-        ("one_isEmpty" -> one_isEmpty) ~
-        ("two_size" -> two_size) ~
-        ("two_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_map)) ~
-        ("two_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_filter1_5)) ~
-        ("two_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_flatMap)) ~
-        ("two_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_foreach)) ~
-        ("two_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_first)) ~
-        ("two_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(two_last)) ~
-        ("two_maxAccNo" -> two_maxAccNo) ~
-        ("two_minAccNo" -> two_minAccNo) ~
-        ("two_maxBalance" -> two_maxBalance) ~
-        ("two_minBalance" -> two_minBalance) ~
-        ("two_isEmpty" -> two_isEmpty) 
+      ("allrdd_count" -> allrdd_count) ~
+        ("allrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_map)) ~
+        ("allrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_filter1_5)) ~
+        ("allrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_flatMap)) ~
+        ("allrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_foreach)) ~
+        ("allrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_first)) ~
+        ("allrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_last)) ~
+        ("allrdd_maxAccNo" -> allrdd_maxAccNo) ~
+        ("allrdd_minAccNo" -> allrdd_minAccNo) ~
+        ("allrdd_maxBalance" -> allrdd_maxBalance) ~
+        ("allrdd_minBalance" -> allrdd_minBalance) ~
+        ("allrdd_isEmpty" -> allrdd_isEmpty) ~
+        ("filterrdd_size" -> filterrdd_size) ~
+        ("filterrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_map)) ~
+        ("filterrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_filter1_5)) ~
+        ("filterrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_flatMap)) ~
+        ("filterrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_foreach)) ~
+        ("filterrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_first)) ~
+        ("filterrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_last)) ~
+        ("filterrdd_maxAccNo" -> filterrdd_maxAccNo) ~
+        ("filterrdd_minAccNo" -> filterrdd_minAccNo) ~
+        ("filterrdd_maxBalance" -> filterrdd_maxBalance) ~
+        ("filterrdd_minBalance" -> filterrdd_minBalance) ~
+        ("filterrdd_isEmpty" -> filterrdd_isEmpty) ~
+        ("currdd_count" -> currdd_count) ~
+        ("currdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_map)) ~
+        ("currdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_filter1_5)) ~
+        ("currdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_flatMap)) ~
+        ("currdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_foreach)) ~
+        ("currdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_first)) ~
+        ("currdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_last)) ~
+        ("currdd_maxAccNo" -> currdd_maxAccNo) ~
+        ("currdd_minAccNo" -> currdd_minAccNo) ~
+        ("currdd_maxBalance" -> currdd_maxBalance) ~
+        ("currdd_minBalance" -> currdd_minBalance) ~
+        ("currdd_isEmpty" -> currdd_isEmpty) ~
+        ("curfltrrdd_size" -> curfltrrdd_size) ~
+        ("curfltrrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_map)) ~
+        ("curfltrrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_filter1_5)) ~
+        ("curfltrrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_flatMap)) ~
+        ("curfltrrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_foreach)) ~
+        ("curfltrrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_first)) ~
+        ("curfltrrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_last)) ~
+        ("curfltrrdd_maxAccNo" -> curfltrrdd_maxAccNo) ~
+        ("curfltrrdd_minAccNo" -> curfltrrdd_minAccNo) ~
+        ("curfltrrdd_maxBalance" -> curfltrrdd_maxBalance) ~
+        ("curfltrrdd_minBalance" -> curfltrrdd_minBalance) ~
+        ("curfltrrdd_isEmpty" -> curfltrrdd_isEmpty) 
       )
     return json
   }
@@ -149,54 +202,107 @@ class RddTest1(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, RddTest1) {
         (trn.balance >= 50 && trn.balance <= 10000)
       }
     })
+    val curUsrTxns = TransactionMsg.getRDDForCurrKey(lookBackTime)
+    val curUsrFltrTxns = TransactionMsg.getRDDForCurrKey(lookBackTime, { trnsaction: MessageContainerBase =>
+      {
+        val trn = trnsaction.asInstanceOf[TransactionMsg]
+        (trn.balance >= 50 && trn.balance <= 10000)
+      }
+    })
 
     val result = new RddTest1Result()
 
-    result.one_count = allTxns.count
-    result.one_map = allTxns.map(getTuple).toList
-    result.one_filter1_5 = allTxns.filter(filter_between_50_5000).map(getTuple).toList
-    result.one_flatMap = allTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
- // result.one_groupBy: List[(Long, Int, Long, Double, String)] = null
-    var one_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
+    result.allrdd_count = allTxns.count
+    result.allrdd_map = allTxns.map(getTuple).toList
+    result.allrdd_filter1_5 = allTxns.filter(filter_between_50_5000).map(getTuple).toList
+    result.allrdd_flatMap = allTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
+ // result.allrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+    var allrdd_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
     allTxns.foreach((v:TransactionMsg) => {
-      one_foreach_val = one_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
+      allrdd_foreach_val = allrdd_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
     })
 
-    result.one_foreach = one_foreach_val
-    result.one_first = getVal(allTxns.first())
-    result.one_last = getVal(allTxns.last())
-    val one_maxAccNo = allTxns.max(findMaxAccNo)
-    val one_minAccNo = allTxns.min(findMinAccNo)
-    val one_maxBal = allTxns.max(findMaxBal)
-    val one_minBal = allTxns.min(findMinBal)
-    result.one_maxAccNo = if (one_maxAccNo == None) 0 else one_maxAccNo.get
-    result.one_minAccNo = if (one_minAccNo == None) 0 else one_minAccNo.get
-    result.one_maxBalance = if (one_maxBal == None) 0 else one_maxBal.get
-    result.one_minBalance = if (one_minBal == None) 0 else one_minBal.get
-    result.one_isEmpty = allTxns.isEmpty
+    result.allrdd_foreach = allrdd_foreach_val
+    result.allrdd_first = getVal(allTxns.first())
+    result.allrdd_last = getVal(allTxns.last())
+    val allrdd_maxAccNo = allTxns.max(findMaxAccNo)
+    val allrdd_minAccNo = allTxns.min(findMinAccNo)
+    val allrdd_maxBal = allTxns.max(findMaxBal)
+    val allrdd_minBal = allTxns.min(findMinBal)
+    result.allrdd_maxAccNo = if (allrdd_maxAccNo == None) 0 else allrdd_maxAccNo.get
+    result.allrdd_minAccNo = if (allrdd_minAccNo == None) 0 else allrdd_minAccNo.get
+    result.allrdd_maxBalance = if (allrdd_maxBal == None) 0 else allrdd_maxBal.get
+    result.allrdd_minBalance = if (allrdd_minBal == None) 0 else allrdd_minBal.get
+    result.allrdd_isEmpty = allTxns.isEmpty
 
-    result.two_size = fltrTxns.size
-    result.two_map = fltrTxns.map(getTuple).toList
-    result.two_filter1_5 = fltrTxns.filter(filter_between_50_5000).map(getTuple).toList
-    result.two_flatMap = fltrTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
- // result.two_groupBy: List[(Long, Int, Long, Double, String)] = null
-    var two_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
+    result.filterrdd_size = fltrTxns.size
+    result.filterrdd_map = fltrTxns.map(getTuple).toList
+    result.filterrdd_filter1_5 = fltrTxns.filter(filter_between_50_5000).map(getTuple).toList
+    result.filterrdd_flatMap = fltrTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
+ // result.filterrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+    var filterrdd_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
     fltrTxns.foreach((v:TransactionMsg) => {
-      two_foreach_val = two_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
+      filterrdd_foreach_val = filterrdd_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
     })
 
-    result.two_foreach = two_foreach_val
-    result.two_first = getVal(fltrTxns.first())
-    result.two_last = getVal(fltrTxns.last())
-    val two_maxAccNo = fltrTxns.max(findMaxAccNo)
-    val two_minAccNo = fltrTxns.min(findMinAccNo)
-    val two_maxBal = fltrTxns.max(findMaxBal)
-    val two_minBal = fltrTxns.min(findMinBal)
-    result.two_maxAccNo = if (two_maxAccNo == None) 0 else two_maxAccNo.get
-    result.two_minAccNo = if (two_minAccNo == None) 0 else two_minAccNo.get
-    result.two_maxBalance = if (two_maxBal == None) 0 else two_maxBal.get
-    result.two_minBalance = if (two_minBal == None) 0 else two_minBal.get
-    result.two_isEmpty = fltrTxns.isEmpty
+    result.filterrdd_foreach = filterrdd_foreach_val
+    result.filterrdd_first = getVal(fltrTxns.first())
+    result.filterrdd_last = getVal(fltrTxns.last())
+    val filterrdd_maxAccNo = fltrTxns.max(findMaxAccNo)
+    val filterrdd_minAccNo = fltrTxns.min(findMinAccNo)
+    val filterrdd_maxBal = fltrTxns.max(findMaxBal)
+    val filterrdd_minBal = fltrTxns.min(findMinBal)
+    result.filterrdd_maxAccNo = if (filterrdd_maxAccNo == None) 0 else filterrdd_maxAccNo.get
+    result.filterrdd_minAccNo = if (filterrdd_minAccNo == None) 0 else filterrdd_minAccNo.get
+    result.filterrdd_maxBalance = if (filterrdd_maxBal == None) 0 else filterrdd_maxBal.get
+    result.filterrdd_minBalance = if (filterrdd_minBal == None) 0 else filterrdd_minBal.get
+    result.filterrdd_isEmpty = fltrTxns.isEmpty
+
+    result.currdd_count = curUsrTxns.count
+    result.currdd_map = curUsrTxns.map(getTuple).toList
+    result.currdd_filter1_5 = curUsrTxns.filter(filter_between_50_5000).map(getTuple).toList
+    result.currdd_flatMap = curUsrTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
+ // result.currdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+    var currdd_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
+    curUsrTxns.foreach((v:TransactionMsg) => {
+      currdd_foreach_val = currdd_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
+    })
+
+    result.currdd_foreach = currdd_foreach_val
+    result.currdd_first = getVal(curUsrTxns.first())
+    result.currdd_last = getVal(curUsrTxns.last())
+    val currdd_maxAccNo = curUsrTxns.max(findMaxAccNo)
+    val currdd_minAccNo = curUsrTxns.min(findMinAccNo)
+    val currdd_maxBal = curUsrTxns.max(findMaxBal)
+    val currdd_minBal = curUsrTxns.min(findMinBal)
+    result.currdd_maxAccNo = if (currdd_maxAccNo == None) 0 else currdd_maxAccNo.get
+    result.currdd_minAccNo = if (currdd_minAccNo == None) 0 else currdd_minAccNo.get
+    result.currdd_maxBalance = if (currdd_maxBal == None) 0 else currdd_maxBal.get
+    result.currdd_minBalance = if (currdd_minBal == None) 0 else currdd_minBal.get
+    result.currdd_isEmpty = curUsrTxns.isEmpty
+
+    result.curfltrrdd_size = curUsrFltrTxns.size
+    result.curfltrrdd_map = curUsrFltrTxns.map(getTuple).toList
+    result.curfltrrdd_filter1_5 = curUsrFltrTxns.filter(filter_between_50_5000).map(getTuple).toList
+    result.curfltrrdd_flatMap = curUsrFltrTxns.flatMap((v:TransactionMsg) => { List(v.balance) }).toList
+ // result.curfltrrdd_groupBy: List[(Long, Int, Long, Double, String)] = null
+    var curfltrrdd_foreach_val: List[(Long, Int, Long, Double, String)] = List[(Long, Int, Long, Double, String)]()
+    curUsrFltrTxns.foreach((v:TransactionMsg) => {
+      curfltrrdd_foreach_val = curfltrrdd_foreach_val :+ (v.custid, v.branchid, v.accno, v.balance, v.transtype)
+    })
+
+    result.curfltrrdd_foreach = curfltrrdd_foreach_val
+    result.curfltrrdd_first = getVal(curUsrFltrTxns.first())
+    result.curfltrrdd_last = getVal(curUsrFltrTxns.last())
+    val curfltrrdd_maxAccNo = curUsrFltrTxns.max(findMaxAccNo)
+    val curfltrrdd_minAccNo = curUsrFltrTxns.min(findMinAccNo)
+    val curfltrrdd_maxBal = curUsrFltrTxns.max(findMaxBal)
+    val curfltrrdd_minBal = curUsrFltrTxns.min(findMinBal)
+    result.curfltrrdd_maxAccNo = if (curfltrrdd_maxAccNo == None) 0 else curfltrrdd_maxAccNo.get
+    result.curfltrrdd_minAccNo = if (curfltrrdd_minAccNo == None) 0 else curfltrrdd_minAccNo.get
+    result.curfltrrdd_maxBalance = if (curfltrrdd_maxBal == None) 0 else curfltrrdd_maxBal.get
+    result.curfltrrdd_minBalance = if (curfltrrdd_minBal == None) 0 else curfltrrdd_minBal.get
+    result.curfltrrdd_isEmpty = curUsrFltrTxns.isEmpty
 
     return result
   }

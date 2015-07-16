@@ -84,7 +84,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (null, false)
     }
 
-    def getRddDataFromFatafatData(fatafatData: FatafatData, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    def getRddDataFromFatafatData(fatafatData: FatafatData, tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
       // BUGBUG:: tmRange is not yet handled
       if (fatafatData != null) {
         if (f != null) {
@@ -118,23 +118,47 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (null, false)
     }
 
-    def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (Array[MessageContainerBase], Boolean) = {
+    def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
+      if (key1.size != key2.size)
+        return false
+
+      for (i <- 0 until key1.size) {
+        if (key1(i).compareTo(key2(i)) != 0)
+          return false
+      }
+
+      return true
+    }
+
+    def IsKeyExists(keys: Array[List[String]], searchKey: List[String]): Boolean = {
+      keys.foreach(k => {
+        if (IsSameKey(k, searchKey))
+          return true
+      })
+      return false
+    }
+
+    def getRddData(container: MsgContainerInfo, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[List[String]]): (Array[MessageContainerBase], Array[List[String]]) = {
       val retResult = ArrayBuffer[MessageContainerBase]()
-      var foundPartition = false
+      var foundPartKeys = ArrayBuffer[List[String]]()
       if (container != null) {
-        if (partKey != null) {
+        if (partKey != null && partKey.size > 0) {
           val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (fatafatData != null) {
-            foundPartition = true
-            retResult ++= getRddDataFromFatafatData(fatafatData._2, partKey, tmRange, f)
+          if (fatafatData != null && IsKeyExists(alreadyFoundPartKeys, fatafatData._2.GetKey.toList) == false) {
+            retResult ++= getRddDataFromFatafatData(fatafatData._2, tmRange, f)
+            foundPartKeys += partKey
           }
         } else {
           container.data.foreach(kv => {
-            retResult ++= getRddDataFromFatafatData(kv._2._2, partKey, tmRange, f)
+            val k = kv._2._2.GetKey.toList
+            if (IsKeyExists(alreadyFoundPartKeys, k) == false) {
+              retResult ++= getRddDataFromFatafatData(kv._2._2, tmRange, f)
+              foundPartKeys += k.toList
+            }
           })
         }
       }
-      (retResult.toArray, foundPartition)
+      (retResult.toArray, foundPartKeys.toArray)
     }
   }
 
@@ -319,8 +343,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (v, foundPartKey)
     }
 
-    def getRddData(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (Array[MessageContainerBase], Boolean) = {
-      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f)
+    def getRddData(containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean, alreadyFoundPartKeys: Array[List[String]]): (Array[MessageContainerBase], Array[List[String]]) = {
+      return TxnContextCommonFunctions.getRddData(getMsgContainer(containerName.toLowerCase, false), partKey, tmRange, f, alreadyFoundPartKeys)
     }
   }
 
@@ -1563,20 +1587,29 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    val keystr = if (partKey != null) partKey.mkString(",") else ""
+    val foundPartKeys = ArrayBuffer[List[String]]()
     val retResult = ArrayBuffer[MessageContainerBase]()
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
-      // (Array[MessageContainerBase], Boolean)     
-      val (res, foundPartKey) = txnCtxt.getRddData(containerName, partKey, tmRange, f)
-      retResult ++= res
+      val (res, foundPartKeys1) = txnCtxt.getRddData(containerName, partKey, tmRange, f, foundPartKeys.toArray)
+      if (foundPartKeys1.size > 0) {
+        foundPartKeys ++= foundPartKeys1
+        retResult ++= res
+        if (partKey != null && partKey.size > 0) // Already found the key, no need to go down
+          return retResult.toArray
+      }
     }
 
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
-    if (partKey != null) {
-      val (res1, foundPartKey1) = TxnContextCommonFunctions.getRddData(container, partKey, tmRange, f)
-      if (foundPartKey1) {
+    // In memory
+    if (container != null) {
+      val (res1, foundPartKeys2) = TxnContextCommonFunctions.getRddData(container, partKey, tmRange, f, foundPartKeys.toArray)
+      if (foundPartKeys2.size > 0) {
+        foundPartKeys ++= foundPartKeys2
         retResult ++= res1 // Add only if we find all here
-        return retResult.toArray
+        if (partKey != null && partKey.size > 0) // Already found the key, no need to go down
+          return retResult.toArray
       }
     }
 
@@ -1584,13 +1617,45 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
-        val res2 = TxnContextCommonFunctions.getRddDataFromFatafatData(loadedFfData, partKey, tmRange, f)
+        val res2 = TxnContextCommonFunctions.getRddDataFromFatafatData(loadedFfData, tmRange, f)
         retResult ++= res2
-        return retResult.toArray
       }
+      return retResult.toArray
     }
 
-    // BUGBUG:: Need to get all keys for this message/container and take all the data 
+    if (container != null) {
+      if (container.loadedAll) {
+        // Nothing to be loaded from database
+      } else {
+        // Need to get all keys for this message/container and take all the data 
+        val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
+        val keyCollector = (key: Key) => { collectKey(key, all_keys) }
+        _allDataDataStore.getAllKeys(keyCollector)
+        val keys = getTableKeys(all_keys, containerName.toLowerCase)
+        if (keys.size > 0) {
+          var objs: Array[FatafatData] = new Array[FatafatData](1)
+          val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, container.containerType) }
+          val alreadyFoundPartKeys = foundPartKeys.toArray // No need to add to this list anymore. This is the final place we used this to check
+          keys.foreach(key => {
+            if (TxnContextCommonFunctions.IsKeyExists(alreadyFoundPartKeys, key.K) == false) {
+              val StartDateRange = if (key.D.size == 2) key.D(0) else 0
+              val EndDateRange = if (key.D.size == 2) key.D(1) else 0
+              objs(0) = null
+              try {
+                _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
+
+              } catch {
+                case e: Exception => {}
+                case t: Throwable => {}
+              }
+              if (objs(0) != null) {
+                retResult ++= TxnContextCommonFunctions.getRddDataFromFatafatData(objs(0), tmRange, f)
+              }
+            }
+          })
+        }
+      }
+    }
 
     return retResult.toArray
   }
