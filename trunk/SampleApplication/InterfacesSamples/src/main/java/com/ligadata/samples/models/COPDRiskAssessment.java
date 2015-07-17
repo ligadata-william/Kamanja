@@ -1,4 +1,3 @@
-/*
 package com.ligadata.kamanja.copd;
 
 import com.ligadata.FatafatBase.*;
@@ -12,6 +11,7 @@ import java.util.*;
 /**
  * Created by will on 7/1/15.
  */
+
 public class COPDRiskAssessment extends ModelBase {
     // Messages
     private Beneficiary msg = null;
@@ -461,4 +461,3 @@ public class COPDRiskAssessment extends ModelBase {
 
     }
 }
-*/
