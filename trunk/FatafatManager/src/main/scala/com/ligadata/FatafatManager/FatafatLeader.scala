@@ -659,7 +659,8 @@ object FatafatLeader {
         }
 
         if (changedVals != null) {
-          envCtxt.clearIntermediateResults(changedVals)
+              envCtxt.clearIntermediateResults
+          // envCtxt.clearIntermediateResults(changedVals)
         }
       }
 
