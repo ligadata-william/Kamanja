@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.transforms.printers.scala.common
 
 import scala.collection.mutable._
 import scala.math._
@@ -6,11 +6,14 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.fcnmacro._
 
-//import com.ligadata.Pmml.Runtime._
 
-
-object NodePrinterHelpers extends LogTrait {
+object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 
 	/** used by data dictionary and transform dictionary */
 	def valuesHlp(vals : ArrayBuffer[(String,String)], valNm : String, pad : String) = {
@@ -44,7 +47,7 @@ object NodePrinterHelpers extends LogTrait {
 	 *  NOTE: When the return value of the xApply has "categorical" results
 	 */
 
-	def applyHelper(node : xApply, ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
+	def applyHelper(node : xApply, ctx : PmmlContext, generator : CodePrinterDispatch, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
 			
 		val fcnBuffer : StringBuilder = new StringBuilder()
 		var scalaFcnName : String = PmmlTypes.scalaBuiltinNameFcnSelector(node.function)
@@ -185,7 +188,7 @@ object NodePrinterHelpers extends LogTrait {
 	def simpleFcnPrint(scalaFcnName : String
 					, node : xApply
 				    , ctx : PmmlContext
-				    , generator : PmmlModelGenerator
+				    , generator : CodePrinterDispatch
 				    , generate : CodeFragment.Kind
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
@@ -208,7 +211,7 @@ object NodePrinterHelpers extends LogTrait {
 			var cnt = 0
 			node.Children.foreach((child) => {
 				cnt += 1	
-				generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+				generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
 		  		if (cnt < noChildren) {
 		  			fcnBuffer.append(", ")
 		  		}  
@@ -225,12 +228,12 @@ object NodePrinterHelpers extends LogTrait {
 
 	/** 
 	 *	Control printing of inline function which we wish to short circuit using scala
-	 *  generation.  Currently 'and' and 'or' are supported.
+	 *  generation.  Currently 'if', 'and' and 'or' are supported.
 	 */
 	def shortCircuitFcnPrint(scalaFcnName : String
 					, node : xApply
 				    , ctx : PmmlContext
-				    , generator : PmmlModelGenerator
+				    , generator : CodePrinterDispatch
 				    , generate : CodeFragment.Kind
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
@@ -285,7 +288,7 @@ object NodePrinterHelpers extends LogTrait {
 	def andOrFcnPrint(scalaFcnName : String
 					, node : PmmlExecNode
 				    , ctx : PmmlContext
-				    , generator : PmmlModelGenerator
+				    , generator : CodePrinterDispatch
 				    , generate : CodeFragment.Kind
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
@@ -298,7 +301,7 @@ object NodePrinterHelpers extends LogTrait {
 		node.Children.foreach((child) => {
 			cnt += 1	
 			andOrFcnBuffer.append("(")
-			generator.generateCode1(Some(child), andOrFcnBuffer, generator, CodeFragment.FUNCCALL)
+			generator.generate(Some(child), andOrFcnBuffer, CodeFragment.FUNCCALL)
 			andOrFcnBuffer.append(")")
 	  		if (cnt < noChildren) {
 	  			andOrFcnBuffer.append(s" $scalaFcnName ")
@@ -312,7 +315,7 @@ object NodePrinterHelpers extends LogTrait {
 	def ifFcnPrint(scalaFcnName : String
 					, node : xApply
 				    , ctx : PmmlContext
-				    , generator : PmmlModelGenerator
+				    , generator : CodePrinterDispatch
 				    , generate : CodeFragment.Kind
 				    , order : Traversal.Order
 				    , fcnBuffer : StringBuilder
@@ -331,11 +334,11 @@ object NodePrinterHelpers extends LogTrait {
 		val falseAction : PmmlExecNode = node.Children(2)
 		
 		ifFcnBuffer.append("if(")
-		generator.generateCode1(Some(predicate), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		generator.generate(Some(predicate), ifFcnBuffer, CodeFragment.FUNCCALL)
 		ifFcnBuffer.append(") {")
-		generator.generateCode1(Some(trueAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		generator.generate(Some(trueAction), ifFcnBuffer, CodeFragment.FUNCCALL)
 		ifFcnBuffer.append("} else {")
-		generator.generateCode1(Some(falseAction), ifFcnBuffer, generator, CodeFragment.FUNCCALL)
+		generator.generate(Some(falseAction), ifFcnBuffer, CodeFragment.FUNCCALL)
   		ifFcnBuffer.append("}")
 
   		val ifFcnUseRep : String = ifFcnBuffer.toString
@@ -369,7 +372,7 @@ object NodePrinterHelpers extends LogTrait {
 		}	 
 	 */
 	
-	def simpleRuleHelper(node : xSimpleRule, ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
+	def simpleRuleHelper(node : xSimpleRule, ctx : PmmlContext, generator : CodePrinterDispatch, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
 			
 		val clsBuffer : StringBuilder = new StringBuilder()
 		val nmBuffer : StringBuilder = new StringBuilder()
@@ -390,7 +393,7 @@ object NodePrinterHelpers extends LogTrait {
 		clsBuffer.append(s"        val answer : Boolean = ")
 		
 		node.Children.foreach((child) => {
-	  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
+	  		generator.generate(Some(child), fcnBuffer, CodeFragment.FUNCCALL)
   		})
   		clsBuffer.append(fcnBuffer.toString)
   		clsBuffer.append(s"\n")
@@ -431,7 +434,7 @@ object NodePrinterHelpers extends LogTrait {
 
 	 */
 
-	def ruleSetModelHelper(node : xRuleSetModel, ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
+	def ruleSetModelHelper(node : xRuleSetModel, ctx : PmmlContext, generator : CodePrinterDispatch, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
 			
 		val clsBuffer : StringBuilder = new StringBuilder()
 		val fcnBuffer : StringBuilder = new StringBuilder()
@@ -575,7 +578,7 @@ object NodePrinterHelpers extends LogTrait {
 	def derivedFieldClassSignature(clsBuffer : StringBuilder
 							, node : xDerivedField
 						    , ctx : PmmlContext
-						    , generator : PmmlModelGenerator
+						    , generator : CodePrinterDispatch
 						    , generate : CodeFragment.Kind
 						    , order : Traversal.Order = Traversal.PREORDER)  { 
 		
@@ -594,7 +597,7 @@ object NodePrinterHelpers extends LogTrait {
 	}
 	
 	/** 
-	 *  Answer the IfActionElements for this node if it is the top level function in the supplied derived field.
+	 *  Answer the IfActionElements for this node if 'if' is the top level function in the supplied derived field.
 	 */
 	def IfActionElementsFromTopLevelChild(node : xDerivedField) :  Option[ArrayBuffer[PmmlExecNode]]= {
 		val noChildren : Int = node.Children.length 
@@ -636,7 +639,7 @@ object NodePrinterHelpers extends LogTrait {
 	def derivedFieldExecFcn(clsBuffer : StringBuilder
 							, node : xDerivedField
 						    , ctx : PmmlContext
-						    , generator : PmmlModelGenerator
+						    , generator : CodePrinterDispatch
 						    , generate : CodeFragment.Kind
 						    , order : Traversal.Order = Traversal.PREORDER) { 	
 		val fcnBuffer : StringBuilder = new StringBuilder()
@@ -664,10 +667,10 @@ object NodePrinterHelpers extends LogTrait {
 			case Some(apply) => {
 				val fcnNm : String = if (apply.function == "if") {
 					/** grab the predicate for the if and print it... the 'if' actions have been stripped already for top level if functions */
-					generator.generateCode1(Some(apply.Children.head), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(apply.Children.head), fcnBuffer, CodeFragment.FUNCCALL)
 					""
 				} else {
-					generator.generateCode1(Some(apply), fcnBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(apply), fcnBuffer, CodeFragment.FUNCCALL)
 					apply.function
 				}
 				fcnNm
@@ -685,10 +688,10 @@ object NodePrinterHelpers extends LogTrait {
 				if (ifActionElems.length == 2)  {
 					val truthAction : PmmlExecNode = ifActionElems.apply(0)
 					val falseAction : PmmlExecNode = ifActionElems.apply(1)
-					generator.generateCode1(Some(truthAction), actionBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(truthAction), actionBuffer, CodeFragment.FUNCCALL)
 					truthStr = actionBuffer.toString
 					actionBuffer.clear
-					generator.generateCode1(Some(falseAction), actionBuffer, generator, CodeFragment.FUNCCALL)
+					generator.generate(Some(falseAction), actionBuffer, CodeFragment.FUNCCALL)
 					liesStr = actionBuffer.toString
 					ifActionElemsLen = 2
 				}
@@ -716,7 +719,7 @@ object NodePrinterHelpers extends LogTrait {
 	
 	def derivedFieldFcnHelper(node : xDerivedField
 						    , ctx : PmmlContext
-						    , generator : PmmlModelGenerator
+						    , generator : CodePrinterDispatch
 						    , generate : CodeFragment.Kind
 						    , order : Traversal.Order = Traversal.PREORDER) : String = { 
 		val clsBuffer : StringBuilder = new StringBuilder()
@@ -778,7 +781,7 @@ object NodePrinterHelpers extends LogTrait {
 	 *  derived fields will only be updated if referenced by a rule or other transformation dictionary derived field..  
 	 *  This part of the code is primarily boilerplate.        
 	 */
-	def modelClassComment(ctx : PmmlContext, generator : PmmlModelGenerator) : String = {
+	def modelClassComment(ctx : PmmlContext, generator : CodePrinterDispatch) : String = {
 		val commentBuffer : StringBuilder = new StringBuilder()
 
 		/** Get the classname for this object */
@@ -852,7 +855,7 @@ object NodePrinterHelpers extends LogTrait {
 		/** Give the rest... */
 		commentBuffer.append(s"/** Other Packages... */\n")
 		commentBuffer.append(s"import com.ligadata.FatafatBase._\n")
-		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
@@ -951,7 +954,7 @@ object NodePrinterHelpers extends LogTrait {
 		classname
 	}
 
-	def objBody(ctx : PmmlContext, generator : PmmlModelGenerator) : String = {
+	def objBody(ctx : PmmlContext, generator : CodePrinterDispatch) : String = {
 		val objBuffer : StringBuilder = new StringBuilder()
 	  
 		/** Get the classname for this object */
@@ -1052,7 +1055,7 @@ object NodePrinterHelpers extends LogTrait {
 		objBuffer.toString
 	}
 
-	def modelClassBody(ctx : PmmlContext, generator : PmmlModelGenerator) : String = {
+	def modelClassBody(ctx : PmmlContext, generator : CodePrinterDispatch) : String = {
 		val clsBuffer : StringBuilder = new StringBuilder()
 			
 		/** Get the classname for this object */
@@ -1123,10 +1126,11 @@ object NodePrinterHelpers extends LogTrait {
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(transId, gCtx)\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.pmml.runtime.Context = new com.ligadata.pmml.runtime.Context(transId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
+		/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 		clsBuffer.append(s"    var ruleSetModel : RuleSetModel = null\n")
 		clsBuffer.append(s"    var simpleRules : ArrayBuffer[SimpleRule] = new ArrayBuffer[SimpleRule]\n")
 		
@@ -1165,11 +1169,13 @@ object NodePrinterHelpers extends LogTrait {
 			clsBuffer.append(s"    def initialize : $nmspc$classname$verNoStr = {\n")
 			clsBuffer.append(s"\n")
 			
+			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			val ruleCtors = ctx.RuleRuleSetInstantiators.apply("SimpleRule")
 			val ruleCtorsInOrder = ctx.simpleRuleInsertionOrder
 			val ruleSetModel = ctx.RuleRuleSetInstantiators("RuleSetModel")
 			val ruleSetModelCtorStr : String = ruleSetModel.head  // there is only one of these 
 			
+			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			/** initialize the RuleSetModel and SimpleRules array with new instances of respective classes */
 			clsBuffer.append(s"        ctx.SetRuleSetModel($ruleSetModelCtorStr)\n")
 			clsBuffer.append(s"        val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
@@ -1186,6 +1192,7 @@ object NodePrinterHelpers extends LogTrait {
 			  		clsBuffer.append(s"        ruleSetModel.AddRuleSelectionMethod(new RuleSelectionMethod(${'"'}$criterion${'"'}))\n")
 			 })
 			
+			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			clsBuffer.append(s"\n        /* Update each rules ScoreDistribution if necessary.... */\n")
 			var i : Int = 1
 			if (ctx.RuleScoreDistributions.size > 0) {
@@ -1208,8 +1215,9 @@ object NodePrinterHelpers extends LogTrait {
 				clsBuffer.append(s"        /* ... no score distribution information present in the pmml */\n")
 			}
 			
-	 		/** Add the mining schema to the ruleSetModel object */
-			clsBuffer.append(s"\n        /* Update each ruleSetModel's mining schema dict */\n")
+			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel mining field receiver should just be "model" not ruleSetModel */
+	 		/** Add the mining schema to the model object */
+			clsBuffer.append(s"\n        /* Update each model's mining schema dict */\n")
 	  		ctx.miningSchemaInstantiators.foreach(fld => { 
 	  			val mFieldName : String = fld._1
 	  			val ctor : String = fld._2
@@ -1231,7 +1239,7 @@ object NodePrinterHelpers extends LogTrait {
 			val dictBuffer : StringBuilder = new StringBuilder()
 			val ddNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("DataDictionary") 
 			ddNode match {
-			  case Some(ddNode) => generator.generateCode1(Some(ddNode), dictBuffer, generator, CodeFragment.VALDECL)
+			  case Some(ddNode) => generator.generate(Some(ddNode), dictBuffer, CodeFragment.VALDECL)
 			  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!\n")
 			}
 			clsBuffer.append(dictBuffer.toString)
@@ -1242,19 +1250,20 @@ object NodePrinterHelpers extends LogTrait {
 			val xNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary") 
 			dictBuffer.clear
 			xNode match {
-			  case Some(xNode) => generator.generateCode1(Some(xNode), dictBuffer, generator, CodeFragment.VALDECL)
+			  case Some(xNode) => generator.generate(Some(xNode), dictBuffer, CodeFragment.VALDECL)
 			  case _ => PmmlError.logError(ctx, s"there was no data dictionary avaialble... whoops!")
 			}		
 			clsBuffer.append(dictBuffer.toString)
 			clsBuffer.append(s"\n")
 			
+			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
 			/** fill the Context's mining field dictionary ... generator generates ruleSet.addMiningField(... */
 			clsBuffer.append(s"        /** fill the Context's mining field dictionary ...*/\n")
 			val rsmNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel") 
 			dictBuffer.clear
 			clsBuffer.append(s"        //val ruleSetModel : RuleSetModel = ctx.GetRuleSetModel\n")
 			rsmNode match {
-			  case Some(rsmNode) => generator.generateCode1(Some(rsmNode), dictBuffer, generator, CodeFragment.MININGFIELD)
+			  case Some(rsmNode) => generator.generate(Some(rsmNode), dictBuffer, CodeFragment.MININGFIELD)
 			  case _ => PmmlError.logError(ctx, s"no mining fields... whoops!\n")
 			}
 			clsBuffer.append(dictBuffer.toString)
@@ -1328,6 +1337,7 @@ object NodePrinterHelpers extends LogTrait {
 			clsBuffer.append(s"    }   /** end of initialize fcn  */	\n")  /** end of initialize fcn  */		
 			clsBuffer.append(s"\n")
 			
+			/** Other Model Support FIXME: this is a RuleSet specific execute function.  These will be different for each model type. */
 	   		/** 
 			 *  Add the execute function to the the class body... the prepareResults function will build the return array for consumption by engine. 
 			 */
@@ -1345,7 +1355,7 @@ object NodePrinterHelpers extends LogTrait {
 
 	/** 
 	 *  Answer the alternate constructor string that the model object's CreateNewModel method uses.
-	 *  The alternate constructor is used to integrate the new traits developed to integrate with the
+	 *  The alternate constructor is used to integrate the new traits developed with the
 	 *  current model generator.  Using this approach, very little of the compiler has changed to 
 	 *  support it.
 	 *  
@@ -1406,7 +1416,7 @@ object NodePrinterHelpers extends LogTrait {
 	
 	def preparePrepareResultsFunction(ctx : PmmlContext
 									, classname : String
-									, generator : PmmlModelGenerator
+									, generator : CodePrinterDispatch
 									, clsBuffer : StringBuilder) : Unit = {
 		val prepResultBuffer : StringBuilder = new StringBuilder
 		
@@ -1417,6 +1427,7 @@ object NodePrinterHelpers extends LogTrait {
 		
 		/** NOTE: The mining field values need to be duplicated here so as to not foul the "retain" in the next step... this mining map is a variable
 		 *  that actually discards the mining fields that are NOT 'predicted' or 'supplementary' */
+		/** Other Model Support FIXME: the default score is not appropriate for many models ... this will need to be customized for other models */
 		prepResultBuffer.append(s"        val defaultScore : String = GetContext.GetRuleSetModel.DefaultScore().Value\n")
         prepResultBuffer.append(s"        val miningVars : Array[MiningField] = GetContext.GetRuleSetModel.MiningSchemaMap().values.toArray\n")
         prepResultBuffer.append(s"        val predictionFld : MiningField = miningVars.filter(m => m.usageType == ${'"'}predicted${'"'}).head\n") 
@@ -1498,7 +1509,7 @@ object NodePrinterHelpers extends LogTrait {
 	 *  @param generator : the pmml model generator controller that orchestrates the code generation
 	 *  @return a StringBuilder instance loaded with content 
 	 */
-	def modelClass(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder = {
+	def modelClass(ctx : PmmlContext, generator : CodePrinterDispatch) : StringBuilder = {
 		val clsBuffer : StringBuilder = new StringBuilder()
 			
 		clsBuffer.append(modelClassComment(ctx, generator))
@@ -1530,19 +1541,19 @@ object NodePrinterHelpers extends LogTrait {
 
 	 */
 
-	def classDecls(ctx : PmmlContext, generator : PmmlModelGenerator) : StringBuilder =  {
+	def classDecls(ctx : PmmlContext, generator : CodePrinterDispatch) : StringBuilder =  {
 		val classBuffer: StringBuilder = new StringBuilder
 		classBuffer.append(s"\n")
 		classBuffer.append(s"/*************** Derived Field Class Definitions ***************/\n\n")
 		val xDictNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("TransformationDictionary")
-		generator.generateCode1(xDictNode, classBuffer, generator, CodeFragment.DERIVEDCLASS)
+		generator.generate(xDictNode, classBuffer, CodeFragment.DERIVEDCLASS)
 		classBuffer.append(s"\n")
 		classBuffer.append(s"/*************** SimpleRule Class Definitions ***************/\n\n")
 		val ruleSetModelNode : Option[PmmlExecNode] = ctx.pmmlExecNodeMap.apply("RuleSetModel")
-		generator.generateCode1(ruleSetModelNode, classBuffer, generator, CodeFragment.RULECLASS)
+		generator.generate(ruleSetModelNode, classBuffer, CodeFragment.RULECLASS)
 		classBuffer.append(s"\n")
 		classBuffer.append(s"/*************** RuleSetModel Class Definition ***************/\n\n")
-		generator.generateCode1(ruleSetModelNode, classBuffer, generator, CodeFragment.RULESETCLASS)
+		generator.generate(ruleSetModelNode, classBuffer, CodeFragment.RULESETCLASS)
 		
 		classBuffer
 	}

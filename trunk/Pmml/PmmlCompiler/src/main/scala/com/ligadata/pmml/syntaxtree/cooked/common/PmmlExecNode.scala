@@ -1,15 +1,20 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.syntaxtree.cooked.common
 
 import scala.collection.mutable._
 import scala.math._
 import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.cooked.common._
+import com.ligadata.pmml.transforms.printers.scala.common._
 
 
-class PmmlExecNode (val qName : String, val lineNumber : Int, val columnNumber : Int) extends LogTrait  { 
+class PmmlExecNode (val qName : String, val lineNumber : Int, val columnNumber : Int) extends com.ligadata.pmml.compiler.LogTrait  { 
 	var children : Queue[PmmlExecNode] = new Queue[PmmlExecNode]()
 	
 	def addChild(child : PmmlExecNode) = {
@@ -24,11 +29,6 @@ class PmmlExecNode (val qName : String, val lineNumber : Int, val columnNumber :
 	def asString(ctx : PmmlContext) : String = "PMML"
 	  
 	override def toString : String = s"Node $qName ($lineNumber:$columnNumber)"
-	
-	def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order) : String = 
-	{
-		asString(ctx)
-	}
 	
 	/** general access to PmmlExecNode trees .. our node visitor */
 	def Visit(visitor : PmmlExecVisitor, navStack : Stack[PmmlExecNode]) {
@@ -218,9 +218,6 @@ class xConstant(lineNumber : Int, columnNumber : Int, val dataType : String, val
 	  	}
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String = {
-		asString(ctx)
-	}
 }
 
 class xHeader(lineNumber : Int, columnNumber : Int, val copyright : String, val description : String) 
@@ -239,11 +236,6 @@ class xHeader(lineNumber : Int, columnNumber : Int, val copyright : String, val 
 			header
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		asString(ctx)
-	}
-
 }
 
 
@@ -282,45 +274,6 @@ class xDataField(lineNumber : Int, columnNumber : Int
 		val typ = PmmlTypes.scalaDataType(dataType)
 		val variable = s"var $name : $typ "
 		variable
-	}
-
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val typeStr : String = PmmlTypes.scalaDataType(dataType)
-		
-		val fieldDecl : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				generate match {
-					case CodeFragment.VARDECL => {
-						s"val $name : $typeStr "
-					}
-					case CodeFragment.VALDECL => {
-						s"var $name : $typeStr "						
-					}
-					case CodeFragment.FUNCCALL => {
-						/** generate the code to fetch the value */ 
-						
-						/** FIXME:  HACK ALERT!!! When the field refers to "beneficiary... " we really don't want to retrieve a value 
-						 *  from the dictionaries.  Instead this field reference refers to a the extracted data found in ctx.Beneficiary... 
-						 *  With this in mind, we don't do the lookup for the value.  Instead, we simply return the beneficiary reference as a string.
-						 */
-		
-						if (name.startsWith("beneficiary")) {
-							name
-						} else {
-							s"ctx.valueFor(${'"'}$name${'"'})"			  
-						}
-					} 
-					case _ => { 
-						PmmlError.logError(ctx, "DataField node - unsupported CodeFragment.Kind") 
-						""
-					}
-				}
-			}
-		}
-		fieldDecl
 	}
 
 }
@@ -380,17 +333,6 @@ class xDataDictionary(lineNumber : Int, columnNumber : Int) extends PmmlExecNode
 		dictBuffer.toString
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val dictDecl : String = order match {
-			case Traversal.PREORDER => asCode
-			case _ => {
-				PmmlError.logError(ctx, s"TransformationDictionary only supports Traversal.PREORDER")
-				""
-			}
-		}
-		dictDecl
-	}
 }	 
 
 class xDerivedField(lineNumber : Int, columnNumber : Int
@@ -431,42 +373,6 @@ class xDerivedField(lineNumber : Int, columnNumber : Int
 		variable
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		ctx.elementStack.push(this) /** track the element as it is processed */
-		
-		val typeStr : String = PmmlTypes.scalaDataType(dataType)
-		
-		val fieldDecl : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				kind match {
-					case CodeFragment.DERIVEDCLASS => {
-						ctx.fcnTypeInfoStack.clear /** if there is cruft, kill it now as we prep for dive into derived field and its function hierarchy*/
-						NodePrinterHelpers.derivedFieldFcnHelper(this, ctx, generator, kind, order)
-					}
-					case CodeFragment.FUNCCALL => {
-						/** generate the code to fetch the value  
-						
-						if (name.startsWith("beneficiary")) {
-							name
-						} else {
-							s"ctx.valueFor(${'"'}$name${'"'})"			  
-						}*/
-					  ""
-					} 
-					case _ => { 
-						PmmlError.logError(ctx, "DerivedField node - unsupported CodeFragment.Kind") 
-						""
-					}
-				}
-			}
-		}
-		ctx.elementStack.pop 	/** done discard the current element */
-		
-		fieldDecl
-	}
 }
 
 class xTransformationDictionary(lineNumber : Int, columnNumber : Int) 
@@ -526,34 +432,6 @@ class xTransformationDictionary(lineNumber : Int, columnNumber : Int)
 		dictBuffer.toString
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val codeStr : String = order match {
-			case Traversal.PREORDER => {
-				kind match {
-				  case CodeFragment.VALDECL => asCode
-				  case CodeFragment.DERIVEDCLASS => {
-					  	val clsBuffer : StringBuilder = new StringBuilder()
-					  	
-						Children.foreach((child) => {
-							generator.generateCode1(Some(child), clsBuffer, generator, kind)
-				  		})
-					  	
-				    	clsBuffer.toString
-				  }
-				  case _ => { 
-					  PmmlError.logError(ctx, s"fragment kind $kind not supported by TransformationDictionary")
-				      ""
-				  }
-				}
-			}
-			case _ => {
-				PmmlError.logError(ctx, s"TransformationDictionary only supports Traversal.PREORDER")
-				""
-			}
-		}
-		codeStr
-	}
 }	 
 
 class xDefineFunction(lineNumber : Int, columnNumber : Int
@@ -586,22 +464,6 @@ class xDefineFunction(lineNumber : Int, columnNumber : Int
 		/** FIXME build scala argument list here instead of this place holder that returns the ArgumentTypes */
 		ArgumentTypes
 	}
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-	  
-	  /**
-	   	
-	   	
-	   	  The function decl gets stored in the function dict of the context.  
-	   	  It has the function and parameter fields... usable for type checking 
-	   	  or for c++ generation situations 
-	   	
-	   	  For now we don't print anything for these <<<<<<<<<<<<<<<<<<<<
-	   	
-	   	
-	   */
-		""
-	}
 
 }
 
@@ -616,24 +478,6 @@ class xParameterField(lineNumber : Int, columnNumber : Int
 		applyv
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-	  /**
-	   	
-	   	
-	   	  The function decl gets stored in the function dict of the context.  
-	   	  It has the function  and parameter fields... usable for type checking 
-	   	  or for c++ generation situations 
-	   	
-	   	  For now we don't print anything for these <<<<<<<<<<<<<<<<<<<<
-	   	
-	   	
-	   **/
-	  
-		""
-	}
-
-
 }
 
 class xApply(lineNumber : Int, columnNumber : Int, val function : String, val mapMissingTo : String, val invalidValueTreatment : String = "returnInvalid") 
@@ -654,31 +498,6 @@ class xApply(lineNumber : Int, columnNumber : Int, val function : String, val ma
 		applyv
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val fcn : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-
-				/** for iterables ... push the function type info state on stack for use by xConstant printer when handling 'ident' types */
-				if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN) {
-					ctx.fcnTypeInfoStack.push(typeInfo)
-				}
-				
-				val fcnStr : String = NodePrinterHelpers.applyHelper(this, ctx, generator, generate, order)
-
-				if (typeInfo != null && typeInfo.fcnTypeInfoType != FcnTypeInfoType.SIMPLE_FCN && ctx.fcnTypeInfoStack.nonEmpty) {
-					val fcnTypeInfo : FcnTypeInfo = ctx.fcnTypeInfoStack.top
-					logger.debug(s"finished printing apply function $function... popping FcnTypeInfo : \n${fcnTypeInfo.toString}")
-					ctx.fcnTypeInfoStack.pop
-				} 
-				
-				fcnStr
-			}
-		}
-		fcn
-	}
 	
 	override def toString : String = s"Apply function '$function' ($lineNumber:$columnNumber)"
 
@@ -694,21 +513,6 @@ class xFieldRef(lineNumber : Int, columnNumber : Int, val field : String, val ma
 		fr
 	}
 
-	override def codeGenerator(ctx : PmmlContext
-							, generator : PmmlModelGenerator
-							, generate : CodeFragment.Kind
-							, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val fldRef : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-
-				PmmlExecNode.prepareFieldReference(ctx, field)
-			}
-		}
-		fldRef
-	}
 }
 
 class xExtension(lineNumber : Int, columnNumber : Int, val extender : String, val name : String , val value : String ) 
@@ -720,21 +524,6 @@ class xExtension(lineNumber : Int, columnNumber : Int, val extender : String, va
 		ext
 	}
 	
-	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val ext : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}Extension $name${'"'})"
-			}
-		}
-		ext
-	}
-  
 }     
 
 /** 
@@ -841,20 +630,6 @@ class xMapValuesMap(lineNumber : Int, columnNumber : Int
 		ext
 	}
 
-	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVM : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVM
-	}
 }
 
 class xMapValuesMapInline(lineNumber : Int, columnNumber : Int
@@ -874,21 +649,6 @@ class xMapValuesMapInline(lineNumber : Int, columnNumber : Int
 		ext
 	}
 	
-	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVMI : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVMI
-	}
-
 }
 
 class xMapValuesMapExternal(lineNumber : Int, columnNumber : Int
@@ -908,20 +668,6 @@ class xMapValuesMapExternal(lineNumber : Int, columnNumber : Int
 			ext
 	  }
 
-  	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVME : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVME
-	}
 }
 
 class xMapValuesArray(lineNumber : Int, columnNumber : Int
@@ -955,20 +701,6 @@ class xMapValuesArray(lineNumber : Int, columnNumber : Int
 		ext
 	}
 
-  	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVA : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVA
-	}
 }
 
 class xMapValuesArrayExternal(lineNumber : Int, columnNumber : Int
@@ -987,20 +719,6 @@ class xMapValuesArrayExternal(lineNumber : Int, columnNumber : Int
 		ext
 	}
 
-  	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVAE : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVAE
-	}
 }
 
 class xMapValuesArrayInline(lineNumber : Int, columnNumber : Int
@@ -1019,20 +737,6 @@ class xMapValuesArrayInline(lineNumber : Int, columnNumber : Int
 		ext
 	}
 
-  	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val mapVAI : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $outputColumn${'"'})"
-			}
-		}
-		mapVAI
-	}
 }
 
 /**xMapValuesVectorExternal
@@ -1067,7 +771,7 @@ class xMapValuesArrayInline(lineNumber : Int, columnNumber : Int
 */
 
 
-class xFieldColumnPair(lineNumber : Int, columnNumber : Int, field : String, column : String) 
+class xFieldColumnPair(lineNumber : Int, columnNumber : Int, val field : String, val column : String) 
 			extends PmmlExecNode("FieldColumnPair", lineNumber, columnNumber) {
 
 	override def asString(ctx : PmmlContext) : String = {
@@ -1075,20 +779,6 @@ class xFieldColumnPair(lineNumber : Int, columnNumber : Int, field : String, col
 		ext
 	}
 
-  	/** 
-	 *  FIXME: when the MapValues are implemented....
-	 */
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val fldColPr : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s"ctx.dDict.apply(${'"'}MapValues $field${'"'})"
-			}
-		}
-		fldColPr
-	}
 }
 
 class xMiningField(lineNumber : Int, columnNumber : Int
@@ -1112,41 +802,11 @@ class xMiningField(lineNumber : Int, columnNumber : Int
 		ext
 	}
  
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val fld : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => { /** arguments for the add mining field function in RuleSetModel */
-			    generate match {
-			      case CodeFragment.MININGFIELD => {
-			    	  s"ruleSet.AddMiningField(${'"'}$name${'"'}, new MiningField(${'"'}$name${'"'},${'"'}$usageType${'"'},${'"'}$opType${'"'},${'"'}$importance${'"'},${'"'}$outliers${'"'},${'"'}$lowValue${'"'},${'"'}$highValue${'"'},${'"'}$missingValueReplacement${'"'},${'"'}$missingValueTreatment${'"'},${'"'}$invalidValueTreatment${'"'}))\n"
-			      }
-			      case _ => {
-			    	  PmmlError.logError(ctx, "MiningField .. Only CodeFragment.MININGFIELD is supported")
-			    	  ""
-			      }
-			    }
-			}
-		}
-		fld
-	}
 }
 
 class xRuleSelectionMethod(lineNumber : Int, columnNumber : Int, val criterion : String) 
 			extends PmmlExecNode("RuleSelectionMethod", lineNumber, columnNumber) {
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val selMeth : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s" new RuleSelectionMethod(${'"'}$criterion${'"'})"
-			}
-		}
-		selMeth
-	}
 }
 
 class xRuleSetModel(lineNumber : Int, columnNumber : Int
@@ -1195,33 +855,6 @@ class xRuleSetModel(lineNumber : Int, columnNumber : Int
 		ext
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val rsm : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				kind match {
-					case CodeFragment.RULESETCLASS => {
-						NodePrinterHelpers.ruleSetModelHelper(this, ctx, generator, kind, order)						
-					}
-					case CodeFragment.RULECLASS | CodeFragment.MININGFIELD => {  /** continue diving for the RULECLASS and MININGFIELD generators */
-						val clsBuffer : StringBuilder = new StringBuilder()
-						Children.foreach((child) => {
-							generator.generateCode1(Some(child), clsBuffer, generator, kind)
-						})
-					   	clsBuffer.toString
-					}
-					case _ => { 
-						val kindStr : String = kind.toString
-						PmmlError.logError(ctx, s"RuleSetModel node - unsupported CodeFragment.Kind - $kindStr") 
-						""
-					}
-				}
-			}
-		}
-		rsm
-	}
 }
 
 class xRuleSet(lineNumber : Int, columnNumber : Int
@@ -1235,24 +868,6 @@ class xRuleSet(lineNumber : Int, columnNumber : Int
 		ext
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val rsm : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				ctx.logger.debug("xRuleSet is not used for code generation... the important information it possesses has been given to its parent xRuleSetModel")
-				ctx.logger.debug("xRuleSet children are important, however.  They are available through an instance of this class.")
-
-				val clsBuffer : StringBuilder = new StringBuilder()
-				Children.foreach((child) => {
-					generator.generateCode1(Some(child), clsBuffer, generator, kind)
-				})
-			   	clsBuffer.toString
-			}
-		}
-		rsm
-	}
 }
 
 class xSimpleRule(lineNumber : Int, columnNumber : Int
@@ -1298,33 +913,6 @@ class xSimpleRule(lineNumber : Int, columnNumber : Int
 		ext
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val simpRule : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				generate match {
-					case CodeFragment.RULECLASS => {
-						NodePrinterHelpers.simpleRuleHelper(this, ctx, generator, generate, order)
-					}
-					case CodeFragment.MININGFIELD => {
-						/** 
-						 *  Ignore this one. The visiting method will pass this down to the MiningSchema and the RuleSet children and their children. 
-						 *  It only is meaningful in the MiningSchema path
-						 */
-						""
-					}
-					case _ => { 
-						val kindStr : String = generate.toString
-						PmmlError.logError(ctx, s"SimpleRule node - unsupported CodeFragment.Kind - $kindStr") 
-						""
-					}
-				}
-			}
-		}
-		simpRule
-	}
 }
 
 class xScoreDistribution(lineNumber : Int, columnNumber : Int
@@ -1341,17 +929,6 @@ class xScoreDistribution(lineNumber : Int, columnNumber : Int
 		ext
 	}
 	
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val scoreDist : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s" new ScoreDistribution(${'"'}$value${'"'}, ${'"'}$recordCount${'"'}, ${'"'}$confidence${'"'}, ${'"'}$value${'"'}, ${'"'}$probability${'"'})"
-			}
-		}
-		scoreDist
-	}
 }
 
 class xCompoundPredicate(lineNumber : Int, columnNumber : Int, val booleanOperator : String) 
@@ -1362,51 +939,9 @@ class xCompoundPredicate(lineNumber : Int, columnNumber : Int, val booleanOperat
 		ext
 	}
   
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, fragmentKind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val compoundPredStr : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				val boolOpFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(booleanOperator)
-				val isShortCircuitOp = (boolOpFcn == "or" || boolOpFcn == "and")
-				if (isShortCircuitOp) {
-					val op : String = if (boolOpFcn == "or") "||" else "&&"
-			  		fcnBuffer.append("(")
-					NodePrinterHelpers.andOrFcnPrint(op
-													, this
-												    , ctx
-												    , generator
-												    , fragmentKind
-												    , Traversal.INORDER
-												    , fcnBuffer
-												    , null)		    
-			  		fcnBuffer.append(")")
-			  		fcnBuffer.toString
-				} else {
-					val cPred = s"$boolOpFcn("
-					fcnBuffer.append(cPred)
-					var i : Int = 0
-	
-			  		Children.foreach((child) => {
-			  			i += 1
-				  		generator.generateCode1(Some(child), fcnBuffer, generator, CodeFragment.FUNCCALL)
-				  		if (i < Children.length) fcnBuffer.append(", ")
-			  		})
-	
-			  		val closingParen : String = s")"
-			  		fcnBuffer.append(closingParen)
-			  		fcnBuffer.toString
-				}
-			}
-		}
-		compoundPredStr
-	}
-	
 }
 
-class xSimplePredicate(lineNumber : Int, columnNumber : Int, val field : String, val operator : String, value : String) 
+class xSimplePredicate(lineNumber : Int, columnNumber : Int, val field : String, val operator : String, val value : String) 
 			extends PmmlExecNode("SimplePredicate", lineNumber, columnNumber) {
   
 	override def asString(ctx : PmmlContext) : String = {
@@ -1414,35 +949,6 @@ class xSimplePredicate(lineNumber : Int, columnNumber : Int, val field : String,
 		ext
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val simplePredStr : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				val opFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(operator)
-				val sPred = s"$opFcn("
-				fcnBuffer.append(sPred)
-				
-				val fldRef : String = PmmlExecNode.prepareFieldReference(ctx, field)
-				
-				/** getFieldType answers an array of the field types for the given field and a boolean indicating if it is a container type.*/
-				val scalaTypes : Array[(String,Boolean, BaseTypeDef)] = ctx.getFieldType(field, false) 
-				val scalaType : String = scalaTypes(0)._1
-				val quotes : String = scalaType match {
-					case "String" | "LocalDate" | "LocalTime" | "DateTime" => s"${'"'}"
-					case _ => ""
-				} 
-				val fieldRefConstPair : String = s"$fldRef,$quotes$value$quotes"
-				fcnBuffer.append(fieldRefConstPair)
-		  		val closingParen : String = s")"
-		  		fcnBuffer.append(closingParen)
-		  		fcnBuffer.toString
-			}
-		}
-		simplePredStr
-	}
 }
 
 /**
@@ -1459,31 +965,6 @@ class xSimpleSetPredicate(lineNumber : Int, columnNumber : Int, val field: Strin
 		ext
   	}
 
-  	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-  	{
-	  	val fcnBuffer : StringBuilder = new StringBuilder()
-		val simplePredStr : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				val opFcn : String = PmmlTypes.scalaBuiltinNameFcnSelector(booleanOperator)
-				val sPred = s"$opFcn("
-				fcnBuffer.append(sPred)
-				var cnt = 0
-				Children.foreach((child : PmmlExecNode) => {
-			  		generator.generateCode1(child.asInstanceOf[Option[PmmlExecNode]], fcnBuffer, generator, CodeFragment.FUNCCALL)
-			  		cnt += 1
-			  		if (cnt < Children.length) { 
-			  			fcnBuffer.append(", ")
-			  		}
-		  		})
-		  		val closingParen : String = s")\n"
-		  		fcnBuffer.append(closingParen)
-		  		fcnBuffer.toString
-			}
-		}
-		simplePredStr
-	}
 }
 
 class xArray(lineNumber : Int, columnNumber : Int, val n: String, val arrayType : String, val array : Array[String]) 
@@ -1495,35 +976,6 @@ class xArray(lineNumber : Int, columnNumber : Int, val n: String, val arrayType 
 		ext
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, kind : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		var arrayStr : String = ""
-		order match {
-			case Traversal.INORDER => { "INORDER Not Used" }
-			case Traversal.POSTORDER => { "POSTORDER Not Used" }
-			case Traversal.PREORDER => {			  
-				val aBuffer : StringBuilder = new StringBuilder()
-				val arrTyp : String = PmmlTypes.scalaDataType(arrayType)
-				val quotes : String = arrTyp match {
-					case "String" | "LocalDate" | "LocalTime" | "DateTime" => s"${'"'}"
-					case _ => ""
-				} 
-				var i = 0
-				for (itm <- array) { 
-					i += 1
-					val comma : String = if (i < array.length) ", " else ""
-					aBuffer.append(s"$quotes$itm$quotes$comma")
-				}
-				
-				arrayStr = kind match {
-				  case CodeFragment.FUNCCALL =>	"List(" + aBuffer.toString +")"		   
-				  case CodeFragment.VARDECL | CodeFragment.VALDECL => s"new ArrayBuffer[$arrTyp]($aBuffer.toString)"			  
-				  case _ => "unsupported code fragment kind requested"				  
-				}
-			}
-		}
-		arrayStr
-	}
 }
 
 class xValue(lineNumber : Int, columnNumber : Int, val value : String, val property : String) 
@@ -1534,456 +986,11 @@ class xValue(lineNumber : Int, columnNumber : Int, val value : String, val prope
 		ext
 	}
 
-	override def codeGenerator(ctx : PmmlContext, generator : PmmlModelGenerator, generate : CodeFragment.Kind, order : Traversal.Order = Traversal.PREORDER) : String =
-	{
-		val valu : String = order match {
-			case Traversal.INORDER => { "" }
-			case Traversal.POSTORDER => { "" }
-			case Traversal.PREORDER => {
-				s" new Value(${'"'}$value${'"'}, ${'"'}$property${'"'})"
-			}
-		}
-		valu
-	}
 }
 
 
 
-object PmmlExecNode extends LogTrait {
-
- 
-
-	def mkPmmlExecConstant(ctx : PmmlContext, c : PmmlConstant) : Option[xConstant] = {
-		var const : xConstant = new xConstant(c.lineNumber, c.columnNumber, c.dataType, PmmlTypes.dataValueFromString(c.dataType, c.Value()))
-		
-		Some(const)
-	}
-
-	def mkPmmlExecHeader(ctx : PmmlContext, headerNode : PmmlHeader) : Option[xHeader] = {
-		/** Collect the copyright and description if present for later use during code generation */
-		ctx.pmmlTerms("Copyright") = Some(headerNode.copyright)
-		ctx.pmmlTerms("Description") = Some(headerNode.description)
-	  
-		Some(new xHeader(headerNode.lineNumber, headerNode.columnNumber, headerNode.copyright, headerNode.description))
-	}
-	
-	def mkPmmlExecApplication(ctx : PmmlContext, headerNode : PmmlApplication) : Option[PmmlExecNode] = {
-		/** Collect the Application name and the version if it is present */
-		ctx.pmmlTerms("ApplicationName") = Some(headerNode.name)
-		ctx.pmmlTerms("Version") = Some(MdMgr.FormatVersion(if (headerNode.version == null || headerNode.version.trim.isEmpty) "1.1" else headerNode.version))
-
-		/** update the header parent node with the application name and version, don't create node*/
-		
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  var header : xHeader = top.asInstanceOf[xHeader]
-			  header.ApplicationNameVersion(headerNode.name, headerNode.version)
-		  }
-		  case _ => None
-		}
-		
-		None 
-	}
-	
-	def mkPmmlExecDataDictionary(ctx : PmmlContext, node : PmmlDataDictionary) : Option[xDataDictionary] = {
-		Some(new xDataDictionary(node.lineNumber, node.columnNumber))
-	}
-	
-	def mkPmmlExecDataField(ctx : PmmlContext, d : PmmlDataField) : Option[xDataField] = {
-		/** update the data dictionary parent node with the datafield; don't create node*/
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		var datafld : xDataField = null
-		top match {
-		  case Some(top) => {
-			  var dict : xDataDictionary = top.asInstanceOf[xDataDictionary]
-			  datafld = new xDataField(d.lineNumber, d.columnNumber, d.name, d.displayName, d.optype, d.dataType, d.taxonomy, d.isCyclic)
-			  dict.add(datafld)
-			  ctx.dDict(datafld.name) = datafld
-			  if (d.Children.size > 0) {
-				  /** pick up the values for DataFields */
-				  d.Children.foreach( aNode => {
-					  if (aNode.isInstanceOf[PmmlValue]) {
-					  val vNode : PmmlValue = aNode.asInstanceOf[PmmlValue]
-						  datafld.addValuePropertyPair(vNode.value, vNode.property)
-					  }
-				  })
-			  }
-		  }
-		  case _ => None
-		}
-		None
-	}
-	
-	def mkPmmlExecValue(ctx : PmmlContext, node : PmmlValue) : Option[xValue] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  if (top.isInstanceOf[xDataField]) {
-				  var d : xDataField = top.asInstanceOf[xDataField]
-				  d.addValuePropertyPair(node.value, node.property)
-			  } else {
-				  var df : xDerivedField = top.asInstanceOf[xDerivedField]
-				  df.addValuePropertyPair(node.value, node.property)
-			  }
-		  }
-		  case _ => None
-		}
-		None
-	}
-
-	def mkPmmlExecInterval(ctx : PmmlContext, node : PmmlInterval) : Option[PmmlExecNode] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-			case Some(top) => {
-				if (top.isInstanceOf[xDataField]) {
-					  var d : xDataField = top.asInstanceOf[xDataField]
-					  d.continuousConstraints(d.leftMargin, d.rightMargin, d.closure)
-				} else {
-					  var df : xDerivedField = top.asInstanceOf[xDerivedField]
-					  df.continuousConstraints(df.leftMargin, df.rightMargin, df.closure)
-				}
-			}
-			case _ => None
-		}
-		None
-	}
-
-	
-	def mkPmmlExecTransformationDictionary(ctx : PmmlContext, node : PmmlTransformationDictionary) : Option[xTransformationDictionary] = {
-		Some(new xTransformationDictionary(node.lineNumber, node.columnNumber))
-	}
-
-	def mkPmmlExecDerivedField(ctx : PmmlContext, d : PmmlDerivedField) : Option[PmmlExecNode] = {
-		/** update the data dictionary parent node with the datafield; don't create node*/
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		var fld : xDerivedField = null
-		top match {
-		  case Some(top) => {
-			  	var dict : xTransformationDictionary = top.asInstanceOf[xTransformationDictionary]
-			  	fld = new xDerivedField(d.lineNumber, d.columnNumber, d.name, d.displayName, d.optype, d.dataType)
-				dict.add(fld)
-				ctx.xDict(fld.name) = fld
-		  }
-		  case _ => None
-		}
-		if (fld == null) {
-			None
-		} else {
-		  Some(fld)
-		}
-		
-	}
-	
-	def mkPmmlExecDefineFunction(ctx : PmmlContext, node : PmmlDefineFunction) : Option[xDefineFunction] = {  
-		Some(new xDefineFunction(node.lineNumber, node.columnNumber, node.name, node.optype, node.dataType))
-	}
-			
-	def mkPmmlExecParameterField(ctx : PmmlContext, node : PmmlParameterField) : Option[xParameterField] = {  
-		Some(new xParameterField(node.lineNumber, node.columnNumber, node.name, node.optype, node.dataType))
-	}
-			
-	def mkPmmlExecApply(ctx : PmmlContext, node : PmmlApply) : Option[xApply] = {  
-		Some(new xApply(node.lineNumber, node.columnNumber, node.function, node.mapMissingTo, node.invalidValueTreatment))
-	}
-
-	def mkPmmlExecFieldRef(ctx : PmmlContext, node : PmmlFieldRef) : Option[xFieldRef] = {
-		Some(new xFieldRef(node.lineNumber, node.columnNumber, node.field, node.mapMissingTo))
-	}
-	
-	def mkPmmlExecMapValues(ctx : PmmlContext, d : PmmlMapValues) : Option[PmmlExecNode] = {
-		val typ = d.dataType
-		val containerStyle = d.containerStyle
-		val dataSrc = d.dataSource
-		
-		var mapvalues = if (containerStyle == "map") {
-			if (dataSrc == "inline") {
-				new xMapValuesMapInline(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
-			  
-			} else { /** locator */
-				new xMapValuesMapExternal(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
-			}
-		} else { /** array */
-			if (dataSrc == "inline") {
-				new xMapValuesArrayInline(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc)
-			} else { /** locator */
-				new xMapValuesArrayExternal(d.lineNumber, d.columnNumber, d.mapMissingTo, d.defaultValue, d.outputColumn, d.dataType, containerStyle, dataSrc) 
-			}
-		}
-		Some(mapvalues)
-	}
-	
-	def mkPmmlExecFieldColumnPair(ctx : PmmlContext, d : PmmlFieldColumnPair) : Option[xFieldColumnPair] = {
-		/** update the value map node with the field col pair; don't create node*/
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  	var mv :xMapValuesMap = top.asInstanceOf[xMapValuesMap]
-				mv.addFieldColumnPair (d.field , d.column) 
-		  }
-		  case _ => None
-		}
-		None
-	}
-	
-	def mkPmmlExecrow(ctx : PmmlContext, d : Pmmlrow) : Option[PmmlExecNode] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  	var mv :xMapValuesMap = top.asInstanceOf[xMapValuesMap]
-
-				/** Each PmmlRow has children (in this implementation we expect two values...
-				 *  a key and a value.  The value maps to the MapValues output and the 
-				 *  there is but one key sine we represent the inline table as a Map.
-				 *  NOTE that more than one key can be present according to the spec. 
-				 *  For this revision, this is not supported.  Tuple2 only.
-				 */
-				val tuples : ArrayBuffer[Option[PmmlRowTuple]] = d.children.filter(_.isInstanceOf[PmmlRowTuple]).asInstanceOf[ArrayBuffer[Option[PmmlRowTuple]]]
-		
-				val valuelen = tuples.length
-				if (valuelen == 2) {
-					val t0 = tuples(0)
-					val k : String = t0 match {
-					  case Some(t0) => t0.Value()
-					  case _ => ""
-					}
-					val t1 = tuples(1)
-					t1 match {
-					  case Some(t1) => {
-						  if (k.length() > 0)
-							  mv.add(k,t1.Value())
-					  }
-					  case _ => 
-					}
-				} else {
-					PmmlError.logError(ctx, s"Currently only 2 tuple rows (simple maps) are supported for InlineTables... row has $valuelen elements")
-				}
-		  }
-		  case _ => None
-		}
-		None
-	}
-	
-	def mkPmmlExecTableLocator(ctx : PmmlContext, node : PmmlTableLocator) : Option[PmmlExecNode] = {
-		val pmmlxtensions : Queue[Option[PmmlExtension]] = node.children.filter(_.isInstanceOf[PmmlExtension]).asInstanceOf[Queue[Option[PmmlExtension]]]
-
-		if (pmmlxtensions.length > 0) {
-			val extens  = pmmlxtensions.map(x => {
-				x match {
-				  	case Some(x) => new xExtension(node.lineNumber, node.columnNumber, x.extender, x.name, x.value)
-				  	case _ => new xExtension(node.lineNumber, node.columnNumber, "", "", "")
-				}
-			}).toArray
-		  
-			val extensions = extens.filter(_.name.length > 0)
-			if (! ctx.pmmlExecNodeStack.isEmpty) {
-				val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-				top match {
-					case Some(top) => {
-						top match {
-						  	case xMap : xMapValuesMap => xMap.addExtensions(extensions) 
-						  	case xArr : xMapValuesArray => xArr.addExtensions(extensions) 
-						  	case _ => PmmlError.logError(ctx, "Parent of TableLocator is not a kind MapValues...discarded")
-						}
-					}
-					case _ => PmmlError.logError(ctx, "TableLocator cannot be added")
-				}
-			}
-		}
-	  
-		None
-	} 
-
-	def mkPmmlExecInlineTable(ctx : PmmlContext, node : PmmlInlineTable) : Option[PmmlExecNode] = {
-		val pmmlxtensions : Queue[Option[PmmlExtension]] = node.children.filter(_.isInstanceOf[PmmlExtension]).asInstanceOf[Queue[Option[PmmlExtension]]]
-
-		if (pmmlxtensions.length > 0) {
-			val extenss  = pmmlxtensions.map(x => {
-				x match {
-				  	case Some(x) => new xExtension(node.lineNumber, node.columnNumber, x.extender, x.name, x.value)
-				  	case _ => new xExtension(node.lineNumber, node.columnNumber, "", "", "")
-				}
-			}).toArray
-			val extensions = extenss.filter(_.name.length > 0)
-			if (! ctx.pmmlExecNodeStack.isEmpty) {
-				val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-				top match {
-					case Some(top) => {
-						top match {
-						  	case xMap : xMapValuesMap => xMap.addExtensions(extensions) 
-						  	case xArr : xMapValuesArray => xArr.addExtensions(extensions) 
-						  	case _ => PmmlError.logError(ctx, "Parent of InlineTable is not a kind MapValues...discarded")
-						}
-					}
-					case _ => PmmlError.logError(ctx, "inline table cannot be added")
-				}
-			}
-		}
-		None
-	} 
-
-	def mkPmmlExecRuleSetModel(ctx : PmmlContext, node : PmmlRuleSetModel) : Option[xRuleSetModel] = {
-		/** Gather content from RuleSetModel attributes for later use by the Scala code generator */
-		ctx.pmmlTerms("ModelName") = Some(node.modelName)
-		ctx.pmmlTerms("FunctionName") = Some(node.functionName)
-		
-		Some(new xRuleSetModel(node.lineNumber, node.columnNumber, node.modelName, node.functionName, node.algorithmName, node.isScorable))
-	}
-	
-	def hlpMkMiningField(ctx : PmmlContext, d : PmmlMiningField) : xMiningField = {
-		val name : String = d.name
-		var fld : xMiningField = new xMiningField(d.lineNumber, d.columnNumber, d.name
-											    , d.usageType
-											    , d.optype
-											    , 0.0
-											    , d.outliers
-											    , 0.0
-											    , 0.0
-											    , d.missingValueReplacement
-											    , d.missingValueTreatment
-											    , d.invalidValueTreatment)
-		try {
-			fld.Importance(d.importance.toDouble)
-			fld.LowValue(d.lowValue.toDouble)
-			fld.HighValue(d.highValue.toDouble)
-		} catch {
-			case _ : Throwable => ctx.logger.debug (s"Unable to coerce one or more of the mining field doubles... name = $name")
-		}
-	  	fld
-	}
-	
-	def mkPmmlExecMiningSchema(ctx : PmmlContext, s : PmmlMiningSchema) : Option[PmmlExecNode] = {
-		s.Children.foreach((child) => {
-			val ch = child.asInstanceOf[PmmlMiningField]
-			mkPmmlExecMiningField(ctx, ch)
-		})
-		None
-	}
-
-	def mkPmmlExecMiningField(ctx : PmmlContext, d : PmmlMiningField) : Option[xMiningField] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  	var mf : xRuleSetModel = top.asInstanceOf[xRuleSetModel]
-				mf.addMiningField (d.name , hlpMkMiningField(ctx, d)) 
-		  }
-		  case _ => None
-		}
-		None
-	}
-	
-	def mkPmmlExecRuleSet(ctx : PmmlContext, prs : PmmlRuleSet) : Option[xRuleSet] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  	var rsm : xRuleSetModel = top.asInstanceOf[xRuleSetModel]
-				rsm.DefaultScore(prs.defaultScore)
-		  }
-		  case _ => None
-		}
-		Some(new xRuleSet(prs.lineNumber, prs.columnNumber, prs.recordCount, prs.nbCorrect, prs.defaultScore, prs.defaultConfidence))
-	}
-	
-	
-	def mkPmmlExecSimpleRule(ctx : PmmlContext, d : PmmlSimpleRule) : Option[PmmlExecNode] = {
-		var rsm : Option[xRuleSetModel] = ctx.pmmlExecNodeStack.apply(1).asInstanceOf[Option[xRuleSetModel]]
-		
-		val id : Option[String] = Some(d.id)
-		var rule : xSimpleRule = new xSimpleRule( d.lineNumber, d.columnNumber, id
-													    , d.score
-													    , 0.0 /** recordCount */
-													    , 0.0 /** nbCorrect */
-													    , 0.0 /** confidence */
-													    , 0.0) /** weight */
-		rsm match {
-			case Some(rsm) => {
-				
-				try {
-					rule.RecordCount(d.recordCount.toDouble)
-					rule.CorrectCount(d.nbCorrect.toDouble)
-					rule.Confidence(d.confidence.toDouble)
-					rule.Weight(d.weight.toDouble)
-				} catch {
-					case _ : Throwable => ctx.logger.debug (s"Unable to coerce one or more mining 'double' fields... name = $id")
-				}
-			
-				rsm.addRule (rule) 
-			}
-			case _ => None
-		}
-		Some(rule)
-	}
-	
-	def mkPmmlExecScoreDistribution(ctx : PmmlContext, d : PmmlScoreDistribution) : Option[PmmlExecNode] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.top
-		top match {
-		  case Some(top) => {
-			  	var mf : xSimpleRule = ctx.pmmlExecNodeStack.top.asInstanceOf[xSimpleRule]
-				var sd : xScoreDistribution = new xScoreDistribution(d.lineNumber, d.columnNumber, d.value
-															, 0.0 /** recordCount */
-														    , 0.0 /** confidence */
-														    , 0.0) /** probability */
-				try {
-					sd.RecordCount(d.recordCount.toDouble)
-					sd.Confidence(d.confidence.toDouble)
-					sd.Probability(d.probability.toDouble)
-				} catch {
-				  case _ : Throwable => ctx.logger.debug ("Unable to coerce one or more score probablity Double values")
-				}
-					
-				mf.addScoreDistribution(sd)
-		  }
-		  case _ => None
-		}
-		None
-	}
-	
-	def mkPmmlExecRuleSelectionMethod(ctx : PmmlContext, d : PmmlRuleSelectionMethod) : Option[PmmlExecNode] = {
-		val top : Option[PmmlExecNode] = ctx.pmmlExecNodeStack.apply(1)   // xRuleSetModel is the grandparent
-		top match {
-		  case Some(top) => {
-			  	var mf : xRuleSetModel = top.asInstanceOf[xRuleSetModel]
-			  	var rsm : xRuleSelectionMethod = new xRuleSelectionMethod(d.lineNumber, d.columnNumber, d.criterion)
-				mf.addRuleSetSelectionMethod(rsm)
-		  }
-		  case _ => None
-		}
-		None
-	}
-
-	def mkPmmlExecArray(ctx : PmmlContext, a : PmmlArray) : Option[xArray] = {
-		val valStr : String = a.valueString
-		val elements = valStr.split(' ').toArray
-		var trimmedElems  = elements.map (e => e.trim)
-		val arrayPattern = """\"(.*)\"""".r
-		
-		val sanQuotesTrimmedElems = trimmedElems.map { x =>
-			val matched = arrayPattern.findFirstMatchIn(x)
-			matched match {
-			  case Some(m) => m.group(1)
-			  case _ => x
-			}
-		}
- 		
-		var arr : xArray = new xArray(a.lineNumber, a.columnNumber, a.n, a.arrayType, sanQuotesTrimmedElems)
-		Some(arr)
-	}
-
-	def mkPmmlExecSimplePredicate(ctx : PmmlContext, d : PmmlSimplePredicate) : Option[xSimplePredicate] = {  
-		Some(new xSimplePredicate(d.lineNumber, d.columnNumber, d.field, d.operator, d.value))
-	}
-	
-	def mkPmmlExecSimpleSetPredicate(ctx : PmmlContext, d : PmmlSimpleSetPredicate) : Option[xSimpleSetPredicate] = {
-		Some(new xSimpleSetPredicate(d.lineNumber, d.columnNumber, d.field, d.booleanOperator))
-	}
-	
-	def mkPmmlExecCompoundPredicate(ctx : PmmlContext, d : PmmlCompoundPredicate) : Option[xCompoundPredicate] = {
-		Some(new xCompoundPredicate(d.lineNumber, d.columnNumber, d.booleanOperator))
-	}
-	
-	
-	
-	
+object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 
 	def prepareFieldReference(ctx : PmmlContext, field : String, order : Traversal.Order = Traversal.PREORDER) : String = {
 
@@ -2111,8 +1118,6 @@ object PmmlExecNode extends LogTrait {
 			
 		varRefBuffer.toString
 	}
-		
-
 
 }
 

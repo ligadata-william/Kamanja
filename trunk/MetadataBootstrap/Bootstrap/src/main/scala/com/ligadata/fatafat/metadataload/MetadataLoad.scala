@@ -43,7 +43,7 @@ object MetadataLoad {
 			(MdMgr.sysNS, "BaseMsg", "com.ligadata.FatafatBase.BaseMsg", List()),
 			(MdMgr.sysNS, "BaseContainer", "com.ligadata.FatafatBase.BaseContainer", List()),
 			(MdMgr.sysNS, "MessageContainerBase", "com.ligadata.FatafatBase.MessageContainerBase", List()),
-			(MdMgr.sysNS, "Context", "com.ligadata.Pmml.Runtime.Context", List()))
+			(MdMgr.sysNS, "Context", "com.ligadata.pmml.runtime.Context", List()))
 	}
 }
 

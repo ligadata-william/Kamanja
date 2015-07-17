@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
@@ -7,9 +7,11 @@ import scala.collection.immutable.StringLike
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
 
-class MetadataInterpreter(val ctx : PmmlContext) extends LogTrait {
+class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compiler.LogTrait {
   
 	val mgr : MdMgr = ctx.mgr
 

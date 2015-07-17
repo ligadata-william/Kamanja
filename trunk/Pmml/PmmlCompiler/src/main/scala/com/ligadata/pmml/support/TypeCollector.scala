@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
@@ -8,6 +8,8 @@ import scala.util.control.Breaks._
 import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.pmml.compiler
+import com.ligadata.pmml.syntaxtree.cooked.common._
 
 /**
  * TypeCollector's focus is to reason about the type system present and implied by the Pmml being processed.

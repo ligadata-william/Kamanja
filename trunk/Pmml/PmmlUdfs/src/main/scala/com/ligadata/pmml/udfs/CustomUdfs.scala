@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import org.apache.log4j.Logger
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
 
 /**
   * Sample udfs .. com.ligadata.pmml.udfs.CustomUdfs

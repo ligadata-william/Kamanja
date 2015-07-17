@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.support
 
 import scala.collection.mutable._
 import scala.math._
@@ -15,9 +15,11 @@ import org.joda.time.tz
 import org.joda.time.LocalDate
 import org.joda.time.Years
 
-import com.ligadata.Pmml.Runtime._
+import com.ligadata.pmml.runtime._
+import com.ligadata.pmml.compiler._ 
+import com.ligadata.pmml.support._ 
 
-object PmmlError extends LogTrait {
+object PmmlError extends com.ligadata.pmml.compiler.LogTrait {
   
 	/** 
 	 *  Process the supplied error, first printing the geo location info in the element stack.
@@ -89,7 +91,7 @@ object PmmlError extends LogTrait {
 }
 
 
-object PmmlTypes extends LogTrait {
+object PmmlTypes extends com.ligadata.pmml.compiler.LogTrait {
   
   	def scalaDataType(dataType : String) : String = {
 	  		val typ = dataType.toLowerCase match {

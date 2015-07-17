@@ -1,4 +1,4 @@
-package com.ligadata.Compiler
+package com.ligadata.pmml.xmlingestion
 
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
@@ -6,8 +6,13 @@ import org.xml.sax.Locator
 import scala.collection._
 import scala.collection.mutable.Stack
 import org.apache.log4j.Logger
+import com.ligadata.pmml.compiler._
+import com.ligadata.pmml.support._
+import com.ligadata.pmml.traits._
+import com.ligadata.pmml.syntaxtree.raw.common._
 
-class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTrait {
+
+class PmmlParseEventParser(ctx : PmmlContext, dispatcher : PmmlNodeGeneratorDispatch)  extends DefaultHandler with com.ligadata.pmml.compiler.LogTrait {
 	var start = false
 	var node: PmmlNode = _
 	val buffer:StringBuilder = new StringBuilder()
@@ -16,31 +21,19 @@ class PmmlParseEventParser(ctx : PmmlContext)  extends DefaultHandler with LogTr
 	override def setDocumentLocator(locator : Locator) {
 		_locator = locator
 	}
-	
+	//  dispatch(namespaceURI: String, localName: String , qName:String , atts: Attributes, lineNumber : Int, columnNumber : Int)
 	override def startElement(namespaceURI: String, localName: String , qName:String , atts: Attributes ) = {
 		buffer.setLength(0);
 
-		if (ctx.pmmlElementVistitorMap.contains(qName)) {
-			logger.debug(s"...encountered $qName")
-			/** dispatch the element visitor that will build the appropriate kind of PmmlNode for it.and push to stack 
-			 	The dispatcher pushes it on the stack to be decorated by its children. */
-			ctx.dispatchElementVisitor(ctx
-									, namespaceURI
-									, localName 
-									, qName
-									, atts
-									, _locator.getLineNumber()
-									, _locator.getColumnNumber())
-			
-		} else {
-			logger.debug(s"...element $qName is of no interest at all")
-		}
+		logger.trace(s"...encountered $qName")
+		/** dispatch the element visitor that will build the appropriate kind of PmmlNode for it.and push to stack 
+		 	The dispatcher pushes it on the stack to be decorated by its children. */
+		dispatcher.dispatch(namespaceURI, localName, qName, atts, _locator.getLineNumber(), _locator.getColumnNumber())
 	}
 
 	override def endElement( uri: String, localName: String, qName: String) = {
 
-
-  		var pmmlnode = if (ctx.pmmlNodeStack.isEmpty) null else ctx.pmmlNodeStack.top
+  		var pmmlnode : PmmlNode = if (ctx.pmmlNodeStack.isEmpty) null else ctx.pmmlNodeStack.top
   		
   		if (pmmlnode == null) {
   			logger.debug(s"endElement... pmmlNodeStack is empty ... qName = $qName")
