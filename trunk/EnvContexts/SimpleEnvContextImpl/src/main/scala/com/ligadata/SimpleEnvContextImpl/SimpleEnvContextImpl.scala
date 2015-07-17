@@ -53,7 +53,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   object TxnContextCommonFunctions {
-    def getRecentFromFatafatData(fatafatData: FatafatData, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+    def getRecentFromFatafatData(fatafatData: FatafatData, tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
       // BUGBUG:: tmRange is not yet handled
       if (fatafatData != null) {
         /*
@@ -98,15 +98,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       //BUGBUG:: tmRange is not yet handled
       //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
       if (container != null) {
-        if (partKey != null) {
+        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
           val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
           if (fatafatData != null)
-            return getRecentFromFatafatData(fatafatData._2, partKey, tmRange, f)
+            return getRecentFromFatafatData(fatafatData._2, tmRange, f)
         } else {
           val dataAsArr = container.data.toArray
           var idx = dataAsArr.size - 1
           while (idx >= 0) {
-            val (v, foundPartKey) = getRecentFromFatafatData(dataAsArr(idx)._2._2, partKey, tmRange, f)
+            val (v, foundPartKey) = getRecentFromFatafatData(dataAsArr(idx)._2._2, tmRange, f)
             if (foundPartKey)
               return (v, foundPartKey)
             idx = idx - 1
@@ -114,6 +114,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
       (null, false)
+    }
+
+    def IsEmptyKey(key: List[String]): Boolean = {
+      (key == null || key.size == 0)
     }
 
     def IsSameKey(key1: List[String], key2: List[String]): Boolean = {
@@ -140,7 +144,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val retResult = ArrayBuffer[MessageContainerBase]()
       var foundPartKeys = ArrayBuffer[List[String]]()
       if (container != null) {
-        if (partKey != null && partKey.size > 0) {
+        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
           val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
           if (fatafatData != null && IsKeyExists(alreadyFoundPartKeys, fatafatData._2.GetKey.toList) == false) {
             retResult ++= getRddDataFromFatafatData(fatafatData._2, tmRange, f)
@@ -195,7 +199,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     def getObject(containerName: String, partKey: List[String], primaryKey: List[String]): (MessageContainerBase, Boolean) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
-      if (container != null) {
+      if (container != null && TxnContextCommonFunctions.IsEmptyKey(partKey) == false && TxnContextCommonFunctions.IsEmptyKey(primaryKey) == false) {
         val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
         if (fatafatData != null) {
           // Search for primary key match
@@ -234,14 +238,18 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (container != null) {
         val notFndPartkeys = ArrayBuffer[List[String]]()
         for (i <- 0 until partKeys.size) {
-          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
-          if (fatafatData != null) {
-            // Search for primary key match
-            val fnd = fatafatData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
-            if (fnd != null)
-              return (true, Array[List[String]]())
-          } else {
-            notFndPartkeys += partKeys(i)
+          if (TxnContextCommonFunctions.IsEmptyKey(partKeys(i)) == false) {
+            val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
+            if (fatafatData != null) {
+              if (TxnContextCommonFunctions.IsEmptyKey(primaryKeys(i)) == false) {
+                // Search for primary key match
+                val fnd = fatafatData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
+                if (fnd != null)
+                  return (true, Array[List[String]]())
+              }
+            } else {
+              notFndPartkeys += partKeys(i)
+            }
           }
         }
         return (false, notFndPartkeys.toArray)
@@ -278,6 +286,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
 
     def setObject(containerName: String, partKey: List[String], value: MessageContainerBase): Unit = {
+      if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+        return
       val container = getMsgContainer(containerName.toLowerCase, true)
       if (container != null) {
         val partKeyStr = InMemoryKeyDataInJson(partKey)
@@ -642,6 +652,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def localGetObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey) || TxnContextCommonFunctions.IsEmptyKey(primaryKey))
+      return null
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (v, foundPartKey) = txnCtxt.getObject(containerName, partKey, primaryKey)
@@ -684,6 +696,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   private def localHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
     val retVals = ArrayBuffer[MessageContainerBase]()
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+      return retVals.toArray
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (objs, foundPartKey) = txnCtxt.getObjects(containerName, partKey, appendCurrentChanges)
@@ -907,6 +921,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Same kind of code is there in localGetObject
   private def loadBeforeSetObject(txnCtxt: TransactionContext, transId: Long, containerName: String, partKey: List[String]): Unit = {
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+      return
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
@@ -1438,6 +1454,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+    if (TxnContextCommonFunctions.IsEmptyKey(partKey))
+      None
     val txnCtxt = getTransactionContext(transId, false)
     if (txnCtxt != null) {
       val (v, foundPartKey) = txnCtxt.getRecent(containerName, partKey, tmRange, f)
@@ -1453,24 +1471,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (foundPartKey)
       return Some(v)
 
-    if (container != null && partKey != null) { // Loading for partition id
+    if (container != null) { // Loading for partition id
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
-        val (v1, foundPartKey1) = TxnContextCommonFunctions.getRecentFromFatafatData(loadedFfData, partKey, tmRange, f)
+        val (v1, foundPartKey1) = TxnContextCommonFunctions.getRecentFromFatafatData(loadedFfData, tmRange, f)
         if (foundPartKey1)
           return Some(v1)
       }
       return None // If partition key exists, tried DB also, no need to go down
     }
 
-    // BUGBUG:: Need to get all keys for this message/container and see whether we can read any data and return 
-
     None
   }
 
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
-    val keystr = if (partKey != null) partKey.mkString(",") else ""
     val foundPartKeys = ArrayBuffer[List[String]]()
     val retResult = ArrayBuffer[MessageContainerBase]()
     val txnCtxt = getTransactionContext(transId, false)
@@ -1479,7 +1494,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (foundPartKeys1.size > 0) {
         foundPartKeys ++= foundPartKeys1
         retResult ++= res
-        if (partKey != null && partKey.size > 0) // Already found the key, no need to go down
+        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) // Already found the key, no need to go down
           return retResult.toArray
       }
     }
@@ -1491,12 +1506,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       if (foundPartKeys2.size > 0) {
         foundPartKeys ++= foundPartKeys2
         retResult ++= res1 // Add only if we find all here
-        if (partKey != null && partKey.size > 0) // Already found the key, no need to go down
+        if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) // Already found the key, no need to go down
           return retResult.toArray
       }
     }
 
-    if (container != null && partKey != null) { // Loading for partition id
+    if (container != null && TxnContextCommonFunctions.IsEmptyKey(partKey) == false) { // Loading for partition id
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {

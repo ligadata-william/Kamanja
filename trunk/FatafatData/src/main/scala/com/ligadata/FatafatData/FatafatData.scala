@@ -98,13 +98,15 @@ class FatafatData {
 
   // Getting Message or Container from existing list
   def GetMessageContainerBase(primaryKey: Array[String], newCopyIfFound: Boolean): MessageContainerBase = {
-    for (i <- 0 until data.size) {
-      val pkd = data(i).PrimaryKeyData
-      if (pkd.sameElements(primaryKey)) {
-        if (newCopyIfFound)
-          return data(i) //BUGBUG:: Need to create Duplicate copy here for now we don't have method to duplicate yet.
-        else
-          return data(i)
+    if (primaryKey != null && primaryKey.size > 0) {
+      for (i <- 0 until data.size) {
+        val pkd = data(i).PrimaryKeyData
+        if (pkd.sameElements(primaryKey)) {
+          if (newCopyIfFound)
+            return data(i) //BUGBUG:: Need to create Duplicate copy here for now we don't have method to duplicate yet.
+          else
+            return data(i)
+        }
       }
     }
     return null
