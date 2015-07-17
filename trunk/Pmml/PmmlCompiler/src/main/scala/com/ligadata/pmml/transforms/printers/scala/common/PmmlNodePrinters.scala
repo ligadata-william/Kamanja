@@ -856,7 +856,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		/** Give the rest... */
 		commentBuffer.append(s"/** Other Packages... */\n")
 		commentBuffer.append(s"import com.ligadata.FatafatBase._\n")
-		commentBuffer.append(s"import com.ligadata.Pmml.Runtime._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
 		commentBuffer.append(s"import scala.collection.mutable._\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
 		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
@@ -1140,7 +1140,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val alternateCtor : String = generateAlternateCtor(msgdefTypes.toArray)
 		clsBuffer.append(s"$alternateCtor\n") 
 		
-		clsBuffer.append(s"    val ctx : com.ligadata.Pmml.Runtime.Context = new com.ligadata.Pmml.Runtime.Context(transId, gCtx)\n")
+		clsBuffer.append(s"    val ctx : com.ligadata.pmml.runtime.Context = new com.ligadata.pmml.runtime.Context(transId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
 		
 		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
