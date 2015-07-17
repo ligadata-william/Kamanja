@@ -11,7 +11,6 @@ import java.util.*;
 /**
  * Created by will on 7/1/15.
  */
-
 public class COPDRiskAssessment extends ModelBase {
     // Messages
     private Beneficiary msg = null;
@@ -196,24 +195,25 @@ public class COPDRiskAssessment extends ModelBase {
 
     private Boolean hasSmokingHistory() {
         for (InpatientClaim ic : inpatientClaimHistory) {
-            if (coughCodes.contains(ic.admtng_icd9_dgns_cd())) {
+            if (smokeCodes.contains(ic.admtng_icd9_dgns_cd()))
                 return true;
-            }
 
             for (String code : ic.icd9_dgns_cds()) {
-                if (coughCodes.contains(code)) {
+                if (smokeCodes.contains(code))
                     return true;
-                }
             }
         }
 
         for (OutpatientClaim oc : outpatientClaimHistory) {
-            if (coughCodes.contains(oc.admtng_icd9_dgns_cd())) {
+            for(String code: oc.icd9_dgns_cds()){
+                System.out.println("\t" + code);
+            }
+            if (smokeCodes.contains(oc.admtng_icd9_dgns_cd())) {
                 return true;
             }
 
             for (String code : oc.icd9_dgns_cds()) {
-                if (coughCodes.contains(code)) {
+                if (smokeCodes.contains(code)) {
                     return true;
                 }
             }
@@ -373,6 +373,7 @@ public class COPDRiskAssessment extends ModelBase {
 
     private MappedModelResults copdRiskLevel() {
         Boolean hasSmokingHistory = hasSmokingHistory();
+        System.out.println("Has Smoking History: " + hasSmokingHistory);
         Boolean hasEnvironmentalExposure = hasEnvironmentalExposure();
         Boolean hasDyspnea = hasDyspnea();
         Boolean hasChronicCough = hasChronicCough();
@@ -417,8 +418,11 @@ public class COPDRiskAssessment extends ModelBase {
     @Override
     public MappedModelResults execute(boolean emitAllResults) {
         MappedModelResults result = copdRiskLevel();
-        if (result.get("COPD Risk Level") == "")
-            return null;
+        if(!emitAllResults) {
+            if (result.get("COPD Risk Level") == "") {
+                return null;
+            }
+        }
         return result;
     }
 
