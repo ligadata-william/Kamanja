@@ -1,3 +1,4 @@
+/*
 package com.ligadata.kamanja.copd;
 
 import com.ligadata.FatafatBase.*;
@@ -460,3 +461,4 @@ public class COPDRiskAssessment extends ModelBase {
 
     }
 }
+*/
