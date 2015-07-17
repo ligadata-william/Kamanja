@@ -32,6 +32,10 @@ class PmmlModelGenerator(ctx : PmmlContext) extends CodePrinterDispatch with com
 				, kind : CodeFragment.Kind) : Unit = {
 		val printer : CodePrinter = node match {
 		  case Some(node) => {
+			  val nodeName : String = node.qName
+			  if (nodeName == "SimpleRule") {
+				  val stop : Boolean = true
+			  }
 			  val pr : CodePrinter = pmmlXNodePrinterMap.getOrElse(node.qName, null)
 			  if (pr == null) {
 				  PmmlError.logError(ctx, s"there is no printer for node type ${node.getClass.getName} ... check dispatch map initialization")

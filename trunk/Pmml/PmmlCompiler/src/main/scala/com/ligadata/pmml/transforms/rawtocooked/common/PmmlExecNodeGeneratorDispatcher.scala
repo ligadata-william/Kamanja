@@ -30,6 +30,9 @@ class PmmlExecNodeGeneratorDispatcher(ctx : PmmlContext) extends PmmlExecNodeGen
 	def dispatch(qName : String, pmmlnode : PmmlNode) : Unit = {
 
 		val generator : PmmlExecNodeGenerator = if (qName != null && pmmlnode != null) {
+			if (qName == "SimpleRule") {
+				val stop : Boolean = true
+			}
 		  	val gen : PmmlExecNodeGenerator = pmmlXNodeDispatchMap.getOrElse(qName, null)
 			if (gen == null) {
 				if (! ignoreList.contains(qName)) {
@@ -111,7 +114,7 @@ class PmmlExecNodeGeneratorDispatcher(ctx : PmmlContext) extends PmmlExecNodeGen
 	    , ("DerivedField" -> new DerivedFieldPmmlExecNodeGenerator(ctx))
 	    , ("FieldColumn" -> new FieldColumnPairPmmlExecNodeGenerator(ctx))
 	    , ("FieldRef" -> new FieldRefPmmlExecNodeGenerator(ctx))
-	    , ("HeaderPmml" -> new HeaderPmmlExecNodeGenerator(ctx))
+	    , ("Header" -> new HeaderPmmlExecNodeGenerator(ctx))
 	    , ("InlineTable" -> new InlineTablePmmlExecNodeGenerator(ctx))
 	    , ("Interval" -> new IntervalPmmlExecNodeGenerator(ctx))
 	    , ("MapValues" -> new MapValuesPmmlExecNodeGenerator(ctx))
@@ -119,7 +122,8 @@ class PmmlExecNodeGeneratorDispatcher(ctx : PmmlContext) extends PmmlExecNodeGen
 	    , ("MiningSchema" -> new MiningSchemaPmmlExecNodeGenerator(ctx))
 	    , ("ParameterField" -> new ParameterFieldPmmlExecNodeGenerator(ctx))
 	    , ("RowColumnPair" -> new RowColumnPairPmmlExecNodeGenerator(ctx))
-	    , ("RuleSelection" -> new RuleSelectionMethodPmmlExecNodeGenerator(ctx))
+	    , ("RuleSelectionMethod" -> new RuleSelectionMethodPmmlExecNodeGenerator(ctx))
+	    , ("RuleSet", new RuleSetPmmlExecNodeGenerator(ctx))
 	    , ("RuleSetModel" -> new RuleSetModelPmmlExecNodeGenerator(ctx))
 	    , ("ScoreDistribution" -> new ScoreDistributionPmmlExecNodeGenerator(ctx))
 	    , ("SimplePredicate" -> new SimplePredicatePmmlExecNodeGenerator(ctx))
