@@ -9,6 +9,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import java.io.{ DataInputStream, DataOutputStream }
+import org.apache.log4j.Logger
 
 object LowBalanceAlert2 extends ModelBaseObj {
   override def IsValidMessage(msg: MessageContainerBase): Boolean = return msg.isInstanceOf[TransactionMsg]
@@ -102,22 +103,25 @@ class LowBalanceAlertResult2 extends ModelResultBase {
 }
 
 class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBalanceAlert2) {
+  // private[this] val LOG = Logger.getLogger(getClass);
   override def execute(emitAllResults: Boolean): ModelResultBase = {
     // First check the preferences and decide whether to continue or not
     val gPref = GlobalPreferences.getRecentOrNew(Array("Type1"))
     val pref = CustPreferences.getRecentOrNew
-    if (pref.multidayminbalancealertoptout == false)
+    if (pref.multidayminbalancealertoptout == true) {
       return null
+    }
 
     // Check if at least min number of hours elapsed since last alert  
     val curDtTmInMs = RddDate.currentGmtDateTime
     val alertHistory = CustAlertHistory.getRecentOrNew
-    if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertdttminms)) < gPref.minalertdurationinhrs)
+    if (curDtTmInMs.timeDiffInHrs(RddDate(alertHistory.alertdttminms)) < gPref.minalertdurationinhrs) {
       return null
+    }
 
     // get history of transaction whose balance is less than minAlertBalance in last N days
     val lookBackTime = curDtTmInMs.lastNdays(gPref.numlookbackdaysformultidayminbalancealert)
-    val rcntTxns = TransactionMsg.getRDD(lookBackTime, { trnsaction: MessageContainerBase =>
+    val rcntTxns = TransactionMsg.getRDDForCurrKey(lookBackTime, { trnsaction: MessageContainerBase =>
       {
         val trn = trnsaction.asInstanceOf[TransactionMsg]
         trn.balance < gPref.minalertbalance
@@ -125,21 +129,23 @@ class LowBalanceAlert2(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, LowBala
     })
 
     // quick check to whether it is worth doing group by operation
-    if (rcntTxns.isEmpty || rcntTxns.count < gPref.maxnumdaysallowedwithminbalance)
+    if (rcntTxns.isEmpty || rcntTxns.count < gPref.maxnumdaysallowedwithminbalance) {
       return null
+    }
 
     // compute distinct days in the retrieved history (number of days with balance less than minAlertBalance)
     // and check if those days meet the threshold
     val daysWhenBalanceIsLessThanMin = rcntTxns.groupBy({ trn => trn.date }).count.toInt
-    if (daysWhenBalanceIsLessThanMin <= gPref.maxnumdaysallowedwithminbalance)
+    if (daysWhenBalanceIsLessThanMin < gPref.maxnumdaysallowedwithminbalance) {
       return null
+    }
 
     // create new alert history record and persist (if policy is to keep only one, this will replace existing one)
     CustAlertHistory.build.withalertdttminms(curDtTmInMs.getDateTimeInMs).withalerttype("tooManyMinBalanceDays").withnumdayswithlessbalance(daysWhenBalanceIsLessThanMin).Save
 
     val rcntTxn = TransactionMsg.getRecent
     val curTmInMs = curDtTmInMs.getDateTimeInMs
-    
+
     // results
     new LowBalanceAlertResult2().withCustId(rcntTxn.get.custid).withBranchId(rcntTxn.get.branchid).withAccNo(rcntTxn.get.accno).withCurBalance(rcntTxn.get.balance).withAlertType("lowBalanceAlert2").withTriggerTime(curTmInMs)
   }

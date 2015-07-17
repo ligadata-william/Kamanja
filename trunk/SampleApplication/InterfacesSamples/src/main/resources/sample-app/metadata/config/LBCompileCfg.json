@@ -2,9 +2,5 @@
     "LowBalanceAlert":{
         "Dependencies":["fatafatbase_2.10-1.0.jar"],
         "MessageAndContainers":["system.custalerthistory","system.custpreferences","system.globalpreferences","system.customerinfo", "system.transactionmsg"]
-    },
-    "LowBalanceAlert2":{
-        "Dependencies":["fatafatbase_2.10-1.0.jar"],
-        "MessageAndContainers":["system.custalerthistory","system.custpreferences","system.globalpreferences","system.customerinfo", "system.transactionmsg"]
     }
 }
