@@ -529,18 +529,18 @@ class ArrayTypeHandler {
           if (memberExists) {
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sprevVerObj.%s.foreach(child => {%s".format(pad2, f.Name, newline))
             if (sameType)
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child})%s".format(pad2, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += child});%s".format(pad2, f.Name, newline))
             else {
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj})%s".format(pad2, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s += curVerObj});%s".format(pad2, f.Name, newline))
             }
           }
         } else {
           if (memberExists) {
             prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s for(i <- 0 until prevVerObj.%s.length) { %s".format(pad2, f.Name, newline))
             if (sameType)
-              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s(i) = prevVerObj.%s(i)}%s".format(pad2, f.Name, f.Name, newline))
+              prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s(i) = prevVerObj.%s(i)};%s".format(pad2, f.Name, f.Name, newline))
             else {
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%sval curVerObj = new %s()%s".format(pad2, curObjtypeStr, newline))
               prevObjDeserializedBuf = prevObjDeserializedBuf.append("%scurVerObj.ConvertPrevToNewVerObj(child)%s".format(pad2, newline))
