@@ -24,5 +24,7 @@ Hbase, [DSL](https://github.com/ligaDATA/Kamanja/wiki/Glossary#d)).
 minimal downtime.
 13. **Vibrant Community**. Easy to deploy, provides test samples, developer guides, and community forums to answer your questions and make contributions.
 
+[Proceed to wiki homepage](https://github.com/ligaDATA/Kamanja/wiki)
+
 
 
