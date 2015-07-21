@@ -1053,19 +1053,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			objBuffer.append(s"} \n")
 		}
 
-		val msgContainer : (String, Boolean, BaseTypeDef, String) = msgNameContainerInfo.tail.head
-		val (msgName, isPrintedInCtor, msgTypedef, varName) : (String, Boolean, BaseTypeDef, String) = msgContainer
-		val msgTypeStr : String = msgTypedef.typeString
-		val msgInvokeStr : String = s"msg.asInstanceOf[$msgTypeStr]"
-		
-		objBuffer.append(s"    def CreateNewModel(transId: Long, gCtx : EnvContext, msg : MessageContainerBase, tenantId: String): ModelBase =\n")
-		objBuffer.append(s"    {\n") 
-		objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(gCtx, $msgInvokeStr, getModelName, getVersion, tenantId, transId)\n")
-		objBuffer.append(s"    }\n") 	
-		objBuffer.append(s"\n")
-
-		objBuffer.append(s"} \n")
-
 		objBuffer.toString
 	}
 
@@ -1142,11 +1129,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		
 		clsBuffer.append(s"    val ctx : com.ligadata.pmml.runtime.Context = new com.ligadata.pmml.runtime.Context(transId, gCtx)\n")
 		clsBuffer.append(s"    def GetContext : Context = { ctx }\n")
-		
-		clsBuffer.append(s"    override def getModelName : String = $nmspc$classname$verNoStr.getModelName\n")
-		clsBuffer.append(s"    override def getVersion : String = $nmspc$classname$verNoStr.getVersion\n")
-		clsBuffer.append(s"    override def getTenantId : String = tenantId\n")
-		clsBuffer.append(s"    override def getTempTransId: Long = transId\n")
 
 		clsBuffer.append(s"    var bInitialized : Boolean = false\n")
 		/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
