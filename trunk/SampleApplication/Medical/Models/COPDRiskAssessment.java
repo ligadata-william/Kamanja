@@ -373,7 +373,6 @@ public class COPDRiskAssessment extends ModelBase {
 
     private MappedModelResults copdRiskLevel() {
         Boolean hasSmokingHistory = hasSmokingHistory();
-        System.out.println("Has Smoking History: " + hasSmokingHistory);
         Boolean hasEnvironmentalExposure = hasEnvironmentalExposure();
         Boolean hasDyspnea = hasDyspnea();
         Boolean hasChronicCough = hasChronicCough();
@@ -382,7 +381,7 @@ public class COPDRiskAssessment extends ModelBase {
         Boolean hasFamilyHistory = hasFamilyHistory();
         Boolean ageOver40 = age40OrOlder();
 
-        Boolean hasCOPDSymptoms = hasDyspnea || hasChronicCough || hasChronicCough;
+        Boolean hasCOPDSymptoms = hasDyspnea || hasChronicCough || hasChronicSputum;
 
         String riskLevel = "";
 
