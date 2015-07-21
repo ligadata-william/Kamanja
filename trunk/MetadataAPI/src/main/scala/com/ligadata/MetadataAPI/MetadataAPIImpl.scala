@@ -693,7 +693,7 @@ object MetadataAPIImpl extends MetadataAPI {
       store.commitTx(t)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to delete object batch for : " + keyList.mkString(","))
+        logger.error("Failed to delete object batch for : " + keyList.mkString(","))
         store.endTx(t)
         throw new UpdateStoreFailedException("Failed to delete object batch for : " + keyList.mkString(","))
       }
@@ -757,7 +757,7 @@ object MetadataAPIImpl extends MetadataAPI {
       SaveObjectList(keyList, valueList, store)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to insert/update object for : " + keyList.mkString(","))
+        logger.error("Failed to insert/update object for : " + keyList.mkString(","))
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
       }
     }
@@ -825,7 +825,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.debug("Failed to insert/update object for : " + keyList.mkString(","))
+        logger.error("Failed to insert/update object for : " + keyList.mkString(","))
         throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
       }
     }
@@ -2011,17 +2011,17 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: MappingException => {
-        logger.debug("Failed to parse the type, json => " + typeJson + ",Error => " + e.getMessage())
+        logger.error("Failed to parse the type, json => " + typeJson + ",Error => " + e.getMessage())
         apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
         apiResult.toString()
       }
       case e: AlreadyExistsException => {
-        logger.debug("Failed to update the type, json => " + typeJson + ",Error => " + e.getMessage())
+        logger.error("Failed to update the type, json => " + typeJson + ",Error => " + e.getMessage())
         apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
         apiResult.toString()
       }
       case e: Exception => {
-        logger.debug("Failed to up the type, json => " + typeJson + ",Error => " + e.getMessage())
+        logger.error("Failed to up the type, json => " + typeJson + ",Error => " + e.getMessage())
         apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateType", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Type_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2212,12 +2212,12 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: AlreadyExistsException => {
-        logger.debug("Failed to update the function, key => " + key + ",Error => " + e.getMessage())
+        logger.error("Failed to update the function, key => " + key + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + dispkey)
         apiResult.toString()
       }
       case e: Exception => {
-        logger.debug("Failed to up the type, json => " + key + ",Error => " + e.getMessage())
+        logger.error("Failed to up the type, json => " + key + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2351,17 +2351,17 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: MappingException => {
-        logger.debug("Failed to parse the function, json => " + functionsText + ",Error => " + e.getMessage())
+        logger.error("Failed to parse the function, json => " + functionsText + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
         apiResult.toString()
       }
       case e: AlreadyExistsException => {
-        logger.debug("Failed to add the function, json => " + functionsText + ",Error => " + e.getMessage())
+        logger.error("Failed to add the function, json => " + functionsText + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
         apiResult.toString()
       }
       case e: Exception => {
-        logger.debug("Failed to up the function, json => " + functionsText + ",Error => " + e.getMessage())
+        logger.error("Failed to up the function, json => " + functionsText + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateFunctions", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Function_Failed + ":" + functionsText)
         apiResult.toString()
       }
@@ -2421,12 +2421,12 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: AlreadyExistsException => {
-        logger.debug("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
+        logger.error("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Concept_Failed + ":" + dispkey)
         apiResult.toString()
       }
       case e: Exception => {
-        logger.debug("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
+        logger.error("Failed to update the concept, key => " + key + ",Error => " + e.getMessage())
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateConcept", null, "Error :" + e.toString() + ErrorCodeConstants.Update_Concept_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -4522,7 +4522,7 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(msgDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to load message into cache " + key + ":" + e.getMessage())
+        logger.error("Failed to load message into cache " + key + ":" + e.getMessage())
       }
     }
   }
@@ -5230,7 +5230,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
-        logger.debug("Failed to fetch the typeDefs:" + e.getMessage())
+        logger.error("Failed to fetch the typeDefs:" + e.getMessage())
         None
       }
     }

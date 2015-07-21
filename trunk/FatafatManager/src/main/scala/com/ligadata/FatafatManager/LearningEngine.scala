@@ -108,7 +108,6 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           allMdlsResults = scala.collection.mutable.Map[String, SavedMdlResult]()
         // Run all models
         val mdlsStartTime = System.nanoTime
-
         val results = RunAllModels(transId, msg, envContext, uk, uv, xformedMsgCntr, totalXformedMsgs)
         LOG.debug(ManagerUtils.getComponentElapsedTimeStr("Models", uv, readTmNs, mdlsStartTime))
 
@@ -184,6 +183,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               }
             }
             envContext.saveStatus(transId, "OutAdap", false)
+            val sendOutStartTime = System.nanoTime
+            output.foreach(o => {
+              o.send(resStr, cntr.toString)
+            })
+            LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
           }
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
