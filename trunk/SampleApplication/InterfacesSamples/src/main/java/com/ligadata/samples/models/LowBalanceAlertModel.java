@@ -44,9 +44,9 @@ public class LowBalanceAlertModel extends ModelBase {
         return ModelResult.builder().withResult(new LowBalanceAlertResult(txnContext)).build(); 
     }
 	*/
-    /**
-     * @param inTxnContext
-     */ /*
+/**
+ * @param inTxnContext
+ */ /*
     public LowBalanceAlertModel (ModelContext mdlContext) {
     	super(mdlContext, objSignleton);
     }

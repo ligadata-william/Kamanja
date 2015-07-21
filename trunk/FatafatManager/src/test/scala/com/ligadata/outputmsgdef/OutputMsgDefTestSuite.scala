@@ -1,3 +1,4 @@
+/*
 package com.ligadata.outputmsgdef
 
 import org.json4s.jackson.JsonMethods._
@@ -1105,3 +1106,4 @@ class System_HL7_1000001_1430446865995 extends BaseMsg {
   def ConvertPrevToNewVerObj(obj: Any): Unit = {}
 
 }
+*/

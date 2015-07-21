@@ -1,11 +1,11 @@
 
 package com.ligadata.FatafatManager
 
-import com.ligadata.FatafatBase.{ BaseMsg, DelimitedData, JsonData, XmlData, EnvContext, SavedMdlResult, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.FatafatBase._
 import com.ligadata.Utils.Utils
 import java.util.Map
+import com.ligadata.outputmsg.OutputMsgGenerator
 import scala.util.Random
-import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerBase, BaseMsgObj, BaseMsg, BaseContainer, InputAdapter, OutputAdapter, InputData, ThreadLocalStorage }
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -37,7 +37,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       // Execute all modes here
       models.foreach(md => {
         try {
-          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) { // Checking whether this message has any fields/concepts to execute in this model
+          if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+            // Checking whether this message has any fields/concepts to execute in this model
             val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
             val curMd = md.mdl.CreateNewModel(mdlCtxt)
@@ -123,75 +124,79 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               allMdlsResults(res.mdlName) = res
             })
           } catch {
-            case e: Exception =>
-              {
-                LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-                e.printStackTrace
-              }
+            case e: Exception => {
+              LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+              e.printStackTrace
+            }
           }
           val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
+
           results.map(res => {
-            resMap(res.mdlName) = res.results.map(r => { (r.name, r.result) })
+            resMap(res.mdlName) = res.mdlRes.asKeyValuesMap.map(r => {(r._1, r._2)}).toArray
+            //resMap(res.mdlName) = res.results.map(r => {
+            //(r.name, r.result)
+            //})
           })
 
           var resStr = "Not found any output."
           val outputMsgs = FatafatMetadata.getMdMgr.OutputMessages(true, true)
           if (outputMsgs != None && outputMsgs != null && outputMsgs.get.size > 0) {
             LOG.info("msg " + msg.FullName)
-            LOG.info(" outputMsgs.size" +outputMsgs.get.size)
+            LOG.info(" outputMsgs.size" + outputMsgs.get.size)
             var outputGen = new OutputMsgGenerator()
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
             resStr = resultedoutput.map(resout => resout._3).mkString("\n")
           } else {
 
-          val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
-          val resStr = compact(render(json))
+            val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
+            val resStr = compact(render(json))
 
-          envContext.saveStatus(transId, "Start", true)
-          if (isValidPartitionKey) {
-            envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
-          }
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
-            try {
-              LOG.debug("====================================> Started Waiting in Step 1")
-              Thread.sleep(FatafatConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 1")
-            } catch {
-              case e: Exception => {}
+            envContext.saveStatus(transId, "Start", true)
+            if (isValidPartitionKey) {
+              envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
             }
-          }
-          if (ignoreOutput == false) {
+            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
+              try {
+                LOG.debug("====================================> Started Waiting in Step 1")
+                Thread.sleep(FatafatConfiguration.waitProcessingTime)
+                LOG.debug("====================================> Done Waiting in Step 1")
+              } catch {
+                case e: Exception => {}
+              }
+            }
+            if (ignoreOutput == false) {
+              if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+                LOG.debug("====================================> Sending to Output Adapter")
+              }
+              val sendOutStartTime = System.nanoTime
+              output.foreach(o => {
+                o.send(resStr, cntr.toString)
+              })
+              LOG.debug(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
+            }
             if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
-              LOG.debug("====================================> Sending to Output Adapter")
+              try {
+                LOG.debug("====================================> Started Waiting in Step 2")
+                Thread.sleep(FatafatConfiguration.waitProcessingTime)
+                LOG.debug("====================================> Done Waiting in Step 2")
+              } catch {
+                case e: Exception => {}
+              }
             }
-            val sendOutStartTime = System.nanoTime
-            output.foreach(o => {
-              o.send(resStr, cntr.toString)
-            })
-            LOG.debug(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
+            envContext.saveStatus(transId, "OutAdap", false)
           }
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+          var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
+          if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
+          totalLatencyFromReadToProcess += latencyFromReadToProcess
+          envContext.saveStatus(transId, "SetData", false)
+          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
             try {
-              LOG.debug("====================================> Started Waiting in Step 2")
+              LOG.debug("====================================> Started Waiting in Step 3")
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 2")
+              LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
               case e: Exception => {}
             }
-          }
-          envContext.saveStatus(transId, "OutAdap", false)
-        }
-        var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
-        if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
-        totalLatencyFromReadToProcess += latencyFromReadToProcess
-        envContext.saveStatus(transId, "SetData", false)
-        if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
-          try {
-            LOG.debug("====================================> Started Waiting in Step 3")
-            Thread.sleep(FatafatConfiguration.waitProcessingTime)
-            LOG.debug("====================================> Done Waiting in Step 3")
-          } catch {
-            case e: Exception => {}
           }
         }
       } else {
@@ -207,4 +212,3 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     cntr += 1
   }
 }
-

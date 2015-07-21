@@ -2481,6 +2481,7 @@ object TestMetadataAPI {
       val loadTypesFromAFile = ()         => { LoadTypesFromAFile }
       val uploadJarFile = ()              => { UploadJarFile }
       val uploadEngineConfig = ()         => { UploadEngineConfig }
+      val uploadCompileConfig = ()        => { UploadCompileConfig }
       val dumpAllNodes = ()               => { DumpAllNodesAsJson }
       val dumpAllClusters = ()            => { DumpAllClustersAsJson }
       val dumpAllClusterCfgs = ()         => { DumpAllClusterCfgsAsJson }
@@ -2495,8 +2496,8 @@ object TestMetadataAPI {
       val addModelSourceScala = ()        => { AddModelSourceScala }
 
       val topLevelMenu = List(("Add Model",addModel),
-            ("Get Model - Java", addModelSourceJava),
-            ("Get Model - Scala", addModelSourceScala),          
+            ("Add Model - Java", addModelSourceJava),
+            ("Add Model - Scala", addModelSourceScala),
 			      ("Get Model",getModel),
 			      ("Get All Models",getAllModels),
 			      ("Remove Model",removeModel),
@@ -2533,6 +2534,7 @@ object TestMetadataAPI {
 			      ("Dump All Types By Object Type",dumpAllTypesByObjTypeAsJson),
 			      ("Upload Any Jar",uploadJarFile),
 			      ("Upload Engine Config",uploadEngineConfig),
+            ("Upload Compile Config", uploadCompileConfig),
 			      ("Dump Node Objects",dumpAllNodes),
 			      ("Dump Cluster Objects",dumpAllClusters),
 			      ("Dump ClusterCfg Node Objects",dumpAllClusterCfgs),

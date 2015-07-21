@@ -395,6 +395,7 @@ public class COPDRiskAssessment extends ModelBase {
         }
 
         Result[] results = new Result[]{
+                new Result("Desynpuf ID", msg.desynpuf_id()),
                 new Result("COPD Risk Level", riskLevel),
                 new Result("Is Over 40 Years Old", ageOver40),
                 new Result("Has Smoking History", hasSmokingHistory),
