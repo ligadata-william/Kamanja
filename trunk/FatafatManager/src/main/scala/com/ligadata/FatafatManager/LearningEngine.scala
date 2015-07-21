@@ -131,10 +131,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
 
           results.map(res => {
-            resMap(res.mdlName) = res.mdlRes.asKeyValuesMap.map(r => {(r._1, r._2)}).toArray
-            //resMap(res.mdlName) = res.results.map(r => {
-            //(r.name, r.result)
-            //})
+            resMap(res.mdlName) = res.mdlRes.asKeyValuesMap.map(r => { (r._1, r._2) }).toArray
           })
 
           var resStr = "Not found any output."
@@ -146,49 +143,43 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             val resultedoutput = outputGen.generateOutputMsg(msg, resMap, outputMsgs.get.toArray)
             resStr = resultedoutput.map(resout => resout._3).mkString("\n")
           } else {
-
             val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
             val resStr = compact(render(json))
+          }
 
-            envContext.saveStatus(transId, "Start", true)
-            if (isValidPartitionKey) {
-              envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+          envContext.saveStatus(transId, "Start", true)
+          if (isValidPartitionKey) {
+            envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
+          }
+          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
+            try {
+              LOG.debug("====================================> Started Waiting in Step 1")
+              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              LOG.debug("====================================> Done Waiting in Step 1")
+            } catch {
+              case e: Exception => {}
             }
-            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
-              try {
-                LOG.debug("====================================> Started Waiting in Step 1")
-                Thread.sleep(FatafatConfiguration.waitProcessingTime)
-                LOG.debug("====================================> Done Waiting in Step 1")
-              } catch {
-                case e: Exception => {}
-              }
-            }
-            if (ignoreOutput == false) {
-              if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
-                LOG.debug("====================================> Sending to Output Adapter")
-              }
-              val sendOutStartTime = System.nanoTime
-              output.foreach(o => {
-                o.send(resStr, cntr.toString)
-              })
-              LOG.debug(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
-            }
+          }
+          if (ignoreOutput == false) {
             if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
-              try {
-                LOG.debug("====================================> Started Waiting in Step 2")
-                Thread.sleep(FatafatConfiguration.waitProcessingTime)
-                LOG.debug("====================================> Done Waiting in Step 2")
-              } catch {
-                case e: Exception => {}
-              }
+              LOG.debug("====================================> Sending to Output Adapter")
             }
-            envContext.saveStatus(transId, "OutAdap", false)
             val sendOutStartTime = System.nanoTime
             output.foreach(o => {
               o.send(resStr, cntr.toString)
             })
             LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
           }
+          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+            try {
+              LOG.debug("====================================> Started Waiting in Step 2")
+              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              LOG.debug("====================================> Done Waiting in Step 2")
+            } catch {
+              case e: Exception => {}
+            }
+          }
+          envContext.saveStatus(transId, "OutAdap", false)
           var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
