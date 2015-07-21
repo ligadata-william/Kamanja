@@ -665,7 +665,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.error("Data not found for key:" + partKeyStr)
+        logger.debug("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -805,7 +805,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.error("Data not found for key:" + partKeyStr)
+        logger.debug("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
@@ -833,7 +833,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.error("Data not found for key:" + partKeyStr)
+        logger.debug("Data not found for key:" + partKeyStr)
       }
     }
     if (objs(0) != null) {
