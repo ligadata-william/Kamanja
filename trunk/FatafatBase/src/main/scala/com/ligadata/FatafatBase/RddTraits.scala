@@ -9,12 +9,13 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.reflect.{ classTag, ClassTag }
 import com.ligadata.Exceptions._
-import com.ligadata.FatafatBase.api.java.function._
+import com.ligadata.FatafatBase.api.java.function.{Function1 => JFunction1, FlatMapFunction1 => JFlatMapFunction1, PairFunction => JPairFunction}
 import com.google.common.base.Optional
 import com.ligadata.Utils.Utils
 import java.util.{ Comparator, List => JList, Iterator => JIterator }
 import java.lang.{ Iterable => JIterable, Long => JLong }
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.JavaConversions._
 
 object ThreadLocalStorage {
   final val modelContextInfo = new ThreadLocal[ModelContext]();
@@ -22,8 +23,8 @@ object ThreadLocalStorage {
 
 object FatafatUtils {
   def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
-  def toScalaFunction1[T, R](fun: Function1[T, R]): T => R = x => fun.call(x)
-  def pairFunToScalaFun[A, B, C](x: PairFunction[A, B, C]): A => (B, C) = y => x.call(y)
+  def toScalaFunction1[T, R](fun: JFunction1[T, R]): T => R = x => fun.call(x)
+  def pairFunToScalaFun[A, B, C](x: JPairFunction[A, B, C]): A => (B, C) = y => x.call(y)
 }
 
 import FatafatUtils._
@@ -399,11 +400,11 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
   /**
    * Return a new RDD by applying the function to all elements of this RDD.
    */
-  def map[R](f: Function1[T, R]): JavaRDD[R] = {
+  def map[R](f: JFunction1[T, R]): JavaRDD[R] = {
     JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
 
-  def map[R](tmRange: TimeRange, f: Function1[T, R]): JavaRDD[R] = {
+  def map[R](tmRange: TimeRange, f: JFunction1[T, R]): JavaRDD[R] = {
     // BUGBUG:: Yet to implement filtering tmRange
     JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
@@ -411,7 +412,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
   /**
    * Return a new RDD by applying a function to all the elements of this RDD, and than flattening the results.
    */
-  def flatMap[U](f: FlatMapFunction1[T, U]): JavaRDD[U] = {
+  def flatMap[U](f: JFlatMapFunction1[T, U]): JavaRDD[U] = {
     def fn = (x: T) => f.call(x).asScala
     JavaRDD.fromRDD(rdd.flatMap(fn)(fakeClassTag[U]))(fakeClassTag[U])
   }
@@ -419,7 +420,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
   /**
    * Return an RDD of grouped elements.
    */
-  def groupBy[U](f: Function1[T, U]): JavaPairRDD[U, JIterable[T]] = {
+  def groupBy[U](f: JFunction1[T, U]): JavaPairRDD[U, JIterable[T]] = {
     // The type parameter is U instead of K in order to work around a compiler bug; see SPARK-4459
     implicit val ctagK: ClassTag[U] = fakeClassTag
     implicit val ctagV: ClassTag[JList[T]] = fakeClassTag
@@ -460,7 +461,7 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
   /**
    * Return a new RDD containing only the elements that satisfy the predicate.
    */
-  def filter(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rdd.filter((x => f.call(x).booleanValue())))
+  def filter(f: JFunction1[T, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rdd.filter((x => f.call(x).booleanValue())))
 
   /**
    * Return the union of this RDD and another one.
@@ -514,7 +515,7 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])(implicit val kClassTag: ClassTag[K
   /**
    * Return a new RDD containing only the elements that satisfy the predicate.
    */
-  def filter(f: Function1[(K, V), java.lang.Boolean]): JavaPairRDD[K, V] =
+  def filter(f: JFunction1[(K, V), java.lang.Boolean]): JavaPairRDD[K, V] =
     new JavaPairRDD[K, V](rdd.filter(x => f.call(x).booleanValue()))
 
   /**
@@ -757,7 +758,7 @@ abstract class RDDObject[T: ClassTag] {
     }
     RDD.makeRDD(values)
   }
-
+  
   /**
    * Return an RDD.
    */
@@ -772,6 +773,20 @@ abstract class RDDObject[T: ClassTag] {
     RDD.makeRDD(values)
   }
 
+  /**
+   * Return an RDD.
+   */
+  final def getRDD(key: Array[String]): RDD[T] = {
+    val mdlCtxt = getCurrentModelContext
+    var values: Array[T] = Array[T]()
+    if (mdlCtxt != null && mdlCtxt.txnContext != null) {
+      val fndVal = mdlCtxt.txnContext.gCtx.getRDD(mdlCtxt.txnContext.transId, getFullName, key.toList, null, null)
+      if (fndVal != null)
+        values = fndVal.map(v => v.asInstanceOf[T])
+    }
+    RDD.makeRDD(values)
+  }
+  
   // Saving data
   final def saveOne(inst: T): Unit = {
     val mdlCtxt = getCurrentModelContext
@@ -813,6 +828,8 @@ trait JavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]] {
   val LOG = Logger.getLogger(getClass);
   def wrapRDDObject(rddObj: RDDObject[T]): This
 
+  private def wrapRDD(rdd: RDD[T]): JavaRDD[T] = JavaRDD.fromRDD(rdd)
+  
   implicit val classTag: ClassTag[T]
   def rddObj: RDDObject[T]
 
@@ -829,24 +846,27 @@ trait JavaRDDObjectLike[T, This <: JavaRDDObjectLike[T, This]] {
   def getRecent(key: Array[String]): Optional[T] = Utils.optionToOptional(rddObj.getRecent(key))
   def getRecentOrNew(key: Array[String]): T = rddObj.getRecentOrNew(key)
 
-  def getOne(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): Optional[T] = null
-  def getOne(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): Optional[T] = null
-  def getOneOrNew(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): T = rddObj.build
-  def getOneOrNew(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): T = rddObj.build
+  def getOne(tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): Optional[T] = Utils.optionToOptional(rddObj.getOne(tmRange, (x => f.call(x).booleanValue())))
+  def getOneOrNew(tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): T = rddObj.getOneOrNew(tmRange, (x => f.call(x).booleanValue()))
+
+  def getOne(key: Array[String], tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): Optional[T] = Utils.optionToOptional(rddObj.getOne(key, tmRange, (x => f.call(x).booleanValue())))
+  def getOneOrNew(key: Array[String], tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): T = rddObj.getOneOrNew(key, tmRange, (x => f.call(x).booleanValue()))
 
   // This group of functions retrieve collection of objects 
-  def getRDDForCurrKey(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
-  def getRDDForCurrKey(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDDForCurrKey(f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = rddObj.getRDDForCurrKey((x => f.call(x).booleanValue()))
+  def getRDDForCurrKey(tmRange: TimeRange): JavaRDD[T] = rddObj.getRDDForCurrKey(tmRange)
+  def getRDDForCurrKey(tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = rddObj.getRDDForCurrKey(tmRange, (x => f.call(x).booleanValue()))
 
   // With too many messages, these may fail - mostly useful for message types where number of messages are relatively small 
-  def getRDD(): JavaRDD[T] = null
-  def getRDD(tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
-  def getRDD(tmRange: TimeRange): JavaRDD[T] = rddObj.getRDD(tmRange)
-  def getRDD(f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
+  def getRDD(): JavaRDD[T] = wrapRDD(rddObj.getRDD())
+  def getRDD(tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rddObj.getRDD(tmRange, {x: MessageContainerBase => f.call(x).booleanValue()}))
+  def getRDD(tmRange: TimeRange): JavaRDD[T] = wrapRDD(rddObj.getRDD(tmRange))
+  def getRDD(f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rddObj.getRDD((x => f.call(x).booleanValue())))
 
-  def getRDD(key: Array[String], tmRange: TimeRange, f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
-  def getRDD(key: Array[String], f: Function1[T, java.lang.Boolean]): JavaRDD[T] = null
-  def getRDD(key: Array[String], tmRange: TimeRange): JavaRDD[T] = rddObj.getRDD(key, tmRange)
+  def getRDD(key: Array[String], tmRange: TimeRange, f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rddObj.getRDD(key, tmRange, (x => f.call(x).booleanValue())))
+  def getRDD(key: Array[String], f: JFunction1[MessageContainerBase, java.lang.Boolean]): JavaRDD[T] = wrapRDD(rddObj.getRDD(key, {x: MessageContainerBase => f.call(x).booleanValue()}))
+  def getRDD(key: Array[String], tmRange: TimeRange): JavaRDD[T] = wrapRDD(rddObj.getRDD(key, tmRange))
+  def getRDD(key: Array[String]): JavaRDD[T] = wrapRDD(rddObj.getRDD(key))
 
   // Saving data
   def saveOne(inst: T): Unit = rddObj.saveOne(inst)

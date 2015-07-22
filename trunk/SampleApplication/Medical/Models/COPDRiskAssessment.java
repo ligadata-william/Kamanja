@@ -58,10 +58,18 @@ public class COPDRiskAssessment extends ModelBase {
         lookupPeriod = new TimeRange(getOneYearAgo(), getToday());
 
         // Getting message RDD objects
-        inpatientClaimHistoryRDD = InpatientClaimFactory.getRDD(partitionKeys, getLookupPeriod());
-        outpatientClaimHistoryRDD = OutpatientClaimFactory.getRDD(partitionKeys, getLookupPeriod());
-        hl7HistoryRDD = HL7Factory.getRDD(partitionKeys, getLookupPeriod());
-
+/*
+        // We can call the rddObject with local variable also.
+        JavaRDDObject<InpatientClaim> inpJavaRddObject = InpatientClaimFactory.rddObject;
+        JavaRDDObject<OutpatientClaim> outpJavaRddObject = OutpatientClaimFactory.rddObject;
+        JavaRDDObject<HL7> hl7JavaRddObject = HL7Factory.rddObject;
+        inpatientClaimHistoryRDD = inpJavaRddObject.getRDD(partitionKeys, getLookupPeriod());
+        outpatientClaimHistoryRDD = outpJavaRddObject.getRDD(partitionKeys, getLookupPeriod());
+        hl7HistoryRDD = hl7JavaRddObject.getRDD(partitionKeys, getLookupPeriod());
+*/
+        inpatientClaimHistoryRDD = InpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
+        outpatientClaimHistoryRDD = OutpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
+        hl7HistoryRDD = HL7Factory.rddObject.getRDD(partitionKeys, getLookupPeriod());
         // Filter claims down to the last year based on clm_thru_dt
         for (Iterator<InpatientClaim> ipClaimIt = inpatientClaimHistoryRDD.iterator(); ipClaimIt.hasNext(); ) {
             InpatientClaim claim = ipClaimIt.next();
@@ -85,11 +93,11 @@ public class COPDRiskAssessment extends ModelBase {
         }
 
         // Getting lookup tables
-        coughCodesRDD = CoughCodesFactory.getRDD(new TimeRange(0, getToday()));
-        dyspnoeaCodesRDD = DyspnoeaCodesFactory.getRDD(new TimeRange(0, getToday()));
-        envCodesRDD = EnvCodesFactory.getRDD(new TimeRange(0, getToday()));
-        smokeCodesRDD = SmokeCodesFactory.getRDD(new TimeRange(0, getToday()));
-        sputumCodesRDD = SputumCodesFactory.getRDD(new TimeRange(0, getToday()));
+        coughCodesRDD = CoughCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
+        dyspnoeaCodesRDD = DyspnoeaCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
+        envCodesRDD = EnvCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
+        smokeCodesRDD = SmokeCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
+        sputumCodesRDD = SputumCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
 
         for (Iterator<CoughCodes> coughCodeIt = coughCodesRDD.iterator(); coughCodeIt.hasNext(); ) {
             coughCodes.add(coughCodeIt.next().icd9code());
