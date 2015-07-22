@@ -247,13 +247,16 @@ trait MetadataAPIService extends HttpService {
       //TODO
       logger.debug("In post request process of model java")
       val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role)))
-      addSourceModelService ! AddSourceModelService.Process(body)
+      addSourceModelService ! AddSourceModelService.ProcessJava(body)
       //rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromJavaSource", body.toString, "Upload of java model successful").toString)
     }
     else if (objtype.equalsIgnoreCase("modelscala")) {
       //TODO
       logger.debug("In post request process of model scala")
-      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+     // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+     val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role)))
+      addSourceModelService ! AddSourceModelService.ProcessScala(body)
+     
     }
     else if (objtype.equalsIgnoreCase("modelpmml")) {
       //TODO
