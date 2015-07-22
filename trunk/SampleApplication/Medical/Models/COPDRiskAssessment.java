@@ -11,6 +11,7 @@ import java.util.*;
 /**
  * Created by will on 7/1/15.
  */
+
 public class COPDRiskAssessment extends ModelBase {
     // Messages
     private Beneficiary msg = null;
@@ -31,11 +32,11 @@ public class COPDRiskAssessment extends ModelBase {
     private ArrayList<HL7> hl7History = new ArrayList<>();
 
     // Lookup Arrays
-    private ArrayList<String> coughCodes = new ArrayList<String>();
-    private ArrayList<String> dyspnoeaCodes = new ArrayList<String>();
-    private ArrayList<String> envCodes = new ArrayList<String>();
-    private ArrayList<String> smokeCodes = new ArrayList<String>();
-    private ArrayList<String> sputumCodes = new ArrayList<String>();
+    private ArrayList<String> coughCodes = new ArrayList<>();
+    private ArrayList<String> dyspnoeaCodes = new ArrayList<>();
+    private ArrayList<String> envCodes = new ArrayList<>();
+    private ArrayList<String> smokeCodes = new ArrayList<>();
+    private ArrayList<String> sputumCodes = new ArrayList<>();
 
     private String[] partitionKeys = null;
 
@@ -58,18 +59,10 @@ public class COPDRiskAssessment extends ModelBase {
         lookupPeriod = new TimeRange(getOneYearAgo(), getToday());
 
         // Getting message RDD objects
-/*
-        // We can call the rddObject with local variable also.
-        JavaRDDObject<InpatientClaim> inpJavaRddObject = InpatientClaimFactory.rddObject;
-        JavaRDDObject<OutpatientClaim> outpJavaRddObject = OutpatientClaimFactory.rddObject;
-        JavaRDDObject<HL7> hl7JavaRddObject = HL7Factory.rddObject;
-        inpatientClaimHistoryRDD = inpJavaRddObject.getRDD(partitionKeys, getLookupPeriod());
-        outpatientClaimHistoryRDD = outpJavaRddObject.getRDD(partitionKeys, getLookupPeriod());
-        hl7HistoryRDD = hl7JavaRddObject.getRDD(partitionKeys, getLookupPeriod());
-*/
         inpatientClaimHistoryRDD = InpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
         outpatientClaimHistoryRDD = OutpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
         hl7HistoryRDD = HL7Factory.rddObject.getRDD(partitionKeys, getLookupPeriod());
+
         // Filter claims down to the last year based on clm_thru_dt
         for (Iterator<InpatientClaim> ipClaimIt = inpatientClaimHistoryRDD.iterator(); ipClaimIt.hasNext(); ) {
             InpatientClaim claim = ipClaimIt.next();
@@ -93,11 +86,11 @@ public class COPDRiskAssessment extends ModelBase {
         }
 
         // Getting lookup tables
-        coughCodesRDD = CoughCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
-        dyspnoeaCodesRDD = DyspnoeaCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
-        envCodesRDD = EnvCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
-        smokeCodesRDD = SmokeCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
-        sputumCodesRDD = SputumCodesFactory.rddObject.getRDD(new TimeRange(0, getToday()));
+        coughCodesRDD = CoughCodesFactory.rddObject.getRDD();
+        dyspnoeaCodesRDD = DyspnoeaCodesFactory.rddObject.getRDD();
+        envCodesRDD = EnvCodesFactory.rddObject.getRDD();
+        smokeCodesRDD = SmokeCodesFactory.rddObject.getRDD();
+        sputumCodesRDD = SputumCodesFactory.rddObject.getRDD();
 
         for (Iterator<CoughCodes> coughCodeIt = coughCodesRDD.iterator(); coughCodeIt.hasNext(); ) {
             coughCodes.add(coughCodeIt.next().icd9code());
