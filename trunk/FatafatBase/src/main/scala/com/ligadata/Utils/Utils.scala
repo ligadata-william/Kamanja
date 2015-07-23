@@ -90,7 +90,8 @@ object Utils {
       }
     } catch {
       case e: Exception =>
-        failStr = "Invalid Configuration. Message: " + e.getMessage()
+        val stackTrace = Utils.ThrowableTraceString(e)
+        failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:"+stackTrace
         configs = null
     }
     return (configs, failStr)

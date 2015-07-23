@@ -21,7 +21,7 @@ lazy val BaseTypes = project.in(file("BaseTypes")) dependsOn(Metadata, Exception
 
 lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata, Exceptions)
 
-lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata, Exceptions)
+lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata, Exceptions, FatafatBase)
 
 lazy val ZooKeeperClient   = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize, Exceptions)
 
@@ -43,7 +43,7 @@ lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/Fi
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(FatafatBase, FatafatData, Storage, Serialize, Exceptions)
 
-lazy val Storage = project.in(file("Storage")) dependsOn(Metadata, Exceptions)
+lazy val Storage = project.in(file("Storage")) dependsOn(Metadata, Exceptions, FatafatBase)
 
 lazy val Metadata = project.in(file("Metadata")) dependsOn(Exceptions)
 
@@ -73,7 +73,7 @@ lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dep
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(FatafatBase,MetadataAPI,ZooKeeperLeaderLatch, Exceptions)
 
-lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient")) dependsOn(Serialize, Exceptions)
+lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient")) dependsOn(Serialize, Exceptions, FatafatBase)
 
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, FatafatBase, Exceptions)
 
@@ -81,13 +81,13 @@ lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, FatafatB
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient, Exceptions)
 
-lazy val JsonDataGen = project.in(file("Utils/JsonDataGen")) dependsOn(Exceptions)
+lazy val JsonDataGen = project.in(file("Utils/JsonDataGen")) dependsOn(Exceptions, FatafatBase)
 
 lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI, Exceptions)
 
 lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters, Exceptions)
 
-lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata, Exceptions)
+lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata, Exceptions, FatafatBase)
 
 lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage, Exceptions)
 
@@ -95,7 +95,7 @@ lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase, Ex
 
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs, Exceptions)
 
-lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector")) dependsOn(FatafatBase)
 
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
 

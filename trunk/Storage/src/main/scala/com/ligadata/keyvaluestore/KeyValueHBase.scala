@@ -24,6 +24,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions._
+import com.ligadata.Utils.Utils
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -107,6 +108,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -119,6 +121,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     connection = HConnectionManager.createConnection(config);
   } catch {
     case e: Exception => {
+      val stackTrace = Utils.ThrowableTraceString(e)
       throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -132,7 +135,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
         ugi.checkTGTAndReloginFromKeytab
     } catch {
       case e: Exception => {
-        logger.error("Failed to relogin into HBase. Message:" + e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to relogin into HBase. Message:" + e.getMessage()+"\nStackTrace:"+stackTrace)
         // Not throwing exception from here
       }
     }
@@ -208,6 +212,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       handler(value)
     } catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new KeyNotFoundException(e.getMessage())
       }
     }
@@ -231,6 +236,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
       target.Construct(key, value)
     } catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new KeyNotFoundException(e.getMessage())
       }
     }

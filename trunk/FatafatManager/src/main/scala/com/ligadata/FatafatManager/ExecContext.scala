@@ -8,6 +8,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Utils.Utils
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
@@ -33,8 +34,9 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         })
       } catch {
         case e: Exception => {
-          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          e.printStackTrace()
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
@@ -53,7 +55,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -112,7 +115,8 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             results += m.asInstanceOf[Map[String, Any]]
           } catch {
             case e: Exception => {
-              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
+              val stackTrace = Utils.ThrowableTraceString(e)
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
         }
@@ -124,14 +128,16 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             })
           } catch {
             case e: Exception => {
-              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
+              val stackTrace = Utils.ThrowableTraceString(e)
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
         }
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
 
@@ -177,7 +183,8 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
         })
       } catch {
         case e: Exception => {
-          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
@@ -185,7 +192,8 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
   }

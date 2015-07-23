@@ -7,6 +7,7 @@ import kafka.producer.{ ProducerConfig, Producer, KeyedMessage }
 import org.apache.log4j.Logger
 import com.ligadata.FatafatBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.KafkaQueueAdapterConfiguration
+import com.ligadata.Utils.Utils
 
 object KafkaProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new KafkaProducer(inputConfig, cntrAdapter)
@@ -58,7 +59,8 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       cntrAdapter.addCntr(key, 1) // for now adding each row
     } catch {
       case e: Exception => {
-        LOG.error("Failed to send :" + e.getMessage)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to send :" + e.getMessage+"\nStackTrace:"+stackTrace)
       }
     }
   }

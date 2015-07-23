@@ -3,6 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Utils.Utils
 
 class BaseTypesHandler {
 
@@ -143,7 +144,7 @@ class BaseTypesHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -182,7 +183,9 @@ class BaseTypesHandler {
         }
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
     serializedBuf.toString
@@ -215,7 +218,9 @@ class BaseTypesHandler {
       }
 
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"/nStackTrace:"+stackTrace)}
     }
 
     deserializedBuf.toString
@@ -293,7 +298,9 @@ class BaseTypesHandler {
       }
 
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry)

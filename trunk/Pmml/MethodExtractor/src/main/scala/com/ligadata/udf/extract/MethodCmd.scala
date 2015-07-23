@@ -5,6 +5,7 @@ import util.control.Breaks._
 import scala.util.matching.Regex
 import org.apache.log4j.Logger
 import com.ligadata.fatafat.metadata._
+import com.ligadata.Utils.Utils
 
 
 /** 
@@ -159,7 +160,7 @@ class MethodCmd(  val mgr : MdMgr
 				argNames = ((reNames findAllIn typeSigArgs).mkString(",")).split(',').map(nm => nm.stripSuffix(":"))
 				argTypes = typeSigArgs.split(reTypes).filter(_.length > 0).map(typ => typ.trim)
 			} catch {
-				case e : Exception => {	}
+				case e : Exception => { val stackTrace = Utils.ThrowableTraceString(e)	}
 			}
 			
 			if (argNames.size == 0 || argTypes.size == 0) {

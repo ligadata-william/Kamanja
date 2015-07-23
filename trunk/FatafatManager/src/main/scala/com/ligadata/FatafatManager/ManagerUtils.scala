@@ -34,7 +34,7 @@ object ManagerUtils {
       return classes.toArray
     } catch {
       case e: Exception =>
-        e.printStackTrace();
+        val stackTrace = Utils.ThrowableTraceString(e)
         return null
     }
   }
@@ -55,7 +55,8 @@ object ManagerUtils {
           }
         } catch {
           case e: Exception => {
-            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+            val stackTrace = Utils.ThrowableTraceString(e)
+            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             return false
           }
         }

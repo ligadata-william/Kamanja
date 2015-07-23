@@ -13,6 +13,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions._
 
 import java.util.Date
+import com.ligadata.Utils.Utils
 
 case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
 case class TypeDefList(Types: List[TypeDef])
@@ -91,18 +92,19 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val funcDef = List(fn.NameSpace,fn.Name,fn.Version)
 	    val funcName = funcDef.mkString(",")
-	    logger.error("Failed to add the func: " + funcName  + ": " + e.getMessage())
+      val stackTrace = Utils.ThrowableTraceString(e)
+	    logger.error("Failed to add the func: " + funcName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	  }
 	}
       })
       funcDefList.toArray
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+      val stackTrace = Utils.ThrowableTraceString(e)
         throw new FunctionListParsingException(e.getMessage())
       }
     }
@@ -186,13 +188,15 @@ object JsonSerializer {
       case e:AlreadyExistsException => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
+  val stackTrace = Utils.ThrowableTraceString(e)
+	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	throw new AlreadyExistsException(e.getMessage())
       }
       case e:Exception => {
 	val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	val typeName = keyValues.mkString(",")
-	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
+  val stackTrace = Utils.ThrowableTraceString(e)
+	logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	throw new TypeDefProcessingException(e.getMessage())
       }
     }
@@ -219,23 +223,25 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
+      val stackTrace = Utils.ThrowableTraceString(e)
+	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	  }
 	  case e:TypeDefProcessingException => {
 	    val keyValues = List(typ.NameSpace,typ.Name,typ.Version)
 	    val typeName = keyValues.mkString(",")
-	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage())
+      val stackTrace = Utils.ThrowableTraceString(e)
+	    logger.error("Failed to add the type: " + typeName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	  }
 	}
       })
       typeDefList.toArray
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new TypeDefListParsingException(e.getMessage())
       }
     }
@@ -268,7 +274,8 @@ object JsonSerializer {
 	  case e:AlreadyExistsException => {
 	    val keyValues = List(o.NameSpace,o.Name,o.Version)
 	    val fullName  = keyValues.mkString(",")
-	    logger.error("Failed to add the Concept: " + fullName  + ": " + e.getMessage())
+      val stackTrace = Utils.ThrowableTraceString(e)
+	    logger.error("Failed to add the Concept: " + fullName  + ": " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	  }
 	}
       })
@@ -276,11 +283,11 @@ object JsonSerializer {
       attrDefList
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ConceptListParsingException(e.getMessage())
       }
     }
@@ -302,11 +309,11 @@ object JsonSerializer {
       zkTransaction
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ZkTransactionParsingException(e.getMessage())
       }
     }
@@ -338,14 +345,15 @@ object JsonSerializer {
       //val derivedConcept = MdMgr.GetMdMgr.MakeDerivedAttr(func,attrList)
     }catch {
       case e:AlreadyExistsException => {
-	logger.error("Failed to add the DerivedConcept: : " + e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+	logger.error("Failed to add the DerivedConcept: : " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ConceptListParsingException(e.getMessage())
       }
     }
@@ -372,11 +380,11 @@ object JsonSerializer {
       contDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ContainerDefParsingException(e.getMessage())
       }
     }
@@ -428,11 +436,11 @@ object JsonSerializer {
       concept
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ConceptParsingException(e.getMessage())
       }
     }
@@ -466,11 +474,11 @@ object JsonSerializer {
       function
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new FunctionParsingException(e.getMessage())
       }
     }
@@ -501,11 +509,11 @@ object JsonSerializer {
       msgDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new MessageDefParsingException(e.getMessage())
       }
     }
@@ -547,11 +555,11 @@ object JsonSerializer {
       modDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ModelDefParsingException(e.getMessage())
       }
     }
@@ -569,11 +577,11 @@ object JsonSerializer {
       cfg
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new EngineConfigParsingException(e.getMessage())
       }
     }
@@ -591,11 +599,11 @@ object JsonSerializer {
       cfg
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw new ApiArgListParsingException(e.getMessage())
       }
     }
@@ -617,7 +625,7 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -820,7 +828,7 @@ object JsonSerializer {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -1377,7 +1385,7 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -1399,7 +1407,7 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw Json4sSerializationException(e.getMessage())
       }
     }

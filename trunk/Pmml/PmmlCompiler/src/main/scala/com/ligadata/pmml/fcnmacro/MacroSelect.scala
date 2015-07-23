@@ -10,6 +10,7 @@ import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.traits._
 import com.ligadata.pmml.syntaxtree.cooked.common._
 import com.ligadata.pmml.support._
+import com.ligadata.Utils.Utils
 
 /**
  * class MacroSelect retrieves a MacroDef from the mdmgr based upon the function signature.
@@ -482,7 +483,9 @@ class MacroSelect(val ctx : PmmlContext
 		  			val numeric(argNum) = part
 		  			arg = argNum
 	  			} catch {
-	  			  case e: Exception => arg = null
+	  			  case e: Exception => {
+              val stackTrace = Utils.ThrowableTraceString(e)
+              arg = null}
 	  			}
 	  			arg
 	  		})

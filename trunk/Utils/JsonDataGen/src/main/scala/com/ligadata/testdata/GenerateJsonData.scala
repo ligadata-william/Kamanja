@@ -6,6 +6,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.HashMap
 import java.io.File
 import java.io.PrintWriter
+import com.ligadata.Utils.Utils
 
 object GenerateJsonData {
 
@@ -78,7 +79,8 @@ class GenerateJsonData {
       outfile.close
     } catch {
       case e: Exception => {
-        throw new Exception("Error: " + e.printStackTrace())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Error: " + stackTrace)
       }
     }
   }
@@ -112,7 +114,8 @@ class GenerateJsonData {
       count = count + 1
     } catch {
       case e: Exception => {
-        throw new Exception("Error: " + e.printStackTrace())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Error: " + stackTrace)
       }
     }
 
@@ -125,7 +128,8 @@ class GenerateJsonData {
       outputfile.write("\n")
     } catch {
       case e: Exception => {
-        throw new Exception("Error: " + e.printStackTrace())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Error: " + stackTrace)
       }
     }
 

@@ -1,5 +1,6 @@
 package com.ligadata.messagedef
 
+import com.ligadata.Utils.Utils
 class ConstantMethodGenerator {
   //populate method in msg-TransactionMsg class
    def populate = {
@@ -38,7 +39,7 @@ class ConstantMethodGenerator {
       """
  	}catch{
 		case e:Exception =>{
-			e.printStackTrace()
+			val stackTrace = Utils.ThrowableTraceString(e)
   			throw e
 		}
 	}
@@ -58,7 +59,7 @@ class ConstantMethodGenerator {
       """
 	 	}catch{
 			case e:Exception =>{
-				e.printStackTrace()
+				val stackTrace = Utils.ThrowableTraceString(e)
 	  			throw e
 			}
 		}
@@ -74,7 +75,7 @@ class ConstantMethodGenerator {
      	 assignJsonData(json)
 	}catch{
 	    case e:Exception =>{
-   	    	e.printStackTrace()
+   	    	val stackTrace = Utils.ThrowableTraceString(e)
    	  		throw e	    	
 	  	}
 	  }
@@ -118,7 +119,7 @@ class ConstantMethodGenerator {
       """
 	  }catch{
   			case e:Exception =>{
-   				e.printStackTrace()
+   				val stackTrace = Utils.ThrowableTraceString(e)
    			throw e	    	
 	  	}
 	}
@@ -180,7 +181,7 @@ class ConstantMethodGenerator {
    
 	  } catch {
       	case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -209,7 +210,7 @@ class ConstantMethodGenerator {
     	assignXml(xml)
 	} catch{
 		case e:Exception =>{
-   			e.printStackTrace()
+   			val stackTrace = Utils.ThrowableTraceString(e)
    	  		throw e	    	
     	}
 	}
@@ -227,7 +228,7 @@ class ConstantMethodGenerator {
       """
 	}catch{
 	  case e:Exception =>{
-	    e.printStackTrace()
+	    val stackTrace = Utils.ThrowableTraceString(e)
 		throw e	    	
 	  }
    	}
@@ -243,7 +244,7 @@ class ConstantMethodGenerator {
      
 	}catch{
 	  case e:Exception =>{
-	    e.printStackTrace()
+	    val stackTrace = Utils.ThrowableTraceString(e)
 		throw e	    	
 	  }
    	}
@@ -451,7 +452,7 @@ class ConstantMethodGenerator {
     	   """ + serStr + """
     	} catch {
     		case e: Exception => {
-    	    e.printStackTrace()
+    	    val stackTrace = Utils.ThrowableTraceString(e)
     	  }
         }
      } 
@@ -512,7 +513,7 @@ class ConstantMethodGenerator {
       	""" + deSer + """ 
       	} catch {
       		case e: Exception => {
-          		e.printStackTrace()
+          		val stackTrace = Utils.ThrowableTraceString(e)
       		}
       	}
     } 
@@ -594,7 +595,7 @@ class ConstantMethodGenerator {
      SerializeNonBaseTypes(dos)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
       }
     }
   }

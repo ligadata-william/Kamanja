@@ -667,7 +667,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -807,7 +808,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -835,7 +837,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -1659,8 +1662,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
 
               } catch {
-                case e: Exception => {}
-                case t: Throwable => {}
+                case e: Exception => {val stackTrace = Utils.ThrowableTraceString(e)}
+                case t: Throwable => {val stackTrace = Utils.ThrowableTraceString(t)}
               }
               if (objs(0) != null) {
                 retResult ++= TxnContextCommonFunctions.getRddDataFromFatafatData(objs(0), tmRange, f)

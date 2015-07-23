@@ -8,6 +8,7 @@ import com.ligadata.fatafat.metadata.AttributeDef
 import com.ligadata.fatafat.metadata.MappedMsgTypeDef
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
+import com.ligadata.Utils.Utils
 
 import org.apache.log4j.Logger
 
@@ -180,7 +181,7 @@ class ContainerTypeHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }

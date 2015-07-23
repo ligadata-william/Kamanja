@@ -7,6 +7,7 @@ import org.joda.time.format._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.FatafatBase._
 import org.apache.log4j.Logger
+import com.ligadata.Utils.Utils
 
 trait LogTrait {
     val loggerName = this.getClass.getName()
@@ -978,6 +979,7 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
+            val stackTrace = Utils.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
 			    	0
 			    }
@@ -1027,6 +1029,7 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
+            val stackTrace = Utils.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$dateStr' with any of the patterns - '${datePatterns.toString}'")
 			    	0
 			    }
@@ -1072,6 +1075,7 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 		      case iae:IllegalArgumentException => {
+            val stackTrace = Utils.ThrowableTraceString(iae)
 		    	  logger.error(s"Unable to parse '$timeStr' with any of the patterns - '${timePatterns.toString}'")
 		    	  0
 		      }

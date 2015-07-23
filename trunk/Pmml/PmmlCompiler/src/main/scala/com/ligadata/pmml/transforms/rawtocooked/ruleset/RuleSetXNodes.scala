@@ -124,7 +124,7 @@ class SimpleRulePmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNod
 						rule.Confidence(node.confidence.toDouble)
 						rule.Weight(node.weight.toDouble)
 					} catch {
-						case _ : Throwable => ctx.logger.debug (s"Unable to coerce one or more mining 'double' fields... name = $id")
+						case _ : Throwable => {ctx.logger.debug (s"Unable to coerce one or more mining 'double' fields... name = $id")}
 					}
 				
 					rsm.addRule (rule) 

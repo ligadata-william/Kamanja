@@ -13,6 +13,7 @@ import org.apache.log4j._
 
 import com.ligadata.fatafat.metadata.SecurityAdapter
 import java.util.Properties
+import com.ligadata.Utils.Utils
 
 class SimpleApacheShiroAdapter extends SecurityAdapter{
 
@@ -77,27 +78,30 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
         currentUser.login(token);
       } catch {
         case uae:UnknownAccountException => {
-          log.error("SimpleApacheShiroAdapter: There is no user with username of " + token.getPrincipal());
+          val stackTrace = Utils.ThrowableTraceString(uae)
+          log.error("SimpleApacheShiroAdapter: There is no user with username of " + token.getPrincipal()+"\nStackTrace:"+stackTrace);
           return false
         } 
         case ice:IncorrectCredentialsException => {
-          log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
+          val stackTrace = Utils.ThrowableTraceString(ice)
+          log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!"+"\nStackTrace:"+stackTrace);
           return false
         } 
         case lae:LockedAccountException => {
+          val stackTrace = Utils.ThrowableTraceString(lae)
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
-                    "Please contact your administrator to unlock it.");
+                    "Please contact your administrator to unlock it."+"\nStackTrace:"+stackTrace);
           return false
         }
         // ... catch more exceptions here, maybe custom ones specific to your application?
         case ae: AuthenticationException => {
-          ae.printStackTrace()
-          log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
+          val stackTrace = Utils.ThrowableTraceString(ae)
+          log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage()+"\nStackTrace:"+stackTrace)
           return false
         }
         case e: Exception => {
-          e.printStackTrace()
-          log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage())
+          val stackTrace = Utils.ThrowableTraceString(e)
+          log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage()+"\nStackTrace:"+stackTrace)
           return false
         }
       }

@@ -3,6 +3,8 @@ package com.ligadata.FatafatBase
 import java.net.URL
 import java.net.URLClassLoader
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
+import com.ligadata.Utils.Utils
+
 
 trait MessageContainerBase {
   var transactionId: Long
@@ -65,8 +67,8 @@ object SerializeDeserialize {
 
     } catch {
       case e: Exception => {
-        // LOG.error("Failed to get classname :" + clsName)
-        e.printStackTrace
+        //LOG.error("Failed to get classname :" + clsName)
+        Utils.ThrowableTraceString(e)
         dos.close
         bos.close
         throw e
@@ -100,7 +102,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         // LOG.error("Failed to get classname :" + clsName)
-        e.printStackTrace
+        Utils.ThrowableTraceString(e)
         dis.close
         throw e
       }

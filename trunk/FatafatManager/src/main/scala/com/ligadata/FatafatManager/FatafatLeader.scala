@@ -22,6 +22,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.curator.utils.ZKPaths
 import scala.actors.threadpool.{ Executors, ExecutorService }
+import com.ligadata.Utils.Utils
 
 case class AdapMaxPartitions(Adap: String, MaxParts: Int)
 case class PartAndTxn(Part: String, Txn: Long)
@@ -155,7 +156,8 @@ object FatafatLeader {
             }
           } catch {
             case e: Exception => {
-              LOG.error("UpdatePartitionsNodeData => Failed eventType: %s, eventPath: %s, eventPathData: %s, Reason:%s, Message:%s".format(eventType, eventPath, evntPthData, e.getCause, e.getMessage))
+              val stackTrace = Utils.ThrowableTraceString(e)
+              LOG.error("UpdatePartitionsNodeData => Failed eventType: %s, eventPath: %s, eventPathData: %s, Reason:%s, Message:%s".format(eventType, eventPath, evntPthData, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
         }
@@ -168,7 +170,8 @@ object FatafatLeader {
       }
     } catch {
       case e: Exception => {
-        LOG.error("Exception while UpdatePartitionsNodeData, reason %s, message %s".format(e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Exception while UpdatePartitionsNodeData, reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -254,6 +257,8 @@ object FatafatLeader {
               Thread.sleep(1000) // sleep 1000 ms and then check
             } catch {
               case e: Exception => {
+                val stackTrace = Utils.ThrowableTraceString(e)
+                
               }
             }
             if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
@@ -317,7 +322,9 @@ object FatafatLeader {
         SetNewDataToZkc(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
       }
     } catch {
-      case e: Exception => {}
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+      }
     }
   }
 
@@ -456,8 +463,9 @@ object FatafatLeader {
         }
       } catch {
         case e: Exception => {
-          LOG.error("Failed to print final Unique Keys. JsonString:%s, Reason:%s, Message:%s".format(receivedJsonStr, e.getCause, e.getMessage))
-          e.printStackTrace()
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to print final Unique Keys. JsonString:%s, Reason:%s, Message:%s".format(receivedJsonStr, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          
         }
       }
     })
@@ -551,7 +559,9 @@ object FatafatLeader {
               SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
             }
           } catch {
-            case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+            case e: Exception => {
+              val stackTrace = Utils.ThrowableTraceString(e)
+              LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
           }
         }
         case "distribute" => {
@@ -577,7 +587,8 @@ object FatafatLeader {
 
           } catch {
             case e: Exception => {
-              LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+              val stackTrace = Utils.ThrowableTraceString(e)
+              LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
               distributed = false
             }
           }
@@ -593,7 +604,8 @@ object FatafatLeader {
               sentDistributed = true
             } catch {
               case e: Exception => {
-                LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage))
+                val stackTrace = Utils.ThrowableTraceString(e)
+                LOG.error("distribute action failed with reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
               }
             }
           }
@@ -613,7 +625,8 @@ object FatafatLeader {
       // 
     } catch {
       case e: Exception => {
-        LOG.error("Found invalid JSON: %s".format(receivedJsonStr))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Found invalid JSON: %s".format(receivedJsonStr)+"\nStackTrace:"+stackTrace)
       }
     }
 
@@ -711,7 +724,8 @@ object FatafatLeader {
       // 
     } catch {
       case e: Exception => {
-        LOG.error("Found invalid JSON: %s".format(receivedJsonStr))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Found invalid JSON: %s".format(receivedJsonStr)+"StackTrace:"+stackTrace)
       }
     }
 
@@ -765,7 +779,9 @@ object FatafatLeader {
           })
         }
       } catch {
-        case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        case e: Exception => { 
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
       }
     }
   }
@@ -780,7 +796,9 @@ object FatafatLeader {
           uniqPartKeysValues ++= uKeysVals
         })
       } catch {
-        case e: Exception => { LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        case e: Exception => {
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
       }
     }
 
@@ -821,6 +839,7 @@ object FatafatLeader {
         } catch {
           case e: Exception => {
             // Not doing anything
+            val stackTrace = Utils.ThrowableTraceString(e)
           }
         }
 
@@ -886,7 +905,8 @@ object FatafatLeader {
         */
       } catch {
         case e: Exception => {
-          LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace"+stackTrace)
           throw e
         }
       }

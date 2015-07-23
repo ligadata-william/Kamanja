@@ -3,6 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
+import com.ligadata.Utils.Utils
 
 class ArrayTypeHandler {
 
@@ -167,7 +168,7 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -368,7 +369,7 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -416,7 +417,9 @@ class ArrayTypeHandler {
         serializedBuf.append("%sdos.write(bytes)}})}}%s".format(pad3, newline))
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
     return serializedBuf.toString()
@@ -475,7 +478,9 @@ class ArrayTypeHandler {
         deserializedBuf.append("%s%s fields(\"%s\") = (-1, %s)}%s".format(newline, pad2, f.Name, f.Name, newline))
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception =>{ 
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
     return deserializedBuf.toString
   }
@@ -598,7 +603,9 @@ class ArrayTypeHandler {
         }
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)

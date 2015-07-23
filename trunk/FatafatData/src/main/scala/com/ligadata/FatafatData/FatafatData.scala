@@ -8,6 +8,7 @@ import com.ligadata.FatafatBase._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.Utils.Utils
 
 case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -134,7 +135,7 @@ class FatafatData {
         })
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          Utils.ThrowableTraceString(e)
           throw e
         }
       }
@@ -150,7 +151,7 @@ class FatafatData {
         data ++= collection.data
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          Utils.ThrowableTraceString(e)
           throw e
         }
       }
@@ -197,7 +198,7 @@ class FatafatData {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        Utils.ThrowableTraceString(e)
         dos.close
         bos.close
         throw e
@@ -251,7 +252,7 @@ class FatafatData {
       dis.close
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        Utils.ThrowableTraceString(e)
         dis.close
         throw e
       }

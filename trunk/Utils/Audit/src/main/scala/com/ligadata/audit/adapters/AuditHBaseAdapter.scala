@@ -26,6 +26,7 @@ import java.io.IOException
 import java.util.Date
 import java.util.Calendar
 import com.ligadata.Exceptions._
+import com.ligadata.Utils.Utils
 
 //import org.apache.hadoop.hbase.util.Bytes;
 /*
@@ -77,7 +78,8 @@ class AuditHBaseAdapter extends AuditAdapter
       }
       catch{
         case e:Exception => {
-          throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
+          val stackTrace = Utils.ThrowableTraceString(e)
+          throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage()+"\nStackTrace:"+stackTrace)
         }
       }
       createTable(table)
@@ -132,7 +134,8 @@ class AuditHBaseAdapter extends AuditAdapter
       tableHBase.put(p)
     } catch {
       case e:Exception => {
-	      throw new Exception("Failed to save an object in HBase table " + table + ":" + e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+	      throw new Exception("Failed to save an object in HBase table " + table + ":" + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -224,7 +227,8 @@ class AuditHBaseAdapter extends AuditAdapter
       auditRecords
     } catch {
       case e:Exception => {
-	throw new Exception("Failed to fetch audit records: " + e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+	throw new Exception("Failed to fetch audit records: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -252,7 +256,8 @@ class AuditHBaseAdapter extends AuditAdapter
        })
     } catch {
       case e:Exception => {
-        throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception("Failed to read Audit Configuration: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }     
     }
   }

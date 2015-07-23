@@ -17,6 +17,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import kafka.consumer.ConsoleConsumer
+import com.ligadata.Utils.Utils
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -87,6 +88,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), groupName)
     } catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
       }
     }
 
@@ -212,7 +214,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           val key = Category + "/" + qc.Name + "/evtCnt"
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
-                          case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                          case e: Exception => {
+                            val stackTrace = Utils.ThrowableTraceString(e)
+                            LOG.error("Failed with Message:" + e.getMessage+"/nStackTrace:"+stackTrace)}
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -229,7 +233,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
               }
             } catch {
               case e: Exception => {
-                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
+                val stackTrace = Utils.ThrowableTraceString(e)
+                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
               }
             }
             LOG.debug("===========================> Exiting Thread for Partition:" + curPartitionId)
@@ -238,7 +243,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       }
     } catch {
       case e: Exception => {
-        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -258,9 +264,14 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     val dataAndStat = try {
       (Some(client.readData(path, stat)), stat)
     } catch {
-      case e: ZkNoNodeException =>
+      case e: ZkNoNodeException =>{
+       val stackTrace = Utils.ThrowableTraceString(e)
         (None, stat)
-      case e2: Exception => throw e2
+      }
+      case e2: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e2)
+        throw e2
+        }
     }
     dataAndStat
   }
@@ -313,7 +324,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       key.Deserialize(k)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -328,7 +340,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
+          val stackTrace = Utils.ThrowableTraceString(e)
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"/nStackTrace:"+stackTrace)
           throw e
         }
       }

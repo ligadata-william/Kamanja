@@ -11,6 +11,7 @@ import com.ligadata.fatafat.metadata.StructTypeDef
 import com.ligadata.fatafat.metadata.AttributeDef
 import com.ligadata.fatafat.metadata.MappedMsgTypeDef
 import org.apache.log4j.Logger
+import com.ligadata.Utils.Utils
 
 class MessageFldsExtractor {
 
@@ -454,7 +455,7 @@ class MessageFldsExtractor {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         throw e
       }
     }
@@ -485,7 +486,7 @@ class MessageFldsExtractor {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
       }
     }
     log.debug("version from metadata " + msgdef.get.Version)
@@ -573,7 +574,7 @@ class MessageFldsExtractor {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
       }
     }
 

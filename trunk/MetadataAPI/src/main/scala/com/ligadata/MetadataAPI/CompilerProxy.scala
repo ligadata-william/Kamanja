@@ -29,6 +29,7 @@ import org.json4s.jackson.JsonMethods._
 
 import java.net.URL
 import java.net.URLClassLoader
+import com.ligadata.Utils.Utils
 
 /**
  *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the
@@ -102,8 +103,9 @@ class CompilerProxy{
         nonTypeDeps)
     } catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
+        logger.error("\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -123,8 +125,9 @@ class CompilerProxy{
         modelVersion, msgDefClassFilePath, elements, sourceCode, totalDeps, typeDeps, nonTypeDeps)
     }  catch {
       case e: Exception => {
+        val stackTrace = Utils.ThrowableTraceString(e)
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
+        logger.error("\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -203,12 +206,14 @@ class CompilerProxy{
       (classStr,modDef)
     } catch {
       case e:Exception =>{
-        logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition " + e.toString+"\nStackTrace:"+stackTrace)
+        throw new ModelCompilationFailedException(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
       case e:AlreadyExistsException => {
-        logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition " + e.toString+"\nStackTrace:"+stackTrace)
+        throw new ModelCompilationFailedException(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -323,14 +328,15 @@ class CompilerProxy{
     }
     catch{
       case e:Exception =>{
-        logger.debug("Failed to compile the message definition " + e.toString)
-        e.printStackTrace
-        throw new MsgCompilationFailedException(e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.debug("Failed to compile the message definition " + e.toString+"\nStackTrace:"+stackTrace)
+        throw new MsgCompilationFailedException(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
       case e:AlreadyExistsException =>{
-        logger.debug("Failed to compile the message definition " + e.toString)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.debug("Failed to compile the message definition " + e.toString+"\nStackTrace:"+stackTrace)
         //e.printStackTrace
-        throw new MsgCompilationFailedException(e.getMessage())
+        throw new MsgCompilationFailedException(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -565,13 +571,14 @@ class CompilerProxy{
       modDef
     } catch {
       case e:AlreadyExistsException =>{
-        logger.error("Failed to compile the model definition " + e.toString)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition " + e.toString+"\nStackTrace:"+stackTrace)
         throw e
       }
       case e:Exception =>{
-        e.printStackTrace()
-        logger.error("Failed to compile the model definition " + e.toString)
-        throw new ModelCompilationFailedException(e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to compile the model definition " + e.toString+"\nStackTrace:"+stackTrace)
+        throw new ModelCompilationFailedException(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
 
@@ -748,7 +755,7 @@ class CompilerProxy{
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
           } catch {
             case e: java.lang.NoClassDefFoundError => {
-              e.printStackTrace
+              val stackTrace = Utils.ThrowableTraceString(e)
               throw e
             }
             case e: Exception => {
@@ -769,9 +776,9 @@ class CompilerProxy{
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
-            logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName)
-            e.printStackTrace()
-            throw new MsgCompilationFailedException(clsName)
+            val stackTrace = Utils.ThrowableTraceString(e)
+            logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName+"\nStackTrtace:"+stackTrace)
+            throw new MsgCompilationFailedException(clsName+"\nStackTrace:"+stackTrace)
           }
         }
       }
@@ -805,7 +812,7 @@ class CompilerProxy{
       return classes.toArray
     } catch {
       case e: Exception =>
-        e.printStackTrace();
+        val stackTrace = Utils.ThrowableTraceString(e)
         return Array[String]()
     }
   }
@@ -883,7 +890,8 @@ class CompilerProxy{
         classLoader.loadedJars += fl.getPath()
       } catch {
         case e: Exception => {
-          logger.error("Failed to add "+jarName + " due to internal exception " + e.printStackTrace)
+          val stackTrace = Utils.ThrowableTraceString(e)
+          logger.error("Failed to add "+jarName + " due to internal exception " + "\nStackTrace:"+stackTrace)
           return
         }
       }

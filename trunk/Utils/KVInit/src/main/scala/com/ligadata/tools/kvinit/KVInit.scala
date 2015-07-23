@@ -391,8 +391,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          logger.error("Failed to get classname:%s as message".format(clsName))
-          e.printStackTrace
+          val stackTrace = Utils.ThrowableTraceString(e)
+          logger.error("Failed to get classname:%s as message".format(clsName)+"\nStackTrace:"+stackTrace)
+          
         }
       }
     }
@@ -411,8 +412,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          logger.error("Failed to get classname:%s as container".format(clsName))
-          e.printStackTrace
+          val stackTrace = Utils.ThrowableTraceString(e)
+          logger.error("Failed to get classname:%s as container".format(clsName)+"\nStackTrace:"+stackTrace)
+          
         }
       }
     }
@@ -434,7 +436,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          logger.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
+          val stackTrace = Utils.ThrowableTraceString(e)
+          logger.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+"\nStackTrace:"+stackTrace)
           isOk = false
         }
       }
@@ -486,7 +489,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           }
         } catch {
           case e: Exception => {
-            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+            val stackTrace = Utils.ThrowableTraceString(e)
+            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage+"\nStackTrace:"+stackTrace)
             return false
           }
         }
@@ -536,8 +540,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        val stackTrace = Utils.ThrowableTraceString(e)
+        throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -636,8 +640,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             processedRows += 1
           } catch {
             case e: Exception => {
-              logger.error("Failed to serialize/write data.")
-              e.printStackTrace
+              val stackTrace = Utils.ThrowableTraceString(e)
+              logger.error("Failed to serialize/write data."+"\nStackTrace:"+stackTrace)
+              
               errsCnt += 1
             }
           }
@@ -668,7 +673,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
-        case e: Exception => logger.error("Failed to send update notification to engine.")
+        case e: Exception => {
+          val stackTrace = Utils.ThrowableTraceString(e)
+          logger.error("Failed to send update notification to engine."+"\nStackTrace:"+stackTrace)}
       } finally {
         if (zkcForSetData != null)
           zkcForSetData.close
@@ -810,7 +817,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       }
     } catch {
       case e: Exception => {
-        logger.error("Failed to open Input File %s. Message:%s".format(inputeventfile, e.getMessage))
+        val stackTrace = Utils.ThrowableTraceString(e)
+        logger.error("Failed to open Input File %s. Message:%s".format(inputeventfile, e.getMessage)+"/nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -830,7 +838,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       is = new FileInputStream(inputfile)
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        val stackTrace = Utils.ThrowableTraceString(e)
         return false
     }
 

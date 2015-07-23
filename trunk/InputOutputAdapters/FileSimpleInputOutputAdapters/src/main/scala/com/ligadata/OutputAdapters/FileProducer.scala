@@ -7,6 +7,7 @@ import java.util.zip.GZIPOutputStream
 import java.nio.file.{ Paths, Files }
 import com.ligadata.FatafatBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.FileAdapterConfiguration
+import com.ligadata.Utils.Utils
 
 object FileProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new FileProducer(inputConfig, cntrAdapter)
@@ -54,7 +55,8 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
       cntrAdapter.addCntr(key, 1)
     } catch {
       case e: Exception => {
-        LOG.error("Failed to send :" + e.getMessage)
+        val stackTrace = Utils.ThrowableTraceString(e)
+        LOG.error("Failed to send :" + e.getMessage+"\nStackTrace:"+stackTrace)
       }
     }
   }

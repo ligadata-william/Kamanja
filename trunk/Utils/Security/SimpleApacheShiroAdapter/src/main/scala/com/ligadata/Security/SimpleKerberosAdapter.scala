@@ -8,6 +8,7 @@ import java.security._
 import javax.security.auth.callback._
 import javax.security.auth.kerberos._
 import org.apache.log4j._
+import com.ligadata.Utils.Utils
 
 class SampleKerberosActions(inPriv: String) extends java.security.PrivilegedAction[String] {
   private def priv = inPriv
@@ -56,7 +57,8 @@ class SimpleKerberosAdapter extends SecurityAdapter {
        log.info ("kerberor LoginManager found")
     } catch {
         case uae: Exception => {
-          log.error (uae.printStackTrace())
+          val stackTrace = Utils.ThrowableTraceString(uae)
+          log.error ("\nStackTrace:"+stackTrace)
           return false
         }
     }
@@ -67,7 +69,8 @@ class SimpleKerberosAdapter extends SecurityAdapter {
        log.info ("User "+username+" authenticated")
     } catch{
       case le: LoginException => {
-        log.error (le.printStackTrace())
+        val stackTrace = Utils.ThrowableTraceString(le)
+        log.error ("\nStackTrace:"+stackTrace)
         return false
       }
     } 
@@ -79,7 +82,8 @@ class SimpleKerberosAdapter extends SecurityAdapter {
       Subject.doAsPrivileged(mysubject, action, null);
     } catch {
       case se: SecurityException => {
-        log.error(se.printStackTrace())
+        val stackTrace = Utils.ThrowableTraceString(se)
+        log.error("\nStackTrace:"+stackTrace)
         return false
       }
     } 

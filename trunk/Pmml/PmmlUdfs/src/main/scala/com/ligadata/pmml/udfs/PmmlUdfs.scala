@@ -37,6 +37,7 @@ import org.apache.log4j.Logger
 
 import com.ligadata.pmml.runtime._
 import com.ligadata.FatafatBase._
+import com.ligadata.Utils.Utils
 
 /**
  * These are the udfs supplied with the system.
@@ -6324,6 +6325,7 @@ object Udfs extends LogTrait {
 		    lcd.getMillis()
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = Utils.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
 		    	0
 		    }
@@ -6510,6 +6512,7 @@ object Udfs extends LogTrait {
     		millis
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = Utils.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
 		    	0
 		    }
@@ -6538,6 +6541,7 @@ object Udfs extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
+            val stackTrace = Utils.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${fmtStrArray.toString}'")
 			    	0
 			    }
@@ -6647,6 +6651,7 @@ object Udfs extends LogTrait {
 	        millis
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = Utils.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
 		    	0
 		    }
@@ -6691,6 +6696,7 @@ object Udfs extends LogTrait {
 	        seconds
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = Utils.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
 		    	0
 		    }
