@@ -26,7 +26,7 @@ trait CodePrinterDispatch {
 
 	    The CodeFragment.Kind describes what kind of string should be produced.  Note 
 	    that many nodes can produce different representations. For example, is a 
-	    declaration or an “use” expression required for a DataField.
+	    declaration or an "use" expression required for a DataField.
  	    
  	    @param node the PmmlExecNode
  	    @param buffer the caller's buffer to which the print for the node (and below it) will be left
