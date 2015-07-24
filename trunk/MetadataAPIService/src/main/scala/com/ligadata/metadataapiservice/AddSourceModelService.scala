@@ -51,12 +51,24 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
 
     //var nameVal = APIService.extractNameFromPMML(pmmlStr)
 
+    var modelName=""
+    val regex=" \"([^\"]*)\"(.*$)".r
+
+    val arr=sourceCode.split("\n")
+    for(i <- arr){
+      if(i.contains("ModelName")){
+        modelName=(regex.findFirstIn(i).getOrElse("No Match").replace("\"","")).trim
+      }
+    }
+    val usersModelName=userid.getOrElse("")+"."+modelName
+
+
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
 	   // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
 	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       //def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
-      val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"java","LowBalanceAlertModel",userid)
+      val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"java",usersModelName,userid)
       requestContext.complete(apiResult)
     }
   }
@@ -64,15 +76,22 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
   def processScala(sourceCode:String) = {
 
     logger.debug("Requesting AddSourceModel SCALA.")
+    var modelName=""
+    val regex=" \"([^\"]*)\"(.*$)".r
 
-    //var nameVal = APIService.extractNameFromPMML(pmmlStr)
-
+    val arr=sourceCode.split("\n")
+    for(i <- arr){
+      if(i.contains("ModelName")){
+       modelName=(regex.findFirstIn(i).getOrElse("No Match").replace("\"","")).trim
+      }
+    }
+    val usersModelName=userid.getOrElse("")+"."+modelName
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
      // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
     } else {
       //def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
-      val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"scala",".HelloWorld",userid)
+      val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"scala",usersModelName,userid)
       requestContext.complete(apiResult)
     }
   }
