@@ -51,7 +51,7 @@ class MessageDefImpl {
 
   val logger = this.getClass.getName
   lazy val log = Logger.getLogger(logger)
-  val pkg: String = "com.ligadata.messagescontainers"
+  //val pkg: String = "com.ligadata.messagescontainers"
   var rddHandler = new RDDHandler
   var methodGen = new ConstantMethodGenerator
   var messageFldsExtractor = new MessageFldsExtractor
@@ -725,8 +725,8 @@ class MessageDefImpl {
 
     val cur_time = System.currentTimeMillis
     //  val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "." + message.get("Name").get.toString() + "." + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
-    // val pkg =  message.get("NameSpace").get.toString.toLowerCase()
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
+    val pkg =  message.get("NameSpace").get.toString
+    val physicalName: String = pkg + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
 
     new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }

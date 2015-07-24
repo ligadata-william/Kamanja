@@ -377,8 +377,8 @@ class ConstantMsgObjVarGenerator {
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     else if (msg.msgtype.equals("Container"))
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
-    var nonVerPkg = "package " + msg.pkg + "." + msg.NameSpace + ";\n"
-    var verPkg = "package " + msg.pkg + "." + msg.NameSpace + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
+    var nonVerPkg = "package " + msg.pkg +";\n"
+    var verPkg = "package " + msg.pkg + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
     var otherImprts = """
   
 import org.json4s.jackson.JsonMethods._
