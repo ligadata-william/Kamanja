@@ -1427,7 +1427,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1448,7 +1448,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"getIntermediateStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1469,7 +1469,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"getAllFinalStatusInfo() -- Unable to load Status Info")
+          logger.debug(s"getAllFinalStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1546,7 +1546,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
+          logger.debug(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
