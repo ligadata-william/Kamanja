@@ -2614,14 +2614,8 @@ object TestMetadataAPI {
     MetadataAPIImpl.getAuditRec(filterParameters)
   }
 
-  def main(args: Array[String]) {
+  def Main(args: Array[String]) {
     try {
-      //logger.setLevel(Level.TRACE);  //check again
-      //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      //  serializer.SetLoggerLevel(Level.TRACE)
-      //  JsonSerializer.SetLoggerLevel(Level.TRACE)
-      //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
 
       var myConfigFile: String = null
       if (args.length == 0) {
@@ -2646,4 +2640,5 @@ object TestMetadataAPI {
       MetadataAPIImpl.shutdown
     }
   }
+
 }
