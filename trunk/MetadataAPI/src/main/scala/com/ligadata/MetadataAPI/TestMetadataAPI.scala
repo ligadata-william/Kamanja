@@ -120,11 +120,7 @@ object TestMetadataAPI {
       }
 
       val typKey = typKeys(choice - 1)
-
-      val typKeyTokens = typKey.split("\\.")
-      val typNameSpace = typKeyTokens(0)
-      val typName = typKeyTokens(1)
-      val typVersion = typKeyTokens(2)
+      val(typNameSpace, typName, typVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(typKey)
       val typOpt = MetadataAPIImpl.GetType(typNameSpace, typName, typVersion, "JSON", userid)
 
       typOpt match {
@@ -173,10 +169,7 @@ object TestMetadataAPI {
       }
 
       val typKey = typKeys(choice - 1)
-      val typKeyTokens = typKey.split("\\.")
-      val typNameSpace = typKeyTokens(0)
-      val typName = typKeyTokens(1)
-      val typVersion = typKeyTokens(2)
+      val(typNameSpace, typName, typVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(typKey)
       val apiResult = MetadataAPIImpl.RemoveType(typNameSpace, typName, typVersion.toLong, userid)
 
       // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -279,10 +272,7 @@ object TestMetadataAPI {
       }
 
       val fcnKey = fcnKeys(choice - 1)
-      val fcnKeyTokens = fcnKey.split("\\.")
-      val fcnNameSpace = fcnKeyTokens(0)
-      val fcnName = fcnKeyTokens(1)
-      val fcnVersion = fcnKeyTokens(2)
+      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(fcnKey)
       val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong, userid)
 
       //val resultData = MetadataAPIImpl.getApiResult(apiResult)
@@ -320,12 +310,7 @@ object TestMetadataAPI {
       }
 
       val fcnKey = fcnKeys(choice - 1)
-
-      val fcnKeyTokens = fcnKey.split("\\.")
-      println("FUNCTION KEY: " + fcnKey)
-      val fcnNameSpace = fcnKeyTokens(0)
-      val fcnName = fcnKeyTokens(1)
-      //val fcnVersion = fcnKeyTokens(2)
+      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(fcnKey)
       val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace, fcnName, "JSON", userid)
 
       //   val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
@@ -419,12 +404,7 @@ object TestMetadataAPI {
         return
       }
       val msgKey = msgKeys(choice - 1)
-
-      val msgKeyTokens = msgKey.split("\\.")
-      val msgNameSpace = msgKeyTokens(0)
-      val msgName = msgKeyTokens(1)
-      val msgVersion = msgKeyTokens(2)
-
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace, msgName, msgVersion.toLong)
       logger.debug("DependentModels => " + depModels)
 
@@ -465,12 +445,7 @@ object TestMetadataAPI {
         return
       }
       val msgKey = msgKeys(choice - 1)
-
-      val msgKeyTokens = msgKey.split("\\.")
-      val msgNameSpace = msgKeyTokens(0)
-      val msgName = msgKeyTokens(1)
-      val msgVersion = msgKeyTokens(2)
-
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace, msgName, msgVersion.toLong)
       if (depModels.length > 0) {
         depModels.foreach(mod => {
@@ -512,11 +487,7 @@ object TestMetadataAPI {
         return
       }
       val contKey = contKeys(choice - 1)
-
-      val contKeyTokens = contKey.split("\\.")
-      val contNameSpace = contKeyTokens(0)
-      val contName = contKeyTokens(1)
-      val contVersion = contKeyTokens(2)
+      val(contNameSpace, contName, contVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(contKey)
       val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace, contName, "JSON", contVersion, userid)
       println("Result as Json String => \n" + apiResult)
 
@@ -553,11 +524,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-
-      val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace, modName, "JSON", modVersion, userid)
 
       //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -596,11 +563,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-
-      val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace, modName, "JSON", modVersion, userid)
 
       //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -616,7 +579,7 @@ object TestMetadataAPI {
   def RemoveMessageFromStore {
     try {
       // logger.setLevel(Level.TRACE); //check again
-
+println("WTF")
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
 
       if (msgKeys.length == 0) {
@@ -637,11 +600,7 @@ object TestMetadataAPI {
       }
 
       val msgKey = msgKeys(choice - 1)
-
-      val msgKeyTokens = msgKey.split("\\.")
-      val msgNameSpace = msgKeyTokens(0)
-      val msgName = msgKeyTokens(1)
-      val msgVersion = msgKeyTokens(2)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid)
 
       //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -678,11 +637,7 @@ object TestMetadataAPI {
       }
 
       val contKey = contKeys(choice - 1)
-
-      val contKeyTokens = contKey.split("\\.")
-      val contNameSpace = contKeyTokens(0)
-      val contName = contKeyTokens(1)
-      val contVersion = contKeyTokens(2)
+      val(contNameSpace, contName, contVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(contKey)
       val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
 
       // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -701,7 +656,7 @@ object TestMetadataAPI {
   def RemoveMessage {
     try {
       //  logger.setLevel(Level.TRACE); //check again
-
+println("Getting Messages")
       val msgKeys = MetadataAPIImpl.GetAllMessagesFromCache(true, None)
 
       if (msgKeys.length == 0) {
@@ -722,11 +677,7 @@ object TestMetadataAPI {
       }
 
       val msgKey = msgKeys(choice - 1)
-
-      val msgKeyTokens = msgKey.split("\\.")
-      val msgNameSpace = msgKeyTokens(0)
-      val msgName = msgKeyTokens(1)
-      val msgVersion = msgKeyTokens(2)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid)
 
       //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -763,11 +714,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val modKeyTokens = modKey.split("\\.")
-      //val modNameSpace = modKeyTokens(0)
-      val modNameSpace = modKeyTokens.dropRight(2).mkString(".")
-      val modName = modKeyTokens(modKeyTokens.length - 2)
-      val modVersion = modKeyTokens(modKeyTokens.length - 1)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -780,6 +727,7 @@ object TestMetadataAPI {
     }
   }
 
+ 
   def DeactivateModel {
     try {
       //logger.setLevel(Level.TRACE);  //check again
@@ -804,10 +752,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -844,10 +789,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -884,10 +826,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val modKeyTokens = modKey.split("\\.")
-      val modNameSpace = modKeyTokens(0)
-      val modName = modKeyTokens(1)
-      val modVersion = modKeyTokens(2)
+      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -900,6 +839,7 @@ object TestMetadataAPI {
     }
   }
 
+ 
   def GetAllMessagesFromStore {
     try {
       //logger.setLevel(Level.TRACE);  //check again
@@ -1286,6 +1226,7 @@ object TestMetadataAPI {
 
     } catch {
       case e: AlreadyExistsException => {
+        e.printStackTrace()
         logger.error("Message Already in the metadata....")
       }
       case e: Exception => {
@@ -2409,10 +2350,7 @@ object TestMetadataAPI {
 	      }
 
 	      val outputMsgKey = outputMsgKeys(choice - 1)
-	      val outputTokens = outputMsgKey.split("\\.")
-	      val outputNameSpace = outputTokens(0)
-	      val outputName = outputTokens(1)
-	      val outputVersion = outputTokens(2)
+        val(outputNameSpace, outputName, outputVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(outputMsgKey)
 	      val apiResult = MetadataAPIOutputMsg.RemoveOutputMsg(outputNameSpace, outputName, outputVersion.toLong, userid)
 
 	      //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)

@@ -524,17 +524,17 @@ class CompilerProxy{
 
       //Classpath is set by now.
       var (status2,jarFileName) = jarCode(modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),
-        modelName,
-        modelVersion,
-        packagedSource,
-        classPath,
-        MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
-        "TestClient",
-        msgDefClassFilePath,
-        MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
-        MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
-        false,
-        sourceLang)
+                                                                       modelName,
+                                                                       modelVersion,
+                                                                       packagedSource,
+                                                                       classPath,
+                                                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
+                                                                       "TestClient",
+                                                                       msgDefClassFilePath,
+                                                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
+                                                                       MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
+                                                                       false,
+                                                                       sourceLang)
 
       /* The following check require cleanup at some point */
       if (status2 > 1 ){
@@ -546,15 +546,14 @@ class CompilerProxy{
 
       // Create the ModelDef object
       // TODO... for now keep modelNapespace hardcoded to System... since nothing in this product can process a real namespace name
-      var modelNamespaceTemp = "System"
+      //var modelNamespaceTemp = "System"
+      var modelNamespaceTemp = packageName
       val modDef : ModelDef = MdMgr.GetMdMgr.MakeModelDef(modelNamespaceTemp, modelName,"","RuleSet",
-        getInputVarsFromElements(elements),
-        List[(String, String, String)]() ,
-        MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
-        //deps.toArray[String] ++ elements.map(e=>{e.JarName}).toArray[String],
-        deps.toArray[String],
-        false
-      )
+                                                          getInputVarsFromElements(elements),
+                                                          List[(String, String, String)]() ,
+                                                          MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion)),"",
+                                                          deps.toArray[String],
+                                                          false)
 
       // Need to set some values by hand here.
       modDef.jarName = jarFileName
@@ -726,7 +725,8 @@ class CompilerProxy{
       loadJarFile(jarNameType, classLoader)
     })
 
-    var classNames = getClasseNamesInJar(jarName0)
+    var classNames = getClassesNamesInJar(jarName0)
+
     var tempCurClass: Class[_] = null
     classNames.foreach (clsName => {
       var curClz = Class.forName(clsName, true, classLoader.loader)
@@ -787,9 +787,9 @@ class CompilerProxy{
 
 
   /**
-   * getClasseNamesInJar - A utility method to grab all class files from the jarfile
+   * getClassesNamesInJar - A utility method to grab all class files from the jarfile
    */
-  private  def getClasseNamesInJar(jarName: String): Array[String] = {
+  private  def getClassesNamesInJar(jarName: String): Array[String] = {
     try {
       val jarFile = new JarInputStream(new FileInputStream(jarName))
       val classes = new ArrayBuffer[String]

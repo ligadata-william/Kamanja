@@ -591,16 +591,15 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def GetObject(key: String, store: DataStore): IStorage = {
-    try {
-      var k = new com.ligadata.keyvaluestore.Key
-      for (c <- key) {
-        k += c.toByte
-      }
-      GetObject(k, store)
+    var k = new com.ligadata.keyvaluestore.Key
+    for (c <- key) {
+      k += c.toByte
     }
+    GetObject(k, store)
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore) {
+    println("SAVING SHIT: "+key)
     val t = store.beginTx
     object obj extends IStorage {
       var k = new com.ligadata.keyvaluestore.Key
@@ -943,6 +942,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       val dispkey = (getObjectType(obj) + "." + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)).toLowerCase
+      println("Key is "+key)
       obj.tranId = GetNewTranId
       //val value = JsonSerializer.SerializeObjectToJson(obj)
       logger.debug("Serialize the object: name of the object => " + dispkey)
@@ -965,6 +965,7 @@ object MetadataAPIImpl extends MetadataAPI {
         }
         case o: FunctionDef => {
           val funcKey = (obj.getClass().getName().split("\\.").last + "." + o.typeString).toLowerCase
+          println("functKey is "+funcKey)
           logger.debug("Adding the function to the cache: name of the object =>  " + funcKey)
           SaveObject(funcKey, value, functionStore)
           mdMgr.AddFunc(o)
@@ -1051,10 +1052,12 @@ object MetadataAPIImpl extends MetadataAPI {
       true
     } catch {
       case e: AlreadyExistsException => {
+        e.printStackTrace()
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
         false
      }
       case e: Exception => {
+        e.printStackTrace()
         logger.error("Failed to Save the object(" + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version) + "): " + e.getMessage())
         false
       }
@@ -2160,33 +2163,42 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def RemoveFunction(functionDef: FunctionDef): String = {
-    var key = functionDef.typeString
-    val dispkey = functionDef.FullName + "." + MdMgr.Pad0s2Version(functionDef.Version)
-    try {
-      DeleteObject(functionDef)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
-      apiResult.toString()
-    } catch {
-      case e: Exception => {
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
-        apiResult.toString()
-      }
-    }
-  }
-
+  
   def RemoveFunction(nameSpace: String, functionName: String, version: Long, userid: Option[String]): String = {
-    var key = functionName + ":" + version
-    val dispkey = functionName + "." + MdMgr.Pad0s2Version(version)
+    var key = nameSpace + "." + functionName + "." + version
+    val dispkey =  nameSpace + "." + functionName + "." + MdMgr.Pad0s2Version(version)
+    var newTranId = GetNewTranId
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.FUNCTION,AuditConstants.SUCCESS,"",nameSpace+"."+key)
     try {
-      DeleteObject(key, functionStore)
-      var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
-      apiResult.toString()
+      val o = MdMgr.GetMdMgr.Functions(nameSpace.toLowerCase, functionName.toLowerCase, true, true)
+      o match {
+        case None =>
+          logger.warn("Function not found => " + key)
+          var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Failed_Not_Found + ": " + dispkey)
+          return apiResult.toString()
+        case Some(m)   =>
+          // Found a function, the Functions returns a set, but since we asked for only the latest, there can be only 1 in the returned set.
+          // so grab the last one.
+          val fDef = m.last.asInstanceOf[FunctionDef]
+          logger.debug("function found => " + fDef.FullName + "." + MdMgr.Pad0s2Version(fDef.Version))
+          
+          // Mark the transactionId for this transaction and delete object
+          fDef.tranId = newTranId
+          DeleteObject(fDef)
+          
+          // Notify everyone who cares about this change.
+          var allObjectsArray =  Array[BaseElemDef](fDef)
+          val operations = for (op <- allObjectsArray) yield "Remove"
+          NotifyEngine(allObjectsArray, operations)
+    
+          // 'Saul Good'man
+          var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveFunction", null, ErrorCodeConstants.Remove_Function_Successfully + ":" + dispkey)
+          return apiResult.toString()
+      }
     } catch {
       case e: Exception => {
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveFunction", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_Function_Failed + ":" + dispkey)
-        apiResult.toString()
+        return apiResult.toString()
       }
     }
   }
@@ -2248,14 +2260,13 @@ object MetadataAPIImpl extends MetadataAPI {
       allJars.foreach(jar => {
         val jarName = JarPathsUtils.GetValidJarFile(jarPaths, jar)
         val f = new File(jarName)
-        if (f.exists()) {
-          // Nothing to do
-        } else {
+        if (!f.exists()) {  
           try {
             val mObj = GetObject(jar, jarStore)
             // Nothing to do after getting the object.
           } catch {
             case e: Exception => {
+              e.printStackTrace()
               missingJars += jar
             }
           }
@@ -2279,21 +2290,19 @@ object MetadataAPIImpl extends MetadataAPI {
         val missingJars = scala.collection.mutable.Set[String]()
         funcList.foreach(func => {
           logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,functionsText,AuditConstants.SUCCESS,"",func.FullNameWithVer)  
-          SaveObject(func, MdMgr.GetMdMgr)
-          missingJars ++= CheckForMissingJar(func)
+          if (SaveObject(func, MdMgr.GetMdMgr))
+            missingJars ++= CheckForMissingJar(func)
+          else {
+            if (!aggFailures.equalsIgnoreCase("")) aggFailures = aggFailures + ","  
+            aggFailures = aggFailures + func.FullNameWithVer           
+          }
         })
         if (missingJars.size > 0) {
           var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", null, "Error : Not found required jars " + missingJars.mkString(",") + "\n" + ErrorCodeConstants.Add_Function_Failed + ":" + functionsText)
           return apiResult.toString()
         }
         val alreadyCheckedJars = scala.collection.mutable.Set[String]()        
-        funcList.foreach(func => {
-          UploadJarsToDB(func, false, alreadyCheckedJars)
-          if (!SaveObject(func, MdMgr.GetMdMgr)) {
-            if (!aggFailures.equalsIgnoreCase("")) aggFailures = aggFailures + ","  
-            aggFailures = aggFailures + func.FullNameWithVer
-          }
-        })
+        funcList.foreach(func => { UploadJarsToDB(func, false, alreadyCheckedJars) })
 /*
         val objectsAdded = funcList.map(f => f.asInstanceOf[BaseElemDef])
         val operations = funcList.map(f => "Add")
@@ -2310,6 +2319,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        e.printStackTrace()
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddFunctions", functionsText, "Error :" + e.toString() + ErrorCodeConstants.Add_Function_Failed)
         apiResult.toString()
       }
@@ -2507,6 +2517,7 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: Exception => {
+        e.printStackTrace()
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddMessageDef", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Message_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -2540,12 +2551,12 @@ object MetadataAPIImpl extends MetadataAPI {
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, ("System", "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofintarrayof" + msgDef.name, (sysNS, "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // ImmutableMapOfString<TypeName>
-          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, ("System", "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeImmutableMap(msgDef.nameSpace, "immutablemapofstringarrayof" + msgDef.name, (sysNS, "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
@@ -2555,12 +2566,12 @@ object MetadataAPIImpl extends MetadataAPI {
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfStringArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, ("System", "String"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofstringarrayof" + msgDef.name, (sysNS, "String"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
           // MapOfIntArrayOf<TypeName>
-          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, ("System", "Int"), ("System", "arrayof" + msgDef.name), msgDef.ver, recompile)
+          obj = mdMgr.MakeMap(msgDef.nameSpace, "mapofintarrayof" + msgDef.name, (sysNS, "Int"), (msgDef.nameSpace, "arrayof" + msgDef.name), msgDef.ver, recompile)
           obj.dependencyJarNames = depJars
           AddObjectToCache(obj, mdMgr)
           types = types :+ obj
@@ -2582,6 +2593,7 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     } catch {
       case e: Exception => {
+        e.printStackTrace()
         throw new Exception(e.getMessage())
       }
     }
@@ -2920,7 +2932,6 @@ object MetadataAPIImpl extends MetadataAPI {
   def RemoveMessage(nameSpace: String, name: String, version: Long, userid: Option[String], zkNotify:Boolean = true): String = {
     var key = nameSpace + "." + name + "." + version
     val dispkey = nameSpace + "." + name + "." + MdMgr.Pad0s2Version(version)
-
     var newTranId = GetNewTranId
     if (userid != None) logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.DELETEOBJECT,AuditConstants.MESSAGE,AuditConstants.SUCCESS,"",key)
     try {
@@ -2944,7 +2955,7 @@ object MetadataAPIImpl extends MetadataAPI {
             objectsToBeRemoved = objectsToBeRemoved :+ typeDef.get
           }
           
-          objectsToBeRemoved.foreach(typ => {   
+          objectsToBeRemoved.foreach(typ => {  
             typ.tranId = newTranId         
             RemoveType(typ.nameSpace, typ.name, typ.ver, None)
           })
@@ -4250,7 +4261,7 @@ object MetadataAPIImpl extends MetadataAPI {
       typeStore.getAllKeys({ (key: Key) =>
         {
           val strKey = KeyAsStr(key)
-          val i = strKey.indexOf(".")
+           val i = strKey.indexOf(".")
           val objType = strKey.substring(0, i)
           val typeName = strKey.substring(i + 1)
           objectType match {
@@ -5216,7 +5227,7 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val dispkey = nameSpace+"."+objectName+"."+version
       if (userid != None) logAuditRec(userid,Some(AuditConstants.READ),AuditConstants.GETOBJECT,AuditConstants.TYPE,AuditConstants.SUCCESS,"",dispkey)
-      val typeDefs = MdMgr.GetMdMgr.Types(MdMgr.sysNS, objectName, false, false)
+      val typeDefs = MdMgr.GetMdMgr.Types(nameSpace, objectName, false, false)
       typeDefs match {
         case None => None
         case Some(ts) =>
