@@ -1,6 +1,7 @@
 package com.ligadata.jpmml.models;
 
 import com.ligadata.FatafatBase.*;
+import com.ligadata.messagescontainers.System.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		ModelResultBase result = null;
 
 		// Getting Java RDD Object and performing operations on that
-		JavaRDDObject<IrisMsg> javaRddObj = IrisMsgFactory.toJavaRDDObject();
+		JavaRDDObject<IrisMsg> javaRddObj = IrisMsgFactory.rddObject;
 		Optional<IrisMsg> obj = javaRddObj.getRecent();
 
 		if (obj.isPresent()) {
