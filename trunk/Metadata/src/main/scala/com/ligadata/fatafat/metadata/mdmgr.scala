@@ -805,6 +805,7 @@ class MdMgr {
             case "Remove" => {
               m.Deleted
               m.Deactive
+              if (compilerFuncDefs.contains(m.typeString.toLowerCase)) compilerFuncDefs -= m.typeString.toLowerCase
               logger.debug("The function " + key + " is removed ")
             }
             case "Activate" => {

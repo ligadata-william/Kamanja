@@ -144,6 +144,9 @@ object ErrorCodeConstants {
    val Get_Model_From_DB_Failed = "Failed to fetch Model from DB";
    val Get_Model_From_DB_Successful = "Successfully fetched Model form DB";
    
+   // Functions
+   val Remove_Function_Failed_Not_Found = "Failed to delete an existing Function"
+   
    //Node
    val Add_Node_Failed = "Failed to add/update a node";
    val Add_Node_Successful = "Node added/updated Successfully";
