@@ -66,7 +66,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> "/tmp")
 		connectinfo+= ("schema" -> ("default_1_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -116,7 +116,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> "/tmp")
 		connectinfo+= ("schema" -> ("default_2_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -176,7 +176,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> "/tmp")
 		connectinfo+= ("schema" -> ("default_3_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -240,7 +240,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> "/tmp")
 		connectinfo+= ("schema" -> ("default_4_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
