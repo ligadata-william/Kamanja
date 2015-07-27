@@ -1434,14 +1434,15 @@ object TestMetadataAPI {
       print("\nEnter your choice: ")
       val choice2: Int = readInt()
       println("Entered CHOICE: "+choice2)
-      if (choice2 == pmmlFiles.length + 1) {
+      if (choice2 == configsKeys.length + 1) {
         return
       }
     //  if (choice2 < 1 || choice2 > pmmlFiles.length + 1) {
     //    logger.error("Invalid Choice : " + choice)
     //    return
     //  }
-      
+
+      println("Before modelConfigName")
       modelConfigName =  configToChoices(choice2 - 1)
       println("CHOSE " + (choice2-1) + "  "+modelConfigName)
       
