@@ -664,6 +664,13 @@ class CompilerProxy{
         repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+typeClassName + "\\;*"), "")
       }
     })
+    
+    //typeNamesace contains all the messages and containers 
+    if (typeNamespace == null) {
+      logger.error("COMPILER_PROXY: Unable to find at least one message in the Metadata for this model")
+      throw new MsgCompilationFailedException(modelConfigName)
+    }
+    
     //Replace the "import com....*;" statement - JAVA STYLE IMPORT ALL
     repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"\\*\\;*"), "")
     // Replace the "import com...._;" type of statement  - SCALA STYLE IMPORT ALL
