@@ -10,7 +10,7 @@ import com.datastax.driver.core.BatchStatement
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import com.ligadata.Exceptions._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 /*
   	You open connection to a cluster hostname[,hostname]:port
@@ -77,7 +77,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
 	session.execute(createKeySpaceStmt);
       } catch {
 	case e: Exception => {
-    val stackTrace = Utils.ThrowableTraceString(e)
+    val stackTrace = StackTrace.ThrowableTraceString(e)
 	  throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
 	}
       }
@@ -91,7 +91,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
     }
   } catch {
     case e: Exception => {
-      val stackTrace = Utils.ThrowableTraceString(e)
+      val stackTrace = StackTrace.ThrowableTraceString(e)
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }

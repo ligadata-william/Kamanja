@@ -9,7 +9,7 @@ import java.nio.file.{ Paths, Files }
 import com.ligadata.FatafatBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 object FileConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -51,7 +51,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         is = new FileInputStream(sFileName)
     } catch {
       case e: Exception =>
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to open FileConsumer for %s. Message:%s".format(sFileName, e.getMessage)+"\nStackTrace:"+stackTrace)
         throw e
         return
@@ -100,7 +100,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                       transId += 1
                     } catch {
                       case e: Exception => {
-                        val stackTrace = Utils.ThrowableTraceString(e)
+                        val stackTrace = StackTrace.ThrowableTraceString(e)
                         LOG.error("Failed with Message:" + e.getMessage+"\nStackTrace:"+stackTrace)}
                     }
 
@@ -156,7 +156,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
             transId += 1
           } catch {
             case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               LOG.error("Failed with Message:" + e.getMessage+"\nStackTrace:"+stackTrace)}
           }
 
@@ -168,7 +168,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
@@ -287,7 +287,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           throw e
         }

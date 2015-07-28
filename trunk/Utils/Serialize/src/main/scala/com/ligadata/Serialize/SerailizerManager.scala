@@ -1,7 +1,7 @@
 package com.ligadata.Serialize
 
 import com.ligadata.Exceptions._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 object SerializerManager {
   def GetSerializer(serializerType: String): Serializer = {
@@ -15,7 +15,7 @@ object SerializerManager {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new SerializerManagerException("Failed to create Serializer for : " + serializerType)
       }
     }

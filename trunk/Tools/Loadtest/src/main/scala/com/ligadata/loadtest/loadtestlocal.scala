@@ -15,7 +15,7 @@ import akka.actor._
 import com.ligadata._
 import com.ligadata.keyvaluestore._
 import com.ligadata.loadtest._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalStub = null)
 {  
@@ -93,7 +93,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception  => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 				if(config.nScenario==0) sender ! Result ()
@@ -111,7 +111,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"/nStackTrace:"+stackTrace)
             }
 				}
@@ -130,7 +130,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}					
 				if(config.nScenario==0) sender ! Result ()
@@ -148,7 +148,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}					
 				if(config.nScenario==0) sender ! Result ()
@@ -169,7 +169,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 
@@ -198,7 +198,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				catch 
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 				

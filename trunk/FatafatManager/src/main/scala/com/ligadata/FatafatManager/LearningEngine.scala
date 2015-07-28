@@ -16,6 +16,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.outputmsg.OutputMsgGenerator
+import com.ligadata.Exceptions.StackTrace
 
 class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
@@ -56,11 +57,11 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           }
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" +stackTrace)
           }
           case t: Throwable => {
-            val stackTrace = Utils.ThrowableTraceString(t)
+            val stackTrace = StackTrace.ThrowableTraceString(t)
             LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + stackTrace)
           }
         } finally {
@@ -126,7 +127,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             })
           } catch {
             case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
               
             }
@@ -160,7 +161,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
-              case e: Exception => {val stackTrace = Utils.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
             }
           }
           if (ignoreOutput == false) {
@@ -179,7 +180,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 2")
             } catch {
-              case e: Exception => {val stackTrace = Utils.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
             }
           }
           envContext.saveStatus(transId, "OutAdap", false)
@@ -193,7 +194,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
-              case e: Exception => {val stackTrace = Utils.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
             }
           }
         }
@@ -202,7 +203,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         
       }

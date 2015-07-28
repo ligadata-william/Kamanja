@@ -9,7 +9,6 @@ import com.datastax.driver.core.ConsistencyLevel
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
 import com.ligadata.Exceptions._
-import com.ligadata.Utils.Utils
 
 /*
   	You open connection to a cluster hostname[,hostname]:port
@@ -92,7 +91,7 @@ class AuditCassandraAdapter extends AuditAdapter {
           session.execute(createKeySpaceStmt);
         } catch {
           case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace =   StackTrace.ThrowableTraceString(e)
               throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()+"\nStactkTrace"+stackTrace) 
             }
         }
@@ -108,7 +107,7 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage()+"\nStactkTrace"+stackTrace)
       }
     } 
@@ -175,7 +174,7 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     }catch {
       case e: Exception => 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
     }
   }
@@ -246,7 +245,7 @@ class AuditCassandraAdapter extends AuditAdapter {
       auditRecords
     } catch {
       case e:Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Failed to fetch audit records: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -269,7 +268,7 @@ class AuditCassandraAdapter extends AuditAdapter {
        })
     } catch {
       case e:Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Failed to read Audit Configuration: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }     
     }

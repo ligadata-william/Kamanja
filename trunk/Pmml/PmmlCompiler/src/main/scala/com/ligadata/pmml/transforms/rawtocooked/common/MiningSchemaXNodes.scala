@@ -9,7 +9,7 @@ import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._
 import com.ligadata.pmml.syntaxtree.raw.common._
 import com.ligadata.pmml.syntaxtree.cooked.common._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class MiningSchemaPmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNodeGenerator with com.ligadata.pmml.compiler.LogTrait {
 
@@ -102,7 +102,7 @@ class MiningFieldPmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNo
 			fld.HighValue(d.highValue.toDouble)
 		} catch {
 			case _ : Throwable => {
-        val stackTrace = Utils.ThrowableTraceString(_)
+        val stackTrace = StackTrace.ThrowableTraceString(_)
         ctx.logger.debug (s"Unable to coerce one or more of the mining field doubles... name = $name")}
 		}
 	  	fld

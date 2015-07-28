@@ -19,6 +19,7 @@ import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.Utils
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -33,7 +34,7 @@ class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
     } finally {
       if (serverSocket.isClosed() == false)
@@ -65,7 +66,7 @@ class ConnHandler(var socket: Socket, var mgr: FatafatManager) extends Runnable 
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
     } finally {
       socket.close;
@@ -309,7 +310,7 @@ class FatafatManager {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to load Wait Processing Info."+"\nStackTrace:"+stackTrace)}
       }
 
@@ -364,7 +365,7 @@ class FatafatManager {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false

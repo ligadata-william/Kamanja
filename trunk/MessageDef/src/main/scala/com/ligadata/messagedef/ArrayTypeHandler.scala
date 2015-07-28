@@ -3,7 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class ArrayTypeHandler {
 
@@ -168,7 +168,7 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }
@@ -369,7 +369,7 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }
@@ -418,7 +418,7 @@ class ArrayTypeHandler {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
@@ -479,7 +479,7 @@ class ArrayTypeHandler {
       }
     } catch {
       case e: Exception =>{ 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
     return deserializedBuf.toString
@@ -604,7 +604,7 @@ class ArrayTypeHandler {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 

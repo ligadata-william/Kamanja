@@ -17,7 +17,7 @@ import java.io.{ File }
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.syntaxtree.cooked.common._
 import com.ligadata.pmml.support._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 
 /** 
@@ -1207,7 +1207,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
           }
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             PmmlError.logError(ctx, "Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
             return false
           }

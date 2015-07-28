@@ -5,7 +5,7 @@ import com.ligadata.FatafatBase.{ BaseMsg, MessageContainerBase }
 import com.ligadata.fatafat.metadata.MdMgr
 import com.ligadata.fatafat.metadata._
 import org.apache.log4j.Logger
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 import scala.collection.mutable.{ ArrayBuffer }
 
@@ -36,7 +36,7 @@ class OutputMsgGenerator {
       } else throw new Exception("Output Msg Def in the sent list of OutputMsgDef do not match with either Model Results or Top level Msg")
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -74,7 +74,7 @@ class OutputMsgGenerator {
       })
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -156,7 +156,7 @@ class OutputMsgGenerator {
       (outputMsgDefExists, finalOutputMsgs.toArray, mymap)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -279,7 +279,7 @@ class OutputMsgGenerator {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }

@@ -21,7 +21,7 @@ lazy val BaseTypes = project.in(file("BaseTypes")) dependsOn(Metadata, Exception
 
 lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata, Exceptions)
 
-lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata, Exceptions, FatafatBase)
+lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata, Exceptions)
 
 lazy val ZooKeeperClient   = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize, Exceptions)
 
@@ -35,7 +35,7 @@ lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, FatafatBase, 
 
 lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, ApiImpl, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)
 
-lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase)
+lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase, Exceptions)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(FatafatBase, Exceptions)
 
@@ -87,7 +87,7 @@ lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(
 
 lazy val Controller = project.in(file("Utils/Controller")) dependsOn(ZooKeeperClient,ZooKeeperListener,KafkaSimpleInputOutputAdapters, Exceptions)
 
-lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata, Exceptions, FatafatBase)
+lazy val SimpleApacheShiroAdapter = project.in(file("Utils/Security/SimpleApacheShiroAdapter")) dependsOn(Metadata, Exceptions)
 
 lazy val AuditAdapters = project.in(file("Utils/Audit")) dependsOn(Storage, Exceptions)
 
@@ -95,7 +95,7 @@ lazy val FatafatData = project.in(file("FatafatData")) dependsOn(FatafatBase, Ex
 
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs, Exceptions)
 
-lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector")) dependsOn(FatafatBase)
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector")) dependsOn(Exceptions)
 
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
 

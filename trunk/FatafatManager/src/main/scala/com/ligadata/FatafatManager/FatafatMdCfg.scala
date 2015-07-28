@@ -14,6 +14,8 @@ import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
 
+import com.ligadata.Exceptions.StackTrace
+
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 object FatafatMdCfg {
   private[this] val LOG = Logger.getLogger(getClass);
@@ -269,7 +271,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)
           
         }
@@ -380,7 +382,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)}
       }
     } else {
@@ -417,7 +419,7 @@ object FatafatMdCfg {
         outputAdapters += adapter
       } catch {
         case e: Exception =>{
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           return false
           }
@@ -471,7 +473,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception =>{ 
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+"\nStackTrace:"+stackTrace)}
       }
     } else {
@@ -507,7 +509,7 @@ object FatafatMdCfg {
         inputAdapters += adapter
       } catch {
         case e: Exception =>{
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           return false
         }

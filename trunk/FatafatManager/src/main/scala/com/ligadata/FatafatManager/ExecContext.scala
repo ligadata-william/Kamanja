@@ -8,7 +8,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
@@ -34,7 +34,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         })
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           
         }
@@ -55,7 +55,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
@@ -115,7 +115,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             results += m.asInstanceOf[Map[String, Any]]
           } catch {
             case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
@@ -128,7 +128,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             })
           } catch {
             case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
@@ -136,7 +136,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
@@ -183,7 +183,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
         })
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         }
       } finally {
@@ -192,7 +192,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }

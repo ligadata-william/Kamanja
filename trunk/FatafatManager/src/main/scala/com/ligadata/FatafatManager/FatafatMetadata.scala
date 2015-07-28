@@ -16,7 +16,7 @@ import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
@@ -100,7 +100,7 @@ class FatafatMetadata {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to get classname :" + clsName+"\nStackTrace:"+stackTrace)
         
         return false
@@ -118,7 +118,7 @@ class FatafatMetadata {
         } catch {
           case e: Exception => {
             // Trying Regular Object instantiation
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             objinst = curClass.newInstance
           }
         }
@@ -158,7 +158,7 @@ class FatafatMetadata {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
           return false
         }
@@ -207,7 +207,7 @@ class FatafatMetadata {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to get classname :" + clsName+"/nStackTrace:"+stackTrace)
         
         return false
@@ -224,7 +224,7 @@ class FatafatMetadata {
           objinst = obj.instance
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -245,7 +245,7 @@ class FatafatMetadata {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
           return false
         }
@@ -302,7 +302,7 @@ class FatafatMetadata {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to get classname :" + clsName+"\nStackTrace:"+stackTrace)
         
         return false
@@ -322,7 +322,7 @@ class FatafatMetadata {
           objinst = obj.instance
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -342,7 +342,7 @@ class FatafatMetadata {
         }
       } catch {
         case e: Exception =>
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)
           return false
       }
@@ -505,7 +505,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       localUpdateFatafatMdObjects(msgObjects, contObjects, mdlObjects, removedModels, removedMessages, removedContainers)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.writeLock().unlock();
@@ -640,7 +640,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       UpdateFatafatMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to load messages, containers & models from metadata manager. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         throw e
       }
@@ -653,7 +653,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, zkSessionTimeoutMs, zkConnectionTimeoutMs)
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           throw e
         }
@@ -712,7 +712,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                 }
               }
             }
@@ -730,7 +730,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                 }
               }
             }
@@ -748,7 +748,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                 }
               }
             }
@@ -786,7 +786,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Add Model:" + key+"\nStackTrace"+stackTrace)
                 }
               }
@@ -796,7 +796,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 removedModels += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Remove Model:" + key+"\nStackTrace:"+stackTrace)
                 }
               }
@@ -818,7 +818,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Add Message:" + key+"\nStackTrace:"+stackTrace)
                 }
               }
@@ -828,7 +828,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 removedMessages += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Remove Message:" + key+"\nStackTrace:"+stackTrace)
                 }
               }
@@ -850,7 +850,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 }
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Add Container:" + key+"\nStackTrace:"+stackTrace)
                 }
               }
@@ -860,7 +860,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
                 removedContainers += ((zkMessage.NameSpace, zkMessage.Name, zkMessage.Version.toLong))
               } catch {
                 case e: Exception => {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.error("Failed to Remove Container:" + key+"\nStackTrace:"+stackTrace)
                 }
               }
@@ -904,7 +904,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetMessgeInfo(msgType)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -923,7 +923,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetModel(mdlName)
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -942,7 +942,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetContainer(containerName)
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -961,7 +961,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetMessgeOrContainer(msgOrContainerName)
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -980,7 +980,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetAllMessges
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -999,7 +999,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetAllModels
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -1018,7 +1018,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       v = localgetAllContainers
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();

@@ -23,7 +23,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import com.ligadata.Serialize._
 import java.net.URLClassLoader
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 
 /**
@@ -120,7 +120,7 @@ object MethodExtract extends App with LogTrait{
 			if (versionNumberStr != null) versionNumber = versionNumberStr.toLong
 		} catch {
 		  case _:Throwable => {
-        val stackTrace = Utils.ThrowableTraceString(_)
+        val stackTrace = StackTrace.ThrowableTraceString(_)
         versionNumber = 1000000}
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
@@ -169,7 +169,7 @@ object MethodExtract extends App with LogTrait{
 			val members = clsType.declarations
 			members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
 		} catch {
-		  case t : Throwable => val stackTrace = Utils.ThrowableTraceString(t) 
+		  case t : Throwable => val stackTrace = StackTrace.ThrowableTraceString(t) 
 		  sys.exit
 		}
 		
@@ -402,7 +402,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 	          }
 	        } catch {
 	          case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
 	            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage+"\nStackTrace:"+stackTrace)
 	            return false
 	          }

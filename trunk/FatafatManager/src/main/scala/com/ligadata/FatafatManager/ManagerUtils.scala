@@ -9,6 +9,7 @@ import java.util.jar.JarInputStream
 import scala.util.control.Breaks._
 import scala.collection.mutable.TreeSet
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -34,7 +35,7 @@ object ManagerUtils {
       return classes.toArray
     } catch {
       case e: Exception =>
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         return null
     }
   }
@@ -55,7 +56,7 @@ object ManagerUtils {
           }
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             return false
           }

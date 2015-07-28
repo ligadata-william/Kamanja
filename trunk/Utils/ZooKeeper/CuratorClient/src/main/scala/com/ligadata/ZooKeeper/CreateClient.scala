@@ -6,7 +6,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.zookeeper.CreateMode
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 object CreateClient {
   def CreateNodeIfNotExists(zkcConnectString: String, znodePath: String) = {
@@ -34,7 +34,7 @@ object CreateClient {
       })
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     } finally {

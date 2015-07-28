@@ -3,7 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class ConceptTypeHandler {
 
@@ -85,7 +85,7 @@ class ConceptTypeHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }

@@ -11,7 +11,7 @@ import java.util.zip.GZIPInputStream
 import java.nio.file.{Files, Paths }
 import kafka.utils.VerifiableProperties
 import com.ligadata.Utils.KeyHasher
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 object ProducerSimpleStats {
 
@@ -71,7 +71,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
     } catch {
       case e: Exception =>
         {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
         }
         // println("Exception found, so , Bucket : 0")
         return 0
@@ -112,7 +112,7 @@ object SimpleKafkaProducer {
       //producer.send(new KeyedMessage(topic, message))
     } catch {
       case e: Exception =>
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         sys.exit(1)
     }
   }
@@ -155,7 +155,7 @@ object SimpleKafkaProducer {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         println("Error reading from a file " + e.printStackTrace()+"\nStackTrace:"+stackTrace)}
     } finally {
       if (bis != null) bis.close
@@ -591,7 +591,7 @@ object SimpleKafkaProducer {
       try {
         executor.awaitTermination(Long.MaxValue, TimeUnit.NANOSECONDS);
       } catch {
-        case e: Exception => {val stackTrace = Utils.ThrowableTraceString(e)}
+        case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
       }
     }
 

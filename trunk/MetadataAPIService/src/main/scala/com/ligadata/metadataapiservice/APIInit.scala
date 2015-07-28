@@ -13,6 +13,7 @@ import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
 import org.apache.log4j._
 import com.ligadata.Utils._
+import com.ligadata.Exceptions.StackTrace
 
 object APIInit {
   val loggerName = this.getClass.getName

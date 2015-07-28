@@ -23,6 +23,7 @@ import com.ligadata.FatafatBase._
 import com.ligadata.fatafat.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import com.ligadata.Serialize.{ JDataStore }
+import com.ligadata.Exceptions.StackTrace
 
 case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -106,7 +107,7 @@ object ExtractData extends MdBaseResolveInfo {
           }
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace
             throw new Exception(errMsg)
           }
@@ -233,7 +234,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to get classname:%s as message".format(clsName)+"\nStackTrace:"+stackTrace)
           sys.exit(1)
         }
@@ -254,7 +255,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to get classname:%s as container".format(clsName)+"\nStaackTrace:"+stackTrace)
           sys.exit(1)
         }
@@ -281,7 +282,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
           sys.exit(1)
         }
@@ -329,7 +330,7 @@ object ExtractData extends MdBaseResolveInfo {
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -349,7 +350,7 @@ object ExtractData extends MdBaseResolveInfo {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.debug("1. Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
@@ -427,7 +428,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         if (os != null)
           os.close
         os = null
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
       }
     }
@@ -543,7 +544,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
       exitCode = 0
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("%s:Failed to extract data with exception. Reason:%s, Message:%s".format(GetCurDtTmStr, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         exitCode = 1
       }

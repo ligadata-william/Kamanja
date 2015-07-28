@@ -6,7 +6,7 @@ import java.io.File;
 import java.nio.ByteBuffer
 import org.apache.log4j._
 import com.ligadata.Exceptions._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 /*
 
@@ -148,11 +148,11 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 	map.close();
       }catch{
 	case e:NullPointerException =>{
-    val stackTrace = Utils.ThrowableTraceString(e)
+    val stackTrace = StackTrace.ThrowableTraceString(e)
 	  logger.error("Unexpected Null pointer exception when closing hashmap, seems like internal bug related to mapdb "+"\nStackTrace:"+stackTrace)
 	}
 	case e:Exception =>{
-    val stackTrace = Utils.ThrowableTraceString(e)
+    val stackTrace = StackTrace.ThrowableTraceString(e)
 	  logger.error("Unexpected error when closing hashmap " + e.getMessage()+"\nStackTrace:"+stackTrace)
 	}
       }

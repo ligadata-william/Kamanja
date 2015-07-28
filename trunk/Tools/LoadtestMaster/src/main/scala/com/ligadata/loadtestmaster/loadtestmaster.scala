@@ -20,7 +20,7 @@ import akka.event.LoggingAdapter;
 import akka.routing.RoundRobinPool
 import scala.concurrent.duration.Duration
 import concurrent._
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class Conf(arguments: Seq[String]) extends ScallopConf(arguments)
 {
@@ -104,7 +104,7 @@ class Master(outputfile : String) extends Actor
 				catch
 				{
 					case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             println("Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)}
 					self ! Done(0, 0, 0, 0, 0)
 				}
@@ -239,14 +239,14 @@ object Master
 
 				  		if(nTries>0)
 				  		{
-                val stackTrace = Utils.ThrowableTraceString(e1)
+                val stackTrace = StackTrace.ThrowableTraceString(e1)
 				  			println("Prepare: Caught exception " + e1.getMessage()+"\nStackTrace:"+stackTrace)
 				  			Thread.sleep(30000L)
 
 				  		}
 				  		else
 				  		{
-                val stackTrace = Utils.ThrowableTraceString(e1)
+                val stackTrace = StackTrace.ThrowableTraceString(e1)
 				  			println("Prepare: Caught exception " + e1.getMessage() + "\n" + "StackTrace:"+stackTrace)
 				  			throw e1
 				  		}
@@ -257,14 +257,14 @@ object Master
 
 				  		if(nTries>0)
 				  		{
-                val stackTrace = Utils.ThrowableTraceString(e)
+                val stackTrace = StackTrace.ThrowableTraceString(e)
 				  			println("Prepare: Caught exception " + e.getMessage()+"\nStackTrace:"+stackTrace)
 				  			Thread.sleep(30000L)
 
 				  		}
 				  		else
 				  		{
-                val stackTrace = Utils.ThrowableTraceString(e)
+                val stackTrace = StackTrace.ThrowableTraceString(e)
 				  			println("Prepare: Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)
 				  			throw e
 				  		}

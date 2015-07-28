@@ -7,6 +7,7 @@ import com.ligadata.fatafat.metadata.StructTypeDef
 import com.ligadata.fatafat.metadata.AttributeDef
 import com.ligadata.Utils.Utils
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 class MessageTypeHandler {
 
@@ -146,7 +147,7 @@ class MessageTypeHandler {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }

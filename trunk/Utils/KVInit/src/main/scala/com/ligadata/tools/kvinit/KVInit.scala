@@ -40,6 +40,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
+import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -391,7 +392,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to get classname:%s as message".format(clsName)+"\nStackTrace:"+stackTrace)
           
         }
@@ -412,7 +413,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to get classname:%s as container".format(clsName)+"\nStackTrace:"+stackTrace)
           
         }
@@ -436,7 +437,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         }
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+"\nStackTrace:"+stackTrace)
           isOk = false
         }
@@ -489,7 +490,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
           }
         } catch {
           case e: Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage+"\nStackTrace:"+stackTrace)
             return false
           }
@@ -540,7 +541,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -640,7 +641,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             processedRows += 1
           } catch {
             case e: Exception => {
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               logger.error("Failed to serialize/write data."+"\nStackTrace:"+stackTrace)
               
               errsCnt += 1
@@ -674,7 +675,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           logger.error("Failed to send update notification to engine."+"\nStackTrace:"+stackTrace)}
       } finally {
         if (zkcForSetData != null)
@@ -817,7 +818,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Failed to open Input File %s. Message:%s".format(inputeventfile, e.getMessage)+"/nStackTrace:"+stackTrace)
         throw e
       }
@@ -838,7 +839,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       is = new FileInputStream(inputfile)
     } catch {
       case e: Exception =>
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         return false
     }
 

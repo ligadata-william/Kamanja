@@ -3,7 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class BaseTypesHandler {
 
@@ -144,7 +144,7 @@ class BaseTypesHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }
@@ -184,7 +184,7 @@ class BaseTypesHandler {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
@@ -219,7 +219,7 @@ class BaseTypesHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"/nStackTrace:"+stackTrace)}
     }
 
@@ -299,7 +299,7 @@ class BaseTypesHandler {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 

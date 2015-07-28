@@ -11,7 +11,8 @@ import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
+import com.ligadata.Exceptions.StackTrace
 
 object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2
@@ -248,7 +249,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             } catch {
               case e: java.lang.InterruptedException =>
                 {
-                  val stackTrace = Utils.ThrowableTraceString(e)
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
                   LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread"+"\nStackTrace:"+stackTrace)
                 }
             }
@@ -293,7 +294,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
         })
       } catch {
         case e: java.lang.InterruptedException =>{
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")+"\nStackTrace:"+stackTrace}
       } finally {
         if (partConsumer != null) { partConsumer.close }
@@ -327,7 +328,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       key.Deserialize(k)
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
         throw e
       }
@@ -343,7 +344,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
           throw e
         }
@@ -391,7 +392,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
             })
           } catch {
             case e: Exception => { 
-              val stackTrace = Utils.ThrowableTraceString(e)
+              val stackTrace = StackTrace.ThrowableTraceString(e)
               LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + stackTrace) }
           } finally {
             if (llConsumer != null) llConsumer.close()
@@ -401,7 +402,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
 
     } catch {
       case e: Exception => { 
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.debug("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition+"\nStackTrace:"+stackTrace) }
     }
     return leaderMetadata;
@@ -461,7 +462,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       }
     } catch {
       case e: java.lang.Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}"+"\nStackTrace:"+stackTrace) }
     } finally {
       if (llConsumer != null) { llConsumer.close }
@@ -487,7 +488,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
         }
       } catch {
         case e: InterruptedException => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
           LOG.debug("Adapter terminated during findNewLeader"+"\nStackTrace:"+stackTrace) }
       }
     }
@@ -511,7 +512,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       hbExecutor.shutdownNow()
     } catch {
       case e: java.lang.InterruptedException => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         LOG.debug("Heartbeat terminated"+"\nStackTrace:"+stackTrace)}
     }
   }
@@ -565,14 +566,14 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
               Thread.sleep(KafkaSimpleConsumer.MONITOR_FREQUENCY)
             } catch {
               case e: java.lang.InterruptedException =>
-                val stackTrace = Utils.ThrowableTraceString(e)
+                val stackTrace = StackTrace.ThrowableTraceString(e)
                 LOG.debug("Shutting down the Monitor heartbeat"+"\nStackTrace:"+stackTrace)
                 hbRunning = false
             }
           }
         } catch {
           case e: java.lang.Exception => {
-            val stackTrace = Utils.ThrowableTraceString(e)
+            val stackTrace = StackTrace.ThrowableTraceString(e)
             LOG.error("Heartbeat forced down due to exception + " + stackTrace)}
         } finally {
           hbConsumers.foreach({ case (key, consumer) => { consumer.close } })

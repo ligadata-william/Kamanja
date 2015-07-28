@@ -15,6 +15,7 @@ import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class APIService extends LigadataSSLConfiguration with Runnable{
 

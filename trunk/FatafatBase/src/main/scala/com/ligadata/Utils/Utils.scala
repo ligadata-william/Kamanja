@@ -4,6 +4,7 @@ package com.ligadata.Utils
 import com.google.common.base.Optional
 import java.io.{ InputStream, FileInputStream, File, StringWriter, PrintWriter }
 import java.util.Properties
+import com.ligadata.Exceptions.StackTrace
 
 object Utils {
   val MaxTransactionsPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
@@ -90,7 +91,7 @@ object Utils {
       }
     } catch {
       case e: Exception =>
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:"+stackTrace
         configs = null
     }
@@ -103,10 +104,12 @@ object Utils {
       case None => Optional.absent()
     }
 
+  /*
   def ThrowableTraceString(t: Throwable): String = {
     val sw = new StringWriter();
     val pw = new PrintWriter(sw);
     t.printStackTrace(pw);
     return sw.toString();
   }
+  */
 }

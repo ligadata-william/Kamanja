@@ -3,7 +3,7 @@ package com.ligadata.messagedef
 import com.ligadata.fatafat.metadata.MdMgr
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 class ConstantMsgObjVarGenerator {
 
@@ -154,7 +154,7 @@ class ConstantMsgObjVarGenerator {
 
     } catch {
       case e: Exception => {
-        val stackTrace = Utils.ThrowableTraceString(e)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         throw e
       }
     }
@@ -538,7 +538,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		  return getWithReflection(key)
     	} catch {
     		  case e: Exception => {
-          val stackTrace = Utils.ThrowableTraceString(e)
+          val stackTrace = StackTrace.ThrowableTraceString(e)
     		  // Call By Name
              return getByName(key)
     		  }
@@ -555,7 +555,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		      return null;
 		    } catch {
 		      case e: Exception => {
-		        val stackTrace = Utils.ThrowableTraceString(e)
+		        val stackTrace = StackTrace.ThrowableTraceString(e)
 		        throw e
 		      }
 		    }
