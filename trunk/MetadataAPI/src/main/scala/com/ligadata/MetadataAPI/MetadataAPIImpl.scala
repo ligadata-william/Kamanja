@@ -36,6 +36,8 @@ import scala.collection.immutable.Map
 import scala.collection.immutable.HashMap
 import scala.collection.mutable.HashMap
 
+import com.google.common.base.Throwables
+
 import com.ligadata.messagedef._
 import com.ligadata.Exceptions._
 
@@ -3309,20 +3311,35 @@ object MetadataAPIImpl extends MetadataAPI {
   
   def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
 
-    var compProxy = new CompilerProxy
-    compProxy.setSessionUserId(userid)
-    val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
-    UploadJarsToDB(modDef)
-    val apiResult = AddModel(modDef)  
+    try {
+      var compProxy = new CompilerProxy
+      compProxy.setSessionUserId(userid)
+      val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+      UploadJarsToDB(modDef)
+      val apiResult = AddModel(modDef)  
 
-    // Add all the objects and NOTIFY the world
-    var objectsAdded = new Array[BaseElemDef](0)
-    objectsAdded = objectsAdded :+ modDef
-    val operations = for (op <- objectsAdded) yield "Add"
-    logger.debug("Notify engine via zookeeper")
-    NotifyEngine(objectsAdded, operations)
-
-    apiResult
+      // Add all the objects and NOTIFY the world
+      var objectsAdded = new Array[BaseElemDef](0)
+      objectsAdded = objectsAdded :+ modDef
+      val operations = for (op <- objectsAdded) yield "Add"
+      logger.debug("Notify engine via zookeeper")
+      NotifyEngine(objectsAdded, operations)  
+      apiResult
+    } catch {
+      case e: AlreadyExistsException => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Add_Model_Failed_Higher_Version_Required)
+        apiResult.toString() 
+      }
+      case e: MsgCompilationFailedException => {
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + ErrorCodeConstants.Model_Compilation_Failed)
+        apiResult.toString()        
+      }
+      case e: Exception => {
+        logger.error("Unknown compilation error occured: "+ Throwables.getStackTraceAsString(e))
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, "Error : " + e.toString() + ErrorCodeConstants.Add_Model_Failed)
+        apiResult.toString()
+      }   
+    }
   }    
 
   // Add Model (format XML)
@@ -5943,7 +5960,7 @@ object MetadataAPIImpl extends MetadataAPI {
         return ;
       }
 
-      val (prop, failStr) = Utils.loadConfiguration(configFile.toString, true)
+      val (prop, failStr) = com.ligadata.Utils.Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         return
