@@ -1,9 +1,12 @@
 package com.ligadata.kamanja.copd;
 
+import com.google.common.collect.Lists;
 import com.ligadata.FatafatBase.*;
+import com.ligadata.FatafatBase.api.java.function.Function1;
 import com.ligadata.messagescontainers.System.*;
 import org.joda.time.*;
 
+import java.lang.reflect.Array;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -13,18 +16,66 @@ import java.util.*;
  */
 
 public class COPDRiskAssessment extends ModelBase {
-    // Messages
-    private Beneficiary msg = null;
-    private JavaRDD<InpatientClaim> inpatientClaimHistoryRDD = null;
-    private JavaRDD<OutpatientClaim> outpatientClaimHistoryRDD = null;
-    private JavaRDD<HL7> hl7HistoryRDD = null;
+    public COPDRiskAssessment(ModelContext mdlContext) {
+        super(mdlContext, objSingleton);
+        this.mdlContext = mdlContext;
+        init();
+    }
 
-    // Containers
-    private JavaRDD<CoughCodes> coughCodesRDD = null;
-    private JavaRDD<DyspnoeaCodes> dyspnoeaCodesRDD = null;
-    private JavaRDD<EnvCodes> envCodesRDD = null;
-    private JavaRDD<SmokeCodes> smokeCodesRDD = null;
-    private JavaRDD<SputumCodes> sputumCodesRDD = null;
+    @Override
+    public ModelContext modelContext() {
+        return mdlContext;
+    }
+
+    @Override
+    public ModelBaseObj factory() {
+        return objSingleton;
+    }
+
+    public static class COPDRiskAssessmentObj implements ModelBaseObj {
+        public boolean IsValidMessage(MessageContainerBase msg) {
+            return (msg instanceof Beneficiary);
+        }
+
+        public ModelBase CreateNewModel(ModelContext mdlContext) {
+            return new COPDRiskAssessment(mdlContext);
+        }
+
+        public String ModelName() {
+            return "COPDRiskAssessment";
+        }
+
+        public String Version() {
+            return "0.0.3";
+        }
+
+        public ModelResultBase CreateResultObject() {
+            return new MappedModelResults();
+        }
+
+    }
+
+    private class FilterClaims<T extends BaseMsg> implements Function1<T, Boolean> {
+        @Override
+        public Boolean call(T claim) throws Exception {
+            if(claim instanceof InpatientClaim){
+                return isDateBetween(((InpatientClaim) claim).clm_thru_dt());
+            }
+            else if(claim instanceof OutpatientClaim) {
+                return isDateBetween(((OutpatientClaim) claim).clm_thru_dt());
+            }
+            else if(claim instanceof HL7) {
+                return isDateBetween(((HL7) claim).clm_thru_dt());
+            }
+            else {
+                System.out.println("Unknown type '" + claim.getClass() + "'");
+                return false;
+            }
+        }
+    }
+
+    private Beneficiary msg = null;
+    private ModelContext mdlContext = null;
 
     // Filtered Message Arrays
     private ArrayList<InpatientClaim> inpatientClaimHistory = new ArrayList<>();
@@ -38,14 +89,7 @@ public class COPDRiskAssessment extends ModelBase {
     private ArrayList<String> smokeCodes = new ArrayList<>();
     private ArrayList<String> sputumCodes = new ArrayList<>();
 
-    private String[] partitionKeys = null;
-
-    private ModelContext mdlContext = null;
-
     private SimpleDateFormat yearMonthDayHourFormat = new SimpleDateFormat("yyyyMMdd");
-    private Integer today = null;
-    private Integer oneYearAgo = null;
-    private TimeRange lookupPeriod = null;
 
     private void init() {
         msg = (Beneficiary) this.modelContext().msg();
@@ -54,133 +98,62 @@ public class COPDRiskAssessment extends ModelBase {
         System.out.println("\tMessage Version: " + msg.Version());
         System.out.println("\tMessage Desynpuf ID: " + msg.desynpuf_id());
 
-        partitionKeys = msg.PartitionKeyData();
-
-        lookupPeriod = new TimeRange(getOneYearAgo(), getToday());
+        String[] partitionKeys = msg.PartitionKeyData();
 
         // Getting message RDD objects
-        inpatientClaimHistoryRDD = InpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
-        outpatientClaimHistoryRDD = OutpatientClaimFactory.rddObject.getRDD(partitionKeys, getLookupPeriod());
-        hl7HistoryRDD = HL7Factory.rddObject.getRDD(partitionKeys, getLookupPeriod());
+        JavaRDD<InpatientClaim> inpatientClaimHistoryRDD = InpatientClaimFactory.rddObject.getRDD(partitionKeys).filter(new FilterClaims());
+        JavaRDD<OutpatientClaim> outpatientClaimHistoryRDD = OutpatientClaimFactory.rddObject.getRDD(partitionKeys).filter(new FilterClaims());
+        JavaRDD<HL7> hl7HistoryRDD = HL7Factory.rddObject.getRDD(partitionKeys).filter(new FilterClaims());
 
-        // Filter claims down to the last year based on clm_thru_dt
-        for (Iterator<InpatientClaim> ipClaimIt = inpatientClaimHistoryRDD.iterator(); ipClaimIt.hasNext(); ) {
-            InpatientClaim claim = ipClaimIt.next();
-            if (isDateBetween(claim.clm_thru_dt())) {
-                inpatientClaimHistory.add(claim);
-            }
+        // Getting container RDD objects
+        JavaRDD<CoughCodes> coughCodesRDD = CoughCodesFactory.rddObject.getRDD();
+        JavaRDD<DyspnoeaCodes> dyspnoeaCodesRDD = DyspnoeaCodesFactory.rddObject.getRDD();
+        JavaRDD<EnvCodes> envCodesRDD = EnvCodesFactory.rddObject.getRDD();
+        JavaRDD<SmokeCodes> smokeCodesRDD = SmokeCodesFactory.rddObject.getRDD();
+        JavaRDD<SputumCodes> sputumCodesRDD = SputumCodesFactory.rddObject.getRDD();
+
+        // Taking all messages from the JavaRDD's iterator and placing them in an ArrayList
+        for (Iterator<InpatientClaim> ipClaimIt = inpatientClaimHistoryRDD.iterator(); ipClaimIt.hasNext();) {
+            inpatientClaimHistory.add(ipClaimIt.next());
         }
 
         for (Iterator<OutpatientClaim> opClaimIt = outpatientClaimHistoryRDD.iterator(); opClaimIt.hasNext(); ) {
-            OutpatientClaim claim = opClaimIt.next();
-            if (isDateBetween(claim.clm_thru_dt())) {
-                outpatientClaimHistory.add(claim);
-            }
+            outpatientClaimHistory.add(opClaimIt.next());
         }
 
         for (Iterator<HL7> hl7Iterator = hl7HistoryRDD.iterator(); hl7Iterator.hasNext(); ) {
-            HL7 claim = hl7Iterator.next();
-            if (isDateBetween(claim.clm_thru_dt())) {
-                hl7History.add(claim);
-            }
+            hl7History.add(hl7Iterator.next());
         }
 
-        // Getting lookup tables
-        coughCodesRDD = CoughCodesFactory.rddObject.getRDD();
-        dyspnoeaCodesRDD = DyspnoeaCodesFactory.rddObject.getRDD();
-        envCodesRDD = EnvCodesFactory.rddObject.getRDD();
-        smokeCodesRDD = SmokeCodesFactory.rddObject.getRDD();
-        sputumCodesRDD = SputumCodesFactory.rddObject.getRDD();
-
+        // Taking all icd9 codes from the containers and placing them in an ArrayList
         for (Iterator<CoughCodes> coughCodeIt = coughCodesRDD.iterator(); coughCodeIt.hasNext(); ) {
             coughCodes.add(coughCodeIt.next().icd9code());
-        }
-        System.out.print("Cough Codes:\t");
-        for (String code : coughCodes) {
-            System.out.print(code + ", ");
         }
 
         for (Iterator<DyspnoeaCodes> dyspCodeIt = dyspnoeaCodesRDD.iterator(); dyspCodeIt.hasNext(); ) {
             dyspnoeaCodes.add(dyspCodeIt.next().icd9code());
         }
-        System.out.print("\nDyspnea Codes:\t");
-        for (String code : dyspnoeaCodes) {
-            System.out.print(code + ", ");
-        }
 
         for (Iterator<EnvCodes> envCodeIt = envCodesRDD.iterator(); envCodeIt.hasNext(); ) {
             envCodes.add(envCodeIt.next().icd9code());
-        }
-        System.out.print("\nEnv Codes:\t");
-        for (String code : envCodes) {
-            System.out.print(code + ", ");
         }
 
         for (Iterator<SmokeCodes> smokeCodeIt = smokeCodesRDD.iterator(); smokeCodeIt.hasNext(); ) {
             smokeCodes.add(smokeCodeIt.next().icd9code());
         }
-        System.out.print("\nSmoke Codes:\t");
-        for (String code : smokeCodes) {
-            System.out.print(code + ", ");
-        }
 
         for (Iterator<SputumCodes> sputumCodeIt = sputumCodesRDD.iterator(); sputumCodeIt.hasNext(); ) {
             sputumCodes.add(sputumCodeIt.next().icd9code());
         }
-
-        System.out.print("\nSputum Codes:\t");
-        for (String code : sputumCodes) {
-            System.out.println(code + ", ");
-        }
-        System.out.println();
     }
 
-    private Integer getToday() {
-        if (today == null) {
-            Calendar time = Calendar.getInstance();
-            today = Integer.parseInt(yearMonthDayHourFormat.format(time.getTime()));
-        }
-        return today;
-    }
-
-    private Date getTodayAsDate() {
-        return Calendar.getInstance().getTime();
-    }
-
-    private Date getOneYearAgoAsDate() {
-        Calendar time = Calendar.getInstance();
-        time.add(Calendar.YEAR, -1);
-        return time.getTime();
-    }
-
-    private Date intToDate(Integer date) {
-        try {
-            return yearMonthDayHourFormat.parse(date.toString());
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private boolean isDateBetween(Integer date) {
-        Date tDate = intToDate(date);
-        return ((tDate.before(getTodayAsDate()) || tDate.equals(getTodayAsDate())) && (tDate.after(getOneYearAgoAsDate()) || tDate.equals(getOneYearAgoAsDate())));
-    }
-
-    private Integer getOneYearAgo() {
-        if (oneYearAgo == null) {
-            Calendar time = Calendar.getInstance();
-            time.add(Calendar.YEAR, -1);
-            oneYearAgo = Integer.parseInt(yearMonthDayHourFormat.format(time.getTime()));
-        }
-        return oneYearAgo;
-    }
-
-    private TimeRange getLookupPeriod() {
-        if (lookupPeriod == null) {
-            lookupPeriod = new TimeRange(getOneYearAgo(), getToday());
-        }
-        return lookupPeriod;
+    private boolean isDateBetween(Integer date) throws ParseException {
+        Calendar calendar = Calendar.getInstance();
+        Date tDate = yearMonthDayHourFormat.parse(date.toString());
+        Date today = calendar.getTime();
+        calendar.add(Calendar.YEAR, -1);
+        Date oneYearAgo = calendar.getTime();
+        return ((tDate.before(today) || tDate.equals(today)) && (tDate.after(oneYearAgo) || tDate.equals(oneYearAgo)));
     }
 
     static COPDRiskAssessmentObj objSingleton = new COPDRiskAssessmentObj();
@@ -411,7 +384,7 @@ public class COPDRiskAssessment extends ModelBase {
         for (Result result : results) {
             System.out.println(result.name() + ": " + result.result());
         }
-        System.out.println("****************************************************");
+        System.out.println("******************************************************************************");
 
         return ((MappedModelResults) new COPDRiskAssessmentObj().CreateResultObject()).withResults(results);
     }
@@ -425,44 +398,5 @@ public class COPDRiskAssessment extends ModelBase {
             }
         }
         return result;
-    }
-
-    public COPDRiskAssessment(ModelContext mdlContext) {
-        super(mdlContext, objSingleton);
-        this.mdlContext = mdlContext;
-        init();
-    }
-
-    @Override
-    public ModelContext modelContext() {
-        return mdlContext;
-    }
-
-    @Override
-    public ModelBaseObj factory() {
-        return objSingleton;
-    }
-
-    public static class COPDRiskAssessmentObj implements ModelBaseObj {
-        public boolean IsValidMessage(MessageContainerBase msg) {
-            return (msg instanceof Beneficiary);
-        }
-
-        public ModelBase CreateNewModel(ModelContext mdlContext) {
-            return new COPDRiskAssessment(mdlContext);
-        }
-
-        public String ModelName() {
-            return "COPDRiskAssessment";
-        }
-
-        public String Version() {
-            return "0.0.2";
-        }
-
-        public ModelResultBase CreateResultObject() {
-            return new MappedModelResults();
-        }
-
     }
 }
