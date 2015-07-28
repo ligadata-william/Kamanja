@@ -161,7 +161,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("StackTrace:"+stackTrace)}
             }
           }
           if (ignoreOutput == false) {
@@ -180,7 +181,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 2")
             } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("StackTrace:"+stackTrace)}
             }
           }
           envContext.saveStatus(transId, "OutAdap", false)
@@ -194,7 +196,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(FatafatConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("StackTrace:"+stackTrace)}
             }
           }
         }

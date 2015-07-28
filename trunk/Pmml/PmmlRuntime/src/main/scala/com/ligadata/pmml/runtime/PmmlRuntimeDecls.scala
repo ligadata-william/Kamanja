@@ -980,7 +980,8 @@ object DateTimeHelpers extends LogTrait {
 		    } catch {
 			    case iae:IllegalArgumentException => {
             val stackTrace = StackTrace.ThrowableTraceString(iae)
-			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
+            logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
+            logger.error("\nStacktrace:"+stackTrace)
 			    	0
 			    }
 		    }
@@ -1031,6 +1032,7 @@ object DateTimeHelpers extends LogTrait {
 			    case iae:IllegalArgumentException => {
             val stackTrace = StackTrace.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$dateStr' with any of the patterns - '${datePatterns.toString}'")
+            logger.error("\nStackTrace:"+stackTrace)
 			    	0
 			    }
 		    }
@@ -1077,6 +1079,7 @@ object DateTimeHelpers extends LogTrait {
 		      case iae:IllegalArgumentException => {
             val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	  logger.error(s"Unable to parse '$timeStr' with any of the patterns - '${timePatterns.toString}'")
+            logger.error("\nStackTrace:"+stackTrace)
 		    	  0
 		      }
 		    }

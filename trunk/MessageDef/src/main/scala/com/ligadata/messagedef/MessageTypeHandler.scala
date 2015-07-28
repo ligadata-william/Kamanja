@@ -36,7 +36,8 @@ class MessageTypeHandler {
     var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
     var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
-
+      val logger = this.getClass.getName
+      lazy val log = Logger.getLogger(logger)
     try {
 
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
@@ -148,6 +149,7 @@ class MessageTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.error("StackTrace:"+stackTrace)
         throw e
       }
     }

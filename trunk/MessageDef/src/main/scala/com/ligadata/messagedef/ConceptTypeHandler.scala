@@ -4,6 +4,7 @@ import com.ligadata.fatafat.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class ConceptTypeHandler {
 
@@ -28,7 +29,7 @@ class ConceptTypeHandler {
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
     var fromFuncOfFixed = new StringBuilder(8 * 1024)
-
+    val LOG = Logger.getLogger(getClass)
     try {
 
       var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).getOrElse(null)
@@ -86,6 +87,7 @@ class ConceptTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         throw e
       }
     }

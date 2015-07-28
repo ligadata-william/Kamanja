@@ -15,7 +15,8 @@ import org.apache.log4j.Logger
 class ContainerTypeHandler {
 
   var methodGen = new ConstantMethodGenerator
-
+    val logger = this.getClass.getName
+    lazy val log = Logger.getLogger(logger)
   def handleContainer(msg: Message, mdMgr: MdMgr, ftypeVersion: Long, f: Element, recompile: Boolean, childs: Map[String, Any]): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
@@ -182,6 +183,7 @@ class ContainerTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.error("StackTrace:"+stackTrace)
         throw e
       }
     }

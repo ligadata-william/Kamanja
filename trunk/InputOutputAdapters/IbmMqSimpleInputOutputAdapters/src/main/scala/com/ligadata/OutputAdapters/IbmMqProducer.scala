@@ -11,6 +11,7 @@ import com.ibm.msg.client.jms.JmsFactoryFactory
 import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.common.CommonConstants
 import com.ibm.msg.client.jms.JmsConstants
+import com.ligadata.Exceptions.StackTrace
 
 object IbmMqProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new IbmMqProducer(inputConfig, cntrAdapter)
@@ -73,7 +74,10 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     producer = session.createProducer(destination)
     connection.start()
   } catch {
-    case jmsex: Exception => printFailure(jmsex)
+    case jmsex: Exception => {
+      printFailure(jmsex)
+      val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+      LOG.error("StackTrace:"+stackTrace)}
   }
 
   override def send(message: String, partKey: String): Unit = {
@@ -94,6 +98,8 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     } catch {
       case jmsex: Exception => {
         printFailure(jmsex)
+        val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+      LOG.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -109,7 +115,8 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         producer.close()
       } catch {
         case jmsex: Exception => {
-          LOG.error("Producer could not be closed.")
+          val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+          LOG.error("Producer could not be closed."+"\nSatcktrace:"+stackTrace)
           printFailure(jmsex)
         }
       }
@@ -122,7 +129,8 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         session.close()
       } catch {
         case jmsex: Exception => {
-          LOG.error("Session could not be closed.")
+          val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+          LOG.error("Session could not be closed."+"\nStacktrace:"+stackTrace)
           printFailure(jmsex)
         }
       }
@@ -132,7 +140,8 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
         connection.close()
       } catch {
         case jmsex: Exception => {
-          LOG.error("Connection could not be closed.")
+          val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+          LOG.error("Connection could not be closed."+"\nStackTrace:"+stackTrace)
           printFailure(jmsex)
         }
       }

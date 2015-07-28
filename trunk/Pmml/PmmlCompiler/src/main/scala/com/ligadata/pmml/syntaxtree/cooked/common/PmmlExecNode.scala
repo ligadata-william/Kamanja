@@ -1303,7 +1303,9 @@ object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 		} catch {
 			case _ : Throwable => {
         val stackTrace = StackTrace.ThrowableTraceString(_)
+        ctx.logger.error("StackTrace:"+stackTrace)
         ctx.logger.debug (s"Unable to coerce one or more of the mining field doubles... name = $name")}
+      
 		}
 	  	fld
 	}
@@ -1362,6 +1364,7 @@ object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 				} catch {
 					case _ : Throwable => {
             val stackTrace = StackTrace.ThrowableTraceString(_)
+            ctx.logger.error("StackTrace:"+stackTrace)
             ctx.logger.debug (s"Unable to coerce one or more mining 'double' fields... name = $id")}
 				}
 			
@@ -1388,6 +1391,7 @@ object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 				} catch {
 				  case _ : Throwable => {
             val stackTrace = StackTrace.ThrowableTraceString(_)
+            ctx.logger.error("StackTrace:"+stackTrace)
             ctx.logger.debug ("Unable to coerce one or more score probablity Double values")}
 				}
 					

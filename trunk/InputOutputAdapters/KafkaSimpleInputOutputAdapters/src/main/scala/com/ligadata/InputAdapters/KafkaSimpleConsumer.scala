@@ -12,7 +12,6 @@ import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
 import com.ligadata.Exceptions.StackTrace
-import com.ligadata.Exceptions.StackTrace
 
 object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2

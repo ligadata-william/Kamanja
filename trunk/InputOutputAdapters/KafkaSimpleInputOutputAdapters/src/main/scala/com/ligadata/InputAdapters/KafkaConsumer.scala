@@ -90,6 +90,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("\nStackTrace:"+stackTrace)
       }
     }
 
@@ -267,10 +268,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case e: ZkNoNodeException =>{
        val stackTrace = StackTrace.ThrowableTraceString(e)
+       LOG.error("\nStackTrace:"+stackTrace)
         (None, stat)
       }
       case e2: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e2)
+        LOG.error("\nStackTrace:"+stackTrace)
         throw e2
         }
     }

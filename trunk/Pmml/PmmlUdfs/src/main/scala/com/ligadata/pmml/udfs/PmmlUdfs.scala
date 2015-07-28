@@ -6327,6 +6327,7 @@ object Udfs extends LogTrait {
 		    case iae:IllegalArgumentException => {
           val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }
@@ -6514,6 +6515,7 @@ object Udfs extends LogTrait {
 		    case iae:IllegalArgumentException => {
           val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }
@@ -6543,6 +6545,7 @@ object Udfs extends LogTrait {
 			    case iae:IllegalArgumentException => {
             val stackTrace = StackTrace.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${fmtStrArray.toString}'")
+            logger.error("\nStackTrace:"+stackTrace)
 			    	0
 			    }
 		    }
@@ -6653,6 +6656,7 @@ object Udfs extends LogTrait {
 		    case iae:IllegalArgumentException => {
           val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }
@@ -6698,6 +6702,7 @@ object Udfs extends LogTrait {
 		    case iae:IllegalArgumentException => {
           val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }

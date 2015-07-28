@@ -69,6 +69,7 @@ object RunJdbcCollector {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace
+            LOG.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
         }

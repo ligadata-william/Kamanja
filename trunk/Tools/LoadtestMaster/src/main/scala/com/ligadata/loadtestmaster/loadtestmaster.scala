@@ -21,6 +21,7 @@ import akka.routing.RoundRobinPool
 import scala.concurrent.duration.Duration
 import concurrent._
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class Conf(arguments: Seq[String]) extends ScallopConf(arguments)
 {
@@ -59,7 +60,7 @@ class Master(outputfile : String) extends Actor
 	var nLastOps : Long = 0;
 	var nLastSizeW : Long = 0;
 	var nLastSizeR : Long = 0;
-
+  private val LOG = Logger.getLogger(getClass)
 	var configRemote : RemoteConfiguration = null
 
 	{
@@ -105,6 +106,7 @@ class Master(outputfile : String) extends Actor
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:"+stackTrace)
             println("Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)}
 					self ! Done(0, 0, 0, 0, 0)
 				}
@@ -210,7 +212,7 @@ class Master(outputfile : String) extends Actor
 object Master
 {
 	var resultfile = "result.cvs"
-
+  private val LOG = Logger.getLogger(getClass)
 	def Prepare(config : Configuration)
 	{
 		if(config.bTruncateStore)
@@ -240,6 +242,7 @@ object Master
 				  		if(nTries>0)
 				  		{
                 val stackTrace = StackTrace.ThrowableTraceString(e1)
+                LOG.error("StackTrace:"+stackTrace)
 				  			println("Prepare: Caught exception " + e1.getMessage()+"\nStackTrace:"+stackTrace)
 				  			Thread.sleep(30000L)
 
@@ -247,6 +250,7 @@ object Master
 				  		else
 				  		{
                 val stackTrace = StackTrace.ThrowableTraceString(e1)
+                LOG.error("StackTrace:"+stackTrace)
 				  			println("Prepare: Caught exception " + e1.getMessage() + "\n" + "StackTrace:"+stackTrace)
 				  			throw e1
 				  		}
@@ -258,6 +262,7 @@ object Master
 				  		if(nTries>0)
 				  		{
                 val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("StackTrace:"+stackTrace)
 				  			println("Prepare: Caught exception " + e.getMessage()+"\nStackTrace:"+stackTrace)
 				  			Thread.sleep(30000L)
 
@@ -265,6 +270,7 @@ object Master
 				  		else
 				  		{
                 val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.error("StackTrace:"+stackTrace)
 				  			println("Prepare: Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)
 				  			throw e
 				  		}

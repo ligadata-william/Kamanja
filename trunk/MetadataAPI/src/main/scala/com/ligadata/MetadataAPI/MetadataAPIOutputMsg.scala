@@ -13,6 +13,7 @@ import com.ligadata.Serialize._
 import com.ligadata.Utils._
 import util.control.Breaks._
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 object MetadataAPIOutputMsg {
 
@@ -143,6 +144,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new UnexpectedMetadataAPIException(e.getMessage())
       }
     }
@@ -159,6 +161,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }
@@ -188,6 +191,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new UnexpectedMetadataAPIException("Failed to fetch all the OutputMsgs:" + e.toString)
       }
     }
@@ -221,6 +225,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetOutputMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_OutputMessage_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -254,6 +259,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }

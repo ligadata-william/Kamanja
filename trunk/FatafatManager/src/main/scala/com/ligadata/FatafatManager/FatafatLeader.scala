@@ -258,7 +258,7 @@ object FatafatLeader {
             } catch {
               case e: Exception => {
                 val stackTrace = StackTrace.ThrowableTraceString(e)
-                
+                LOG.error("StackTrace:"+stackTrace)
               }
             }
             if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
@@ -324,6 +324,7 @@ object FatafatLeader {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -706,12 +707,12 @@ object FatafatLeader {
                     envCtxt.ReloadKeys(txnid, contName, keys)
                   } catch {
                     case e: Exception => {
-                      logger.error("Failed to reload keys for container:" + contName)
-                      e.printStackTrace()
+                      val stackTrace = StackTrace.ThrowableTraceString(e)
+                      logger.error("Failed to reload keys for container:" + contName+"\nStackTrace:"+stackTrace)
                     }
-                    case t: Throwable => {
-                      logger.error("Failed to reload keys for container:" + contName)
-                      t.printStackTrace()
+                    case t: Throwable => { 
+                      val stackTrace = StackTrace.ThrowableTraceString(t)
+                      logger.error("Failed to reload keys for container:" + contName+"\nStackTrace:"+stackTrace)
                     }
                   }
                 }
@@ -725,7 +726,7 @@ object FatafatLeader {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Found invalid JSON: %s".format(receivedJsonStr)+"StackTrace:"+stackTrace)
+        LOG.error("Found invalid JSON: %s".format(receivedJsonStr)+"\nStackTrace:"+stackTrace)
       }
     }
 
@@ -840,6 +841,7 @@ object FatafatLeader {
           case e: Exception => {
             // Not doing anything
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:"+stackTrace)
           }
         }
 

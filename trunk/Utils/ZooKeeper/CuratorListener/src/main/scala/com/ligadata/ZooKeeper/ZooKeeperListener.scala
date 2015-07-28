@@ -40,6 +40,7 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -67,6 +68,7 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -93,6 +95,7 @@ class ZooKeeperListener {
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.error("StackTrace:"+stackTrace)
               logger.error("Exception while processing event from zookeeper ZNode %s, reason %s, message %s".format(znodePath, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
             }
           }
@@ -102,6 +105,7 @@ class ZooKeeperListener {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + znodePath + "):" + e.getMessage())
       }
     }
@@ -152,6 +156,7 @@ object ZooKeeperListenerTest {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
       }
     }

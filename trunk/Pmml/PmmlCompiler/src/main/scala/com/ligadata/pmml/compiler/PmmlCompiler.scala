@@ -622,6 +622,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		} catch {
 			case ex: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(ex)
+        logger.error("StackTrace:"+stackTrace)
         throw ex}
 		}
 	}
@@ -632,7 +633,9 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			val xform : PmmlExecNodeGeneratorDispatcher = new PmmlExecNodeGeneratorDispatcher(ctx);
 			xform.transform;
 		} catch {
-			case t: Throwable => val stackTrace = StackTrace.ThrowableTraceString(t)
+			case t: Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
+     logger.error("StackTrace:"+stackTrace)   
+      }
 		}
 	}
 
@@ -660,6 +663,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 				  logger.error(s"Exception detected in $errorVicinity")
 			  }
 			  val stackTrace = StackTrace.ThrowableTraceString(t) 
+        logger.error("StackTrace:"+stackTrace)
 			}
 		}
 		srcCode

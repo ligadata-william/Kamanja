@@ -485,6 +485,7 @@ class MacroSelect(val ctx : PmmlContext
 	  			} catch {
 	  			  case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.error("StackTrae:"+stackTrace)
               arg = null}
 	  			}
 	  			arg

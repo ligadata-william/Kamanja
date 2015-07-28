@@ -152,6 +152,7 @@ class ProtoBufSerializer extends Serializer{
     }catch{
       case e:Exception => {
 	val stackTrace = StackTrace.ThrowableTraceString(e)
+  logger.error("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage())
       }
     }
@@ -177,6 +178,7 @@ class ProtoBufSerializer extends Serializer{
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
@@ -205,6 +207,7 @@ class ProtoBufSerializer extends Serializer{
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }

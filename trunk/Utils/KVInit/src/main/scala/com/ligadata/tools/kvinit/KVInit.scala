@@ -624,8 +624,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             messageOrContainer.populate(inputData)
           } catch {
             case e: Exception => {
-              logger.error("Failed to populate message/container.")
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.error("Failed to populate message/container."+"\nStackTrace:"+stackTrace)
               errsCnt += 1
             }
           }
@@ -840,6 +840,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("\nStacktrace:"+stackTrace)
         return false
     }
 

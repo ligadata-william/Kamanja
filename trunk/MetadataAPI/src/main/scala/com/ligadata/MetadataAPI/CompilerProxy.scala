@@ -756,6 +756,7 @@ class CompilerProxy{
           } catch {
             case e: java.lang.NoClassDefFoundError => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.error("Stacktrace:"+stackTrace)
               throw e
             }
             case e: Exception => {
@@ -813,6 +814,7 @@ class CompilerProxy{
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         return Array[String]()
     }
   }

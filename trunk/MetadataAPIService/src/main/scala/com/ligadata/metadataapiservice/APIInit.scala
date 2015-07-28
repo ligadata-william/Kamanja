@@ -63,7 +63,8 @@ object APIInit {
       InitLeaderLatch
     } catch {
       case e: Exception => {
-	e.printStackTrace()
+	     val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.error("Stacktrace:"+stackTrace)
       }
     }
   }

@@ -119,6 +119,7 @@ class FatafatMetadata {
           case e: Exception => {
             // Trying Regular Object instantiation
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:"+stackTrace)
             objinst = curClass.newInstance
           }
         }
@@ -159,7 +160,7 @@ class FatafatMetadata {
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
+          LOG.error("Failed to instantiate message object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". \nStackTrace:" + stackTrace)
           return false
         }
       }
@@ -208,7 +209,7 @@ class FatafatMetadata {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to get classname :" + clsName+"/nStackTrace:"+stackTrace)
+        LOG.error("Failed to get classname :" + clsName+"\nStackTrace:"+stackTrace)
         
         return false
       }
@@ -225,6 +226,7 @@ class FatafatMetadata {
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("Stacktrace:"+stackTrace)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -246,7 +248,7 @@ class FatafatMetadata {
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
+          LOG.error("Failed to instantiate containerObjects object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". \nStackTrace:" + stackTrace)
           return false
         }
       }
@@ -323,6 +325,7 @@ class FatafatMetadata {
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.error("StackTrace:"+stackTrace)
             // Trying Regular Object instantiation
             objinst = curClass.newInstance
           }
@@ -343,7 +346,7 @@ class FatafatMetadata {
       } catch {
         case e: Exception =>
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)
+          LOG.error("Failed to instantiate model object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". \nStackTrace:" + stackTrace)
           return false
       }
     }
@@ -506,6 +509,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.writeLock().unlock();
@@ -713,6 +717,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.error("StackTrace:"+stackTrace)
                 }
               }
             }
@@ -731,6 +736,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.error("StackTrace:"+stackTrace)
                 }
               }
             }
@@ -749,6 +755,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                   val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.error("StackTrace:"+stackTrace)
                 }
               }
             }
@@ -905,6 +912,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -924,6 +932,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -943,6 +952,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -962,6 +972,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -981,6 +992,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -1000,6 +1012,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();
@@ -1019,6 +1032,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     } catch {
       case e: Exception => { 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.error("StackTrace:"+stackTrace)
         exp = e }
     } finally {
       reent_lock.readLock().unlock();

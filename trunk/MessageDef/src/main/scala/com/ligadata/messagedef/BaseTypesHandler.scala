@@ -4,6 +4,7 @@ import com.ligadata.fatafat.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class BaseTypesHandler {
 
@@ -14,6 +15,7 @@ class BaseTypesHandler {
   private val newline = "\n"
   val transactionid: String = "transactionid"
     var cnstObjVar = new ConstantMsgObjVarGenerator
+    private val LOG = Logger.getLogger(getClass)
 
   def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean, msg: Message): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], ArrayBuffer[String], ArrayBuffer[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -145,6 +147,7 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.error("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -185,6 +188,7 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.error("StackTrace:"+stackTrace)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 
@@ -220,6 +224,7 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.error("StackTrace:"+stackTrace)
         throw new Exception("Exception occured " + e.getCause()+"/nStackTrace:"+stackTrace)}
     }
 
@@ -300,6 +305,7 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.error("StackTrace:"+stackTrace)
         throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
     }
 

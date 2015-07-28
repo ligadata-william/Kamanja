@@ -51,6 +51,7 @@ object TestApiService {
         } catch {
           case e: Exception =>
             val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.error("StackTrace:"+stackTrace)
             failStr = "Failed to load configuration. Message:" + e.getMessage+"\nStackTrace:"+stackTrace
             configs = null
         } finally {
@@ -73,6 +74,7 @@ object TestApiService {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
         failStr = "Invalid Configuration. Message: " + e.getMessage()+"\nStackTrace:"+stackTrace
+        logger.error("Error:"+failStr)
         configs = null
     }
     return (configs, failStr)
@@ -301,6 +303,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new InternalErrorException("Failed to Convert the Jar (" + jarName + ") to array of bytes: " + e.getMessage())
       }
     }
@@ -353,6 +356,7 @@ object TestApiService {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
         val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status+"\nStackTrace:"+stackTrace
+        logger.error("Error:"+errStr)
         throw new Exception(errStr)
     }
   }
@@ -378,6 +382,7 @@ object TestApiService {
     } catch {
       case e: Exception =>{
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -420,6 +425,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         return null
       }
     }
@@ -437,6 +443,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -449,6 +456,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -468,6 +476,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception("Failed to convert given object key into json string" + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -502,6 +511,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -541,6 +551,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -623,6 +634,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -680,6 +692,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -737,6 +750,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -805,6 +819,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -873,6 +888,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -938,6 +954,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -984,6 +1001,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1026,6 +1044,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1072,6 +1091,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1119,6 +1139,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1167,6 +1188,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1214,6 +1236,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1266,6 +1289,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1314,6 +1338,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1359,6 +1384,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1428,6 +1454,7 @@ object TestApiService {
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1470,6 +1497,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1586,6 +1614,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1617,6 +1646,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
       }
     } finally {
       // Cleanup and exit

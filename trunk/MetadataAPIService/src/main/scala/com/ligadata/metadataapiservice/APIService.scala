@@ -140,7 +140,8 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         logger.debug("Unexpected Interrupt")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.error("Stacktrace:"+stackTrace)
       }
     } finally {
       Shutdown(0)

@@ -49,6 +49,7 @@ class ScoreDistributionPmmlExecNodeGenerator(val ctx : PmmlContext) extends Pmml
 					} catch {
 					  case _ : Throwable => {
               val stackTrace = StackTrace.ThrowableTraceString(_)
+              ctx.logger.debug ("StackTrace:"+stackTrace)
               ctx.logger.debug ("Unable to coerce one or more score probablity Double values"+"\nStackTrace:"+stackTrace)}
 					}
 						

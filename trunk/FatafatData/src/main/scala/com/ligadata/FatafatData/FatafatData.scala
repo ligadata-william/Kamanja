@@ -9,6 +9,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -40,7 +41,9 @@ class FatafatData {
   private var StartDateRange: Int = 0 // Start Date Range
   private var EndDateRange: Int = 0 // End Date Range
   private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
-
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
+  
   def Version = ver // Current Version
 
   // Getting Key information
@@ -135,7 +138,7 @@ class FatafatData {
         })
       } catch {
         case e: Exception => {
-          StackTrace.ThrowableTraceString(e)
+          logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -152,6 +155,7 @@ class FatafatData {
       } catch {
         case e: Exception => {
           StackTrace.ThrowableTraceString(e)
+          logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -198,7 +202,7 @@ class FatafatData {
 
     } catch {
       case e: Exception => {
-        StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -252,7 +256,7 @@ class FatafatData {
       dis.close
     } catch {
       case e: Exception => {
-        StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }

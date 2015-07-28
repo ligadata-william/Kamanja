@@ -12,6 +12,7 @@ import java.nio.file.{Files, Paths }
 import kafka.utils.VerifiableProperties
 import com.ligadata.Utils.KeyHasher
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 object ProducerSimpleStats {
 
@@ -54,6 +55,8 @@ class  ExtractKey {
 }
 
 class CustPartitioner(props: VerifiableProperties) extends Partitioner {
+   val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   def partition(key: Any, a_numPartitions: Int): Int = {
 
     if (key == null) return 0
@@ -72,6 +75,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
       case e: Exception =>
         {
           val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("StackTrace:"+stackTrace)
         }
         // println("Exception found, so , Bucket : 0")
         return 0
@@ -103,6 +107,9 @@ object SimpleKafkaProducer {
   val requestRequiredAcks: Integer = 1
 
   val codec = if (compress) DefaultCompressionCodec.codec else NoCompressionCodec.codec
+  
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 
   def send(producer: Producer[AnyRef, AnyRef], topic: String, message: String, partIdx: String): Unit = send(producer, topic, message.getBytes("UTF8"), partIdx.getBytes("UTF8"))
 
@@ -113,6 +120,7 @@ object SimpleKafkaProducer {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         sys.exit(1)
     }
   }
@@ -156,6 +164,7 @@ object SimpleKafkaProducer {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         println("Error reading from a file " + e.printStackTrace()+"\nStackTrace:"+stackTrace)}
     } finally {
       if (bis != null) bis.close
@@ -591,7 +600,8 @@ object SimpleKafkaProducer {
       try {
         executor.awaitTermination(Long.MaxValue, TimeUnit.NANOSECONDS);
       } catch {
-        case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
+        case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+          logger.error("StackTrace:"+stackTrace)}
       }
     }
 

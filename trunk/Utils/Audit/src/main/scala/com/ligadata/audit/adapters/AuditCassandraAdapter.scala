@@ -92,6 +92,7 @@ class AuditCassandraAdapter extends AuditAdapter {
         } catch {
           case e: Exception => {
               val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.error("Stacktrace:"+stackTrace)
               throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()+"\nStactkTrace"+stackTrace) 
             }
         }
@@ -108,6 +109,7 @@ class AuditCassandraAdapter extends AuditAdapter {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage()+"\nStactkTrace"+stackTrace)
       }
     } 
@@ -175,6 +177,7 @@ class AuditCassandraAdapter extends AuditAdapter {
     }catch {
       case e: Exception => 
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
     }
   }
@@ -246,6 +249,7 @@ class AuditCassandraAdapter extends AuditAdapter {
     } catch {
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         throw new Exception("Failed to fetch audit records: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -269,6 +273,7 @@ class AuditCassandraAdapter extends AuditAdapter {
     } catch {
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("Stacktrace:"+stackTrace)
         throw new Exception("Failed to read Audit Configuration: " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }     
     }

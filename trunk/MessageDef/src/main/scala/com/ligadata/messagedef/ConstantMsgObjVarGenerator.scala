@@ -155,6 +155,7 @@ class ConstantMsgObjVarGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.error("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -539,6 +540,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     	} catch {
     		  case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
+          log.error("StackTrace:"+stackTrace)
     		  // Call By Name
              return getByName(key)
     		  }
@@ -556,6 +558,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		    } catch {
 		      case e: Exception => {
 		        val stackTrace = StackTrace.ThrowableTraceString(e)
+            log.error("StackTrace:"+stackTrace)
 		        throw e
 		      }
 		    }

@@ -2,8 +2,11 @@ package com.ligadata.Serialize
 
 import com.ligadata.Exceptions._
 import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 object SerializerManager {
+   val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   def GetSerializer(serializerType: String): Serializer = {
     try {
       serializerType.toLowerCase match {
@@ -16,6 +19,7 @@ object SerializerManager {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new SerializerManagerException("Failed to create Serializer for : " + serializerType)
       }
     }

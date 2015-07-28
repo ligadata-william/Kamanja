@@ -121,6 +121,7 @@ object MethodExtract extends App with LogTrait{
 		} catch {
 		  case _:Throwable => {
         val stackTrace = StackTrace.ThrowableTraceString(_)
+        logger.error("StackTrace:"+stackTrace)
         versionNumber = 1000000}
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
@@ -169,7 +170,9 @@ object MethodExtract extends App with LogTrait{
 			val members = clsType.declarations
 			members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
 		} catch {
-		  case t : Throwable => val stackTrace = StackTrace.ThrowableTraceString(t) 
+		  case t : Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
+      logger.error("StackTrace:"+stackTrace)  
+      }
 		  sys.exit
 		}
 		

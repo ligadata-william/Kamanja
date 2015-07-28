@@ -103,6 +103,7 @@ class MiningFieldPmmlExecNodeGenerator(val ctx : PmmlContext) extends PmmlExecNo
 		} catch {
 			case _ : Throwable => {
         val stackTrace = StackTrace.ThrowableTraceString(_)
+        ctx.logger.debug ("StackTrace:"+stackTrace)
         ctx.logger.debug (s"Unable to coerce one or more of the mining field doubles... name = $name")}
 		}
 	  	fld

@@ -109,6 +109,7 @@ object ExtractData extends MdBaseResolveInfo {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace
+            logger.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -331,6 +332,7 @@ object ExtractData extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
@@ -429,6 +431,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
           os.close
         os = null
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
       }
     }

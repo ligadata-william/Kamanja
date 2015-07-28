@@ -383,7 +383,7 @@ object FatafatMdCfg {
       } catch {
         case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)}
+          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". \nStackTrace:" + stackTrace)}
       }
     } else {
       LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)

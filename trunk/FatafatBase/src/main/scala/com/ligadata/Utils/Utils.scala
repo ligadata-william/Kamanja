@@ -4,9 +4,12 @@ package com.ligadata.Utils
 import com.google.common.base.Optional
 import java.io.{ InputStream, FileInputStream, File, StringWriter, PrintWriter }
 import java.util.Properties
+import org.apache.log4j._
 import com.ligadata.Exceptions.StackTrace
 
 object Utils {
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   val MaxTransactionsPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
 
   def SimpDateFmtTimeFromMs(tmMs: Long): String = {
@@ -92,6 +95,7 @@ object Utils {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
         failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:"+stackTrace
         configs = null
     }

@@ -78,6 +78,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
       } catch {
 	case e: Exception => {
     val stackTrace = StackTrace.ThrowableTraceString(e)
+    logger.error("StackTrace:"+stackTrace)
 	  throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage())
 	}
       }
@@ -92,6 +93,7 @@ class KeyValueCassandra(parameter: PropertyMap) extends DataStore {
   } catch {
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.error("StackTrace:"+stackTrace)
       throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
     }
   }
