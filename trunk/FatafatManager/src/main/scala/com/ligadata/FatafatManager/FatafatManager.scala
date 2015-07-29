@@ -473,17 +473,25 @@ class FatafatManager {
     var timeOutEndTime: Long = 0
     var participentsChangedCntr: Long = 0
     var lookingForDups = false
-    
+    var cntr: Long = 0
+    var prevParticipents = ""
+
     val nodeNameToSetZk = "Node" + FatafatConfiguration.nodeId.toString
 
     print("FatafatManager is running now. Waiting for user to terminate with CTRL + C\n")
     while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
+      cntr = cntr + 1
       if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
+        val dispWarn = (lookingForDups && timeOutEndTime > 0)
         lookingForDups = false
         timeOutEndTime = 0
         participentsChangedCntr = FatafatConfiguration.participentsChangedCntr
         val cs = FatafatLeader.GetClusterStatus
         if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+          if (dispWarn) {
+            LOG.warn("Got new participents. Trying to see whether the node still has duplicates participents. Previous Participents:{%s} Current Participents:{%s}".format(prevParticipents, cs.participants.mkString(",")))
+          }
+          prevParticipents = ""
           val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
           if (isNotLeader) {
             val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
@@ -494,6 +502,7 @@ class FatafatManager {
                 mxTm = 5000
               timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
               LOG.error("Found more than one of NodeId:%s in Participents:{%s}. Waiting for %d milli seconds to check whether it is real duplicate or not.".format(cs.nodeId, cs.participants.mkString(","), mxTm))
+              prevParticipents = cs.participants.mkString(",")
             }
           }
         }
@@ -519,11 +528,12 @@ class FatafatManager {
 
       try {
         Thread.sleep(500) // Waiting for 500 milli secs
-        if (heartBeat != null)
-          heartBeat.SetMainData(nodeNameToSetZk)
       } catch {
         case e: Exception => {
         }
+      }
+      if (heartBeat != null && (cntr % 2 == 1)) {
+        heartBeat.SetMainData(nodeNameToSetZk)
       }
     }
 
