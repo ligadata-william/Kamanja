@@ -33,7 +33,7 @@ lazy val FatafatBase = project.in(file("FatafatBase")) dependsOn(Metadata, Excep
 
 lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, FatafatBase, Exceptions)
 
-lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, ApiImpl, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)
+lazy val FatafatManager = project.in(file("FatafatManager")) dependsOn(Metadata, FatafatBase, ApiImpl, FatafatData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions, HeartBeat)
 
 lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(FatafatBase)
 
@@ -67,7 +67,7 @@ lazy val PmmlUdfs = project.in(file("Pmml/PmmlUdfs")) dependsOn(Metadata, PmmlRu
 
 lazy val MethodExtractor = project.in(file("Pmml/MethodExtractor")) dependsOn(PmmlUdfs, Metadata, FatafatBase, Serialize, Exceptions)
 
-lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef,Exceptions)
+lazy val MetadataAPI = project.in(file("MetadataAPI")) dependsOn(Storage,Metadata,MessageDef,PmmlCompiler,Serialize,ZooKeeperClient,ZooKeeperListener,OutputMsgDef,Exceptions, HeartBeat)
 
 lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dependsOn(Metadata, FatafatBase, BaseTypes, Exceptions)
 
@@ -100,3 +100,5 @@ lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
 
 lazy val InterfacesSamples = project.in(file("SampleApplication/InterfacesSamples")) dependsOn(Metadata, FatafatBase, FatafatData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
+
+lazy val HeartBeat = project.in(file("HeartBeat")) dependsOn(ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)

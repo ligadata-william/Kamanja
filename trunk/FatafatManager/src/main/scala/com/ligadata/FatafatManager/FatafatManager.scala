@@ -19,6 +19,7 @@ import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.Utils
 import org.apache.log4j.Logger
+import com.ligadata.HeartBeat.HeartBeatUtil
 
 class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -176,6 +177,7 @@ class FatafatManager {
   private val outputAdapters = new ArrayBuffer[OutputAdapter]
   private val statusAdapters = new ArrayBuffer[OutputAdapter]
   private val validateInputAdapters = new ArrayBuffer[InputAdapter]
+  private var heartBeat: HeartBeatUtil = null
 
   private type OptionMap = Map[Symbol, Any]
 
@@ -189,6 +191,9 @@ class FatafatManager {
   private def Shutdown(exitCode: Int): Int = {
     if (FatafatMetadata.envCtxt != null)
       FatafatMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
+    if (heartBeat != null)
+      heartBeat.Shutdown
+    heartBeat = null
     FatafatLeader.Shutdown
     FatafatMetadata.Shutdown
     ShutdownAdapters
@@ -317,6 +322,7 @@ class FatafatManager {
       var metadataUpdatesZkNodePath = ""
       var adaptersStatusPath = ""
       var dataChangeZkNodePath = ""
+      var zkHeartBeatNodePath = ""
 
       if (FatafatConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
@@ -326,6 +332,7 @@ class FatafatManager {
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
         dataChangeZkNodePath = zkNodeBasePath + "/datachange"
+        zkHeartBeatNodePath = zkNodeBasePath + "/monitor/engine/" + FatafatConfiguration.nodeId.toString
       }
 
       FatafatMdCfg.ValidateAllRequiredJars
@@ -340,6 +347,12 @@ class FatafatManager {
       if (retval) {
         FatafatMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, FatafatConfiguration.zkConnectString, metadataUpdatesZkNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
         FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
+      }
+
+      if (retval && zkHeartBeatNodePath.size > 0) {
+        heartBeat = new HeartBeatUtil
+        heartBeat.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, zkHeartBeatNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, 5000) // for every 5 secs
+        heartBeat.SetMainData("Node" + FatafatConfiguration.nodeId.toString)
       }
 
       /*
@@ -445,24 +458,25 @@ class FatafatManager {
 
     scheduledThreadPool.scheduleWithFixedDelay(statusPrint_PD, 0, 1000, TimeUnit.MILLISECONDS);
 
-/**
-    print("=> ")
-    breakable {
-      for (ln <- io.Source.stdin.getLines) {
-        val rv = execCmd(ln)
-        if (rv)
-          break;
-        print("=> ")
-      }
-    }
-**/
-
+    /**
+     * print("=> ")
+     * breakable {
+     * for (ln <- io.Source.stdin.getLines) {
+     * val rv = execCmd(ln)
+     * if (rv)
+     * break;
+     * print("=> ")
+     * }
+     * }
+     */
 
     var timeOutEndTime: Long = 0
     var participentsChangedCntr: Long = 0
     var lookingForDups = false
+    
+    val nodeNameToSetZk = "Node" + FatafatConfiguration.nodeId.toString
 
-    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C")
+    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C\n")
     while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
       if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
         lookingForDups = false
@@ -505,6 +519,8 @@ class FatafatManager {
 
       try {
         Thread.sleep(500) // Waiting for 500 milli secs
+        if (heartBeat != null)
+          heartBeat.SetMainData(nodeNameToSetZk)
       } catch {
         case e: Exception => {
         }
