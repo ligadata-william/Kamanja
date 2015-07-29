@@ -43,10 +43,10 @@ class HeartBeatUtil {
   private[this] val _components = collection.mutable.Map[(String, String), ComponentInfo]()
   private[this] val _metrics = collection.mutable.Map[(String, String), MetricInfo]()
 
-  LOG.warn("Instantiated HeartBeat")
+  LOG.debug("Instantiated HeartBeat")
   
   def Init(nodeId: String, zkConnectString: String, zkNodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int, refreshTimeInMs: Int): Unit = {
-    LOG.warn("Called HeartBeat Init")
+    LOG.debug("Called HeartBeat Init")
     _nodeId = nodeId
     _zkConnectString = zkConnectString
     _zkNodePath = zkNodePath
@@ -81,7 +81,7 @@ class HeartBeatUtil {
   }
 
   def SetComponentData(sType: String, sName: String): Unit = {
-    LOG.warn("Called HeartBeat SetComponentData")
+    LOG.debug("Called HeartBeat SetComponentData")
     _setDataLockObj.synchronized {
       val key = (sType.toLowerCase, sName.toLowerCase)
       val oldComp = _components.getOrElse(key, null)
@@ -99,7 +99,7 @@ class HeartBeatUtil {
   }
 
   def SetMainData(sName: String): Unit = {
-    LOG.warn("Called HeartBeat SetMainData")
+    LOG.debug("Called HeartBeat SetMainData")
     _setDataLockObj.synchronized {
       _mainInfo.name = sName
       _mainInfo.uniqueId = _cntr
@@ -111,7 +111,7 @@ class HeartBeatUtil {
   }
 
   def Shutdown: Unit = {
-    LOG.warn("Called HeartBeat Shutdown")
+    LOG.debug("Called HeartBeat Shutdown")
     _setDataLockObj.synchronized {
       if (_exec != null)
         _exec.shutdown
@@ -127,7 +127,7 @@ class HeartBeatUtil {
   }
 
   private def SetNewDataInZk: Unit = {
-    LOG.warn("Called HeartBeat SetNewDataInZk. Setting data @" + _zkNodePath)
+    LOG.debug("Called HeartBeat SetNewDataInZk. Setting data @" + _zkNodePath)
     _setDataLockObj.synchronized {
       if (_zkcForSetData != null && _mainInfo != null && _mainInfo.name != null) {
         val dataJson =
