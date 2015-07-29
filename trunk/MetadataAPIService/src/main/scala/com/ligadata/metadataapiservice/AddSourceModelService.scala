@@ -20,7 +20,7 @@ object AddSourceModelService {
   case class ProcessScala(sourceCode:String)
 }
 
-class AddSourceModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String]) extends Actor {
+class AddSourceModelService(requestContext: RequestContext, userid:Option[String], password:Option[String], cert:Option[String], modelname: Option[String]) extends Actor {
 
   import AddSourceModelService._
 
@@ -51,7 +51,7 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
 
     //var nameVal = APIService.extractNameFromPMML(pmmlStr)
 
-    var modelName=""
+    /*var modelName=""
     val regex=" \"([^\"]*)\"(.*$)".r
 
     val arr=sourceCode.split("\n")
@@ -60,8 +60,9 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
         modelName=(regex.findFirstIn(i).getOrElse("No Match").replace("\"","")).trim
       }
     }
-    val usersModelName=userid.getOrElse("")+"."+modelName
-
+    */
+    val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
+    logger.debug("user model name is: "+usersModelName)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
 	   // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
@@ -76,7 +77,7 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
   def processScala(sourceCode:String) = {
 
     logger.debug("Requesting AddSourceModel SCALA.")
-    var modelName=""
+    /*var modelName=""
     val regex=" \"([^\"]*)\"(.*$)".r
 
     val arr=sourceCode.split("\n")
@@ -86,6 +87,8 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
       }
     }
     val usersModelName=userid.getOrElse("")+"."+modelName
+    */
+    val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
      // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
