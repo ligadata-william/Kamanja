@@ -9,6 +9,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.actors.threadpool.{ Executors, ExecutorService }
 
 class HeartBeatUtil {
+  private[this] val LOG = Logger.getLogger(getClass);
   class MainInfo {
     var name: String = null
     var uniqueId: Long = 0
@@ -42,7 +43,10 @@ class HeartBeatUtil {
   private[this] val _components = collection.mutable.Map[(String, String), ComponentInfo]()
   private[this] val _metrics = collection.mutable.Map[(String, String), MetricInfo]()
 
+  LOG.warn("Instantiated HeartBeat")
+  
   def Init(nodeId: String, zkConnectString: String, zkNodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int, refreshTimeInMs: Int): Unit = {
+    LOG.warn("Called HeartBeat Init")
     _nodeId = nodeId
     _zkConnectString = zkConnectString
     _zkNodePath = zkNodePath
@@ -53,6 +57,8 @@ class HeartBeatUtil {
     if (_zkcForSetData != null && _exec != null)
       Shutdown
 
+    CreateClient.CreateNodeIfNotExists(zkConnectString, zkNodePath) // Creating the path if missing
+      
     _zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
     _exec = Executors.newFixedThreadPool(1)
 
@@ -65,7 +71,7 @@ class HeartBeatUtil {
           val curTime = System.currentTimeMillis
           val diffTm = curTime - startTime
           if (_exec.isShutdown == false && diffTm >= _refreshTimeInMs) {
-            var startTime = curTime
+            startTime = curTime
             // Sent the stuff in ZK
             SetNewDataInZk
           }
@@ -75,6 +81,7 @@ class HeartBeatUtil {
   }
 
   def SetComponentData(sType: String, sName: String): Unit = {
+    LOG.warn("Called HeartBeat SetComponentData")
     _setDataLockObj.synchronized {
       val key = (sType.toLowerCase, sName.toLowerCase)
       val oldComp = _components.getOrElse(key, null)
@@ -92,7 +99,9 @@ class HeartBeatUtil {
   }
 
   def SetMainData(sName: String): Unit = {
+    LOG.warn("Called HeartBeat SetMainData")
     _setDataLockObj.synchronized {
+      _mainInfo.name = sName
       _mainInfo.uniqueId = _cntr
       _cntr = _cntr + 1
       _mainInfo.lastSeen = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date(System.currentTimeMillis))
@@ -102,6 +111,7 @@ class HeartBeatUtil {
   }
 
   def Shutdown: Unit = {
+    LOG.warn("Called HeartBeat Shutdown")
     _setDataLockObj.synchronized {
       if (_exec != null)
         _exec.shutdown
@@ -117,6 +127,7 @@ class HeartBeatUtil {
   }
 
   private def SetNewDataInZk: Unit = {
+    LOG.warn("Called HeartBeat SetNewDataInZk. Setting data @" + _zkNodePath)
     _setDataLockObj.synchronized {
       if (_zkcForSetData != null && _mainInfo != null && _mainInfo.name != null) {
         val dataJson =
