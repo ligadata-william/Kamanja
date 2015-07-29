@@ -782,7 +782,7 @@ class OutputMsgDef extends BaseElemDef {
 }
 
 object ModelCompilationConstants {
-  val DEPENDENCIES: String = "dependencies"
+  val DEPENDENCIES: String = "Dependencies"
   val TYPES_DEPENDENCIES: String = "MessageAndContainers"
   val SOURCECODE: String = "source"
   val PHYSICALNAME: String = "pName"
