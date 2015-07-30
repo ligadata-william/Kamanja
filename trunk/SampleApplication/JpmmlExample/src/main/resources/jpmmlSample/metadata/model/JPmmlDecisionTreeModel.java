@@ -1,10 +1,217 @@
 package com.ligadata.jpmml.models;
 
 import com.ligadata.FatafatBase.*;
-import com.google.common.base.Optional;
-import org.apache.commons.codec.binary.Base64;
+import com.ligadata.messagescontainers.System.*;
 
-class ModelArchive {
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.transform.Source;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.google.common.collect.BiMap;
+import com.google.common.base.Optional;
+
+import org.dmg.pmml.Entity;
+import org.dmg.pmml.FieldName;
+import org.dmg.pmml.PMML;
+import org.dmg.pmml.OpType;
+import org.dmg.pmml.DataType;
+
+import org.jpmml.evaluator.Computable;
+import org.jpmml.evaluator.FieldValue;
+import org.jpmml.evaluator.FieldValueUtil;
+import org.jpmml.evaluator.HasProbability;
+import org.jpmml.evaluator.HasEntityRegistry;
+import org.jpmml.evaluator.HasEntityId;
+import org.jpmml.evaluator.ModelEvaluator;
+import org.jpmml.evaluator.ModelEvaluatorFactory;
+import org.jpmml.evaluator.TreeModelEvaluator;
+import org.jpmml.evaluator.*;
+
+import org.jpmml.model.ImportFilter;
+import org.jpmml.model.JAXBUtil;
+
+
+import org.xml.sax.InputSource;
+
+
+public class JPmmlDecisionTreeModel extends ModelBase {
+
+	static JPmmlDecisionTreeModelObj objectSingleton = new JPmmlDecisionTreeModelObj();
+
+	public Logger logger = Logger.getLogger(this.getClass().getName());
+
+	public ModelResultBase execute(boolean emitAllResults) {
+
+		// Directly calling methods from Scala Singleton object. Not preferable
+		// to use direct scala.
+		IrisMsg msg = (IrisMsg) modelContext().msg();
+		ModelResultBase result = null;
+
+
+		String pmmlSrc = getModelBase64(modelContext());
+		PMML pmml = null;
+
+		InputStream is = IOUtils.toInputStream(pmmlSrc);
+
+		try {
+		    Source transformedSource = ImportFilter.apply(new InputSource(is));
+		    pmml = JAXBUtil.unmarshalPMML(transformedSource);
+
+
+			TreeModelEvaluator modelEvaluator = new TreeModelEvaluator(pmml);
+
+			/** The preparation of field values: */
+			Map<FieldName, FieldValue> arguments = new LinkedHashMap<FieldName, FieldValue>();
+
+			List<FieldName> activeFields = modelEvaluator.getActiveFields();
+			//List<FieldName> targetFields = modelEvaluator.getTargetFields();
+			List<FieldName> outputFields = modelEvaluator.getOutputFields();
+
+			Map<FieldName, FieldValue> preparedFields = prepareFields(activeFields, msg);
+
+			// for(FieldName activeField : activeFields){
+			    // The raw (ie. user-supplied) value could be any Java primitive value
+			    // Object rawValue = ...;
+
+			    // The raw value is passed through: 1) outlier treatment, 2) missing value treatment, 3) invalid value treatment and 4) type conversion
+			    // FieldValue activeValue = modelEvaluator.prepare(activeField, rawValue);
+
+			    // arguments.put(activeField, activeValue);
+			// }
+
+			/** Evaluate the model */
+			Map<FieldName, ?> results = modelEvaluator.evaluate(preparedFields);
+
+			/** get the target */
+			FieldName targetName = modelEvaluator.getTargetField();
+			Object targetValue = results.get(targetName);
+			/** if the value is derived, get its value */
+			if(targetValue instanceof Computable){
+			    Computable computable = (Computable)targetValue;
+			    Object primitiveValue = computable.getResult();
+			    targetValue = primitiveValue;
+			}
+
+		/** do something with this... not sure what  
+
+		If this code is in the source, it causes the type introspection done by the
+		metadata api's compiler proxy to fail with a hard assertion error in 
+		JavaMirror.scala
+
+			if(targetValue instanceof HasEntityId){  
+			    HasEntityId hasEntityId = (HasEntityId)targetValue;
+			    HasEntityRegistry<?> hasEntityRegistry = (HasEntityRegistry<?>)modelEvaluator;
+			    BiMap<String, ? extends Entity> entities = hasEntityRegistry.getEntityRegistry();
+			    Entity winner = entities.get(hasEntityId.getEntityId());
+
+			    // Test for "probability" result feature
+			    if(targetValue instanceof HasProbability){
+			        HasProbability hasProbability = (HasProbability)targetValue;
+			        Double winnerProbability = hasProbability.getProbability(winner.getId());
+			    }
+			}
+		*/
+
+	        com.ligadata.FatafatBase.Result[] returnResults = new com.ligadata.FatafatBase.Result[]{
+	        	new com.ligadata.FatafatBase.Result(targetName.getValue(), targetValue)
+	        };
+
+	        logger.info("Model " + ModelName() + "'s prediction is " + targetName.getValue() + "... its value = " + targetValue.toString());
+
+	        result = new MappedModelResults().withResults(returnResults);
+
+	    }
+	    catch (Exception e) {
+	    	logger.error("Exception type : " + e.getClass().getName() + " detected... stack trace = \n" + e.getStackTrace());
+
+		} finally {
+			try {
+		    	is.close();
+			} catch (IOException ioe) {}
+		}
+
+		return result;
+	}
+
+	public Map<FieldName, FieldValue> prepareFields(List<FieldName> activeFields, IrisMsg msg){
+		Map<FieldName, FieldValue> pmmlArguments = new LinkedHashMap<FieldName, FieldValue>();
+
+		for(FieldName activeField : activeFields) {
+	    	Object userValue = msg.get(activeField.getValue());
+	    	FieldValue pmmlValue = null;
+
+	    	if (userValue instanceof String) {
+	    		pmmlValue = FieldValueUtil.create(DataType.STRING, OpType.CATEGORICAL, (String)userValue);
+	    	} else if (userValue instanceof Integer) {
+	    		pmmlValue = FieldValueUtil.create(DataType.INTEGER, OpType.CONTINUOUS, (Integer)userValue);
+	    	} else if (userValue instanceof Boolean) {
+	    		pmmlValue = FieldValueUtil.create(DataType.BOOLEAN, OpType.CATEGORICAL, (boolean)userValue);
+	    	} else if (userValue instanceof Float) {
+	    		pmmlValue = FieldValueUtil.create(DataType.FLOAT, OpType.CONTINUOUS, (Float)userValue);
+	    	} else if (userValue instanceof Double) {
+	    		pmmlValue = FieldValueUtil.create(DataType.DOUBLE, OpType.CONTINUOUS, (Double)userValue);
+	    	} else if (userValue instanceof Long) {
+
+	    	} else {
+
+	    	}
+	    		
+	    	if (pmmlValue != null) {
+	    		pmmlArguments.put(activeField, pmmlValue);
+	    	} else {
+	    		// this type not handled message 
+	    		logger.error("the supplied value's type " + userValue.getClass().getName() + " is not currently handled by prepareFields()");
+	    		logger.error("the supplied value's string representation = " + userValue.toString() );
+	    	}
+	  	}
+	  	return pmmlArguments;
+
+	}
+
+
+	public JPmmlDecisionTreeModel(ModelContext modelContext) {
+		super(modelContext, objectSingleton);
+	}
+
+	public static class JPmmlDecisionTreeModelObj implements ModelBaseObj {
+		public boolean IsValidMessage(MessageContainerBase msg) {
+			return (msg instanceof IrisMsg);
+		}
+
+		public ModelBase CreateNewModel(ModelContext modelContext) {
+			return new JPmmlDecisionTreeModel(modelContext);
+		}
+
+		public String ModelName() {
+			//return "KNIME";
+			return "JPmmlDecisionTreeModel";
+		}
+
+		public String Version() {
+			return "0.0.1";
+		}
+
+		public ModelResultBase CreateResultObject() {
+			return new MappedModelResults();
+		}
+	}
+
+
 
     /**
         Obtain the model from the model context.  
@@ -90,6 +297,18 @@ class ModelArchive {
         "</PMML>" +
         "";
 
+    /**
+        Obtain the model from the model context.  
+
+        NOTE: The model context could conceivably contain the model source, but it is really not
+        needed or for some model types may not even be available (jar only model submission).
+        We might consider using key information (a hash of PMML perhaps) here that is used to 
+        fetch the model source from the peristent store, or alternatively only supply source when 
+        the jpmml model type or other models of its ilk are in use.
+
+        @param mdlContext a ModelContext with the necessary information to obtain the PMML source
+        @return the model associated with this ModelContext
+     */
     static String getModelBase64(ModelContext mdlContext) {
         // return mdlContext.modelSource
         Base64 decoder = new Base64();
@@ -98,7 +317,6 @@ class ModelArchive {
         return modelPmml;
     }
 
-
     static String irisDecisionTreeBase64 = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPFBNTUwgdmVyc2lvbj0iNC4xIiB4bWxucz0iaHR0cDovL3d3dy5kbWcub3JnL1BNTUwtNF8xIj4KICA8SGVhZGVyIGNvcHlyaWdodD0iS05JTUUiPgogICAgPEFwcGxpY2F0aW9uIG5hbWU9IktOSU1FIiB2ZXJzaW9uPSIyLjguMCIvPgogIDwvSGVhZGVyPgogIDxEYXRhRGljdGlvbmFyeSBudW1iZXJPZkZpZWxkcz0iNSI+CiAgICA8RGF0YUZpZWxkIG5hbWU9InNlcGFsX2xlbmd0aCIgb3B0eXBlPSJjb250aW51b3VzIiBkYXRhVHlwZT0iZG91YmxlIj4KICAgICAgPEludGVydmFsIGNsb3N1cmU9ImNsb3NlZENsb3NlZCIgbGVmdE1hcmdpbj0iNC4zIiByaWdodE1hcmdpbj0iNy45Ii8+CiAgICA8L0RhdGFGaWVsZD4KICAgIDxEYXRhRmllbGQgbmFtZT0ic2VwYWxfd2lkdGgiIG9wdHlwZT0iY29udGludW91cyIgZGF0YVR5cGU9ImRvdWJsZSI+CiAgICAgIDxJbnRlcnZhbCBjbG9zdXJlPSJjbG9zZWRDbG9zZWQiIGxlZnRNYXJnaW49IjIuMCIgcmlnaHRNYXJnaW49IjQuNCIvPgogICAgPC9EYXRhRmllbGQ+CiAgICA8RGF0YUZpZWxkIG5hbWU9InBldGFsX2xlbmd0aCIgb3B0eXBlPSJjb250aW51b3VzIiBkYXRhVHlwZT0iZG91YmxlIj4KICAgICAgPEludGVydmFsIGNsb3N1cmU9ImNsb3NlZENsb3NlZCIgbGVmdE1hcmdpbj0iMS4wIiByaWdodE1hcmdpbj0iNi45Ii8+CiAgICA8L0RhdGFGaWVsZD4KICAgIDxEYXRhRmllbGQgbmFtZT0icGV0YWxfd2lkdGgiIG9wdHlwZT0iY29udGludW91cyIgZGF0YVR5cGU9ImRvdWJsZSI+CiAgICAgIDxJbnRlcnZhbCBjbG9zdXJlPSJjbG9zZWRDbG9zZWQiIGxlZnRNYXJnaW49IjAuMSIgcmlnaHRNYXJnaW49IjIuNSIvPgogICAgPC9EYXRhRmllbGQ+CiAgICA8RGF0YUZpZWxkIG5hbWU9ImNsYXNzIiBvcHR5cGU9ImNhdGVnb3JpY2FsIiBkYXRhVHlwZT0ic3RyaW5nIj4KICAgICAgPFZhbHVlIHZhbHVlPSJJcmlzLXNldG9zYSIvPgogICAgICA8VmFsdWUgdmFsdWU9IklyaXMtdmVyc2ljb2xvciIvPgogICAgICA8VmFsdWUgdmFsdWU9IklyaXMtdmlyZ2luaWNhIi8+CiAgICA8L0RhdGFGaWVsZD4KICA8L0RhdGFEaWN0aW9uYXJ5PgogIDxUcmVlTW9kZWwgbW9kZWxOYW1lPSJEZWNpc2lvblRyZWUiIGZ1bmN0aW9uTmFtZT0iY2xhc3NpZmljYXRpb24iIHNwbGl0Q2hhcmFjdGVyaXN0aWM9ImJpbmFyeVNwbGl0IiBtaXNzaW5nVmFsdWVTdHJhdGVneT0ibGFzdFByZWRpY3Rpb24iIG5vVHJ1ZUNoaWxkU3RyYXRlZ3k9InJldHVybk51bGxQcmVkaWN0aW9uIj4KICAgIDxNaW5pbmdTY2hlbWE+CiAgICAgIDxNaW5pbmdGaWVsZCBuYW1lPSJzZXBhbF9sZW5ndGgiIGludmFsaWRWYWx1ZVRyZWF0bWVudD0iYXNJcyIvPgogICAgICA8TWluaW5nRmllbGQgbmFtZT0ic2VwYWxfd2lkdGgiIGludmFsaWRWYWx1ZVRyZWF0bWVudD0iYXNJcyIvPgogICAgICA8TWluaW5nRmllbGQgbmFtZT0icGV0YWxfbGVuZ3RoIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiLz4KICAgICAgPE1pbmluZ0ZpZWxkIG5hbWU9InBldGFsX3dpZHRoIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiLz4KICAgICAgPE1pbmluZ0ZpZWxkIG5hbWU9ImNsYXNzIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiIHVzYWdlVHlwZT0icHJlZGljdGVkIi8+CiAgICA8L01pbmluZ1NjaGVtYT4KICAgIDxOb2RlIGlkPSIwIiBzY29yZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSIxNTAuMCI+CiAgICAgIDxUcnVlLz4KICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjUwLjAiLz4KICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgIDxOb2RlIGlkPSIxIiBzY29yZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSI1MC4wIj4KICAgICAgICA8U2ltcGxlUHJlZGljYXRlIGZpZWxkPSJwZXRhbF93aWR0aCIgb3BlcmF0b3I9Imxlc3NPckVxdWFsIiB2YWx1ZT0iMC42Ii8+CiAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjUwLjAiLz4KICAgICAgICA8U2NvcmVEaXN0cmlidXRpb24gdmFsdWU9IklyaXMtdmVyc2ljb2xvciIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSIwLjAiLz4KICAgICAgPC9Ob2RlPgogICAgICA8Tm9kZSBpZD0iMiIgc2NvcmU9IklyaXMtdmVyc2ljb2xvciIgcmVjb3JkQ291bnQ9IjEwMC4wIj4KICAgICAgICA8U2ltcGxlUHJlZGljYXRlIGZpZWxkPSJwZXRhbF93aWR0aCIgb3BlcmF0b3I9ImdyZWF0ZXJUaGFuIiB2YWx1ZT0iMC42Ii8+CiAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12ZXJzaWNvbG9yIiByZWNvcmRDb3VudD0iNTAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgICAgPE5vZGUgaWQ9IjMiIHNjb3JlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSI1NC4wIj4KICAgICAgICAgIDxTaW1wbGVQcmVkaWNhdGUgZmllbGQ9InBldGFsX3dpZHRoIiBvcGVyYXRvcj0ibGVzc09yRXF1YWwiIHZhbHVlPSIxLjciLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSIwLjAiLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12ZXJzaWNvbG9yIiByZWNvcmRDb3VudD0iNDkuMCIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZpcmdpbmljYSIgcmVjb3JkQ291bnQ9IjUuMCIvPgogICAgICAgIDwvTm9kZT4KICAgICAgICA8Tm9kZSBpZD0iMTAiIHNjb3JlPSJJcmlzLXZpcmdpbmljYSIgcmVjb3JkQ291bnQ9IjQ2LjAiPgogICAgICAgICAgPFNpbXBsZVByZWRpY2F0ZSBmaWVsZD0icGV0YWxfd2lkdGgiIG9wZXJhdG9yPSJncmVhdGVyVGhhbiIgdmFsdWU9IjEuNyIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSIxLjAiLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI0NS4wIi8+CiAgICAgICAgPC9Ob2RlPgogICAgICA8L05vZGU+CiAgICA8L05vZGU+CiAgPC9UcmVlTW9kZWw+CjwvUE1NTD4=";
 
-}
+};

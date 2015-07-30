@@ -18,6 +18,8 @@ libraryDependencies += "org.jpmml" % "pmml-evaluator" % "1.2.1"
 
 libraryDependencies += "org.jpmml" % "pmml-model" % "1.2.3"
 
+libraryDependencies += "org.jpmml" % "pmml-schema" % "1.2.3"
+
 libraryDependencies += "commons-codec" % "commons-codec" % "1.10"
 
 libraryDependencies += "commons-io" % "commons-io" % "2.4"
