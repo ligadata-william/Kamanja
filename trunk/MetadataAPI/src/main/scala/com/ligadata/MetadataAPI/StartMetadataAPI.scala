@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.{Paths, Files}
 import java.util.logging.Logger
 
-import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.MetadataAPI.{ApiResult, MetadataAPIImpl}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
@@ -43,21 +43,24 @@ object StartMetadataAPI {
     // val input=scala.io.Source.fromFile(options.getOrElse('input, None).toString).mkString
     val input = options.getOrElse('input, None)
     val action = options.getOrElse('action, None)
-    route(action, input)
+    val response=route(action, input)
+    println("\nResponse: "+response)
   }
 
-  def route(action: Any, input: Any): Unit = {
+  def route(action: Any, input: Any): String = {
+    var response=""
     if (action == "addMessage") {
       println("Adding message")
-      addMessage(input)
+     response=addMessage(input)
     }
     else if (action == None) {
       //give all options to perform action
-
+      response="Incorrect action."
     }
+    response
   }
 
-  def addMessage(input: Any): Unit = {
+  def addMessage(input: Any): String = {
 
     var msgFileDir: String = ""
     val gitMsgFileDir = "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
@@ -79,16 +82,16 @@ object StartMetadataAPI {
           messages.length match {
             case 0 => {
               println("Messages not found at " + msgFileDir)
-              return
+              "Messages not found at " + msgFileDir
             }
             case option => {
-              var userOptions = getUserInputFromMainMenu(messages)
+              getUserInputFromMainMenu(messages)
             }
           }
         }
         case false => {
           println("Message directory is invalid.")
-          return
+          "Message directory is invalid."
         }
       }
     } else {
@@ -97,7 +100,8 @@ object StartMetadataAPI {
       var message=new File(input.toString)
       val messageDef = Source.fromFile(message).mkString
       val response: String = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
-      println("Response: " + response)
+      //println("Response: " + response)
+      response
     }
   }
 
@@ -128,7 +132,8 @@ object StartMetadataAPI {
     }
   }
 
-  def getUserInputFromMainMenu(messages: Array[File]) = {
+  def getUserInputFromMainMenu(messages: Array[File]): String = {
+    var result=""
     var srNo = 0
     println("\nPick a Message Definition file(s) from below choices\n")
     for (message <- messages) {
@@ -148,15 +153,15 @@ object StartMetadataAPI {
           var message=messages(userOption.toInt-1)
           //process message
           val messageDef = Source.fromFile(message).mkString
-          val messageDef = Source.fromFile(message).mkString
           val response: String = MetadataAPIImpl.AddContainer(messageDef, "JSON", userid)
-          println("Response: "+response)
+          result=response
         }
         case _ => {
           println("Incorrect input "+userOption+". Please enter the correct option.\nIf other options valid, the message definition is loaded for them.")
-
+          result="Incorrect input "+userOption+". Please enter the correct option.\nIf other options valid, the message definition is loaded for them."
         }
       }
     }
+    result
   }
 }

@@ -1246,7 +1246,6 @@ object TestMetadataAPI {
       print("\nEnter your choices (separate with commas if more than 1 choice given): ")
       //val choice:Int = readInt()
       val choicesStr: String = readLine()
-
       var valid: Boolean = true
       var choices: List[Int] = List[Int]()
       var results: ArrayBuffer[(String, String, String)] = ArrayBuffer[(String, String, String)]()
