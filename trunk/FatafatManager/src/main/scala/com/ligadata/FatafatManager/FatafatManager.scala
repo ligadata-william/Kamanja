@@ -296,15 +296,16 @@ class FatafatManager {
         return false
       }
 
+      // This is just for debugging info. If anything fails here, we should not care.
       try {
-        FatafatConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "").replace("\"", "0").trim.toInt
+        FatafatConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "0").replace("\"", "").trim.toInt
         if (FatafatConfiguration.waitProcessingTime > 0) {
           val setps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0)
           if (setps.size > 0)
             FatafatConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => LOG.error("Failed to load Wait Processing Info.")
+        case e: Exception => {} 
       }
 
       FatafatMetadata.InitBootstrap
