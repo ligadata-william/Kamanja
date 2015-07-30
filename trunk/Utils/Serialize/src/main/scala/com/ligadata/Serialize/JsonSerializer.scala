@@ -9,6 +9,7 @@ import org.apache.log4j._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 
 import com.ligadata.Exceptions._
 
@@ -1403,6 +1404,11 @@ object JsonSerializer {
         throw Json4sSerializationException(e.getMessage())
       }
     }
+  }
+  
+  def SerializeMapToJsonString (map: scala.collection.mutable.Map[String,Any]): String = {
+     implicit val formats = org.json4s.DefaultFormats
+     return Serialization.write(map)
   }
 
 }

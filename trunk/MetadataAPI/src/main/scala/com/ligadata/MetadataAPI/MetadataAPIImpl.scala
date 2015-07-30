@@ -153,6 +153,16 @@ object MetadataAPIImpl extends MetadataAPI {
       }
     }
   }
+  
+  /**
+   *  getHealthCheck - will return all the health-check information for the nodeId specified. 
+   *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
+   */
+  def getHealthCheck(nodeId: List[String] = List[String]()): String = {
+     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", JsonSerializer.SerializeMapToJsonString(MonitorAPIImpl.getHeartbeatInfo(nodeId)), ErrorCodeConstants.Add_Type_Successful)
+     apiResult.toString
+  }
+
 
   /**
    * InitSecImpl  - 1. Create the Security Adapter class.  The class name and jar name containing
@@ -5624,6 +5634,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  def getNodeList1: Array[NodeInfo] = {MdMgr.GetMdMgr.Nodes.values.toArray}
   // All available nodes(format JSON) as a String
   def GetAllNodes(formatType: String,userid: Option[String]): String = {
     try {
