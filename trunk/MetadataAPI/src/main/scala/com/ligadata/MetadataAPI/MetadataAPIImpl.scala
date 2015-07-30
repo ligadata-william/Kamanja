@@ -3301,7 +3301,9 @@ object MetadataAPIImpl extends MetadataAPI {
     var compProxy = new CompilerProxy
     compProxy.setSessionUserId(userid)
     val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+    logger.info("Begin uploading dependent Jar, please wait.")
     UploadJarsToDB(modDef)
+    logger.info("Finished uploading dependent Jars.")
     val apiResult = AddModel(modDef)  
 
     // Add all the objects and NOTIFY the world
