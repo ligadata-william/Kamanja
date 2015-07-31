@@ -60,7 +60,7 @@ class ArrayTypeHandler {
           fname = arrayType.elemDef.implementationName + ".Input"
 
         if (msg.Fixed != null) {
-          if (msg.Fixed.toLowerCase().equals("true")) {
+          if (MsgUtils.isTrue(MsgUtils.LowerCase(msg.Fixed))) {
             assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 

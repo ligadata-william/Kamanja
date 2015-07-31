@@ -8,6 +8,7 @@ import java.io.PrintWriter
 import java.util.Date
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.Map
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
@@ -28,7 +29,7 @@ trait Attrib {
   var Type: String
 }
 
-class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
+class Message(var msgtype: String, var NameSpace: String, var Name: String, var PhysicalName: String, var Version: String, var Description: String, var Fixed: String, var Persist: Boolean, var isCase: Boolean, var Elements: List[Element], var TDataExists: Boolean, var TrfrmData: TransformData, var jarset: Set[String], var pkg: String, var concepts: List[String], var Ctype: String, var CCollectiontype: String, var Containers: List[String], var PartitionKey: List[String], var PrimaryKeys: List[String], var ClsNbr: Long)
 class TransformData(var input: Array[String], var output: Array[String], var keys: Array[String])
 class Field(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var Fieldtype: String, var FieldtypeVer: String)
 class Element(var NameSpace: String, var Name: String, var Ttype: String, var CollectionType: String, var ElemType: String, var FieldtypeVer: String)
@@ -240,9 +241,9 @@ class MessageDefImpl {
       //createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
-      if (message.msgtype.equals("Message"))
+      if (message.msgtype.equals("message"))
         containerDef = createFixedMsgDef(message, list, mdMgr, argsList, recompile)
-      else if (message.msgtype.equals("Container"))
+      else if (message.msgtype.equals("container"))
         containerDef = createFixedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
@@ -268,9 +269,9 @@ class MessageDefImpl {
       // createScalaFile(classstr, ver, classname)
       val cname = message.pkg + "." + message.NameSpace + "_" + message.Name.toString() + "_" + MdMgr.ConvertVersionToLong(message.Version).toString
 
-      if (message.msgtype.equals("Message"))
+      if (message.msgtype.equals("message"))
         containerDef = createMappedMsgDef(message, list, mdMgr, argsList, recompile)
-      else if (message.msgtype.equals("Container"))
+      else if (message.msgtype.equals("container"))
         containerDef = createMappedContainerDef(message, list, mdMgr, argsList, recompile)
     } catch {
       case e: Exception => {
@@ -311,12 +312,12 @@ class MessageDefImpl {
       val isFixed = cnstObjVar.getIsFixed(message)
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
+      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr, message) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populatecsv(csvassignstr, count) + methodGen.populateJson + methodGen.assignJsonData(jsonstr, message) + methodGen.assignXmlData(xmlStr) + getSerializedFuncStr + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfFixed + " \n}")
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
     } catch {
@@ -361,12 +362,12 @@ class MessageDefImpl {
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
 
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
+      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr, message) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr, message) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
 
@@ -535,7 +536,14 @@ class MessageDefImpl {
     var message: Message = null
     var jtype: String = null
     //val parsed = JSON.parseFull(json)
-    val map = parse(json).values.asInstanceOf[Map[String, Any]]
+    val mapOriginal = parse(json).values.asInstanceOf[scala.collection.immutable.Map[String, Any]]
+
+    if (mapOriginal == null)
+      throw new Exception("Invalid json data")
+
+    val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+    //println("map" + map)
     // val map = parsed.get.asInstanceOf[Map[String, Any]]
     //  val map = parsed
     var key: String = ""
@@ -555,12 +563,12 @@ class MessageDefImpl {
   private def geJsonType(map: Map[String, Any]): String = {
     var jtype: String = null
     try {
-      if (map.contains("Message"))
-        jtype = "Message"
-      else if (map.contains("Container"))
-        jtype = "Container"
-      else if (map.contains("Concepts"))
-        jtype = "Concepts"
+      if (map.contains("message"))
+        jtype = "message"
+      else if (map.contains("container"))
+        jtype = "container"
+      else if (map.contains("concepts"))
+        jtype = "concepts"
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -572,11 +580,14 @@ class MessageDefImpl {
 
   private def processJsonMap(key: String, map: Map[String, Any], mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var msg1: Message = null
-    type messageMap = Map[String, Any]
+    type messageMap = scala.collection.immutable.Map[String, Any]
     try {
+
       if (map.contains(key)) {
+
         if (map.get(key).get.isInstanceOf[messageMap]) {
-          val message = map.get(key).get.asInstanceOf[Map[String, Any]]
+
+          val message = map.get(key).get.asInstanceOf[messageMap]
           // if (message.get("Fixed").get.equals("true")) {
           msg1 = getMsgorCntrObj(message, key, mdMgr, recompile).asInstanceOf[Message]
           //  } else if (message.get("Fixed").get.equals("false")) {
@@ -624,16 +635,16 @@ class MessageDefImpl {
 
   // Make sure the version is in the format of nn.nn.nn
   private def extractVersion(message: Map[String, Any]): String = {
-    MdMgr.FormatVersion(message.getOrElse("Version", "0").toString)
+    MdMgr.FormatVersion(message.getOrElse("version", "0").toString)
   }
 
-  private def getMsgorCntrObj(message: Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
+  private def getMsgorCntrObj(messageOriginal: scala.collection.immutable.Map[String, Any], mtype: String, mdMgr: MdMgr, recompile: Boolean = false): Message = {
     var ele: List[Element] = null
     var elements: List[Element] = null
     var tdata: TransformData = null
     var tdataexists: Boolean = false
     var container: Message = null
-    val tkey: String = "TransformData"
+    val tkey: String = "transformdata"
     var pKey: String = null
     var prmryKey: String = null
     var partitionKeysList: List[String] = null
@@ -641,79 +652,134 @@ class MessageDefImpl {
     var conceptsList: List[String] = null
     var msgVersion: String = ""
     var persistMsg: Boolean = false
+    var isCase: Boolean = false
+    var NameSpace: String = ""
+    var Name: String = ""
+    var Description: String = ""
+    var Fixed: String = ""
+
     try {
-      if (message != null) {
-        if (message.getOrElse("NameSpace", null) == null)
+      if (messageOriginal != null) {
+        //println("messageOriginal " + messageOriginal)
+        val message: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+        messageOriginal.foreach(kv => { message(kv._1.toLowerCase()) = kv._2 })
+
+        //println("message " + message)
+        if (message.getOrElse("namespace", null) == null)
           throw new Exception("Please provide the Name space in the message definition ")
 
-        if (message.getOrElse("Name", null) == null)
+        if (message.getOrElse("name", null) == null)
           throw new Exception("Please provide the Name of the message definition ")
 
-        if (message.getOrElse("Version", null) == null)
+        if (message.getOrElse("version", null) == null)
           throw new Exception("Please provide the Version of the message definition ")
 
-        if (message.getOrElse("Fixed", null) == null)
+        if (message.getOrElse("fixed", null) == null)
           throw new Exception("Please provide the type of the message definition (either Fixed or Mapped) ")
 
-        val persist = message.getOrElse("Persist", "false").toString.toLowerCase
+        val persist = message.getOrElse("persist", "false").toString
 
-        if (persist.equals("true"))
+        val isCaseSentve = message.getOrElse("iscasesensitive", "false").toString
+
+        if (MsgUtils.isTrue(MsgUtils.LowerCase(persist)))
           persistMsg = true
 
+        if (MsgUtils.isTrue(MsgUtils.LowerCase(isCaseSentve)))
+          isCase = true
+
         for (key: String <- message.keys) {
-          if (key.equals("Elements") || key.equals("Fields") || key.equals("Concepts")) {
-            ele = getElementsObj(message, key).asInstanceOf[List[Element]]
+          if (key.equals("elements") || key.equals("fields") || key.equals("concepts")) {
+            ele = getElementsObj(message, key, isCase).asInstanceOf[List[Element]]
 
             // container = getElementsObj(message, key)._2.asInstanceOf[Message]
           }
 
-          if (mtype.equals("Message") && message.contains(tkey)) {
+          if (mtype.equals("message") && message.contains(tkey)) {
             if (key.equals(tkey)) {
               tdataexists = true
               tdata = getTransformData(message, key)
             }
           }
 
-          if (key.equals("PartitionKey")) {
-            var partitionKeys = message.getOrElse("PartitionKey", null)
+          if (key.equals("partitionkey")) {
+            var partitionKeys = message.getOrElse("partitionkey", null)
             if (partitionKeys != null) {
               partitionKeysList = partitionKeys.asInstanceOf[List[String]]
-              partitionKeysList = partitionKeysList.map(p => p.toLowerCase())
+              if (!isCase)
+                partitionKeysList = partitionKeysList.map(p => MsgUtils.LowerCase(p))
               for (partitionKey: String <- partitionKeysList) {
-                if (partitionKeysList.size == 1)
-                  pKey = partitionKey.toLowerCase()
+                if (partitionKeysList.size == 1) {
+                  if (isCase)
+                    pKey = partitionKey
+                  else
+                    pKey = partitionKey.toLowerCase
+                }
               }
             }
           }
 
-          if (key.equals("PrimaryKey")) {
-            var primaryKeys = message.getOrElse("PrimaryKey", null)
+          if (key.equals("primarykey")) {
+            var primaryKeys = message.getOrElse("primarykey", null)
 
             if (primaryKeys != null) {
               primaryKeysList = primaryKeys.asInstanceOf[List[String]]
-              primaryKeysList = primaryKeysList.map(p => p.toLowerCase())
+              if (!isCase)
+                primaryKeysList = primaryKeysList.map(p => MsgUtils.LowerCase(p))
             }
           }
 
-          if (key.equals("Concepts")) {
+          if (key.equals("concepts")) {
             conceptsList = getConcepts(message, key)
           }
         }
-        // if (ele == null)
-        //   throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (MsgUtils.isTrue(MsgUtils.LowerCase(message.get("fixed").get.toString())) && ele == null)
+          throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("name").get.toString())
+
+        /*
+        if (!partitionKeysList.exists(a => ele.exists(elem => elem.Name == a)))
+          throw new Exception("Partition Key/Keys should be one of the Fields of Message/Container Definition ")
+
+        if (!primaryKeysList.exists(a => {
+          println("============  " + a)
+          ele.exists(elem => {
+            println("**************" + elem.Name)
+            elem.Name == a
+
+          })
+        }))
+          throw new Exception("Primary Key/Keys should be one of the Fields of Message/Container Definition ")
+          * 
+          */
 
         if (ele != null)
-          ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)
+          ele = ele :+ new Element("", "transactionId", "system.long", "", "fields", null)
         else
-          ele = List(new Element("", "transactionId", "system.long", "", "Fields", null))
+          ele = List(new Element("", "transactionId", "system.long", "", "fields", null))
 
-        // ele.foreach(f => log.debug("====" + f.Name))
+        //ele.foreach(f => println("====" + f.Name))
 
         if (recompile) {
-          msgVersion = messageFldsExtractor.getRecompiledMsgContainerVersion(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), mdMgr)
+          msgVersion = messageFldsExtractor.getRecompiledMsgContainerVersion(mtype, message.get("namespace").get.toString, message.get("name").get.toString(), mdMgr)
         } else {
           msgVersion = extractVersion(message)
         }
+        NameSpace = message.get("namespace").get.toString()
+        Name = message.get("name").get.toString
+        Description = message.get("description").get.toString()
+        Fixed = message.get("fixed").get.toString()
+
+        /* if (isCase) {
+          NameSpace = namespace
+          Name = name
+          Description = desc
+          Fixed = fixed
+        } else {
+          NameSpace = Utils.LowerCase(namespace)
+          Name = Utils.LowerCase(name)
+          Description = Utils.LowerCase(desc)
+          Fixed = Utils.LowerCase(fixed)
+        }*/
 
       }
     } catch {
@@ -725,10 +791,10 @@ class MessageDefImpl {
 
     val cur_time = System.currentTimeMillis
     //  val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + "." + message.get("Name").get.toString() + "." + MdMgr.ConvertVersionToLong(msgVersion).toString + "_" + cur_time
-    // val pkg =  message.get("NameSpace").get.toString.toLowerCase()
-    val physicalName: String = pkg + "." + message.get("NameSpace").get.toString + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + message.get("Name").get.toString()
+    // val pkg = NameSpace
+    val physicalName: String = pkg + "." + NameSpace + ".V" + MdMgr.ConvertVersionToLong(msgVersion).toString + "." + Name
 
-    new Message(mtype, message.get("NameSpace").get.toString, message.get("Name").get.toString(), physicalName, msgVersion, message.get("Description").get.toString(), message.get("Fixed").get.toString(), persistMsg, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
+    new Message(mtype, NameSpace, Name, physicalName, msgVersion, Description, Fixed, persistMsg, isCase, ele, tdataexists, tdata, null, pkg.trim(), conceptsList, null, null, null, partitionKeysList, primaryKeysList, cur_time)
   }
 
   private def getTransformData(message: Map[String, Any], tkey: String): TransformData = {
@@ -740,11 +806,11 @@ class MessageDefImpl {
     if (message.get(tkey).get.isInstanceOf[tMap]) {
       val tmap: Map[String, Any] = message.get(tkey).get.asInstanceOf[Map[String, Any]]
       for (key <- tmap.keys) {
-        if (key.equals("Input"))
+        if (key.equals("input"))
           iarr = gettData(tmap, key)
-        if (key.equals("Output"))
+        if (key.equals("output"))
           oarr = gettData(tmap, key)
-        if (key.equals("Keys"))
+        if (key.equals("keys"))
           karr = gettData(tmap, key)
       }
     }
@@ -759,21 +825,21 @@ class MessageDefImpl {
     tlist.toArray
   }
 
-  private def getElementsObj(message: Map[String, Any], key: String): List[Element] = {
+  private def getElementsObj(message: Map[String, Any], key: String, isCase: Boolean): List[Element] = {
     // type list = List[Element]
     var elist: List[Element] = null
     var containerList: List[String] = null
     var container: Message = null
     var lbuffer = new ListBuffer[Element]
-    var conceptStr: String = "Concepts"
+    var conceptStr: String = "concepts"
 
     try {
-      if (key.equals("Elements") || key.equals("Fields")) {
+      if (key.equals("elements") || key.equals("fields")) {
         // val (elist, container) = getElements(message, key).asInstanceOf[List[Element]]
-        elist = getElements(message, key).asInstanceOf[List[Element]]
+        elist = getElements(message, key, isCase).asInstanceOf[List[Element]]
         // container = getElements(message, key)._2.asInstanceOf[Message]
-      } else if (key.equals("Concepts")) {
-        elist = getConceptData(message.get(conceptStr).get.asInstanceOf[List[String]], conceptStr)
+      } else if (key.equals("concepts")) {
+        elist = getConceptData(message.get(conceptStr).get.asInstanceOf[List[String]], conceptStr, isCase)
 
       } else throw new Exception("Either Fields or Elements or Concepts  do not exist in " + key + " json")
     } catch {
@@ -786,7 +852,7 @@ class MessageDefImpl {
     elist
   }
 
-  private def getConceptData(ccpts: List[String], key: String): List[Element] = {
+  private def getConceptData(ccpts: List[String], key: String, isCase: Boolean): List[Element] = {
     var element: Element = null
     var lbuffer = new ListBuffer[Element]
     type string = String;
@@ -811,7 +877,7 @@ class MessageDefImpl {
     try {
       if (message.get(key).get.isInstanceOf[ccptList]) {
         //val eList = message.get(key).get.asInstanceOf[List[String]]
-        conceptList = message.getOrElse("Concepts", null).asInstanceOf[ccptList]
+        conceptList = message.getOrElse("concepts", null).asInstanceOf[ccptList]
 
       } else throw new Exception("Elements list do not exist in json")
     } catch {
@@ -823,55 +889,64 @@ class MessageDefImpl {
     conceptList
   }
 
-  private def getElements(message: Map[String, Any], key: String): List[Element] = {
+  private def getElements(message: Map[String, Any], key: String, isCase: Boolean): List[Element] = {
     // var fbuffer = new ListBuffer[Field]
     var lbuffer = new ListBuffer[Element]
     var container: Message = null
-    type messageList = List[Map[String, Any]]
-    type keyMap = Map[String, Any]
+    type messageList = List[scala.collection.immutable.Map[String, Any]]
+    type keyMap = scala.collection.immutable.Map[String, Any]
     type typList = List[String]
     var cntrList: List[String] = null
     try {
+
       if (message.get(key).get.isInstanceOf[messageList]) {
-        val eList = message.get(key).get.asInstanceOf[List[Map[String, Any]]]
+
+        val eList = message.get(key).get.asInstanceOf[messageList]
         for (l <- eList) {
+
           if (l.isInstanceOf[keyMap]) {
-            val eMap: Map[String, Any] = l.asInstanceOf[Map[String, Any]]
 
-            if (eMap.contains("Field")) {
-              lbuffer += getElement(eMap)
+            val eMap1: scala.collection.immutable.Map[String, Any] = l.asInstanceOf[scala.collection.immutable.Map[String, Any]]
 
-            } else if (key.equals("Fields")) {
-              lbuffer += getElementData(eMap.asInstanceOf[Map[String, String]], key)
+            val eMap: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+            eMap1.foreach(kv => { eMap(kv._1.toLowerCase()) = kv._2 })
 
-            } else if (eMap.contains("Container") || eMap.contains("Message") || eMap.contains("Containers") || eMap.contains("Messages") || eMap.contains("Concept") || eMap.contains("Concepts")) {
+            if (eMap.contains("field")) {
+              lbuffer += getElement(eMap, isCase)
+
+            } else if (key.equals("fields")) {
+              lbuffer += getElementData(eMap.asInstanceOf[Map[String, String]], key, isCase)
+
+            } else if (eMap.contains("container") || eMap.contains("message") || eMap.contains("containers") || eMap.contains("messages") || eMap.contains("concept") || eMap.contains("concepts")) {
 
               var key: String = ""
-              if (eMap.contains("Container"))
-                key = "Container"
-              else if (eMap.contains("Containers"))
-                key = "Containers"
-              else if (eMap.contains("Message"))
-                key = "Message"
-              else if (eMap.contains("Messages"))
-                key = "Messages"
-              else if (eMap.contains("Concepts"))
-                key = "Concepts"
-              else if (eMap.contains("Concept"))
-                key = "Concept"
+              if (eMap.contains("container"))
+                key = "container"
+              else if (eMap.contains("containers"))
+                key = "containers"
+              else if (eMap.contains("message"))
+                key = "message"
+              else if (eMap.contains("messages"))
+                key = "messages"
+              else if (eMap.contains("concepts"))
+                key = "concepts"
+              else if (eMap.contains("concept"))
+                key = "concept"
 
               if (eMap.get(key).get.isInstanceOf[keyMap]) {
-                val containerMap: Map[String, Any] = eMap.get(key).get.asInstanceOf[Map[String, Any]]
-                lbuffer += getElementData(containerMap.asInstanceOf[Map[String, String]], key)
+                val containerMap: keyMap = eMap.get(key).get.asInstanceOf[keyMap]
+                val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+                containerMap.foreach(kv => { map(kv._1) = kv._2 })
+                lbuffer += getElementData(map.asInstanceOf[scala.collection.mutable.Map[String, String]], key, isCase)
               } else if (eMap.get(key).get.isInstanceOf[typList]) {
-                lbuffer ++= getConceptData(eMap.get(key).get.asInstanceOf[List[String]], key)
+                lbuffer ++= getConceptData(eMap.get(key).get.asInstanceOf[List[String]], key, isCase)
               } else if (eMap.get(key).get.isInstanceOf[String]) {
                 var cntrList: ListBuffer[String] = new ListBuffer[String]()
                 cntrList += eMap.get(key).get.toString
-                lbuffer ++= getConceptData(cntrList.toList, key)
+                lbuffer ++= getConceptData(cntrList.toList, key, isCase)
               }
 
-            } else if (message.get("Fixed").get.toString().toLowerCase == "true") throw new Exception("Either Fields or Container or Message or Concepts  do not exist in " + key + " json")
+            } else if (MsgUtils.isTrue(MsgUtils.LowerCase(message.get("fixed").get.toString()))) throw new Exception("Either Fields or Container or Message or Concepts  do not exist in " + key + " json")
           }
         }
       } else throw new Exception("Elements list do not exist in message/container definition json")
@@ -885,6 +960,7 @@ class MessageDefImpl {
     //  val ele: Element = new Element(fbuffer.toList, container)
     //  println("ele " + ele.Fields(1).Name)
     // lbuffer += ele
+
     (lbuffer.toList)
   }
 
@@ -951,15 +1027,18 @@ class MessageDefImpl {
     new Field(concept.NameSpace.getOrElse(null), concept.Name.getOrElse(null), concept.Type.getOrElse(null), null, eType, null)
   }
 
-  private def getElement(eMap: Map[String, Any]): Element = {
+  private def getElement(eMap: Map[String, Any], isCase: Boolean): Element = {
     var fld: Element = null
-    type keyMap = Map[String, String]
+    type keyMap = scala.collection.immutable.Map[String, String]
     if (eMap == null) throw new Exception("element Map is null")
     try {
       for (eKey: String <- eMap.keys) {
-        if (eMap.get(eKey).get.isInstanceOf[keyMap]) {
-          val element = eMap.get(eKey).get.asInstanceOf[Map[String, String]]
-          fld = getElementData(element, eKey)
+        val fldMap = eMap.get(eKey).get
+        if (fldMap != null && fldMap != "None" && fldMap.isInstanceOf[keyMap]) {
+          val fldMap1 = fldMap.asInstanceOf[scala.collection.immutable.Map[String, String]]
+          val mapElement: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map[String, String]()
+          fldMap1.foreach(kv => { mapElement(kv._1.toLowerCase()) = kv._2 })
+          fld = getElementData(mapElement, eKey, isCase)
         }
       }
     } catch {
@@ -971,41 +1050,57 @@ class MessageDefImpl {
     fld
   }
 
-  private def getElementData(field: Map[String, String], key: String): Element = {
+  private def getElementData(fieldMap: Map[String, String], key: String, isCase: Boolean): Element = {
     var fld: Element = null
     var name: String = ""
     var fldTypeVer: String = null
-
     var namespace: String = ""
     var ttype: String = ""
     var collectionType: String = ""
     type string = String;
-    if (field == null) throw new Exception("element Map is null")
+
+    if (fieldMap == null) throw new Exception("element Map is null")
+
     try {
-      if (field.contains("NameSpace") && (field.get("NameSpace").get.isInstanceOf[string]))
-        namespace = field.get("NameSpace").get.asInstanceOf[String]
+      val field: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+      fieldMap.foreach(kv => { field(kv._1.toLowerCase()) = kv._2 })
 
-      if (field.contains("Name") && (field.get("Name").get.isInstanceOf[String]))
-        name = field.get("Name").get.asInstanceOf[String].toLowerCase()
-      else throw new Exception("Field Name do not exist in " + key)
+      if (field.contains("namespace") && (field.get("namespace").get.isInstanceOf[string])) {
+        namespace = field.get("namespace").get.asInstanceOf[String]
+      }
 
-      if (field.contains("Type") && (field.get("Type").get.isInstanceOf[string])) {
-        val fieldstr = field.get("Type").get.toString.split("\\.")
+      if (field.contains("name") && (field.get("name").get.isInstanceOf[String])) {
+        name = field.get("name").get.asInstanceOf[String]
+      } else throw new Exception("Field Name do not exist in " + key)
+
+      if (field.contains("type") && (field.get("type").get.isInstanceOf[string])) {
+        val fieldstr = field.get("type").get.toString.split("\\.")
         if ((fieldstr != null) && (fieldstr.size == 2)) {
-          namespace = fieldstr(0).toLowerCase()
-          ttype = field.get("Type").get.asInstanceOf[String].toLowerCase()
-        } else
-          ttype = field.get("Type").get.asInstanceOf[String].toLowerCase()
-        if (field.contains("CollectionType") && (field.get("CollectionType").get.isInstanceOf[string])) {
-          collectionType = field.get("CollectionType").get.asInstanceOf[String].toLowerCase()
+          namespace = fieldstr(0)
+          ttype = field.get("type").get.asInstanceOf[String]
+        } else {
+          ttype = field.get("type").get.asInstanceOf[String]
         }
-        if (field.contains("Version") && (field.get("Version").get.isInstanceOf[string])) {
-          fldTypeVer = field.get("Version").get.asInstanceOf[String].toLowerCase()
+
+        if (field.contains("collectiontype") && (field.get("collectiontype").get.isInstanceOf[string])) {
+          collectionType = field.get("collectiontype").get.asInstanceOf[String]
+        }
+
+        if (field.contains("version") && (field.get("version").get.isInstanceOf[string])) {
+          fldTypeVer = field.get("version").get.asInstanceOf[String]
         }
 
       } else throw new Exception("Field Type do not exist in " + key)
+
+      if (isCase) {
+        fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
+
+      } else {
+        fld = new Element(MsgUtils.LowerCase(namespace), MsgUtils.LowerCase(name), MsgUtils.LowerCase(ttype), MsgUtils.LowerCase(collectionType), key, fldTypeVer)
+      }
+
       //log.debug("key========" + key)
-      fld = new Element(namespace, name, ttype, collectionType, key, fldTypeVer)
+
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -1028,5 +1123,16 @@ class MessageDefImpl {
     }
 
   }
+
+  /*
+  private def containsAll(Collection<?> coll) {
+Iterator<?> e = coll.iterator();
+while (e.hasNext())
+if (!contains(e.next())) // Invokes safe contains() above
+return false;
+return true;
+}
+* 
+* */
 
 }

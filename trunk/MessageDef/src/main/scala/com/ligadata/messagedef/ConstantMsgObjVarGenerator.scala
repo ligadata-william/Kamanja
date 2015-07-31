@@ -20,16 +20,25 @@ class ConstantMsgObjVarGenerator {
     var partitionString = partitionStr.substring(0, partitionStr.length - 1)
     partitionString = partitionString + ")"
 
-    val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    var partitionKeys: String = ""
+    if (message.isCase)
+      partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p).mkString("\", \"") + "\")") else ""
+    else
+      partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
 
     if (partitionKeys != null && partitionKeys.trim() != "")
-      "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString + getPartitionKeyDef
+      "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString + getPartitionKeyDef(message)
     else
       "\n   override def PartitionKeyData(inputdata:InputData): Array[String] = Array[String]()"
   }
 
   def primarykeyStrObj(message: Message, primaryPos: Array[Int]): String = {
-    val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    var prmryKeys: String = ""
+    if (message.isCase)
+      prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p).mkString("\", \"") + "\")") else ""
+    else
+      prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+
     val pad1 = "\t"
     var primaryStr = new StringBuilder
     log.debug("primaryPos " + primaryPos.length)
@@ -41,15 +50,37 @@ class ConstantMsgObjVarGenerator {
     primaryString = primaryString + ")"
 
     if (prmryKeys != null && prmryKeys.trim() != "")
-      "\n	val primaryKeys : Array[String] = " + prmryKeys + "\n    val prmryKeyPos = " + primaryString + getPrimaryKeyDef
+      "\n	val primaryKeys : Array[String] = " + prmryKeys + "\n    val prmryKeyPos = " + primaryString + getPrimaryKeyDef(message)
     else
       "\n    override def PrimaryKeyData(inputdata:InputData): Array[String] = Array[String]()"
   }
 
-  def getPrimaryKeyDef(): String = {
+  def getPrimaryKeyDef(msg: Message): String = {
 
     var getPrimaryKeyData = new StringBuilder(8 * 1024)
+    var caseSensMapStr: String = ""
 
+    if (msg.isCase) {
+      caseSensMapStr = """
+        val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (map == null) {
+    		   return prmryKeyPos.map(pos => "")
+    		}
+        """
+
+    } else {
+
+      caseSensMapStr = """
+         val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
+    			return prmryKeyPos.map(pos => "")
+    		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
+        """
+
+    }
     getPrimaryKeyData = getPrimaryKeyData.append("""
 	  
     override def PrimaryKeyData(inputdata:InputData): Array[String] = {
@@ -63,13 +94,8 @@ class ConstantMsgObjVarGenerator {
     		return prmryKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (mapOriginal == null) {
-    			return prmryKeyPos.map(pos => "")
-    		}
-    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
-    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
-
+    		""" + caseSensMapStr + """
+       
     		return primaryKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -87,9 +113,33 @@ class ConstantMsgObjVarGenerator {
    *
    */
 
-  def getPartitionKeyDef(): String = {
+  def getPartitionKeyDef(msg: Message): String = {
 
     var getParitionData = new StringBuilder(8 * 1024)
+
+    var caseSensMapStr: String = ""
+
+    if (msg.isCase) {
+      caseSensMapStr = """
+        val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (map == null) {
+    		   return partKeyPos.map(pos => "")
+    		}
+        """
+
+    } else {
+
+      caseSensMapStr = """
+         val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
+    		if (mapOriginal == null) {
+    			return partKeyPos.map(pos => "")
+    		}
+    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+
+        """
+
+    }
 
     getParitionData = getParitionData.append("""
         
@@ -104,12 +154,7 @@ class ConstantMsgObjVarGenerator {
     		return partKeyPos.map(pos => csvData.tokens(pos))
     	} else if (inputdata.isInstanceOf[JsonData]) {
     		val jsonData = inputdata.asInstanceOf[JsonData]
-    		val mapOriginal = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
-    		if (mapOriginal == null) {
-    			return partKeyPos.map(pos => "")
-    		}
-    		val map: scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
-    		mapOriginal.foreach(kv => { map(kv._1.toLowerCase()) = kv._2 })
+    		""" + caseSensMapStr + """
     		return partitionKeys.map(key => map.getOrElse(key, "").toString)
     	} else if (inputdata.isInstanceOf[XmlData]) {
     		val xmlData = inputdata.asInstanceOf[XmlData]
@@ -213,7 +258,7 @@ class ConstantMsgObjVarGenerator {
       primaryKeyDef = getPrimaryKeyDef
     }
 */
-    if (msg.msgtype.equals("Message")) {
+    if (msg.msgtype.equals("message")) {
       if (msg.TDataExists) {
         tdataexists = gettdataexists + msg.TDataExists.toString
         tattribs = tdataattribs(msg)
@@ -226,7 +271,7 @@ class ConstantMsgObjVarGenerator {
       //cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
       cobj.append(tattribs + newline + tdataexists + newline + getName(msg) + newline + getVersion(msg) + newline + createNewMessage(msg, clsname) + newline + isFixed + canPersist + rddHandler.HandleRDD(msg.Name) + newline + pratitionKeys + primaryKeys + newline + getFullName + newline + cbrace + newline)
 
-    } else if (msg.msgtype.equals("Container")) {
+    } else if (msg.msgtype.equals("container")) {
       // cobj.append(getMessageName(msg) + newline + getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + cbrace + newline)
 
       //  cobj.append(getName(msg) + newline + getVersion(msg) + newline + createNewContainer(msg) + newline + isFixed + pratitionKeys + primaryKeys + newline + primaryKeyDef + partitionKeyDef + cbrace + newline)
@@ -243,9 +288,9 @@ class ConstantMsgObjVarGenerator {
   }
 
   def getMessageName(msg: Message) = {
-    if (msg.msgtype.equals("Message"))
+    if (msg.msgtype.equals("message"))
       "\toverride def getMessageName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\""
-    else if (msg.msgtype.equals("Container"))
+    else if (msg.msgtype.equals("container"))
       "\toverride def getContainerName: String = " + "\"" + msg.NameSpace + "." + msg.Name + "\""
 
   }
@@ -303,11 +348,11 @@ class ConstantMsgObjVarGenerator {
     var btrait: String = ""
     var strait: String = ""
     var csetters: String = ""
-    if (message.msgtype.equals("Message")) {
+    if (message.msgtype.equals("message")) {
       btrait = "BaseMsgObj"
       strait = "BaseMsg"
       csetters = ""
-    } else if (message.msgtype.equals("Container")) {
+    } else if (message.msgtype.equals("container")) {
       btrait = "BaseContainerObj"
       strait = "BaseContainer"
       csetters = cSetter
@@ -373,9 +418,9 @@ class ConstantMsgObjVarGenerator {
 
   def importStmts(msg: Message): (String, String, String, String) = {
     var imprt: String = ""
-    if (msg.msgtype.equals("Message"))
+    if (msg.msgtype.equals("message"))
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
-    else if (msg.msgtype.equals("Container"))
+    else if (msg.msgtype.equals("container"))
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     var nonVerPkg = "package " + msg.pkg + "." + msg.NameSpace + ";\n"
     var verPkg = "package " + msg.pkg + "." + msg.NameSpace + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
@@ -410,10 +455,10 @@ import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
     val uscore = "_"
     val cls = "class"
     val obj = "object"
-    if (msg.msgtype.equals("Message")) {
+    if (msg.msgtype.equals("message")) {
       oname = "BaseMsgObj {"
       sname = "BaseMsg {"
-    } else if (msg.msgtype.equals("Container")) {
+    } else if (msg.msgtype.equals("container")) {
       oname = "BaseContainerObj {"
       sname = "BaseContainer {"
     }
@@ -475,12 +520,13 @@ trait BaseContainer {
       var keys = Map(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
         """
       var fields: scala.collection.mutable.Map[String, (Int, Any)] = new scala.collection.mutable.HashMap[String, (Int, Any)];
+      fields("transactionId") = (4, transactionId)
 	"""
     } else {
       """ 
 	    var keys = Map[String, Int]()
 	    var fields: scala.collection.mutable.Map[String, (Int, Any)] = new scala.collection.mutable.HashMap[String, (Int, Any)];
-	  
+	    fields("transactionId") = (4, transactionId)
 	  """
     }
   }
@@ -633,6 +679,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def partitionkeyStrMapped(message: Message, partitionPos: Array[Int]): String = {
     val pad1 = "\t"
     var partitionStr = new StringBuilder
+    var partitionKeys: String = ""
     partitionStr.append("Array(")
     for (p <- partitionPos) {
       partitionStr.append(p + ",")
@@ -640,7 +687,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var partitionString = partitionStr.substring(0, partitionStr.length - 1)
     partitionString = partitionString + ")"
 
-    val partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    if (!message.isCase)
+      partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    else
+      partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p).mkString("\", \"") + "\")") else ""
 
     if (partitionKeys != null && partitionKeys.trim() != "")
       "\n	val partitionKeys : Array[String] = " + partitionKeys + "\n    val partKeyPos = " + partitionString.toString + "\n " + pad1 + "override def PartitionKeyData: Array[String] =  partitionKeys.map(p => { fields.getOrElse(p, \"\").toString})  "
@@ -650,7 +700,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
 
   def primarykeyStrMapped(message: Message, primaryPos: Array[Int]): String = {
-    val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    var prmryKeys: String = ""
+    if (!message.isCase)
+
+      prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
+    else
+      prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
     log.debug("primaryPos " + primaryPos.length)

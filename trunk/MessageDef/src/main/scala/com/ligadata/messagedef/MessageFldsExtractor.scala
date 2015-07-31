@@ -145,7 +145,7 @@ class MessageFldsExtractor {
           if (f.FieldtypeVer != null)
             ftypeVersion = MdMgr.ConvertVersionToLong(message.Version)
 
-          if ((f.ElemType.equals("Field")) || (f.ElemType.equals("Fields"))) {
+          if ((f.ElemType.equals("field")) || (f.ElemType.equals("fields"))) {
 
             log.debug("message.Version " + MdMgr.ConvertVersionToLong(message.Version))
 
@@ -268,9 +268,9 @@ class MessageFldsExtractor {
             }
             count = count + 1
 
-          } else if ((f.ElemType.equals("Container")) || (f.ElemType.equals("Message"))) {
+          } else if ((f.ElemType.equals("container")) || (f.ElemType.equals("message"))) {
 
-            if (f.ElemType.equals("Message"))
+            if (f.ElemType.equals("message"))
               throw new Exception("Adding Child Messages are not allowed in Message/Container Definition")
 
             //val typ = MdMgr.GetMdMgr.Type(f.Ttype, ftypeVersion, true) // message.Version.toLong
@@ -335,11 +335,11 @@ class MessageFldsExtractor {
                 //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
               } else {
 
-                if (f.ElemType.equals("Container")) {
+                if (f.ElemType.equals("container")) {
 
                   val (cntnr_1, cntnr_2, cntnr_3, cntnr_4) = cntTypHandler.handleContainer(message, mdMgr, ftypeVersion, f, recompile, childs)
                   list = cntnr_1
-                  argsList = argsList ::: cntnr_2                  
+                  argsList = argsList ::: cntnr_2
                   jarset = jarset ++ cntnr_3
                   scalaclass = scalaclass.append(cntnr_4(0))
                   assignCsvdata = assignCsvdata.append(cntnr_4(1))
@@ -389,7 +389,7 @@ class MessageFldsExtractor {
 
               }
             }
-          } else if (f.ElemType.equals("Concept")) {
+          } else if (f.ElemType.equals("concept")) {
             val (ccpt_1, ccpt_2, ccpt_3, ccpt_4, ccpt_5, ccpt_6, ccpt_7, ccpt_8, ccpt_9, ccpt_10, ccpt_11) = ccptTypHandler.handleConcept(mdMgr, ftypeVersion, f, message)
             scalaclass = scalaclass.append(ccpt_1)
             assignCsvdata = assignCsvdata.append(ccpt_2)
@@ -423,12 +423,24 @@ class MessageFldsExtractor {
         scalaclass.append(methodGen.getAddMappedMsgsInConstructor(mappedMsgFieldsVar.toString) + methodGen.getAddMappedArraysInConstructor(mappedMsgFieldsArry.toString, mappedMsgFieldsArryBuffer.toString) + cnstObjVar.getMappedMsgPrevVerMatchKeys(mappedPrevVerMatchkeys.toString) + methodGen.mappedToStringForKeys)
         scalaclass.append(cnstObjVar.getMappedMsgPrevVerTypeNotMatchKeys(mappedPrevTypNotMatchkeys.toString) + methodGen.mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf.toString))
 
-        partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
-        prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
+        if (message.isCase) {
+          partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => "toStringForKey(\"" + p + "\")").mkString(", ") + ")") else ""
+          prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => "toStringForKey(\"" + p + "\")").mkString(", ") + ")") else ""
+        } else {
+          partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
+          prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => "toStringForKey(\"" + p.toLowerCase + "\")").mkString(", ") + ")") else ""
+        }
 
       } else if (message.Fixed.toLowerCase().equals("true")) {
-        partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
-        prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
+
+        if (message.isCase) {
+          partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p + ".toString").mkString(", ") + ")") else ""
+          prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p + ".toString").mkString(", ") + ")") else ""
+        } else {
+          partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
+          prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p.toLowerCase + ".toString").mkString(", ") + ")") else ""
+
+        }
       }
       /*
       var partitionKeyStr = new StringBuilder(8 * 1024)
