@@ -31,6 +31,7 @@ trait MetadataAPIService extends HttpService {
   val AUDIT_LOG_TOKN = "audit_log"
   val LEADER_TOKN = "leader"
   val APIName = "MetadataAPIService"
+  val GET_HEALTH = "heartbeat"
 
   val loggerName = this.getClass.getName
   val logger = Logger.getLogger(loggerName)
@@ -47,31 +48,37 @@ trait MetadataAPIService extends HttpService {
           logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role)
           get {
               path("api" / Rest) { str => {
-              val toknRoute = str.split("/")
-              logger.debug("GET reqeust : api/" + str)
-              if (toknRoute.size == 1) {
-                if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-                  requestContext => processGetAuditLogRequest(null, requestContext, user, password, role)
+                val toknRoute = str.split("/")
+                logger.debug("GET reqeust : api/" + str)
+                if (toknRoute.size == 1) {
+                  if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
+                    requestContext => processGetAuditLogRequest(null, requestContext, user, password, role)
+                  }
+                  else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
+                    requestContext => processGetLeaderRequest(null, requestContext, user, password, role)
+                  }
+                  else if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) {
+                    requestContext => processHBRequest("", requestContext, user, password, role) 
+                  }
+                  else {
+                    requestContext => processGetObjectRequest(toknRoute(0), "", requestContext, user, password, role)
+                  }
                 }
-                else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
-                  requestContext => processGetLeaderRequest(null, requestContext, user, password, role)
+                else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
+                  requestContext => processGetKeysRequest(toknRoute(1).toLowerCase, requestContext, user, password, role)
+                }
+                else if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
+                  // strip the first token and send the rest
+                  val filterParameters = toknRoute.slice(1, toknRoute.size)
+                  requestContext => processGetAuditLogRequest(filterParameters, requestContext, user, password, role)
+                }
+                else if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) {
+                  requestContext => processHBRequest(toknRoute(1).toLowerCase, requestContext, user, password, role)
                 }
                 else {
-                  requestContext => processGetObjectRequest(toknRoute(0), "", requestContext, user, password, role)
+                  requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role)
                 }
               }
-              else if (toknRoute(0).equalsIgnoreCase(KEY_TOKN)) {
-                requestContext => processGetKeysRequest(toknRoute(1).toLowerCase, requestContext, user, password, role)
-              }
-              else if (toknRoute(0).equalsIgnoreCase(AUDIT_LOG_TOKN)) {
-                // strip the first token and send the rest
-                val filterParameters = toknRoute.slice(1, toknRoute.size)
-                requestContext => processGetAuditLogRequest(filterParameters, requestContext, user, password, role)
-              }
-              else {
-                requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role)
-              }
-            }
             }
           } ~
             put {
@@ -296,6 +303,14 @@ trait MetadataAPIService extends HttpService {
   }
 
   /**
+   * 
+   */
+  private def processHBRequest(nodeId: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
+      val heartBeatSerivce = actorRefFactory.actorOf(Props(new GetHeartbeatService(rContext, userid, password, role)))
+      heartBeatSerivce ! GetHeartbeatService.Process(nodeId)       
+  }
+  
+  /**
    *
    */
   private def processGetObjectRequest(objtype: String, objKey: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
@@ -306,7 +321,6 @@ trait MetadataAPIService extends HttpService {
       argParm = verifyInput(objKey, objtype, rContext)
       if (argParm == null) return
     }
-
     if (objtype.equalsIgnoreCase("Config")) {
       val allObjectsService = actorRefFactory.actorOf(Props(new GetConfigObjectsService(rContext, userid, password, role)))
       allObjectsService ! GetConfigObjectsService.Process(objKey)
