@@ -4,12 +4,16 @@ import org.apache.zookeeper.KeeperException.NoNodeException
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.apache.log4j._
 
 /**
  * MonitorAPIImpl - Implementation for methods required to access Monitor related methods. 
  * @author danielkozin
  */
 object MonitorAPIImpl {
+  
+  val loggerName = this.getClass.getName
+  lazy val logger = Logger.getLogger(loggerName)
   
   /**
    * getHeartbeatInfo - get the heartbeat information from the zookeeper.  This informatin is placed there
@@ -18,51 +22,14 @@ object MonitorAPIImpl {
    */
    def getHeartbeatInfo(nodeIds: List[String] = List[String]()) : scala.collection.mutable.Map[String,Any] = {
      
-     
+     // If the Metadata did not initialize zookeeper, do it here.
      var zkMonitorInfoPath = MetadataAPIImpl.metadataAPIConfig.getProperty("ZNODE_PATH").trim + "/monitor/engine"
      if (MetadataAPIImpl.zkc == null) {
        MetadataAPIImpl.InitZooKeeper
      }
      
-     
-     
-     //*******************************
-     try {
-        MetadataAPIImpl.zkc.create.forPath(zkMonitorInfoPath+"/1")
-         
-     } catch {
-       case e: Exception => {e.printStackTrace()}
-     }
-     
-     try {
-        MetadataAPIImpl.zkc.create.forPath(zkMonitorInfoPath+"/2")
-         
-     } catch {
-       case e: Exception => {e.printStackTrace()}
-     }
-
-     
-     
-     val test = 
-          ("Name" -> "TestInfo") ~
-            ("UniqueId" -> "55") ~
-            ("LastSeen" -> 34534) ~
-            ("StartTime" -> 1232)
-            
-     val test2 = 
-          ("Name" -> "TestInfo2") ~
-            ("UniqueId" -> "56") ~
-            ("LastSeen" -> 333) ~
-            ("StartTime" -> 12)
-            
-     val data = compact(render(test)).getBytes
-     val data2 = compact(render(test2)).getBytes
-     MetadataAPIImpl.zkc.setData().forPath(zkMonitorInfoPath+"/1", data) 
-     MetadataAPIImpl.zkc.setData().forPath(zkMonitorInfoPath+"/2", data2) 
-     
-      
-     //*******************************    
-     
+     // If there were no NodeIds passed in, we want to get information on all 
+     // knowd NodeIds...
      var listOfIds: List[String] = List[String]()
      if (nodeIds == null || nodeIds.length == 0) {
        var tempA = MetadataAPIImpl.getNodeList1
@@ -74,20 +41,17 @@ object MonitorAPIImpl {
      else {
        listOfIds = nodeIds
      }
-  
-     if (MetadataAPIImpl.zkc == null) {
-       MetadataAPIImpl.InitZooKeeper
-     }
 
      var hbResult: scala.collection.mutable.Map[String,Any] = scala.collection.mutable.Map[String,Any]()
      
+     // Get all the nodeIds.
      listOfIds.foreach (nodeId => {
        try {
          //hbResult = hbResult + "......" + new String(MetadataAPIImpl.zkc.getData.forPath(zkMonitorInfoPath+"/"+ nodeId))
          hbResult(nodeId) = new String(MetadataAPIImpl.zkc.getData.forPath(zkMonitorInfoPath+"/"+ nodeId))
        } catch {
          case e: org.apache.zookeeper.KeeperException.NoNodeException => {
-           println("Unable to get information for NodeId: "+ nodeId)
+           logger.warn("Unable to get information for NodeId: "+ nodeId)
          }
          case e: Exception => {
            e.printStackTrace
