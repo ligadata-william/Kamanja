@@ -2,6 +2,7 @@ import org.junit._
 import org.junit.Assert._
 import com.ligadata.keyvaluestore._
 
+import java.io._
 /*
  * create 'default', 'value'
  *
@@ -13,6 +14,9 @@ import com.ligadata.keyvaluestore._
 
 class BasicMapDBUnitTest
 {
+
+  val tempDir = getClass.getResource(".").getPath
+
 	@Test
 	def testMapDBLocalHM()
 	{
@@ -66,7 +70,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> tempDir)
 		connectinfo+= ("schema" -> ("default_1_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -107,6 +111,14 @@ class BasicMapDBUnitTest
 		assertEquals(i.Value, o.Value)
 
 		store.Shutdown()
+		var path = tempDir + "/default_1_treemap.db"
+		new File(path).delete()
+		path = tempDir + "/default_1_treemap.db.p"
+		new File(path).delete()
+		path = tempDir + "/default_1_hashmap.hdb"
+		new File(path).delete()
+		path = tempDir + "/default_1_hashmap.hdb.p"
+		new File(path).delete()
 
 		println("testMapDBLocal - Done")
 	}
@@ -116,7 +128,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> tempDir)
 		connectinfo+= ("schema" -> ("default_2_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -168,6 +180,15 @@ class BasicMapDBUnitTest
 
 		store.Shutdown()
 
+		var path = tempDir + "/default_2_treemap.db"
+		new File(path).delete()
+		path = tempDir + "/default_2_treemap.db.p"
+		new File(path).delete()
+		path = tempDir + "/default_2_hashmap.hdb"
+		new File(path).delete()
+		path = tempDir + "/default_2_hashmap.hdb.p"
+		new File(path).delete()
+
 		println("testMapDBLocalAdd - Done")
 	}
 
@@ -176,7 +197,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> tempDir)
 		connectinfo+= ("schema" -> ("default_3_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -232,6 +253,15 @@ class BasicMapDBUnitTest
 */
 		store.Shutdown()
 
+		var path = tempDir + "/default_3_treemap.db"
+		new File(path).delete()
+		path = tempDir + "/default_3_treemap.db.p"
+		new File(path).delete()
+		path = tempDir + "/default_3_hashmap.hdb"
+		new File(path).delete()
+		path = tempDir + "/default_3_hashmap.hdb.p"
+		new File(path).delete()
+
 		println("testGetAllKeysLocal - Done")
 	}
 
@@ -240,7 +270,7 @@ class BasicMapDBUnitTest
 		val connectinfo = new PropertyMap
 
 		connectinfo+= ("connectiontype" -> connectiontype)
-		connectinfo+= ("path" -> ".")
+		connectinfo+= ("path" -> tempDir)
 		connectinfo+= ("schema" -> ("default_4_" + connectiontype))
 		connectinfo+= ("table" -> "default")
 		connectinfo+= ("inmemory" -> "false")
@@ -304,6 +334,15 @@ class BasicMapDBUnitTest
 
 		store.TruncateStore()
 		store.Shutdown()
+		
+		var path = tempDir + "/default_4_treemap.db"
+		new File(path).delete()
+		path = tempDir + "/default_4_treemap.db.p"
+		new File(path).delete()
+		path = tempDir + "/default_4_hashmap.hdb"
+		new File(path).delete()
+		path = tempDir + "/default_4_hashmap.hdb.p"
+		new File(path).delete()
 
 		println("testMapDBLocalPersistence - Done")
 	}

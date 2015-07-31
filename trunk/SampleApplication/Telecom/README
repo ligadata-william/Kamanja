@@ -1,0 +1,6 @@
+The files under this directory are used to illustrate use of Kamanja NewAPI functionality to setup
+a very simple alerts when a subscriber of telecommunications company(such as T-mobile) exceeds usage limits
+imposed by their plans. Specifically, we have included "Container" definitions(lookup tables) and a "Message" definition
+that represent the usage data, a model definition( written in scala). 
+
+Please follow Kamanja Developer Guide to setup this sample example within the Kamanja environment.
