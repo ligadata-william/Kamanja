@@ -5,10 +5,10 @@ import Keys._
 
 object myBuild extends Build {
 
-  lazy val UnitTests = project.in(file(".")).dependsOn(Metadata,FatafatBase,Exceptions).aggregate(Metadata,FatafatBase,Exceptions)
+  lazy val UnitTests = project.in(file(".")).dependsOn(Metadata,KamanjaBase,Exceptions).aggregate(Metadata,KamanjaBase,Exceptions)
 
   lazy val Metadata = ProjectRef(file("../../"), "Metadata")
-  lazy val FatafatBase = ProjectRef(file("../../"), "FatafatBase")
+  lazy val KamanjaBase = ProjectRef(file("../../"), "KamanjaBase")
   lazy val Exceptions = ProjectRef(file("../../"), "Exceptions")
 
   retrieveManaged := true

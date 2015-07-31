@@ -18,8 +18,8 @@ mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
     case x if x endsWith "google/common/annotations/GwtCompatible.class" => MergeStrategy.first
     case x if x endsWith "google/common/annotations/GwtIncompatible.class" => MergeStrategy.first
     case x if x endsWith "/apache/commons/beanutils/BasicDynaBean.class" => MergeStrategy.first
-    case x if x endsWith "com\\ligadata\\fatafat\\metadataload\\MetadataLoad.class" => MergeStrategy.first
-    case x if x endsWith "com/ligadata/fatafat/metadataload/MetadataLoad.class" => MergeStrategy.first
+    case x if x endsWith "com\\ligadata\\kamanja\\metadataload\\MetadataLoad.class" => MergeStrategy.first
+    case x if x endsWith "com/ligadata/kamanja/metadataload/MetadataLoad.class" => MergeStrategy.first
     case x if x endsWith "org/apache/commons/beanutils/BasicDynaBean.class" => MergeStrategy.last
     case x if x endsWith "com\\esotericsoftware\\minlog\\Log.class" => MergeStrategy.first
     case x if x endsWith "com\\esotericsoftware\\minlog\\Log$Logger.class" => MergeStrategy.first
@@ -48,7 +48,7 @@ unmanagedBase <<= baseDirectory { base => base / "custom_lib" }
 
 unmanagedJars in Compile <<= baseDirectory map { base => (base ** "*.jar").classpath }
 
-name := "FatafatManager"
+name := "KamanjaManager"
 
 version := "1.0"
 

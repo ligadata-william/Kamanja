@@ -1,9 +1,9 @@
 package com.ligadata.outputmsg
 
-import com.ligadata.fatafat.metadata.OutputMsgDef
-import com.ligadata.FatafatBase.{ BaseMsg, MessageContainerBase }
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.OutputMsgDef
+import com.ligadata.KamanjaBase.{ BaseMsg, MessageContainerBase }
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata._
 import org.apache.log4j.Logger
 
 import scala.collection.mutable.{ ArrayBuffer }

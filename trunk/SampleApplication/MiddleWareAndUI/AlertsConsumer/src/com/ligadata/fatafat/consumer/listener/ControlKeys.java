@@ -1,4 +1,4 @@
-package com.ligadata.fatafat.consumer.listener;
+package com.ligadata.kamanja.consumer.listener;
 
 public class ControlKeys {
 

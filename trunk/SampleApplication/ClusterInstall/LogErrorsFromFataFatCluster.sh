@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# RecentLogErrorsFromFataFatCluster.sh
+# RecentLogErrorsFromKamanjaCluster.sh
 #
 
 Usage()
 {
     echo 
-    echo "Answer any errors from the Fatafat cluster log"
+    echo "Answer any errors from the Kamanja cluster log"
     echo
     echo "Usage:"
-    echo "      LogErrorsFromFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "      LogErrorsFromKamanjaCluster.sh --ClusterId <cluster name identifer> "
     echo "                                     --MetadataAPIConfig  <metadataAPICfgPath>  "
-    echo "                                     --FatafatLogPath <fatafat system log path>"
+    echo "                                     --KamanjaLogPath <kamanja system log path>"
     echo "                                     [--ErrLogPath <where errors are collected> ] "
     echo 
     echo "  NOTES: Logs for the cluster specified by the cluster identifier parameter found in the metadata api "
@@ -32,7 +32,7 @@ else
     exit 1
 fi
 
-if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--ClusterId" && "$name1" != "--FatafatLogPath" && "$name1" != "--ErrLogPath" ]]; then
+if [[ "$name1" != "--MetadataAPIConfig" && "$name1" != "--ClusterId" && "$name1" != "--KamanjaLogPath" && "$name1" != "--ErrLogPath" ]]; then
 	echo "Problem: Bad arguments"
 	echo 
 	Usage
@@ -56,7 +56,7 @@ while [ "$1" != "" ]; do
         --MetadataAPIConfig )   shift
                                 metadataAPIConfig=$1
                                 ;;
-        --FatafatLogPath )      shift
+        --KamanjaLogPath )      shift
                                 logPath=$1
                                 ;;
         --ErrLogPath )          shift
@@ -74,7 +74,7 @@ echo "logPath=$logPath"
 echo "errorLogPath=$errorLogPath"
 
 if [ -z "$logPath" ]; then
-    echo "Problem: Please specify the Fatafat log path.... logPath = $logPath"
+    echo "Problem: Please specify the Kamanja log path.... logPath = $logPath"
     echo 
     Usage
     exit 1
@@ -111,7 +111,7 @@ currentDate=`date +"%Y-%m-%d %T"`
 
 # For each cluster node examine 1) whether there are logs, 2) if the logs are have records that reflect the lookback date
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
-# config directory where the FataFat engine config file is located.
+# config directory where the Kamanja engine config file is located.
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do

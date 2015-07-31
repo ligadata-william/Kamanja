@@ -1,7 +1,7 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase.{ BaseMsg, InputData, DelimitedData, JsonData, XmlData, EnvContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, InputData, DelimitedData, JsonData, XmlData, EnvContext }
 import com.ligadata.Utils.Utils
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -19,7 +19,7 @@ class TransformMessageData {
     inpData.curPos = 0
     if (associatedMsg != null && associatedMsg.size > 0) {
       val msgType = associatedMsg
-      val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+      val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
       if (msgInfo == null)
         throw new Exception("Not found Message Type \"" + msgType + "\"")
       if (msgInfo.tranformMsgFlds == null) {
@@ -45,7 +45,7 @@ class TransformMessageData {
       throw new Exception("Not found any fields to get Message Type")
     val msgType = str_arr(0).trim
 
-    val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+    val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
     if (msgInfo == null)
       throw new Exception("Not found Message Type \"" + msgType + "\"")
 
@@ -76,7 +76,7 @@ class TransformMessageData {
 
     if (associatedMsg != null && associatedMsg.size > 0) {
       val msgType = associatedMsg
-      val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+      val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
       if (msgInfo == null)
         throw new Exception("Not found Message Type \"" + msgType + "\"")
 
@@ -91,7 +91,7 @@ class TransformMessageData {
     if (msgTypeAny == null)
       throw new Exception("MessageType not found in JSON data : " + inputData)
     val msgType = msgTypeAny.toString.trim
-    val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+    val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
     if (msgInfo == null)
       throw new Exception("Not found Message Type \"" + msgType + "\"")
     inpData.root_json = Option(parsed_json)
@@ -110,7 +110,7 @@ class TransformMessageData {
 
     if (associatedMsg != null && associatedMsg.size > 0) {
       val msgType = associatedMsg
-      val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+      val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
       if (msgInfo == null)
         throw new Exception("Not found Message Type \"" + msgType + "\"")
       return (msgType, msgInfo, inpData)
@@ -120,7 +120,7 @@ class TransformMessageData {
     if (msgTypeAny == null)
       throw new Exception("MessageType not found in XML data : " + inputData)
     val msgType = msgTypeAny.text.toString.trim
-    val msgInfo = FatafatMetadata.getMessgeInfo(msgType)
+    val msgInfo = KamanjaMetadata.getMessgeInfo(msgType)
     if (msgInfo == null)
       throw new Exception("Not found Message Type \"" + msgType + "\"")
 

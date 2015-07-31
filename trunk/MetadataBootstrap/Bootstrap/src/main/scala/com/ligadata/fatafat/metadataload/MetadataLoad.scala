@@ -1,11 +1,11 @@
-package com.ligadata.fatafat.metadataload
+package com.ligadata.kamanja.metadataload
 
 import scala.collection.mutable.{ Set }
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.FatafatBase._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.KamanjaBase._
 import com.ligadata.BaseTypes._
 import org.joda.time.base
 import org.joda.time.chrono
@@ -39,10 +39,10 @@ object MetadataLoad {
 	def BaseContainersInfo: Array[(String, String, String, List[(String, String, String, String, Boolean, String)])] = {
 		// nameSpace: String, name: String, physicalName: String, args: List[(String, String, String, String, Boolean, String)
 		return Array[(String, String, String, List[(String, String, String, String, Boolean, String)])](
-			(MdMgr.sysNS, "EnvContext", "com.ligadata.FatafatBase.EnvContext", List()),
-			(MdMgr.sysNS, "BaseMsg", "com.ligadata.FatafatBase.BaseMsg", List()),
-			(MdMgr.sysNS, "BaseContainer", "com.ligadata.FatafatBase.BaseContainer", List()),
-			(MdMgr.sysNS, "MessageContainerBase", "com.ligadata.FatafatBase.MessageContainerBase", List()),
+			(MdMgr.sysNS, "EnvContext", "com.ligadata.KamanjaBase.EnvContext", List()),
+			(MdMgr.sysNS, "BaseMsg", "com.ligadata.KamanjaBase.BaseMsg", List()),
+			(MdMgr.sysNS, "BaseContainer", "com.ligadata.KamanjaBase.BaseContainer", List()),
+			(MdMgr.sysNS, "MessageContainerBase", "com.ligadata.KamanjaBase.MessageContainerBase", List()),
 			(MdMgr.sysNS, "Context", "com.ligadata.pmml.runtime.Context", List()))
 	}
 }

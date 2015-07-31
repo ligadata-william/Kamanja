@@ -1,14 +1,14 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.fatafat.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.FatafatBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
+import com.ligadata.KamanjaBase.{ BaseMsg, MdlInfo, MessageContainerBase, MessageContainerObjBase, BaseMsgObj, BaseContainerObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext, MdBaseResolveInfo }
 import scala.collection.mutable.HashMap
 import org.apache.log4j._
 import scala.collection.mutable.ArrayBuffer
@@ -27,7 +27,7 @@ class MsgContainerObjAndTransformInfo(var tranformMsgFlds: TransformMsgFldsMap, 
 }
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
-class FatafatMetadata {
+class KamanjaMetadata {
   val LOG = Logger.getLogger(getClass);
 
   // LOG.setLevel(Level.TRACE)
@@ -59,7 +59,7 @@ class FatafatMetadata {
       })
     }
 
-    val nonExistsJars = FatafatMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
       return false
@@ -68,7 +68,7 @@ class FatafatMetadata {
     true
   }
 
-  def LoadMdMgrElems(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror,
+  def LoadMdMgrElems(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror,
     tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]], tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]],
     tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
     PrepareMessages(loadedJars, loader, mirror, tmpMsgDefs)
@@ -80,7 +80,7 @@ class FatafatMetadata {
     LOG.info("Loaded Metadata Models:" + modelObjects.map(container => container._1).mkString(","))
   }
 
-  private[this] def CheckAndPrepMessage(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef): Boolean = {
+  private[this] def CheckAndPrepMessage(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef): Boolean = {
     var isMsg = true
     var curClass: Class[_] = null
 
@@ -93,7 +93,7 @@ class FatafatMetadata {
       isMsg = false
 
       while (curClz != null && isMsg == false) {
-        isMsg = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
+        isMsg = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
         if (isMsg == false)
           curClz = curClz.getSuperclass()
       }
@@ -163,7 +163,7 @@ class FatafatMetadata {
     return false
   }
 
-  def PrepareMessage(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
+  def PrepareMessage(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, msg: MessageDef, loadJars: Boolean): Unit = {
     if (loadJars)
       LoadJarIfNeeded(msg, loadedJars, loader)
     // else Assuming we are already loaded all the required jars
@@ -184,7 +184,7 @@ class FatafatMetadata {
     }
   }
 
-  private[this] def CheckAndPrepContainer(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef): Boolean = {
+  private[this] def CheckAndPrepContainer(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef): Boolean = {
     var isContainer = true
     var curClass: Class[_] = null
 
@@ -197,7 +197,7 @@ class FatafatMetadata {
       isContainer = false
 
       while (curClz != null && isContainer == false) {
-        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
+        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
         if (isContainer == false)
           curClz = curClz.getSuperclass()
       }
@@ -247,7 +247,7 @@ class FatafatMetadata {
     return false
   }
 
-  def PrepareContainer(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
+  def PrepareContainer(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, container: ContainerDef, loadJars: Boolean, ignoreClassLoad: Boolean): Unit = {
     if (loadJars)
       LoadJarIfNeeded(container, loadedJars, loader)
     // else Assuming we are already loaded all the required jars
@@ -276,7 +276,7 @@ class FatafatMetadata {
     }
   }
 
-  private[this] def CheckAndPrepModel(clsName: String, loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef): Boolean = {
+  private[this] def CheckAndPrepModel(clsName: String, loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef): Boolean = {
     var isModel = true
     var curClass: Class[_] = null
 
@@ -289,7 +289,7 @@ class FatafatMetadata {
       isModel = false
 
       while (curClz != null && isModel == false) {
-        isModel = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.ModelBaseObj")
+        isModel = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
         if (isModel == false)
           curClz = curClz.getSuperclass()
       }
@@ -340,7 +340,7 @@ class FatafatMetadata {
     return false
   }
 
-  def PrepareModel(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
+  def PrepareModel(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, mdl: ModelDef, loadJars: Boolean): Unit = {
     if (loadJars)
       LoadJarIfNeeded(mdl, loadedJars, loader)
     // else Assuming we are already loaded all the required jars
@@ -376,10 +376,10 @@ class FatafatMetadata {
       return Set[String]()
     }
 
-    return allJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j)).toSet
+    return allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toSet
   }
 
-  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: FatafatClassLoader): Boolean = {
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     val allJars = GetAllJarsFromElem(elem)
     if (allJars.size > 0) {
       return ManagerUtils.LoadJars(allJars.toArray, loadedJars, loader)
@@ -411,7 +411,7 @@ class FatafatMetadata {
     }
   }
 
-  private def PrepareMessages(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]]): Unit = {
+  private def PrepareMessages(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpMsgDefs: Option[scala.collection.immutable.Set[MessageDef]]): Unit = {
     if (tmpMsgDefs == None) // Not found any messages
       return
 
@@ -428,7 +428,7 @@ class FatafatMetadata {
     })
   }
 
-  private def PrepareContainers(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]]): Unit = {
+  private def PrepareContainers(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpContainerDefs: Option[scala.collection.immutable.Set[ContainerDef]]): Unit = {
     if (tmpContainerDefs == None) // Not found any containers
       return
 
@@ -451,7 +451,7 @@ class FatafatMetadata {
 
   }
 
-  private def PrepareModels(loadedJars: TreeSet[String], loader: FatafatClassLoader, mirror: reflect.runtime.universe.Mirror, tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
+  private def PrepareModels(loadedJars: TreeSet[String], loader: KamanjaClassLoader, mirror: reflect.runtime.universe.Mirror, tmpModelDefs: Option[scala.collection.immutable.Set[ModelDef]]): Unit = {
     if (tmpModelDefs == None) // Not found any models
       return
 
@@ -468,12 +468,12 @@ class FatafatMetadata {
   }
 }
 
-object FatafatMetadata extends MdBaseResolveInfo {
+object KamanjaMetadata extends MdBaseResolveInfo {
   var envCtxt: EnvContext = null // Engine will set it once EnvContext is initialized
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
   private[this] var loadedJars: TreeSet[String] = _
-  private[this] var loader: FatafatClassLoader = _
+  private[this] var loader: KamanjaClassLoader = _
   private[this] var mirror: reflect.runtime.universe.Mirror = _
 
   private[this] var messageContainerObjects = new HashMap[String, MsgContainerObjAndTransformInfo]
@@ -484,7 +484,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
   //LOG.setLevel(Level.TRACE)
 
-  private def UpdateFatafatMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
+  private def UpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
     removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
 
@@ -492,7 +492,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
 
     reent_lock.writeLock().lock();
     try {
-      localUpdateFatafatMdObjects(msgObjects, contObjects, mdlObjects, removedModels, removedMessages, removedContainers)
+      localUpdateKamanjaMdObjects(msgObjects, contObjects, mdlObjects, removedModels, removedMessages, removedContainers)
     } catch {
       case e: Exception => { exp = e }
     } finally {
@@ -502,7 +502,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       throw exp
   }
 
-  private def localUpdateFatafatMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
+  private def localUpdateKamanjaMdObjects(msgObjects: HashMap[String, MsgContainerObjAndTransformInfo], contObjects: HashMap[String, MsgContainerObjAndTransformInfo],
     mdlObjects: HashMap[String, MdlInfo], removedModels: ArrayBuffer[(String, String, Long)], removedMessages: ArrayBuffer[(String, String, Long)],
     removedContainers: ArrayBuffer[(String, String, Long)]): Unit = {
     //BUGBUG:: Assuming there is no issues if we remove the objects first and then add the new objects. We are not adding the object in the same order as it added in the transaction. 
@@ -538,7 +538,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Containers
+        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, containerNames, true, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Containers
       }
     }
 
@@ -547,7 +547,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Messages
+        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, topMessageNames, false, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Messages
       }
     }
 
@@ -600,17 +600,17 @@ object FatafatMetadata extends MdBaseResolveInfo {
   }
 
   def InitBootstrap: Unit = {
-    MetadataAPIImpl.InitMdMgrFromBootStrap(FatafatConfiguration.configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile)
   }
 
-  def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: FatafatClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
+  def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: KamanjaClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
     /*
-    if (FatafatConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| FatafatConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
-      MetadataAPIImpl.InitMdMgr(mdMgr, FatafatConfiguration.metadataStoreType, FatafatConfiguration.metadataLocation, FatafatConfiguration.metadataSchemaName, "")
-    else if ((FatafatConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (FatafatConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
-      MetadataAPIImpl.InitMdMgr(mdMgr, FatafatConfiguration.metadataStoreType, "", FatafatConfiguration.metadataSchemaName, FatafatConfiguration.metadataLocation)
+    if (KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
+      MetadataAPIImpl.InitMdMgr(mdMgr, KamanjaConfiguration.metadataStoreType, KamanjaConfiguration.metadataLocation, KamanjaConfiguration.metadataSchemaName, "")
+    else if ((KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
+      MetadataAPIImpl.InitMdMgr(mdMgr, KamanjaConfiguration.metadataStoreType, "", KamanjaConfiguration.metadataSchemaName, KamanjaConfiguration.metadataLocation)
 */
-    // MetadataAPIImpl.InitMdMgrFromBootStrap(FatafatConfiguration.configFile)
+    // MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile)
 
     loadedJars = tmpLoadedJars
     loader = tmpLoader
@@ -620,12 +620,12 @@ object FatafatMetadata extends MdBaseResolveInfo {
     val tmpContainerDefs = mdMgr.Containers(true, true)
     val tmpModelDefs = mdMgr.Models(true, true)
 
-    val obj = new FatafatMetadata
+    val obj = new KamanjaMetadata
 
     try {
       obj.LoadMdMgrElems(loadedJars, loader, mirror, tmpMsgDefs, tmpContainerDefs, tmpModelDefs)
       // Lock the global object here and update the global objects
-      UpdateFatafatMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
+      UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, null, null, null)
     } catch {
       case e: Exception => {
         LOG.error("Failed to load messages, containers & models from metadata manager. Reason:%s Message:%s".format(e.getCause, e.getMessage))
@@ -665,13 +665,13 @@ object FatafatMetadata extends MdBaseResolveInfo {
     }
 
     if (mdMgr == null) {
-      LOG.error("Metadata Manager should not be NULL while updaing metadta in Fatafat manager.")
+      LOG.error("Metadata Manager should not be NULL while updaing metadta in Kamanja manager.")
       return
     }
 
     MetadataAPIImpl.UpdateMdMgr(zkTransaction)
 
-    val obj = new FatafatMetadata
+    val obj = new KamanjaMetadata
 
     // BUGBUG:: Not expecting added element & Removed element will happen in same transaction at this moment
     // First we are adding what ever we need to add, then we are removing. So, we are locking before we append to global array and remove what ever is gone.
@@ -742,7 +742,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     if (unloadMsgsContainers.size > 0)
       envCtxt.clearIntermediateResults(unloadMsgsContainers.toArray)
 
-    val nonExistsJars = FatafatMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
       // return
@@ -854,7 +854,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
     })
 
     // Lock the global object here and update the global objects
-    UpdateFatafatMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
+    UpdateKamanjaMdObjects(obj.messageObjects, obj.containerObjects, obj.modelObjects, removedModels, removedMessages, removedContainers)
   }
 
   override def getMessgeOrContainerInstance(MsgContainerType: String): MessageContainerBase = {

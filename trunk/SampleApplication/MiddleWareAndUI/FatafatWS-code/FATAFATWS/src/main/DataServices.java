@@ -18,12 +18,12 @@ import org.joda.time.DateTime;
 
 
 
-public class DataServices 
+public class DataServices
 {
 	private static final String DRIVER_CLASS_NAME = "org.postgresql.Driver";
-	
 
-	
+
+
 	public static DBConnectionData parseConnectionString(String fullConnectionString) throws Exception {
 		String connectionString = "", userName = "", password = "";
 		Map<String, String> connectionData = new HashMap<String, String>();
@@ -44,9 +44,9 @@ public class DataServices
 		return new DBConnectionData(connectionString, userName, password, connectionData.get("Server"), port,
 				connectionData.get("Database"));
 	}
-	
-	
-	
+
+
+
 	public static Connection connectToDB(String connectionString) {
 		Connection result = null;
 		try {
@@ -54,7 +54,7 @@ public class DataServices
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		try 
+		try
 		{
 			//----------------------just for testing---------------------
 			/*String server = "ls20.dc.npario.com";
@@ -63,12 +63,12 @@ public class DataServices
 			String password = "";
 			int port = 5432;
 			String connectionString = "jdbc:postgresql://" + server + ":" + port + "/"+ database;
-			
-			
+
+
 			Global.CONNECTION_DATA = new DBConnectionData(connectionString, userName, password, server, port, database);*/
 
 			//-------------------------------------------
-			
+
 			Global.CONNECTION_DATA = DataServices.parseConnectionString(connectionString);
 			result = DriverManager.getConnection(Global.CONNECTION_DATA.connectionString, Global.CONNECTION_DATA.userName, Global.CONNECTION_DATA.password);
 
@@ -78,8 +78,8 @@ public class DataServices
 		}
 		return result;
 	}
-	
-	
+
+
 	public static void closeConnection(Connection connection)
 	{
 		try
@@ -89,15 +89,15 @@ public class DataServices
 		}
 		catch(SQLException ex)
 		{
-			
+
 		}
 	}
 
 	public static ResultSet getResultSet(Connection conn, String select_string) {
 		ResultSet rs = null;
 
-		try 
-		{			
+		try
+		{
 			PreparedStatement s = conn.prepareStatement(select_string);
 			rs = s.executeQuery();
 		} catch (SQLException e) {
@@ -107,11 +107,11 @@ public class DataServices
 		}
 		return rs;
 	}
-	
+
 	public static void executeNonQuery(final Connection conn, final String query) throws SQLException {
 		PreparedStatement s = null;
-		try 
-		{			
+		try
+		{
 			s = conn.prepareStatement(query);
 			s.execute();
 			s.close();
@@ -120,8 +120,8 @@ public class DataServices
 			throw e;
 		}
 	}
-	
-	
+
+
 	public static String readScalarString(final Connection conn, final String query) throws SQLException {
 		ResultSet rs = getResultSet(conn, query);
 		if (rs.next()) {
@@ -167,7 +167,7 @@ public class DataServices
 		}
 		return -1;
 	}
-	
+
 	public static DateTime GetDateTimeFromResultSet(ResultSet rs, String colName) throws SQLException
 	{
 		if (rs.getObject(colName) == null)
@@ -185,12 +185,12 @@ public class DataServices
 
 		return datetime;
 	}
-	
+
 	public static final SimpleDateFormat formatYear = new SimpleDateFormat("yyyy");
 	public static final SimpleDateFormat formatMonth = new SimpleDateFormat("MM");
 	public static final SimpleDateFormat formatDay = new SimpleDateFormat("dd");
-	
-	
+
+
 	public static class DBConnectionData {
 		final public String connectionString;
 		final public String userName;
@@ -210,12 +210,12 @@ public class DataServices
 			this.databaseName = db;
 		}
 	}
-	
-	
-	public static final String Schema_Name = "bar_fatafat";
-	
+
+
+	public static final String Schema_Name = "bar_kamanja";
+
 	public static final String PD_TBL_NAME = Schema_Name + ".PD";
-	
+
     public static final String PD_COLNAME_ID = "id";
     public static final String PD_COLNAME_NodeId = "nodeid";
     public static final String PD_COLNAME_TimeStamp = "message_timestamp";
@@ -231,10 +231,10 @@ public class DataServices
     public static final String PD_COLNAME_LB_Alets = "lb_alets";
     public static final String PD_COLNAME_EventsLatency = "events_latency";
     public static final String PD_COLNAME_AlertsLatency = "alerts_latency";
-    
-    
+
+
     public static final String Alert_TBL_NAME = Schema_Name + ".alert";
-	
+
     public static final String Alert_COLNAME_ID = "id";
     public static final String Alert_COLNAME_NodeId = "nodeid";
     public static final String Alert_COLNAME_TimeStamp = "alert_timestamp";
@@ -244,9 +244,9 @@ public class DataServices
     public static final String Alert_COLNAME_RunLedgerAmount = "run_ledger_amount";
     public static final String Alert_COLNAME_MsgPostTimeStamp = "message_post_timestamp";
     public static final String Alert_COLNAME_AlertPostTimeStamp = "alert_post_timestamp";
-    
-    
-    
+
+
+
     public static final String AlertDetails_TBL_NAME = Schema_Name + ".alert_details";
     public static final String AlertDetails_COLNAME_ID = "id";
     //public static final String AlertDetails_COLNAME_ID = "nodeid";
@@ -259,7 +259,7 @@ public class DataServices
     public static final String AlertDetails_COLNAME_Amount = "amount";
     public static final String AlertDetails_COLNAME_AccShortName = "acct_short_name";
     public static final String AlertDetails_COLNAME_MobileNumber = "mobile_number";
-    
-    
-    
+
+
+
 }

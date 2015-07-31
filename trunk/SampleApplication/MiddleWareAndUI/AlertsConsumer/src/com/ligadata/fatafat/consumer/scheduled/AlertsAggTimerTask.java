@@ -1,13 +1,13 @@
-package com.ligadata.fatafat.consumer.scheduled;
+package com.ligadata.kamanja.consumer.scheduled;
 
 import java.util.TimerTask;
 
 import org.apache.curator.framework.CuratorFramework;
 
-import com.ligadata.fatafat.consumer.listener.ControlKeys;
-import com.ligadata.fatafat.consumer.message.Aggregations;
-import com.ligadata.fatafat.consumer.util.ZKFields;
-import com.ligadata.fatafat.consumer.util.ZKUtil;
+import com.ligadata.kamanja.consumer.listener.ControlKeys;
+import com.ligadata.kamanja.consumer.message.Aggregations;
+import com.ligadata.kamanja.consumer.util.ZKFields;
+import com.ligadata.kamanja.consumer.util.ZKUtil;
 
 public class AlertsAggTimerTask extends TimerTask {
 

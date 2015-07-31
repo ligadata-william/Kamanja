@@ -1,6 +1,6 @@
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase.CountersAdapter
+import com.ligadata.KamanjaBase.CountersAdapter
 
 object SimpleStats extends CountersAdapter {
 

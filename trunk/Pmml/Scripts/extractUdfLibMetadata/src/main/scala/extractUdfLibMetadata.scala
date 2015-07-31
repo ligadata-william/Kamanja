@@ -36,7 +36,7 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
                  being collected
               fcnDefsPath is the file path that will receive the function definitions
       
-        Notes: This script must run from the top level sbt project directory (e.g., ~/github/Fatafat/trunk)
+        Notes: This script must run from the top level sbt project directory (e.g., ~/github/Kamanja/trunk)
         The object argument supplied must inherit from com.ligadata.pmml.udfs.UdfBase for extraction to be successful.
         Obviously it is helpful if the project actually builds.  This script executes the fat jar version of the 
         MethodExtractor (<sbtRoot>/trunk/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0)

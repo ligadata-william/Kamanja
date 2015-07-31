@@ -1,17 +1,17 @@
-package com.ligadata.FatafatData
+package com.ligadata.KamanjaData
 
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
 import scala.collection.mutable.ArrayBuffer;
 import scala.collection.JavaConversions._
 import scala.util.control.Breaks._
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
+case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
-object FatafatData {
+object KamanjaData {
   def Version = 1 // Current Version
   def PrepareKey(typName: String, partitionkey: List[String], StartDateRange: Int, EndDateRange: Int): String = {
     /*
@@ -22,7 +22,7 @@ object FatafatData {
     return x
 */
 
-    val key = FatafatDataKey(typName.toLowerCase, partitionkey.map(k => k.toLowerCase), List(StartDateRange, EndDateRange), Version)
+    val key = KamanjaDataKey(typName.toLowerCase, partitionkey.map(k => k.toLowerCase), List(StartDateRange, EndDateRange), Version)
     val json =
       ("T" -> key.T) ~
         ("K" -> key.K) ~
@@ -32,8 +32,8 @@ object FatafatData {
   }
 }
 
-class FatafatData {
-  private val ver = FatafatData.Version // Version
+class KamanjaData {
+  private val ver = KamanjaData.Version // Version
   private var typName: String = "" // Type name (Message, container)
   private var key = ArrayBuffer[String]() // Partition Key
   private var StartDateRange: Int = 0 // Start Date Range
@@ -113,7 +113,7 @@ class FatafatData {
   }
 
   // BUGBUG:: Order of containers/messages are not guaranteed here. Because we don't know which one comes first in this. For now expecting this is old and appending collection is latest.
-  def appendWithCheck(collection: FatafatData): Unit = {
+  def appendWithCheck(collection: KamanjaData): Unit = {
     if (key.sameElements(collection.key)) {
       try {
         collection.data.foreach(typ => {
@@ -144,7 +144,7 @@ class FatafatData {
   }
 
   // Here are not checking for duplicates existance. Thinking that collection always has new messages/containers.
-  def appendNoDupCheck(collection: FatafatData): Unit = {
+  def appendNoDupCheck(collection: KamanjaData): Unit = {
     if (key.sameElements(collection.key)) {
       try {
         data ++= collection.data
@@ -159,7 +159,7 @@ class FatafatData {
     }
   }
 
-  def SerializeKey: String = return FatafatData.PrepareKey(typName, key.toList, StartDateRange, EndDateRange)
+  def SerializeKey: String = return KamanjaData.PrepareKey(typName, key.toList, StartDateRange, EndDateRange)
 
   def SerializeData: Array[Byte] = {
     val bos: ByteArrayOutputStream = new ByteArrayOutputStream(1024 * 1024)

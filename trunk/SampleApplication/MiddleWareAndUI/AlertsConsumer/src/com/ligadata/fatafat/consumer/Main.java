@@ -1,4 +1,4 @@
-package com.ligadata.fatafat.consumer;
+package com.ligadata.kamanja.consumer;
 
 import java.util.Calendar;
 import java.util.Timer;
@@ -9,15 +9,15 @@ import org.apache.curator.framework.recipes.shared.SharedValue;
 import org.apache.curator.framework.recipes.shared.SharedValueListener;
 import org.apache.log4j.Logger;
 
-import com.ligadata.fatafat.consumer.listener.StartListener;
-import com.ligadata.fatafat.consumer.message.AbstractConsumerController;
-import com.ligadata.fatafat.consumer.message.AlertsConsumerController;
-import com.ligadata.fatafat.consumer.message.StatusConsumerController;
-import com.ligadata.fatafat.consumer.scheduled.AlertsAggTimerTask;
-import com.ligadata.fatafat.consumer.util.ConfigFields;
-import com.ligadata.fatafat.consumer.util.ConfigManager;
-import com.ligadata.fatafat.consumer.util.ZKFields;
-import com.ligadata.fatafat.consumer.util.ZKUtil;
+import com.ligadata.kamanja.consumer.listener.StartListener;
+import com.ligadata.kamanja.consumer.message.AbstractConsumerController;
+import com.ligadata.kamanja.consumer.message.AlertsConsumerController;
+import com.ligadata.kamanja.consumer.message.StatusConsumerController;
+import com.ligadata.kamanja.consumer.scheduled.AlertsAggTimerTask;
+import com.ligadata.kamanja.consumer.util.ConfigFields;
+import com.ligadata.kamanja.consumer.util.ConfigManager;
+import com.ligadata.kamanja.consumer.util.ZKFields;
+import com.ligadata.kamanja.consumer.util.ZKUtil;
 
 public class Main {
 

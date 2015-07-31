@@ -1,8 +1,8 @@
 package com.ligadata.samples.messages;
 
-import com.ligadata.FatafatBase.JavaRDDObject;
-import com.ligadata.FatafatBase.BaseMsgObj;
-import com.ligadata.FatafatBase.BaseContainerObj;
+import com.ligadata.KamanjaBase.JavaRDDObject;
+import com.ligadata.KamanjaBase.BaseMsgObj;
+import com.ligadata.KamanjaBase.BaseContainerObj;
 
 public final class CustAlertHistoryFactory {
 	public static JavaRDDObject<CustAlertHistory> rddObject = CustAlertHistory$.MODULE$.toJavaRDDObject();

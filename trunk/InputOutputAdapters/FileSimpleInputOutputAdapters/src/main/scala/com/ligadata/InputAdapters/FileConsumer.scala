@@ -6,7 +6,7 @@ import org.apache.log4j.Logger
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.FatafatBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.KamanjaBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 

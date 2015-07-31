@@ -1,4 +1,4 @@
-package com.ligadata.fatafat.consumer.util;
+package com.ligadata.kamanja.consumer.util;
 
 public interface ZKFields {
 

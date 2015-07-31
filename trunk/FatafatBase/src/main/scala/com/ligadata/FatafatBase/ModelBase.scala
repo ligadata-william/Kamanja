@@ -1,9 +1,9 @@
 
-package com.ligadata.FatafatBase
+package com.ligadata.KamanjaBase
 
 import scala.collection.immutable.Map
 import com.ligadata.Utils.Utils
-import com.ligadata.fatafat.metadata.MdMgr
+import com.ligadata.kamanja.metadata.MdMgr
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._

@@ -1,10 +1,10 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.FatafatBase.{ EnvContext, InputAdapterObj, InputAdapter, OutputAdapterObj, OutputAdapter, AdapterConfiguration, MakeExecContext }
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.KamanjaBase.{ EnvContext, InputAdapterObj, InputAdapter, OutputAdapterObj, OutputAdapter, AdapterConfiguration, MakeExecContext }
 import com.ligadata.Utils.Utils
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
@@ -15,51 +15,51 @@ import org.json4s.native.JsonMethods._
 import java.io.{ File }
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
-object FatafatMdCfg {
+object KamanjaMdCfg {
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val mdMgr = GetMdMgr
 
   def InitConfigInfo: Boolean = {
-    val nd = mdMgr.Nodes.getOrElse(FatafatConfiguration.nodeId.toString, null)
+    val nd = mdMgr.Nodes.getOrElse(KamanjaConfiguration.nodeId.toString, null)
     if (nd == null) {
-      LOG.error("Node %d not found in metadata".format(FatafatConfiguration.nodeId))
+      LOG.error("Node %d not found in metadata".format(KamanjaConfiguration.nodeId))
       return false
     }
 
-    FatafatConfiguration.clusterId = nd.ClusterId
+    KamanjaConfiguration.clusterId = nd.ClusterId
 
     val cluster = mdMgr.ClusterCfgs.getOrElse(nd.ClusterId, null)
     if (cluster == null) {
-      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, nd.ClusterId))
+      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, nd.ClusterId))
       return false
     }
 
     val dataStore = cluster.cfgMap.getOrElse("DataStore", null)
     if (dataStore == null) {
-      LOG.error("DataStore not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, nd.ClusterId))
+      LOG.error("DataStore not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, nd.ClusterId))
       return false
     }
 
     val statusInfo = cluster.cfgMap.getOrElse("StatusInfo", null)
     if (statusInfo == null) {
-      LOG.error("StatusInfo not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, nd.ClusterId))
+      LOG.error("StatusInfo not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, nd.ClusterId))
       return false
     }
 
     val zooKeeperInfo = cluster.cfgMap.getOrElse("ZooKeeperInfo", null)
     if (zooKeeperInfo == null) {
-      LOG.error("ZooKeeperInfo not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, nd.ClusterId))
+      LOG.error("ZooKeeperInfo not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, nd.ClusterId))
       return false
     }
 
-    FatafatConfiguration.jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
-    if (FatafatConfiguration.jarPaths.size == 0) {
+    KamanjaConfiguration.jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
+    if (KamanjaConfiguration.jarPaths.size == 0) {
       LOG.error("Not found valid JarPaths.")
       return false
     }
 
-    FatafatConfiguration.nodePort = nd.NodePort
-    if (FatafatConfiguration.nodePort <= 0) {
+    KamanjaConfiguration.nodePort = nd.NodePort
+    if (KamanjaConfiguration.nodePort <= 0) {
       LOG.error("Not found valid nodePort. It should be greater than 0")
       return false
     }
@@ -69,54 +69,54 @@ object FatafatMdCfg {
     val statusStoreInfo = parse(statusInfo).extract[JDataStore]
     val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
-    FatafatConfiguration.dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
-    if (FatafatConfiguration.dataStoreType.size == 0) {
+    KamanjaConfiguration.dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
+    if (KamanjaConfiguration.dataStoreType.size == 0) {
       LOG.error("Not found valid DataStoreType.")
       return false
     }
 
-    FatafatConfiguration.dataSchemaName = dataStoreInfo.SchemaName.replace("\"", "").trim
-    if (FatafatConfiguration.dataSchemaName.size == 0) {
+    KamanjaConfiguration.dataSchemaName = dataStoreInfo.SchemaName.replace("\"", "").trim
+    if (KamanjaConfiguration.dataSchemaName.size == 0) {
       LOG.error("Not found valid DataSchemaName.")
       return false
     }
 
-    FatafatConfiguration.dataLocation = dataStoreInfo.Location.replace("\"", "").trim
-    if (FatafatConfiguration.dataLocation.size == 0) {
+    KamanjaConfiguration.dataLocation = dataStoreInfo.Location.replace("\"", "").trim
+    if (KamanjaConfiguration.dataLocation.size == 0) {
       LOG.error("Not found valid DataLocation.")
       return false
     }
 
-    FatafatConfiguration.adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.trim
+    KamanjaConfiguration.adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.trim
 
-    FatafatConfiguration.statusInfoStoreType = statusStoreInfo.StoreType.replace("\"", "").trim
-    if (FatafatConfiguration.statusInfoStoreType.size == 0) {
+    KamanjaConfiguration.statusInfoStoreType = statusStoreInfo.StoreType.replace("\"", "").trim
+    if (KamanjaConfiguration.statusInfoStoreType.size == 0) {
       LOG.error("Not found valid Status Information StoreType.")
       return false
     }
 
-    FatafatConfiguration.statusInfoSchemaName = statusStoreInfo.SchemaName.replace("\"", "").trim
-    if (FatafatConfiguration.statusInfoSchemaName.size == 0) {
+    KamanjaConfiguration.statusInfoSchemaName = statusStoreInfo.SchemaName.replace("\"", "").trim
+    if (KamanjaConfiguration.statusInfoSchemaName.size == 0) {
       LOG.error("Not found valid Status Information SchemaName.")
       return false
     }
 
-    FatafatConfiguration.statusInfoLocation = statusStoreInfo.Location.replace("\"", "").trim
-    if (FatafatConfiguration.statusInfoLocation.size == 0) {
+    KamanjaConfiguration.statusInfoLocation = statusStoreInfo.Location.replace("\"", "").trim
+    if (KamanjaConfiguration.statusInfoLocation.size == 0) {
       LOG.error("Not found valid Status Information Location.")
       return false
     }
 
-    FatafatConfiguration.statusInfoAdapterSpecificConfig = if (statusStoreInfo.AdapterSpecificConfig == None || statusStoreInfo.AdapterSpecificConfig == null) "" else statusStoreInfo.AdapterSpecificConfig.get.trim
+    KamanjaConfiguration.statusInfoAdapterSpecificConfig = if (statusStoreInfo.AdapterSpecificConfig == None || statusStoreInfo.AdapterSpecificConfig == null) "" else statusStoreInfo.AdapterSpecificConfig.get.trim
     
-    FatafatConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
-    FatafatConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
-    FatafatConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
-    FatafatConfiguration.zkConnectionTimeoutMs = if (zKInfo.ZooKeeperConnectionTimeoutMs == None || zKInfo.ZooKeeperConnectionTimeoutMs == null) 0 else zKInfo.ZooKeeperConnectionTimeoutMs.get.toString.toInt
+    KamanjaConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
+    KamanjaConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
+    KamanjaConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
+    KamanjaConfiguration.zkConnectionTimeoutMs = if (zKInfo.ZooKeeperConnectionTimeoutMs == None || zKInfo.ZooKeeperConnectionTimeoutMs == null) 0 else zKInfo.ZooKeeperConnectionTimeoutMs.get.toString.toInt
 
     // Taking minimum values in case if needed
-    FatafatConfiguration.zkSessionTimeoutMs = if (FatafatConfiguration.zkSessionTimeoutMs <= 0) 30000 else FatafatConfiguration.zkSessionTimeoutMs
-    FatafatConfiguration.zkConnectionTimeoutMs = if (FatafatConfiguration.zkConnectionTimeoutMs <= 0) 30000 else FatafatConfiguration.zkConnectionTimeoutMs
+    KamanjaConfiguration.zkSessionTimeoutMs = if (KamanjaConfiguration.zkSessionTimeoutMs <= 0) 30000 else KamanjaConfiguration.zkSessionTimeoutMs
+    KamanjaConfiguration.zkConnectionTimeoutMs = if (KamanjaConfiguration.zkConnectionTimeoutMs <= 0) 30000 else KamanjaConfiguration.zkConnectionTimeoutMs
 
     return true
   }
@@ -138,15 +138,15 @@ object FatafatMdCfg {
     val allJarsToBeValidated = scala.collection.mutable.Set[String]();
 
     // EnvContext Jars
-    val cluster = mdMgr.ClusterCfgs.getOrElse(FatafatConfiguration.clusterId, null)
+    val cluster = mdMgr.ClusterCfgs.getOrElse(KamanjaConfiguration.clusterId, null)
     if (cluster == null) {
-      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, FatafatConfiguration.clusterId))
+      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, KamanjaConfiguration.clusterId))
       return false
     }
 
     val envCtxtStr = cluster.cfgMap.getOrElse("EnvironmentContext", null)
     if (envCtxtStr == null) {
-      LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, FatafatConfiguration.clusterId))
+      LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, KamanjaConfiguration.clusterId))
       return false
     }
 
@@ -166,7 +166,7 @@ object FatafatMdCfg {
     }
 
     if (allJars != null) {
-      allJarsToBeValidated ++= allJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j))
+      allJarsToBeValidated ++= allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
     }
 
     // All Adapters
@@ -181,10 +181,10 @@ object FatafatMdCfg {
         val depJars = if (a._2.DependencyJars != null) a._2.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
 
         if (jar != null && jar.size > 0) {
-          allJarsToBeValidated += FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, jar)
+          allJarsToBeValidated += KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, jar)
         }
         if (depJars != null && depJars.size > 0) {
-          allJarsToBeValidated ++= depJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j))
+          allJarsToBeValidated ++= depJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
         }
       } else {
         LOG.error("Found unhandled adapter type %s for adapter %s".format(a._2.TypeString, a._2.Name))
@@ -201,16 +201,16 @@ object FatafatMdCfg {
     true
   }
 
-  def LoadEnvCtxt(loaderInfo: FatafatLoaderInfo): EnvContext = {
-    val cluster = mdMgr.ClusterCfgs.getOrElse(FatafatConfiguration.clusterId, null)
+  def LoadEnvCtxt(loaderInfo: KamanjaLoaderInfo): EnvContext = {
+    val cluster = mdMgr.ClusterCfgs.getOrElse(KamanjaConfiguration.clusterId, null)
     if (cluster == null) {
-      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, FatafatConfiguration.clusterId))
+      LOG.error("Cluster not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, KamanjaConfiguration.clusterId))
       return null
     }
 
     val envCtxtStr = cluster.cfgMap.getOrElse("EnvironmentContext", null)
     if (envCtxtStr == null) {
-      LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(FatafatConfiguration.nodeId, FatafatConfiguration.clusterId))
+      LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, KamanjaConfiguration.clusterId))
       return null
     }
 
@@ -232,7 +232,7 @@ object FatafatMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -243,7 +243,7 @@ object FatafatMdCfg {
     var curClz = clz
 
     while (clz != null && isEntCtxt == false) {
-      isEntCtxt = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.EnvContext")
+      isEntCtxt = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.EnvContext")
       if (isEntCtxt == false)
         curClz = curClz.getSuperclass()
     }
@@ -257,11 +257,11 @@ object FatafatMdCfg {
         if (objinst.isInstanceOf[EnvContext]) {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           envCtxt.SetClassLoader(loaderInfo.loader)
-          envCtxt.SetMetadataResolveInfo(FatafatMetadata)
-          val containerNames = FatafatMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          val topMessageNames = FatafatMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, containerNames, true, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Containers
-          envCtxt.AddNewMessageOrContainers(FatafatMetadata.getMdMgr, FatafatConfiguration.dataStoreType, FatafatConfiguration.dataLocation, FatafatConfiguration.dataSchemaName, FatafatConfiguration.adapterSpecificConfig, topMessageNames, false, FatafatConfiguration.statusInfoStoreType, FatafatConfiguration.statusInfoSchemaName, FatafatConfiguration.statusInfoLocation, FatafatConfiguration.statusInfoAdapterSpecificConfig) // Messages
+          envCtxt.SetMetadataResolveInfo(KamanjaMetadata)
+          val containerNames = KamanjaMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+          val topMessageNames = KamanjaMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
+          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, containerNames, true, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Containers
+          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, topMessageNames, false, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -279,7 +279,7 @@ object FatafatMdCfg {
     null
   }
 
-  def LoadAdapters(loaderInfo: FatafatLoaderInfo, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: ArrayBuffer[OutputAdapter], statusAdapters: ArrayBuffer[OutputAdapter], validateInputAdapters: ArrayBuffer[InputAdapter]): Boolean = {
+  def LoadAdapters(loaderInfo: KamanjaLoaderInfo, inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: ArrayBuffer[OutputAdapter], statusAdapters: ArrayBuffer[OutputAdapter], validateInputAdapters: ArrayBuffer[InputAdapter]): Boolean = {
     LOG.info("Loading Adapters started @ " + Utils.GetCurDtTmStr)
     val s0 = System.nanoTime
 
@@ -320,13 +320,13 @@ object FatafatMdCfg {
     // Get input adapter
     LOG.debug("Getting Input Adapters")
 
-    if (LoadInputAdapsForCfg(inputAdaps, inputAdapters, outputAdapters.toArray, FatafatMetadata.envCtxt, loaderInfo) == false)
+    if (LoadInputAdapsForCfg(inputAdaps, inputAdapters, outputAdapters.toArray, KamanjaMetadata.envCtxt, loaderInfo) == false)
       return false
 
     // Get input adapter
     LOG.debug("Getting Validate Input Adapters")
 
-    if (LoadValidateInputAdapsFromCfg(validateAdaps, validateInputAdapters, outputAdapters.toArray, FatafatMetadata.envCtxt, loaderInfo) == false)
+    if (LoadValidateInputAdapsFromCfg(validateAdaps, validateInputAdapters, outputAdapters.toArray, KamanjaMetadata.envCtxt, loaderInfo) == false)
       return false
 
     val totaltm = "TimeConsumed:%.02fms".format((System.nanoTime - s0) / 1000000.0);
@@ -335,7 +335,7 @@ object FatafatMdCfg {
     true
   }
 
-  private def CreateOutputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, loaderInfo: FatafatLoaderInfo): OutputAdapter = {
+  private def CreateOutputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, loaderInfo: KamanjaLoaderInfo): OutputAdapter = {
     if (statusAdapterCfg == null) return null
     var allJars: collection.immutable.Set[String] = null
     if (statusAdapterCfg.dependencyJars != null && statusAdapterCfg.jarName != null) {
@@ -347,7 +347,7 @@ object FatafatMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -358,7 +358,7 @@ object FatafatMdCfg {
     var curClz = clz
 
     while (clz != null && isOutputAdapter == false) {
-      isOutputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.OutputAdapterObj")
+      isOutputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.OutputAdapterObj")
       if (isOutputAdapter == false)
         curClz = curClz.getSuperclass()
     }
@@ -386,7 +386,7 @@ object FatafatMdCfg {
     null
   }
 
-  private def LoadOutputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], outputAdapters: ArrayBuffer[OutputAdapter], loaderInfo: FatafatLoaderInfo, hasInputAdapterName: Boolean): Boolean = {
+  private def LoadOutputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], outputAdapters: ArrayBuffer[OutputAdapter], loaderInfo: KamanjaLoaderInfo, hasInputAdapterName: Boolean): Boolean = {
     // ConfigurationName
     if (adaps.size > 1) {
       LOG.error(" Got %d ouput adapters, but we are expecting only one output adapter.".format(adaps.size))
@@ -421,7 +421,7 @@ object FatafatMdCfg {
     return true
   }
 
-  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: FatafatLoaderInfo, mkExecCtxt: MakeExecContext): InputAdapter = {
+  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo, mkExecCtxt: MakeExecContext): InputAdapter = {
     if (statusAdapterCfg == null) return null
     var allJars: collection.immutable.Set[String] = null
 
@@ -434,7 +434,7 @@ object FatafatMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -445,7 +445,7 @@ object FatafatMdCfg {
     var curClz = clz
 
     while (clz != null && isInputAdapter == false) {
-      isInputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.FatafatBase.InputAdapterObj")
+      isInputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.InputAdapterObj")
       if (isInputAdapter == false)
         curClz = curClz.getSuperclass()
     }
@@ -473,7 +473,7 @@ object FatafatMdCfg {
     null
   }
 
-  private def PrepInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: FatafatLoaderInfo, mkExecCtxt: MakeExecContext): Boolean = {
+  private def PrepInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo, mkExecCtxt: MakeExecContext): Boolean = {
     // ConfigurationName
     if (adaps.size == 0) {
       return true
@@ -507,11 +507,11 @@ object FatafatMdCfg {
     return true
   }
 
-  private def LoadInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: FatafatLoaderInfo): Boolean = {
+  private def LoadInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo): Boolean = {
     return PrepInputAdapsForCfg(adaps, inputAdapters, outputAdapters, envCtxt, loaderInfo, MakeExecContextImpl)
   }
 
-  private def LoadValidateInputAdapsFromCfg(validate_adaps: scala.collection.mutable.Map[String, AdapterInfo], valInputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: FatafatLoaderInfo): Boolean = {
+  private def LoadValidateInputAdapsFromCfg(validate_adaps: scala.collection.mutable.Map[String, AdapterInfo], valInputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo): Boolean = {
     val validateInputAdapters = scala.collection.mutable.Map[String, AdapterInfo]()
 
     outputAdapters.foreach(oa => {

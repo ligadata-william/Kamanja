@@ -1,16 +1,16 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 
-import com.ligadata.fatafat.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import scala.collection.mutable.TreeSet
 import scala.util.control.Breaks._
-import com.ligadata.FatafatBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
+import com.ligadata.KamanjaBase.{ MdlInfo, MessageContainerObjBase, BaseMsgObj, BaseContainer, ModelBaseObj, TransformMessage, EnvContext }
 import scala.collection.mutable.HashMap
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
@@ -30,7 +30,7 @@ case class DistributionMap(Node: String, Adaps: List[NodeDistMap])
 case class FoundKeysInValidation(K: String, V1: String, V2: Int, V3: Int, V4: Long)
 case class ActionOnAdaptersMap(action: String, adaptermaxpartitions: Option[List[AdapMaxPartitions]], distributionmap: Option[List[DistributionMap]], foundKeysInValidation: Option[List[FoundKeysInValidation]])
 
-object FatafatLeader {
+object KamanjaLeader {
   private[this] val LOG = Logger.getLogger(getClass);
   private[this] val lock = new Object()
   private[this] val lock1 = new Object()
@@ -370,7 +370,7 @@ object FatafatLeader {
   // Here Leader can change or Participants can change
   private def EventChangeCallback(cs: ClusterStatus): Unit = {
     LOG.debug("EventChangeCallback => Enter")
-    FatafatConfiguration.participentsChangedCntr += 1
+    KamanjaConfiguration.participentsChangedCntr += 1
     SetClusterStatus(cs)
     LOG.info("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, cs.isLeader.toString, cs.leader, cs.participants.mkString(",")))
     LOG.debug("EventChangeCallback => Exit")

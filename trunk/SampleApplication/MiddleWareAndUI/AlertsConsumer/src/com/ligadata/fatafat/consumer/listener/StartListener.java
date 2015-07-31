@@ -1,12 +1,12 @@
-package com.ligadata.fatafat.consumer.listener;
+package com.ligadata.kamanja.consumer.listener;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.shared.SharedValueListener;
 import org.apache.curator.framework.recipes.shared.SharedValueReader;
 import org.apache.curator.framework.state.ConnectionState;
 
-import com.ligadata.fatafat.consumer.Main;
-import com.ligadata.fatafat.consumer.message.Aggregations;
+import com.ligadata.kamanja.consumer.Main;
+import com.ligadata.kamanja.consumer.message.Aggregations;
 
 public class StartListener implements SharedValueListener {
 

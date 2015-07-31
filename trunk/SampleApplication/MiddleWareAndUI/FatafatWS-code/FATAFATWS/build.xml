@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<project name="FATAFATWS" default="war">
+<project name="KAMANJAWS" default="war">
 
 	<path id="compile.classpath">
 		<fileset dir="WebContent/WEB-INF/lib">
@@ -28,7 +28,7 @@
 	</target>
 
 	<target name="war" depends="compile">
-		<war destfile="dist/FatafatWS.war" webxml="WebContent/WEB-INF/web.xml">
+		<war destfile="dist/KamanjaWS.war" webxml="WebContent/WEB-INF/web.xml">
 			<fileset dir="WebContent" />
 			<classes dir="build/classes" />
 		</war>

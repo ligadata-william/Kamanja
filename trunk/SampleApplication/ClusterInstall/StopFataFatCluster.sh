@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# StopFataFatCluster.sh
+# StopKamanjaCluster.sh
 #
 #	NOTE: This script must currently be run from a trunk directory that contains the build installed on the cluster to be run.
 
@@ -8,7 +8,7 @@ Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StopFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "      StopKamanjaCluster.sh --ClusterId <cluster name identifer> "
     echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo 
     echo "  NOTES: Stop the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
@@ -78,8 +78,8 @@ fi
 
 # Start the cluster nodes using the information extracted from the metadata and supplied config.  Remember the jvm's pid in the $installDir/run
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
-# config directory where the FataFat engine config file is located.
-echo "...stopping the FataFat cluster $clusterName"
+# config directory where the Kamanja engine config file is located.
+echo "...stopping the Kamanja cluster $clusterName"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -93,7 +93,7 @@ while read LINE; do
     read LINE
     roles=$LINE
     echo "NodeInfo = $machine, $id, $cfgFile, $targetPath, $roles"
-    echo "...On machine $machine, stopping FataFat node with configuration $cfgFile for nodeId $id to $machine:$targetPath"
+    echo "...On machine $machine, stopping Kamanja node with configuration $cfgFile for nodeId $id to $machine:$targetPath"
     #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
     # 
     # FIXME: something more graceful than killing the jvm is desirable.

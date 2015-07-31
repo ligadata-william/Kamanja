@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# StatusFataFatCluster.sh
+# StatusKamanjaCluster.sh
 #
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StatusFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "      StatusKamanjaCluster.sh --ClusterId <cluster name identifer> "
     echo "                           --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo 
     echo "  NOTES: Get status on the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to "
@@ -77,8 +77,8 @@ fi
 
 # Start the cluster nodes using the information extracted from the metadata and supplied config.  Remember the jvm's pid in the $installDir/run
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
-# config directory where the FataFat engine config file is located.
-echo "...get stuatus for the FataFat cluster $clusterName"
+# config directory where the Kamanja engine config file is located.
+echo "...get stuatus for the Kamanja cluster $clusterName"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -118,7 +118,7 @@ while read LINE; do
              if [ ! -d "$installDir/run" ]; then
                 mkdir "$installDir/run"
              fi
-             ps u -p $pidvals | grep "FatafatManager-1.0" | grep -v "grep" | wc -l > "$installDir/run/$statusfile"
+             ps u -p $pidvals | grep "KamanjaManager-1.0" | grep -v "grep" | wc -l > "$installDir/run/$statusfile"
              ps u -p $pidvals | grep "MetadataAPIService-1.0" | grep -v "grep" | wc -l >> "$installDir/run/$statusfile"
 
 EOF
@@ -132,12 +132,12 @@ EOF
     if [ "$processingengine_cnt" -gt 0 ]; then
     if [ ! -z "$enginestatuspidcnt" ]; then
         if [[ -n "$enginestatuspidcnt" ]] && [[ "$enginestatuspidcnt" -gt 0 ]]; then
-            echo "Status:UP, Node:$machine, Service:FatafatManager"
+            echo "Status:UP, Node:$machine, Service:KamanjaManager"
         else
-            echo "Status:DOWN, Node:$machine, Service:FatafatManager"
+            echo "Status:DOWN, Node:$machine, Service:KamanjaManager"
          fi
     else
-         echo "Status:DOWN, Node:$machine, Service:FatafatManager"
+         echo "Status:DOWN, Node:$machine, Service:KamanjaManager"
     fi
     fi
 

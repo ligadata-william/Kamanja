@@ -1,7 +1,7 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import com.ligadata.Utils.Utils
 import java.util.Map
 import com.ligadata.outputmsg.OutputMsgGenerator
@@ -30,7 +30,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
     if (finalTopMsgOrContainer != null) {
 
-      val models: Array[MdlInfo] = FatafatMetadata.getAllModels.map(mdl => mdl._2).toArray
+      val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
 
       val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
 
@@ -70,7 +70,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
   }
 
   private def GetTopMsgName(msgName: String): (String, Boolean, MsgContainerObjAndTransformInfo) = {
-    val topMsgInfo = FatafatMetadata.getMessgeInfo(msgName)
+    val topMsgInfo = KamanjaMetadata.getMessgeInfo(msgName)
     if (topMsgInfo == null || topMsgInfo.parents.size == 0) return (msgName, false, null)
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
@@ -135,7 +135,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           })
 
           var resStr = "Not found any output."
-          val outputMsgs = FatafatMetadata.getMdMgr.OutputMessages(true, true)
+          val outputMsgs = KamanjaMetadata.getMdMgr.OutputMessages(true, true)
           if (outputMsgs != None && outputMsgs != null && outputMsgs.get.size > 0) {
             LOG.info("msg " + msg.FullName)
             LOG.info(" outputMsgs.size" + outputMsgs.get.size)
@@ -151,17 +151,17 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (isValidPartitionKey) {
             envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
           }
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(1)) {
+          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(1)) {
             try {
               LOG.debug("====================================> Started Waiting in Step 1")
-              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
               case e: Exception => {}
             }
           }
           if (ignoreOutput == false) {
-            if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+            if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
               LOG.debug("====================================> Sending to Output Adapter")
             }
             val sendOutStartTime = System.nanoTime
@@ -170,10 +170,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
             })
             LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
           }
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(2)) {
+          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
             try {
               LOG.debug("====================================> Started Waiting in Step 2")
-              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 2")
             } catch {
               case e: Exception => {}
@@ -184,10 +184,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
           totalLatencyFromReadToProcess += latencyFromReadToProcess
           envContext.saveStatus(transId, "SetData", false)
-          if (FatafatConfiguration.waitProcessingTime > 0 && FatafatConfiguration.waitProcessingSteps(3)) {
+          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
             try {
               LOG.debug("====================================> Started Waiting in Step 3")
-              Thread.sleep(FatafatConfiguration.waitProcessingTime)
+              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
               case e: Exception => {}

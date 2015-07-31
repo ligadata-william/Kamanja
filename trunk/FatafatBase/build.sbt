@@ -1,4 +1,4 @@
-name := "FatafatBase"
+name := "KamanjaBase"
 
 version := "1.0"
 

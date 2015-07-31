@@ -1,7 +1,7 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 
 import scala.reflect.runtime.{ universe => ru }
 import scala.util.control.Breaks._
@@ -20,7 +20,7 @@ import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.Utils
 import org.apache.log4j.Logger
 
-class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
+class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
   private val serverSocket = new ServerSocket(port)
 
@@ -45,7 +45,7 @@ class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
   }
 }
 
-class ConnHandler(var socket: Socket, var mgr: FatafatManager) extends Runnable {
+class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
   private val out = new PrintStream(socket.getOutputStream)
   private val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
@@ -69,7 +69,7 @@ class ConnHandler(var socket: Socket, var mgr: FatafatManager) extends Runnable 
   }
 }
 
-object FatafatConfiguration {
+object KamanjaConfiguration {
   var configFile: String = _
   var allConfigs: Properties = _
   var metadataStoreType: String = _
@@ -144,15 +144,15 @@ object FatafatConfiguration {
   }
 }
 
-class FatafatClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
     super.addURL(url)
   }
 }
 
-class FatafatLoaderInfo {
+class KamanjaLoaderInfo {
   // class loader
-  val loader: FatafatClassLoader = new FatafatClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+  val loader: KamanjaClassLoader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
 
   // Loaded jars
   val loadedJars: TreeSet[String] = new TreeSet[String];
@@ -163,14 +163,14 @@ class FatafatLoaderInfo {
   // ru.runtimeMirror(modelsloader)
 }
 
-class FatafatManager {
+class KamanjaManager {
   private val LOG = Logger.getLogger(getClass);
 
   // metadata loader
-  private val metadataLoader = new FatafatLoaderInfo
+  private val metadataLoader = new KamanjaLoaderInfo
 
-  // FatafatServer Object
-  private var serviceObj: FatafatServer = null
+  // KamanjaServer Object
+  private var serviceObj: KamanjaServer = null
 
   private val inputAdapters = new ArrayBuffer[InputAdapter]
   private val outputAdapters = new ArrayBuffer[OutputAdapter]
@@ -187,13 +187,13 @@ class FatafatManager {
   }
 
   private def Shutdown(exitCode: Int): Int = {
-    if (FatafatMetadata.envCtxt != null)
-      FatafatMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
-    FatafatLeader.Shutdown
-    FatafatMetadata.Shutdown
+    if (KamanjaMetadata.envCtxt != null)
+      KamanjaMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
+    KamanjaLeader.Shutdown
+    KamanjaMetadata.Shutdown
     ShutdownAdapters
-    if (FatafatMetadata.envCtxt != null)
-      FatafatMetadata.envCtxt.Shutdown
+    if (KamanjaMetadata.envCtxt != null)
+      KamanjaMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
     return exitCode
@@ -218,8 +218,8 @@ class FatafatManager {
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
       if (jars.length > 0) {
-        val qualJars = jars.map(j => FatafatConfiguration.GetValidJarFile(FatafatConfiguration.jarPaths, j))
-        val nonExistsJars = FatafatMdCfg.CheckForNonExistanceJars(qualJars.toSet)
+        val qualJars = jars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
+        val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(qualJars.toSet)
         if (nonExistsJars.size > 0) {
           LOG.error("Not found jars in given Dynamic Jars List : {" + nonExistsJars.mkString(", ") + "}")
           return false
@@ -269,48 +269,48 @@ class FatafatManager {
   private def initialize: Boolean = {
     var retval: Boolean = true
 
-    val loadConfigs = FatafatConfiguration.allConfigs
+    val loadConfigs = KamanjaConfiguration.allConfigs
 
     try {
-      FatafatConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
-      if (FatafatConfiguration.metadataStoreType.size == 0) {
+      KamanjaConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
+      if (KamanjaConfiguration.metadataStoreType.size == 0) {
         LOG.error("Not found valid MetadataStoreType.")
         return false
       }
 
-      FatafatConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
-      if (FatafatConfiguration.metadataSchemaName.size == 0) {
+      KamanjaConfiguration.metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
+      if (KamanjaConfiguration.metadataSchemaName.size == 0) {
         LOG.error("Not found valid MetadataSchemaName.")
         return false
       }
 
-      FatafatConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
-      if (FatafatConfiguration.metadataLocation.size == 0) {
+      KamanjaConfiguration.metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
+      if (KamanjaConfiguration.metadataLocation.size == 0) {
         LOG.error("Not found valid MetadataLocation.")
         return false
       }
 
-      FatafatConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
-      if (FatafatConfiguration.nodeId <= 0) {
+      KamanjaConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
+      if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
       }
 
       // This is just for debugging info. If anything fails here, we should not care.
       try {
-        FatafatConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "0").replace("\"", "").trim.toInt
-        if (FatafatConfiguration.waitProcessingTime > 0) {
+        KamanjaConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "0").replace("\"", "").trim.toInt
+        if (KamanjaConfiguration.waitProcessingTime > 0) {
           val setps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0)
           if (setps.size > 0)
-            FatafatConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
+            KamanjaConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
         case e: Exception => {} 
       }
 
-      FatafatMetadata.InitBootstrap
+      KamanjaMetadata.InitBootstrap
 
-      if (FatafatMdCfg.InitConfigInfo == false)
+      if (KamanjaMdCfg.InitConfigInfo == false)
         return false
 
       var engineLeaderZkNodePath = ""
@@ -319,9 +319,9 @@ class FatafatManager {
       var adaptersStatusPath = ""
       var dataChangeZkNodePath = ""
 
-      if (FatafatConfiguration.zkNodeBasePath.size > 0) {
-        val zkNodeBasePath = FatafatConfiguration.zkNodeBasePath.stripSuffix("/").trim
-        FatafatConfiguration.zkNodeBasePath = zkNodeBasePath
+      if (KamanjaConfiguration.zkNodeBasePath.size > 0) {
+        val zkNodeBasePath = KamanjaConfiguration.zkNodeBasePath.stripSuffix("/").trim
+        KamanjaConfiguration.zkNodeBasePath = zkNodeBasePath
         engineLeaderZkNodePath = zkNodeBasePath + "/engineleader"
         engineDistributionZkNodePath = zkNodeBasePath + "/enginedistribution"
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
@@ -329,24 +329,24 @@ class FatafatManager {
         dataChangeZkNodePath = zkNodeBasePath + "/datachange"
       }
 
-      FatafatMdCfg.ValidateAllRequiredJars
+      KamanjaMdCfg.ValidateAllRequiredJars
 
-      FatafatMetadata.envCtxt = FatafatMdCfg.LoadEnvCtxt(metadataLoader)
-      if (FatafatMetadata.envCtxt == null)
+      KamanjaMetadata.envCtxt = KamanjaMdCfg.LoadEnvCtxt(metadataLoader)
+      if (KamanjaMetadata.envCtxt == null)
         return false
 
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
-      retval = FatafatMdCfg.LoadAdapters(metadataLoader, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
+      retval = KamanjaMdCfg.LoadAdapters(metadataLoader, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
 
       if (retval) {
-        FatafatMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, FatafatConfiguration.zkConnectString, metadataUpdatesZkNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs)
-        FatafatLeader.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, FatafatMetadata.envCtxt, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
+        KamanjaMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
+        KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
       /*
       if (retval) {
         try {
-          serviceObj = new FatafatServer(this, FatafatConfiguration.nodePort)
+          serviceObj = new KamanjaServer(this, KamanjaConfiguration.nodePort)
           (new Thread(serviceObj)).start()
         } catch {
           case e: Exception => {
@@ -380,8 +380,8 @@ class FatafatManager {
   }
 
   def run(args: Array[String]): Int = {
-    FatafatConfiguration.Reset
-    FatafatLeader.Reset
+    KamanjaConfiguration.Reset
+    KamanjaLeader.Reset
     if (args.length == 0) {
       PrintUsage()
       return Shutdown(1)
@@ -394,8 +394,8 @@ class FatafatManager {
       return Shutdown(1)
     }
 
-    FatafatConfiguration.configFile = cfgfile.toString
-    val (loadConfigs, failStr) = Utils.loadConfiguration(FatafatConfiguration.configFile, true)
+    KamanjaConfiguration.configFile = cfgfile.toString
+    val (loadConfigs, failStr) = Utils.loadConfiguration(KamanjaConfiguration.configFile, true)
     if (failStr != null && failStr.size > 0) {
       LOG.error(failStr)
       return Shutdown(1)
@@ -404,7 +404,7 @@ class FatafatManager {
       return Shutdown(1)
     }
 
-    FatafatConfiguration.allConfigs = loadConfigs
+    KamanjaConfiguration.allConfigs = loadConfigs
 
     {
       // Printing all configuration
@@ -430,7 +430,7 @@ class FatafatManager {
       def run() {
         val stats: scala.collection.immutable.Map[String, Long] = SimpleStats.copyMap
         val statsStr = stats.mkString("~")
-        val dispStr = "PD,%d,%s,%s".format(FatafatConfiguration.nodeId, Utils.GetCurDtTmStr, statsStr)
+        val dispStr = "PD,%d,%s,%s".format(KamanjaConfiguration.nodeId, Utils.GetCurDtTmStr, statsStr)
 
         if (statusAdapters != null) {
           statusAdapters.foreach(sa => {
@@ -463,20 +463,20 @@ class FatafatManager {
     var participentsChangedCntr: Long = 0
     var lookingForDups = false
 
-    print("FatafatManager is running now. Waiting for user to terminate with CTRL + C")
-    while (FatafatConfiguration.shutdown == false) { // Infinite wait for now
-      if (participentsChangedCntr != FatafatConfiguration.participentsChangedCntr) {
+    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
+    while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now
+      if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
         lookingForDups = false
         timeOutEndTime = 0
-        participentsChangedCntr = FatafatConfiguration.participentsChangedCntr
-        val cs = FatafatLeader.GetClusterStatus
+        participentsChangedCntr = KamanjaConfiguration.participentsChangedCntr
+        val cs = KamanjaLeader.GetClusterStatus
         if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
           val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
           if (isNotLeader) {
             val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
             if (sameNodeIds.size > 1) {
               lookingForDups = true
-              var mxTm = if (FatafatConfiguration.zkSessionTimeoutMs > FatafatConfiguration.zkConnectionTimeoutMs) FatafatConfiguration.zkSessionTimeoutMs else FatafatConfiguration.zkConnectionTimeoutMs
+              var mxTm = if (KamanjaConfiguration.zkSessionTimeoutMs > KamanjaConfiguration.zkConnectionTimeoutMs) KamanjaConfiguration.zkSessionTimeoutMs else KamanjaConfiguration.zkConnectionTimeoutMs
               if (mxTm < 5000) // if the value is < 5secs, we are taking 5 secs
                 mxTm = 5000
               timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
@@ -490,14 +490,14 @@ class FatafatManager {
         if (timeOutEndTime < System.currentTimeMillis) {
           lookingForDups = false
           timeOutEndTime = 0
-          val cs = FatafatLeader.GetClusterStatus
+          val cs = KamanjaLeader.GetClusterStatus
           if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
             val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
             if (isNotLeader) {
               val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
               if (sameNodeIds.size > 1) {
                 LOG.error("Found more than one of NodeId:%s in Participents:{%s} for ever. Shutting down this node.".format(cs.nodeId, cs.participants.mkString(",")))
-                FatafatConfiguration.shutdown = true
+                KamanjaConfiguration.shutdown = true
               }
             }
           }
@@ -520,7 +520,7 @@ class FatafatManager {
 
 object OleService {
   def main(args: Array[String]): Unit = {
-    val mgr = new FatafatManager
+    val mgr = new KamanjaManager
     sys.exit(mgr.run(args))
   }
 }

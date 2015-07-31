@@ -1,5 +1,5 @@
 
-package com.ligadata.FatafatBase
+package com.ligadata.KamanjaBase
 
 trait InputData {
   val dataInput: String // Just for Debugging/Logging purpose. Engine will parse the data to corresponding type and give it to populate

@@ -6,27 +6,27 @@ import org.json4s.DefaultFormats
 import org.json4s.Formats
 import scala.xml.XML
 import scala.xml.Elem
-import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
+import com.ligadata.KamanjaBase.{ InputData, DelimitedData, JsonData, XmlData }
 import com.ligadata.BaseTypes._
-import com.ligadata.FatafatBase.SerializeDeserialize
+import com.ligadata.KamanjaBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream, ByteArrayOutputStream }
 
-import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase }
 
 import org.scalatest.FunSuite
-import com.ligadata.FatafatBase.BaseMsg
-import com.ligadata.FatafatBase.{ DelimitedData, InputData }
-import com.ligadata.fatafat.metadata._
+import com.ligadata.KamanjaBase.BaseMsg
+import com.ligadata.KamanjaBase.{ DelimitedData, InputData }
+import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 import org.json4s.jackson.JsonMethods._
 import scala.xml.XML
-import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
+import com.ligadata.KamanjaBase.{ InputData, DelimitedData, JsonData, XmlData }
 import com.ligadata.BaseTypes._
 import java.io.{ DataInputStream, DataOutputStream }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, MdBaseResolveInfo }
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, MdBaseResolveInfo }
+import com.ligadata.kamanja.metadataload.MetadataLoad
 
 trait MsgMdlInitialize extends BeforeAndAfterEach { this: Suite =>
 
@@ -398,7 +398,7 @@ class System_HL7_1000001_1430446865995 extends BaseMsg {
 
   override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
 
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = {
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.KamanjaBase.BaseMsg = {
     return null
   }
 

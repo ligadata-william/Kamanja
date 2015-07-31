@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# StartFataFatCluster.sh
+# StartKamanjaCluster.sh
 #
 
 Usage()
 {
     echo 
     echo "Usage:"
-    echo "      StartFataFatCluster.sh --ClusterId <cluster name identifer> "
+    echo "      StartKamanjaCluster.sh --ClusterId <cluster name identifer> "
     echo "                           --MetadataAPIConfig  <metadataAPICfgPath> "
     echo 
     echo "  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate"
@@ -77,8 +77,8 @@ fi
 
 # Start the cluster nodes using the information extracted from the metadata and supplied config.  Remember the jvm's pid in the $installDir/run
 # directory setup for that purpose.  The name of the pid file will always be 'node$id.pid'.  The targetPath points to the given cluster's 
-# config directory where the FataFat engine config file is located.
-echo "...start the FataFat cluster $clusterName"
+# config directory where the Kamanja engine config file is located.
+echo "...start the Kamanja cluster $clusterName"
 exec 12<&0 # save current stdin
 exec < "$workDir/$ipIdCfgTargPathQuartetFileName"
 while read LINE; do
@@ -95,7 +95,7 @@ while read LINE; do
     restapi_cnt=`echo $roles_lc | grep "restapi" | grep -v "grep" | wc -l`
     processingengine_cnt=`echo $roles_lc | grep "processingengine" | grep -v "grep" | wc -l`
     echo "NodeInfo = $machine, $id, $cfgFile, $targetPath, $roles"
-    echo "...On machine $machine, starting FataFat node with configuration $cfgFile for NodeId $id to $machine:$targetPath"
+    echo "...On machine $machine, starting Kamanja node with configuration $cfgFile for NodeId $id to $machine:$targetPath"
     nodeCfg=`echo $cfgFile | sed 's/.*\/\(.*\)/\1/g' | sed 's/[\x01-\x1F\x7F]//g'`
     pidfile=node$id.pid
      #scp -o StrictHostKeyChecking=no "$cfgFile" "$machine:$targetPath/"
@@ -104,7 +104,7 @@ while read LINE; do
 		cd $targetPath
 		echo "nodeCfg=$nodeCfg"
         if [ "$processingengine_cnt" -gt 0 ]; then
-		java -Xmx50g -Xms50g -Dlog4j.configuration=file:$targetPath/engine_log4j.properties -Djavax.net.ssl.trustStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStorePassword=fc2appKey16app -Djavax.net.ssl.trustStorePassword=fc2appKey16app -jar "$installDir/bin/FatafatManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
+		java -Xmx50g -Xms50g -Dlog4j.configuration=file:$targetPath/engine_log4j.properties -Djavax.net.ssl.trustStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStore=/apps/projects/fusioncell2/ssl/keystoreFC16_RBB_Fusion_Cell.jks -Djavax.net.ssl.keyStorePassword=fc2appKey16app -Djavax.net.ssl.trustStorePassword=fc2appKey16app -jar "$installDir/bin/KamanjaManager-1.0" --config "$targetPath/$nodeCfg" < /dev/null > /dev/null 2>&1 & 
         fi
         if [ "$restapi_cnt" -gt 0 ]; then
 		java -Dlog4j.configuration=file:$targetPath/restapi_log4j.properties  -jar "$installDir/bin/MetadataAPIService-1.0" --config "$targetPath/MetadataAPIConfig_${id}.properties" < /dev/null > /dev/null 2>&1 & 
@@ -112,11 +112,11 @@ while read LINE; do
 		if [ ! -d "$installDir/run" ]; then
 			mkdir "$installDir/run"
 		fi
-			ps aux | egrep "FatafatManager|MetadataAPIService" | grep -v "grep" | tr -s " " | cut -d " " -f2 | tr "\\n" "," | sed "s/,$//"   > "$installDir/run/$pidfile"
+			ps aux | egrep "KamanjaManager|MetadataAPIService" | grep -v "grep" | tr -s " " | cut -d " " -f2 | tr "\\n" "," | sed "s/,$//"   > "$installDir/run/$pidfile"
 #		sleep 5
 EOF
 
-# ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "FatafatManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
+# ssh -o StrictHostKeyChecking=no -T $machine 'ps aux | grep "KamanjaManager-1.0" | grep -v "grep"' > $workDir/temppid.pid
 # scp  -o StrictHostKeyChecking=no   $workDir/temppid.pid "$machine:$installDir/run/node$id.pid"
 
 done

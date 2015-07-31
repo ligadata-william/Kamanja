@@ -1,4 +1,4 @@
-package com.ligadata.fatafat.metadata
+package com.ligadata.kamanja.metadata
 
 import scala.Enumeration
 import scala.collection.immutable.List

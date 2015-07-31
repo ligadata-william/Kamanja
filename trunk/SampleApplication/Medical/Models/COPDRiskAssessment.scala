@@ -1,13 +1,13 @@
 package com.ligadata.samples.models
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import RddUtils._
 import RddDate._
-import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
 import com.ligadata.messagescontainers._
 import com.ligadata.messagescontainers.System._
-import com.ligadata.FatafatBase.MinVarType._
+import com.ligadata.KamanjaBase.MinVarType._
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import scala.io.Source

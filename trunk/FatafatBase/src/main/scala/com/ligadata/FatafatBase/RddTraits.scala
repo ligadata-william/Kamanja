@@ -1,4 +1,4 @@
-package com.ligadata.FatafatBase
+package com.ligadata.KamanjaBase
 
 import scala.language.implicitConversions
 import java.util.{ Date, Calendar, TimeZone }
@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.reflect.{ classTag, ClassTag }
 import com.ligadata.Exceptions._
-import com.ligadata.FatafatBase.api.java.function.{Function1 => JFunction1, FlatMapFunction1 => JFlatMapFunction1, PairFunction => JPairFunction}
+import com.ligadata.KamanjaBase.api.java.function.{Function1 => JFunction1, FlatMapFunction1 => JFlatMapFunction1, PairFunction => JPairFunction}
 import com.google.common.base.Optional
 import com.ligadata.Utils.Utils
 import java.util.{ Comparator, List => JList, Iterator => JIterator }
@@ -21,13 +21,13 @@ object ThreadLocalStorage {
   final val modelContextInfo = new ThreadLocal[ModelContext]();
 }
 
-object FatafatUtils {
+object KamanjaUtils {
   def fakeClassTag[T]: ClassTag[T] = ClassTag.AnyRef.asInstanceOf[ClassTag[T]]
   def toScalaFunction1[T, R](fun: JFunction1[T, R]): T => R = x => fun.call(x)
   def pairFunToScalaFun[A, B, C](x: JPairFunction[A, B, C]): A => (B, C) = y => x.call(y)
 }
 
-import FatafatUtils._
+import KamanjaUtils._
 
 class Stats {
   // # of Rows, Total Size of the data, Avg Size, etc
@@ -205,7 +205,7 @@ object RDD {
 class RDD[T: ClassTag] {
   private val collection = ArrayBuffer[T]()
 
-  private[FatafatBase] def Collection = collection
+  private[KamanjaBase] def Collection = collection
 
   val LOG = Logger.getLogger(getClass);
 
@@ -401,12 +401,12 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
    * Return a new RDD by applying the function to all elements of this RDD.
    */
   def map[R](f: JFunction1[T, R]): JavaRDD[R] = {
-    JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
+    JavaRDD.fromRDD(rdd.map(KamanjaUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
 
   def map[R](tmRange: TimeRange, f: JFunction1[T, R]): JavaRDD[R] = {
     // BUGBUG:: Yet to implement filtering tmRange
-    JavaRDD.fromRDD(rdd.map(FatafatUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
+    JavaRDD.fromRDD(rdd.map(KamanjaUtils.toScalaFunction1(f))(fakeClassTag))(fakeClassTag)
   }
 
   /**
@@ -424,7 +424,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] {
     // The type parameter is U instead of K in order to work around a compiler bug; see SPARK-4459
     implicit val ctagK: ClassTag[U] = fakeClassTag
     implicit val ctagV: ClassTag[JList[T]] = fakeClassTag
-    JavaPairRDD.fromRDD(JavaPairRDD.groupByResultToJava(rdd.groupBy(FatafatUtils.toScalaFunction1(f))(fakeClassTag)))
+    JavaPairRDD.fromRDD(JavaPairRDD.groupByResultToJava(rdd.groupBy(KamanjaUtils.toScalaFunction1(f))(fakeClassTag)))
   }
 
   /**

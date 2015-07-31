@@ -2,7 +2,7 @@
   "COPDRiskAssessment": {
     "PhysicalName": "COPDRiskAssessment.COPDRiskAssessmentObj",
     "Dependencies": [
-      "fatafatbase_2.10-1.0.jar"
+      "kamanjabase_2.10-1.0.jar"
     ],
     "MessageAndContainers": [
       "system.beneficiary",

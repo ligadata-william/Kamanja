@@ -3,7 +3,7 @@ package com.ligadata.RDD
 import scala.language.implicitConversions
 import scala.reflect.{ classTag, ClassTag }
 import org.apache.log4j.Logger
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import scala.collection.mutable.ArrayBuffer
 
 /*

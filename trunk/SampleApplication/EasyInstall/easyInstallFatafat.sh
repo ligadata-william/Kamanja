@@ -100,7 +100,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly
+sbt clean package KamanjaManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -113,7 +113,7 @@ echo "copy the fat jars to $installPath ..."
 cd $srcPath
 cp Utils/KVInit/target/scala-2.10/KVInit* $bin
 cp MetadataAPI/target/scala-2.10/MetadataAPI* $bin
-cp FatafatManager/target/scala-2.10/FatafatManager* $bin
+cp KamanjaManager/target/scala-2.10/KamanjaManager* $bin
 cp Pmml/MethodExtractor/target/scala-2.10/MethodExtractor* $bin
 cp Utils/SimpleKafkaProducer/target/scala-2.10/SimpleKafkaProducer* $bin
 cp Utils/ExtractData/target/scala-2.10/ExtractData* $bin
@@ -126,7 +126,7 @@ cp MetadataAPIService/target/scala-2.10/MetadataAPIService* $bin
 # *******************************
 
 # Base Types and Functions, InputOutput adapters, and original versions of things
-echo "copy all Fatafat jars and the jars upon which they depend to the $systemlib"
+echo "copy all Kamanja jars and the jars upon which they depend to the $systemlib"
 
 
 cp $ivyPath/cache/org.codehaus.jackson/jackson-xc/jars/jackson-xc-1.8.3.jar $systemlib
@@ -217,9 +217,9 @@ cp $srcPath/InputOutputAdapters/FileSimpleInputOutputAdapters/target/scala-2.10/
 cp $srcPath/Utils/Security/SimpleApacheShiroAdapter/target/scala-2.10/simpleapacheshiroadapter_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/org.apache.curator/curator-client/bundles/curator-client-2.6.0.jar $systemlib
 cp $srcPath/Utils/ZooKeeper/CuratorListener/target/scala-2.10/zookeeperlistener_2.10-1.0.jar $systemlib
-cp $srcPath/FatafatManager/target/scala-2.10/fatafatmanager_2.10-1.0.jar $systemlib
+cp $srcPath/KamanjaManager/target/scala-2.10/kamanjamanager_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/javax.servlet.jsp/jsp-api/jars/jsp-api-2.1.jar $systemlib
-cp $srcPath/FatafatManager/custom_lib/scala-actors.jar $systemlib
+cp $srcPath/KamanjaManager/custom_lib/scala-actors.jar $systemlib
 cp $ivyPath/cache/ch.qos.logback/logback-classic/jars/logback-classic-1.0.13.jar $systemlib
 cp $ivyPath/cache/com.sun.jersey/jersey-json/bundles/jersey-json-1.9.jar $systemlib
 cp $ivyPath/cache/org.ow2.asm/asm-tree/jars/asm-tree-4.0.jar $systemlib
@@ -307,14 +307,14 @@ cp $ivyPath/cache/com.jamesmurty.utils/java-xmlbuilder/jars/java-xmlbuilder-0.4.
 cp $srcPath/Pmml/MethodExtractor/target/scala-2.10/methodextractor_2.10-1.0.jar $systemlib
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/jms-1.1.jar $systemlib
 cp $ivyPath/cache/org.apache.hbase/hbase-client/jars/hbase-client-0.98.4-hadoop2.jar $systemlib
-cp $srcPath/FatafatBase/target/scala-2.10/fatafatbase_2.10-1.0.jar $systemlib
+cp $srcPath/KamanjaBase/target/scala-2.10/kamanjabase_2.10-1.0.jar $systemlib
 cp $ivyPath/cache/com.sleepycat/je/jars/je-4.0.92.jar $systemlib
 cp $ivyPath/cache/com.pyruby/java-stub-server/jars/java-stub-server-0.12.jar $systemlib
 cp $ivyPath/cache/io.spray/spray-routing/bundles/spray-routing-1.3.1.jar $systemlib
 cp $ivyPath/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.7.jar $systemlib
 cp $ivyPath/cache/com.thoughtworks.paranamer/paranamer/jars/paranamer-2.6.jar $systemlib
 cp $ivyPath/cache/javax.servlet/servlet-api/jars/servlet-api-2.5.jar $systemlib
-cp $srcPath/FatafatData/target/scala-2.10/fatafatdata_2.10-0.1.0.jar $systemlib
+cp $srcPath/KamanjaData/target/scala-2.10/kamanjadata_2.10-0.1.0.jar $systemlib
 cp $ivyPath/cache/org.scalatest/scalatest_2.10/bundles/scalatest_2.10-2.2.4.jar $systemlib
 cp $ivyPath/cache/org.ow2.asm/asm-commons/jars/asm-commons-4.0.jar $systemlib
 cp $ivyPath/cache/org.apache.commons/commons-compress/jars/commons-compress-1.4.1.jar $systemlib
@@ -397,7 +397,7 @@ cp -rf * $installPath/documentation
 # copy models, messages, containers, config, scripts, types  messages data prep
 # *******************************
 
-cp $srcPath/FatafatManager/src/main/resources/log4j.properties $installPath/config
+cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/config
 
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs
@@ -451,4 +451,4 @@ bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
 chmod 0700 $installPath/input/application-2-Healthcare/bin/*sh
 
-echo "FataFat install complete..."
+echo "Kamanja install complete..."

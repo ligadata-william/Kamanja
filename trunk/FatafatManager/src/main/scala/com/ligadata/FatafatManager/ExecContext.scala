@@ -1,7 +1,7 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
-import com.ligadata.FatafatBase.{ EnvContext, ExecContext, InputAdapter, OutputAdapter, MakeExecContext, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.KamanjaBase.{ EnvContext, ExecContext, InputAdapter, OutputAdapter, MakeExecContext, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 
 import org.apache.log4j.Logger
 import org.json4s._
@@ -47,7 +47,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
               ("C" -> kv._1) ~
                 ("K" -> kv._2)))
           val sendJson = compact(render(datachangedata))
-          FatafatLeader.SetNewDataToZkc(FatafatConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
+          KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
       }

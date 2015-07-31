@@ -1,4 +1,4 @@
-package com.ligadata.FatafatBase.api.java.function;
+package com.ligadata.KamanjaBase.api.java.function;
 
 import scala.Tuple2;
 

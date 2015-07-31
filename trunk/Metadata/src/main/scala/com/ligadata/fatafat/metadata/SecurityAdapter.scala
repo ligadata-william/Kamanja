@@ -1,10 +1,10 @@
-package com.ligadata.fatafat.metadata
+package com.ligadata.kamanja.metadata
 
 import java.util.Properties
 import java.util.Date
 
 /**
- * This trait must be implemented by the actual Security Implementation for Fatafat.  All Metadata access methods will 
+ * This trait must be implemented by the actual Security Implementation for Kamanja.  All Metadata access methods will 
  * call the preformAuth call prior to executing the code.
  */
 trait SecurityAdapter {
@@ -24,7 +24,7 @@ trait SecurityAdapter {
 }
 
 /**
- * This trait must be implemented by the actual Audit Implementation for Fatafat.  All Metadata access methods will
+ * This trait must be implemented by the actual Audit Implementation for Kamanja.  All Metadata access methods will
  * call the ADD method when
  */
 trait AuditAdapter {

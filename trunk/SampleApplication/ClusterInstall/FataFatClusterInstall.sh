@@ -1,30 +1,30 @@
 #!/bin/bash
 
-# FataFatClusterInstall.sh
+# KamanjaClusterInstall.sh
 
 #   Based upon either the metadata at the location found specified in the MetadataAPI config supplied, or, if a 
-#   node config file was specified, from that file... install the FataFat software.  The software is 
+#   node config file was specified, from that file... install the Kamanja software.  The software is 
 #   built with the easy installer script and then gzipped and tar'd when the KafkaInstallPath is supplied.
 #   If the TarballPath option is given, the tarball path in the value will be distributed.  If both Kafka path and
 #   TarballPath are given, script issues usage message and exits.
 #
 #   Build examples:
 #       a) Using the node config file Engine2BoxConfigV1.json 
-#       FataFatClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
 #                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
 #       b) Using the metadata found in the metadata store specified by the MetadataAPIConfig.properties
-#       FataFatClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1
 #
 #   TarballPath distribution examples (when the tarball has been built outside this script):
 #       a) Using the node config file Engine2BoxConfigV1.json 
-#       FataFatClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
 #                               --NodeConfigPath SampleApplication/Medical/Configs/Engine2BoxConfigV1.json 
-#                               --TarballPath ~/tarballs/Fatafat-01.00.0001.tgz
+#                               --TarballPath ~/tarballs/Kamanja-01.00.0001.tgz
 #       b) Using the metadata found in the metadata store specified by the MetadataAPIConfig.properties
-#       FataFatClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
-#                               --TarballPath ~/tarballs/Fatafat-01.00.0001.tgz
+#       KamanjaClusterInstall.sh  --MetadataAPIConfig SampleApplication/Medical/Configs/MetadataAPIConfig.properties 
+#                               --TarballPath ~/tarballs/Kamanja-01.00.0001.tgz
 #
 #   In the "a)" examples, a cluster configuration is presumably presented in the NodeConfigPath file (i.e, the cluster decl
 #   is new).  In the "b)" examples, the cluster config info is retrieved from the metadata store.
@@ -47,16 +47,16 @@ name1=$1
 Usage()
 {
     echo
-    echo "Install a Fatafat cluster from source or tarball."
+    echo "Install a Kamanja cluster from source or tarball."
     echo
     echo "Usage if building from source:"
-    echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
+    echo "      KamanjaClusterInstall.sh --ClusterId <cluster name identifer> "
     echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --KafkaInstallPath <kafka location>"
     echo "                               --NodeConfigPath <engine config path> "
     echo "                               [ --WorkingDir <alt working dir>  ]"
     echo "Usage if deploying tarball:"
-    echo "      FataFatClusterInstall.sh --ClusterId <cluster name identifer> "
+    echo "      KamanjaClusterInstall.sh --ClusterId <cluster name identifer> "
     echo "                               --MetadataAPIConfig  <metadataAPICfgPath>  "
     echo "                               --TarballPath <tarball path>"
     echo "                               --NodeConfigPath <engine config path> "
@@ -281,7 +281,7 @@ fi
 
 
 # Skip the build if tarballPath was supplied 
-dtPrefix="FataFat`date +"%Y%b%d"`"
+dtPrefix="Kamanja`date +"%Y%b%d"`"
 tarName="$dtPrefix.tgz"
 trunkDir=`pwd` #save the current trunk directory 
 
@@ -291,13 +291,13 @@ if [ -z "$tarballPath" ]; then
 	# 1 build the installation in the staging directory
 	stagingDir="$workDir/$installDirName"
 	mkdir -p "$stagingDir"
-	echo "...build the FataFat installation directory in $stagingDir"
+	echo "...build the Kamanja installation directory in $stagingDir"
 
     # use the install directory given in the metadataAPI config file's ROOT_DIR's value
     # we will use assume the current user's .ivy2 directory for the deps and the `pwd` for the build directory.
     # the KafkaInstallPath supplied will be used for kafka
     echo "...building the repo found in `pwd` staging to $stagingDir.  Each cluster node will have this build installed in $installDir."
-    easyInstallFatafat.sh "$stagingDir" `pwd` ~/.ivy2 "$kafkaInstallPath"
+    easyInstallKamanja.sh "$stagingDir" `pwd` ~/.ivy2 "$kafkaInstallPath"
 
     # 2) compress staging dir and tar it
     echo "...compress and tar the installation directory $stagingDir to $tarName"
@@ -311,7 +311,7 @@ else
     tarName=`echo "$tarballPath" | sed 's/.*\/\(.*\)/\1/g'`
 fi
 
-# 3) determine which machines and installation directories are to get the build from the metadata and FataFat config
+# 3) determine which machines and installation directories are to get the build from the metadata and Kamanja config
 # A number of files are produced, all in the working dir.
 ipFile="ip.txt"
 ipPathPairFile="ipPath.txt"

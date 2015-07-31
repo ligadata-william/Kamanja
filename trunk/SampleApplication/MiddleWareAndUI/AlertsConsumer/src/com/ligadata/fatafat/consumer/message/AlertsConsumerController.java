@@ -1,4 +1,4 @@
-package com.ligadata.fatafat.consumer.message;
+package com.ligadata.kamanja.consumer.message;
 
 import kafka.consumer.KafkaStream;
 

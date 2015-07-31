@@ -1,5 +1,5 @@
 
-package com.ligadata.FatafatManager
+package com.ligadata.KamanjaManager
 
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
@@ -39,7 +39,7 @@ object ManagerUtils {
     }
   }
 
-  def LoadJars(jars: Array[String], loadedJars: TreeSet[String], loader: FatafatClassLoader): Boolean = {
+  def LoadJars(jars: Array[String], loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     // Loading all jars
     for (j <- jars) {
       LOG.debug("Processing Jar " + j.trim)

@@ -1,5 +1,5 @@
 
-package com.ligadata.FatafatBase
+package com.ligadata.KamanjaBase
 
 class AdapterConfiguration {
   var Name: String = _ // Name of the Adapter, KafkaQueue Name/MQ Name/File Adapter Logical Name/etc
