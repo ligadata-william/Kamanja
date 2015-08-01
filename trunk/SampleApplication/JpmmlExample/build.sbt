@@ -12,13 +12,11 @@ libraryDependencies += "org.json4s" %% "json4s-jackson" % "3.2.9"
 
 libraryDependencies += "com.google.guava" % "guava" % "18.0" 
 
-libraryDependencies += "org.jpmml" % "bundle" % "1.0.22"
+libraryDependencies += "org.jpmml" % "pmml-evaluator" % "1.1.20"
 
-libraryDependencies += "org.jpmml" % "pmml-evaluator" % "1.2.1"
+libraryDependencies += "org.jpmml" % "pmml-model" % "1.1.16"
 
-libraryDependencies += "org.jpmml" % "pmml-model" % "1.2.3"
-
-libraryDependencies += "org.jpmml" % "pmml-schema" % "1.2.3"
+libraryDependencies += "org.jpmml" % "pmml-schema" % "1.1.16"
 
 libraryDependencies += "commons-codec" % "commons-codec" % "1.10"
 

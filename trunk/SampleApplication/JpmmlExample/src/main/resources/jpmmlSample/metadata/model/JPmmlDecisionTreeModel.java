@@ -66,52 +66,64 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		String pmmlSrc = getModelBase64(modelContext());
 		PMML pmml = null;
 
+		logger.info("pmml to be processed =\n\n" + pmmlSrc + "\n\n");
+		System.out.println("pmml to be processed = \n\n" + pmmlSrc + "\n\n");
 		InputStream is = IOUtils.toInputStream(pmmlSrc);
+
 
 		try {
 		    Source transformedSource = ImportFilter.apply(new InputSource(is));
 		    pmml = JAXBUtil.unmarshalPMML(transformedSource);
+		} catch (Exception e) {
+			logger.error("oops! exception occurred");
+		} finally {
+			try {
+		    	is.close();
+			} catch (IOException ioe) {}
+		}
 
 
-			TreeModelEvaluator modelEvaluator = new TreeModelEvaluator(pmml);
+		TreeModelEvaluator modelEvaluator = new TreeModelEvaluator(pmml);
 
-			/** The preparation of field values: */
-			Map<FieldName, FieldValue> arguments = new LinkedHashMap<FieldName, FieldValue>();
+		/** The preparation of field values: */
+		Map<FieldName, FieldValue> arguments = new LinkedHashMap<FieldName, FieldValue>();
 
-			List<FieldName> activeFields = modelEvaluator.getActiveFields();
-			//List<FieldName> targetFields = modelEvaluator.getTargetFields();
-			List<FieldName> outputFields = modelEvaluator.getOutputFields();
+		List<FieldName> activeFields = modelEvaluator.getActiveFields();
+		//List<FieldName> targetFields = modelEvaluator.getTargetFields();
+		List<FieldName> outputFields = modelEvaluator.getOutputFields();
 
-			Map<FieldName, FieldValue> preparedFields = prepareFields(activeFields, msg);
+		Map<FieldName, FieldValue> preparedFields = prepareFields(activeFields, msg);
 
-			// for(FieldName activeField : activeFields){
-			    // The raw (ie. user-supplied) value could be any Java primitive value
-			    // Object rawValue = ...;
+		// for(FieldName activeField : activeFields){
+		    // The raw (ie. user-supplied) value could be any Java primitive value
+		    // Object rawValue = ...;
 
-			    // The raw value is passed through: 1) outlier treatment, 2) missing value treatment, 3) invalid value treatment and 4) type conversion
-			    // FieldValue activeValue = modelEvaluator.prepare(activeField, rawValue);
+		    // The raw value is passed through: 1) outlier treatment, 2) missing value treatment, 3) invalid value treatment and 4) type conversion
+		    // FieldValue activeValue = modelEvaluator.prepare(activeField, rawValue);
 
-			    // arguments.put(activeField, activeValue);
-			// }
+		    // arguments.put(activeField, activeValue);
+		// }
 
-			/** Evaluate the model */
-			Map<FieldName, ?> results = modelEvaluator.evaluate(preparedFields);
+		/** Evaluate the model */
+		Map<FieldName, ?> results = modelEvaluator.evaluate(preparedFields);
 
-			/** get the target */
-			FieldName targetName = modelEvaluator.getTargetField();
-			Object targetValue = results.get(targetName);
-			/** if the value is derived, get its value */
-			if(targetValue instanceof Computable){
-			    Computable computable = (Computable)targetValue;
-			    Object primitiveValue = computable.getResult();
-			    targetValue = primitiveValue;
-			}
+		/** get the target */
+		FieldName targetName = modelEvaluator.getTargetField();
+		Object targetValue = results.get(targetName);
+		/** if the value is derived, get its value */
+		if(targetValue instanceof Computable){
+		    Computable computable = (Computable)targetValue;
+		    Object primitiveValue = computable.getResult();
+		    targetValue = primitiveValue;
+		}
 
 		/** do something with this... not sure what  
 
-		If this code is in the source, it causes the type introspection done by the
+		FIXME: If this code is in the source, it causes the type introspection done by the
 		metadata api's compiler proxy to fail with a hard assertion error in 
 		JavaMirror.scala
+
+		Word on web has it this sort of problem has been fixed in 2.11.x
 
 			if(targetValue instanceof HasEntityId){  
 			    HasEntityId hasEntityId = (HasEntityId)targetValue;
@@ -127,23 +139,14 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 			}
 		*/
 
-	        com.ligadata.FatafatBase.Result[] returnResults = new com.ligadata.FatafatBase.Result[]{
-	        	new com.ligadata.FatafatBase.Result(targetName.getValue(), targetValue)
-	        };
+        com.ligadata.FatafatBase.Result[] returnResults = new com.ligadata.FatafatBase.Result[]{
+        	new com.ligadata.FatafatBase.Result(targetName.getValue(), targetValue)
+        };
 
-	        logger.info("Model " + ModelName() + "'s prediction is " + targetName.getValue() + "... its value = " + targetValue.toString());
+        logger.info("Model " + ModelName() + "'s prediction is " + targetName.getValue() + "... its value = " + targetValue.toString());
 
-	        result = new MappedModelResults().withResults(returnResults);
+        result = new MappedModelResults().withResults(returnResults);
 
-	    }
-	    catch (Exception e) {
-	    	logger.error("Exception type : " + e.getClass().getName() + " detected... stack trace = \n" + e.getStackTrace());
-
-		} finally {
-			try {
-		    	is.close();
-			} catch (IOException ioe) {}
-		}
 
 		return result;
 	}
