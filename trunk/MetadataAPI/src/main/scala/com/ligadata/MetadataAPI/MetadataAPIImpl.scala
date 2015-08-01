@@ -29,6 +29,7 @@ import com.datastax.driver.core.ResultSet
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.keyvaluestore.cassandra._
+import com.ligadata.HeartBeat.HeartBeatUtil
 
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{ JSONObject, JSONArray }
@@ -125,6 +126,8 @@ object MetadataAPIImpl extends MetadataAPI {
   private var currentTranLevel: Long = _
   private var passwd: String = null
   private var compileCfg: String = ""
+  private var heartBeat: HeartBeatUtil = null
+  var zkHeartBeatNodePath = ""
 
   // For future debugging  purposes, we want to know which properties were not set - so create a set
   // of values that can be set via our config files
@@ -159,8 +162,16 @@ object MetadataAPIImpl extends MetadataAPI {
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
    */
   def getHealthCheck(nodeId: List[String] = List[String]()): String = {
-     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", JsonSerializer.SerializeMapToJsonString(MonitorAPIImpl.getHeartbeatInfo(nodeId)), ErrorCodeConstants.Add_Type_Successful)
+     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo, ErrorCodeConstants.Add_Type_Successful)
      apiResult.toString
+  }
+  
+  /**
+   * clockNewActivity - update Metadata health info, showing its still alive.
+   */
+  def clockNewActivity: Unit= {
+    if (heartBeat != null)
+      heartBeat.SetMainData("Node" + "_metadata")
   }
 
 
@@ -6225,7 +6236,8 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
-    initZkListener   
+    InitHearbeat
+    initZkListeners   
   }
 
   def InitMdMgrFromBootStrap(configFile: String) {
@@ -6238,22 +6250,40 @@ object MetadataAPIImpl extends MetadataAPI {
       MetadataAPIImpl.readMetadataAPIConfigFromPropertiesFile(configFile)
     }
 
-    initZkListener
+    initZkListeners
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
+    InitHearbeat
     isInitilized = true
     logger.debug("Metadata synching is now available.")
     
   }
   
+  private def InitHearbeat: Unit = {
+    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "Metadata"
+    if (zkHeartBeatNodePath.size > 0) {  
+      heartBeat = new HeartBeatUtil
+      heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath,3000, 3000, 5000) // for every 5 secs
+      heartBeat.SetMainData("Node" + "_metadata")
+      MonitorAPIImpl.startMetadataHeartbeat
+    }
+
+  }
+  
   /**
    * Create a listener to monitor Meatadata Cache
    */
-  def initZkListener: Unit = {
+  def initZkListeners: Unit = {
      // Set up a zk listener for metadata invalidation   metadataAPIConfig.getProperty("AUDIT_IMPL_CLASS").trim
     var znodePath = metadataAPIConfig.getProperty("ZNODE_PATH")
-    if (znodePath != null) znodePath = znodePath.trim + "/metadataupdate" else return
+    var hbPathEngine = znodePath
+    var hbPathMetadata = znodePath
+    if (znodePath != null) {
+      znodePath = znodePath.trim + "/metadataupdate" 
+      hbPathEngine = hbPathEngine.trim + "/monitor/engine"
+      hbPathMetadata = hbPathMetadata + "/monitor/metadata"
+    } else return
     var zkConnectString = metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING")
     if (zkConnectString != null) zkConnectString = zkConnectString.trim else return
 
@@ -6262,6 +6292,8 @@ object MetadataAPIImpl extends MetadataAPI {
         CreateClient.CreateNodeIfNotExists(zkConnectString, znodePath)
         zkListener = new ZooKeeperListener
         zkListener.CreateListener(zkConnectString, znodePath, UpdateMetadata, 3000, 3000)
+        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathEngine, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
+        zkListener.CreatePathChildrenCacheListener(zkConnectString, hbPathMetadata, true, MonitorAPIImpl.updateHeartbeatInfo, 3000, 3000)
       } catch {
         case e: Exception => {
           logger.error("Failed to initialize ZooKeeper Connection. Reason:%s Message:%s".format(e.getCause, e.getMessage))
@@ -6288,11 +6320,24 @@ object MetadataAPIImpl extends MetadataAPI {
       }
   }
   
+  private def shutdownHeartbeat: Unit = {
+    try {
+      if (heartBeat != null)
+        heartBeat.Shutdown
+      heartBeat = null
+    } catch {
+        case e: Exception => {
+          logger.error("Error trying to shutdown Hearbbeat. ")
+          throw e
+        }
+      }    
+  }
   
   /**
    * shutdown - call this method to release various resources held by 
    */
   def shutdown: Unit = {
+    shutdownHeartbeat
     CloseDbStore
     shutdownZkListener
     shutdownAuditAdapter

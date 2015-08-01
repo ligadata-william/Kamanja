@@ -5,6 +5,10 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.log4j._
+import scala.collection.JavaConverters._
+import org.apache.curator.framework.recipes.cache._
+import scala.actors.threadpool.{ Executors, ExecutorService }
+
 
 /**
  * MonitorAPIImpl - Implementation for methods required to access Monitor related methods. 
@@ -14,51 +18,79 @@ object MonitorAPIImpl {
   
   val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
+  val CHILD_ADDED_ACTION = "CHILD_ADDED"
+  val CHILD_REMOVED_ACTION = "CHILD_REMOVED"
+  val CHILD_UPDATED_ACTION = "CHILD_UPDATED"
+  val ENGINE = "engine"
+  val METADATA = "metadata"
+  
+  private var healthInfo: scala.collection.mutable.Map[String,Any] = scala.collection.mutable.Map[String,Any]()
+  
+  /**
+   * updateHeartbeatInfo - this is a callback function, zookeeper listener will call here to update the local cache. Users should not
+   *                       calling in here by themselves
+   * 
+   */
+  def updateHeartbeatInfo(eventType: String, eventPath: String, eventPathData: Array[Byte], children: Array[(String, Array[Byte])]): Unit = {
+    
+    try {
+      if (eventPathData == null) println()
+      logger.debug("eventType ->" + eventType)
+      logger.debug("eventPath ->" + eventPath)
+      if (eventPathData == null) {  logger.debug("eventPathData is null"); return; }
+      logger.debug("eventPathData ->" + new String(eventPathData))
+    
+      // Ok, we got an event, parse to see what it is.
+      var pathTokens = eventPath.split('/')
+    
+      // We are guaranteed the pathTokens.length - 2 is either a Metadata or Engine
+      var componentName = pathTokens(pathTokens.length - 2)
+      var nodeName = pathTokens(pathTokens.length - 1)
+      var key = componentName+"."+nodeName
+    
+      // Add or Remove the data to/from the map.
+      if (eventType.equals(CHILD_ADDED_ACTION) || eventType.equals(CHILD_UPDATED_ACTION)) 
+        healthInfo(key) = new String(eventPathData)
+      else 
+        if (healthInfo.contains(key)) healthInfo.remove(key)
+    } catch {
+      case e: Exception => {
+        e.printStackTrace
+      }
+    }  
+  }
   
   /**
    * getHeartbeatInfo - get the heartbeat information from the zookeeper.  This informatin is placed there
    *                    by Kamanja Engine instances.
    * @return - String
    */
-   def getHeartbeatInfo(nodeIds: List[String] = List[String]()) : scala.collection.mutable.Map[String,Any] = {
-     
-     // If the Metadata did not initialize zookeeper, do it here.
-     var zkMonitorInfoPath = MetadataAPIImpl.metadataAPIConfig.getProperty("ZNODE_PATH").trim + "/monitor/engine"
-     if (MetadataAPIImpl.zkc == null) {
-       MetadataAPIImpl.InitZooKeeper
-     }
-     
-     // If there were no NodeIds passed in, we want to get information on all 
-     // knowd NodeIds...
-     var listOfIds: List[String] = List[String]()
-     if (nodeIds == null || nodeIds.length == 0) {
-       var tempA = MetadataAPIImpl.getNodeList1
-       for (i <- 0 until tempA.length) {
-         println(tempA(i).nodeId)
-         listOfIds = tempA(i).nodeId :: listOfIds 
+   def getHeartbeatInfo :String = {
+     var ar = healthInfo.values.toArray
+     var isFirst = true
+     var resultJson = "["
+     if (healthInfo != null && ar.length > 0) {
+       for(i <- 0 until ar.length ) {
+         if (!isFirst) resultJson = resultJson + ","
+         resultJson = resultJson + ar(i).asInstanceOf[String]
        }
      } 
-     else {
-       listOfIds = nodeIds
-     }
-
-     var hbResult: scala.collection.mutable.Map[String,Any] = scala.collection.mutable.Map[String,Any]()
+     return resultJson + "]"
      
-     // Get all the nodeIds.
-     listOfIds.foreach (nodeId => {
-       try {
-         //hbResult = hbResult + "......" + new String(MetadataAPIImpl.zkc.getData.forPath(zkMonitorInfoPath+"/"+ nodeId))
-         hbResult(nodeId) = new String(MetadataAPIImpl.zkc.getData.forPath(zkMonitorInfoPath+"/"+ nodeId))
-       } catch {
-         case e: org.apache.zookeeper.KeeperException.NoNodeException => {
-           logger.warn("Unable to get information for NodeId: "+ nodeId)
-         }
-         case e: Exception => {
-           e.printStackTrace
-           throw new InternalErrorException("Failed to notify a zookeeper message from the objectList " + e.getMessage())
-         }      
-       }         
-     })
-     return hbResult
    }
+   
+   def startMetadataHeartbeat: Unit = {
+     var _exec = Executors.newFixedThreadPool(1)
+
+     _exec.execute(new Runnable() {
+       override def run() = {
+         var startTime = System.currentTimeMillis
+         while (_exec.isShutdown == false) {
+           Thread.sleep(5000)
+           MetadataAPIImpl.clockNewActivity
+         }
+       }
+      })
+   }
+   
 }
