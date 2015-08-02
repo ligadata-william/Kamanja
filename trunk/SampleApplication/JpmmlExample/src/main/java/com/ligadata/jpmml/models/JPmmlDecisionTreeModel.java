@@ -2,7 +2,7 @@ package com.ligadata.jpmml.models;
 
 import com.ligadata.FatafatBase.*;
 import com.ligadata.pmml.udfs.Udfs;
-//import com.ligadata.messagescontainers.System.*;
+import com.ligadata.messagescontainers.System.*;
 
 import java.io.*;
 //import java.util.ArrayList;
@@ -50,15 +50,44 @@ import org.jpmml.model.JAXBUtil;
 
 import org.xml.sax.InputSource;
 
-
+/** 
+ * JPmmlDecisionTreeModel demonstrates a sample jpmml evaluated DecisionTree model... in this case
+ * the KNIME originated model that analyzes the ever popular Iris dataset.  This model is effectively
+ * a shim between the Kamanja engine and the jpmml evaluator.  Currently this model is explicitly 
+ * asking the jpmml-evaluator module to build a tree model.  The jpmml promise in their documentation
+ * is that the appropriate evaluator can be determined automatically.  
+ * 
+ * When this is exploited/made available, there will be one "model overseer" that will manage all jpmml
+ * evaluator interpreted models.
+ *
+ */
 public class JPmmlDecisionTreeModel extends ModelBase {
 
 	static JPmmlDecisionTreeModelObj objectSingleton = new JPmmlDecisionTreeModelObj();
 
 	public Logger logger = Logger.getLogger(this.getClass().getName());
 
-	public ModelResultBase execute(boolean emitAllResults) { return null; }
+	/** 
+	 * The standard entry point for the model when the engine is calling...
+	 * 
+	 * @param emitAllResults a boolean that when true will emit results even for "no score" situations.
+	 * @return ModelResultBase .. a map of model results as dictated by the target, supplementary, and/or
+	 * 		output specifications gleaned from the PMML model.
+	 */
+	public ModelResultBase execute(boolean emitAllResults) { 
+		IrisMsg msg = (IrisMsg) modelContext().msg();
+		return execute(msg, emitAllResults);
+	}
 	
+	/** "Two-step" this so it is easy to test with an application in addition to the standard
+	 * 	feed from the engine.  The unit test application located near bottom of source file 
+	 * 	calls here.
+	 * 
+	 * @param msg the incoming BaseMsg derivative 
+	 * @param emitAllResults
+	 * @return ModelResultBase .. a map of model results as dictated by the target, supplementary, and/or
+	 * 		output specifications gleaned from the PMML model.
+	 */
 	public ModelResultBase execute(IrisMsg msg, boolean emitAllResults) {
 
 		// Directly calling methods from Scala Singleton object. Not preferable
@@ -66,16 +95,19 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		//IrisMsg msg = (IrisMsg) modelContext().msg();
 		ModelResultBase result = null;
 
-		Long beforeModelIngestion = Udfs.Now();
+		Long beforeModelBase64Decode = Udfs.Now();
 		
 		String pmmlSrc = getModelBase64(modelContext());
 		PMML pmml = null;
 
+		Long beforeModelIngestion = Udfs.Now();
+		Long modelBase64Ms = Udfs.millisecsBetween(beforeModelIngestion, beforeModelBase64Decode, false);
+		logger.info("pmml base64 conversion time = " + modelBase64Ms + " ms");
+
 		//logger.info("pmml to be processed =\n\n" + pmmlSrc + "\n\n");
-		//System.out.println("pmml to be processed = \n\n" + pmmlSrc + "\n\n");
 		InputStream is = IOUtils.toInputStream(pmmlSrc);
 
-
+		/** Ingest the pmml source to build the pmml syntax tree for the evaluator. */
 		try {
 		    Source src = ImportFilter.apply(new InputSource(is));
 		    pmml = JAXBUtil.unmarshalPMML(src);
@@ -142,7 +174,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		metadata api's compiler proxy to fail with a hard assertion error in 
 		JavaMirror.scala
 
-		Word on web has it this sort of problem has been fixed in 2.11.x
+		Word on web has it this sort of problem has been fixed in <b>2.11.x</b>
 
 			if(targetValue instanceof HasEntityId){  
 			    HasEntityId hasEntityId = (HasEntityId)targetValue;
@@ -171,6 +203,12 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		return result;
 	}
 
+	/**
+	 * Prepare the incoming message fields, annotating their types.
+	 * @param activeFields the pmml model fields that are "input" fields
+	 * @param msg the incoming message from the engine
+	 * @return a map of field name -> FieldValue pairs that will be supplied to the evaluator.
+	 */
 	public Map<FieldName, FieldValue> prepareFields(List<FieldName> activeFields, IrisMsg msg){
 		Map<FieldName, FieldValue> pmmlArguments = new LinkedHashMap<FieldName, FieldValue>();
 
@@ -206,10 +244,17 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 
 	}
 
+	/** Construct a JPmmlDecisionTreeModel 
+	 *
+	 * 	@param modelContext - the engines model context supplied at factory's CreateNewModel time.
+	 */
 	public JPmmlDecisionTreeModel(ModelContext modelContext) {
 		super(modelContext, objectSingleton);
 	}
 
+	/** 
+	 * The factory object associated with the JpmmlDecisionTreeModel.
+	 */
 	public static class JPmmlDecisionTreeModelObj implements ModelBaseObj {
 		public boolean IsValidMessage(MessageContainerBase msg) {
 			return (msg instanceof IrisMsg);
@@ -240,7 +285,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
         NOTE: The model context could conceivably contain the model source, but it is really not
         needed or for some model types may not even be available (jar only model submission).
         We might consider using key information (a hash of PMML perhaps) here that is used to 
-        fetch the model source from the peristent store, or alternatively only supply source when 
+        fetch the model source from the persistent store, or alternatively only supply source when 
         the jpmml model type or other models of its ilk are in use.
 
         @param mdlContext a ModelContext with the necessary information to obtain the PMML source
@@ -251,6 +296,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
         return irisDecisionTree;
     }
 
+    /** the Iris decision tree model in text form so you can see it */
     static String irisDecisionTree = 
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
         "<PMML version=\"4.1\" xmlns=\"http://www.dmg.org/PMML-4_1\">" +
@@ -341,9 +387,11 @@ public class JPmmlDecisionTreeModel extends ModelBase {
         return modelPmml;
     }
 
+    /** the Iris decision tree pmml file expressed as a Base64 string */
     static String irisDecisionTreeBase64 = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPFBNTUwgdmVyc2lvbj0iNC4yIiB4bWxucz0iaHR0cDovL3d3dy5kbWcub3JnL1BNTUwtNF8yIj4KICA8SGVhZGVyIGNvcHlyaWdodD0iS05JTUUiPgogICAgPEFwcGxpY2F0aW9uIG5hbWU9IktOSU1FIiB2ZXJzaW9uPSIyLjguMCIvPgogIDwvSGVhZGVyPgogIDxEYXRhRGljdGlvbmFyeSBudW1iZXJPZkZpZWxkcz0iNSI+CiAgICA8RGF0YUZpZWxkIG5hbWU9InNlcGFsX2xlbmd0aCIgb3B0eXBlPSJjb250aW51b3VzIiBkYXRhVHlwZT0iZG91YmxlIj4KICAgICAgPEludGVydmFsIGNsb3N1cmU9ImNsb3NlZENsb3NlZCIgbGVmdE1hcmdpbj0iNC4zIiByaWdodE1hcmdpbj0iNy45Ii8+CiAgICA8L0RhdGFGaWVsZD4KICAgIDxEYXRhRmllbGQgbmFtZT0ic2VwYWxfd2lkdGgiIG9wdHlwZT0iY29udGludW91cyIgZGF0YVR5cGU9ImRvdWJsZSI+CiAgICAgIDxJbnRlcnZhbCBjbG9zdXJlPSJjbG9zZWRDbG9zZWQiIGxlZnRNYXJnaW49IjIuMCIgcmlnaHRNYXJnaW49IjQuNCIvPgogICAgPC9EYXRhRmllbGQ+CiAgICA8RGF0YUZpZWxkIG5hbWU9InBldGFsX2xlbmd0aCIgb3B0eXBlPSJjb250aW51b3VzIiBkYXRhVHlwZT0iZG91YmxlIj4KICAgICAgPEludGVydmFsIGNsb3N1cmU9ImNsb3NlZENsb3NlZCIgbGVmdE1hcmdpbj0iMS4wIiByaWdodE1hcmdpbj0iNi45Ii8+CiAgICA8L0RhdGFGaWVsZD4KICAgIDxEYXRhRmllbGQgbmFtZT0icGV0YWxfd2lkdGgiIG9wdHlwZT0iY29udGludW91cyIgZGF0YVR5cGU9ImRvdWJsZSI+CiAgICAgIDxJbnRlcnZhbCBjbG9zdXJlPSJjbG9zZWRDbG9zZWQiIGxlZnRNYXJnaW49IjAuMSIgcmlnaHRNYXJnaW49IjIuNSIvPgogICAgPC9EYXRhRmllbGQ+CiAgICA8RGF0YUZpZWxkIG5hbWU9ImNsYXNzIiBvcHR5cGU9ImNhdGVnb3JpY2FsIiBkYXRhVHlwZT0ic3RyaW5nIj4KICAgICAgPFZhbHVlIHZhbHVlPSJJcmlzLXNldG9zYSIvPgogICAgICA8VmFsdWUgdmFsdWU9IklyaXMtdmVyc2ljb2xvciIvPgogICAgICA8VmFsdWUgdmFsdWU9IklyaXMtdmlyZ2luaWNhIi8+CiAgICA8L0RhdGFGaWVsZD4KICA8L0RhdGFEaWN0aW9uYXJ5PgogIDxUcmVlTW9kZWwgbW9kZWxOYW1lPSJEZWNpc2lvblRyZWUiIGZ1bmN0aW9uTmFtZT0iY2xhc3NpZmljYXRpb24iIHNwbGl0Q2hhcmFjdGVyaXN0aWM9ImJpbmFyeVNwbGl0IiBtaXNzaW5nVmFsdWVTdHJhdGVneT0ibGFzdFByZWRpY3Rpb24iIG5vVHJ1ZUNoaWxkU3RyYXRlZ3k9InJldHVybk51bGxQcmVkaWN0aW9uIj4KICAgIDxNaW5pbmdTY2hlbWE+CiAgICAgIDxNaW5pbmdGaWVsZCBuYW1lPSJzZXBhbF9sZW5ndGgiIGludmFsaWRWYWx1ZVRyZWF0bWVudD0iYXNJcyIvPgogICAgICA8TWluaW5nRmllbGQgbmFtZT0ic2VwYWxfd2lkdGgiIGludmFsaWRWYWx1ZVRyZWF0bWVudD0iYXNJcyIvPgogICAgICA8TWluaW5nRmllbGQgbmFtZT0icGV0YWxfbGVuZ3RoIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiLz4KICAgICAgPE1pbmluZ0ZpZWxkIG5hbWU9InBldGFsX3dpZHRoIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiLz4KICAgICAgPE1pbmluZ0ZpZWxkIG5hbWU9ImNsYXNzIiBpbnZhbGlkVmFsdWVUcmVhdG1lbnQ9ImFzSXMiIHVzYWdlVHlwZT0icHJlZGljdGVkIi8+CiAgICA8L01pbmluZ1NjaGVtYT4KICAgIDxOb2RlIGlkPSIwIiBzY29yZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSIxNTAuMCI+CiAgICAgIDxUcnVlLz4KICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjUwLjAiLz4KICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgIDxOb2RlIGlkPSIxIiBzY29yZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSI1MC4wIj4KICAgICAgICA8U2ltcGxlUHJlZGljYXRlIGZpZWxkPSJwZXRhbF93aWR0aCIgb3BlcmF0b3I9Imxlc3NPckVxdWFsIiB2YWx1ZT0iMC42Ii8+CiAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjUwLjAiLz4KICAgICAgICA8U2NvcmVEaXN0cmlidXRpb24gdmFsdWU9IklyaXMtdmVyc2ljb2xvciIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSIwLjAiLz4KICAgICAgPC9Ob2RlPgogICAgICA8Tm9kZSBpZD0iMiIgc2NvcmU9IklyaXMtdmVyc2ljb2xvciIgcmVjb3JkQ291bnQ9IjEwMC4wIj4KICAgICAgICA8U2ltcGxlUHJlZGljYXRlIGZpZWxkPSJwZXRhbF93aWR0aCIgb3BlcmF0b3I9ImdyZWF0ZXJUaGFuIiB2YWx1ZT0iMC42Ii8+CiAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12ZXJzaWNvbG9yIiByZWNvcmRDb3VudD0iNTAuMCIvPgogICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI1MC4wIi8+CiAgICAgICAgPE5vZGUgaWQ9IjMiIHNjb3JlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSI1NC4wIj4KICAgICAgICAgIDxTaW1wbGVQcmVkaWNhdGUgZmllbGQ9InBldGFsX3dpZHRoIiBvcGVyYXRvcj0ibGVzc09yRXF1YWwiIHZhbHVlPSIxLjciLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy1zZXRvc2EiIHJlY29yZENvdW50PSIwLjAiLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12ZXJzaWNvbG9yIiByZWNvcmRDb3VudD0iNDkuMCIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZpcmdpbmljYSIgcmVjb3JkQ291bnQ9IjUuMCIvPgogICAgICAgIDwvTm9kZT4KICAgICAgICA8Tm9kZSBpZD0iMTAiIHNjb3JlPSJJcmlzLXZpcmdpbmljYSIgcmVjb3JkQ291bnQ9IjQ2LjAiPgogICAgICAgICAgPFNpbXBsZVByZWRpY2F0ZSBmaWVsZD0icGV0YWxfd2lkdGgiIG9wZXJhdG9yPSJncmVhdGVyVGhhbiIgdmFsdWU9IjEuNyIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXNldG9zYSIgcmVjb3JkQ291bnQ9IjAuMCIvPgogICAgICAgICAgPFNjb3JlRGlzdHJpYnV0aW9uIHZhbHVlPSJJcmlzLXZlcnNpY29sb3IiIHJlY29yZENvdW50PSIxLjAiLz4KICAgICAgICAgIDxTY29yZURpc3RyaWJ1dGlvbiB2YWx1ZT0iSXJpcy12aXJnaW5pY2EiIHJlY29yZENvdW50PSI0NS4wIi8+CiAgICAgICAgPC9Ob2RlPgogICAgICA8L05vZGU+CiAgICA8L05vZGU+CiAgPC9UcmVlTW9kZWw+CjwvUE1NTD4=";
 
-    public static class IrisMsg {
+    /** the unit test message */
+   /** public static class IrisMsg {
 		public IrisMsg(int serno, double sepal_length, double sepal_width, double petal_length, double petal_width, String irisClass) {
 			this.serno = serno;
 			this.sepal_length = sepal_length;
@@ -378,8 +426,13 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		public double petal_length = 0;
 		public double petal_width = 0;
 		public String irisClass = "";
-	};
+	}; */
 	
+	/**
+	 * Unit test for this model.
+	 * 
+	 * @param args
+	 
     public static void main(String[] args) {
 	
 	    JPmmlDecisionTreeModel model = new JPmmlDecisionTreeModel(null) ;
@@ -390,6 +443,6 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		if (resultOk) {
 			
 		}
-	}
+	}*/
 
 };
