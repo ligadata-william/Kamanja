@@ -262,9 +262,8 @@ trait MetadataAPIService extends HttpService {
      
     }
     else if (objtype.equalsIgnoreCase("modelpmml")) {
-      //TODO
-      logger.debug("In post request process of model pmml")
-      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromPMMLSource", body.toString, "Upload of java model successful").toString)
+      val addModelService: ActorRef = actorRefFactory.actorOf(Props(new AddModelService(rContext, userid, password, role)))
+      addModelService ! AddModelService.Process(body)
     }
     else {
       rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)
