@@ -392,7 +392,8 @@ import com.ligadata.FatafatBase.{InputData, DelimitedData, JsonData, XmlData}
 import com.ligadata.BaseTypes._
 import com.ligadata.FatafatBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
-
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 """
     val versionPkgImport = verPkg + otherImprts + imprt
     val nonVerPkgImport = nonVerPkg + otherImprts + imprt
@@ -758,6 +759,13 @@ class XmlData(var dataInput: String) extends InputData(){ }
   }
     
   """
+  }
+  
+   def logStackTrace = {
+    """
+    private val LOG = Logger.getLogger(getClass)
+    """
+    
   }
 
 }
