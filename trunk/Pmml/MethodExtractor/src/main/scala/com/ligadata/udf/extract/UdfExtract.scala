@@ -16,7 +16,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import org.apache.log4j.Logger
 import com.ligadata.pmml.udfs._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{JSONObject, JSONArray}
 import org.json4s._
@@ -282,7 +282,7 @@ definitions are written to the supplied typeDefsPath and fcnDefsPath respectivel
 	  
 Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed scala object name> 
 													--cp <classpath>
-                                                    --namespace <the fatafat namespace> 
+                                                    --namespace <the kamanja namespace> 
                                                     --exclude <a list of functions to ignore>
                                                     --versionNumber <N>
                                                     --deps <jar dependencies comma delimited list>
@@ -290,7 +290,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 													--fcnDefsPath <function definition file path>
          where 	<fully qualifed scala object name> (required) is the scala object name that contains the 
 					functions to be cataloged
-				<the fatafat namespace> in which these UDFs should be cataloged
+				<the kamanja namespace> in which these UDFs should be cataloged
 				<a list of functions to ignore> is a comma delimited list of functions to ignore (OPTIONAL)
 				<N> is the version number to be assigned to all functions in the UDF lib.  It should be greater than
 					the prior versions that may have been for a prior version of the UDFs.
@@ -336,22 +336,22 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 		 		  		
 		mgr.AddFixedContainer(MdMgr.sysNS
 						    , "EnvContext"
-						    , "com.ligadata.FatafatBase.EnvContext"
+						    , "com.ligadata.KamanjaBase.EnvContext"
 					  		, List()) 
 		 		  		
 		mgr.AddFixedContainer(MdMgr.sysNS
 							    , "BaseMsg"
-							    , "com.ligadata.FatafatBase.BaseMsg"
+							    , "com.ligadata.KamanjaBase.BaseMsg"
 						  		, List()) 
 		  		
 		mgr.AddFixedContainer(MdMgr.sysNS
 							    , "BaseContainer"
-							    , "com.ligadata.FatafatBase.BaseContainer"
+							    , "com.ligadata.KamanjaBase.BaseContainer"
 						  		, List()) 		
 				  		
 		mgr.AddFixedContainer(MdMgr.sysNS
 							    , "MessageContainerBase"
-							    , "com.ligadata.FatafatBase.MessageContainerBase"
+							    , "com.ligadata.KamanjaBase.MessageContainerBase"
 						  		, List()) 		
 
 		mgr

@@ -15,11 +15,11 @@ import scala.reflect.runtime.{ universe => ru }
 import java.net.URL
 import java.net.URLClassLoader
 
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadataload.MetadataLoad
 
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
@@ -203,7 +203,7 @@ object MetadataAPIImpl extends MetadataAPI {
     loadJar(classLoader,implJarName)
 
     // All is good, create the new class
-    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.fatafat.metadata.SecurityAdapter]]
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.kamanja.metadata.SecurityAdapter]]
     authObj = className.newInstance
     authObj.init
     logger.debug("Created class "+ className.getName)
@@ -227,7 +227,7 @@ object MetadataAPIImpl extends MetadataAPI {
     loadJar(classLoader,implJarName)
 
     // All is good, create the new class
-    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.fatafat.metadata.AuditAdapter]]
+    var className = Class.forName(implClassName, true, classLoader.loader).asInstanceOf[Class[com.ligadata.kamanja.metadata.AuditAdapter]]
     auditObj = className.newInstance
     auditObj.init(metadataAPIConfig.getProperty("AUDIT_PARMS"))
     logger.debug("Created class "+ className.getName)
@@ -6087,7 +6087,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var MODEL_FILES_DIR = ""
       val MODEL_FILES_DIR1 = configMap.APIConfigParameters.MODEL_FILES_DIR
       if (MODEL_FILES_DIR1 == None) {
-        MODEL_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        MODEL_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
       } else
         MODEL_FILES_DIR = MODEL_FILES_DIR1.get
       logger.debug("MODEL_FILES_DIR => " + MODEL_FILES_DIR)
@@ -6095,7 +6095,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var TYPE_FILES_DIR = ""
       val TYPE_FILES_DIR1 = configMap.APIConfigParameters.TYPE_FILES_DIR
       if (TYPE_FILES_DIR1 == None) {
-        TYPE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        TYPE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
       } else
         TYPE_FILES_DIR = TYPE_FILES_DIR1.get
       logger.debug("TYPE_FILES_DIR => " + TYPE_FILES_DIR)
@@ -6103,7 +6103,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var FUNCTION_FILES_DIR = ""
       val FUNCTION_FILES_DIR1 = configMap.APIConfigParameters.FUNCTION_FILES_DIR
       if (FUNCTION_FILES_DIR1 == None) {
-        FUNCTION_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+        FUNCTION_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
       } else
         FUNCTION_FILES_DIR = FUNCTION_FILES_DIR1.get
       logger.debug("FUNCTION_FILES_DIR => " + FUNCTION_FILES_DIR)
@@ -6111,7 +6111,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var CONCEPT_FILES_DIR = ""
       val CONCEPT_FILES_DIR1 = configMap.APIConfigParameters.CONCEPT_FILES_DIR
       if (CONCEPT_FILES_DIR1 == None) {
-        CONCEPT_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+        CONCEPT_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
       } else
         CONCEPT_FILES_DIR = CONCEPT_FILES_DIR1.get
       logger.debug("CONCEPT_FILES_DIR => " + CONCEPT_FILES_DIR)
@@ -6119,7 +6119,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var MESSAGE_FILES_DIR = ""
       val MESSAGE_FILES_DIR1 = configMap.APIConfigParameters.MESSAGE_FILES_DIR
       if (MESSAGE_FILES_DIR1 == None) {
-        MESSAGE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+        MESSAGE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
       } else
         MESSAGE_FILES_DIR = MESSAGE_FILES_DIR1.get
       logger.debug("MESSAGE_FILES_DIR => " + MESSAGE_FILES_DIR)
@@ -6127,7 +6127,7 @@ object MetadataAPIImpl extends MetadataAPI {
       var CONTAINER_FILES_DIR = ""
       val CONTAINER_FILES_DIR1 = configMap.APIConfigParameters.CONTAINER_FILES_DIR
       if (CONTAINER_FILES_DIR1 == None) {
-        CONTAINER_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+        CONTAINER_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
       } else
         CONTAINER_FILES_DIR = CONTAINER_FILES_DIR1.get
 
@@ -6151,13 +6151,13 @@ object MetadataAPIImpl extends MetadataAPI {
 
       logger.debug("MODEL_EXEC_FLAG => " + MODEL_EXEC_FLAG)
 
-      val CONFIG_FILES_DIR = gitRootDir + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+      val CONFIG_FILES_DIR = gitRootDir + "/Kamanja/trunk/SampleApplication/Medical/Configs"
       logger.debug("CONFIG_FILES_DIR => " + CONFIG_FILES_DIR)
 
       var OUTPUTMESSAGE_FILES_DIR = ""
       val OUTPUTMESSAGE_FILES_DIR1 = configMap.APIConfigParameters.OUTPUTMESSAGE_FILES_DIR
       if (OUTPUTMESSAGE_FILES_DIR1 == None) {
-        OUTPUTMESSAGE_FILES_DIR = gitRootDir + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
+        OUTPUTMESSAGE_FILES_DIR = gitRootDir + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
       } else
         OUTPUTMESSAGE_FILES_DIR = OUTPUTMESSAGE_FILES_DIR1.get
       logger.debug("OUTPUTMESSAGE_FILES_DIR => " + OUTPUTMESSAGE_FILES_DIR)

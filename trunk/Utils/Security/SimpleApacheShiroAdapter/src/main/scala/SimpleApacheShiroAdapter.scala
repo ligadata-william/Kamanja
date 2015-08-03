@@ -11,7 +11,7 @@ import org.apache.shiro.subject.Subject
 import org.apache.shiro.util.Factory
 import org.apache.log4j._
 
-import com.ligadata.fatafat.metadata.SecurityAdapter
+import com.ligadata.kamanja.metadata.SecurityAdapter
 import java.util.Properties
 
 class SimpleApacheShiroAdapter extends SecurityAdapter{

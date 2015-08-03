@@ -1,6 +1,6 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 
@@ -16,7 +16,7 @@ class ArrayTypeHandler {
   var cnstObjVar = new ConstantMsgObjVarGenerator
   var methodGen = new ConstantMethodGenerator
 
-  def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
+  def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -177,7 +177,7 @@ class ArrayTypeHandler {
 
   }
 
-  def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
+  def handleArrayBuffer(keysSet: Set[String], msg: Message, typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -252,7 +252,7 @@ class ArrayTypeHandler {
         if (msg.NameSpace != null)
           msgNameSpace = msg.NameSpace
         argsList = (msgNameSpace, f.Name, arrayBufType.NameSpace, arrayBufType.Name, false, null) :: argsList
-        val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.FatafatBase.BaseMsg]"
+        val msgtype = "scala.collection.mutable.ArrayBuffer[com.ligadata.KamanjaBase.BaseMsg]"
         if (msg.Fixed.toLowerCase().equals("true")) //--- --- commented to declare the arraybuffer of messages in memeber variables section for both fixed adn mapped messages
           scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
@@ -378,20 +378,20 @@ class ArrayTypeHandler {
     (list, argsList, jarset, returnAB.toArray)
   }
 
-  def serializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  def serializeMsgContainer(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     serialize(typ, fixed, f)
   }
 
-  def deSerializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
+  def deSerializeMsgContainer(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
     deSerialize(typ, fixed, f, isArayBuf)
   }
 
-  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
+  def prevObjDeserializeMsgContainer(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
     prevObjDeserialize(typ, fixed, f, childs, isArayBuf)
   }
 
   //serialize String for array of messages or containers
-  private def serialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element): String = {
+  private def serialize(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element): String = {
     var serializedBuf = new StringBuilder(8 * 1024)
     try {
       if (f.Name == null || f.Name.trim() == "")
@@ -423,7 +423,7 @@ class ArrayTypeHandler {
   }
 
   //Deserialize String for array of messages or containers
-  private def deSerialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
+  private def deSerialize(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element, isArayBuf: Boolean): String = {
     var deserializedBuf = new StringBuilder(8 * 1024)
 
     try {
@@ -481,7 +481,7 @@ class ArrayTypeHandler {
   }
 
   //Previous object Deserialize String and Convert Old object to new Object for array of messages or containers
-  private def prevObjDeserialize(typ: Option[com.ligadata.fatafat.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
+  private def prevObjDeserialize(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element, childs: Map[String, Any], isArayBuf: Boolean): (String, String, String, String) = {
     var prevObjDeserializedBuf = new StringBuilder(8 * 1024)
     var convertOldObjtoNewObjBuf = new StringBuilder(8 * 1024)
     var mappedPrevVerMatchkeys = new StringBuilder(8 * 1024)
