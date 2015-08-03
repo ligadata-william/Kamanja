@@ -5494,7 +5494,7 @@ object MetadataAPIImpl extends MetadataAPI {
     SaveObjectList(keyList,valueList,modelConfigStore)  
     
     // return reuslts
-    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", 0.toString, "Upload of model config successful")
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
     apiResult.toString()
   }
   
