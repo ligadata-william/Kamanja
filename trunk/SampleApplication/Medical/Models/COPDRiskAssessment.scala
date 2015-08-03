@@ -1,13 +1,13 @@
 package com.ligadata.samples.models
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import RddUtils._
 import RddDate._
-import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
 import com.ligadata.messagescontainers._
 import com.ligadata.messagescontainers.System._
-import com.ligadata.FatafatBase.MinVarType._
+import com.ligadata.KamanjaBase.MinVarType._
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import scala.io.Source
@@ -39,15 +39,18 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     var today : Date = Calendar.getInstance.getTime
     var  oneYearBeforeDate = cal.getTime
     var  originalFormat : SimpleDateFormat = new SimpleDateFormat("yyyyMMdd")
-    val inPatientInfoThisLastyear : RDD[InpatientClaim] = InpatientClaim.getRDD(msgBeneficiary.PartitionKeyData, new TimeRange(Integer.parseInt(originalFormat.format(oneYearBeforeDate)),Integer.parseInt(originalFormat.format(today))))
-    val outPatientInfoThisLastYear : RDD[OutpatientClaim] = OutpatientClaim.getRDD(msgBeneficiary.PartitionKeyData, new TimeRange(Integer.parseInt(originalFormat.format(oneYearBeforeDate)),Integer.parseInt(originalFormat.format(today))))
+    val inPatientInfoThisLastyear : RDD[InpatientClaim] = InpatientClaim.getRDD(msgBeneficiary.PartitionKeyData).filter { x =>  
+    originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate)  
+    }
+   
+    val outPatientInfoThisLastYear : RDD[OutpatientClaim] = OutpatientClaim.getRDD(msgBeneficiary.PartitionKeyData).filter { x =>  
+    originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate)  
+    } 
     
 
     def getOverSmokingCodesInLastYear() : Boolean = {
       for(x<-inPatientInfoThisLastyear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
                   if(smokingCodeSet.contains(x.admtng_icd9_dgns_cd))
                     {
                       return true
@@ -60,13 +63,9 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                         return true
                       }
                     }
-              }
-                
           }
       for(x<-outPatientInfoThisLastYear)
           {
-               if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate)) 
-               {
                   if(smokingCodeSet.contains(x.admtng_icd9_dgns_cd))
                   {
                     return true
@@ -79,8 +78,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                       return true
                     }
                   }
-               }
-                  
           }
        
       return false
@@ -90,8 +87,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     def getEnvironmentalExposuresInLastYear() : Boolean = {
        for(x<-inPatientInfoThisLastyear)
           {
-             if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-             {
              if(envExposureCodeSet.contains(x.admtng_icd9_dgns_cd))
                     {
                       return true
@@ -104,12 +99,9 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                         return true
                       }
                     }
-               }
           }
       for(x<-outPatientInfoThisLastYear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
                if(envExposureCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -122,7 +114,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                           return true
                         }
                       }
-              }
           }
        
       return false
@@ -132,8 +123,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     def getDyspnoeaInLastYear() : Boolean = {
       for(x<-inPatientInfoThisLastyear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
                if(dyspnoeaCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -146,13 +135,10 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                           return true
                         }
                       }
-                    
-              }
           }
       for(x<-outPatientInfoThisLastYear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
+
                if(dyspnoeaCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -166,7 +152,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                         }
                       }
                     
-              }
           }
        
       return false
@@ -175,8 +160,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     def getChronicCoughInLastYear() : Boolean = {
       for(x<-inPatientInfoThisLastyear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
                if(coughCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -189,14 +172,12 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                           return true
                         }
                       }
-              }
               
           }
       
       for(x<-outPatientInfoThisLastYear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
+
                         if(coughCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -209,7 +190,6 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                           return true
                         }
                       }
-              }
           }
        
       return false
@@ -218,8 +198,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     def getChronicSputumInLastYear() : Boolean = {
       for(x<-inPatientInfoThisLastyear)
           {
-              if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-              {
+              
                if(sputumCodeSet.contains(x.admtng_icd9_dgns_cd))
                       {
                         return true
@@ -232,12 +211,10 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                           return true
                         }
                       }
-              }
           }
       for(x<-outPatientInfoThisLastYear)
           {
-            if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-            {
+
              if(sputumCodeSet.contains(x.admtng_icd9_dgns_cd))
                     {
                       return true
@@ -249,8 +226,7 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
                       {
                         return true
                       }
-                    }
-            }   
+                    }           
           }
        
       return false
@@ -258,27 +234,28 @@ class COPDRiskAssessment(mdlCtxt : ModelContext) extends ModelBase(mdlCtxt, COPD
     
     def getHL7InfoThisLastYear() : Boolean = {
       
-      val hl7info = HL7.getRDD(msgBeneficiary.PartitionKeyData, new TimeRange(Integer.parseInt(originalFormat.format(oneYearBeforeDate)),Integer.parseInt(originalFormat.format(today))))
-      
+      val hl7info = HL7.getRDD(msgBeneficiary.PartitionKeyData).filter { x =>  
+    originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate)  
+    } 
       for(x<-hl7info){
-        if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-        {
+        
           if(x.chroniccough>0 || x.sp_copd>0 || x.shortnessofbreath>0 || x.chronicsputum>0){
             return true
           }
-        }
+        
         }
       return false
     } 
      
     def getAATDeficiencyInLastYear() : Boolean = {
-       val hl7info = HL7.getRDD(msgBeneficiary.PartitionKeyData, new TimeRange(Integer.parseInt(originalFormat.format(oneYearBeforeDate)),Integer.parseInt(originalFormat.format(today))))
+       val hl7info = HL7.getRDD(msgBeneficiary.PartitionKeyData).filter { x =>  
+    originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate)  
+    } 
       for(x<-hl7info){
-        if(originalFormat.parse(x.clm_thru_dt.toString()).before(today) && originalFormat.parse(x.clm_thru_dt.toString()).after(oneYearBeforeDate))
-        {
+        
         if(x.aatdeficiency==1)
           return true
-        }
+        
       }
       return false
     }
