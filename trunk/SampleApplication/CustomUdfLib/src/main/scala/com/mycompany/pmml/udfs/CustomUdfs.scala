@@ -125,7 +125,7 @@ object CustomUdfs extends LogTrait {
      @param yyyymmdds: an Int encoded with iso8601 date...
      @return string rep of this date
     */
-    def iso8601DateFmt(fmtStr : String, yyyymmdds : Int): String = {
+    def ISO8601DateFmt(fmtStr : String, yyyymmdds : Int): String = {
         val dateTime : DateTime = toDateTime(yyyymmdds)
         val fmt : DateTimeFormatter  = DateTimeFormat.forPattern(fmtStr);
         val str : String = fmt.print(dateTime);
