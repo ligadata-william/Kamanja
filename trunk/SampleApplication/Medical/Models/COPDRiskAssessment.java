@@ -1,8 +1,8 @@
 package com.ligadata.kamanja.copd;
 
 import com.google.common.collect.Lists;
-import com.ligadata.FatafatBase.*;
-import com.ligadata.FatafatBase.api.java.function.Function1;
+import com.ligadata.KamanjaBase.*;
+import com.ligadata.KamanjaBase.api.java.function.Function1;
 import com.ligadata.messagescontainers.System.*;
 import org.joda.time.*;
 

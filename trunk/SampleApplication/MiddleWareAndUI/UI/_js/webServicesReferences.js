@@ -1,10 +1,10 @@
 
 var serverName = '/';
 
-var getEventsInfo = serverName + 'FATAFATWS/MessagesService?svc=getEventsInfo';
-var reset = serverName + 'FATAFATWS/MessagesService?svc=reset';
-var dataReset = serverName + 'FATAFATWS/MessagesService?svc=dataReset';
+var getEventsInfo = serverName + 'KAMANJAWS/MessagesService?svc=getEventsInfo';
+var reset = serverName + 'KAMANJAWS/MessagesService?svc=reset';
+var dataReset = serverName + 'KAMANJAWS/MessagesService?svc=dataReset';
 
-var start = serverName + 'FATAFATWS/MessagesService?svc=start';
+var start = serverName + 'KAMANJAWS/MessagesService?svc=start';
 
 var SendSms = serverName + 'ServicePrototype/SendSms';

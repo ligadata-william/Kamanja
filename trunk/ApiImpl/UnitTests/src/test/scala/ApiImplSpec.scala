@@ -1,6 +1,6 @@
 package com.ligadata.automation.unittests.apiimpl
 
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 
 import org.scalatest._
 import Matchers._

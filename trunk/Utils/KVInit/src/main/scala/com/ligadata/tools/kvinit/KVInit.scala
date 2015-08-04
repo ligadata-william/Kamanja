@@ -16,13 +16,13 @@ import java.nio.charset.StandardCharsets
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.FatafatBase._
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.KamanjaBase._
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import java.util.Properties
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata._
 import java.net.URL
 import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
@@ -30,7 +30,7 @@ import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.FatafatData.FatafatData
+import com.ligadata.KamanjaData.KamanjaData
 import java.io.FileInputStream
 import java.util.zip.GZIPInputStream
 import java.io.BufferedReader
@@ -67,7 +67,7 @@ must be specified as the key field name.  Failure to find this name causes termi
 no kv store creation.
       
 Sample uses:
-      java -jar /tmp/FatafatInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/FatafatInstall/EngineConfig.cfg --csvpath /tmp/FatafatInstall/sampledata/TestContainer.csv --keyfieldname Id
+      java -jar /tmp/KamanjaInstall/KVInit-1.0 --kvname System.TestContainer --config /tmp/KamanjaInstall/EngineConfig.cfg --csvpath /tmp/KamanjaInstall/sampledata/TestContainer.csv --keyfieldname Id
 
 """
   }
@@ -385,7 +385,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
+          isContainer = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
@@ -405,7 +405,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
+          isMsg = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
@@ -625,7 +625,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             }
           }
           try {
-            val datarec = new FatafatData
+            val datarec = new KamanjaData
             // var keyData = messageOrContainer.PartitionKeyData
             val keyData = keyPositions.map(kp => inputData.tokens(kp)) // We should take messageOrContainer.PartitionKeyData instead of this. That way we have proper value convertion before giving keys to us.
             datarec.SetKey(keyData)
@@ -732,7 +732,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
       val data: Array[String] = tuples.split(dataDelim, -1).map(_.trim)
       val partkey = keyPositions.map(kp => data(kp)).toList
-      datastore.get(makeKey(FatafatData.PrepareKey(objFullName, partkey, 0, 0)), printOne)
+      datastore.get(makeKey(KamanjaData.PrepareKey(objFullName, partkey, 0, 0)), printOne)
     })
   }
 
