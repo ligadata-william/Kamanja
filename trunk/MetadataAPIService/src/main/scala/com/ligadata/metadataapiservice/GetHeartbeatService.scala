@@ -13,7 +13,7 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 
 object GetHeartbeatService {
-  case class Process(nodeId:String)
+  case class Process(nodeIds:String)
 }
 
 /**
@@ -33,15 +33,13 @@ class GetHeartbeatService(requestContext: RequestContext, userid:Option[String],
       context.stop(self)
   }
   
-  def process(nodeId:String): Unit = {
-    var tid = nodeId
-    if (nodeId.size == 0) tid = "all"
-    log.debug("Requesting Heartbeat for Nodeid: " + tid)
-    
+  def process(nodeIds:String): Unit = {
+    // NodeIds is a JSON array of nodeIds.
+  
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","heartbeat"))) {
-      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:UPDATE not allowed for this user").toString )
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:Checking Heartbeat is not allowed for this user").toString )
     } else {
-      val apiResult = MetadataAPIImpl.getHealthCheck()  
+      val apiResult = MetadataAPIImpl.getHealthCheck(nodeIds)  
       requestContext.complete(apiResult)      
     }
   }  

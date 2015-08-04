@@ -46,13 +46,12 @@ object MonitorAPIImpl {
       // We are guaranteed the pathTokens.length - 2 is either a Metadata or Engine
       var componentName = pathTokens(pathTokens.length - 2)
       var nodeName = pathTokens(pathTokens.length - 1)
-      var key = componentName+"."+nodeName
     
       // Add or Remove the data to/from the map.
       if (eventType.equals(CHILD_ADDED_ACTION) || eventType.equals(CHILD_UPDATED_ACTION)) 
-        healthInfo(key) = new String(eventPathData)
+        healthInfo(nodeName) = new String(eventPathData)
       else 
-        if (healthInfo.contains(key)) healthInfo.remove(key)
+        if (healthInfo.contains(nodeName)) healthInfo.remove(nodeName)
     } catch {
       case e: Exception => {
         e.printStackTrace
@@ -69,7 +68,6 @@ object MonitorAPIImpl {
      var ar = healthInfo.values.toArray
      var isFirst = true
      var resultJson = "["
-  
      // If List is empty, then return everything. otherwise, return only those items that are present int he
      // list    
      if (ids.length > 0) {
@@ -98,7 +96,6 @@ object MonitorAPIImpl {
     */
    def startMetadataHeartbeat: Unit = {
      var _exec = Executors.newFixedThreadPool(1)
-
      _exec.execute(new Runnable() {
        override def run() = {
          var startTime = System.currentTimeMillis

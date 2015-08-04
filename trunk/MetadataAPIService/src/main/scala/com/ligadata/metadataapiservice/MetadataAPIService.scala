@@ -57,9 +57,6 @@ trait MetadataAPIService extends HttpService {
                   else if (toknRoute(0).equalsIgnoreCase(LEADER_TOKN)) {
                     requestContext => processGetLeaderRequest(null, requestContext, user, password, role)
                   }
-                  else if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) {
-                    requestContext => processHBRequest("", requestContext, user, password, role) 
-                  }
                   else {
                     requestContext => processGetObjectRequest(toknRoute(0), "", requestContext, user, password, role)
                   }
@@ -71,9 +68,6 @@ trait MetadataAPIService extends HttpService {
                   // strip the first token and send the rest
                   val filterParameters = toknRoute.slice(1, toknRoute.size)
                   requestContext => processGetAuditLogRequest(filterParameters, requestContext, user, password, role)
-                }
-                else if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) {
-                  requestContext => processHBRequest(toknRoute(1).toLowerCase, requestContext, user, password, role)
                 }
                 else {
                   requestContext => processGetObjectRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role)
@@ -115,7 +109,10 @@ trait MetadataAPIService extends HttpService {
                   val toknRoute = str.split("/")
                   logger.debug("POST reqeust : api/" + str)
                   if (toknRoute.size == 1) {
-                    entity(as[String]) { reqBody => { requestContext => processPostRequest(toknRoute(0), reqBody, requestContext, user, password, role)}}
+                    if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) 
+                      requestContext => processHBRequest(reqBody, requestContext, user, password, role) 
+                    else
+                      entity(as[String]) { reqBody => { requestContext => processPostRequest(toknRoute(0), reqBody, requestContext, user, password, role)}}
                   } else if (toknRoute.size == 2 && toknRoute(0) == "model") {
                     toknRoute(1).toString match {
                       case ModelType.PMML => {
@@ -135,9 +132,9 @@ trait MetadataAPIService extends HttpService {
                     }
 
                   }
-
-                  else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)}
-                }
+                  else { 
+                    requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)}
+                  }
                 }
               }
             } ~
@@ -305,9 +302,9 @@ trait MetadataAPIService extends HttpService {
   /**
    * 
    */
-  private def processHBRequest(nodeId: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
+  private def processHBRequest(nodeIds: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
       val heartBeatSerivce = actorRefFactory.actorOf(Props(new GetHeartbeatService(rContext, userid, password, role)))
-      heartBeatSerivce ! GetHeartbeatService.Process(nodeId)       
+      heartBeatSerivce ! GetHeartbeatService.Process(nodeIds)       
   }
   
   /**
