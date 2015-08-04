@@ -13,11 +13,11 @@ import java.io.FileWriter
 import sys.process._
 import java.io.PrintWriter
 import org.apache.log4j._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
 import com.ligadata.pmml.compiler._
-import com.ligadata.fatafat.metadata.ObjFormatType._
+import com.ligadata.kamanja.metadata.ObjFormatType._
 import com.ligadata.Serialize._
 import com.ligadata.Exceptions._
 import java.util.jar.JarInputStream
@@ -734,7 +734,7 @@ class CompilerProxy{
 
       var isModel = false
       while (curClz != null && isModel == false) {
-        isModel = isDerivedFrom(curClz, "com.ligadata.FatafatBase.ModelBaseObj")
+        isModel = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
           if (isModel == false)
           curClz = curClz.getSuperclass()
       }
@@ -761,9 +761,9 @@ class CompilerProxy{
           }
           // Pull the Model metadata out of the actual object here... NameSpace,Name, and Version all come from
           // this temporary class
-          var baseModelTrait: com.ligadata.FatafatBase.ModelBaseObj = null
-          if (objInst.isInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]) {
-            baseModelTrait = objInst.asInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]
+          var baseModelTrait: com.ligadata.KamanjaBase.ModelBaseObj = null
+          if (objInst.isInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]) {
+            baseModelTrait = objInst.asInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]
             var fullName = baseModelTrait.ModelName.split('.')
             return (fullName.dropRight(1).mkString("."), fullName(fullName.length-1), baseModelTrait.Version, clsName)
           }
@@ -779,7 +779,7 @@ class CompilerProxy{
         }
       }
     })
-    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.FatafatBase.ModelBaseObj was found in the jarred source "+jarFileName)
+    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelBaseObj was found in the jarred source "+jarFileName)
     throw new MsgCompilationFailedException(jarFileName)
   }
 

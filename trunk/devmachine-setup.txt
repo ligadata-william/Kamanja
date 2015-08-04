@@ -51,7 +51,7 @@ sbt
 
 # Run a project
 #
-project Fatafat
+project Kamanja
 run
 
 # Debugger (windows)

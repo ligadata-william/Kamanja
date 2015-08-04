@@ -7,9 +7,9 @@ import akka.io.IO
 import akka.io.Tcp._
 import spray.can.Http
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.MetadataAPI._
 import org.apache.log4j._
 import com.ligadata.Utils._
@@ -76,7 +76,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       if (args.length == 0) {
         logger.warn("Config File defaults to " + configFile)
         logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-        logger.warn("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+        logger.warn("The config file supplied is a complete path name of a  json file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       } else {
         val options = nextOption(Map(), args.toList)
         val cfgfile = options.getOrElse('config, null)
@@ -156,7 +156,7 @@ object APIService {
   
   
   /**
-   * extractNameFromJson - applies to a simple Fatafat object
+   * extractNameFromJson - applies to a simple Kamanja object
    */
   def extractNameFromJson (jsonObj: String, objType: String): String = {
     var inParm: Map[String,Any] = null

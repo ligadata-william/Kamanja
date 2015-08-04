@@ -12,14 +12,14 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata.EntityType
-import com.ligadata.fatafat.metadata.MessageDef
-import com.ligadata.fatafat.metadata.BaseAttributeDef
-import com.ligadata.fatafat.metadata.ContainerDef
-import com.ligadata.fatafat.metadata.ArrayTypeDef
-import com.ligadata.fatafat.metadata.ArrayBufTypeDef
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.EntityType
+import com.ligadata.kamanja.metadata.MessageDef
+import com.ligadata.kamanja.metadata.BaseAttributeDef
+import com.ligadata.kamanja.metadata.ContainerDef
+import com.ligadata.kamanja.metadata.ArrayTypeDef
+import com.ligadata.kamanja.metadata.ArrayBufTypeDef
+import com.ligadata.kamanja.metadata._
 import com.ligadata.Exceptions._
 
 trait Attrib {

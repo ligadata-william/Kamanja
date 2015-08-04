@@ -1,7 +1,7 @@
 package com.ligadata.Serialize
 
 import java.io._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 
 import java.io.ByteArrayOutputStream
 

@@ -115,11 +115,11 @@ object TestApiService {
       var database_host = "localhost"
       var database_schema = "metadata"
       var database_location = "/tmp"
-      var jar_target_dir = "/tmp/FatafatInstall"
+      var jar_target_dir = "/tmp/KamanjaInstall"
       var scala_home = root_dir + "/scala-2.10.4"
       var java_home = root_dir + "/jdk1.8.0_05"
-      var manifest_path = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
-      var classpath = ".:/tmp/FatafatInstall/metadata_2.10-1.0.jar:/tmp/FatafatInstall/basefunctions_2.10-0.1.0.jar:/tmp/FatafatInstall/messagedef_2.10-1.0.jar:/tmp/FatafatInstall/methodextractor_2.10-1.0.jar:/tmp/FatafatInstall/pmmlcompiler_2.10-1.0.jar:/tmp/FatafatInstall/bankenvcontext_2.10-1.0.jar:/tmp/FatafatInstall/fatafatbase_2.10-1.0.jar:/tmp/FatafatInstall/bankbootstrap_2.10-1.0.jar:/tmp/FatafatInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/FatafatInstall/medicalbootstrap_2.10-1.0.jar:/tmp/FatafatInstall/joda-time-2.3.jar:/tmp/FatafatInstall/joda-convert-1.6.jar:/tmp/FatafatInstall/basetypes_2.10-0.1.0.jar:/tmp/FatafatInstall/pmmludfs_2.10-1.0.jar:/tmp/FatafatInstall/pmmlruntime_2.10-1.0.jar:/tmp/FatafatInstall/json4s-native_2.10-3.2.9.jar:/tmp/FatafatInstall/json4s-core_2.10-3.2.9.jar:/tmp/FatafatInstall/json4s-ast_2.10-3.2.9.jar:/tmp/FatafatInstall/jackson-databind-2.3.1.jar:/tmp/FatafatInstall/jackson-annotations-2.3.0.jar:/tmp/FatafatInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/FatafatInstall/jackson-core-2.3.1.jar:/tmp/FatafatInstall/log4j-1.2.17.jar"
+      var manifest_path = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models/manifest.mf"
+      var classpath = ".:/tmp/KamanjaInstall/metadata_2.10-1.0.jar:/tmp/KamanjaInstall/basefunctions_2.10-0.1.0.jar:/tmp/KamanjaInstall/messagedef_2.10-1.0.jar:/tmp/KamanjaInstall/methodextractor_2.10-1.0.jar:/tmp/KamanjaInstall/pmmlcompiler_2.10-1.0.jar:/tmp/KamanjaInstall/bankenvcontext_2.10-1.0.jar:/tmp/KamanjaInstall/kamanjabase_2.10-1.0.jar:/tmp/KamanjaInstall/bankbootstrap_2.10-1.0.jar:/tmp/KamanjaInstall/bankmsgsandcontainers_2.10-1.0.jar:/tmp/KamanjaInstall/medicalbootstrap_2.10-1.0.jar:/tmp/KamanjaInstall/joda-time-2.3.jar:/tmp/KamanjaInstall/joda-convert-1.6.jar:/tmp/KamanjaInstall/basetypes_2.10-0.1.0.jar:/tmp/KamanjaInstall/pmmludfs_2.10-1.0.jar:/tmp/KamanjaInstall/pmmlruntime_2.10-1.0.jar:/tmp/KamanjaInstall/json4s-native_2.10-3.2.9.jar:/tmp/KamanjaInstall/json4s-core_2.10-3.2.9.jar:/tmp/KamanjaInstall/json4s-ast_2.10-3.2.9.jar:/tmp/KamanjaInstall/jackson-databind-2.3.1.jar:/tmp/KamanjaInstall/jackson-annotations-2.3.0.jar:/tmp/KamanjaInstall/json4s-jackson_2.10-3.2.9.jar:/tmp/KamanjaInstall/jackson-core-2.3.1.jar:/tmp/KamanjaInstall/log4j-1.2.17.jar"
       var notify_engine = "NO"
       var znode_path = "/ligadata/metadata"
       var zookeeper_connect_string = "localhost:2181"
@@ -129,14 +129,14 @@ object TestApiService {
       var api_leader_selection_zk_node = "/ligadata/metadata"
       var zk_session_timeout_ms = "4000"
       var zk_connection_timeout_ms = "30000"
-      var config_files_dir = git_root + "/Fatafat/trunk/SampleApplication/Medical/Configs"
-      var model_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
-      var message_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
-      var container_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
-      var function_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
-      var concept_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
-      var type_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
-      var outputmessage_files_dir = git_root + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
+      var config_files_dir = git_root + "/Kamanja/trunk/SampleApplication/Medical/Configs"
+      var model_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+      var message_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+      var container_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+      var function_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+      var concept_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+      var type_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+      var outputmessage_files_dir = git_root + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMsgs"
       var compiler_work_dir = root_dir + "/tmp"
       var model_exec_log = "false"
 
@@ -1317,7 +1317,7 @@ object TestApiService {
         11 -> "ListTypeDef",
         12 -> "QueueTypeDef",
         13 -> "TupleTypeDef")
-      var selectedType = "com.ligadata.fatafat.metadata.ScalarTypeDef"
+      var selectedType = "com.ligadata.kamanja.metadata.ScalarTypeDef"
       var done = false
       while (done == false) {
         println("\n\nPick a Type ")
@@ -1328,7 +1328,7 @@ object TestApiService {
         print("\nEnter your choice: ")
         val choice: Int = readInt()
         if (choice <= typeMenu.size) {
-          selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
+          selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
         } else if (choice == typeMenu.size + 1) {
           done = true
@@ -1582,7 +1582,7 @@ object TestApiService {
       if (args.length == 0) {
         logger.warn("Config File defaults to " + myConfigFile)
         logger.warn("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-        logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
+        logger.warn("The config file supplied is a complete path name of a config file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.properties")
       } else {
         val cfgfile = args(0)
         if (cfgfile == null) {

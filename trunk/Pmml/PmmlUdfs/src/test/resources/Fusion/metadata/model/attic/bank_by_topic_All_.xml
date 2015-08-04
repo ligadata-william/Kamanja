@@ -65,7 +65,7 @@ CODING TO DO:
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
     <Header copyright="LigaDATA. Copyright 2015" description="TwitterDemo">
-     <Application name="FatafatTwitterDemo" version="00.01.00"/>
+     <Application name="KamanjaTwitterDemo" version="00.01.00"/>
     </Header>
 
   <!-- ===================================================================================================== -->
@@ -154,7 +154,7 @@ CODING TO DO:
 
   <!-- ================================================================================ -->
   <!-- 2.3.5) Save the Incremented conters to db -->
-  <!-- get from the FATAFAT global context -->
+  <!-- get from the KAMANJA global context -->
   <DerivedField name="saveIncrSetsumCounters" dataType="boolean" optype="categorical">
     <Apply function="Put">
       <FieldRef field="gCtx"/>
@@ -971,7 +971,7 @@ CODING TO DO:
   <!-- ================================================================================ -->
   <!-- 2.3.1.2.1 and related -->
   <!-- LOAD WORD SETS for later matching with text in Twitter -->
-  <!-- get from the FATAFAT global context -->
+  <!-- get from the KAMANJA global context -->
   <!-- ........ LOAD WORDSET _a ............................. -->
   <!-- these first word sets are for the "topics" in the GUI, such as lines in the line chart -->
   <DerivedField name="container_a" dataType="ArrayOfMessageContainerBase" optype="categorical">
@@ -1187,7 +1187,7 @@ CODING TO DO:
 
   <!-- ================================================================================ -->
   <!-- 2.3.1.2.2) -->
-  <!-- get from the FATAFAT global context -->
+  <!-- get from the KAMANJA global context -->
   <!-- Get Summary Counters cosniders all companies under one group -->
   <DerivedField name="sumCounters" dataType="Counters" optype="continuous">
     <Apply function="GetMsgContainerElseNew">
@@ -2064,7 +2064,7 @@ CODING TO DO:
 <!-- ===================================================================================================== -->
 <RuleSetModel modelName="DemoModel" functionName="classification" algorithmName="RuleSet">
 
-  <!-- For Fatafat (only), list the variables in the output record -->
+  <!-- For Kamanja (only), list the variables in the output record -->
   <!-- for normal PMML, these are the fields avilable to be used by the model -->
   <MiningSchema>
     <MiningField name="cnt_1_1" usageType="supplementary"/>

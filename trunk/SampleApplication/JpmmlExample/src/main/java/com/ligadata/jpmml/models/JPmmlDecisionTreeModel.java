@@ -1,6 +1,6 @@
 package com.ligadata.jpmml.models;
 
-import com.ligadata.FatafatBase.*;
+import com.ligadata.KamanjaBase.*;
 import com.ligadata.pmml.udfs.Udfs;
 import com.ligadata.messagescontainers.System.*;
 
@@ -190,8 +190,8 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 			}
 		*/
 
-        com.ligadata.FatafatBase.Result[] returnResults = new com.ligadata.FatafatBase.Result[]{
-        	new com.ligadata.FatafatBase.Result(targetName.getValue(), simplePrediction)
+        com.ligadata.KamanjaBase.Result[] returnResults = new com.ligadata.KamanjaBase.Result[]{
+        	new com.ligadata.KamanjaBase.Result(targetName.getValue(), simplePrediction)
         };
 
         logger.info(ModelName() + "'s decorated prediction = " + targetValue.toString());

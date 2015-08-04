@@ -3,7 +3,7 @@ package com.ligadata.OutputAdapters
 
 import java.util.Properties
 import org.apache.log4j.Logger
-import com.ligadata.FatafatBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
+import com.ligadata.KamanjaBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.IbmMqAdapterConfiguration
 import javax.jms.{ Connection, Destination, JMSException, Message, MessageProducer, Session, TextMessage, BytesMessage }
 import com.ibm.msg.client.jms.JmsConnectionFactory
