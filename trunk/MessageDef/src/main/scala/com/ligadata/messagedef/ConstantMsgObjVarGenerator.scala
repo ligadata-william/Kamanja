@@ -9,7 +9,7 @@ class ConstantMsgObjVarGenerator {
 
   var rddHandler = new RDDHandler
   val logger = this.getClass.getName
-  lazy val log = Logger.getLogger(logger)
+  lazy val LOG = Logger.getLogger(logger)
 
   def partitionkeyStrObj(message: Message, partitionPos: Array[Int]): String = {
     val pad1 = "\t"
@@ -33,7 +33,7 @@ class ConstantMsgObjVarGenerator {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.debug("primaryPos " + primaryPos.length)
+    LOG.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -155,7 +155,7 @@ class ConstantMsgObjVarGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        LOG.error("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -541,7 +541,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     	} catch {
     		  case e: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          log.error("StackTrace:"+stackTrace)
+          LOG.error("StackTrace:"+stackTrace)
     		  // Call By Name
              return getByName(key)
     		  }
@@ -559,7 +559,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		    } catch {
 		      case e: Exception => {
 		        val stackTrace = StackTrace.ThrowableTraceString(e)
-            log.error("StackTrace:"+stackTrace)
+            LOG.error("StackTrace:"+stackTrace)
 		        throw e
 		      }
 		    }
@@ -659,7 +659,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.debug("primaryPos " + primaryPos.length)
+    LOG.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
