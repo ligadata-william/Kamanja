@@ -349,6 +349,7 @@ class CompilerProxy{
                        , sourceCode : String
                        , clientName : String
                        , targetClassFolder: String
+                       , packageRoot: String
                        , sourceLanguage : String = "scala") : Int =
   {
 
@@ -382,7 +383,7 @@ class CompilerProxy{
       if (sourceLanguage.equalsIgnoreCase("java")) {
         return compileRc
       }
-      val mvCmd : String = s"mv com $compiler_work_dir/$moduleName/"
+      val mvCmd : String = s"mv $packageRoot $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
         logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")
@@ -412,7 +413,11 @@ class CompilerProxy{
                         , helperJavaSource: String = null
                         , helperJavaSourcePath: String = null) : (Int, String) =
   {
-    var currentWorkFolder: String = modelName
+    var currentWorkFolder: String = moduleName
+    
+    if (moduleNamespace == null || moduleNamespace.length == 0) throw new ModelCompilationFailedException("Missing Namespace")
+    
+
     if (isLocalOnly) {
       currentWorkFolder = currentWorkFolder + "_local"
     }
@@ -450,7 +455,8 @@ class CompilerProxy{
     }
 
     // Compile 
-    val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, null, sourceLanguage)
+    var packageRoot = (moduleNamespace.split('.'))(0).trim
+    val rc = compile(s"$compiler_work_dir/$currentWorkFolder", cHome, sourceName, classpath, sourceCode, clientName, null, packageRoot, sourceLanguage)
 
     // Bail if compilation filed.
     if (rc != 0) {
@@ -460,7 +466,11 @@ class CompilerProxy{
     // if helperJavaSource is not null, means we are generating Factory java files.
     if (helperJavaSource != null) {
       val tempClassPath = classpath+":"+s"$compiler_work_dir/$currentWorkFolder"
+<<<<<<< HEAD
       val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, modelName+"Factory", tempClassPath, helperJavaSource, clientName, modelName, "java")
+=======
+      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, moduleName+"Factory", tempClassPath, helperJavaSource, clientName, moduleName, packageRoot,"java")
+>>>>>>> Enable any package name to be chosen for messages and models
       // Bail if compilation filed.
       if (rc != 0) {
         return (rc, "")
@@ -995,15 +1005,6 @@ class CompilerProxy{
    *                         }  
    */
   private def createSavedSourceCode(source: String, deps: scala.collection.immutable.Set[String], typeDeps: List[String], pName: String): String = {
-    println("COMILER_PROXY: recording for future recompile of the model")
-    println("==========================================")
-    println("Dependencies:")
-    deps.foreach(x=>{println(x)})
-    println("==========================================")
-    println("Types:")
-    typeDeps.foreach(x=>{println(x)})
-    println("==========================================")
-
     val json = ((ModelCompilationConstants.SOURCECODE -> source) ~
       (ModelCompilationConstants.DEPENDENCIES -> deps.toList) ~
       (ModelCompilationConstants.TYPES_DEPENDENCIES -> typeDeps) ~
