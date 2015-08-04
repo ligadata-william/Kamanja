@@ -601,7 +601,6 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def SaveObject(key: String, value: Array[Byte], store: DataStore) {
-    println("SAVING SHIT: "+key)
     val t = store.beginTx
     object obj extends IStorage {
       var k = new com.ligadata.keyvaluestore.Key

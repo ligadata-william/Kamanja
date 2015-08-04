@@ -224,6 +224,25 @@ class CompilerProxy{
       logger.debug("Call Message Compiler ....")
       val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
+      
+      println("NAMESPACE Info: ")
+      println("--------------------")
+      println("Namespace in MSGDEF is "+ msgDef.NameSpace + " or "+  msgDef.nameSpace)
+      println("****Code 1*")
+      println(classStrVer.substring(0,30))
+      println("*****")
+      println("****Code 2*")
+       println(classStrVerJava.substring(0,30))
+      println("*****")
+      println("****Code 3*")
+       println(classStrNoVer.substring(0,30))
+      println("*****")
+      println("****Code 4*")
+      println(classStrNoVerJava.substring(0,30))
+      println("*****")
+      println("****Original Json*")
+      println(msgDefStr)
+      println("--------------------")
 
       val nameArray = msgDef.PhysicalName.split('.')
       var realClassName: String = ""
@@ -232,7 +251,7 @@ class CompilerProxy{
       }
 
       val msgDefFilePath = compiler_work_dir + "/" +realClassName + ".txt"
-      dumpStrTextToFile(msgDefStr,msgDefFilePath)
+    //  dumpStrTextToFile(msgDefStr,msgDefFilePath)
 
       val msgDefClassFilePath = compiler_work_dir + "/" + realClassName + ".scala"
       dumpStrTextToFile(classStrVer,msgDefClassFilePath)
@@ -242,7 +261,7 @@ class CompilerProxy{
       dumpStrTextToFile(classStrVerJava,msgDefHelperClassFilePath)
 
       val msgDefFilePathLocal = compiler_work_dir + "/" + realClassName + "_local.txt"
-      dumpStrTextToFile(msgDefStr,msgDefFilePathLocal)
+   //   dumpStrTextToFile(msgDefStr,msgDefFilePathLocal)
 
       val msgDefClassFilePathLocal = compiler_work_dir + "/" + realClassName + "_local.scala"
       dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
