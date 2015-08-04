@@ -224,25 +224,6 @@ class CompilerProxy{
       logger.debug("Call Message Compiler ....")
       val((classStrVer, classStrVerJava), msgDef, (classStrNoVer, classStrNoVerJava)) = msg.processMsgDef(msgDefStr, "JSON",mgr,recompile)
       logger.debug("Message Compilation done ...." + JsonSerializer.SerializeObjectToJson(msgDef))
-      
-      println("NAMESPACE Info: ")
-      println("--------------------")
-      println("Namespace in MSGDEF is "+ msgDef.NameSpace + " or "+  msgDef.nameSpace)
-      println("****Code 1*")
-      println(classStrVer.substring(0,30))
-      println("*****")
-      println("****Code 2*")
-       println(classStrVerJava.substring(0,30))
-      println("*****")
-      println("****Code 3*")
-       println(classStrNoVer.substring(0,30))
-      println("*****")
-      println("****Code 4*")
-      println(classStrNoVerJava.substring(0,30))
-      println("*****")
-      println("****Original Json*")
-      println(msgDefStr)
-      println("--------------------")
 
       val nameArray = msgDef.PhysicalName.split('.')
       var realClassName: String = ""
@@ -250,19 +231,19 @@ class CompilerProxy{
         realClassName = nameArray(nameArray.length-1)
       }
 
-      val msgDefFilePath = compiler_work_dir + "/" +realClassName + ".txt"
-    //  dumpStrTextToFile(msgDefStr,msgDefFilePath)
-
+      // This may be temporary, but need to lowercase all the packages name since they serve as namespaces and MsgDef lowercases them
+      var tPackageName = extractPackageNameFromSource(classStrVer)
+      replacePackageNameInSource(classStrVer,tPackageName.toLowerCase)
+      replacePackageNameInSource(classStrVerJava,tPackageName.toLowerCase)
+      replacePackageNameInSource(classStrNoVer,tPackageName.toLowerCase)
+      replacePackageNameInSource(classStrNoVerJava,tPackageName.toLowerCase)
+      
+      
+      // Save the message.scala, messageFactory.java and message_local.scala in the work directory
       val msgDefClassFilePath = compiler_work_dir + "/" + realClassName + ".scala"
       dumpStrTextToFile(classStrVer,msgDefClassFilePath)
-
-      // This is a java file
       val msgDefHelperClassFilePath = compiler_work_dir + "/" + realClassName + "Factory.java"
       dumpStrTextToFile(classStrVerJava,msgDefHelperClassFilePath)
-
-      val msgDefFilePathLocal = compiler_work_dir + "/" + realClassName + "_local.txt"
-   //   dumpStrTextToFile(msgDefStr,msgDefFilePathLocal)
-
       val msgDefClassFilePathLocal = compiler_work_dir + "/" + realClassName + "_local.scala"
       dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
 
@@ -290,7 +271,7 @@ class CompilerProxy{
         classPath,
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
         "Test Client",
-        msgDefFilePath,
+        msgDefClassFilePath,
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
         false,"scala",
@@ -310,7 +291,7 @@ class CompilerProxy{
         classPath,
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR"),
         "Test Client",
-        msgDefFilePathLocal,
+        msgDefClassFilePathLocal,
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("SCALA_HOME"),
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAVA_HOME"),
         true,"scala",
@@ -618,14 +599,13 @@ class CompilerProxy{
     inVars
   }
 
-  /**
+   /**
    *
    * parseSourceForMetadata - this method will parse the source code of a custom scala or java
    *                          model for model metadata.
    *
    *
    */
-
   private def parseSourceForMetadata (sourceCode: String,
                                       modelConfigName: String,
                                       sourceLang: String,
@@ -635,31 +615,8 @@ class CompilerProxy{
 
     // We have to create a dummy jar file for this so that we can interrogate the generated Object for Modelname
     // and Model Version.  To do this, we create a dummy source with V0 in the package name.
-    val packageExpression = "\\s*package\\s*".r
-    val endPackageEpression = "[\t\n\r\f;]".r
-    var indx1: Integer = -1
-    var indx2: Integer = -1
-
-    var packageName: String = ""
-    var codeBeginIndx = sourceCode.indexOf("import")
-    var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))
-    var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
-    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))
-
-    // If there are no package present, we will not compile this.
-    if (indx1 != -1 && (indx2 + indx1) > indx1)
-      packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim
-    else {
-      logger.error("COMPILER_PROXY: Error compiling model source. unable to find package")
-      throw new MsgCompilationFailedException(modelConfigName)
-    }
-
-    logger.debug("COMPILER_PROXY: packageName at the top of the source is ->"+packageName)
-    // Augment the code with the new package name V0, which is invalid inside the engine, but this is really a dummy
-    // class.
-    var repackagedCode = "package "+ packageName +".V0;\n" + sourceCode.substring(codeBeginIndx)
-
+    var packageName = extractPackageNameFromSource(sourceCode)
+    var repackagedCode = replacePackageNameInSource(sourceCode,packageName,".V0;\n")
 
     // We need to add the imports to the actual TypeDependency Jars...  All the Message,Container, etc Elements
     // have been passed into this def.  
@@ -988,6 +945,43 @@ class CompilerProxy{
     combinedDeps.foreach (x=>println(x))
     println("=============End Of list==================")
     (classPath,depElems,combinedDeps,nonTypeDeps)
+  }
+  
+  /**
+   * extractPackageNameFromSource - use regex to pull out the package name from a scala or java source code.
+   */
+  private def extractPackageNameFromSource(sourceCode: String): String = {
+    val packageExpression = "\\s*package\\s*".r
+    val endPackageEpression = "[\t\n\r\f;]".r  
+    var indx1: Integer = -1
+    var indx2: Integer = -1
+    var packageName: String = ""
+    
+    // Extract all characters between "package" and "whitespace" or ";"  this is your package name.
+    var sMatchResult = packageExpression.findFirstMatchIn(sourceCode).getOrElse(null)
+    if (sMatchResult != null) indx1 = sMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))    
+    var eMatchResult = endPackageEpression.findFirstMatchIn(sourceCode.substring(indx1)).getOrElse(null)
+    if (eMatchResult != null) indx2 = eMatchResult.end else logger.error("COMPILER_PROXY: Bad Source. "+ sourceCode.subSequence(0, 100))
+    
+    // If there are no package present, we will not compile this.
+    if (indx1 != -1 && (indx2 + indx1) > indx1) {
+      packageName = sourceCode.substring(indx1,(indx2 + indx1 -1)).trim
+      return packageName
+    } else {
+      logger.error("COMPILER_PROXY: Error compiling model source. unable to find package")
+      throw new MsgCompilationFailedException("Unable to determine package name")
+    }
+  }
+  
+  /**
+   * replacePackageNameInSource - Replace package name with a different package.  Models will add version, and Messages need to 
+   *                              change to lowercase.
+   */
+  private def replacePackageNameInSource(sourceCode: String, newPackageName: String, version: String = ""): String = {
+    
+    var codeBeginIndx = sourceCode.indexOf("import")
+    var repackagedCode = "package "+ newPackageName + version + sourceCode.substring(codeBeginIndx)
+    repackagedCode
   }
 
   /**
