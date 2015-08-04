@@ -87,7 +87,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         configFile = cfgfile.asInstanceOf[String]
       }
 
-      val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
+      val (loadConfigs, failStr) = com.ligadata.Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         Shutdown(1)
