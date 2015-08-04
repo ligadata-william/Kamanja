@@ -135,7 +135,7 @@ object MetadataAPIImpl extends MetadataAPI {
                                "JAR_PATHS","JAR_TARGET_DIR","ROOT_DIR","GIT_ROOT","SCALA_HOME","JAVA_HOME","MANIFEST_PATH","CLASSPATH","NOTIFY_ENGINE","SERVICE_HOST",
                                "ZNODE_PATH","ZOOKEEPER_CONNECT_STRING","COMPILER_WORK_DIR","SERVICE_PORT","MODEL_FILES_DIR","TYPE_FILES_DIR","FUNCTION_FILES_DIR",
                                "CONCEPT_FILES_DIR","MESSAGE_FILES_DIR","CONTAINER_FILES_DIR","CONFIG_FILES_DIR","MODEL_EXEC_LOG","NODE_ID","SSL_CERTIFICATE","SSL_PASSWD", "DO_AUTH","SECURITY_IMPL_CLASS",
-                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG")
+                               "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS","AUDIT_IMPL_JAR", "DO_AUDIT","AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG","METADATANODEID")
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -161,9 +161,11 @@ object MetadataAPIImpl extends MetadataAPI {
    *  getHealthCheck - will return all the health-check information for the nodeId specified. 
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
    */
-  def getHealthCheck(nodeId: List[String] = List[String]()): String = {
-     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo, ErrorCodeConstants.Add_Type_Successful)
-     apiResult.toString
+  def getHealthCheck(nodeId: String = ""): String = {
+    println("Get these beats "+nodeId)
+    val ids = parse(nodeId).values.asInstanceOf[List[String]]
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.Add_Type_Successful)
+    apiResult.toString
   }
   
   /**
@@ -171,7 +173,7 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def clockNewActivity: Unit= {
     if (heartBeat != null)
-      heartBeat.SetMainData("Node" + "_metadata")
+      heartBeat.SetMainData("MetadataNodeID" + metadataAPIConfig.getProperty("METADATANODEID").toString)
   }
 
 
@@ -6261,11 +6263,11 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   private def InitHearbeat: Unit = {
-    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "Metadata"
+    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "METADATANODEID" + metadataAPIConfig.getProperty("METADATANODEID").toString
     if (zkHeartBeatNodePath.size > 0) {  
       heartBeat = new HeartBeatUtil
       heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath,3000, 3000, 5000) // for every 5 secs
-      heartBeat.SetMainData("Node" + "_metadata")
+      heartBeat.SetMainData("MetadataNodeID" + metadataAPIConfig.getProperty("METADATANODEID").toString)
       MonitorAPIImpl.startMetadataHeartbeat
     }
 

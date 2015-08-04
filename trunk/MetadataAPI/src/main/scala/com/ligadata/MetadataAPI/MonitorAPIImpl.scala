@@ -34,7 +34,7 @@ object MonitorAPIImpl {
   def updateHeartbeatInfo(eventType: String, eventPath: String, eventPathData: Array[Byte], children: Array[(String, Array[Byte])]): Unit = {
     
     try {
-      if (eventPathData == null) println()
+      if (eventPathData == null) return
       logger.debug("eventType ->" + eventType)
       logger.debug("eventPath ->" + eventPath)
       if (eventPathData == null) {  logger.debug("eventPathData is null"); return; }
@@ -42,7 +42,7 @@ object MonitorAPIImpl {
     
       // Ok, we got an event, parse to see what it is.
       var pathTokens = eventPath.split('/')
-    
+     
       // We are guaranteed the pathTokens.length - 2 is either a Metadata or Engine
       var componentName = pathTokens(pathTokens.length - 2)
       var nodeName = pathTokens(pathTokens.length - 1)
@@ -65,20 +65,37 @@ object MonitorAPIImpl {
    *                    by Kamanja Engine instances.
    * @return - String
    */
-   def getHeartbeatInfo :String = {
+   def getHeartbeatInfo(ids: List[String]) :String = {
      var ar = healthInfo.values.toArray
      var isFirst = true
      var resultJson = "["
-     if (healthInfo != null && ar.length > 0) {
-       for(i <- 0 until ar.length ) {
-         if (!isFirst) resultJson = resultJson + ","
-         resultJson = resultJson + ar(i).asInstanceOf[String]
-       }
-     } 
+  
+     // If List is empty, then return everything. otherwise, return only those items that are present int he
+     // list    
+     if (ids.length > 0) {
+       ids.foreach (id => {
+         if (healthInfo.contains(id)) {
+           if (!isFirst) resultJson = resultJson + ","
+           resultJson = resultJson +  healthInfo(id).asInstanceOf[String]
+           isFirst = false
+         }
+       })
+     } else {
+       if (healthInfo != null && ar.length > 0) {
+         for(i <- 0 until ar.length ) {
+           if (!isFirst) resultJson = resultJson + ","
+           resultJson = resultJson + ar(i).asInstanceOf[String]
+           isFirst = false
+         }
+       }      
+     }
      return resultJson + "]"
      
    }
    
+   /**
+    * startMetadataHeartbeat - will be called internally by the MetadataAPI task to update the healthcheck every 5 seconds.
+    */
    def startMetadataHeartbeat: Unit = {
      var _exec = Executors.newFixedThreadPool(1)
 

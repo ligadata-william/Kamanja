@@ -616,5 +616,5 @@ trait MetadataAPI {
    *  getHealthCheck - will return all the health-check information for the nodeId specified. 
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
    */
-  def getHealthCheck(nodeId: List[String]): String 
+  def getHealthCheck(nodeId: String): String 
 }
