@@ -162,7 +162,6 @@ object MetadataAPIImpl extends MetadataAPI {
    *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
    */
   def getHealthCheck(nodeId: String = ""): String = {
-    println("Get these beats "+nodeId)
     val ids = parse(nodeId).values.asInstanceOf[List[String]]
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.Add_Type_Successful)
     apiResult.toString
