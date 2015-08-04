@@ -233,19 +233,20 @@ class CompilerProxy{
 
       // This may be temporary, but need to lowercase all the packages name since they serve as namespaces and MsgDef lowercases them
       var tPackageName = extractPackageNameFromSource(classStrVer)
-      replacePackageNameInSource(classStrVer,tPackageName.toLowerCase)
-      replacePackageNameInSource(classStrVerJava,tPackageName.toLowerCase)
-      replacePackageNameInSource(classStrNoVer,tPackageName.toLowerCase)
-      replacePackageNameInSource(classStrNoVerJava,tPackageName.toLowerCase)
+      var tPackageNameNoVer = extractPackageNameFromSource(classStrNoVer)
+      var r_classStrVer = replacePackageNameInSource(classStrVer,tPackageName.toLowerCase)
+      var r_classStrVerJava = replacePackageNameInSource(classStrVerJava,tPackageName.toLowerCase)
+      var r_classStrNoVer = replacePackageNameInSource(classStrNoVer,tPackageNameNoVer.toLowerCase)
+      var r_classStrNoVerJava = replacePackageNameInSource(classStrNoVerJava,tPackageNameNoVer.toLowerCase)
       
       
       // Save the message.scala, messageFactory.java and message_local.scala in the work directory
       val msgDefClassFilePath = compiler_work_dir + "/" + realClassName + ".scala"
-      dumpStrTextToFile(classStrVer,msgDefClassFilePath)
+      dumpStrTextToFile(r_classStrVer,msgDefClassFilePath)
       val msgDefHelperClassFilePath = compiler_work_dir + "/" + realClassName + "Factory.java"
-      dumpStrTextToFile(classStrVerJava,msgDefHelperClassFilePath)
+      dumpStrTextToFile(r_classStrVerJava,msgDefHelperClassFilePath)
       val msgDefClassFilePathLocal = compiler_work_dir + "/" + realClassName + "_local.scala"
-      dumpStrTextToFile(classStrNoVer,msgDefClassFilePathLocal)
+      dumpStrTextToFile(r_classStrNoVer,msgDefClassFilePathLocal)
 
       var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
 
@@ -281,7 +282,7 @@ class CompilerProxy{
 
       // This is a java file
       val msgDefHelperClassFilePathLocal = compiler_work_dir + "/" + realClassName + "Factory.java"
-      dumpStrTextToFile(classStrNoVerJava,msgDefHelperClassFilePathLocal)
+      dumpStrTextToFile(r_classStrNoVerJava,msgDefHelperClassFilePathLocal)
 
       logger.debug("Generating No Versioned JarFile for "+msgDefClassFilePath)
       var(status2,jarFileNoVersion) = jarCode(msgDef.nameSpace,
@@ -956,10 +957,6 @@ class CompilerProxy{
         classPath = depJars
       }
     }
-    println("COMPILER_PROXY: List of all the dependencies needed to compile this model")
-    println("==========================================")
-    combinedDeps.foreach (x=>println(x))
-    println("=============End Of list==================")
     (classPath,depElems,combinedDeps,nonTypeDeps)
   }
   
@@ -993,7 +990,7 @@ class CompilerProxy{
    * replacePackageNameInSource - Replace package name with a different package.  Models will add version, and Messages need to 
    *                              change to lowercase.
    */
-  private def replacePackageNameInSource(sourceCode: String, newPackageName: String, version: String = ""): String = {
+  private def replacePackageNameInSource(sourceCode: String, newPackageName: String, version: String = ";\n"): String = {
     
     var codeBeginIndx = sourceCode.indexOf("import")
     var repackagedCode = "package "+ newPackageName + version + sourceCode.substring(codeBeginIndx)
