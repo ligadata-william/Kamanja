@@ -444,6 +444,12 @@ cp -rf * $installPath/input/application-1-HelloWorld/template
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
 
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/application-1-HelloWorld/metadata/config
+
+cd $srcPath/SampleApplication/Medical/Configs
+cp -rf * $installPath/input/application-2-Healthcare/metadata/config
+
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
