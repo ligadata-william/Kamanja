@@ -100,7 +100,7 @@ echo $bin
 echo "clean, package and assemble $srcPath ..."
 
 cd $srcPath
-sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly
+#sbt clean package FatafatManager/assembly MetadataAPI/assembly KVInit/assembly MethodExtractor/assembly SimpleKafkaProducer/assembly NodeInfoExtract/assembly ExtractData/assembly MetadataAPIService/assembly JdbcDataCollector/assembly
 
 # recreate eclipse projects
 #echo "refresh the eclipse projects ..."
@@ -443,6 +443,12 @@ cp -rf * $installPath/input/application-1-HelloWorld/template
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/application-1-HelloWorld/metadata/config
+
+cd $srcPath/SampleApplication/Medical/Configs
+cp -rf * $installPath/input/application-2-Healthcare/metadata/config
 
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
