@@ -3328,7 +3328,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
     } catch {
       case e: Exception => {
-        apiResult=new ApiResult(ErrorCodeConstants.Failure, "AddModel", null, e.getStackTraceString).toString
+        apiResult=new ApiResult(ErrorCodeConstants.Failure, "AddModel", null,"Failed to compile model. Unexpected error occurred. Please see logs for more information.").toString
       }
     }
     apiResult
@@ -5518,7 +5518,8 @@ object MetadataAPIImpl extends MetadataAPI {
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
     apiResult.toString()
   }
-  
+
+
   /**
    * 
    */

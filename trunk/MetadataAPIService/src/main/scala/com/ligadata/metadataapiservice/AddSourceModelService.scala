@@ -8,6 +8,7 @@ import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import com.ligadata.fatafat.metadata._
+import scala.collection.immutable.Map
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
@@ -46,29 +47,16 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
   }
 
   def processJava(sourceCode:String) = {
-
     logger.debug("Requesting AddSourceModel JAVA.")
-
-    //var nameVal = APIService.extractNameFromPMML(pmmlStr)
-
-    /*var modelName=""
-    val regex=" \"([^\"]*)\"(.*$)".r
-
-    val arr=sourceCode.split("\n")
-    for(i <- arr){
-      if(i.contains("ModelName")){
-        modelName=(regex.findFirstIn(i).getOrElse("No Match").replace("\"","")).trim
-      }
-    }
-    */
     val usersModelName=userid.getOrElse("")+"."+modelname.getOrElse("")
     logger.debug("user model name is: "+usersModelName)
 
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
-	   // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
 	    requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
-    } else {
-      //def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
+    }else if((modelname.getOrElse(""))=="") {
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Failed to add model. No model configuration name supplied. Please specify in the header the model configuration name where the key is 'modelname' and the value is the name of the configuration.").toString )
+    }
+    else {
       val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"java",usersModelName,userid)
       requestContext.complete(apiResult)
     }
@@ -92,7 +80,10 @@ class AddSourceModelService(requestContext: RequestContext, userid:Option[String
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("insert","model"))) {
      // MetadataAPIImpl.logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.INSERTOBJECT,sourceCode,AuditConstants.FAIL,"",nameVal)
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,  "Error:UPDATE not allowed for this user").toString )
-    } else {
+    }else if((modelname.getOrElse(""))=="") {
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null,"Failed to add model. No model configuration name supplied. Please specify in the header the model configuration name where the key is 'modelname' and the value is the name of the configuration." ).toString )
+    }
+    else {
       //def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
       val apiResult = MetadataAPIImpl.AddModelFromSource(sourceCode,"scala",usersModelName,userid)
       requestContext.complete(apiResult)
