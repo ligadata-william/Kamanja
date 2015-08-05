@@ -1945,7 +1945,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			          
 			          val collCollType : BaseTypeDef = if (containerType.ElementTypes.size > 0) containerType.ElementTypes.last else null
 			          val collCollContainer : ContainerTypeDef  = if (collCollType.isInstanceOf[ContainerTypeDef]) collCollType.asInstanceOf[ContainerTypeDef] else null
-			          val collCollElemType : BaseTypeDef = if (collCollContainer.ElementTypes.size > 0) collCollContainer.ElementTypes.last else null
+			          val collCollElemType : BaseTypeDef = if (collCollContainer != null && collCollContainer.ElementTypes.size > 0) {
+			        	  collCollContainer.ElementTypes.last 
+			          } else {
+			        	  null
+			          }
 					  val collAttrContainer  : ContainerTypeDef = if (collCollElemType != null && ctx.MetadataHelper.isContainerWithFieldOrKeyNames(collCollElemType)) {
 						  collCollElemType match {
 						    case s : StructTypeDef => collCollElemType.asInstanceOf[StructTypeDef]
@@ -1971,26 +1975,24 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				    		  (null,"Any",false)
 				    	  }
 				    	  Array[(String,Boolean,BaseTypeDef)]((attrStr,isContainerWithFields,attrType))
-				      } else {	
-				        
+				      } else {	        
 				    	  /** 
-				    	   *  The assumption HAD been that 'ident' arguments to the Iterable function referred to field names of a
-				    	   *  structure or mapped message container.  NOW there is an exception.  It is also possible to refer to the entire
-				    	   *  element of the Iterable with the '_each' member variable used in the applied function on the member of the Iterable.
-				    	   *  
-				    	   *  Check that here and if it is '_each' (current value of ctx.applyElementName) let it pass, filling out the triple of course.
+				    	   *  See if the constant value refers to the entire element of the Iterable ... i.e., the '_each' 
+				    	   *  member variable is present.
 				    	   */
 				    	  val collTypeInfo : Array[(String,Boolean,BaseTypeDef)] = if (constNode.Value.toString == ctx.applyElementName) {
-				    		  val isContainerWithFields = false
-				    		  val collCollElemTypeStr : String = collCollElemType.typeString
-				    		  val collCollContainerTypeStr : String = collCollContainer.typeString
-				    		  Array[(String,Boolean,BaseTypeDef)]((collCollContainerTypeStr,isContainerWithFields,collCollContainer))
-				    		  //Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollElemType))
-				    	  } else {
-					    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
-					    	  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
-					    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
-				    	  }
+				    		  val (collCollElemTypeStr,isContainerWithFields, typedef) : (String, Boolean, BaseTypeDef) = if (collCollType == null) {
+				    				  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference a valid type")
+				    				  ("Unknown field", false, null)
+				    			  } else {
+				    				  (collCollType.typeString, false, collCollType)
+				    			  }
+	  				    		  Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollContainer))
+				    		  } else {
+						    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
+						    	  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
+						    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
+				    		  }
 				        
 				      	  collTypeInfo
 				      }
