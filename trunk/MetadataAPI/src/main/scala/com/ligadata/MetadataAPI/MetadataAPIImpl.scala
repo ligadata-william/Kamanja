@@ -6262,7 +6262,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   private def InitHearbeat: Unit = {
-    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "METADATANODEID" + metadataAPIConfig.getProperty("METADATANODEID").toString
+    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "Node" + metadataAPIConfig.getProperty("NODE_ID").toString
     if (zkHeartBeatNodePath.size > 0) {  
       heartBeat = new HeartBeatUtil
       heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath,3000, 3000, 5000) // for every 5 secs
