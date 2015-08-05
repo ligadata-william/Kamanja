@@ -383,7 +383,14 @@ class CompilerProxy{
       if (sourceLanguage.equalsIgnoreCase("java")) {
         return compileRc
       }
-      val mvCmd : String = s"mv $packageRoot $compiler_work_dir/$moduleName/"
+      
+      /** get the top level package name */
+      val packageLine : String = sourceCode.takeWhile(ch => ch != '\n')
+      val pkgPattern = "package[ \t][ \t]*([A-Za-z0-9_.][A-Za-z0-9_.]+).*".r
+      val pkgPattern(fullpkgName) = packageLine
+      val topLevelPkg : String = fullpkgName.split('.').head
+      
+      val mvCmd : String = s"mv $topLevelPkg $compiler_work_dir/$moduleName/"
       val mvCmdRc : Int = Process(mvCmd).!
       if (mvCmdRc != 0) {
         logger.warn(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")

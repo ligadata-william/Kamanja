@@ -194,15 +194,19 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		    	val legitSz : Int = aliasSpcPair.filter(each => each.split(',').size == 2).size /** insist on only 2 items in each commma-delimited string */
 		    	if (pathLen == legitSz) {
 		    		val userSupplied : Array[(String,String)] = aliasSpcPair.map(each => {
-		    			val pair : Array[String] = each.split('.')
-		    			namespaceSearchMap(pair(0).trim) = pair(1).trim
-		    			(pair(0).trim,pair(1).trim)
+		    			val (alias, nmspc) : (String,String) = (each.split(',').head.trim, each.split(',').last.trim) 
+		    			/** build up the map so namespaces can be found by their alias */
+		    			namespaceSearchMap(alias) = nmspc
+		    			/** add the cleaned up alias and path pairs to the userSupplied array that will be considered first before the defaults */
+		    			(alias,nmspc)
 		    		})
-		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
-		    		(Array[(String,String)]() ++ namespaceSearchPathDefault) ++ userSupplied
+		    		/** Add the default alias/namespace into the namespaceSearchMap so defaults also can be found by alias */
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1) = pair._2)
+		    		/** Create the nameSpcSearchPath... user supplied namespaces are considered before the defaults */
+		    		(Array[(String,String)]() ++ userSupplied ++ namespaceSearchPathDefault)
 		    	} else {
 		    		PmmlError.logError(this, s"Namespace specification is invalid ... either omit the NamespaceSearchPath DataField or provide one or more ${'"'}namespace alias , full.pkg.name.space${'"'} strings as NamespaceSearchPath's enumerated values")
-		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1)=pair._2)
+		    		namespaceSearchPathDefault.foreach(pair => namespaceSearchMap(pair._1) = pair._2)
 		    		Array[(String,String)]() ++ namespaceSearchPathDefault
 		    	}
 		  	} else {
@@ -214,6 +218,34 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	  	nmSpcs
 	}
 
+	/** 
+	 *  Answer the namespaces in the search path that are not contained in the default search path (i.e., not system or pmml).
+	 *  Note that it is possible to find the system and pmml in the explicit search path in a model when the author wants to 
+	 *  change the ordering of udfs or types in some application specific way.  That is, the system and pmml don't always have
+	 *  to be last in the search path. 
+	 *  @return Array[(String,String)] with the specified paths.
+	 *  
+	 */
+	def namespaceSearchPathSansDefaults : Array[(String,String)] = {
+		namespaceSearchPath.diff(namespaceSearchPathDefault)
+	}
+	
+	/** 
+	 *  Answer the paths of the namespace search path pairs that are not in the default search path.
+	 *  @return array of search paths
+	 */
+	def namespaceSearchPathSansDefaultsPathsOnly : Array[String] = {
+		val nmspcSansDefaults : Array[(String,String)] = namespaceSearchPathSansDefaults
+		nmspcSansDefaults.map(pair => pair._2)
+	}
+	
+	/** 
+	 *  Answer the paths of the namespace search path pairs that are not in the default search path.
+	 *  @return array of search path aliases
+	 */
+	def namespaceSearchPathSansDefaultsAliasesOnly : Array[String] = {
+		namespaceSearchPathSansDefaults.map(pair => pair._1)
+	}
 	
 	/** 
 	 *  When expandCompoundFieldTypes is specified, any container.subcontainer.field... reference has the type 

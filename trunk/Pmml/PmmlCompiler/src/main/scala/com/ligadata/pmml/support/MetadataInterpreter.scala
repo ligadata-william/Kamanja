@@ -231,7 +231,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		containerType = if (nmSpc != null) getContainerWithNamesType(nmSpc, containerTypeName) else null
 	  	} else {
 		  	breakable {
-				ctx.namespaceSearchPath.foreach( nmspc => {			
+		  		val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmspc => {			
 					val cntnr : ContainerTypeDef = getContainerWithNamesType(nmspc._2, name)
 					if (cntnr != null) {
 						containerType = cntnr
@@ -285,7 +286,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		containerType = if (nmSpc != null) getContainerType(nmSpc, containerTypeName) else null
 	  	} else {
 		  	breakable {
-				ctx.namespaceSearchPath.foreach( nmspc => {			
+				val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmspc => {			
 					val cntnr : ContainerTypeDef = getContainerType(nmspc._2, name)
 					if (cntnr != null) {
 						containerType = cntnr
@@ -328,7 +330,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		attr = if (nmSpc != null) mgr.ActiveAttribute(nmSpc, restOfName) else null
 	  	} else {
 		  	breakable {
-				ctx.namespaceSearchPath.foreach( nmspc => {			
+				val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmspc => {			
 					attr  = mgr.ActiveAttribute(nmspc._2, name)
 					if (attr != null) {
 						break
@@ -398,7 +401,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 				} else { /** just one unqualified name */
 					/** use the namespaceSearchPath elements for the namespace until a match or all possibilities exhausted */
 
-					ctx.namespaceSearchPath.foreach( nmspc => {			
+					val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+					nmspcSrchPath.foreach( nmspc => {			
 						val nmspFcns : Set[FunctionDef] = mgr.FunctionsAvailable(nmspc._2,fcnName)
 						if (functions != null && nmspFcns != null && nmspFcns.size > 0) {
 						  functions ++= nmspFcns
@@ -470,7 +474,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		}
 	  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
 	  		breakable {
-			  	ctx.namespaceSearchPath.foreach( path => {
+			  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( path => {
 			  		buffer.clear
 			  		buffer.append(path._2)
 			  		buffer.append(".")
@@ -518,7 +523,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		}
 	  	} else { /** prefix the sans namespace key with each namespace in the search path and try to find one */
 			breakable {
-				ctx.namespaceSearchPath.foreach( path => {
+				val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( path => {
 			  		buffer.clear
 			  		buffer.append(path._2)
 			  		buffer.append(".")
@@ -544,7 +550,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 		var baseType : BaseTypeDef = null
 		val withNmSpc : Boolean = true
 		breakable {
-		  	ctx.namespaceSearchPath.foreach( nmSpc => {
+		  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmSpc => {
 		  		val (typeStrWOut, baseTypeWOut) = getDDictFieldType(nmSpc._2, nm : String, ! withNmSpc)
 		  		if (baseTypeWOut != null) {
 					typeStr = typeStrWOut
@@ -591,7 +598,11 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 				val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(fldType)
 				/** verify it is present in the metadata and get metadata description for it */
 				fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, scalaVersionOfPmmlBuiltinType))
-				fldTypedef.typeString
+				if (fldTypedef != null) {
+					fldTypedef.typeString
+				} else {
+					"None"
+				}
 			}
 		} else null 
 		(scalaType,fldTypedef)
@@ -606,7 +617,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 		var baseType : BaseTypeDef = null
 		val withNmSpc : Boolean = true
 		breakable {
-		  	ctx.namespaceSearchPath.foreach( nmSpc => {
+		  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+			nmspcSrchPath.foreach( nmSpc => {
 		  		val (typeStrWOut, baseTypeWOut) = getXDictFieldType(nmSpc._2, nm : String, ! withNmSpc)
 		  		if (baseTypeWOut != null) {
 					typeStr = typeStrWOut
@@ -641,8 +653,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 			val alias : String =  if (fldType.contains('.')) fldType.split('.').head else null
 			val fldTypeName : String = if (fldType.contains('.')) fldType.split('.').tail.head else fldType
 			val nameSpc : String = if (alias != null && ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else nmSpc
-					
-			fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nameSpc, fldTypeName)).asInstanceOf[BaseTypeDef]
+			val nameKey : String = MdMgr.MkFullName(nameSpc, fldTypeName)
+			fldTypedef = mgr.ActiveType(nameKey).asInstanceOf[BaseTypeDef]
 			if (fldTypedef != null) {
 				fldTypedef.typeString
 			} else {
@@ -650,7 +662,11 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 				val scalaVersionOfPmmlBuiltinType : String = PmmlTypes.scalaDataType(fldType)
 				/** verify it is present in the metadata and get metadata description for it */
 				fldTypedef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, scalaVersionOfPmmlBuiltinType))
-				fldTypedef.typeString
+				if (fldTypedef != null) {
+					fldTypedef.typeString
+				} else {
+					"None"
+				}
 			}
 		} else null 
 		(scalaType,fldTypedef)
@@ -696,7 +712,8 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  		}
 	  	} else {
 			breakable {
-			  	ctx.namespaceSearchPath.foreach( nmSpc => {
+			  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmSpc => {
 			  		val fldTypedef : BaseTypeDef = mgr.ActiveType(nmSpc._2, typename)
 					if (fldTypedef != null) {
 						typeStr = fldTypedef.typeString

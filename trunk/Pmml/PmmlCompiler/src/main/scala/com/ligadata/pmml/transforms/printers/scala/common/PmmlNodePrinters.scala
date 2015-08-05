@@ -653,7 +653,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
 		
-		if (node.name == "IfElsePred1") {
+		if (node.name == "inPatientClaimDateKeysFormatted") {
 			val stop : Boolean = true
 		}
 		
@@ -851,7 +851,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 				commentBuffer.append(s"import $pkg._\n")
 			})
 		} else {
-			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML */\n")
+			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML... */\n")
 		}
 		/** Give the rest... */
 		commentBuffer.append(s"/** Other Packages... */\n")
@@ -864,6 +864,16 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
 		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
 		commentBuffer.append(s"\n")
+
+		/** Add the namespace search paths as well */
+		if (ctx.namespaceSearchPathSansDefaultsPathsOnly.size > 0) {
+			commentBuffer.append(s"/** NamespaceSearchPath elements specified in PMML */\n")
+			ctx.namespaceSearchPathSansDefaultsPathsOnly.foreach ( nmspc => {
+				commentBuffer.append(s"import $nmspc._\n")
+			})
+		} else {
+			commentBuffer.append(s"/** No NamespaceSearchPath elements in PMML... */\n")
+		}	
 		
 		commentBuffer.append(s"/**\n")
 		appName match {
