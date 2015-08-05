@@ -1,3 +1,16 @@
+Skip to content
+This repository  
+Pull requests
+Issues
+Gist
+ @ligadata-william
+ Unwatch 26
+  Unstar 7
+ Fork 5ligaDATA/Kamanja PRIVATE
+Branch: KamanjaBrew  Kamanja/trunk/SampleApplication/Telecom/metadata/model/SubscriberUsageAlert_Telecom.scala
+@ligadata-eshanligadata-eshan 2 days ago changed filenames
+1 contributor
+RawBlameHistory     293 lines (243 sloc)  11.03 kB
 // The following model generates an alert when an individual subscriber or account with sharedplan exceed usage
 // above threshold as defined by a rate plan
 // The following containers are used for lookup
@@ -263,30 +276,32 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     // generate alerts if plan limits are exceeded based on planType
     planInfo.plantype match {
       case 1 => { // shared plans
-	// exceeded plan limit
-	if ( actMonthlyUsage > planLimit ){
-	  if (actInfo.thresholdalertoptout == false) {
-	    dumpAppLog(logTag + "Creating Alert for a shared plan account " + actInfo.actno)
-	    dumpAppLog(logTag + "---------------------------")
-	    return new AccountUsageAlertResult().withAct(actInfo.actno).withCurusage(actMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
-	  }
-	}
+  // exceeded plan limit
+  if ( actMonthlyUsage > planLimit ){
+    if (actInfo.thresholdalertoptout == false) {
+      dumpAppLog(logTag + "Creating Alert for a shared plan account " + actInfo.actno)
+      dumpAppLog(logTag + "---------------------------")
+      return new AccountUsageAlertResult().withAct(actInfo.actno).withCurusage(actMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
+    }
+  }
       }
       case 2 => { // individual plans
-	// individual plan,  individual limit may have been exceeded
-	if ( subMonthlyUsage > indLimit ){
-	  if (subInfo.thresholdalertoptout == false) {
-	    dumpAppLog(logTag + "Creating alert for individual subscriber account " + rcntTxn.get.msisdn)
-	    dumpAppLog(logTag + "---------------------------")
-	    return new SubscriberUsageAlertResult().withMsisdn(rcntTxn.get.msisdn).withCurusage(subMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
-	  }
-	}
+  // individual plan,  individual limit may have been exceeded
+  if ( subMonthlyUsage > indLimit ){
+    if (subInfo.thresholdalertoptout == false) {
+      dumpAppLog(logTag + "Creating alert for individual subscriber account " + rcntTxn.get.msisdn)
+      dumpAppLog(logTag + "---------------------------")
+      return new SubscriberUsageAlertResult().withMsisdn(rcntTxn.get.msisdn).withCurusage(subMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
+    }
+  }
       }
       case _ => {
-	// unsupported plan type
-	//dumpAppLog("Unknown planType => " + planInfo.plantype)
+  // unsupported plan type
+  //dumpAppLog("Unknown planType => " + planInfo.plantype)
       }
     }
     return null
   }
 }
+Status API Training Shop Blog About Pricing
+© 2015 GitHub, Inc. Terms Privacy Security Contact Help
