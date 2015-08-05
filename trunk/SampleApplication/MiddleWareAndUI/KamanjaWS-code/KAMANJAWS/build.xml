@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<project name="KAMANJAWS" default="war">
+
+	<path id="compile.classpath">
+		<fileset dir="WebContent/WEB-INF/lib">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="D:\Setup\tomcat6\lib">
+			<include name="*.jar" />
+		</fileset>
+        <fileset dir="C:\Program Files\Java\jdk1.7.0\lib">
+            <include name="*.jar" />
+        </fileset>
+        <fileset dir="C:\Program Files\Java\jdk1.7.0\jre\lib">
+            <include name="*.jar" />
+        </fileset>
+	</path>
+
+	<target name="init">
+		<mkdir dir="build/classes" />
+		<mkdir dir="dist" />
+	</target>
+
+	<target name="compile" depends="init">
+		<javac destdir="build/classes" debug="true" srcdir="src">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+
+	<target name="war" depends="compile">
+		<war destfile="dist/KamanjaWS.war" webxml="WebContent/WEB-INF/web.xml">
+			<fileset dir="WebContent" />
+			<classes dir="build/classes" />
+		</war>
+	</target>
+
+	<target name="clean">
+		<delete dir="dist" />
+		<delete dir="build" />
+	</target>
+</project>

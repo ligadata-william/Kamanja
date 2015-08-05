@@ -2,8 +2,8 @@ package com.ligadata.pmml.transforms.rawtocooked.common
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Queue
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._

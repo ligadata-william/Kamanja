@@ -90,7 +90,7 @@ object SampleAggregator {
         aggKeys = agg.keysToMonitor.toMap
         statusData = agg.aggregatedStatusData.toMap
 
-        // Total Messages Processed - number of message out of FatafatEngine output kafka queues
+        // Total Messages Processed - number of message out of KamanjaEngine output kafka queues
         totalMsgProcessed = totalMsgProcessed + agg.getMsgProcessed()
 
         // aggregate values reported by the status queues.
@@ -169,7 +169,7 @@ class SampleAggregator  {
   def getData = aggregatedData.toMap
 
   /**
-   * processCSVMessage - Used to process messages out of the standard FatafatEngine status queue.
+   * processCSVMessage - Used to process messages out of the standard KamanjaEngine status queue.
    * @param msg - message
    * @param seedOffset - offset of the message that contains for this Status Queue.
    */
@@ -200,8 +200,8 @@ class SampleAggregator  {
   }
 
   /**
-   * processJsonMessage - this will process a message out of the FatafatEngine output kafka queue..  They are guaranteed
-   * to be JSON format as defined by the existing FatafatEngine documentation.
+   * processJsonMessage - this will process a message out of the KamanjaEngine output kafka queue..  They are guaranteed
+   * to be JSON format as defined by the existing KamanjaEngine documentation.
    * @param msg Map[String,Any] - The standard Map representation of the JSON string.
    */
   def processJsonMessage(msg: Map[String,Any]): Unit = lock.synchronized {

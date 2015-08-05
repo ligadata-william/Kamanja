@@ -1,7 +1,7 @@
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
-    <Header copyright="Barclays. Copyright 2015" description="FatafatElasticSearch">
-     <Application name="FatafatElasticSearch" version="00.01.00"/>
+    <Header copyright="Barclays. Copyright 2015" description="KamanjaElasticSearch">
+     <Application name="KamanjaElasticSearch" version="00.01.00"/>
     </Header>
 
   <!-- ===================================================================================================== -->

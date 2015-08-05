@@ -15,9 +15,9 @@ import com.ligadata.pmml.runtime._
 /**
   * Sample udfs .. com.ligadata.pmml.udfs.CustomUdfs
     This is a sample udf library to illustrate how one would add their own library of
-    functions to the Fatafat system such that they could be used in the PMML models run
+    functions to the Kamanja system such that they could be used in the PMML models run
     there.
-    The udfs used in Fatafat must be declared in an object (i.e., they are static methods
+    The udfs used in Kamanja must be declared in an object (i.e., they are static methods
     for those of you familiar with java).
     NOTE: If you want to invoke functions in the core library, make your UDF project that 
     builds your UDFs dependent on PmmlUdfs:
@@ -43,7 +43,7 @@ import com.ligadata.pmml.runtime._
     The last two arguments are paths to the json that is produced by the script looking
     into the udf jar for PmmlUdfs at the functions on the 'fullObjectPath'.
     As written, the types do not really need to be loaded into the MetadataAPI, as they 
-    have all been defined in the Fatafat metadata bootstrap.  The udfs json file must be loaded 
+    have all been defined in the Kamanja metadata bootstrap.  The udfs json file must be loaded 
     however.  The types would be needed if you introduced a type that has not been previously declared
     in the bootstrap.  If you are not sure there is no harm loading the types file.  If one of 
     the types is already present, an error will be logged to that effect.  This is probably ok,
@@ -54,7 +54,7 @@ import com.ligadata.pmml.runtime._
         <DataField name="UDFSearchPath" displayName="UDFSearchPath" dataType="container">
           <Value value="com.mycompany.pmml.udfs.CustomUdfs" property="valid"/>
         </DataField>
-    Important: Don't forget to upload your library to the Fatafat cluster.  There is an upload jar
+    Important: Don't forget to upload your library to the Kamanja cluster.  There is an upload jar
     protocol for this purpose.
   */
 object CustomUdfs extends LogTrait {

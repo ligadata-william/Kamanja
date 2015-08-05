@@ -12,19 +12,19 @@ IF %2 == "" (
         exit 1
 )
 
-set FATAFATLIBPATH=%installPath%
+set KAMANJALIBPATH=%installPath%
 
 REM *******************************
 REM Clean out prior installation
 REM *******************************
-del /s %FATAFATLIBPATH%
+del /s %KAMANJALIBPATH%
 
 REM *******************************
 REM Make the directories as needed
 REM *******************************
-mkdir %FATAFATLIBPATH%\msgdata
-mkdir %FATAFATLIBPATH%\kvstores
-mkdir %FATAFATLIBPATH%\logs
+mkdir %KAMANJALIBPATH%\msgdata
+mkdir %KAMANJALIBPATH%\kvstores
+mkdir %KAMANJALIBPATH%\logs
 
 REM *******************************
 REM Build fat-jars
@@ -35,7 +35,7 @@ echo "clean, package and assemble %srcPath% ..."
 cd %srcPath%
 call sbt clean 
 call sbt package 
-call sbt FatafatManager/assembly 
+call sbt KamanjaManager/assembly 
 call sbt MetadataAPI/assembly 
 call sbt KVInit/assembly 
 call sbt MethodExtractor/assembly 
@@ -47,12 +47,12 @@ REM cd %srcPath%
 REM sbt eclipse
 
 REM Move them into place
-echo "xcopy the fat jars to %FATAFATLIBPATH% ..."
+echo "xcopy the fat jars to %KAMANJALIBPATH% ..."
 
 cd %srcPath%
-xcopy Utils\KVInit\target\scala-2.10\KVInit* %FATAFATLIBPATH%
-xcopy MetadataAPI\target\scala-2.10\MetadataAPI* %FATAFATLIBPATH%
-xcopy FatafatManager\target\scala-2.10\FatafatManager* %FATAFATLIBPATH%
+xcopy Utils\KVInit\target\scala-2.10\KVInit* %KAMANJALIBPATH%
+xcopy MetadataAPI\target\scala-2.10\MetadataAPI* %KAMANJALIBPATH%
+xcopy KamanjaManager\target\scala-2.10\KamanjaManager* %KAMANJALIBPATH%
 
 REM *******************************
 REM xcopy jars required (more than required if the fat jars are used)
@@ -60,44 +60,44 @@ REM *******************************
 
 REM Base Types and Functions, InputOutput adapters, and original versions of things
 echo "xcopy Base Types and Functions, InputOutput adapters..."
-xcopy %srcPath%\BaseFunctions\target\scala-2.10\basefunctions_2.10-0.1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\BaseTypes\target\scala-2.10\basetypes_2.10-0.1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\InputOutputAdapters\FileSimpleInputOutputAdapters\target\scala-2.10\filesimpleinputoutputadapters_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\InputOutputAdapters\KafkaSimpleInputOutputAdapters\target\scala-2.10\kafkasimpleinputoutputadapters_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\EnvContexts\SimpleEnvContextImpl\target\scala-2.10\simpleenvcontextimpl_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\MetadataBootstrap\Bootstrap\target\scala-2.10\bootstrap_2.10-1.0.jar %FATAFATLIBPATH%
+xcopy %srcPath%\BaseFunctions\target\scala-2.10\basefunctions_2.10-0.1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\BaseTypes\target\scala-2.10\basetypes_2.10-0.1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\InputOutputAdapters\FileSimpleInputOutputAdapters\target\scala-2.10\filesimpleinputoutputadapters_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\InputOutputAdapters\KafkaSimpleInputOutputAdapters\target\scala-2.10\kafkasimpleinputoutputadapters_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\EnvContexts\SimpleEnvContextImpl\target\scala-2.10\simpleenvcontextimpl_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\MetadataBootstrap\Bootstrap\target\scala-2.10\bootstrap_2.10-1.0.jar %KAMANJALIBPATH%
 
 REM Storage jars
 echo "xcopy Storage jars..."
-xcopy %srcPath%\Storage\target\scala-2.10\storage_2.10-0.0.0.2.jar %FATAFATLIBPATH%
+xcopy %srcPath%\Storage\target\scala-2.10\storage_2.10-0.0.0.2.jar %KAMANJALIBPATH%
 
 REM Metadata jars
 echo "xcopy Metadata jars..."
-xcopy %srcPath%\Metadata\target\scala-2.10\metadata_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\MessageDef\target\scala-2.10\messagedef_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\MetadataAPI\target\scala-2.10\metadataapi_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\MetadataAPIService\target\scala-2.10\metadataapiservice_2.10-0.1.jar %FATAFATLIBPATH%
-xcopy %srcPath%\MetadataAPIServiceClient\target\scala-2.10\metadataapiserviceclient_2.10-0.1.jar %FATAFATLIBPATH% : Didn't build... Not included anymore?
-xcopy %srcPath%\Pmml\MethodExtractor\target\scala-2.10\methodextractor_2.10-1.0.jar %FATAFATLIBPATH%
+xcopy %srcPath%\Metadata\target\scala-2.10\metadata_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\MessageDef\target\scala-2.10\messagedef_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\MetadataAPI\target\scala-2.10\metadataapi_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\MetadataAPIService\target\scala-2.10\metadataapiservice_2.10-0.1.jar %KAMANJALIBPATH%
+xcopy %srcPath%\MetadataAPIServiceClient\target\scala-2.10\metadataapiserviceclient_2.10-0.1.jar %KAMANJALIBPATH% : Didn't build... Not included anymore?
+xcopy %srcPath%\Pmml\MethodExtractor\target\scala-2.10\methodextractor_2.10-1.0.jar %KAMANJALIBPATH%
 
-REM Fatafat jars
-echo "xcopy Fatafat jars..."
-xcopy %srcPath%\FatafatBase\target\scala-2.10\fatafatbase_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\FatafatManager\target\scala-2.10\fatafatmanager_2.10-1.0.jar %FATAFATLIBPATH%
+REM Kamanja jars
+echo "xcopy Kamanja jars..."
+xcopy %srcPath%\KamanjaBase\target\scala-2.10\kamanjabase_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\KamanjaManager\target\scala-2.10\kamanjamanager_2.10-1.0.jar %KAMANJALIBPATH%
 
 REM Pmml compile and runtime jars
 echo "xcopy Pmml compile and runtime jars..."
-xcopy %srcPath%\Pmml\PmmlRuntime\target\scala-2.10\pmmlruntime_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\Pmml\PmmlUdfs\target\scala-2.10\pmmludfs_2.10-1.0.jar %FATAFATLIBPATH%
-xcopy %srcPath%\Pmml\PmmlCompiler\target\scala-2.10\pmmlcompiler_2.10-1.0.jar %FATAFATLIBPATH%
+xcopy %srcPath%\Pmml\PmmlRuntime\target\scala-2.10\pmmlruntime_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\Pmml\PmmlUdfs\target\scala-2.10\pmmludfs_2.10-1.0.jar %KAMANJALIBPATH%
+xcopy %srcPath%\Pmml\PmmlCompiler\target\scala-2.10\pmmlcompiler_2.10-1.0.jar %KAMANJALIBPATH%
 
 REM sample configs
 REMecho "xcopy sample configs..."
-xcopy %srcPath%\Utils\KVInit\src\main\resources\*cfg %FATAFATLIBPATH%
+xcopy %srcPath%\Utils\KVInit\src\main\resources\*cfg %KAMANJALIBPATH%
 
 REM other jars 
 echo "xcopy other jars..."
-xcopy %srcPath%\..\externals\log4j\log4j-1.2.17.jar %FATAFATLIBPATH%
+xcopy %srcPath%\..\externals\log4j\log4j-1.2.17.jar %KAMANJALIBPATH%
 
 REM *******************************
 REM COPD messages data prep
@@ -113,17 +113,17 @@ REM 7za -tgzip messages_old_format.csv.gz messages_old_format.csv
 REM 7za -tgzip messages_new_format_all.csv.gz messages_new_format_all.csv
 REM 7za -tgzip messages50_2014_BIOH.csv.gz messages50_2014_BIOH.csv
 
-xcopy *gz %FATAFATLIBPATH%\msgdata\
+xcopy *gz %KAMANJALIBPATH%\msgdata\
 
 REM *******************************
-REM All that is left is to run the FatafatManager
+REM All that is left is to run the KamanjaManager
 REM *******************************
 
 REM no debug
-REM java -jar %FATAFATLIBPATH%\FatafatManager-1.0 --config /tmp/FatafatInstall/COPD.cfg
+REM java -jar %KAMANJALIBPATH%\KamanjaManager-1.0 --config /tmp/KamanjaInstall/COPD.cfg
 
 REM debug version intended for eclipse attached debugging
-REM java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar %FATAFATLIBPATH%/FatafatManager-1.0 --config /tmp/FatafatInstall/COPD.cfg
+REM java -Xdebug -Xrunjdwp:transport=dt_socket,address=8998,server=y -jar %KAMANJALIBPATH%/KamanjaManager-1.0 --config /tmp/KamanjaInstall/COPD.cfg
 
 
-echo "installFatafat complete..."
+echo "installKamanja complete..."
