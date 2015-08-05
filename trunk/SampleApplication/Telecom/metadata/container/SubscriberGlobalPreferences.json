@@ -20,6 +20,9 @@
 		"Type": "System.Long"
 	  }
 	],
+	"PrimaryKey": [
+	  "PrefType"
+	],
 	"PartitionKey": [
 	  "PrefType"
 	]

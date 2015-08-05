@@ -28,6 +28,9 @@
 		"Type": "System.Boolean"
 	  }
 	],
+	"PrimaryKey": [
+	  "msisdn"
+	],
 	"PartitionKey": [
 	  "msisdn"
 	]
