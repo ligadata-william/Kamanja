@@ -163,7 +163,7 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def getHealthCheck(nodeId: String = ""): String = {
     val ids = parse(nodeId).values.asInstanceOf[List[String]]
-    var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.Add_Type_Successful)
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "GetHeartbeat", MonitorAPIImpl.getHeartbeatInfo(ids), ErrorCodeConstants.GetHeartbeat_Success)
     apiResult.toString
   }
   
