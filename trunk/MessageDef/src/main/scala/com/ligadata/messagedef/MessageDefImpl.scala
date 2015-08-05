@@ -699,8 +699,9 @@ class MessageDefImpl {
             conceptsList = getConcepts(message, key)
           }
         }
-        // if (ele == null)
-        //   throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (message.get("Fixed").get.toString().toLowerCase == "true" && ele == null)
+          throw new Exception("Either Fields or Elements or Concepts  do not exist in the Fixed Message/Container " + message.get("Name").get.toString())
 
         if (ele != null)
           ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)
