@@ -34,8 +34,7 @@ class FatafatServer(var mgr: FatafatManager, port: Int) extends Runnable {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
+        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -66,8 +65,7 @@ class ConnHandler(var socket: Socket, var mgr: FatafatManager) extends Runnable 
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace) }
+        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       socket.close;
     }
@@ -310,8 +308,7 @@ class FatafatManager {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to load Wait Processing Info."+"\nStackTrace:"+stackTrace)}
+          LOG.error("Failed to load Wait Processing Info.")}
       }
 
       FatafatMetadata.InitBootstrap
@@ -365,8 +362,7 @@ class FatafatManager {
 
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to initialize. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         // LOG.debug("Failed to initialize. Message:" + e.getMessage + "\n" + e.printStackTrace)
         retval = false
       }
@@ -515,6 +511,8 @@ class FatafatManager {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
         case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("\nStackTrace:"+stackTrace)
         }
       }
     }

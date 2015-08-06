@@ -64,7 +64,7 @@ object APIInit {
     } catch {
       case e: Exception => {
 	     val stackTrace =   StackTrace.ThrowableTraceString(e)
-              logger.error("Stacktrace:"+stackTrace)
+              logger.debug("Stacktrace:"+stackTrace)
       }
     }
   }

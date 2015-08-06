@@ -58,7 +58,7 @@ class SimpleKerberosAdapter extends SecurityAdapter {
     } catch {
         case uae: Exception => {
           val stackTrace = StackTrace.ThrowableTraceString(uae)
-          log.error ("\nStackTrace:"+stackTrace)
+          log.debug ("\nStackTrace:"+stackTrace)
           return false
         }
     }
@@ -70,7 +70,7 @@ class SimpleKerberosAdapter extends SecurityAdapter {
     } catch{
       case le: LoginException => {
         val stackTrace = StackTrace.ThrowableTraceString(le)
-        log.error ("\nStackTrace:"+stackTrace)
+        log.debug ("\nStackTrace:"+stackTrace)
         return false
       }
     } 
@@ -83,7 +83,7 @@ class SimpleKerberosAdapter extends SecurityAdapter {
     } catch {
       case se: SecurityException => {
         val stackTrace = StackTrace.ThrowableTraceString(se)
-        log.error("\nStackTrace:"+stackTrace)
+        log.debug("\nStackTrace:"+stackTrace)
         return false
       }
     } 

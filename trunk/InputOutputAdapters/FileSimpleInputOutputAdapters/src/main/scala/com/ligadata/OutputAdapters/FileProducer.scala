@@ -55,8 +55,7 @@ class FileProducer(val inputConfig: AdapterConfiguration, cntrAdapter: CountersA
       cntrAdapter.addCntr(key, 1)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to send :" + e.getMessage+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to send :" + e.getMessage)
       }
     }
   }

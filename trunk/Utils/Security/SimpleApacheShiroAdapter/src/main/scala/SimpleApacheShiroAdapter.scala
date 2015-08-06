@@ -78,30 +78,29 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
         currentUser.login(token);
       } catch {
         case uae:UnknownAccountException => {
-          val stackTrace = StackTrace.ThrowableTraceString(uae)
-          log.error("SimpleApacheShiroAdapter: There is no user with username of " + token.getPrincipal()+"\nStackTrace:"+stackTrace);
+          log.error("SimpleApacheShiroAdapter: There is no user with username of " + token.getPrincipal());
           return false
         } 
         case ice:IncorrectCredentialsException => {
-          val stackTrace = StackTrace.ThrowableTraceString(ice)
-          log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!"+"\nStackTrace:"+stackTrace);
+          
+          log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
           return false
         } 
         case lae:LockedAccountException => {
-          val stackTrace = StackTrace.ThrowableTraceString(lae)
+          
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
-                    "Please contact your administrator to unlock it."+"\nStackTrace:"+stackTrace);
+                    "Please contact your administrator to unlock it.");
           return false
         }
         // ... catch more exceptions here, maybe custom ones specific to your application?
         case ae: AuthenticationException => {
-          val stackTrace = StackTrace.ThrowableTraceString(ae)
-          log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage()+"\nStackTrace:"+stackTrace)
+          
+          log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
           return false
         }
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage()+"\nStackTrace:"+stackTrace)
+          
+          log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage())
           return false
         }
       }

@@ -75,7 +75,7 @@ class CustPartitioner(props: VerifiableProperties) extends Partitioner {
       case e: Exception =>
         {
           val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.error("StackTrace:"+stackTrace)
+          logger.debug("StackTrace:"+stackTrace)
         }
         // println("Exception found, so , Bucket : 0")
         return 0
@@ -120,7 +120,7 @@ object SimpleKafkaProducer {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         sys.exit(1)
     }
   }
@@ -164,8 +164,8 @@ object SimpleKafkaProducer {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:"+stackTrace)
-        println("Error reading from a file " + e.printStackTrace()+"\nStackTrace:"+stackTrace)}
+        logger.debug("Stacktrace:"+stackTrace)
+        println("Error reading from a file ")}
     } finally {
       if (bis != null) bis.close
     }
@@ -601,7 +601,7 @@ object SimpleKafkaProducer {
         executor.awaitTermination(Long.MaxValue, TimeUnit.NANOSECONDS);
       } catch {
         case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.error("StackTrace:"+stackTrace)}
+          logger.debug("StackTrace:"+stackTrace)}
       }
     }
 

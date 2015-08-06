@@ -109,7 +109,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -123,7 +123,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
   } catch {
     case e: Exception => {
       val stackTrace = StackTrace.ThrowableTraceString(e)
-      logger.error("StackTrace:"+stackTrace)
+      logger.debug("StackTrace:"+stackTrace)
       throw new ConnectionFailedException("Unable to connect to hbase at " + hostnames + ":" + e.getMessage())
     }
   }
@@ -137,8 +137,8 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
         ugi.checkTGTAndReloginFromKeytab
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Failed to relogin into HBase. Message:" + e.getMessage()+"\nStackTrace:"+stackTrace)
+        
+        logger.error("Failed to relogin into HBase. Message:" + e.getMessage())
         // Not throwing exception from here
       }
     }
@@ -215,7 +215,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new KeyNotFoundException(e.getMessage())
       }
     }
@@ -240,7 +240,7 @@ class KeyValueHBase(parameter: PropertyMap) extends DataStore {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new KeyNotFoundException(e.getMessage())
       }
     }

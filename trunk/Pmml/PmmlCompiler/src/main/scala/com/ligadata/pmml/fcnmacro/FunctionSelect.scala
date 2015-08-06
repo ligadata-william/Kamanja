@@ -1207,7 +1207,6 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
           }
         } catch {
           case e: Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
             PmmlError.logError(ctx, "Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
             return false
           }

@@ -71,7 +71,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         //LOG.error("Failed to get classname :" + clsName)
-          logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -105,7 +105,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         // LOG.error("Failed to get classname :" + clsName)
-        logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }

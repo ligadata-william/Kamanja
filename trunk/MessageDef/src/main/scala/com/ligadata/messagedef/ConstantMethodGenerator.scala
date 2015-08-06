@@ -42,7 +42,7 @@ class ConstantMethodGenerator {
  	}catch{
 		case e:Exception =>{
 			val stackTrace = StackTrace.ThrowableTraceString(e)
-      LOG.error("Stacktrace:"+stackTrace)
+      LOG.debug("Stacktrace:"+stackTrace)
   			throw e
 		}
 	}
@@ -63,7 +63,7 @@ class ConstantMethodGenerator {
 	 	}catch{
 			case e:Exception =>{
 				val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Stacktrace:"+stackTrace)  
+        LOG.debug("Stacktrace:"+stackTrace)  
 	  			throw e
 			}
 		}
@@ -80,7 +80,7 @@ class ConstantMethodGenerator {
 	}catch{
 	    case e:Exception =>{
    	    	val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Stacktrace:"+stackTrace)
+          LOG.debug("Stacktrace:"+stackTrace)
    	  		throw e	    	
 	  	}
 	  }
@@ -125,7 +125,7 @@ class ConstantMethodGenerator {
 	  }catch{
   			case e:Exception =>{
    				val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Stacktrace:"+stackTrace)
+          LOG.debug("Stacktrace:"+stackTrace)
    			throw e	    	
 	  	}
 	}
@@ -188,7 +188,7 @@ class ConstantMethodGenerator {
 	  } catch {
       	case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Stacktrace:"+stackTrace)
+        LOG.debug("Stacktrace:"+stackTrace)
         throw e
       }
     }
@@ -218,7 +218,7 @@ class ConstantMethodGenerator {
 	} catch{
 		case e:Exception =>{
    			val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Stacktrace:"+stackTrace)
+        LOG.debug("Stacktrace:"+stackTrace)
    	  		throw e	    	
     	}
 	}
@@ -237,7 +237,7 @@ class ConstantMethodGenerator {
 	}catch{
 	  case e:Exception =>{
 	    val stackTrace = StackTrace.ThrowableTraceString(e)
-      LOG.error("Stacktrace:"+stackTrace)
+      LOG.debug("Stacktrace:"+stackTrace)
 		throw e	    	
 	  }
    	}
@@ -254,7 +254,7 @@ class ConstantMethodGenerator {
 	}catch{
 	  case e:Exception =>{
 	    val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Stacktrace:"+stackTrace)
+        LOG.debug("Stacktrace:"+stackTrace)
 		throw e	    	
 	  }
    	}
@@ -357,7 +357,7 @@ class ConstantMethodGenerator {
             } catch {
             	case e: Exception => {
              val stackTrace = StackTrace.ThrowableTraceString(e)
-            	LOG.error("Stacktrace:"+stackTrace)
+            	LOG.debug("Stacktrace:"+stackTrace)
             	throw e
             	}
             }
@@ -464,7 +464,7 @@ class ConstantMethodGenerator {
     	} catch {
     		case e: Exception => {
     	    val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("StackTrace:"+stackTrace)
+          LOG.debug("StackTrace:"+stackTrace)
     	  }
         }
      } 
@@ -526,7 +526,7 @@ class ConstantMethodGenerator {
       	} catch {
       		case e: Exception => {
           		val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.error("StackTrace:"+stackTrace)
+              LOG.debug("StackTrace:"+stackTrace)
       		}
       	}
     } 
@@ -609,7 +609,7 @@ class ConstantMethodGenerator {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:"+stackTrace)
       }
     }
   }

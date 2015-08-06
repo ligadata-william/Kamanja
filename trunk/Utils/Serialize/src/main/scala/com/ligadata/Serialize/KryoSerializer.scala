@@ -44,7 +44,7 @@ class KryoSerializer extends Serializer{
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new KryoSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
@@ -65,7 +65,7 @@ class KryoSerializer extends Serializer{
     }catch{
       case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new KryoSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }

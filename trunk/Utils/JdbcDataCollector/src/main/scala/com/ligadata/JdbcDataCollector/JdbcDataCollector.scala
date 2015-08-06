@@ -67,8 +67,7 @@ object RunJdbcCollector {
           }
         } catch {
           case e: Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace
+            val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
             LOG.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
@@ -91,8 +90,7 @@ object RunJdbcCollector {
       // conn.setNetworkTimeout(Executor executor, timeoutInSec)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("%s:Failed to establish connection. URL:%s, User:%s, Passwd:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, urlstr, userId, passwd, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+        LOG.error("%s:Failed to establish connection. URL:%s, User:%s, Passwd:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, urlstr, userId, passwd, e.getMessage, e.getCause))
       }
     }
     return conn;
@@ -111,8 +109,7 @@ object RunJdbcCollector {
         st.setQueryTimeout(timeoutInSec)
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("%s:Failed to create statement. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+          LOG.error("%s:Failed to create statement. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
           return false
         }
       }
@@ -120,8 +117,7 @@ object RunJdbcCollector {
         res = st.executeQuery(selectQry)
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("%s:Failed to exeucte query:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, selectQry, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+          LOG.error("%s:Failed to exeucte query:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, selectQry, e.getMessage, e.getCause))
           res.close
           return false
         }
@@ -176,8 +172,7 @@ object RunJdbcCollector {
       retVal = true
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+        LOG.error("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
         retVal = false
       }
     } finally {
@@ -190,8 +185,7 @@ object RunJdbcCollector {
           st.close()
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+          LOG.error("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
           retVal = false
         }
       }
@@ -270,8 +264,7 @@ object RunJdbcCollector {
       })
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("%s:Failed with exception. Message:%s, Reason:%s ".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+        LOG.error("%s:Failed with exception. Message:%s, Reason:%s ".format(GetCurDtTmStr, e.getMessage, e.getCause))
         sys.exit(1)
       }
     }
@@ -358,8 +351,7 @@ object RunJdbcCollector {
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("%s:Exception:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, e.toString, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+        LOG.error("%s:Exception:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, e.toString, e.getMessage, e.getCause))
         exitCode = 1
       }
     } finally {
@@ -368,8 +360,7 @@ object RunJdbcCollector {
           db.close
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("%s:Exception:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, e.toString, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+          LOG.error("%s:Exception:%s. Message:%s, Reason:%s".format(GetCurDtTmStr, e.toString, e.getMessage, e.getCause))
           exitCode = 1
         }
       }

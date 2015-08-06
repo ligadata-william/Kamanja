@@ -59,8 +59,7 @@ class KafkaProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
       cntrAdapter.addCntr(key, 1) // for now adding each row
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to send :" + e.getMessage+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to send :" + e.getMessage)
       }
     }
   }

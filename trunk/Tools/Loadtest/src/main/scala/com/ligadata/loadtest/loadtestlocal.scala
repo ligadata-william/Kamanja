@@ -96,7 +96,7 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception  => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
+            LOG.debug("StackTrace:"+stackTrace)
             println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 				if(config.nScenario==0) sender ! Result ()
@@ -115,8 +115,8 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception"+"/nStackTrace:"+stackTrace)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")
             }
 				}
 				if(config.nScenario==0) sender ! Result ()
@@ -135,8 +135,8 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception"+"\nStackTrace:"+stackTrace)}
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -154,8 +154,8 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception"+"\nStackTrace:"+stackTrace)}
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -176,8 +176,8 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception"+"\nStackTrace:"+stackTrace)}
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 
 				context.system.scheduler.scheduleOnce(config.nMsgDelay) 
@@ -206,8 +206,8 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception"+"\nStackTrace:"+stackTrace)}
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 				
 				sender ! Result()

@@ -161,7 +161,7 @@ class MethodCmd(  val mgr : MdMgr
 				argTypes = typeSigArgs.split(reTypes).filter(_.length > 0).map(typ => typ.trim)
 			} catch {
 				case e : Exception => { val stackTrace = StackTrace.ThrowableTraceString(e)	
-          logger.error("StackTrace:"+stackTrace)}
+          logger.debug("StackTrace:"+stackTrace)}
 			}
 			
 			if (argNames.size == 0 || argTypes.size == 0) {

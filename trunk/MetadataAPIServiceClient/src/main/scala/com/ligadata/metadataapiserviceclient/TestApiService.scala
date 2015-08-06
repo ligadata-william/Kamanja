@@ -51,7 +51,7 @@ object TestApiService {
         } catch {
           case e: Exception =>
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            logger.error("StackTrace:"+stackTrace)
+            logger.debug("StackTrace:"+stackTrace)
             failStr = "Failed to load configuration. Message:" + e.getMessage+"\nStackTrace:"+stackTrace
             configs = null
         } finally {
@@ -73,7 +73,7 @@ object TestApiService {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        failStr = "Invalid Configuration. Message: " + e.getMessage()+"\nStackTrace:"+stackTrace
+        failStr = "Invalid Configuration. Message: " + e.getMessage()
         logger.error("Error:"+failStr)
         configs = null
     }
@@ -272,8 +272,7 @@ object TestApiService {
 
     } catch {
       case e: Exception =>
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Failed to load configuration: " + e.getMessage+"\nStackTrace:"+stackTrace)
+        logger.error("Failed to load configuration: " + e.getMessage)
         sys.exit(1)
     }
   }
@@ -354,8 +353,8 @@ object TestApiService {
       response.body.asString
     } catch {
       case e: Exception =>
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status+"\nStackTrace:"+stackTrace
+       
+        val errStr = "Failed to get response for the API call(" + url + "), status = " + response.status
         logger.error("Error:"+errStr)
         throw new Exception(errStr)
     }
@@ -382,8 +381,8 @@ object TestApiService {
     } catch {
       case e: Exception =>{
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-        throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception(e.getMessage())
       }
     }
   }
@@ -425,7 +424,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         return null
       }
     }
@@ -443,7 +442,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -456,7 +455,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -476,8 +475,8 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-        throw new Exception("Failed to convert given object key into json string" + e.getMessage()+"\nStackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception("Failed to convert given object key into json string" + e.getMessage())
       }
     }
   }
@@ -511,7 +510,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -551,7 +550,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -634,7 +633,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -692,7 +691,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -750,7 +749,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -819,7 +818,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -883,12 +882,11 @@ object TestApiService {
       })
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Container Already in the metadata...." + e.getMessage()+"\nStackTrace:"+stackTrace)
+        logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -949,12 +947,11 @@ object TestApiService {
       })
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Message Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Message Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -996,12 +993,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Object Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1044,7 +1040,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1086,12 +1082,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Model Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1134,12 +1129,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Function Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1183,12 +1177,11 @@ object TestApiService {
 
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Function Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1231,12 +1224,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Concept Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1284,12 +1276,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Concept Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1333,12 +1324,11 @@ object TestApiService {
       println("Results as json string => \n" + res)
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Type Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Type Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1384,7 +1374,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1449,12 +1439,11 @@ object TestApiService {
 
     } catch {
       case e: AlreadyExistsException => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Object Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1497,7 +1486,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1614,7 +1603,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1646,7 +1635,7 @@ object TestApiService {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
       }
     } finally {
       // Cleanup and exit

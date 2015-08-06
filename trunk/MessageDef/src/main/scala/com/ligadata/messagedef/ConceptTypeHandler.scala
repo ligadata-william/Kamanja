@@ -87,7 +87,7 @@ class ConceptTypeHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }

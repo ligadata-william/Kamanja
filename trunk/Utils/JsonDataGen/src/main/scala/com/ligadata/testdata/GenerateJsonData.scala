@@ -82,7 +82,7 @@ class GenerateJsonData {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:"+stackTrace)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Error: " + stackTrace)
       }
     }
@@ -118,7 +118,7 @@ class GenerateJsonData {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:"+stackTrace)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Error: " + stackTrace)
       }
     }
@@ -133,7 +133,7 @@ class GenerateJsonData {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("Stacktrace:"+stackTrace)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Error: " + stackTrace)
       }
     }

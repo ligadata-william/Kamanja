@@ -148,12 +148,12 @@ class KeyValueHashMap(parameter: PropertyMap) extends DataStore {
 	map.close();
       }catch{
 	case e:NullPointerException =>{
-    val stackTrace = StackTrace.ThrowableTraceString(e)
-	  logger.error("Unexpected Null pointer exception when closing hashmap, seems like internal bug related to mapdb "+"\nStackTrace:"+stackTrace)
+    
+	  logger.error("Unexpected Null pointer exception when closing hashmap, seems like internal bug related to mapdb ")
 	}
 	case e:Exception =>{
-    val stackTrace = StackTrace.ThrowableTraceString(e)
-	  logger.error("Unexpected error when closing hashmap " + e.getMessage()+"\nStackTrace:"+stackTrace)
+    
+	  logger.error("Unexpected error when closing hashmap " + e.getMessage())
 	}
       }
     }

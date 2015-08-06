@@ -107,8 +107,7 @@ object ExtractData extends MdBaseResolveInfo {
           }
         } catch {
           case e: Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace
+            val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
             logger.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
@@ -235,8 +234,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to get classname:%s as message".format(clsName)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to get classname:%s as message".format(clsName))
           sys.exit(1)
         }
       }
@@ -256,8 +254,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to get classname:%s as container".format(clsName)+"\nStaackTrace:"+stackTrace)
+          LOG.error("Failed to get classname:%s as container".format(clsName))
           sys.exit(1)
         }
       }
@@ -283,8 +280,7 @@ object ExtractData extends MdBaseResolveInfo {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage()+ ". StackTrace:" + stackTrace)
+          LOG.error("Failed to instantiate message or conatiner object:" + clsName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
           sys.exit(1)
         }
       }
@@ -332,8 +328,8 @@ object ExtractData extends MdBaseResolveInfo {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-        throw new Exception(e.getMessage()+"\nStackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception(e.getMessage())
       }
     }
   }
@@ -431,8 +427,8 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
           os.close
         os = null
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
-        throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause)+"\nStackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
       }
     }
   }
@@ -547,8 +543,7 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
       exitCode = 0
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("%s:Failed to extract data with exception. Reason:%s, Message:%s".format(GetCurDtTmStr, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("%s:Failed to extract data with exception. Reason:%s, Message:%s".format(GetCurDtTmStr, e.getCause, e.getMessage))
         exitCode = 1
       }
     } finally {

@@ -293,8 +293,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
         })
       } catch {
         case e: java.lang.InterruptedException =>{
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")+"\nStackTrace:"+stackTrace}
+          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")}
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
@@ -327,8 +326,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       key.Deserialize(k)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
         throw e
       }
     }
@@ -343,8 +341,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           throw e
         }
       }
@@ -461,8 +458,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
       }
     } catch {
       case e: java.lang.Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}"+"\nStackTrace:"+stackTrace) }
+        
+        LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}") }
     } finally {
       if (llConsumer != null) { llConsumer.close }
     }
@@ -572,8 +569,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val output: Arr
           }
         } catch {
           case e: java.lang.Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("Heartbeat forced down due to exception + " + stackTrace)}
+            LOG.error("Heartbeat forced down due to exception + ")}
         } finally {
           hbConsumers.foreach({ case (key, consumer) => { consumer.close } })
           hbRunning = false

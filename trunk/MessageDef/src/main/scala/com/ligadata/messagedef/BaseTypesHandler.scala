@@ -147,7 +147,7 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.error("StackTrace:"+stackTrace)
+         LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -188,8 +188,8 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.error("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     serializedBuf.toString
@@ -224,8 +224,8 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.error("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause()+"/nStackTrace:"+stackTrace)}
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     deserializedBuf.toString
@@ -305,8 +305,8 @@ class BaseTypesHandler {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-         LOG.error("StackTrace:"+stackTrace)
-        throw new Exception("Exception occured " + e.getCause()+"\nStackTrace:"+stackTrace)}
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry)

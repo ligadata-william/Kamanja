@@ -90,7 +90,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("\nStackTrace:"+stackTrace)
+        LOG.debug("\nStackTrace:"+stackTrace)
       }
     }
 
@@ -217,8 +217,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
                           case e: Exception => {
-                            val stackTrace = StackTrace.ThrowableTraceString(e)
-                            LOG.error("Failed with Message:" + e.getMessage+"/nStackTrace:"+stackTrace)}
+                            LOG.error("Failed with Message:" + e.getMessage)}
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -235,8 +234,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
               }
             } catch {
               case e: Exception => {
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
               }
             }
             LOG.debug("===========================> Exiting Thread for Partition:" + curPartitionId)
@@ -245,8 +243,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage))
       }
     }
   }
@@ -268,12 +265,12 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case e: ZkNoNodeException =>{
        val stackTrace = StackTrace.ThrowableTraceString(e)
-       LOG.error("\nStackTrace:"+stackTrace)
+       LOG.debug("\nStackTrace:"+stackTrace)
         (None, stat)
       }
       case e2: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e2)
-        LOG.error("\nStackTrace:"+stackTrace)
+        LOG.debug("\nStackTrace:"+stackTrace)
         throw e2
         }
     }
@@ -328,8 +325,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       key.Deserialize(k)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
         throw e
       }
     }
@@ -344,8 +340,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"/nStackTrace:"+stackTrace)
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           throw e
         }
       }

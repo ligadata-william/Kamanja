@@ -34,8 +34,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
         })
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
           
         }
       } finally {
@@ -55,8 +54,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
       }
     }
   }
@@ -115,8 +113,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             results += m.asInstanceOf[Map[String, Any]]
           } catch {
             case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
             }
           }
         }
@@ -128,16 +125,14 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
             })
           } catch {
             case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+              LOG.error("Failed reason %s, message %s".format(e.getCause, e.getMessage))
             }
           }
         }
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to collect model results. Reason %s, message %s".format(e.getCause, e.getMessage))
       }
     }
 
@@ -183,8 +178,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
         })
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
@@ -192,8 +186,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to serialize uniqueKey/uniqueVal. Reason:%s Message:%s".format(e.getCause, e.getMessage))
       }
     }
   }

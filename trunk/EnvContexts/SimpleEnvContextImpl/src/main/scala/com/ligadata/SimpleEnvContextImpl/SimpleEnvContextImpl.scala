@@ -440,23 +440,23 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       } catch {
         case e: ClassNotFoundException => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}. \nStackTrace:${stackTrace}")
+          
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
           notFoundKeys += 1
         }
         case e: KeyNotFoundException => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}. \nStackTrace:${stackTrace}")
+          
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
           notFoundKeys += 1
         }
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}. \nStackTrace:${stackTrace}")
+          
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
           notFoundKeys += 1
         }
         case ooh: Throwable => {
-          val stackTrace = StackTrace.ThrowableTraceString(ooh)
-          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}. \nStackTrace:${stackTrace}")
+          
+          logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
           throw ooh
         }
       }
@@ -556,7 +556,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        logger.error("Failed to GetDataStoreHandle. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+        logger.error("Failed to GetDataStoreHandle")
         throw e
       }
     }
@@ -1249,8 +1249,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               cntr += 1
             } catch {
               case e: Exception => {
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                logger.error("Failed to serialize/write data. \nStackTrace:${stackTrace}")
+                
+                logger.error("Failed to serialize/write data.")
                 throw e
               }
             }
@@ -1283,7 +1283,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         cntr += 1
       } catch {
         case e: Exception => {
-          logger.error("Failed to write data. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error("Failed to write data")
           throw e
         }
       }
@@ -1307,7 +1307,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         cntr += 1
       } catch {
         case e: Exception => {
-          logger.error("Failed to write data. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error("Failed to write data")
           throw e
         }
       }
@@ -1324,7 +1324,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     } catch {
       case e: Exception => {
         _allDataDataStore.endTx(txn)
-        logger.error("Failed to write data. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+        logger.error("Failed to write data")
         throw e
       }
     }
@@ -1429,7 +1429,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error(s"Unable to load Status Info")
         }
       }
     })
@@ -1450,7 +1450,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error(s"Unable to load Status Info")
         }
       }
     })
@@ -1471,7 +1471,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error(s"Unable to load Status Info")
         }
       }
     })
@@ -1548,7 +1548,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Validate (Check Point) Adapter Information. \nStackTrace:" + StackTrace.ThrowableTraceString(e))
+          logger.error(s"Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
@@ -1662,8 +1662,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
 
               } catch {
-                case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)}
-                case t: Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)}
+                case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("\nStackTrace:"+stackTrace)}
+                case t: Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
+                  logger.debug("\nStackTrace:"+stackTrace)}
               }
               if (objs(0) != null) {
                 retResult ++= TxnContextCommonFunctions.getRddDataFromFatafatData(objs(0), tmRange, f)

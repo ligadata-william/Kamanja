@@ -36,7 +36,7 @@ object ManagerUtils {
     } catch {
       case e: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("StackTrace:"+stackTrace)
+        LOG.debug("StackTrace:"+stackTrace)
         return null
     }
   }
@@ -57,8 +57,7 @@ object ManagerUtils {
           }
         } catch {
           case e: Exception => {
-            val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
             return false
           }
         }

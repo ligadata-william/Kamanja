@@ -141,7 +141,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       }
       case e: Exception => {
         val stackTrace =   StackTrace.ThrowableTraceString(e)
-              logger.error("Stacktrace:"+stackTrace)
+              logger.debug("Stacktrace:"+stackTrace)
       }
     } finally {
       Shutdown(0)

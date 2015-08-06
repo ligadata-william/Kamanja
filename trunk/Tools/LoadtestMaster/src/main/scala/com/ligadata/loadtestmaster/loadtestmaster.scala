@@ -106,8 +106,8 @@ class Master(outputfile : String) extends Actor
 				{
 					case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
-            LOG.error("StackTrace:"+stackTrace)
-            println("Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)}
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception " + e.getMessage() )}
 					self ! Done(0, 0, 0, 0, 0)
 				}
 			}
@@ -242,8 +242,8 @@ object Master
 				  		if(nTries>0)
 				  		{
                 val stackTrace = StackTrace.ThrowableTraceString(e1)
-                LOG.error("StackTrace:"+stackTrace)
-				  			println("Prepare: Caught exception " + e1.getMessage()+"\nStackTrace:"+stackTrace)
+                LOG.debug("StackTrace:"+stackTrace)
+				  			println("Prepare: Caught exception " + e1.getMessage())
 				  			Thread.sleep(30000L)
 
 				  		}

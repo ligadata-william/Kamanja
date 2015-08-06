@@ -109,12 +109,12 @@ object MetadataAPIOutputMsg {
       }
       case e: ObjectNolongerExistsException => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText+"\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
         apiResult.toString()
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText+"\nStackTrace:"+stackTrace)
+        var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UpdateOutputMessage", null, "Error :" + e.toString() + ErrorCodeConstants.Update_OutputMessage_Failed + ":" + outputMsgText)
         apiResult.toString()
       }
     }
@@ -144,7 +144,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new UnexpectedMetadataAPIException(e.getMessage())
       }
     }
@@ -161,7 +161,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Add_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }
@@ -191,7 +191,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new UnexpectedMetadataAPIException("Failed to fetch all the OutputMsgs:" + e.toString)
       }
     }
@@ -225,7 +225,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "GetOutputMessageDefFromCache", null, "Error :" + e.toString() + ErrorCodeConstants.Get_OutputMessage_From_Cache_Failed + ":" + dispkey)
         apiResult.toString()
       }
@@ -259,7 +259,7 @@ object MetadataAPIOutputMsg {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "RemoveOutputMsg", null, "Error :" + e.toString() + ErrorCodeConstants.Remove_OutputMessage_Failed + ":" + key)
         apiResult.toString()
       }

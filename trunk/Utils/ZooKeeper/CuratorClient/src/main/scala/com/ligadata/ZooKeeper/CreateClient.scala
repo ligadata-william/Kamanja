@@ -38,7 +38,7 @@ object CreateClient {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     } finally {

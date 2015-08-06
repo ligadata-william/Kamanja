@@ -19,7 +19,7 @@ object SerializerManager {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new SerializerManagerException("Failed to create Serializer for : " + serializerType)
       }
     }

@@ -138,7 +138,7 @@ class FatafatData {
         })
       } catch {
         case e: Exception => {
-          logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -155,7 +155,7 @@ class FatafatData {
       } catch {
         case e: Exception => {
           StackTrace.ThrowableTraceString(e)
-          logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -202,7 +202,7 @@ class FatafatData {
 
     } catch {
       case e: Exception => {
-        logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -256,7 +256,7 @@ class FatafatData {
       dis.close
     } catch {
       case e: Exception => {
-        logger.error("StackTrace:"+StackTrace.ThrowableTraceString(e))
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }

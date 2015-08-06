@@ -74,8 +74,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         consumer.close()
       } catch {
         case jmsex: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(jmsex)
-          LOG.error("Producer could not be closed."+"\nstackTrace:"+stackTrace)
+          LOG.error("Producer could not be closed.")
           printFailure(jmsex)
         }
       }
@@ -88,8 +87,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         session.close()
       } catch {
         case jmsex: Exception => {
-           val stackTrace = StackTrace.ThrowableTraceString(jmsex)
-          LOG.error("Session could not be closed."+"\nstackTrace:"+stackTrace)
+          LOG.error("Session could not be closed.")
           printFailure(jmsex)
         }
       }
@@ -99,8 +97,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         connection.close()
       } catch {
         case jmsex: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(jmsex)
-          LOG.error("Connection could not be closed."+"\nstackTrace:"+stackTrace)
+          LOG.error("Connection could not be closed.")
           printFailure(jmsex)
         }
       }
@@ -153,7 +150,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     } catch {
       case jmsex: Exception =>
         val stackTrace = StackTrace.ThrowableTraceString(jmsex)
-        LOG.error("\nstackTrace:"+stackTrace)
+        LOG.debug("\nstackTrace:"+stackTrace)
         printFailure(jmsex)
         return
     }
@@ -254,8 +251,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                         }
                       } catch {
                         case e: Exception => {
-                          val stackTrace = StackTrace.ThrowableTraceString(e)
-                          LOG.error("Failed with Message:" + e.getMessage+"\nStacktrace:"+stackTrace)
+                          LOG.error("Failed with Message:" + e.getMessage)
                           printFailure(e)
                         }
                       }
@@ -263,8 +259,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                     }
                   } catch {
                     case e: Exception => {
-                      val stackTrace = StackTrace.ThrowableTraceString(e)
-                      LOG.error("Failed with Message:" + e.getMessage+"\nStacktrace:"+stackTrace)
+                      LOG.error("Failed with Message:" + e.getMessage)
                       printFailure(e)
                     }
                   }
@@ -275,8 +270,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
               }
             } catch {
               case e: Exception => {
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStacktrace:"+stackTrace)
+                LOG.error("Failed with Reason:%s Message:%s".format(e.getCause, e.getMessage))
                 printFailure(e)
               }
             }
@@ -286,8 +280,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       }
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage)+"\nStacktrace:"+stackTrace)
+        LOG.error("Failed to setup Streams. Reason:%s Message:%s".format(e.getCause, e.getMessage))
         printFailure(e)
       }
     }
@@ -316,8 +309,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       key.Deserialize(k)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        LOG.error("Failed to deserialize Key:%s. Reason:%s Message:%s".format(k, e.getCause, e.getMessage))
         printFailure(e)
         throw e
       }
@@ -333,8 +325,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           printFailure(e)
           throw e
         }

@@ -6325,9 +6325,9 @@ object Udfs extends LogTrait {
 		    lcd.getMillis()
 	    } catch {
 		    case iae:IllegalArgumentException => {
-          val stackTrace = StackTrace.ThrowableTraceString(iae)
+          
 		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
-          logger.error("\nStackTrace:"+stackTrace)
+          
 		    	0
 		    }
 	    }

@@ -181,7 +181,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -221,7 +221,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -250,7 +250,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -279,7 +279,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -327,7 +327,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -379,7 +379,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -409,7 +409,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -433,7 +433,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -456,7 +456,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -481,7 +481,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -537,7 +537,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -558,7 +558,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -577,7 +577,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -602,7 +602,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -629,7 +629,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -735,7 +735,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -796,7 +796,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -815,7 +815,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -836,7 +836,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -898,7 +898,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -962,7 +962,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -987,7 +987,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -1032,7 +1032,7 @@ class MessageDefImpl {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }

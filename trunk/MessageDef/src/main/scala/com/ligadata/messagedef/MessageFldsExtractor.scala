@@ -456,7 +456,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -488,7 +488,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
       }
     }
     log.debug("version from metadata " + msgdef.get.Version)
@@ -577,7 +577,7 @@ class MessageFldsExtractor {
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        log.error("StackTrace:"+stackTrace)
+        log.debug("StackTrace:"+stackTrace)
       }
     }
 

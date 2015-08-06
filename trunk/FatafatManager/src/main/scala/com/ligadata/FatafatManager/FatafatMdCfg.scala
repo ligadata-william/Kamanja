@@ -271,8 +271,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". StackTrace:" + stackTrace)
+          LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
           
         }
       }
@@ -382,8 +381,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception => {
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+ ". \nStackTrace:" + stackTrace)}
+          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
       }
     } else {
       LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -419,8 +417,7 @@ object FatafatMdCfg {
         outputAdapters += adapter
       } catch {
         case e: Exception =>{
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
           }
       }
@@ -473,8 +470,7 @@ object FatafatMdCfg {
         }
       } catch {
         case e: Exception =>{ 
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage+"\nStackTrace:"+stackTrace)}
+          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
       }
     } else {
       LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
@@ -509,8 +505,7 @@ object FatafatMdCfg {
         inputAdapters += adapter
       } catch {
         case e: Exception =>{
-          val stackTrace = StackTrace.ThrowableTraceString(e)
-          LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+          LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
         }
       }

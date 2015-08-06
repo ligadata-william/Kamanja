@@ -121,7 +121,7 @@ object MethodExtract extends App with LogTrait{
 		} catch {
 		  case _:Throwable => {
         val stackTrace = StackTrace.ThrowableTraceString(_)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         versionNumber = 1000000}
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
@@ -171,7 +171,7 @@ object MethodExtract extends App with LogTrait{
 			members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
 		} catch {
 		  case t : Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
-      logger.error("StackTrace:"+stackTrace)  
+      logger.debug("StackTrace:"+stackTrace)  
       }
 		  sys.exit
 		}
@@ -405,8 +405,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 	          }
 	        } catch {
 	          case e: Exception => {
-              val stackTrace = StackTrace.ThrowableTraceString(e)
-	            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage+"\nStackTrace:"+stackTrace)
+              logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
 	            return false
 	          }
 	        }

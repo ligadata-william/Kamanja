@@ -57,33 +57,33 @@ mkdir -p $installPath/template
 mkdir -p $installPath/template/config
 mkdir -p $installPath/template/script
 mkdir -p $installPath/input
-mkdir -p $installPath/input/application-2-Healthcare
-mkdir -p $installPath/input/application-2-Healthcare/bin
-mkdir -p $installPath/input/application-2-Healthcare/data
-mkdir -p $installPath/input/application-2-Healthcare/metadata
-mkdir -p $installPath/input/application-2-Healthcare/metadata/config
-mkdir -p $installPath/input/application-2-Healthcare/metadata/container
-mkdir -p $installPath/input/application-2-Healthcare/metadata/function
-mkdir -p $installPath/input/application-2-Healthcare/metadata/message
-mkdir -p $installPath/input/application-2-Healthcare/metadata/model
-mkdir -p $installPath/input/application-2-Healthcare/metadata/script
-mkdir -p $installPath/input/application-2-Healthcare/metadata/type
-mkdir -p $installPath/input/application-2-Healthcare/template
+mkdir -p $installPath/input/COPD-RiskAssessment
+mkdir -p $installPath/input/COPD-RiskAssessment/bin
+mkdir -p $installPath/input/COPD-RiskAssessment/data
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/config
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/container
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/function
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/message
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/model
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/script
+mkdir -p $installPath/input/COPD-RiskAssessment/metadata/type
+mkdir -p $installPath/input/COPD-RiskAssessment/template
 
-# application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld/bin
-mkdir -p $installPath/input/application-1-HelloWorld/data
-mkdir -p $installPath/input/application-1-HelloWorld/metadata
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/config
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/container
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/function
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/message
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/model
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/script
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/type
-mkdir -p $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+# HelloWorld
+mkdir -p $installPath/input/HelloWorld
+mkdir -p $installPath/input/HelloWorld/bin
+mkdir -p $installPath/input/HelloWorld/data
+mkdir -p $installPath/input/HelloWorld/metadata
+mkdir -p $installPath/input/HelloWorld/metadata/config
+mkdir -p $installPath/input/HelloWorld/metadata/container
+mkdir -p $installPath/input/HelloWorld/metadata/function
+mkdir -p $installPath/input/HelloWorld/metadata/message
+mkdir -p $installPath/input/HelloWorld/metadata/model
+mkdir -p $installPath/input/HelloWorld/metadata/script
+mkdir -p $installPath/input/HelloWorld/metadata/type
+mkdir -p $installPath/input/HelloWorld/template
+# HelloWorld
 
 bin=$installPath/bin
 systemlib=$installPath/lib/system
@@ -377,15 +377,15 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 
 echo "Prepare test messages and copy them into place..."
 cd $srcPath/Utils/KVInit/src/main/resources
-cp copd_demo.csv.gz $installPath/input/application-2-Healthcare/data
+cp copd_demo.csv.gz $installPath/input/COPD-RiskAssessment/data
 
 cd $srcPath/SampleApplication/Medical/SampleData
-cp *.csv $installPath/input/application-2-Healthcare/data
+cp *.csv $installPath/input/COPD-RiskAssessment/data
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/data
-cp * $installPath/input/application-1-HelloWorld/data
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/data
+# HelloWorld
 
 # *******************************
 # Copy documentation files
@@ -401,45 +401,45 @@ cp $srcPath/FatafatManager/src/main/resources/log4j.properties $installPath/conf
 
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs
-# cp * $installPath/input/application-2-Healthcare/metadata/config
+# cp * $installPath/input/COPD-RiskAssessment/metadata/config
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
-cp * $installPath/input/application-2-Healthcare/metadata/container
+cp * $installPath/input/COPD-RiskAssessment/metadata/container
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/application-1-HelloWorld/metadata/container
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/container
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Functions
-cp * $installPath/input/application-2-Healthcare/metadata/function
+cp * $installPath/input/COPD-RiskAssessment/metadata/function
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
-cp * $installPath/input/application-2-Healthcare/metadata/message
+cp * $installPath/input/COPD-RiskAssessment/metadata/message
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/message
-cp * $installPath/input/application-1-HelloWorld/metadata/message
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/message
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Models
-cp *.* $installPath/input/application-2-Healthcare/metadata/model
+cp *.* $installPath/input/COPD-RiskAssessment/metadata/model
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/model
-cp * $installPath/input/application-1-HelloWorld/metadata/model
-# application-1-HelloWorld
+cp * $installPath/input/HelloWorld/metadata/model
+# HelloWorld
 
 cd $srcPath/SampleApplication/Medical/Types
-cp * $installPath/input/application-2-Healthcare/metadata/type
+cp * $installPath/input/COPD-RiskAssessment/metadata/type
 
 cd $srcPath/SampleApplication/Medical/template
-cp -rf * $installPath/input/application-2-Healthcare/template
+cp -rf * $installPath/input/COPD-RiskAssessment/template
 
-# application-1-HelloWorld
+# HelloWorld
 cd $srcPath/SampleApplication/HelloWorld/template
-cp -rf * $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+cp -rf * $installPath/input/HelloWorld/template
+# HelloWorld
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
@@ -449,6 +449,6 @@ cp SetPaths.sh $installPath/bin/
 
 bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
-chmod 0700 $installPath/input/application-2-Healthcare/bin/*sh
+chmod 0700 $installPath/input/COPD-RiskAssessment/bin/*sh
 
 echo "FataFat install complete..."

@@ -73,7 +73,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.error("StackTrace:"+stackTrace)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     }
@@ -93,8 +93,8 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
         EventChangeCallback(clstStatus)
     } catch {
       case e: Exception => {
-        val stackTrace = StackTrace.ThrowableTraceString(e)
-        LOG.error("Leader callback has some error. Reason:%s, Message:%s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
+        
+        LOG.error("Leader callback has some error. Reason:%s, Message:%s".format(e.getCause, e.getMessage))
       }
     }
   }
