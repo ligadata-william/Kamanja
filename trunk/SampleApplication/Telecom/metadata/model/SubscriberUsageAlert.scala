@@ -202,14 +202,6 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
   }
 
   override def execute(emitAllResults: Boolean): ModelResultBase = {
-    var subMonthlyUsage:Long = 0
-    var actMonthlyUsage:Long = 0
-
-    // Get the current subscriber, account info and global preferences
-    val gPref = SubscriberGlobalPreferences.getRecentOrNew(Array("Type1"))
-    val subInfo = SubscriberInfo.getRecentOrNew
-    val actInfo = AccountInfo.getRecentOrNew(Array(subInfo.actno))
-    val planInfo  = SubscriberPlans.getRecentOrNew(Array(subInfo.planname))
 
     // Make sure current transaction has some data
     val rcntTxn = SubscriberUsage.getRecent
@@ -217,9 +209,19 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
       return null
     }
 
+    // Get the current subscriber, account info and global preferences
+    val gPref = SubscriberGlobalPreferences.getRecentOrNew(Array("Type1"))
+    val subInfo = SubscriberInfo.getRecentOrNew(Array(rcntTxn.get.msisdn.toString))
+    val actInfo = AccountInfo.getRecentOrNew(Array(subInfo.actno))
+    val planInfo  = SubscriberPlans.getRecentOrNew(Array(subInfo.planname))
+
+    var logTag = "SubscriberUsageAlertApp(" + subInfo.msisdn + "," +  actInfo.actno + "): "
+
     // Get current values of aggregatedUsage
     val subAggrUsage = SubscriberAggregatedUsage.getRecentOrNew(Array(subInfo.msisdn.toString))
     val actAggrUsage = AccountAggregatedUsage.getRecentOrNew(Array(actInfo.actno))
+
+    dumpAppLog(logTag + "Before: Subscriber current month usage => " + subAggrUsage.thismonthusage + ",Account current month usage => " + actAggrUsage.thismonthusage)
 
     // Get current month
     val curDtTmInMs = RddDate.currentGmtDateTime
@@ -231,9 +233,8 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     val planLimit = planInfo.planlimit * 1000
     val indLimit  = planInfo.individuallimit * 1000
 
-    var logTag = "SubscriberUsageAlertApp(" + subInfo.msisdn + "," +  actInfo.actno + "): "
 
-    dumpAppLog(logTag + "Subscriber plan name => " + subInfo.planname + ",plan type => " + planInfo.plantype + ",plan limit => " + planLimit + ",individual limit => " + indLimit)
+    //dumpAppLog(logTag + "Subscriber plan name => " + subInfo.planname + ",plan type => " + planInfo.plantype + ",plan limit => " + planLimit + ",individual limit => " + indLimit)
     dumpAppLog(logTag + "Subscriber usage in the current transaction  => " + rcntTxn.get.usage)
 
     // if the usage doesn't belong to this month, we ignore it
@@ -243,19 +244,19 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     }
 
     // aggregate account usage
-    actMonthlyUsage = actAggrUsage.thismonthusage + rcntTxn.get.usage
+    val actMonthlyUsage = actAggrUsage.thismonthusage + rcntTxn.get.usage
     //AccountAggregatedUsage.build.withthismonthusage(actMonthlyUsage).Save
     actAggrUsage.withthismonthusage(actMonthlyUsage).Save
 
     // aggregate the usage 
     // aggregate individual subscriber usage
-    subMonthlyUsage = subAggrUsage.thismonthusage + rcntTxn.get.usage
+    val subMonthlyUsage = subAggrUsage.thismonthusage + rcntTxn.get.usage
     //SubscriberAggregatedUsage.build.withthismonthusage(subMonthlyUsage).Save
     subAggrUsage.withthismonthusage(subMonthlyUsage).Save
 
 
-    dumpAppLog(logTag + "Subscriber current month usage => " + subMonthlyUsage)
-    dumpAppLog(logTag + "Account current month usage => " + actMonthlyUsage)
+    dumpAppLog(logTag + "After: Subscriber current month usage => " + subMonthlyUsage + ",Account current month usage => " + actMonthlyUsage)
+
 
     val curTmInMs = curDtTmInMs.getDateTimeInMs
     
@@ -266,6 +267,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
 	if ( actMonthlyUsage > planLimit ){
 	  if (actInfo.thresholdalertoptout == false) {
 	    dumpAppLog(logTag + "Creating Alert for a shared plan account " + actInfo.actno)
+	    dumpAppLog(logTag + "---------------------------")
 	    return new AccountUsageAlertResult().withAct(actInfo.actno).withCurusage(actMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
 	  }
 	}
@@ -275,6 +277,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
 	if ( subMonthlyUsage > indLimit ){
 	  if (subInfo.thresholdalertoptout == false) {
 	    dumpAppLog(logTag + "Creating alert for individual subscriber account " + rcntTxn.get.msisdn)
+	    dumpAppLog(logTag + "---------------------------")
 	    return new SubscriberUsageAlertResult().withMsisdn(rcntTxn.get.msisdn).withCurusage(subMonthlyUsage).withAlertType("pastThresholdAlert").withTriggerTime(curTmInMs)
 	  }
 	}
