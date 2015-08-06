@@ -1631,7 +1631,7 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.AddModel(pmmlStr, userid))
     } catch {
       case e: AlreadyExistsException => {
-        logger.error("Model Already in the metadata...."+"\nStackTrace:"+stackTrace)
+        logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)

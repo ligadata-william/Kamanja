@@ -860,7 +860,7 @@ object FatafatMetadata extends MdBaseResolveInfo {
               } catch {
                 case e: Exception => {
                  
-                  LOG.error("Failed to Remove Container:" + key+"\nStackTrace:"+stackTrace)
+                  LOG.error("Failed to Remove Container:" + key)
                 }
               }
             }
