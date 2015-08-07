@@ -376,7 +376,6 @@ class ConstantMsgObjVarGenerator {
     if (msg.msgtype.equals("Message"))
       imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     else if (msg.msgtype.equals("Container"))
-
       imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     var nonVerPkg = "package " + msg.pkg +";\n"
     var verPkg = "package " + msg.pkg + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
