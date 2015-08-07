@@ -1,6 +1,6 @@
 package com.ligadata.jpmml.models;
 
-import com.ligadata.FatafatBase.*;
+import com.ligadata.KamanjaBase.*;
 import com.ligadata.pmml.udfs.Udfs;
 import com.ligadata.messagescontainers.System.*;
 
@@ -50,13 +50,13 @@ import org.jpmml.model.JAXBUtil;
 
 import org.xml.sax.InputSource;
 
-/** 
+/**
  * JPmmlDecisionTreeModel demonstrates a sample jpmml evaluated DecisionTree model... in this case
  * the KNIME originated model that analyzes the ever popular Iris dataset.  This model is effectively
- * a shim between the Kamanja engine and the jpmml evaluator.  Currently this model is explicitly 
+ * a shim between the Kamanja engine and the jpmml evaluator.  Currently this model is explicitly
  * asking the jpmml-evaluator module to build a tree model.  The jpmml promise in their documentation
- * is that the appropriate evaluator can be determined automatically.  
- * 
+ * is that the appropriate evaluator can be determined automatically.
+ *
  * When this is exploited/made available, there will be one "model overseer" that will manage all jpmml
  * evaluator interpreted models.
  *
@@ -67,23 +67,23 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 
 	public Logger logger = Logger.getLogger(this.getClass().getName());
 
-	/** 
+	/**
 	 * The standard entry point for the model when the engine is calling...
-	 * 
+	 *
 	 * @param emitAllResults a boolean that when true will emit results even for "no score" situations.
 	 * @return ModelResultBase .. a map of model results as dictated by the target, supplementary, and/or
 	 * 		output specifications gleaned from the PMML model.
 	 */
-	public ModelResultBase execute(boolean emitAllResults) { 
+	public ModelResultBase execute(boolean emitAllResults) {
 		IrisMsg msg = (IrisMsg) modelContext().msg();
 		return execute(msg, emitAllResults);
 	}
-	
+
 	/** "Two-step" this so it is easy to test with an application in addition to the standard
-	 * 	feed from the engine.  The unit test application located near bottom of source file 
+	 * 	feed from the engine.  The unit test application located near bottom of source file
 	 * 	calls here.
-	 * 
-	 * @param msg the incoming BaseMsg derivative 
+	 *
+	 * @param msg the incoming BaseMsg derivative
 	 * @param emitAllResults
 	 * @return ModelResultBase .. a map of model results as dictated by the target, supplementary, and/or
 	 * 		output specifications gleaned from the PMML model.
@@ -96,7 +96,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		ModelResultBase result = null;
 
 		Long beforeModelBase64Decode = Udfs.Now();
-		
+
 		String pmmlSrc = getModelBase64(modelContext());
 		PMML pmml = null;
 
@@ -124,14 +124,14 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		Long afterModelIngestion = Udfs.Now();
 		Long modelIngestionMs = Udfs.millisecsBetween(beforeModelIngestion, afterModelIngestion, false);
         logger.info("pmml ingestion time = " + modelIngestionMs + " ms");
-				
+
 		TreeModelEvaluator modelEvaluator = new TreeModelEvaluator(pmml);
 
 		/** The preparation of field values: */
 		List<FieldName> activeFields = modelEvaluator.getActiveFields();
 		List<FieldName> targetFields = modelEvaluator.getTargetFields();
 		List<FieldName> outputFields = modelEvaluator.getOutputFields();
-		
+
 		if (targetFields != null && outputFields != null) {
 			boolean stopHere = true;
 			if (stopHere) ;
@@ -168,15 +168,15 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		    simplePrediction = primitiveValue;
 		}
 
-		/** do something with this... not sure what  
+		/** do something with this... not sure what
 
 		FIXME: If this code is in the source, it causes the type introspection done by the
-		metadata api's compiler proxy to fail with a hard assertion error in 
+		metadata api's compiler proxy to fail with a hard assertion error in
 		JavaMirror.scala
 
 		Word on web has it this sort of problem has been fixed in <b>2.11.x</b>
 
-			if(targetValue instanceof HasEntityId){  
+			if(targetValue instanceof HasEntityId){
 			    HasEntityId hasEntityId = (HasEntityId)targetValue;
 			    HasEntityRegistry<?> hasEntityRegistry = (HasEntityRegistry<?>)modelEvaluator;
 			    BiMap<String, ? extends Entity> entities = hasEntityRegistry.getEntityRegistry();
@@ -190,8 +190,8 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 			}
 		*/
 
-        com.ligadata.FatafatBase.Result[] returnResults = new com.ligadata.FatafatBase.Result[]{
-        	new com.ligadata.FatafatBase.Result(targetName.getValue(), simplePrediction)
+        com.ligadata.KamanjaBase.Result[] returnResults = new com.ligadata.KamanjaBase.Result[]{
+        	new com.ligadata.KamanjaBase.Result(targetName.getValue(), simplePrediction)
         };
 
         logger.info(ModelName() + "'s decorated prediction = " + targetValue.toString());
@@ -231,11 +231,11 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 	    	} else {
 
 	    	}
-	    		
+
 	    	if (pmmlValue != null) {
 	    		pmmlArguments.put(activeField, pmmlValue);
 	    	} else {
-	    		// this type not handled message 
+	    		// this type not handled message
 	    		logger.error("the supplied value's type " + userValue.getClass().getName() + " is not currently handled by prepareFields()");
 	    		logger.error("the supplied value's string representation = " + userValue.toString() );
 	    	}
@@ -244,7 +244,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 
 	}
 
-	/** Construct a JPmmlDecisionTreeModel 
+	/** Construct a JPmmlDecisionTreeModel
 	 *
 	 * 	@param modelContext - the engines model context supplied at factory's CreateNewModel time.
 	 */
@@ -252,7 +252,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 		super(modelContext, objectSingleton);
 	}
 
-	/** 
+	/**
 	 * The factory object associated with the JpmmlDecisionTreeModel.
 	 */
 	public static class JPmmlDecisionTreeModelObj implements ModelBaseObj {
@@ -280,12 +280,12 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 
 
     /**
-        Obtain the model from the model context.  
+        Obtain the model from the model context.
 
         NOTE: The model context could conceivably contain the model source, but it is really not
         needed or for some model types may not even be available (jar only model submission).
-        We might consider using key information (a hash of PMML perhaps) here that is used to 
-        fetch the model source from the persistent store, or alternatively only supply source when 
+        We might consider using key information (a hash of PMML perhaps) here that is used to
+        fetch the model source from the persistent store, or alternatively only supply source when
         the jpmml model type or other models of its ilk are in use.
 
         @param mdlContext a ModelContext with the necessary information to obtain the PMML source
@@ -297,7 +297,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
     }
 
     /** the Iris decision tree model in text form so you can see it */
-    static String irisDecisionTree = 
+    static String irisDecisionTree =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
         "<PMML version=\"4.1\" xmlns=\"http://www.dmg.org/PMML-4_1\">" +
         "  <Header copyright=\"KNIME\">" +
@@ -365,15 +365,15 @@ public class JPmmlDecisionTreeModel extends ModelBase {
         "";
 
     /**
-        Obtain the model from the model context.  
+        Obtain the model from the model context.
 
         NOTE: The model context could conceivably contain the model source, but it is really not
         needed or for some model types may not even be available (jar only model submission).
-        
+
         The namespace qualified package name should be the key to the store of model accoutrements
         that may be needed by the model... in this case the pmml model source file.
-        We might consider using key information (a hash of PMML src perhaps) here that is used to 
-        fetch the model source from the persistent store, or alternatively only supply source when 
+        We might consider using key information (a hash of PMML src perhaps) here that is used to
+        fetch the model source from the persistent store, or alternatively only supply source when
         the jpmml model type or other models of its ilk are in use.
 
         @param mdlContext a ModelContext with the necessary information to obtain the PMML source
@@ -400,7 +400,7 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 			this.petal_width = petal_width;
 			this.irisClass = irisClass;
 		}
-		
+
 		public Object get(String key)
 		{
 			if (key.equals("sepal_length")) {
@@ -419,29 +419,29 @@ public class JPmmlDecisionTreeModel extends ModelBase {
 				return serno;
 			}
 		}
-		
+
 		public int serno = 0;
-		public double sepal_length = 0; 
+		public double sepal_length = 0;
 		public double sepal_width = 0;
 		public double petal_length = 0;
 		public double petal_width = 0;
 		public String irisClass = "";
 	}; */
-	
+
 	/**
 	 * Unit test for this model.
-	 * 
+	 *
 	 * @param args
-	 
+
     public static void main(String[] args) {
-	
+
 	    JPmmlDecisionTreeModel model = new JPmmlDecisionTreeModel(null) ;
 	    IrisMsg msgTest = new JPmmlDecisionTreeModel.IrisMsg(1, 5.1, 3.5, 1.4, 0.2, "Iris-setosa");
 
 		ModelResultBase result = model.execute(msgTest, true);
 		boolean resultOk = (result != null);
 		if (resultOk) {
-			
+
 		}
 	}*/
 
