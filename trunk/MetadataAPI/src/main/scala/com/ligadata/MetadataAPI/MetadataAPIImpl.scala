@@ -5327,10 +5327,12 @@ object MetadataAPIImpl extends MetadataAPI {
             val nodes = cluster.get("Nodes").get.asInstanceOf[List[_]]
             nodes.foreach(n => {
               val node = n.asInstanceOf[Map[String, Any]]
-              val nodeId = node.getOrElse("NodeId", "").toString.trim
-              MdMgr.GetMdMgr.RemoveNode(nodeId.toLowerCase)
-              key = "NodeInfo." + nodeId
-              keyList = keyList :+ key.toLowerCase
+              val nodeId = node.getOrElse("NodeId", "").toString.trim.toLowerCase
+              if (nodeId.size > 0) {
+                MdMgr.GetMdMgr.RemoveNode(nodeId.toLowerCase)
+                key = "NodeInfo." + nodeId
+                keyList = keyList :+ key.toLowerCase
+              }
             })
           }
 
@@ -5505,7 +5507,7 @@ object MetadataAPIImpl extends MetadataAPI {
               val nodes = cluster.get("Nodes").get.asInstanceOf[List[_]]
               nodes.foreach(n => {
                 val node = n.asInstanceOf[Map[String, Any]]
-                val nodeId = node.getOrElse("NodeId", "").toString.trim
+                val nodeId = node.getOrElse("NodeId", "").toString.trim.toLowerCase
                 val nodePort = node.getOrElse("NodePort", "0").toString.trim.toInt
                 val nodeIpAddr = node.getOrElse("NodeIpAddr", "").toString.trim
                 val scala_home = node.getOrElse("Scala_home", "").toString.trim
