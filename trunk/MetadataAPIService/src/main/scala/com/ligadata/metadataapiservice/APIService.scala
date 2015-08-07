@@ -10,7 +10,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.fatafat.metadata.ObjType._
 import com.ligadata.fatafat.metadata._
 import com.ligadata.fatafat.metadataload.MetadataLoad
-import com.ligadata.MetadataAPI._
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
@@ -87,7 +87,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         configFile = cfgfile.asInstanceOf[String]
       }
 
-      val (loadConfigs, failStr) = com.ligadata.Utils.loadConfiguration(configFile.toString, true)
+      val (loadConfigs, failStr) = Utils.loadConfiguration(configFile.toString, true)
       if (failStr != null && failStr.size > 0) {
         logger.error(failStr)
         Shutdown(1)
