@@ -2,11 +2,10 @@ package com.ligadata.MetadataAPI
 
 import java.io.{ ByteArrayOutputStream, _ }
 
-import com.datastax.driver.core.Cluster
 import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
-import com.ligadata.keyvaluestore._
+import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.twitter.chill.ScalaKryoInstantiator
@@ -31,6 +30,7 @@ object TestMetadataAPI {
   var serializer = SerializerManager.GetSerializer("kryo")
 
   def testDbConn {
+  /*
     var hostnames = "localhost"
     var keyspace = "default"
     var table = "default"
@@ -41,6 +41,7 @@ object TestMetadataAPI {
 
     val cluster = clusterBuilder.build()
     val session = cluster.connect(keyspace);
+*/
   }
 
   // Type defs

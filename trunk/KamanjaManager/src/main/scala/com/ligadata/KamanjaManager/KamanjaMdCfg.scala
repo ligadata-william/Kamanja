@@ -4,15 +4,22 @@ package com.ligadata.KamanjaManager
 import org.apache.log4j.Logger
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
-import com.ligadata.KamanjaBase.{ EnvContext, InputAdapterObj, InputAdapter, OutputAdapterObj, OutputAdapter, AdapterConfiguration, MakeExecContext }
-import com.ligadata.Utils.Utils
+import com.ligadata.KamanjaBase.{ EnvContext }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, InputAdapterObj, OutputAdapter, OutputAdapterObj, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, AdapterConfiguration }
 
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
+
+class KamanjaInputAdapterCallerContext extends InputAdapterCallerContext {
+  var outputAdapters: Array[OutputAdapter] = _
+  var envCtxt: EnvContext = _
+}
 
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 object KamanjaMdCfg {
@@ -64,11 +71,16 @@ object KamanjaMdCfg {
       return false
     }
 
+    KamanjaConfiguration.dataDataStoreInfo = dataStore
+    KamanjaConfiguration.statusDataStoreInfo = statusInfo
+
     implicit val jsonFormats: Formats = DefaultFormats
-    val dataStoreInfo = parse(dataStore).extract[JDataStore]
-    val statusStoreInfo = parse(statusInfo).extract[JDataStore]
     val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
+    /*
+    // DataStore & StatusInfo & ZooKeeperInfo
+    val dataStoreInfo = parse(dataStore).extract[JDataStore]
+    val statusStoreInfo = parse(statusInfo).extract[JDataStore]
     KamanjaConfiguration.dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
     if (KamanjaConfiguration.dataStoreType.size == 0) {
       LOG.error("Not found valid DataStoreType.")
@@ -108,7 +120,8 @@ object KamanjaMdCfg {
     }
 
     KamanjaConfiguration.statusInfoAdapterSpecificConfig = if (statusStoreInfo.AdapterSpecificConfig == None || statusStoreInfo.AdapterSpecificConfig == null) "" else statusStoreInfo.AdapterSpecificConfig.get.trim
-    
+*/
+
     KamanjaConfiguration.zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
     KamanjaConfiguration.zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
     KamanjaConfiguration.zkSessionTimeoutMs = if (zKInfo.ZooKeeperSessionTimeoutMs == None || zKInfo.ZooKeeperSessionTimeoutMs == null) 0 else zKInfo.ZooKeeperSessionTimeoutMs.get.toString.toInt
@@ -119,19 +132,6 @@ object KamanjaMdCfg {
     KamanjaConfiguration.zkConnectionTimeoutMs = if (KamanjaConfiguration.zkConnectionTimeoutMs <= 0) 30000 else KamanjaConfiguration.zkConnectionTimeoutMs
 
     return true
-  }
-
-  // Each jar should be fully qualified path (physical path)
-  def CheckForNonExistanceJars(allJarsToBeValidated: Set[String]): Set[String] = {
-    val nonExistsJars = scala.collection.mutable.Set[String]();
-    allJarsToBeValidated.foreach(j => {
-      val fl = new File(j)
-      if (fl.exists == false || fl.canRead == false || fl.isFile == false) {
-        nonExistsJars += j
-      }
-      // else Valid file
-    })
-    nonExistsJars.toSet
   }
 
   def ValidateAllRequiredJars: Boolean = {
@@ -166,7 +166,7 @@ object KamanjaMdCfg {
     }
 
     if (allJars != null) {
-      allJarsToBeValidated ++= allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
+      allJarsToBeValidated ++= allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
     }
 
     // All Adapters
@@ -181,10 +181,10 @@ object KamanjaMdCfg {
         val depJars = if (a._2.DependencyJars != null) a._2.DependencyJars.map(str => str.trim).filter(str => str.size > 0).toSet else null
 
         if (jar != null && jar.size > 0) {
-          allJarsToBeValidated += KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, jar)
+          allJarsToBeValidated += Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, jar)
         }
         if (depJars != null && depJars.size > 0) {
-          allJarsToBeValidated ++= depJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
+          allJarsToBeValidated ++= depJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
         }
       } else {
         LOG.error("Found unhandled adapter type %s for adapter %s".format(a._2.TypeString, a._2.Name))
@@ -192,7 +192,7 @@ object KamanjaMdCfg {
       }
     })
 
-    val nonExistsJars = CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    val nonExistsJars = Utils.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in EnvContext and/or Adapters Jars List : {" + nonExistsJars.mkString(", ") + "}")
       return false
@@ -208,7 +208,8 @@ object KamanjaMdCfg {
       return null
     }
 
-    val envCtxtStr = cluster.cfgMap.getOrElse("EnvironmentContext", null)
+    val envCtxt1 = cluster.cfgMap.getOrElse("EnvironmentContextInfo", null)
+    val envCtxtStr = if (envCtxt1 == null) cluster.cfgMap.getOrElse("EnvironmentContext", null) else envCtxt1
     if (envCtxtStr == null) {
       LOG.error("EnvironmentContext string not found for Node %d  & ClusterId : %s".format(KamanjaConfiguration.nodeId, KamanjaConfiguration.clusterId))
       return null
@@ -232,7 +233,7 @@ object KamanjaMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -243,7 +244,7 @@ object KamanjaMdCfg {
     var curClz = clz
 
     while (clz != null && isEntCtxt == false) {
-      isEntCtxt = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.EnvContext")
+      isEntCtxt = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.EnvContext")
       if (isEntCtxt == false)
         curClz = curClz.getSuperclass()
     }
@@ -260,8 +261,8 @@ object KamanjaMdCfg {
           envCtxt.SetMetadataResolveInfo(KamanjaMetadata)
           val containerNames = KamanjaMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = KamanjaMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, containerNames, true, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Containers
-          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, topMessageNames, false, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Messages
+          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
+          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
@@ -347,7 +348,7 @@ object KamanjaMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -358,7 +359,7 @@ object KamanjaMdCfg {
     var curClz = clz
 
     while (clz != null && isOutputAdapter == false) {
-      isOutputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.OutputAdapterObj")
+      isOutputAdapter = Utils.isDerivedFrom(curClz, "com.ligadata.InputOutputAdapterInfo.OutputAdapterObj")
       if (isOutputAdapter == false)
         curClz = curClz.getSuperclass()
     }
@@ -421,7 +422,7 @@ object KamanjaMdCfg {
     return true
   }
 
-  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo, mkExecCtxt: MakeExecContext): InputAdapter = {
+  private def CreateInputAdapterFromConfig(statusAdapterCfg: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, loaderInfo: KamanjaLoaderInfo, execCtxtObj: ExecContextObj): InputAdapter = {
     if (statusAdapterCfg == null) return null
     var allJars: collection.immutable.Set[String] = null
 
@@ -434,7 +435,7 @@ object KamanjaMdCfg {
     }
 
     if (allJars != null) {
-      if (ManagerUtils.LoadJars(allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
+      if (Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader) == false)
         throw new Exception("Failed to add Jars")
     }
 
@@ -445,7 +446,7 @@ object KamanjaMdCfg {
     var curClz = clz
 
     while (clz != null && isInputAdapter == false) {
-      isInputAdapter = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.InputAdapterObj")
+      isInputAdapter = Utils.isDerivedFrom(curClz, "com.ligadata.InputOutputAdapterInfo.InputAdapterObj")
       if (isInputAdapter == false)
         curClz = curClz.getSuperclass()
     }
@@ -458,7 +459,7 @@ object KamanjaMdCfg {
         val objinst = obj.instance
         if (objinst.isInstanceOf[InputAdapterObj]) {
           val adapterObj = objinst.asInstanceOf[InputAdapterObj]
-          val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, outputAdapters, envCtxt, mkExecCtxt, SimpleStats)
+          val adapter = adapterObj.CreateInputAdapter(statusAdapterCfg, callerCtxt, execCtxtObj, SimpleStats)
           LOG.info("Created Input Adapter for Name:" + statusAdapterCfg.Name + ", Class:" + statusAdapterCfg.className)
           return adapter
         } else {
@@ -473,11 +474,15 @@ object KamanjaMdCfg {
     null
   }
 
-  private def PrepInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo, mkExecCtxt: MakeExecContext): Boolean = {
+  private def PrepInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo, execCtxtObj: ExecContextObj): Boolean = {
     // ConfigurationName
     if (adaps.size == 0) {
       return true
     }
+
+    val callerCtxt = new KamanjaInputAdapterCallerContext
+    callerCtxt.outputAdapters = outputAdapters
+    callerCtxt.envCtxt = envCtxt
 
     adaps.foreach(ac => {
       //BUGBUG:: Not yet validating required fields 
@@ -495,7 +500,7 @@ object KamanjaMdCfg {
       conf.associatedMsg = adap.AssociatedMessage
 
       try {
-        val adapter = CreateInputAdapterFromConfig(conf, outputAdapters, envCtxt, loaderInfo, mkExecCtxt)
+        val adapter = CreateInputAdapterFromConfig(conf, callerCtxt, loaderInfo, execCtxtObj)
         if (adapter == null) return false
         inputAdapters += adapter
       } catch {
@@ -508,7 +513,7 @@ object KamanjaMdCfg {
   }
 
   private def LoadInputAdapsForCfg(adaps: scala.collection.mutable.Map[String, AdapterInfo], inputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo): Boolean = {
-    return PrepInputAdapsForCfg(adaps, inputAdapters, outputAdapters, envCtxt, loaderInfo, MakeExecContextImpl)
+    return PrepInputAdapsForCfg(adaps, inputAdapters, outputAdapters, envCtxt, loaderInfo, ExecContextObjImpl)
   }
 
   private def LoadValidateInputAdapsFromCfg(validate_adaps: scala.collection.mutable.Map[String, AdapterInfo], valInputAdapters: ArrayBuffer[InputAdapter], outputAdapters: Array[OutputAdapter], envCtxt: EnvContext, loaderInfo: KamanjaLoaderInfo): Boolean = {
@@ -529,7 +534,7 @@ object KamanjaMdCfg {
     })
     if (validateInputAdapters.size == 0)
       return true
-    return PrepInputAdapsForCfg(validateInputAdapters, valInputAdapters, outputAdapters, envCtxt, loaderInfo, MakeValidateExecCtxtImpl)
+    return PrepInputAdapsForCfg(validateInputAdapters, valInputAdapters, outputAdapters, envCtxt, loaderInfo, ValidateExecContextObjImpl)
   }
 
 }

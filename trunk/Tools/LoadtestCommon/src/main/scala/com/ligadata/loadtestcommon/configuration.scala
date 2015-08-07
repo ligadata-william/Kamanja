@@ -2,7 +2,6 @@ package com.ligadata.loadtestcommon
 
 import java.util.concurrent._
 import scala.concurrent.duration.Duration
-import com.ligadata.keyvaluestore.PropertyMap
 import akka.serialization._
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -28,12 +27,9 @@ class Configuration extends scala.Serializable
 	var nMsgDelayMSec : Long = 1
 	var nStatusEverySec : Long = 10
 	
-	var connectinfo = new PropertyMap
-	connectinfo+= ("connectiontype" -> "cassandra")
-	connectinfo+= ("hostlist" -> "localhost") 
-	connectinfo+= ("schema" -> "default")
-	connectinfo+= ("table" -> "default")
-
+	var connectinfo = "{\"connectiontype\": \"cassandra\", \"hostlist\": \"localhost\", \"schema\": \"default\"}"
+	var tablename = "default"
+	
 	def Dump()
 	{
 		println("Workers=" + nWorkers)
@@ -47,9 +43,8 @@ class Configuration extends scala.Serializable
 		println("MsgDelayMSec=" + nMsgDelayMSec)
 		println("StatusEverySec=" + nStatusEverySec)
 		
-		println("Connection info")
-		connectinfo foreach ( (t) => println(t._1 + "=" + t._2))
-		
+		println("Connection info:" + connectinfo)
+		println("Table Name:" + tablename)
 	}
 	
 	def DumpJson() : String =
@@ -89,6 +84,7 @@ class Configuration extends scala.Serializable
 		clone.nStatusEverySec = nStatusEverySec
 		
 		clone.connectinfo = connectinfo
+		clone.tablename = tablename
 		
 		return clone
 	}

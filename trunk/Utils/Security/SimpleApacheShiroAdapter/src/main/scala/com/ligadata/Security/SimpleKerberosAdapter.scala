@@ -1,6 +1,6 @@
 package com.ligadata.Security
 
-import com.ligadata.kamanja.metadata.SecurityAdapter
+import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import com.sun.security.auth.callback.TextCallbackHandler
 import javax.security.auth.login._
 import javax.security.auth.Subject;

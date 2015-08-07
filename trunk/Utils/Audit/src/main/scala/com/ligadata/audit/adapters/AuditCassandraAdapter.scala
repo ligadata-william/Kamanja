@@ -1,7 +1,7 @@
 package com.ligadata.audit.adapters
 
-import com.ligadata.keyvaluestore._
-import com.ligadata.kamanja.metadata._
+import com.ligadata.StorageBase.{ Key, Value}
+import com.ligadata.AuditAdapterInfo._
 import org.apache.log4j._
 import java.util.Date
 import java.util.Calendar

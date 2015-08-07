@@ -14,14 +14,15 @@ import scala.util.Random
 import java.util.concurrent._
 import akka.actor._
 import com.ligadata._
-import com.ligadata.keyvaluestore._
+import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.loadtestcommon._
+import com.ligadata.keyvaluestore.KeyValueManager
 
 class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 {
 	///////////////////////////////////////////////////////////////////////////
 
-	val store = KeyValueManager.Get(config.connectinfo)
+	val store = KeyValueManager.Get(collection.immutable.Set[String](), config.connectinfo, config.tablename)
 
 	// We create an byte array of nRequests * nMaxSize
 	// Create the resources

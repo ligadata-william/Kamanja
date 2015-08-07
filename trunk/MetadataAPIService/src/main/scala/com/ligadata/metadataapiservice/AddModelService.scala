@@ -14,6 +14,7 @@ import com.ligadata.MetadataAPI._
 
 import scala.util.control._
 import org.apache.log4j._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object AddModelService {
   case class Process(pmmlStr:String)

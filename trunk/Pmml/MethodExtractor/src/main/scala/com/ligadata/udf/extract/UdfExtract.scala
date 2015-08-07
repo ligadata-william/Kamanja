@@ -12,8 +12,6 @@ import java.io.BufferedWriter
 import java.io.FileWriter
 import java.io.File
 import java.io.PrintWriter
-import java.net.URL
-import java.net.URLClassLoader
 import org.apache.log4j.Logger
 import com.ligadata.pmml.udfs._
 import com.ligadata.kamanja.metadata._
@@ -22,7 +20,7 @@ import scala.util.parsing.json.{JSONObject, JSONArray}
 import org.json4s._
 import org.json4s.JsonDSL._
 import com.ligadata.Serialize._
-import java.net.URLClassLoader
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 
 
 /**
@@ -141,8 +139,8 @@ object MethodExtract extends App with LogTrait{
 		
 		/** prepare the class path array so that the udf can be loaded (and its udfs introspected) */
 		val cp : Array[String] = classPath.split(':').map(_.trim)
-		val udfLoaderInfo = new UdfExtractLoaderInfo
-		LoadJarIfNeeded(cp, udfLoaderInfo.loadedJars, udfLoaderInfo.loader)
+		val udfLoaderInfo = new KamanjaLoaderInfo
+		Utils.LoadJars(cp, udfLoaderInfo.loadedJars, udfLoaderInfo.loader)
 		
 		val justObjectsFcns : String = clsName.split('.').last.trim
 		//logger.debug(s"Just catalog the functions found in $clsName")
@@ -370,69 +368,4 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 		bufferedWriter.write(text)
 		bufferedWriter.close
 	}
-	
-
-	/**
-	 * 	Load any jars that were supplied on the command line in the --cp argument
-	 *  
-	 *  @param jars the --cp values supplied on command line
-	 *  @loadedJars a TreeSet for avoiding multiple loads of same jar 
-	 *  @param loader the class loader to use 
-	 *  
-	 *  @return true if loading was successful, else false
-	 */
-
-	private def LoadJarIfNeeded(jars : Array[String], loadedJars: TreeSet[String], loader: UDFClassLoader): Boolean = {
-
-	    // Loading all jars
-	    for (j <- jars) {
-	      //logger.debug("Processing Jar " + j.trim)
-	      val fl = new File(j.trim)
-	      if (fl.exists) {
-	        try {
-	          if (loadedJars(fl.getPath())) {
-	            //logger.debug("Jar " + j.trim + " already loaded to class path.")
-	          } else {
-	            loader.addURL(fl.toURI().toURL())
-	            //logger.debug("Jar " + j.trim + " added to class path.")
-	            loadedJars += fl.getPath()
-	          }
-	        } catch {
-	          case e: Exception => {
-	            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
-	            return false
-	          }
-	        }
-	      } else {
-	        logger.error("Jar " + j.trim + " not found")
-	        return false
-	      }
-	    }
-	
-	    true
-	}
-	
-
 }
-
-
-class UDFClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-	override def addURL(url: URL) {
-		super.addURL(url)
-	}
-} 
-
-
-class UdfExtractLoaderInfo {
-	// Class loader
-	val loader: UDFClassLoader = new UDFClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-	// Loaded jars
-	val loadedJars: TreeSet[String] = new TreeSet[String];
-	// Get a mirror for reflection
-	val mirror: scala.reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
-}
-
-
-
-
- 

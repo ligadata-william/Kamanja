@@ -6,10 +6,9 @@ import scala.collection.mutable._
 import scala.util.control.Breaks._
 import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
-import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.mapdb._
+import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.KamanjaBase._
-import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
+// import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.Exceptions._
 import java.net.URLClassLoader
@@ -18,6 +17,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.KamanjaData.{ KamanjaData }
+import com.ligadata.keyvaluestore.KeyValueManager
 
 case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 case class InMemoryKeyData(K: List[String])
@@ -375,6 +375,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   private[this] var _runningTxnsDataStore: DataStore = null
   private[this] var _checkPointAdapInfoDataStore: DataStore = null
   private[this] var _mdres: MdBaseResolveInfo = null
+  private[this] var _jarPaths: collection.immutable.Set[String] = null // Jar paths where we can resolve all jars (including dependency jars).
 
   for (i <- 0 until _buckets) {
     _txnContexts(i) = scala.collection.mutable.Map[Long, TransactionContext]()
@@ -517,41 +518,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
-      var connectinfo = new PropertyMap
-      connectinfo += ("connectiontype" -> storeType)
-      connectinfo += ("table" -> tableName)
-      if (adapterSpecificConfig != null)
-        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
-      storeType match {
-        case "hashmap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "treemap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "cassandra" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-          connectinfo += ("ConsistencyLevelRead" -> "ONE")
-        }
-        case "hbase" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-        }
-        case _ => {
-          throw new Exception("The database type " + storeType + " is not supported yet ")
-        }
-      }
-      logger.debug("Getting DB Connection: " + connectinfo.mkString(","))
-      KeyValueManager.Get(connectinfo)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
         e.printStackTrace()
@@ -560,14 +530,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
-    var k = new com.ligadata.keyvaluestore.Key
+  private def makeKey(key: String): Key = {
+    var k = new Key
     k ++= key.getBytes("UTF8")
     k
   }
 
-  private def makeValue(value: String, serializerInfo: String): com.ligadata.keyvaluestore.Value = {
-    var v = new com.ligadata.keyvaluestore.Value
+  private def makeValue(value: String, serializerInfo: String): Value = {
+    var v = new Value
     v ++= serializerInfo.getBytes("UTF8")
 
     // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
@@ -588,8 +558,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     v
   }
 
-  private def makeValue(value: Array[Byte], serializerInfo: String): com.ligadata.keyvaluestore.Value = {
-    var v = new com.ligadata.keyvaluestore.Value
+  private def makeValue(value: Array[Byte], serializerInfo: String): Value = {
+    var v = new Value
     v ++= serializerInfo.getBytes("UTF8")
 
     // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
@@ -1038,20 +1008,23 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   // Adding new messages or Containers
-  //BUGBUG:: May be we need to lock before we do anything here
-  override def AddNewMessageOrContainers(mgr: MdMgr, storeType: String, dataLocation: String, schemaName: String, adapterSpecificConfig: String, containerNames: Array[String], loadAllData: Boolean, statusInfoStoreType: String, statusInfoSchemaName: String, statusInfoLocation: String, statusInfoadapterSpecificConfig: String): Unit = {
-    logger.info("AddNewMessageOrContainers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
+  override def AddNewMessageOrContainers(mgr: MdMgr, dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit = {
+    logger.info("Messages/Containers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
+    logger.debug("Messages/Containers => loadAllData:%s, jarPaths:%s".format(loadAllData.toString, jarPaths.mkString(",")))
     if (_allDataDataStore == null) {
-      logger.debug("AddNewMessageOrContainers => storeType:%s, dataLocation:%s, schemaName:%s".format(storeType, dataLocation, schemaName))
-      _allDataDataStore = GetDataStoreHandle(storeType, schemaName, "AllData", dataLocation, adapterSpecificConfig)
+      logger.debug("Messages/Containers => dataDataStoreInfo:" + dataDataStoreInfo)
+      _allDataDataStore = GetDataStoreHandle(jarPaths, dataDataStoreInfo, "AllData")
     }
     if (_runningTxnsDataStore == null) {
-      _runningTxnsDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "RunningTxns", statusInfoLocation, statusInfoadapterSpecificConfig)
+      _runningTxnsDataStore = GetDataStoreHandle(jarPaths, statusDataStoreInfo, "RunningTxns")
+      logger.debug("Messages/Containers => statusDataStoreInfo:" + statusDataStoreInfo + ", _runningTxnsDataStore:" + _runningTxnsDataStore)
     }
     if (_checkPointAdapInfoDataStore == null) {
-      _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation, statusInfoadapterSpecificConfig)
+      _checkPointAdapInfoDataStore = GetDataStoreHandle(jarPaths, statusDataStoreInfo, "checkPointAdapInfo")
+      logger.debug("Messages/Containers => statusDataStoreInfo:" + statusDataStoreInfo + ", _checkPointAdapInfoDataStore:" + _checkPointAdapInfoDataStore)
     }
 
+    _jarPaths = jarPaths
     val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
     var keysAlreadyLoaded = false
 
@@ -1238,7 +1211,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
                 def Value = v
 
-                def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+                def Construct(Key: Key, Value: Value) = {}
               }
               storeObjects += obj
               cntr += 1
@@ -1272,7 +1245,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           def Value = v
 
-          def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+          def Construct(Key: Key, Value: Value) = {}
         }
         storeObjects += obj
         cntr += 1
@@ -1297,7 +1270,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           def Value = v
 
-          def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+          def Construct(Key: Key, Value: Value) = {}
         }
         storeObjects += obj
         cntr += 1
@@ -1367,11 +1340,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
             def Value = v
 
-            def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+            def Construct(Key: Key, Value: Value) = {}
           }
           storeObjects(cntr) = obj
           cntr += 1
         })
+
+        if (_runningTxnsDataStore == null) {
+          throw new Exception("Not found Status DataStore to save Status.")
+        }
 
         val txn = _runningTxnsDataStore.beginTx()
         _runningTxnsDataStore.putBatch(storeObjects)
@@ -1411,6 +1388,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Get all Status information from intermediate table
   override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = {
+    if (_runningTxnsDataStore == null) {
+      throw new Exception("Not found Status DataStore to get Status.")
+    }
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     val keys = ArrayBuffer[KamanjaDataKey]()
     val keyCollector = (key: Key) => {
@@ -1437,6 +1417,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   // Get Status information from intermediate table for given keys. No Transaction required here.
   override def getIntermediateStatusInfo(keys: Array[String]): Array[(String, (String, Int, Int))] = {
+    if (_runningTxnsDataStore == null) {
+      throw new Exception("Not found Status DataStore to get.")
+    }
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
@@ -1488,6 +1471,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def PersistValidateAdapterInformation(validateUniqVals: Array[(String, String)]): Unit = {
+    if (_checkPointAdapInfoDataStore == null) {
+      throw new Exception("Not found Status DataStore to save Validate Adapters Information.")
+    }
     // Persists unique key & value here for this transactionId
     val storeObjects = new Array[IStorage](validateUniqVals.size)
     var cntr = 0
@@ -1504,7 +1490,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
         def Value = v
 
-        def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+        def Construct(Key: Key, Value: Value) = {}
       }
       storeObjects(cntr) = obj
       cntr += 1
@@ -1528,14 +1514,20 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def GetValidateAdapterInformation: Array[(String, String)] = {
+    if (_checkPointAdapInfoDataStore == null) {
+      throw new Exception("Not found Status DataStore to get Validate Adapters Information.")
+    }
+    logger.debug(s"GetValidateAdapterInformation() -- Entered")
     val results = ArrayBuffer[(String, String)]()
 
     val keys = ArrayBuffer[KamanjaDataKey]()
     val keyCollector = (key: Key) => {
       collectKey(key, keys)
     }
+    logger.debug(s"GetValidateAdapterInformation() -- About to get keys from _checkPointAdapInfoDataStore:" + _checkPointAdapInfoDataStore)
     _checkPointAdapInfoDataStore.getAllKeys(keyCollector)
     var objs: Array[String] = new Array[String](1)
+    logger.debug(s"GetValidateAdapterInformation() -- Get %d keys".format(keys.size))
     keys.foreach(key => {
       try {
         val buildAdapOne = (tupleBytes: Value) => {

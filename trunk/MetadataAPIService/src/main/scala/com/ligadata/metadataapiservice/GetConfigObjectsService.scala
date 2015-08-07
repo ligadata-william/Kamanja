@@ -15,6 +15,7 @@ import org.json4s.jackson.JsonMethods._
 
 import scala.util.control._
 import org.apache.log4j._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object GetConfigObjectsService {
   case class Process(formatType:String)

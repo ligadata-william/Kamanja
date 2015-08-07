@@ -12,6 +12,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.Serialize._
 import com.ligadata.Utils._
 import util.control.Breaks._
+import com.ligadata.AuditAdapterInfo._
 
 object MetadataAPIOutputMsg {
 

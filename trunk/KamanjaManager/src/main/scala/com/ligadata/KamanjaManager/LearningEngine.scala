@@ -16,8 +16,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.outputmsg.OutputMsgGenerator
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, InputAdapterObj, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 
-class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
+class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
   var cntr: Long = 0
   var totalLatencyFromReadToProcess: Long = 0
@@ -27,6 +28,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
+   LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
 
@@ -38,6 +40,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       models.foreach(md => {
         try {
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
             // Checking whether this message has any fields/concepts to execute in this model
             val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
@@ -77,6 +80,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   def execute(transId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
     // LOG.debug("LE => " + msgData)
+    LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
     try {
       if (msgInfo != null && inputdata != null) {
         val partKeyData = if (msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CanPersist) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata) else null

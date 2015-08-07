@@ -16,6 +16,7 @@ import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader }
 
 class TransformMsgFldsMap(var keyflds: Array[Int], var outputFlds: Array[Int]) {
 }
@@ -59,7 +60,7 @@ class KamanjaMetadata {
       })
     }
 
-    val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    val nonExistsJars = Utils.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
       return false
@@ -93,7 +94,7 @@ class KamanjaMetadata {
       isMsg = false
 
       while (curClz != null && isMsg == false) {
-        isMsg = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
+        isMsg = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
         if (isMsg == false)
           curClz = curClz.getSuperclass()
       }
@@ -197,7 +198,7 @@ class KamanjaMetadata {
       isContainer = false
 
       while (curClz != null && isContainer == false) {
-        isContainer = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
+        isContainer = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
         if (isContainer == false)
           curClz = curClz.getSuperclass()
       }
@@ -289,7 +290,7 @@ class KamanjaMetadata {
       isModel = false
 
       while (curClz != null && isModel == false) {
-        isModel = ManagerUtils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
+        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
         if (isModel == false)
           curClz = curClz.getSuperclass()
       }
@@ -376,13 +377,13 @@ class KamanjaMetadata {
       return Set[String]()
     }
 
-    return allJars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toSet
+    return allJars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j)).toSet
   }
 
   private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     val allJars = GetAllJarsFromElem(elem)
     if (allJars.size > 0) {
-      return ManagerUtils.LoadJars(allJars.toArray, loadedJars, loader)
+      return Utils.LoadJars(allJars.toArray, loadedJars, loader)
     } else {
       return true
     }
@@ -538,7 +539,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= contObjects
       if (envCtxt != null) {
         val containerNames = contObjects.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, containerNames, true, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Containers
+        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
       }
     }
 
@@ -547,7 +548,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
       messageContainerObjects ++= msgObjects
       if (envCtxt != null) {
         val topMessageNames = msgObjects.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataStoreType, KamanjaConfiguration.dataLocation, KamanjaConfiguration.dataSchemaName, KamanjaConfiguration.adapterSpecificConfig, topMessageNames, false, KamanjaConfiguration.statusInfoStoreType, KamanjaConfiguration.statusInfoSchemaName, KamanjaConfiguration.statusInfoLocation, KamanjaConfiguration.statusInfoAdapterSpecificConfig) // Messages
+        envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
       }
     }
 
@@ -604,14 +605,6 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   }
 
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: KamanjaClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
-    /*
-    if (KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("cassandra") == 0|| KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("hbase") == 0)
-      MetadataAPIImpl.InitMdMgr(mdMgr, KamanjaConfiguration.metadataStoreType, KamanjaConfiguration.metadataLocation, KamanjaConfiguration.metadataSchemaName, "")
-    else if ((KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("treemap") == 0) || (KamanjaConfiguration.metadataStoreType.compareToIgnoreCase("hashmap") == 0))
-      MetadataAPIImpl.InitMdMgr(mdMgr, KamanjaConfiguration.metadataStoreType, "", KamanjaConfiguration.metadataSchemaName, KamanjaConfiguration.metadataLocation)
-*/
-    // MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile)
-
     loadedJars = tmpLoadedJars
     loader = tmpLoader
     mirror = tmpMirror
@@ -742,7 +735,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
     if (unloadMsgsContainers.size > 0)
       envCtxt.clearIntermediateResults(unloadMsgsContainers.toArray)
 
-    val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
+    val nonExistsJars = Utils.CheckForNonExistanceJars(allJarsToBeValidated.toSet)
     if (nonExistsJars.size > 0) {
       LOG.error("Not found jars in Messages/Containers/Models Jars List : {" + nonExistsJars.mkString(", ") + "}")
       // return

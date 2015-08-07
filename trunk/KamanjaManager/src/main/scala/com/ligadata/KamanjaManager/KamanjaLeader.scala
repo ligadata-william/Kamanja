@@ -2,7 +2,7 @@
 package com.ligadata.KamanjaManager
 
 import com.ligadata.KamanjaBase._
-
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, ValidateAdapterFoundInfo }
 import com.ligadata.kamanja.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
@@ -231,21 +231,38 @@ object KamanjaLeader {
           validateInputAdapters.foreach(via => {
             // Get all Begin values for Unique Keys
             val begVals = via.getAllPartitionBeginValues
-            val finalVals = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](begVals.size)
+            val finalVals = new ArrayBuffer[StartProcPartInfo](begVals.size)
 
             // Replace the newly found ones
             val nParts = begVals.size
             for (i <- 0 until nParts) {
               val key = begVals(i)._1.Serialize.toLowerCase
               val foundVal = map.getOrElse(key, null)
+
+              val valAdapInfo = new ValidateAdapterFoundInfo
+              valAdapInfo._transformProcessingMsgIdx = 0
+              valAdapInfo._transformTotalMsgIdx = 0
+
+              val info = new StartProcPartInfo
+
               if (foundVal != null) {
                 val desVal = via.DeserializeValue(foundVal)
-                finalVals += ((begVals(i)._1, desVal, 0, (desVal, 0, 0)))
+                valAdapInfo._val = desVal
+                info._key = begVals(i)._1
+                info._val = desVal
+                info._txnId = 0
               } else {
-                finalVals += ((begVals(i)._1, begVals(i)._2, 0, (begVals(i)._2, 0, 0)))
+                valAdapInfo._val = begVals(i)._2
+                info._key = begVals(i)._1
+                info._val = begVals(i)._2
+                info._txnId = 0
               }
+
+              info._validateInfo = valAdapInfo
+              finalVals += info
             }
-            via.StartProcessing(finalVals.size, finalVals.toArray, false)
+            LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
+            via.StartProcessing(finalVals.toArray, false)
           })
 
           var stillWait = true
@@ -262,8 +279,10 @@ object KamanjaLeader {
               stillWait = false
           }
 
-          if (distributionExecutor.isShutdown)
+          if (distributionExecutor.isShutdown) {
+            LOG.debug("Distribution Executor is shutting down")
             break
+          }
 
           // Stopping the Adapters
           validateInputAdapters.foreach(via => {
@@ -444,15 +463,25 @@ object KamanjaLeader {
           })
           LOG.debug("Deserializing Keys & Values done")
 
-          val quads = new ArrayBuffer[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))](keys.size)
+          val quads = new ArrayBuffer[StartProcPartInfo](keys.size)
 
           for (i <- 0 until keys.size) {
             val key = keys(i)
-            quads += ((key, vals(i), uAK(i)._2, processingvals(i)))
+            val valAdapInfo = new ValidateAdapterFoundInfo
+            valAdapInfo._val = processingvals(i)._1
+            valAdapInfo._transformProcessingMsgIdx = processingvals(i)._2
+            valAdapInfo._transformTotalMsgIdx = processingvals(i)._3
+
+            val info = new StartProcPartInfo
+            info._key = key
+            info._val = vals(i)
+            info._txnId = uAK(i)._2
+            info._validateInfo = valAdapInfo
+            quads += info
           }
 
-          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._1.Serialize, q._2.Serialize, q._3, (q._4._1.Serialize, q._4._2, q._4._2)) }).mkString(","))
-          ia.StartProcessing(maxParts, quads.toArray, true)
+          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._key.Serialize, q._val.Serialize, q._txnId, (q._validateInfo._val.Serialize, q._validateInfo._transformProcessingMsgIdx, q._validateInfo._transformTotalMsgIdx)) }).mkString(","))
+          ia.StartProcessing(quads.toArray, true)
         }
       } catch {
         case e: Exception => {
@@ -659,7 +688,7 @@ object KamanjaLeader {
         }
 
         if (changedVals != null) {
-              envCtxt.clearIntermediateResults
+          envCtxt.clearIntermediateResults
           // envCtxt.clearIntermediateResults(changedVals)
         }
       }

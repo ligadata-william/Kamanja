@@ -1,6 +1,6 @@
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.CountersAdapter
+import com.ligadata.InputOutputAdapterInfo.CountersAdapter
 
 object SimpleStats extends CountersAdapter {
 

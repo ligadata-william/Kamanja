@@ -6,15 +6,15 @@ import org.apache.log4j.Logger
 import java.io.{ InputStream, FileInputStream }
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
-import com.ligadata.KamanjaBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, ExecContextObj, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, InputAdapterCallerContext }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
 
 object FileConsumer extends InputAdapterObj {
-  def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
+  def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
 }
 
-class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
+class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputAdapterCallerContext, val execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter) extends InputAdapter {
   private[this] val LOG = Logger.getLogger(getClass);
 
   private[this] val fc = FileAdapterConfiguration.GetAdapterConfig(inputConfig)
@@ -31,7 +31,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
 
   val input = this
 
-  val execThread = mkExecCtxt.CreateExecContext(input, 0, output, envCtxt)
+  val execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
 
   class Stats {
     var totalLines: Long = 0;
@@ -94,7 +94,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(transId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
+                      execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
                       transId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -148,7 +148,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(transId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
+            execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
             transId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
@@ -194,7 +194,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter)
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
+  override def StartProcessing(partitionInfo: Array[StartProcPartInfo], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
     if (partitionInfo == null || partitionInfo.size == 0)
       return
 
