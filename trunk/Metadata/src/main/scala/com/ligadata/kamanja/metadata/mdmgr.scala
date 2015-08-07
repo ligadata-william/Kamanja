@@ -64,6 +64,7 @@ class MdMgr {
   private var nodes = new HashMap[String, NodeInfo]
   private var adapters = new HashMap[String, AdapterInfo]
   private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
+  private var userConfigs = new HashMap[String,String]
 
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
@@ -82,6 +83,7 @@ class MdMgr {
     clusters.clear
     clusterCfgs.clear
     nodes.clear
+    modelConfigs.clear
     adapters.clear
     outputMsgDefs.clear
   }
@@ -2693,6 +2695,14 @@ class MdMgr {
   
   def GetModelConfig(key: String): scala.collection.immutable.Map[String,List[String]] = {
     modelConfigs.getOrElse(key.toLowerCase, scala.collection.immutable.Map[String,List[String]]())
+  }
+  
+  def AddUserConfig(key: String, value: String): Unit = {
+    userConfigs(key.toLowerCase) = value
+  }
+  
+  def GetUserConfig(key: String): String = {
+    userConfigs.getOrElse(key.toLowerCase, new String(""))
   }
   
   def MakeCluster(clusterId: String, description: String, privilges: String): ClusterInfo = {

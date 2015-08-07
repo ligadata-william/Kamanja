@@ -4316,33 +4316,33 @@ object MetadataAPIImpl extends MetadataAPI {
         return false
       }
       keyArray.foreach(key => {
-  //logger.debug("key => " + KeyAsStr(key))
+        //logger.debug("key => " + KeyAsStr(key))
         val obj = GetObject(key, configStore)
         val strKey = KeyAsStr(key)
         val i = strKey.indexOf(".")
         val objType = strKey.substring(0, i)
         val typeName = strKey.substring(i + 1)
-  objType match {
-    case "nodeinfo" => {
+        objType match {
+          case "nodeinfo" => {
             val ni = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[NodeInfo]
-      MdMgr.GetMdMgr.AddNode(ni)
-    }
-    case "adapterinfo" => {
+            MdMgr.GetMdMgr.AddNode(ni)
+          }
+          case "adapterinfo" => {
             val ai = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[AdapterInfo]
-      MdMgr.GetMdMgr.AddAdapter(ai)
-    }
-    case "clusterinfo" => {
+            MdMgr.GetMdMgr.AddAdapter(ai)
+          }
+          case "clusterinfo" => {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterInfo]
-      MdMgr.GetMdMgr.AddCluster(ci)
-    }
-    case "clustercfginfo" => {
+            MdMgr.GetMdMgr.AddCluster(ci)
+          }
+          case "clustercfginfo" => {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterCfgInfo]
-      MdMgr.GetMdMgr.AddClusterCfg(ci)
-    }
-    case _ => {
+            MdMgr.GetMdMgr.AddClusterCfg(ci)
+          }
+          case _ => {
             throw InternalErrorException("LoadAllConfigObjectsIntoCache: Unknown objectType " + objType)
-    }
-  }
+          }
+        }
       })
       return true
     } catch {
@@ -5512,9 +5512,10 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       // extract config objects
       val cfg = JsonSerializer.parseEngineConfig(cfgStr)
+       
       // process clusterInfo object if it exists
       val clusters = cfg.Clusters
-
+            
       if ( clusters == None ){
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "UploadConfig", null, ErrorCodeConstants.Upload_Config_Failed + ":" + cfgStr)
         apiResult.toString()
@@ -5525,6 +5526,24 @@ object MetadataAPIImpl extends MetadataAPI {
         ciList.foreach(c1 => {
           logger.debug("Processing the cluster => " + c1.ClusterId)
           // save in memory
+          
+          
+          // Process Optional User Configuations - these are optional and may not be there
+          val userConfigs = c1.UserConfigs.getOrElse(None)
+          if (userConfigs != None) {
+            var keys = userConfigs.asInstanceOf[Map[String,String]].keys
+            keys.foreach(curK=>{
+              MdMgr.GetMdMgr.AddUserConfig(curK,userConfigs.asInstanceOf[Map[String,String]](curK))
+              var key = curK
+              var value = serializer.SerializeObjectToByteArray(userConfigs.asInstanceOf[Map[String,String]](curK))
+              println(curK + " ...  "+ MdMgr.GetMdMgr.GetUserConfig(curK))
+              keyList   = keyList :+ key.toLowerCase
+              valueList = valueList :+ value
+            })
+ 
+          } 
+         
+          // process the Rest
           var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
           MdMgr.GetMdMgr.AddCluster(ci)
           var key = "ClusterInfo." + ci.clusterId
