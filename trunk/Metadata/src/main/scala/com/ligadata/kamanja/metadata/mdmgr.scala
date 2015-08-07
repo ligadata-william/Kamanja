@@ -64,7 +64,7 @@ class MdMgr {
   private var nodes = new HashMap[String, NodeInfo]
   private var adapters = new HashMap[String, AdapterInfo]
   private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
-  private var userConfigs = new HashMap[String,String]
+  private var userProperties = new HashMap[String,String]
 
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
@@ -84,6 +84,7 @@ class MdMgr {
     clusterCfgs.clear
     nodes.clear
     modelConfigs.clear
+    userProperties.clear
     adapters.clear
     outputMsgDefs.clear
   }
@@ -130,7 +131,13 @@ class MdMgr {
       }
       case "OutputMsgDef" => {
     	  outputMsgDefs.clear
-        }
+      }
+      case "ModelConfigs" => {
+        modelConfigs.clear
+      }
+      case "UserProperties" => {
+        userProperties.clear
+      }     
       case _ => {
         logger.error("Unknown object type " + objectType + " in truncate function")
       }
@@ -2697,12 +2704,12 @@ class MdMgr {
     modelConfigs.getOrElse(key.toLowerCase, scala.collection.immutable.Map[String,List[String]]())
   }
   
-  def AddUserConfig(key: String, value: String): Unit = {
-    userConfigs(key.toLowerCase) = value
+  def AddUserProperties(key: String, value: String): Unit = {
+    userProperties(key.toLowerCase) = value
   }
   
-  def GetUserConfig(key: String): String = {
-    userConfigs.getOrElse(key.toLowerCase, new String(""))
+  def GetUserProperties(key: String): String = {
+    userProperties.getOrElse(key.toLowerCase, new String(""))
   }
   
   def MakeCluster(clusterId: String, description: String, privilges: String): ClusterInfo = {

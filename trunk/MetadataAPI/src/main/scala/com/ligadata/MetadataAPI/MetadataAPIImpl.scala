@@ -545,6 +545,7 @@ object MetadataAPIImpl extends MetadataAPI {
   private var configStore: DataStore = _
   private var outputmsgStore: DataStore = _
   private var modelConfigStore: DataStore = _
+  private var userPopertiesStore: DataStore = _
 
   def oStore = otherStore
 
@@ -1784,6 +1785,7 @@ object MetadataAPIImpl extends MetadataAPI {
       jarStore = GetDataStoreHandle(storeType, "metadata_jars", "jar_store", adapterSpecificConfig)
       transStore = GetDataStoreHandle(storeType, "metadata_trans", "transaction_id", adapterSpecificConfig)
       modelConfigStore = GetDataStoreHandle(storeType, "model_config_store","model_config_objects", adapterSpecificConfig)
+      userPopertiesStore = GetDataStoreHandle(storeType, "user_properties_store","user_properties_objects",adapterSpecificConfig)
 
       modelStore = metadataStore
       messageStore = metadataStore
@@ -1805,6 +1807,7 @@ object MetadataAPIImpl extends MetadataAPI {
         "transaction_id" -> transStore,
         "outputmsgs" -> outputmsgStore,
         "model_config_objects" -> modelConfigStore,
+        "user_properties_objects" -> userPopertiesStore,
         "transaction_id" -> transStore)
     } catch {
       case e: CreateStoreFailedException => {
@@ -1845,6 +1848,11 @@ object MetadataAPIImpl extends MetadataAPI {
         modelConfigStore.Shutdown()
         modelConfigStore = null
         logger.debug("modelConfigStore closed")       
+      }
+      if (userPopertiesStore != null) {
+        userPopertiesStore.Shutdown()
+        userPopertiesStore = null
+        logger.debug("userPopertiesStore closed")              
       }
     } catch {
       case e: Exception => {
@@ -4369,6 +4377,23 @@ object MetadataAPIImpl extends MetadataAPI {
       MdMgr.GetMdMgr.DumpModelConfigs
   }
   
+  //LoadAllUserPopertiesIntoChache - load all the date in the underlying userPopertiesStore into MdMgr Hashmap
+  private def LoadAllUserPopertiesIntoChache: Unit = {
+      var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
+      userPopertiesStore.getAllKeys({ (key: Key) => keys.add(key) })  
+      val keyArray = keys.toArray
+      if (keyArray.length == 0) {
+        logger.debug("No model config objects available in the Database")
+        return
+      }
+      keyArray.foreach (key => {
+        val obj = GetObject(key, userPopertiesStore)
+        val conf = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[Map[String,List[String]]]
+        MdMgr.GetMdMgr.AddModelConfig(KeyAsStr(key),conf)
+      })
+      MdMgr.GetMdMgr.DumpModelConfigs
+  }
+  
   def LoadAllObjectsIntoCache {
     try {
       val configAvailable = LoadAllConfigObjectsIntoCache
@@ -4381,6 +4406,7 @@ object MetadataAPIImpl extends MetadataAPI {
       
       // Load All the Model Configs here... 
       LoadAllModelConfigsIntoChache
+      LoadAllUserPopertiesIntoChache
       startup = true
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
@@ -5529,19 +5555,19 @@ object MetadataAPIImpl extends MetadataAPI {
           
           
           // Process Optional User Configuations - these are optional and may not be there
-          val userConfigs = c1.UserConfigs.getOrElse(None)
-          if (userConfigs != None) {
-            var keys = userConfigs.asInstanceOf[Map[String,String]].keys
-            keys.foreach(curK=>{
-              MdMgr.GetMdMgr.AddUserConfig(curK,userConfigs.asInstanceOf[Map[String,String]](curK))
-              var key = curK
-              var value = serializer.SerializeObjectToByteArray(userConfigs.asInstanceOf[Map[String,String]](curK))
-              println(curK + " ...  "+ MdMgr.GetMdMgr.GetUserConfig(curK))
-              keyList   = keyList :+ key.toLowerCase
-              valueList = valueList :+ value
-            })
+         // val userConfigs = c1.UserConfigs.getOrElse(None)
+         // if (userConfigs != None) {
+         //   var keys = userConfigs.asInstanceOf[Map[String,String]].keys
+         //   keys.foreach(curK=>{
+         //     MdMgr.GetMdMgr.AddUserConfig(curK,userConfigs.asInstanceOf[Map[String,String]](curK))
+         //     var key = curK
+         //     var value = serializer.SerializeObjectToByteArray(userConfigs.asInstanceOf[Map[String,String]](curK))
+         //     println(curK + " ...  "+ MdMgr.GetMdMgr.GetUserConfig(curK))
+         //     keyList   = keyList :+ key.toLowerCase
+         //     valueList = valueList :+ value
+         //   })
  
-          } 
+        //  } 
          
           // process the Rest
           var ci = MdMgr.GetMdMgr.MakeCluster(c1.ClusterId,null,null)
