@@ -4,7 +4,7 @@ import scala.collection.mutable.Stack
 import scala.collection.immutable.Set
 import scala.util.control.Breaks._
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.pmml.compiler._
 
 

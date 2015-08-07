@@ -26,9 +26,9 @@ class RDDHandler {
     }
 
     """
-import com.ligadata.FatafatBase.JavaRDDObject;
-import com.ligadata.FatafatBase.BaseMsgObj;
-import com.ligadata.FatafatBase.BaseContainerObj;
+import com.ligadata.KamanjaBase.JavaRDDObject;
+import com.ligadata.KamanjaBase.BaseMsgObj;
+import com.ligadata.KamanjaBase.BaseContainerObj;
 
 public final class """ + message.Name + """Factory {
 	public static JavaRDDObject<""" + message.Name + """> rddObject = """ + message.Name + """$.MODULE$.toJavaRDDObject();

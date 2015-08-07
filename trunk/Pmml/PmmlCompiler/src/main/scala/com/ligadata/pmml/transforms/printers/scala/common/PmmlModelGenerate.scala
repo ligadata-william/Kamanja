@@ -4,7 +4,7 @@ import org.apache.log4j.Logger
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._

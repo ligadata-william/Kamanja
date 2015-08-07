@@ -1,6 +1,6 @@
 package com.ligadata.samples.models;
 
-import com.ligadata.FatafatBase.*;
+import com.ligadata.KamanjaBase.*;
 import com.ligadata.samples.messages.*;
 import com.google.common.base.Optional;
 

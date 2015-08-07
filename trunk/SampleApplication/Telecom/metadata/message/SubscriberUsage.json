@@ -1,0 +1,31 @@
+{
+  "Message": {
+	"NameSpace": "System",
+	"Name": "SubscriberUsage",
+	"Version": "00.01.00",
+	"Description": "Subscriber Usage",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "msisdn",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "usage",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "date",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "time",
+		"Type": "System.Int"
+	  }
+	],
+	"PartitionKey": [
+	  "msisdn"
+	]
+  }
+}

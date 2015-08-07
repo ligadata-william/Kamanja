@@ -1,1 +1,1 @@
-This the first UI release for the Fatafat
+This the first UI release for the Kamanja

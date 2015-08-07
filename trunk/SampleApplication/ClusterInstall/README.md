@@ -1,12 +1,12 @@
 *******************************************
-Fatafat Install and Administration Scripts 
+Kamanja Install and Administration Scripts 
 *******************************************
 
 The current trunk/SampleApplication/ClusterInstall scripts should be copied to a directory on your PATH.  Verify they are executable and if not perform the appropriate 'chmod' command on them.  
 
-The NodeInfoExtract-1.0 application, used by the FataFatClusterInstall.sh script, also must be on your PATH.  It can be found in the trunk/Utils/NodeInfoExtract/target/scala-2.10 directory.
+The NodeInfoExtract-1.0 application, used by the KamanjaClusterInstall.sh script, also must be on your PATH.  It can be found in the trunk/Utils/NodeInfoExtract/target/scala-2.10 directory.
 
-In addition if you plan to use the RecentLogErrorsFromFataFatCluster.sh script, the DateCalc-1.0 application should also be on your path.  It is used to calculate a timestamp some seconds or minutes or hours ago that will be used determine the first record and those more recent to examine for ERRORs.  Its project is in trunk/Utils/DateCalc.
+In addition if you plan to use the RecentLogErrorsFromKamanjaCluster.sh script, the DateCalc-1.0 application should also be on your path.  It is used to calculate a timestamp some seconds or minutes or hours ago that will be used determine the first record and those more recent to examine for ERRORs.  Its project is in trunk/Utils/DateCalc.
 
 *******************************************
 Pre-requisites before using the installer 
@@ -20,18 +20,18 @@ Install a New Cluster (from source)
 
 1) Run the install script without arguments to see what is required.  For example,
 
-	rich@pepper:~/github/Fatafat/trunk$ FataFatClusterInstall.sh
+	rich@pepper:~/github/Kamanja/trunk$ KamanjaClusterInstall.sh
 
 	Problem: Incorrect number of arguments
 
 	Usage if building from source:
-	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
+	      KamanjaClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --KafkaInstallPath <kafka location>
 	                               --NodeConfigPath <engine config path> 
 	                               [ --WorkingDir <alt working dir>  ]
 	Usage if deploying tarball:
-	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
+	      KamanjaClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --TarballPath <tarball path>
 	                               --NodeConfigPath <engine config path>
@@ -81,7 +81,7 @@ There is an example in trunk/SampleApplication//EasyInstall/template/config/Clus
 
 4) About the KafkaInstallPath parameter
 
-When building from source, the location of your local build machine kafka installation is required because the cluster installer uses the easyInstallFatafat.sh script which needs it to configure CreateQueues.sh, WatchOutputQueue.sh, WatchStatusQueue.sh and WatchInputQueue.sh.  
+When building from source, the location of your local build machine kafka installation is required because the cluster installer uses the easyInstallKamanja.sh script which needs it to configure CreateQueues.sh, WatchOutputQueue.sh, WatchStatusQueue.sh and WatchInputQueue.sh.  
 
 Note: This points out that when multiple machines are to be used for the cluster installation, ALL machines must have the Kafka installed in the same location.  
 
@@ -89,9 +89,9 @@ Note: This points out that when multiple machines are to be used for the cluster
 
 This defaults to /tmp.  Unless you are particularly paranoid that others with access to the machines to receive the installation will foul your installation by tampering with the files in this public location, it does not need to be specified.
 
-6) An example invocation of the FataFatClusterInstall.sh:
+6) An example invocation of the KamanjaClusterInstall.sh:
 
-	rich@pepper:~/github/Fatafat/trunk$ FataFatClusterInstall.sh --ClusterId ligadata1 --MetadataAPIConfig ClusterCfgMetadataAPIConfigCass.properties --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1 --NodeConfigPath ClusterConfig.json
+	rich@pepper:~/github/Kamanja/trunk$ KamanjaClusterInstall.sh --ClusterId ligadata1 --MetadataAPIConfig ClusterCfgMetadataAPIConfigCass.properties --KafkaInstallPath ~/tarballs/kafka/2.10/kafka_2.10-0.8.1.1 --NodeConfigPath ClusterConfig.json
 
 
 ************************************
@@ -101,7 +101,7 @@ Install a New Cluster (from tarball)
 1) Let's focus in on the parameters (snipped from the prior section) that deal with tarball installation:
 
 	Usage if deploying tarball:
-	      FataFatClusterInstall.sh --ClusterId <cluster name identifer> 
+	      KamanjaClusterInstall.sh --ClusterId <cluster name identifer> 
 	                               --MetadataAPIConfig  <metadataAPICfgPath>  
 	                               --TarballPath <tarball path>
 	                               --NodeConfigPath <engine config path>
@@ -111,19 +111,19 @@ All of the parameter descriptions common with the "source" installation in the p
 
 2) Why use a tarball installation?
 
-Depending on the nature of the organization deploying Fatafat clusters, the team that designs and creates the Fatafat cluster may not necessarily be the one that deploys the cluster.  Similarly, the team that deploys the cluster does not have permissions and/or knowledge to build the cluster software from source.  In these cases, a tarball installation is recommended.
+Depending on the nature of the organization deploying Kamanja clusters, the team that designs and creates the Kamanja cluster may not necessarily be the one that deploys the cluster.  Similarly, the team that deploys the cluster does not have permissions and/or knowledge to build the cluster software from source.  In these cases, a tarball installation is recommended.
 
 3) The basic steps to create the tarball are:
 
-	a) Run the easyInstallFatafat.sh script on the build machine.  This will create a local installation at the specified <install dir> location.  See the easyInstallFatafat.sh documentation for more details.
+	a) Run the easyInstallKamanja.sh script on the build machine.  This will create a local installation at the specified <install dir> location.  See the easyInstallKamanja.sh documentation for more details.
 
 	b) Currently only tar'd and gzip'd tarballs are supported.  To create the "tgz" archive for your <install dir> content, change directory to <install dir>'s parent directory and issue 'tar cvzf someTarbBallName.tar.gz <install dir>'.  This tar.gz archive's file path will be the file to specify for the TarballPath value.
 
 	c) In practice, you will want to supply some meaningful information in the tarball name like the release tag from your repo's build, a timestamp, etc.
 
-4) Once created, invoke your FataFatClusterInstall.sh command.  For example,
+4) Once created, invoke your KamanjaClusterInstall.sh command.  For example,
 
-	rich@pepper:~/github/Fatafat/trunk$ FataFatClusterInstall.sh --ClusterId ligadata1 --MetadataAPIConfig ClusterCfgMetadataAPIConfigCass.properties --TarballPath ~/fatafatBuilds/someTarbBallName.tar.gz --NodeConfigPath ClusterConfig.json
+	rich@pepper:~/github/Kamanja/trunk$ KamanjaClusterInstall.sh --ClusterId ligadata1 --MetadataAPIConfig ClusterCfgMetadataAPIConfigCass.properties --TarballPath ~/kamanjaBuilds/someTarbBallName.tar.gz --NodeConfigPath ClusterConfig.json
 
 ******************
 What can go wrong?  
@@ -133,24 +133,24 @@ What can go wrong?
 
 2) Your cluster configuration must refer to valid ip addresses that are reachable from the build/deploy machine.  The paths in the configuration files need to be legitimateand paths.
 
-3) The script uses scp and ssh liberally to make the installation.  The script expects a "passphrase-less" access to the machines in the target cluster declaration, including the local node if it is to participate in the installation.  If this is not the case, there will be errors when the tarball that is created from source (or supplied on the command line) is copied to the password protected node.  See <some wiki page> for how to correct this and what is expected for Fatafat installations in terms of ssh configuration and access.
+3) The script uses scp and ssh liberally to make the installation.  The script expects a "passphrase-less" access to the machines in the target cluster declaration, including the local node if it is to participate in the installation.  If this is not the case, there will be errors when the tarball that is created from source (or supplied on the command line) is copied to the password protected node.  See <some wiki page> for how to correct this and what is expected for Kamanja installations in terms of ssh configuration and access.
 
-4) If you expect to have success with the FataFat cluster install script, it is important to use the same directory topology for your critical components.  These include kafka, zookeeper, cassandra, hbase, scala, and java to name a few.
+4) If you expect to have success with the Kamanja cluster install script, it is important to use the same directory topology for your critical components.  These include kafka, zookeeper, cassandra, hbase, scala, and java to name a few.
 
-5) Parameters supplied to the FataFatClusterInstall.sh need to be cogent.  There are roughly 15 semantic checks currently done on the parameters to the script.  If any problems are detected, the script stops and a meaningful message is written to the console.  They are for the most part self-explanatory, describing with some precision what the problem is.
+5) Parameters supplied to the KamanjaClusterInstall.sh need to be cogent.  There are roughly 15 semantic checks currently done on the parameters to the script.  If any problems are detected, the script stops and a meaningful message is written to the console.  They are for the most part self-explanatory, describing with some precision what the problem is.
 
-6) "I tried to run the cluster after installing it, but an error was thrown."  It is important to realize that the installer does not configure your cluster installation or the applications that are to run on it.  That work must be done after (or if using HBase or Cassandra, before or after) the cluster is installed.  The FataFatClusterInstall.sh's job is to push the installation to the appropriate machines based upon the cluster configuration given to it via parameters.  Nothing more is done.
+6) "I tried to run the cluster after installing it, but an error was thrown."  It is important to realize that the installer does not configure your cluster installation or the applications that are to run on it.  That work must be done after (or if using HBase or Cassandra, before or after) the cluster is installed.  The KamanjaClusterInstall.sh's job is to push the installation to the appropriate machines based upon the cluster configuration given to it via parameters.  Nothing more is done.
 
-7) Installing the correct versions of the software needed to build and run the Fatafat cluster is exceedingly important.  For example, certain libraries upon which Fatafat depends prevent us from simply using the latest versions of the Scala compiler.  Always check <some wiki page> for what the requirements are for the version you wish to install.
+7) Installing the correct versions of the software needed to build and run the Kamanja cluster is exceedingly important.  For example, certain libraries upon which Kamanja depends prevent us from simply using the latest versions of the Scala compiler.  Always check <some wiki page> for what the requirements are for the version you wish to install.
 
-8) The NodeConfigPath is both your friend and your enemy.  If you supply one, it had better NOT be defined in your metadata cache already.  This is principally a problem only when metadata is maintained in Cassandra or HBase.  There will be errors and the installation will fail.  It is intended principally for testing builds and doing development work (typically with a TreeMap or HashMap metadata store... see <some wiki page> for more information about that).  A mature Fatafat installation will likely already have the cluster declaration installed in the cache before the cluster installation takes place, making the NodeConfigPath unnecessary.
+8) The NodeConfigPath is both your friend and your enemy.  If you supply one, it had better NOT be defined in your metadata cache already.  This is principally a problem only when metadata is maintained in Cassandra or HBase.  There will be errors and the installation will fail.  It is intended principally for testing builds and doing development work (typically with a TreeMap or HashMap metadata store... see <some wiki page> for more information about that).  A mature Kamanja installation will likely already have the cluster declaration installed in the cache before the cluster installation takes place, making the NodeConfigPath unnecessary.
 
 9) This list will be augmented with additional issues as this software is experienced by others and they report them.
 
-10) The script can't find NodeInfoExtract-1.0.  What should I do?  Be sure that this application is on your PATH.  See the "Install the FataFatClusterInstall installer" section above for more details.
+10) The script can't find NodeInfoExtract-1.0.  What should I do?  Be sure that this application is on your PATH.  See the "Install the KamanjaClusterInstall installer" section above for more details.
 
 *******************************************
-Before Starting a Newly Installed Fatafat Cluster
+Before Starting a Newly Installed Kamanja Cluster
 *******************************************
 
 Once the installation of the cluster is accomplished, it is necessary to add all application metadata to the Metadata cache.
@@ -159,15 +159,15 @@ The installation doesn't install any application messages, containers, types, fu
 See <the appropriate MetadataAPI user wiki reference> for more information.
 
 *******************************************
-Start a FataFatCluster
+Start a KamanjaCluster
 *******************************************
 
-To start a cluster is a bit simpler than the install script.  There are two familiar arguments.  Running the StartFataFatCluster.sh with no arguments produces this:
+To start a cluster is a bit simpler than the install script.  There are two familiar arguments.  Running the StartKamanjaCluster.sh with no arguments produces this:
 
 Problem: Incorrect number of arguments
 
 	Usage:
-	      StartFataFatCluster.sh --ClusterId <cluster name identifer> 
+	      StartKamanjaCluster.sh --ClusterId <cluster name identifer> 
 	                           --MetadataAPIConfig  <metadataAPICfgPath> 
 
 	  NOTES: Start the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate
@@ -175,19 +175,19 @@ Problem: Incorrect number of arguments
 
 	The ClusterId is the string identifier for the cluster.  It should refer to legitimate cluster metadata in the Metadata cache found in the MetadataAPIConfig file given.
 
-The script will read the cluster metadata, contact each of the nodes described by it, and start the Fatafat engine at that location.  A Process Identifier (PID) is recorded and written to the installation directory's run directory for each of the nodes started.  This PID file will be used by the StatusFataFatCluster.sh script to verify that a process is alive on each respective cluster node.  The StopFataFatCluster.sh script uses the PID to stop respective cluster nodes that are running.
+The script will read the cluster metadata, contact each of the nodes described by it, and start the Kamanja engine at that location.  A Process Identifier (PID) is recorded and written to the installation directory's run directory for each of the nodes started.  This PID file will be used by the StatusKamanjaCluster.sh script to verify that a process is alive on each respective cluster node.  The StopKamanjaCluster.sh script uses the PID to stop respective cluster nodes that are running.
 
 
 *******************************************
-Stop a FataFatCluster
+Stop a KamanjaCluster
 *******************************************
 
-The stop cluster script takes the same arguments as the start script.  Running the StopFataFatCluster.sh script without arguments produces:
+The stop cluster script takes the same arguments as the start script.  Running the StopKamanjaCluster.sh script without arguments produces:
 
 	Problem: Incorrect number of arguments
 
 	Usage:
-	      StopFataFatCluster.sh --ClusterId <cluster name identifer> 
+	      StopKamanjaCluster.sh --ClusterId <cluster name identifer> 
 	                           --MetadataAPIConfig  <metadataAPICfgPath>  
 
 	  NOTES: Stop the cluster specified by the cluster identifier parameter.  Use the metadata api configuration to locate
@@ -196,16 +196,16 @@ The stop cluster script takes the same arguments as the start script.  Running t
 Like start, the stop script contacts each node in the cluster and stops the process with the PID value that was written by the start script.
 
 *******************************************
-Getting Status a FataFatCluster
+Getting Status a KamanjaCluster
 *******************************************
 
-To see if nodes of a cluster are alive, one can use the StatusFataFatCluster.sh.  Again, there are two familiar arguments.  Running the StatusFataFatCluster.sh with no arguments produces this:
+To see if nodes of a cluster are alive, one can use the StatusKamanjaCluster.sh.  Again, there are two familiar arguments.  Running the StatusKamanjaCluster.sh with no arguments produces this:
 
 	Problem: Incorrect number of arguments
 
 
 	Usage:
-	      StatusFataFatCluster.sh --ClusterId <cluster name identifer> 
+	      StatusKamanjaCluster.sh --ClusterId <cluster name identifer> 
 	                           --MetadataAPIConfig  <metadataAPICfgPath>  
 
 	  NOTES: Get status on the cluster specified by the cluster identifier parameter.  Use the metadata api 
@@ -213,26 +213,26 @@ To see if nodes of a cluster are alive, one can use the StatusFataFatCluster.sh.
 
 The ClusterId is the string identifier for the cluster.  It should refer to legitimate cluster metadata in the Metadata cache found in the MetadataAPIConfig file given.
 
-The script will read the cluster metadata, contact each of the nodes described by it, retrieve the respective PIDs and issue a ps command to see the status of the Fatafat engine that is running.  The script will report the health of each node (whether it is up or down).
+The script will read the cluster metadata, contact each of the nodes described by it, retrieve the respective PIDs and issue a ps command to see the status of the Kamanja engine that is running.  The script will report the health of each node (whether it is up or down).
 
 *******************************************
-Findout What is Wrong - Using Fatafat Log tools
+Findout What is Wrong - Using Kamanja Log tools
 *******************************************
 
-In an ideal world, there are never problems with the software running on the system.  The software to be described in this section is not for that utopian view.  It is to find out why things are going bad.  The "devil is in the details" they say, and for Fatafat, the details are found in the system logs on each node in a given cluster.
+In an ideal world, there are never problems with the software running on the system.  The software to be described in this section is not for that utopian view.  It is to find out why things are going bad.  The "devil is in the details" they say, and for Kamanja, the details are found in the system logs on each node in a given cluster.
 
 You have two log scraper choices.  Both look for '- ERROR -' messages in the logs on a given cluster.  
 
-1) The first of the two is called LogErrorsFromFataFatCluster.sh.  It will search an entire log.  Running it without arguments tells what is required for arguments:
+1) The first of the two is called LogErrorsFromKamanjaCluster.sh.  It will search an entire log.  Running it without arguments tells what is required for arguments:
 
 	Problem: Incorrect number of arguments
 
-	Answer any errors from the Fatafat cluster log
+	Answer any errors from the Kamanja cluster log
 
 	Usage:
-	      LogErrorsFromFataFatCluster.sh --ClusterId <cluster name identifer> 
+	      LogErrorsFromKamanjaCluster.sh --ClusterId <cluster name identifer> 
 	                                     --MetadataAPIConfig  <metadataAPICfgPath>  
-	                                     --FatafatLogPath <fatafat system log path>
+	                                     --KamanjaLogPath <kamanja system log path>
 	                                     [--ErrLogPath <where errors are collected> ] 
 
 	  NOTES: Logs for the cluster specified by the cluster identifier parameter found in the metadata api 
@@ -240,7 +240,7 @@ You have two log scraper choices.  Both look for '- ERROR -' messages in the log
 	         Default error log path is "/tmp/errorLog.log" .. errors collected in this file 
 
 
-If your practice is to roll logs every hour, this is probably the script for you.  The error log path will receive just the error lines found in the log.  Because the system log can be moved about with log4j configuration options, the script insists that you give the location of the Fatafat logs.  As written, only the current log will be searched.  If one were to schedule a job that runs every five minutes, the script will nominally run 12 times before log roll over.  The errors of course would repeatedly be emitted for each of the runs during the hour, however, this is satisfactory behvavior for simple console dash board applications.
+If your practice is to roll logs every hour, this is probably the script for you.  The error log path will receive just the error lines found in the log.  Because the system log can be moved about with log4j configuration options, the script insists that you give the location of the Kamanja logs.  As written, only the current log will be searched.  If one were to schedule a job that runs every five minutes, the script will nominally run 12 times before log roll over.  The errors of course would repeatedly be emitted for each of the runs during the hour, however, this is satisfactory behvavior for simple console dash board applications.
 
 Note that all nodes errors are logged to the error log on the administation machine that has issued the script.  Output currently looks like this:
 
@@ -257,19 +257,19 @@ Note that all nodes errors are logged to the error log on the administation mach
 
 In this example, there is no log found for Node 1.  Node 2 has had a very bad 4 minutes.
 
-2) The second option is the script, RecentLogErrorsFromFataFatCluster.sh.  This script produces the same sort of output at the other.  It, however, is designed not to read the entire log.  Instead the script invocation can be configured to only examine log records written to the log in the last "InLast" units, where the unit can be minute, second, hour, or day.
+2) The second option is the script, RecentLogErrorsFromKamanjaCluster.sh.  This script produces the same sort of output at the other.  It, however, is designed not to read the entire log.  Instead the script invocation can be configured to only examine log records written to the log in the last "InLast" units, where the unit can be minute, second, hour, or day.
 
 Running without arguments shows the semantics:
 
 	Problem: Incorrect number of arguments
 
-	Answer any errors from the Fatafat cluster in the past N time units
+	Answer any errors from the Kamanja cluster in the past N time units
 
 	Usage:
-	      RecentLogErrorsFromFataFatCluster.sh --ClusterId <cluster name identifer> 
+	      RecentLogErrorsFromKamanjaCluster.sh --ClusterId <cluster name identifer> 
 	                                           --MetadataAPIConfig  <metadataAPICfgPath>  
 	                                           --InLast <unit count>
-	                                           --FatafatLogPath <fatafat system log path>
+	                                           --KamanjaLogPath <kamanja system log path>
 	                                          [--ErrLogPath <where errors are collected> ] 
 	                                          [--Unit <time unit ... any of {minute, second, hour, day}> ] 
 
@@ -280,14 +280,14 @@ Running without arguments shows the semantics:
 
 One might choose this script over the other for any of the following reasons:
 
-1) the Fatafat clusters is heavily used with lots of transactions both in terms of metadata and model processing traffic
+1) the Kamanja clusters is heavily used with lots of transactions both in terms of metadata and model processing traffic
 2) the high volume dictates more frequent log queries for the admin screen updates.
 3) the log rolling is dictated by logs reaching a substantial size before rolling; this would either make log scanning prohibitively expensive or cause too much output to be provided to the admin screen to be manageable to monitor (if not both).
 
 *************************
 Configuration Issues
 
-If possible, use the simple full log scanner.  If your organization policy and/or Fatafat use is substantial and you think you need the second log scanner, it is recommended that the LOG_TICK=1 be set in your engine startup configuration template.  This will guarantee that each log in the cluster will get a "tick" record each second such that there is no activity on that cluster node.  This guarantees that the simple csplit log '/beginning time/' regular expression will find a record to split upon.
+If possible, use the simple full log scanner.  If your organization policy and/or Kamanja use is substantial and you think you need the second log scanner, it is recommended that the LOG_TICK=1 be set in your engine startup configuration template.  This will guarantee that each log in the cluster will get a "tick" record each second such that there is no activity on that cluster node.  This guarantees that the simple csplit log '/beginning time/' regular expression will find a record to split upon.
 
 A better scanner that is more sophisticated than csplit is planned.
 

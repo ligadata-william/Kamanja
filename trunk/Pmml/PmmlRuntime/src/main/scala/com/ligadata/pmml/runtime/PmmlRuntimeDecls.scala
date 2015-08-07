@@ -4,8 +4,8 @@ import scala.collection.mutable._
 import scala.language.implicitConversions
 import org.joda.time._
 import org.joda.time.format._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.FatafatBase._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.KamanjaBase._
 import org.apache.log4j.Logger
 
 trait LogTrait {

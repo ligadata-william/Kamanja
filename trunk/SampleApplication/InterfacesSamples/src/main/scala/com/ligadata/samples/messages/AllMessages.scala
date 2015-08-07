@@ -2,9 +2,9 @@ package com.ligadata.samples.messages
 
 import java.util.Date
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.FatafatBase.{ InputData, DelimitedData, JsonData, XmlData }
+import com.ligadata.KamanjaBase.{ InputData, DelimitedData, JsonData, XmlData }
 import java.io.{ DataInputStream, DataOutputStream }
-import com.ligadata.FatafatBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, BaseContainerObj, MdBaseResolveInfo, RDDObject, RDD, TimeRange, JavaRDDObject }
 
 object CustAlertHistory extends RDDObject[CustAlertHistory] with BaseContainerObj {
   type T = CustAlertHistory
@@ -73,7 +73,7 @@ class CustAlertHistory(var transactionId: Long, other: CustAlertHistory) extends
   private def getByName(key: String): Any = null
   private def getWithReflection(key: String): Any = null
   override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = null
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.KamanjaBase.BaseMsg = null
   def populate(inputdata: InputData) = {}
   private def populateCSV(inputdata: DelimitedData): Unit = {}
   private def populateJson(json: JsonData): Unit = {}
@@ -153,7 +153,7 @@ class CustPreferences(var transactionId: Long, other: CustPreferences) extends B
   private def getByName(key: String): Any = null
   private def getWithReflection(key: String): Any = null
   override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = null
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.KamanjaBase.BaseMsg = null
   def populate(inputdata: InputData) = {}
   private def populateCSV(inputdata: DelimitedData): Unit = {}
   private def populateJson(json: JsonData): Unit = {}
@@ -234,7 +234,7 @@ class CustTransaction(var transactionId: Long, other: CustTransaction) extends B
   private def getByName(key: String): Any = null
   private def getWithReflection(key: String): Any = null
   override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = null
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.KamanjaBase.BaseMsg = null
   def populate(inputdata: InputData) = {}
   private def populateCSV(inputdata: DelimitedData): Unit = {}
   private def populateJson(json: JsonData): Unit = {}
@@ -309,7 +309,7 @@ class GlobalPreferences(var transactionId: Long, other: GlobalPreferences) exten
   private def getByName(key: String): Any = null
   private def getWithReflection(key: String): Any = null
   override def AddMessage(childPath: Array[(String, String)], msg: BaseMsg): Unit = {}
-  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.FatafatBase.BaseMsg = null
+  override def GetMessage(childPath: Array[(String, String)], primaryKey: Array[String]): com.ligadata.KamanjaBase.BaseMsg = null
   def populate(inputdata: InputData) = {}
   private def populateCSV(inputdata: DelimitedData): Unit = {}
   private def populateJson(json: JsonData): Unit = {}

@@ -3,11 +3,11 @@ package com.ligadata.pmml.compiler
 import scala.collection.mutable._
 import scala.collection.immutable.{ Set }
 import org.xml.sax.Attributes
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.pmml.runtime._
-import com.ligadata.FatafatBase._
+import com.ligadata.KamanjaBase._
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import scala.util.control.Breaks._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._

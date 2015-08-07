@@ -2,7 +2,7 @@ package com.ligadata.ZooKeeper
 
 import com.ligadata.Serialize._
 //import com.ligadata.MetadataAPI._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import org.apache.curator.RetryPolicy
 import org.apache.curator.framework._
 import org.apache.curator.framework.recipes.cache._
@@ -208,7 +208,7 @@ object ZooKeeperListenerTest {
     if (args.length == 0) {
       logger.error("Config File defaults to " + configFile)
       logger.error("One Could optionally pass a config file as a command line argument:  --config myConfig.properties")
-      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Fatafat/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
+      logger.error("The config file supplied is a complete path name of a  json file similar to one in github/Kamanja/trunk/MetadataAPI/src/main/resources/MetadataAPIConfig.json")
     } else {
       val options = nextOption(Map(), args.toList)
       val cfgfile = options.getOrElse('config, null)

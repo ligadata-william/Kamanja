@@ -7,9 +7,9 @@ import scala.reflect.runtime.universe._
  * It is scheduled for removal.  Any implementations depending on this file should be modified by simply
  * removing extends clause from their UDF object.
  *
- * UdfBase trait is inherited by all UDF libraries to be used in the Pmml models executed by Fatafat.
+ * UdfBase trait is inherited by all UDF libraries to be used in the Pmml models executed by Kamanja.
  * It provides key access to the function members of the 'object' methods defined so they may 
- * be cataloged in the Fatafat metadata. 
+ * be cataloged in the Kamanja metadata. 
  * 
  * @see UdfExtract for how function information is extracted from an object. 
  */

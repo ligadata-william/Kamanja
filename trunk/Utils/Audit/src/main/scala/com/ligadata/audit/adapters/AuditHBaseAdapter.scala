@@ -1,7 +1,7 @@
 package com.ligadata.audit.adapters
 
 import com.ligadata.keyvaluestore._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.HBaseConfiguration

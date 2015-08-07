@@ -1,7 +1,7 @@
 package com.ligadata.models.samples.models
 
-import com.ligadata.FatafatBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
-import com.ligadata.FatafatBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
+import com.ligadata.KamanjaBase.{ BaseMsg, BaseContainer, RddUtils, RddDate, BaseContainerObj, MessageContainerBase, RDDObject, RDD }
+import com.ligadata.KamanjaBase.{ TimeRange, ModelBaseObj, ModelBase, ModelResultBase, TransactionContext, ModelContext }
 import com.ligadata.messagescontainers.System.V1000000._
 import RddUtils._
 import RddDate._
@@ -79,48 +79,48 @@ class RddTest1Result extends ModelResultBase {
   override def toJson: List[org.json4s.JsonAST.JObject] = {
     val json = List(
       ("allrdd_count" -> allrdd_count) ~
-        ("allrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_map)) ~
-        ("allrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_filter1_5)) ~
-        ("allrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_flatMap)) ~
-        ("allrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_foreach)) ~
-        ("allrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_first)) ~
-        ("allrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(allrdd_last)) ~
+        ("allrdd_map" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_map)) ~
+        ("allrdd_filter1_5" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_filter1_5)) ~
+        ("allrdd_flatMap" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_flatMap)) ~
+        ("allrdd_foreach" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_foreach)) ~
+        ("allrdd_first" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_first)) ~
+        ("allrdd_last" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(allrdd_last)) ~
         ("allrdd_maxAccNo" -> allrdd_maxAccNo) ~
         ("allrdd_minAccNo" -> allrdd_minAccNo) ~
         ("allrdd_maxBalance" -> allrdd_maxBalance) ~
         ("allrdd_minBalance" -> allrdd_minBalance) ~
         ("allrdd_isEmpty" -> allrdd_isEmpty) ~
         ("filterrdd_size" -> filterrdd_size) ~
-        ("filterrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_map)) ~
-        ("filterrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_filter1_5)) ~
-        ("filterrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_flatMap)) ~
-        ("filterrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_foreach)) ~
-        ("filterrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_first)) ~
-        ("filterrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(filterrdd_last)) ~
+        ("filterrdd_map" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_map)) ~
+        ("filterrdd_filter1_5" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_filter1_5)) ~
+        ("filterrdd_flatMap" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_flatMap)) ~
+        ("filterrdd_foreach" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_foreach)) ~
+        ("filterrdd_first" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_first)) ~
+        ("filterrdd_last" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(filterrdd_last)) ~
         ("filterrdd_maxAccNo" -> filterrdd_maxAccNo) ~
         ("filterrdd_minAccNo" -> filterrdd_minAccNo) ~
         ("filterrdd_maxBalance" -> filterrdd_maxBalance) ~
         ("filterrdd_minBalance" -> filterrdd_minBalance) ~
         ("filterrdd_isEmpty" -> filterrdd_isEmpty) ~
         ("currdd_count" -> currdd_count) ~
-        ("currdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_map)) ~
-        ("currdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_filter1_5)) ~
-        ("currdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_flatMap)) ~
-        ("currdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_foreach)) ~
-        ("currdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_first)) ~
-        ("currdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(currdd_last)) ~
+        ("currdd_map" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_map)) ~
+        ("currdd_filter1_5" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_filter1_5)) ~
+        ("currdd_flatMap" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_flatMap)) ~
+        ("currdd_foreach" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_foreach)) ~
+        ("currdd_first" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_first)) ~
+        ("currdd_last" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(currdd_last)) ~
         ("currdd_maxAccNo" -> currdd_maxAccNo) ~
         ("currdd_minAccNo" -> currdd_minAccNo) ~
         ("currdd_maxBalance" -> currdd_maxBalance) ~
         ("currdd_minBalance" -> currdd_minBalance) ~
         ("currdd_isEmpty" -> currdd_isEmpty) ~
         ("curfltrrdd_size" -> curfltrrdd_size) ~
-        ("curfltrrdd_map" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_map)) ~
-        ("curfltrrdd_filter1_5" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_filter1_5)) ~
-        ("curfltrrdd_flatMap" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_flatMap)) ~
-        ("curfltrrdd_foreach" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_foreach)) ~
-        ("curfltrrdd_first" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_first)) ~
-        ("curfltrrdd_last" -> com.ligadata.FatafatBase.ModelsResults.ValueString(curfltrrdd_last)) ~
+        ("curfltrrdd_map" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_map)) ~
+        ("curfltrrdd_filter1_5" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_filter1_5)) ~
+        ("curfltrrdd_flatMap" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_flatMap)) ~
+        ("curfltrrdd_foreach" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_foreach)) ~
+        ("curfltrrdd_first" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_first)) ~
+        ("curfltrrdd_last" -> com.ligadata.KamanjaBase.ModelsResults.ValueString(curfltrrdd_last)) ~
         ("curfltrrdd_maxAccNo" -> curfltrrdd_maxAccNo) ~
         ("curfltrrdd_minAccNo" -> curfltrrdd_minAccNo) ~
         ("curfltrrdd_maxBalance" -> curfltrrdd_maxBalance) ~

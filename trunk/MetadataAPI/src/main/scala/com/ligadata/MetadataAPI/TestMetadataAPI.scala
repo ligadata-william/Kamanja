@@ -7,8 +7,8 @@ import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.ligadata.Serialize._
 import com.ligadata.ZooKeeper._
 import com.ligadata.keyvaluestore._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.twitter.chill.ScalaKryoInstantiator
 import org.apache.log4j._
 import org.apache.zookeeper.CreateMode
@@ -49,7 +49,7 @@ object TestMetadataAPI {
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
         logger.debug("The environment variable TYPE_FILES_DIR is undefined. Setting to default " + dirName)
       }
 
@@ -195,7 +195,7 @@ object TestMetadataAPI {
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
         logger.debug("The environment variable FUNCTION_FILES_DIR is undefined. Setting to default " + dirName)
       }
 
@@ -933,7 +933,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
         logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1007,7 +1007,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONTAINER_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Containers"
         logger.debug("The environment variable CONTAINER_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1093,7 +1093,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
         logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1164,7 +1164,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MESSAGE_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Messages"
         logger.debug("The environment variable MESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1239,7 +1239,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, the directory defaults to " + dirName)
       }
 
@@ -1320,7 +1320,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1375,14 +1375,15 @@ println("Getting Messages")
       print("\nEnter your choice: ")
       val choice2: Int = readInt()
       println("Entered CHOICE: "+choice2)
-      if (choice2 == pmmlFiles.length + 1) {
+      if (choice2 == configsKeys.length + 1) {
         return
       }
     //  if (choice2 < 1 || choice2 > pmmlFiles.length + 1) {
     //    logger.error("Invalid Choice : " + choice)
     //    return
     //  }
-      
+
+      println("Before modelConfigName")
       modelConfigName =  configToChoices(choice2 - 1)
       println("CHOSE " + (choice2-1) + "  "+modelConfigName)
       
@@ -1401,7 +1402,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1484,7 +1485,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1536,7 +1537,7 @@ println("Getting Messages")
      try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/SampleApplication/Medical/Configs"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1587,7 +1588,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/SampleApplication/Medical/Configs"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1638,7 +1639,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONFIG_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/SampleApplication/Medical/Configs"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/SampleApplication/Medical/Configs"
         logger.debug("The environment variable MODEL_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1689,7 +1690,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
       if (dirName == null) {
-        dirName = "/tmp/FatafatInstall"
+        dirName = "/tmp/KamanjaInstall"
         logger.debug("The environment variable JAR_TARGET_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1739,7 +1740,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("FUNCTION_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Functions"
         logger.debug("The environment variable FUNCTION_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1804,7 +1805,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CONCEPT_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Concepts"
         logger.debug("The environment variable CONCEPT_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1870,7 +1871,7 @@ println("Getting Messages")
     try {
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("TYPE_FILES_DIR")
       if (dirName == null) {
-        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
+        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Types"
         logger.debug("The environment variable TYPE_FILES_DIR is undefined, The directory defaults to " + dirName)
       }
 
@@ -1934,7 +1935,7 @@ println("Getting Messages")
         11 -> "ListTypeDef",
         12 -> "QueueTypeDef",
         13 -> "TupleTypeDef")
-      var selectedType = "com.ligadata.fatafat.metadata.ScalarTypeDef"
+      var selectedType = "com.ligadata.kamanja.metadata.ScalarTypeDef"
       var done = false
       while (done == false) {
         println("\n\nPick a Type ")
@@ -1945,7 +1946,7 @@ println("Getting Messages")
         print("\nEnter your choice: ")
         val choice: Int = readInt()
         if (choice <= typeMenu.size) {
-          selectedType = "com.ligadata.fatafat.metadata." + typeMenu(choice)
+          selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
           done = true
         } else if (choice == typeMenu.size + 1) {
           done = true
@@ -2202,7 +2203,7 @@ println("Getting Messages")
 	    try {
 	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
 	      if (dirName == null) {
-	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
 	        logger.info("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, The directory defaults to " + dirName)
 	      }
 
@@ -2282,7 +2283,7 @@ println("Getting Messages")
 	    try {
 	      var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("OUTPUTMESSAGE_FILES_DIR")
 	      if (dirName == null) {
-	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/fatafat/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
+	        dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/OutputMessages"
 	        logger.debug("The environment variable OUTPUTMESSAGE_FILES_DIR is undefined, the directory defaults to " + dirName)
 	      }
 

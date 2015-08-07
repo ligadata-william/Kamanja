@@ -1,6 +1,6 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata.MdMgr
+import com.ligadata.kamanja.metadata.MdMgr
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 
@@ -166,7 +166,7 @@ class ConstantMsgObjVarGenerator {
     if (getMsg != null && getMsg.trim() != "") {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.FatafatBase.BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.KamanjaBase.BaseMsg = {
 	    if (childPath == null || childPath.size == 0 || primaryKey == null || primaryKey.size == 0) { // Invalid case
     		return null
 	    }
@@ -183,7 +183,7 @@ class ConstantMsgObjVarGenerator {
     } else {
 
       getMessageFunc = """
-    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.FatafatBase.BaseMsg = {
+    override def GetMessage(childPath: Array[(String, String)], primaryKey:Array[String]): com.ligadata.KamanjaBase.BaseMsg = {
        return null
     } 
      
@@ -374,11 +374,17 @@ class ConstantMsgObjVarGenerator {
   def importStmts(msg: Message): (String, String, String, String) = {
     var imprt: String = ""
     if (msg.msgtype.equals("Message"))
-      imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
+      imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseMsgObj, TransformMessage, BaseContainer, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     else if (msg.msgtype.equals("Container"))
+<<<<<<< HEAD
       imprt = "import com.ligadata.FatafatBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
     var nonVerPkg = "package " + msg.pkg +";\n"
     var verPkg = "package " + msg.pkg + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
+=======
+      imprt = "import com.ligadata.KamanjaBase.{BaseMsg, BaseContainer, BaseContainerObj, MdBaseResolveInfo, MessageContainerBase, RDDObject, RDD, TimeRange, JavaRDDObject}"
+    var nonVerPkg = "package " + msg.pkg + "." + msg.NameSpace + ";\n"
+    var verPkg = "package " + msg.pkg + "." + msg.NameSpace + ".V" + MdMgr.ConvertVersionToLong(msg.Version).toString + ";\n"
+>>>>>>> dev
     var otherImprts = """
   
 import org.json4s.jackson.JsonMethods._
@@ -386,9 +392,9 @@ import org.json4s.DefaultFormats
 import org.json4s.Formats
 import scala.xml.XML
 import scala.xml.Elem
-import com.ligadata.FatafatBase.{InputData, DelimitedData, JsonData, XmlData}
+import com.ligadata.KamanjaBase.{InputData, DelimitedData, JsonData, XmlData}
 import com.ligadata.BaseTypes._
-import com.ligadata.FatafatBase.SerializeDeserialize
+import com.ligadata.KamanjaBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
 
 """
