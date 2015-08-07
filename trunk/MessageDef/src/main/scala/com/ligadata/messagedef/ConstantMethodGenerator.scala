@@ -328,12 +328,12 @@ class ConstantMethodGenerator {
 	    """
   }
    def assignJsonDataMessage(mName: String) = {
-    """   
+    """  { 
         val inputData = new JsonData(json.dataInput)
         inputData.root_json = json.root_json
         inputData.cur_json = Option(map.getOrElse("""" + mName + """", null))
 	    """ + mName + """.populate(inputData)
-	    """
+        """
   }
 
    def getArrayStr(mbrVar: String, classname: String): String = {
