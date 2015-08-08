@@ -395,7 +395,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	fcnKeys
 	}
 	
-	/** Collect the child arguments for simple function. */
+	/** Collect the child arguments for simple function. 
+	 *	@param expandCompoundFieldTypes when true, compound field references are returned for each node of the field reference
+	 * 	@return an Array[Array[(typestring, isContainer, typedef)] for each std fcn arg in the reference or leaf if flag parm is false
+	 *  				,Array[(typestring, isContainer, typedef)] for each mbr arg for arguments where iterable function expressions are present
+	 *      			,the address of the ContainerTypeDef if applicable for this argument
+	 *         			,for iterable functions the Array of the BaseTypes for the "mbr" arguments
+	 *            		,the return type if known for those arguments that are functions
+	 */
 	def collectArgKeys(expandCompoundFieldTypes : Boolean = false) : 
 		Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]= {
 
@@ -414,7 +421,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   				val fcnDef : FunctionDef = if (fcnInfo != null) fcnInfo.fcnDef else null
   				val reasonable : Boolean = (isFcn && fcnDef != null && typeStringForRetTypeString == fcnDef.returnTypeString)
   				
-  				val returnType : BaseTypeDef = if (fcnDef != null) fcnDef.retType else ctx.mgr.ActiveType("Boolean") // either 'and' or 'or'
+  				val (returnTypeStr, returnType) : (String,BaseTypeDef) = if (fcnDef != null) {
+  					(fcnDef.retType.typeString, fcnDef.retType) 
+  				} else {
+  					ctx.MetadataHelper.getType("Boolean") // either 'and' or 'or'
+  				}
   				/** FIXME: if 'if' take the type of the true or false action */
   				
   				/** For functions, build an appropriate arg key based on the function return type */
