@@ -280,7 +280,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  Get the container's typedef associated with the supplied namespace and name. 
 	 */
 	def getContainerType(nmSpc : String, container : String) : ContainerTypeDef = {
-		val baseTypeDef : BaseTypeDef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, container))
+		val (typeStr,baseTypeDef) : (String,BaseTypeDef) = MetadataHelper.getType(container)
 		val containerTypeDef = baseTypeDef match {
 		  case c : ContainerTypeDef => baseTypeDef.asInstanceOf[ContainerTypeDef]
 		  case _ => {
@@ -366,36 +366,41 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 				val msgFldName : String =  value._1 
 				val msgFld : xDataField = if (dDict.contains(msgFldName)) dDict.apply(msgFldName) else null
 				val tuple = if (msgFld != null) {
-					val msgDef : MessageDef = mgr.ActiveMessage(MdMgr.SysNS, msgFld.dataType)
-					if (msgDef == null) {
-						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
-						if (containerDef == null) {
-							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
+					val (msgTypeStr, msgDef) : (String,MessageDef) = MetadataHelper.getMsg(msgFld.dataType)
+					if (msgDef != null) {
+						val (containerTypeName, msgDefType) : (String, BaseTypeDef) = MetadataHelper.getType(msgFld.dataType)
+						if (msgDefType == null) {
+							PmmlError.logError(this, "The supplied message has no corresponding message type.  Please add metadata for this message.")
 						} else {
-							if (containerDef.isInstanceOf[ContainerTypeDef]) {
-								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
+							if (msgDefType.isInstanceOf[ContainerTypeDef]) {
+								containersInScope += Tuple4(msgFldName,true,msgDefType,msgFldName)
 							} else {
-								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
+								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${msgDef.typeString}")
 							}
 							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
-							val implJar : String  = containerDef.JarName
-							val depJars : Array[String] = containerDef.DependencyJarNames
+							val implJar : String  = msgDef.JarName
+							val depJars : Array[String] = msgDef.DependencyJarNames
 							collectClassPathJars(implJar, depJars)
 						}
 					} else { /** a container ... not a message ... this is a bit crazy so far... we have not accepted these in the constructor */
-						val containerDef : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, msgFld.dataType)
+						val (containerTypeName, containerDef) : (String,ContainerDef) = MetadataHelper.getContainer(msgFld.dataType)
 						if (containerDef == null) {
 							PmmlError.logError(this, "The supplied message has no corresponding message definition.  Please add metadata for this message.")
 						} else {
-							/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
-							val implJar : String  = containerDef.JarName
-							val depJars : Array[String] = containerDef.DependencyJarNames
-							collectClassPathJars(implJar, depJars)
-						  
-							if (containerDef.isInstanceOf[ContainerTypeDef]) {
-								containersInScope += Tuple4(msgFldName,true,containerDef,msgFldName)
+							val (containerTypeName, containerTypeDef) : (String, BaseTypeDef) = MetadataHelper.getType(msgFld.dataType)
+							if (containerTypeDef == null) {
+								PmmlError.logError(this, "The supplied container has no corresponding container type.  Please add metadata for this container.")
 							} else {
-								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerDef.typeString}")
+								/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
+								val implJar : String  = containerDef.JarName
+								val depJars : Array[String] = containerDef.DependencyJarNames
+								collectClassPathJars(implJar, depJars)
+							  
+								if (containerTypeDef.isInstanceOf[ContainerTypeDef]) {
+									containersInScope += Tuple4(msgFldName,true,containerTypeDef,msgFldName)
+								} else {
+									PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerTypeDef.typeString}")
+								}
 							}
 						}
 					}
@@ -444,7 +449,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  mentioned in the parameters data field used to prepare the main model constructor.
 	 */
 	def RegisterContainerAsNecessary(name : String, dataType : String) : Boolean = {
-		val elem : BaseTypeDef = mgr.ActiveType(MdMgr.SysNS, dataType)
+		val (typeStr,elem) : (String,BaseTypeDef) = MetadataHelper.getType(dataType)
 		val registered : Boolean = if (elem != null) {
 			/** This is a convenient place to pick up the jars needed to compile and execute the model under construction */
 			val implJar : String  = elem.JarName

@@ -245,6 +245,7 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	}
 	
 	/** 
+	 *  OK
 	 *  Answer a ContainerTypeDef that has named fields or null if not a container.  Two types currently
 	 *  have this characteristic: StructTypeDef and MappedMsgTypeDef
 	 *  @param nmSpc - the name of a possible container
@@ -301,10 +302,11 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 
 	
 	/** 
+	 *  OK
 	 *  Answer a ContainerTypeDef or null if not a container
 	 *  @return a ContainerTypeDef that matches
 	 */
-	def getContainerType(nmSpc : String, container : String) : ContainerTypeDef = {
+	private def getContainerType(nmSpc : String, container : String) : ContainerTypeDef = {
 		val baseTypeDef : BaseTypeDef = mgr.ActiveType(MdMgr.MkFullName(nmSpc, container))
 		val containerTypeDef = baseTypeDef match {
 		  case c : ContainerTypeDef => baseTypeDef.asInstanceOf[ContainerTypeDef]
@@ -570,7 +572,9 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  	(typeStr, baseType)
 	}
 	
-	/** Search for the supplied field name, 'nm'.  Use the supplied 'nmSpc' name to locate the BaseType information for the field.
+	/** 
+	 *  OK
+	 *  Search for the supplied field name, 'nm'.  Use the supplied 'nmSpc' name to locate the BaseType information for the field.
 	 *  When the DataField or DerivedField named 'nm' has a dataType that is prefixed with a valid namespace alias, it will be used 
 	 *  instead of the supplied 'nmSpc'.
 	 *  @param nmSpc a namespace key to use for the type search when withNmSpc arg set UNLESS the dictionary field has a namespace alias qualified dataType. In that
@@ -637,7 +641,9 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  	(typeStr, baseType)
 	}
 	
-	/** Search this bad boy, with and without namespace qualifiers...
+	/** 
+	 *  OK
+	 *  Search for xDict field with and without namespace qualifiers...
 	 *  @param nmSpc the namespace key to use for the search when withNmSpc arg set
 	 *  @param nm the name of the transformation dictionary derived field
 	 *  @param withNmSpc the namespace is used to prefix the dataType name
@@ -692,8 +698,10 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	}
 
 
-	/** Answer the typedef string and typedef for the supplied typename.
-	 *  @param typename the name of the transformation dictionary derived field
+	/** 
+	 *  OK
+	 *  Answer the typedef string and typedef for the supplied typename.
+	 *  @param typename the type name of the transformation dictionary derived field
 	 *  @return (type name string, typedef)
 	 */
 	def getType(typename : String) : (String,BaseTypeDef) = {
@@ -737,6 +745,76 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  	(typeStr, baseType)	
 	}
 	
+	/** Answer the MessageDef for the supplied msgName.
+	 *  @param msgName the type name of the transformation dictionary derived field
+	 *  @return (msg type name string, MessageDef)
+	 */
+	def getMsg(msgName : String) : (String,MessageDef) = {
+		var typeStr : String = null
+		var msg : MessageDef = null
+	  	if (msgName != null && msgName.size > 0 && msgName.contains('.')) {
+	  		val alias : String =  msgName.split('.').head
+	  		val restOfName : String =  msgName.split('.').tail.head
+	  		if (restOfName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed message name reference... The message name '$msgName' should either be an unqualified name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		msg = if (nmSpc != null) mgr.ActiveMessage(nmSpc, restOfName) else null
+	  		if (msg != null) {
+	  			typeStr = msg.typeString
+	  		}
+	  	} else {
+			breakable {
+			  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmSpc => {
+			  		val aMsg : MessageDef = mgr.ActiveMessage(nmSpc._2, msgName)
+					if (aMsg != null) {
+						typeStr = aMsg.typeString
+						msg = aMsg
+						break
+					}
+			  	})
+			}
+	  	}
+
+	  	(typeStr, msg)	
+	}
+
+	/** Answer the ContainerDef for the supplied containerName.
+	 *  @param containerName the type name of the transformation dictionary derived field
+	 *  @return (container type name string, ContainerDef)
+	 */
+	def getContainer(containerName : String) : (String,ContainerDef) = {
+		var typeStr : String = null
+		var container : ContainerDef = null
+	  	if (containerName != null && containerName.size > 0 && containerName.contains('.')) {
+	  		val alias : String =  containerName.split('.').head
+	  		val restOfName : String =  containerName.split('.').tail.head
+	  		if (restOfName.contains('.')) {
+	  			PmmlError.logError(ctx, s"Malformed message name reference... The message name '$containerName' should either be an unqualified name or a namespace alias qualified name. See the wiki.")
+	  		}
+	  		val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else null
+	  		container = if (nmSpc != null) mgr.ActiveContainer(nmSpc, restOfName) else null
+	  		if (container != null) {
+	  			typeStr = container.typeString
+	  		}
+	  	} else {
+			breakable {
+			  	val nmspcSrchPath : Array[(String,String)] = ctx.namespaceSearchPath
+				nmspcSrchPath.foreach( nmSpc => {
+			  		val aContainer : ContainerDef = mgr.ActiveContainer(nmSpc._2, containerName)
+					if (aContainer != null) {
+						typeStr = aContainer.typeString
+						container = aContainer
+						break
+					}
+			  	})
+			}
+	  	}
+
+	  	(typeStr, container)	
+	}
+
 	/** 
 	 *  Answer whether this is a container that has a list of keys (MappedMsgTypeDef) or contains fields (StructTypeDef)
 	 *  @param typedef A BaseTypeDef

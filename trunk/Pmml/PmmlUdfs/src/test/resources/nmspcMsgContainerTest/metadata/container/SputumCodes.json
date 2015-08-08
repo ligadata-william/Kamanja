@@ -1,0 +1,23 @@
+{
+   	"Container": { 
+   		"NameSpace":"com.medco.containers.rel10",
+   		"Name":"SputumCodes",
+   		"Version":"00.01.00",
+   		"Description":"Container for Chronic Sputum Codes",
+   		"Fixed":"true",
+   		"Elements" : [
+   		   {
+   		   "Field" : {
+                "Name":"icd9Code",
+                "Type":"System.String"
+   		     }
+   		   },
+   		   {
+   		   "Field" : {
+                "Name":"icd9Description",
+                "Type":"System.String"
+   		     }
+   		   }
+   		]
+   	}
+}
