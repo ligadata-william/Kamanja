@@ -70,6 +70,21 @@ mkdir -p $installPath/input/SampleApplications/metadata/script
 mkdir -p $installPath/input/SampleApplications/metadata/type
 mkdir -p $installPath/input/SampleApplications/template
 
+# Telecom
+mkdir -p $installPath/input/Telecom
+mkdir -p $installPath/input/Telecom/bin
+mkdir -p $installPath/input/Telecom/data
+mkdir -p $installPath/input/Telecom/metadata
+mkdir -p $installPath/input/Telecom/metadata/config
+mkdir -p $installPath/input/Telecom/metadata/container
+mkdir -p $installPath/input/Telecom/metadata/function
+mkdir -p $installPath/input/Telecom/metadata/message
+mkdir -p $installPath/input/Telecom/metadata/model
+mkdir -p $installPath/input/Telecom/metadata/script
+mkdir -p $installPath/input/Telecom/metadata/type
+mkdir -p $installPath/input/Telecom/template
+# Telecom
+
 bin=$installPath/bin
 systemlib=$installPath/lib/system
 applib=$installPath/lib/application
@@ -383,6 +398,12 @@ cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo.csv.gz $installPath/input/SampleApplications/data
 
 
+# Telecom
+cd $srcPath/SampleApplication/Telecom/data
+cp * $installPath/input/Telecom/data
+# Telecom
+
+
 # *******************************
 # Copy documentation files
 # *******************************
@@ -452,7 +473,6 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Medical
 
 #Telecom
-
 cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/SampleApplications/data
 
@@ -473,7 +493,6 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Telecom
 
 #Finance
-
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
 cp * $installPath/input/SampleApplications/data
 
