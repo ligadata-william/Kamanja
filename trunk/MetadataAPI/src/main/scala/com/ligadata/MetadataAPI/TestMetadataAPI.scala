@@ -19,6 +19,7 @@ import scala.io._
 import java.util.Date
 import java.util.Properties
 import com.ligadata.Exceptions._
+import com.ligadata.kamanja.metadata.Utils
 
 object TestMetadataAPI {
 
@@ -120,7 +121,7 @@ object TestMetadataAPI {
       }
 
       val typKey = typKeys(choice - 1)
-      val(typNameSpace, typName, typVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(typKey)
+      val(typNameSpace, typName, typVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(typKey)
       val typOpt = MetadataAPIImpl.GetType(typNameSpace, typName, typVersion, "JSON", userid)
 
       typOpt match {
@@ -169,7 +170,7 @@ object TestMetadataAPI {
       }
 
       val typKey = typKeys(choice - 1)
-      val(typNameSpace, typName, typVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(typKey)
+      val(typNameSpace, typName, typVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(typKey)
       val apiResult = MetadataAPIImpl.RemoveType(typNameSpace, typName, typVersion.toLong, userid)
 
       // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -272,7 +273,7 @@ object TestMetadataAPI {
       }
 
       val fcnKey = fcnKeys(choice - 1)
-      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(fcnKey)
+      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(fcnKey)
       val apiResult = MetadataAPIImpl.RemoveFunction(fcnNameSpace, fcnName, fcnVersion.toLong, userid)
 
       //val resultData = MetadataAPIImpl.getApiResult(apiResult)
@@ -310,7 +311,7 @@ object TestMetadataAPI {
       }
 
       val fcnKey = fcnKeys(choice - 1)
-      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(fcnKey)
+      val(fcnNameSpace, fcnName, fcnVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(fcnKey)
       val apiResult = MetadataAPIImpl.GetFunctionDef(fcnNameSpace, fcnName, "JSON", userid)
 
       //   val (statusCode,resultData) = MetadataAPIImpl.getApiResult(apiResult)
@@ -404,7 +405,7 @@ object TestMetadataAPI {
         return
       }
       val msgKey = msgKeys(choice - 1)
-      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace, msgName, msgVersion.toLong)
       logger.debug("DependentModels => " + depModels)
 
@@ -445,7 +446,7 @@ object TestMetadataAPI {
         return
       }
       val msgKey = msgKeys(choice - 1)
-      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
       val depModels = MetadataAPIImpl.GetDependentModels(msgNameSpace, msgName, msgVersion.toLong)
       if (depModels.length > 0) {
         depModels.foreach(mod => {
@@ -487,7 +488,7 @@ object TestMetadataAPI {
         return
       }
       val contKey = contKeys(choice - 1)
-      val(contNameSpace, contName, contVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(contKey)
+      val(contNameSpace, contName, contVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
       val apiResult = MetadataAPIImpl.GetContainerDefFromCache(contNameSpace, contName, "JSON", contVersion, userid)
       println("Result as Json String => \n" + apiResult)
 
@@ -524,7 +525,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.GetModelDefFromDB(modNameSpace, modName, "JSON", modVersion, userid)
 
       //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -563,7 +564,7 @@ object TestMetadataAPI {
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.GetModelDefFromCache(modNameSpace, modName, "JSON", modVersion, userid)
 
       //     val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -600,7 +601,7 @@ println("WTF")
       }
 
       val msgKey = msgKeys(choice - 1)
-      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid)
 
       //val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -637,7 +638,7 @@ println("WTF")
       }
 
       val contKey = contKeys(choice - 1)
-      val(contNameSpace, contName, contVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(contKey)
+      val(contNameSpace, contName, contVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(contKey)
       val apiResult = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
 
       // val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -677,7 +678,7 @@ println("Getting Messages")
       }
 
       val msgKey = msgKeys(choice - 1)
-      val(msgNameSpace, msgName, msgVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(msgKey)
+      val(msgNameSpace, msgName, msgVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(msgKey)
       val apiResult = MetadataAPIImpl.RemoveMessage(msgNameSpace, msgName, msgVersion.toLong, userid)
 
       //  val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -714,7 +715,7 @@ println("Getting Messages")
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -752,7 +753,7 @@ println("Getting Messages")
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.DeactivateModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -789,7 +790,7 @@ println("Getting Messages")
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.ActivateModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -826,7 +827,7 @@ println("Getting Messages")
       }
 
       val modKey = modKeys(choice - 1)
-      val(modNameSpace, modName, modVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(modKey)
+      val(modNameSpace, modName, modVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(modKey)
       val apiResult = MetadataAPIImpl.RemoveModel(modNameSpace, modName, modVersion.toLong, userid)
 
       //    val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)
@@ -2336,7 +2337,7 @@ println("Getting Messages")
 	        println("Sorry, No output messages available in the Metadata")
 	        return
 	      }
-
+        
 	      println("\nPick the output message to be deleted from the following list: ")
 	      var seq = 0
 	      outputMsgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
@@ -2350,7 +2351,7 @@ println("Getting Messages")
 	      }
 
 	      val outputMsgKey = outputMsgKeys(choice - 1)
-        val(outputNameSpace, outputName, outputVersion) = com.ligadata.MetadataAPI.Utils.parseNameToken(outputMsgKey)
+        val(outputNameSpace, outputName, outputVersion) = com.ligadata.kamanja.metadata.Utils.parseNameToken(outputMsgKey)
 	      val apiResult = MetadataAPIOutputMsg.RemoveOutputMsg(outputNameSpace, outputName, outputVersion.toLong, userid)
 
 	      //   val apiResultStr = MetadataAPIImpl.getApiResult(apiResult)

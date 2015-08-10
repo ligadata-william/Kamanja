@@ -1,4 +1,4 @@
-package com.ligadata.MetadataAPI
+package com.ligadata.kamanja.metadata
 
 import com.ligadata.Exceptions.InvalidArgumentException
 
@@ -28,5 +28,7 @@ object Utils {
     if (msgTokens.length < 2) throw new InvalidArgumentException("Invalid Metadata Object Name, Unable to parse Namespace.Name.Version")
     return (msgTokens.dropRight(1).mkString("."), msgTokens(msgTokens.length-1))
   }   
+  
+  def makeFullName (nameSpace: String, name: String): String = {nameSpace+"."+name}
   
 }
