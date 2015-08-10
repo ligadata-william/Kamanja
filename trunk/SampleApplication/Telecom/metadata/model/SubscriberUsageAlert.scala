@@ -221,7 +221,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     val subAggrUsage = SubscriberAggregatedUsage.getRecentOrNew(Array(subInfo.msisdn.toString))
     val actAggrUsage = AccountAggregatedUsage.getRecentOrNew(Array(actInfo.actno))
 
-    dumpAppLog(logTag + "Before: Subscriber current month usage => " + subAggrUsage.thismonthusage + ",Account current month usage => " + actAggrUsage.thismonthusage)
+    //dumpAppLog(logTag + "Before: Subscriber current month usage => " + subAggrUsage.thismonthusage + ",Account current month usage => " + actAggrUsage.thismonthusage)
 
     // Get current month
     val curDtTmInMs = RddDate.currentGmtDateTime
@@ -239,7 +239,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
 
     // if the usage doesn't belong to this month, we ignore it
     if( txnMonth != currentMonth ){
-      dumpAppLog(logTag + "The month value " + txnMonth + " is either older than current month " + currentMonth + " or incorrect,transaction ignored " + txnMonth)
+      //dumpAppLog(logTag + "The month value " + txnMonth + " is either older than current month " + currentMonth + " or incorrect,transaction ignored " + txnMonth)
       return null
     }
 
@@ -255,7 +255,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
     subAggrUsage.withthismonthusage(subMonthlyUsage).Save
 
 
-    dumpAppLog(logTag + "After: Subscriber current month usage => " + subMonthlyUsage + ",Account current month usage => " + actMonthlyUsage)
+    //dumpAppLog(logTag + "After: Subscriber current month usage => " + subMonthlyUsage + ",Account current month usage => " + actMonthlyUsage)
 
 
     val curTmInMs = curDtTmInMs.getDateTimeInMs
@@ -284,7 +284,7 @@ class SubscriberUsageAlert(mdlCtxt: ModelContext) extends ModelBase(mdlCtxt, Sub
       }
       case _ => {
 	// unsupported plan type
-	dumpAppLog("Unknown planType => " + planInfo.plantype)
+	//dumpAppLog("Unknown planType => " + planInfo.plantype)
       }
     }
     return null
