@@ -1099,7 +1099,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    localGetAllObjects(transId, containerName)
+    val retVals = localGetAllObjects(transId, containerName)
+    logger.debug("getAllObjects - Found %d Message/Containers for %s".format(retVals.size, containerName))
+    retVals
   }
 
   override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
