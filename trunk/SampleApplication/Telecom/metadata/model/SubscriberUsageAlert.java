@@ -44,7 +44,7 @@ public ModelResultBase execute(boolean emitAllResults) {
     // Get the current subscriber, account info and global preferences
 	SubscriberGlobalPreferences gPref = (SubscriberGlobalPreferences) SubscriberGlobalPreferences.getRecentOrNew(new String[]{"Type 1"});
 	System.out.println("msisdn:"+rcntTxn.msisdn());
-	SubscriberInfo subInfo = (SubscriberInfo) SubscriberInfo.getRecentOrNew(new String[]{String.valueOf(rcntTxn.msisdn())}); //(new String[]{String.valueOf(rcntTxn.msisdn())});
+	SubscriberInfo subInfo = (SubscriberInfo) SubscriberInfo.getRecentOrNew(new String[]{String.valueOf(rcntTxn.msisdn())});
 	System.out.println("subinfo:"+subInfo.actno());
 	AccountInfo actInfo = (AccountInfo) AccountInfoFactory.rddObject.getRecentOrNew(new String[]{subInfo.actno()});
 	System.out.println("Account info:"+actInfo.actno());
@@ -56,12 +56,6 @@ public ModelResultBase execute(boolean emitAllResults) {
 	SubscriberAggregatedUsage subAggrUsage = (SubscriberAggregatedUsage) SubscriberAggregatedUsage.getRecentOrNew(new String[]{String.valueOf(subInfo.msisdn())});
 	AccountAggregatedUsage actAggrUsage = (AccountAggregatedUsage) AccountAggregatedUsage.getRecentOrNew(new String[]{actInfo.actno()});
 	
-	try {
-		dumpAppLog(logTag + "Before: Subscriber current month usage => " + subAggrUsage.thismonthusage() + ",Account current month usage => " + actAggrUsage.thismonthusage());
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
 	
 	 // Get current month
 	RddDate curDtTmInMs = RddDate.currentGmtDateTime();
@@ -70,15 +64,9 @@ public ModelResultBase execute(boolean emitAllResults) {
 	
 	// planLimit values are supplied as GB. But SubscriberUsage record contains the usage as MB
     // So convert planLimit to MB
-	 long planLimit = planInfo.planlimit() * 100;
-	 long indLimit = planInfo.individuallimit() * 100;
-	 System.out.println("eshan plan limit"+planLimit);
-	 try {
-		dumpAppLog(logTag + "Subscriber usage in the current transaction  => " + rcntTxn.usage());
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
+	 long planLimit = planInfo.planlimit() * 1024;
+	 long indLimit = planInfo.individuallimit() * 1024;
+	 System.out.println("plan limit:"+planLimit);
 	 
 	 // if the usage doesn't belong to this month, we ignore it
 	  if( txnMonth != currentMonth )
@@ -93,12 +81,6 @@ public ModelResultBase execute(boolean emitAllResults) {
 	  long subMonthlyUsage = subAggrUsage.thismonthusage() + rcntTxn.usage();
 	  subAggrUsage.withthismonthusage(subMonthlyUsage).Save();
 	  
-	  try {
-		dumpAppLog(logTag + "After: Subscriber current month usage => " + subMonthlyUsage + ",Account current month usage => " + actMonthlyUsage);
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
 	  
 	  long curTmInMs = curDtTmInMs.getDateTimeInMs();
 	  
