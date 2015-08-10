@@ -721,6 +721,7 @@ class ClusterCfgInfo {
    * This object captures the information related to a clusterConfiguration
    */
   var clusterId: String = _
+  var usrConfigs: scala.collection.mutable.HashMap[String, String] = _
   var cfgMap: scala.collection.mutable.HashMap[String, String] = _
   var modifiedTime: Date = _
   var createdTime: Date = _
@@ -729,6 +730,7 @@ class ClusterCfgInfo {
   def CfgMap: scala.collection.mutable.HashMap[String, String] = cfgMap
   def ModifiedTime: Date = modifiedTime
   def CreatedTime: Date = createdTime
+  def getUsrConfigs: scala.collection.mutable.HashMap[String, String] = usrConfigs
 }
 
 class AdapterInfo {
@@ -756,6 +758,14 @@ class AdapterInfo {
   def InputAdapterToVerify: String = inputAdapterToVerify
   def DelimiterString: String = delimiterString
   def AssociatedMessage: String = associatedMsg
+}
+
+class UserPropertiesInfo {
+   var clusterId: String = _
+   var props: scala.collection.mutable.HashMap[String, String] = _
+   
+   def ClusterId: String = clusterId
+   def Props: scala.collection.mutable.HashMap[String, String] = props  
 }
 
 class OutputMsgDef extends BaseElemDef {

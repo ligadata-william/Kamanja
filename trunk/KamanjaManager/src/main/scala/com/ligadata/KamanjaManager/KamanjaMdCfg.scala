@@ -259,10 +259,11 @@ object KamanjaMdCfg {
           val envCtxt = objinst.asInstanceOf[EnvContext]
           envCtxt.SetClassLoader(loaderInfo.loader)
           envCtxt.SetMetadataResolveInfo(KamanjaMetadata)
+          envCtxt.setMdMgr(KamanjaMetadata.getMdMgr)
           val containerNames = KamanjaMetadata.getAllContainers.map(container => container._1.toLowerCase).toList.sorted.toArray // Sort topics by names
           val topMessageNames = KamanjaMetadata.getAllMessges.filter(msg => msg._2.parents.size == 0).map(msg => msg._1.toLowerCase).toList.sorted.toArray // Sort topics by names
-          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
-          envCtxt.AddNewMessageOrContainers(KamanjaMetadata.getMdMgr, KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
+          envCtxt.AddNewMessageOrContainers(KamanjaConfiguration.dataDataStoreInfo, containerNames, true, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Containers
+          envCtxt.AddNewMessageOrContainers(KamanjaConfiguration.dataDataStoreInfo, topMessageNames, false, KamanjaConfiguration.statusDataStoreInfo, KamanjaConfiguration.jarPaths) // Messages
           LOG.info("Created EnvironmentContext for Class:" + className)
           return envCtxt
         } else {
