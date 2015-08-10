@@ -702,13 +702,15 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
  		if (ifActionElemsLen == 2) {
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n val resStr = ModelsResults.ValueString(result) ")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}resStr${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n val fldNameStr = ModelsResults.ValueString(${fldName}) ")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}fldNameStr${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"\n        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType($fldName))\n")
 			clsBuffer.append(s"        new $returnDataValueType($fldName)\n")
