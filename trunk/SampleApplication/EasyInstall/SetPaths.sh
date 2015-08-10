@@ -48,6 +48,14 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 # application-1-HelloWorld
 
 
+#Telecom
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/InitKvStores_Template.sh > $install_dir/input/Telecom/bin/InitKvStores.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/StartMetadataAPI_Template.sh > $install_dir/input/Telecom/bin/ApplicationMetadata.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/StartMetadataAPI_Cassandra_Template.sh > $install_dir/input/Telecom/bin/ApplicationMetadata_Cassandra.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/StartRestService_Template.sh > $install_dir/input/Telecom/bin/RestService.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/Telecom/bin/PushSampleDataToKafka.sh
+#Telecom
+
 # changing path in config files
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/ClusterCfgMetadataAPIConfig_Template.properties > $install_dir/config/ClusterCfgMetadataAPIConfig.properties
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/template/config/ClusterCfgMetadataAPIConfig_Cassandra_Template.properties > $install_dir/config/ClusterCfgMetadataAPIConfig_Cassandra.properties
@@ -57,6 +65,9 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/application-2-Healthcare/metadata/config/MetadataAPIConfig.properties
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-2-Healthcare/template/config/MetadataAPIConfig_Cassandra_Template.properties > $install_dir/input/application-2-Healthcare/metadata/config/MetadataAPIConfig_Cassandra.properties
+
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/Telecom/metadata/config/MetadataAPIConfig.properties
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/config/MetadataAPIConfig_Cassandra_Template.properties > $install_dir/input/Telecom/metadata/config/MetadataAPIConfig_Cassandra.properties
 
 # application-1-HelloWorld
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/application-1-HelloWorld/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/application-1-HelloWorld/metadata/config/MetadataAPIConfig.properties

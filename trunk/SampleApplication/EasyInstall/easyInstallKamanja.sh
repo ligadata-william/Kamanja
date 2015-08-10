@@ -85,6 +85,21 @@ mkdir -p $installPath/input/application-1-HelloWorld/metadata/type
 mkdir -p $installPath/input/application-1-HelloWorld/template
 # application-1-HelloWorld
 
+# Telecom
+mkdir -p $installPath/input/Telecom
+mkdir -p $installPath/input/Telecom/bin
+mkdir -p $installPath/input/Telecom/data
+mkdir -p $installPath/input/Telecom/metadata
+mkdir -p $installPath/input/Telecom/metadata/config
+mkdir -p $installPath/input/Telecom/metadata/container
+mkdir -p $installPath/input/Telecom/metadata/function
+mkdir -p $installPath/input/Telecom/metadata/message
+mkdir -p $installPath/input/Telecom/metadata/model
+mkdir -p $installPath/input/Telecom/metadata/script
+mkdir -p $installPath/input/Telecom/metadata/type
+mkdir -p $installPath/input/Telecom/template
+# Telecom
+
 bin=$installPath/bin
 systemlib=$installPath/lib/system
 applib=$installPath/lib/application
@@ -403,6 +418,12 @@ cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/application-1-HelloWorld/data
 # application-1-HelloWorld
 
+# Telecom
+cd $srcPath/SampleApplication/Telecom/data
+cp * $installPath/input/Telecom/data
+# Telecom
+
+
 # *******************************
 # Copy documentation files
 # *******************************
@@ -456,6 +477,23 @@ cp -rf * $installPath/input/application-2-Healthcare/template
 cd $srcPath/SampleApplication/HelloWorld/template
 cp -rf * $installPath/input/application-1-HelloWorld/template
 # application-1-HelloWorld
+
+#Telecom
+cd $srcPath/SampleApplication/Telecom/metadata/container
+cp * $installPath/input/Telecom/metadata/container
+
+cd $srcPath/SampleApplication/Telecom/metadata/message
+cp * $installPath/input/Telecom/metadata/message
+
+cd $srcPath/SampleApplication/Telecom/metadata/model
+cp *.* $installPath/input/Telecom/metadata/model
+
+cd $srcPath/SampleApplication/Telecom/metadata/template
+cp -rf * $installPath/input/Telecom/template
+
+cd $srcPath/SampleApplication/Telecom/metadata/config
+cp -rf * $installPath/input/Telecom/metadata/config
+#Telecom
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
