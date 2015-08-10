@@ -1,10 +1,10 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata.MessageDef
-import com.ligadata.fatafat.metadata.BaseAttributeDef
-import com.ligadata.fatafat.metadata.StructTypeDef
-import com.ligadata.fatafat.metadata.AttributeDef
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.MessageDef
+import com.ligadata.kamanja.metadata.BaseAttributeDef
+import com.ligadata.kamanja.metadata.StructTypeDef
+import com.ligadata.kamanja.metadata.AttributeDef
 
 import org.apache.log4j.Logger
 
@@ -40,7 +40,7 @@ class MessageTypeHandler {
 
       var msgDef: MessageDef = mdMgr.Message(f.Ttype, ftypeVersion, true).getOrElse(null)
       if (msgDef == null) throw new Exception(f.Ttype + " do not exists throwing null pointer")
-      val msgDefobj = "com.ligadata.FatafatBase.BaseMsg"
+      val msgDefobj = "com.ligadata.KamanjaBase.BaseMsg"
       scalaclass = scalaclass.append("%svar %s:%s = _;%s".format(pad1, f.Name, msgDefobj, newline))
       assignCsvdata.append("%s//Not Handling CSV Populate for member type Message".format(pad2))
       assignJsondata.append("%s//Not Handling JSON Populate for member type Message".format(pad2))

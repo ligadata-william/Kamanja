@@ -771,17 +771,19 @@ COPDv2.xml
 					<Constant dataType="string">Msg_Desynpuf_Id</Constant>
 					<FieldRef field="msg.desynpuf_id"/>
 				</Apply>
-				<Apply function="greaterThan">
-					<Apply function="CollectionLength">
-						<FieldRef field="inPatientClaimCostsByDate"/>
+				<Apply function="or">
+					<Apply function="greaterThan">
+						<Apply function="CollectionLength">
+							<FieldRef field="inPatientClaimCostsByDate"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant> 
 					</Apply>
-					<Constant dataType="integer">0</Constant> 
-				</Apply>
-				<Apply function="greaterThan">
-					<Apply function="CollectionLength">
-						<FieldRef field="outPatientClaimCostsByDate"/>
+					<Apply function="greaterThan">
+						<Apply function="CollectionLength">
+							<FieldRef field="outPatientClaimCostsByDate"/>
+						</Apply>
+						<Constant dataType="integer">0</Constant> 
 					</Apply>
-					<Constant dataType="integer">0</Constant> 
 				</Apply>
 			</Apply> 
 		</DerivedField>

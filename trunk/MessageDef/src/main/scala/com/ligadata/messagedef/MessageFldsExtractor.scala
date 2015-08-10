@@ -1,15 +1,15 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata.MessageDef
-import com.ligadata.fatafat.metadata.BaseAttributeDef
-import com.ligadata.fatafat.metadata.ContainerDef
-import com.ligadata.fatafat.metadata.ArrayTypeDef
-import com.ligadata.fatafat.metadata.ArrayBufTypeDef
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.MessageDef
+import com.ligadata.kamanja.metadata.BaseAttributeDef
+import com.ligadata.kamanja.metadata.ContainerDef
+import com.ligadata.kamanja.metadata.ArrayTypeDef
+import com.ligadata.kamanja.metadata.ArrayBufTypeDef
 import scala.collection.mutable.ArrayBuffer
-import com.ligadata.fatafat.metadata.StructTypeDef
-import com.ligadata.fatafat.metadata.AttributeDef
-import com.ligadata.fatafat.metadata.MappedMsgTypeDef
+import com.ligadata.kamanja.metadata.StructTypeDef
+import com.ligadata.kamanja.metadata.AttributeDef
+import com.ligadata.kamanja.metadata.MappedMsgTypeDef
 import org.apache.log4j.Logger
 
 class MessageFldsExtractor {

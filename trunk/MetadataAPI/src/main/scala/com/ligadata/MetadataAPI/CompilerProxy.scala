@@ -13,11 +13,11 @@ import java.io.FileWriter
 import sys.process._
 import java.io.PrintWriter
 import org.apache.log4j._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata._
 import com.ligadata.messagedef._
 import com.ligadata.pmml.compiler._
-import com.ligadata.fatafat.metadata.ObjFormatType._
+import com.ligadata.kamanja.metadata.ObjFormatType._
 import com.ligadata.Serialize._
 import com.ligadata.Exceptions._
 import java.util.jar.JarInputStream
@@ -398,7 +398,7 @@ class CompilerProxy{
    *
    */
   private def jarCode ( moduleNamespace: String
-                        , moduleName: String
+                        , modelName: String
                         , moduleVersion: String
                         , sourceCode : String
                         , classpath : String
@@ -412,7 +412,7 @@ class CompilerProxy{
                         , helperJavaSource: String = null
                         , helperJavaSourcePath: String = null) : (Int, String) =
   {
-    var currentWorkFolder: String = moduleName
+    var currentWorkFolder: String = modelName
     if (isLocalOnly) {
       currentWorkFolder = currentWorkFolder + "_local"
     }
@@ -421,7 +421,7 @@ class CompilerProxy{
     val killDir = s"rm -Rf $compiler_work_dir/"+currentWorkFolder
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
     if (killDirRc != 0) {
-      logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
+      logger.error(s"Unable to rm $compiler_work_dir/$modelName ... rc = $killDirRc")
       return (killDirRc, "")
     }
 
@@ -441,12 +441,12 @@ class CompilerProxy{
     }
 
     /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
-    var sourceName: String = moduleName
+    var sourceName: String = getClassName(sourceCode, sourceLanguage, modelName )
     var cHome: String = scalahome
     if (sourceLanguage.equalsIgnoreCase("java"))
       cHome = javahome
     else {
-      if (isLocalOnly) sourceName = moduleName+"_local"
+      if (isLocalOnly) sourceName = modelName+"_local"
     }
 
     // Compile 
@@ -460,7 +460,7 @@ class CompilerProxy{
     // if helperJavaSource is not null, means we are generating Factory java files.
     if (helperJavaSource != null) {
       val tempClassPath = classpath+":"+s"$compiler_work_dir/$currentWorkFolder"
-      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, moduleName+"Factory", tempClassPath, helperJavaSource, clientName, moduleName, "java")
+      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, modelName+"Factory", tempClassPath, helperJavaSource, clientName, modelName, "java")
       // Bail if compilation filed.
       if (rc != 0) {
         return (rc, "")
@@ -472,9 +472,9 @@ class CompilerProxy{
     if (!isLocalOnly) {
       var d = new java.util.Date()
       var epochTime = d.getTime
-      moduleNameJar = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
+      moduleNameJar = moduleNamespace + "_" + modelName + "_" + moduleVersion + "_" + epochTime + ".jar"
     } else {
-      moduleNameJar = moduleNamespace + "_" + moduleName + ".jar"
+      moduleNameJar = moduleNamespace + "_" + modelName + ".jar"
     }
 
     val jarPath = compiler_work_dir + "/" + moduleNameJar
@@ -516,7 +516,6 @@ class CompilerProxy{
                                 modelVersion: String, msgDefClassFilePath: String, elements: Set[BaseElemDef], originalSource: String,
                                 deps: scala.collection.immutable.Set[String], typeDeps: List[String], notTypeDeps: scala.collection.immutable.Set[String]): ModelDef = {
     try {
-
       // Now, we need to create a real jar file - Need to add an actual Package name with a real Napespace and Version numbers.
       val packageName = modelNamespace +".V"+ MdMgr.ConvertVersionToLong(MdMgr.FormatVersion(modelVersion))
       var packagedSource  = "package "+packageName + ";\n " + repackagedCode.substring(repackagedCode.indexOf("import"))
@@ -664,6 +663,13 @@ class CompilerProxy{
         repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+typeClassName + "\\;*"), "")
       }
     })
+    
+    //typeNamesace contains all the messages and containers 
+    if (typeNamespace == null) {
+      logger.error("COMPILER_PROXY: Unable to find at least one message in the Metadata for this model")
+      throw new MsgCompilationFailedException(modelConfigName)
+    }
+    
     //Replace the "import com....*;" statement - JAVA STYLE IMPORT ALL
     repackagedCode = repackagedCode.replaceAll(("\\s*import\\s*"+typeNamespace.mkString(".")+"[.*]"+"\\*\\;*"), "")
     // Replace the "import com...._;" type of statement  - SCALA STYLE IMPORT ALL
@@ -677,10 +683,7 @@ class CompilerProxy{
     dumpStrTextToFile(finalSourceCode,msgDefClassFilePath)
 
     // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
-    var tempClassName: String = removeUserid(modelConfigName)
-    if (sourceLang.equalsIgnoreCase("java")) {
-      tempClassName = getJavaClassName(sourceCode)
-    }
+    val tempClassName = getClassName(sourceCode, sourceLang, modelConfigName)
 
     // Create a temporary jarFile file so that we can figure out what the metadata info for this class is. 
     var (status,jarFileName) = jarCode(packageName+".V0",
@@ -716,12 +719,12 @@ class CompilerProxy{
 
     // Add this temp jar...
     val jarName0 = JarPathsUtils.GetValidJarFile(jarPaths0, jarFileName)
+    
     loadJarFile(jarName0, classLoader)
     elements.foreach(elem => {
       val jarNameType =  JarPathsUtils.GetValidJarFile(jarPaths0, elem.JarName)
       loadJarFile(jarNameType, classLoader)
     })
-
 
     var classNames = getClasseNamesInJar(jarName0)
     var tempCurClass: Class[_] = null
@@ -731,8 +734,8 @@ class CompilerProxy{
 
       var isModel = false
       while (curClz != null && isModel == false) {
-        isModel = isDerivedFrom(curClz, "com.ligadata.FatafatBase.ModelBaseObj")
-        if (isModel == false)
+        isModel = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
+          if (isModel == false)
           curClz = curClz.getSuperclass()
       }
       if (isModel) {
@@ -742,7 +745,7 @@ class CompilerProxy{
           try {
             // Trying Singleton Object
             val module = classLoader.mirror.staticModule(clsName)
-            val obj = classLoader.mirror.reflectModule(module)
+            val obj = classLoader.mirror.reflectModule(module) 
 
             objInst = obj.instance
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
@@ -758,9 +761,9 @@ class CompilerProxy{
           }
           // Pull the Model metadata out of the actual object here... NameSpace,Name, and Version all come from
           // this temporary class
-          var baseModelTrait: com.ligadata.FatafatBase.ModelBaseObj = null
-          if (objInst.isInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]) {
-            baseModelTrait = objInst.asInstanceOf[com.ligadata.FatafatBase.ModelBaseObj]
+          var baseModelTrait: com.ligadata.KamanjaBase.ModelBaseObj = null
+          if (objInst.isInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]) {
+            baseModelTrait = objInst.asInstanceOf[com.ligadata.KamanjaBase.ModelBaseObj]
             var fullName = baseModelTrait.ModelName.split('.')
             return (fullName.dropRight(1).mkString("."), fullName(fullName.length-1), baseModelTrait.Version, clsName)
           }
@@ -776,7 +779,7 @@ class CompilerProxy{
         }
       }
     })
-    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.FatafatBase.ModelBaseObj was found in the jarred source "+jarFileName)
+    logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelBaseObj was found in the jarred source "+jarFileName)
     throw new MsgCompilationFailedException(jarFileName)
   }
 
@@ -835,18 +838,25 @@ class CompilerProxy{
    * getJavaClassName - pull the java class name fromt he source code so that we can name the 
    *                    saved file appropriately.  
    */
-  private def getJavaClassName(sourceCode: String):String = {
-    var publicClassExpr = "\\s*public\\s*class\\s*\\S*\\s*extends".r
-    var classMatchResult = publicClassExpr.findFirstMatchIn(sourceCode).getOrElse(null)
-    if (classMatchResult != null) {
-      var classSubString = sourceCode.substring(classMatchResult.start,classMatchResult.end)
-      var bExpr = "\\s*public\\s*class\\s*".r
-      var eExpr = "\\s*extends".r
-      var match1 = bExpr.findFirstMatchIn(classSubString).get
-      var match2 = eExpr.findFirstMatchIn(classSubString).get
-      return classSubString.substring(match1.end,match2.start).trim
+  private def getClassName(sourceCode: String, sourceLang: String, modelConfigName: String):String = {
+    
+    
+    // Need to determine the name of the class file in case of Java - to be able to compile we need to know the public class name. 
+    var tempClassName: String = removeUserid(modelConfigName)
+    if (sourceLang.equalsIgnoreCase("java")) {
+      var publicClassExpr = "\\s*public\\s*class\\s*\\S*\\s*extends".r
+      var classMatchResult = publicClassExpr.findFirstMatchIn(sourceCode).getOrElse(null)
+      if (classMatchResult != null) {
+        var classSubString = sourceCode.substring(classMatchResult.start,classMatchResult.end)
+        var bExpr = "\\s*public\\s*class\\s*".r
+        var eExpr = "\\s*extends".r
+        var match1 = bExpr.findFirstMatchIn(classSubString).get
+        var match2 = eExpr.findFirstMatchIn(classSubString).get
+        return classSubString.substring(match1.end,match2.start).trim
+      }
+      return ""
     }
-    ""
+    return tempClassName
   }
 
   /**

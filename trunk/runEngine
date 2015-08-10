@@ -1,7 +1,7 @@
 #!/bin/bash
 # A sample script  I used to test the engine. Yet to implement fat jars and packaging the external dependencies
 
-cd $FATAFATLIBPATH
+cd $KAMANJALIBPATH
 
 export JSON_JARS=$HOME/.ivy2/cache/org.json4s/json4s-jackson_2.10/jars/json4s-jackson_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.10/jars/json4s-ast_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-native_2.10/jars/json4s-native_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-ast_2.11/jars/json4s-ast_2.11-3.2.10.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.9.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.10/jars/json4s-core_2.10-3.2.5.jar:$HOME/.ivy2/cache/org.json4s/json4s-core_2.11/jars/json4s-core_2.11-3.2.10.jar:$HOME/.ivy2/cache/org.json4s/json4s-jackson_2.11/jars/json4s-jackson_2.11-3.2.10.jar
 
@@ -11,6 +11,6 @@ export MAPDB_JARS=$HOME/.ivy2/cache/org.mapdb/mapdb/bundles/mapdb-1.0.6.jar:$HOM
 
 export JODA_JARS=$HOME/.ivy2/cache/org.joda/joda-convert/jars/joda-convert-1.6.jar:$HOME/my_libs/joda-time-2.4.jar
 
-export fatafat_classpath=$FATAFATLIBPATH/log4j-1.2.17.jar:$FATAFATLIBPATH/msgsandcontainers_2.10-1.0.jar:$FATAFATLIBPATH/metadata_2.10-1.0.jar:$FATAFATLIBPATH/fatafatbase_2.10-1.0.jar:$FATAFATLIBPATH/basetypes_2.10-0.1.0.jar:$FATAFATLIBPATH/metadataapi_2.10-1.0.jar:$FATAFATLIBPATH/storage_2.10-0.0.0.2.jar:$FATAFATLIBPATH/pmmlruntime_2.10-1.0.jar:$FATAFATLIBPATH/pmmludfs_2.10-1.0.jar:$JODA_JARS:$JSON_JARS:$MAPDB_JARS:$JACKSON_JARS
-echo $fatafat_classpath
-scala  -J-Xmx1024M -cp $fatafat_classpath $FATAFATLIBPATH/fatafatmanager_2.10-1.0.jar --config $FATAFATLIBPATH/simp_samp_node1_config.cfg
+export kamanja_classpath=$KAMANJALIBPATH/log4j-1.2.17.jar:$KAMANJALIBPATH/msgsandcontainers_2.10-1.0.jar:$KAMANJALIBPATH/metadata_2.10-1.0.jar:$KAMANJALIBPATH/kamanjabase_2.10-1.0.jar:$KAMANJALIBPATH/basetypes_2.10-0.1.0.jar:$KAMANJALIBPATH/metadataapi_2.10-1.0.jar:$KAMANJALIBPATH/storage_2.10-0.0.0.2.jar:$KAMANJALIBPATH/pmmlruntime_2.10-1.0.jar:$KAMANJALIBPATH/pmmludfs_2.10-1.0.jar:$JODA_JARS:$JSON_JARS:$MAPDB_JARS:$JACKSON_JARS
+echo $kamanja_classpath
+scala  -J-Xmx1024M -cp $kamanja_classpath $KAMANJALIBPATH/kamanjamanager_2.10-1.0.jar --config $KAMANJALIBPATH/simp_samp_node1_config.cfg

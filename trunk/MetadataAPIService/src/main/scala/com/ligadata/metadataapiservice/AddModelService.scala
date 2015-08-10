@@ -7,7 +7,7 @@ import akka.io.IO
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._

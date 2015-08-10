@@ -4,7 +4,7 @@ import org.apache.log4j.Logger
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.traits._
@@ -20,7 +20,7 @@ class PmmlModelGenerator(ctx : PmmlContext) extends CodePrinterDispatch with com
 
 	    The CodeFragment.Kind describes what kind of string should be produced.  Note 
 	    that many nodes can produce different representations. For example, is a 
-	    declaration or an “use” expression required for a DataField.
+	    declaration or an "use" expression required for a DataField.
  	    
  	    @param node the PmmlExecNode
  	    @param buffer the caller's buffer to which the print for the node (and below it) will be left
