@@ -83,7 +83,8 @@ case class APIResultJsonProxy(APIResults: APIResultInfo)
 // The implementation class
 object MetadataAPIImpl extends MetadataAPI {
 
-  lazy val sysNS = "System" // system name space
+  lazy val sysNS = "System"
+  // system name space
   lazy val loggerName = this.getClass.getName
   lazy val logger = Logger.getLogger(loggerName)
   lazy val serializer = SerializerManager.GetSerializer("kryo")
@@ -291,6 +292,7 @@ object MetadataAPIImpl extends MetadataAPI {
   def setSSLCertificatePasswd(pw: String) = {
     passwd = pw
   }
+
 
   /**
    * getCurrentTime - Return string representation of the current Date/Time
@@ -527,6 +529,7 @@ object MetadataAPIImpl extends MetadataAPI {
         var value = new Value
 
         def Key = key
+
         def Value = value
         def Construct(k: Key, v: Value) =
           {
@@ -573,7 +576,9 @@ object MetadataAPIImpl extends MetadataAPI {
       for (c <- value) {
         v += c
       }
+
       def Key = k
+
       def Value = v
       def Construct(Key: Key, Value: Value) = {}
     }
@@ -756,7 +761,9 @@ object MetadataAPIImpl extends MetadataAPI {
           for (c <- value) {
             v += c
           }
+
           def Key = k
+
           def Value = v
           def Construct(Key: Key, Value: Value) = {}
         }
@@ -820,7 +827,9 @@ object MetadataAPIImpl extends MetadataAPI {
       // We have to update the currentTranLevel here, since addObjectToCache method does not have the tranId in object
       // yet (a bug that is being ractified now)...  We can remove this code when that is fixed.
       var max: Long = 0
-      objList.foreach(obj => { max = scala.math.max(max, obj.TranId) })
+      objList.foreach(obj => {
+        max = scala.math.max(max, obj.TranId)
+      })
       if (currentTranLevel < max) currentTranLevel = max
 
       if (notifyEngine != "YES") {
@@ -1169,7 +1178,8 @@ object MetadataAPIImpl extends MetadataAPI {
 
       val tmpJarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS")
       val jarPaths = if (tmpJarPaths != null) tmpJarPaths.split(",").toSet else scala.collection.immutable.Set[String]()
-      if (obj.jarName != null && (forceUploadMainJar || checkedJars.contains(obj.jarName) == false)) { //BUGBUG 
+      if (obj.jarName != null && (forceUploadMainJar || checkedJars.contains(obj.jarName) == false)) {
+        //BUGBUG
         val jarsPathsInclTgtDir = jarPaths + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR")
         var jarName = Utils.GetValidJarFile(jarsPathsInclTgtDir, obj.jarName)
         var value = GetJarAsArrayOfBytes(jarName)
@@ -2011,7 +2021,9 @@ object MetadataAPIImpl extends MetadataAPI {
           apiResult.toString()
         case Some(cs) =>
           val conceptArray = cs.toArray
-          conceptArray.foreach(concept => { DeleteObject(concept) })
+          conceptArray.foreach(concept => {
+            DeleteObject(concept)
+          })
           var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcept", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + key) //JsonSerializer.SerializeObjectListToJson(conceptArray))
           apiResult.toString()
       }
@@ -2368,7 +2380,9 @@ object MetadataAPIImpl extends MetadataAPI {
     val jsonStr = pretty(render(json))
     //  logAuditRec(userid,Some(AuditConstants.WRITE),AuditConstants.UPDATEOBJECT,AuditConstants.CONCEPT,AuditConstants.SUCCESS,"",concepts.mkString(",")) 
     try {
-      concepts.foreach(c => { RemoveConcept(c, None) })
+      concepts.foreach(c => {
+        RemoveConcept(c, None)
+      })
       var apiResult = new ApiResult(ErrorCodeConstants.Success, "RemoveConcepts", null, ErrorCodeConstants.Remove_Concept_Successful + ":" + jsonStr)
       apiResult.toString()
     } catch {
@@ -2428,7 +2442,8 @@ object MetadataAPIImpl extends MetadataAPI {
       var types = new Array[BaseElemDef](0)
       val msgType = getObjectType(msgDef)
       val depJars = if (msgDef.DependencyJarNames != null)
-        (msgDef.DependencyJarNames :+ msgDef.JarName) else Array(msgDef.JarName)
+        (msgDef.DependencyJarNames :+ msgDef.JarName)
+      else Array(msgDef.JarName)
       msgType match {
         case "MessageDef" | "ContainerDef" => {
           // ArrayOf<TypeName>
@@ -3196,14 +3211,15 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
-
-    var compProxy = new CompilerProxy
+    var apiResult = ""
+    try {
+      val compProxy = new CompilerProxy
     compProxy.setSessionUserId(userid)
     val modDef: ModelDef = compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
     logger.info("Begin uploading dependent Jar, please wait.")
     UploadJarsToDB(modDef)
     logger.info("Finished uploading dependent Jars.")
-    val apiResult = AddModel(modDef)
+      apiResult = AddModel(modDef)
 
     // Add all the objects and NOTIFY the world
     var objectsAdded = new Array[BaseElemDef](0)
@@ -3212,8 +3228,14 @@ object MetadataAPIImpl extends MetadataAPI {
     logger.debug("Notify engine via zookeeper")
     NotifyEngine(objectsAdded, operations)
 
+    } catch {
+      case e: Exception => {
+        apiResult=new ApiResult(ErrorCodeConstants.Failure, "AddModel", null,"Failed to compile model. Unexpected error occurred. Please see logs for more information.").toString
+      }
+    }
     apiResult
   }
+
 
   // Add Model (format XML)
   def AddModel(pmmlText: String, userid: Option[String]): String = {
@@ -5410,7 +5432,7 @@ object MetadataAPIImpl extends MetadataAPI {
     SaveObjectList(keyList, valueList, modelConfigStore)
 
     // return reuslts
-    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", 0.toString, "Upload of model config successful")
+    var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
     apiResult.toString()
   }
 
