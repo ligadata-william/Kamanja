@@ -1057,9 +1057,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
-      val names: Array[String] = c.split('.')
-      val namespace: String = names.head
-      val name: String = names.last
+      val (namespace, name) = Utils.parseNameTokenNoVersion(c)
       var containerType = mgr.ActiveType(namespace, name)
       if (containerType != null) {
 
@@ -1101,7 +1099,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    localGetAllObjects(transId, containerName)
+    val retVals = localGetAllObjects(transId, containerName)
+    logger.debug("getAllObjects - Found %d Message/Containers for %s".format(retVals.size, containerName))
+    retVals
   }
 
   override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
