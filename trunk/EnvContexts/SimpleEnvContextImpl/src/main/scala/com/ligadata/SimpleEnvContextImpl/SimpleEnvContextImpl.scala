@@ -292,6 +292,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         return
       val container = getMsgContainer(containerName.toLowerCase, true)
       if (container != null) {
+        value.TransactionId(txnId) // Setting the current transactionid
         val partKeyStr = InMemoryKeyDataInJson(partKey)
         val fnd = container.data.getOrElse(partKeyStr, null)
         if (fnd != null) {

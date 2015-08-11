@@ -102,7 +102,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
         }
         msg.populate(inputdata)
-        msg.TransactionId(transId)
+        // msg.TransactionId(transId)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
           envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
