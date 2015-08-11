@@ -106,6 +106,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 * By design, these full package qualified object names must be specified as enumerated values in the data dictionary
 	 * element named "UDFSearchPath".
 	 *
+	 * @deprecated "UdfSearchPath is being replaced with NamespaceSearchPath" "r1.06"
 	 */
 	def udfSearchPath : Array[String] = {
 		val pathDataField : xDataField = if (dDict.contains("UDFSearchPath")) dDict("UDFSearchPath") else null
@@ -144,6 +145,10 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  By default, these two namespaces are always present:  System, Pmml
 	 */
 	val namespaceSearchPathDefault : Array[(String,String)] = Array[(String,String)]((MdMgr.sysNS,MdMgr.sysNS), ("Pmml","Pmml"))
+
+	/** Prevent the defaults from generating import statements */
+	val excludeFromImportConsideration : Array[String] = Array[String](MdMgr.sysNS,"Pmml")
+	def ExcludeFromImportConsideration : Array[String] = excludeFromImportConsideration
 	
 	
 	def NameSpaceSearchPathDefaultAsStr : String = {
@@ -313,12 +318,14 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *      
 	 *  These will be used if present:
 	 *   	Version (string version from the Header)
+	 *    	ModelNamespace (from application name in the Header)
 	 *    	ApplicationName (from the Header)
 	 *    	Copyright (from the Header)
 	 *      Description (from the Header)
 	 *      ModelName (from the RulesetModel ... and other model types we are to support)
-	 *      ClassName (the derived class name based upon the ApplicationName and Version)
+	 *      ClassName (the derived class name based upon the ApplicationName)
 	 *      VersionNumber  (a numeric version number... only dec digits extracted
+	 *      ModelPackageName (the package name used for the generated scala source file)
 	 */
 	var pmmlTerms : HashMap[String,Option[String]] = HashMap[String,Option[String]]() 
 	
@@ -348,11 +355,18 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	 *  The triple consists of the field name, field's type namespace, and the field type */
 	var modelOutputs : Map[String, (String, String, String)] = Map[String, (String, String, String)]()
 	
+	/** collected by RegisterMessages & collectContainers, grist for import statement generation */
+	val importStmtInfo : Map[String, String] = Map[String, String]()
+	def ImportStmtInfo : Map[String, String] = importStmtInfo
+	
 	/** 
 	 *  Register any messages that will appear in the constructor of the generated model class.  Register the
 	 *  the gCtx so it can be added to the constructor even though it is used only in "Get" functions in the 
 	 *  use of it in the derived fields.  Allow ContainerDefs as well as MessageDefs there as well as there is 
 	 *  little to distinguish them from each other save their names.
+	 *  
+	 *  As a side effect collect the physical names of the messages and containers found. These contain the 
+	 *  appropriate version number suffixes needed for the generation of the import statements.
 	 *  
 	 *  NOTE: Containers are encountered during semantic analysis as types are examined on each DataField
 	 *  and DerivedField.  These are added to the containersInScope map as well.  
@@ -373,6 +387,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 							PmmlError.logError(this, "The supplied message has no corresponding message type.  Please add metadata for this message.")
 						} else {
 							if (msgDefType.isInstanceOf[ContainerTypeDef]) {
+								if (MetadataHelper.isContainerWithFieldOrKeyNames(msgDefType)) {
+									importStmtInfo(msgFld.dataType) = msgDefType.PhysicalName /** collect import info */
+								}
 								containersInScope += Tuple4(msgFldName,true,msgDefType,msgFldName)
 							} else {
 								PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${msgDef.typeString}")
@@ -397,6 +414,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 								collectClassPathJars(implJar, depJars)
 							  
 								if (containerTypeDef.isInstanceOf[ContainerTypeDef]) {
+									if (MetadataHelper.isContainerWithFieldOrKeyNames(containerTypeDef)) {
+										importStmtInfo(msgFld.dataType) = containerTypeDef.PhysicalName /** collect import info */
+									}
 									containersInScope += Tuple4(msgFldName,true,containerTypeDef,msgFldName)
 								} else {
 									PmmlError.logError(this, s"MessageDef encountered that did not have a container type def... type = ${containerTypeDef.typeString}")
@@ -458,6 +478,9 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			
 			elem match {
 			  case con : ContainerTypeDef => { 
+				  			if (MetadataHelper.isContainerWithFieldOrKeyNames(elem)) {
+				  				importStmtInfo(name) = elem.PhysicalName /** collect import info */
+				  			}
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
 				  			true
 				  		}
