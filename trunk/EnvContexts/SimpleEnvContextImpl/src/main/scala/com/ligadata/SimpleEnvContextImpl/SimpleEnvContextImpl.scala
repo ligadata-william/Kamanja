@@ -1075,13 +1075,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   private def Clone(vals: Array[MessageContainerBase]): Array[MessageContainerBase] = {
-    vals.map(v => {
-      v.Clone()
+    if (vals == null) return null
+    return vals.map(v => {
+      if (v == null) null else v.Clone()
     })
   }
 
   private def Clone(v: MessageContainerBase): MessageContainerBase = {
-    v.Clone()
+    if (v == null) return null
+    return v.Clone()
   }
 
   private def Clone(ov: Option[MessageContainerBase]): Option[MessageContainerBase] = {
@@ -1619,7 +1621,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
     Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
   }
-  
+
   private def getLocalRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
     val foundPartKeys = ArrayBuffer[List[String]]()
     val retResult = ArrayBuffer[MessageContainerBase]()
