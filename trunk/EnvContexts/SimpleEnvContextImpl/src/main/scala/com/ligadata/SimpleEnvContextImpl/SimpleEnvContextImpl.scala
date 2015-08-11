@@ -1074,16 +1074,31 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     })
   }
 
+  private def Clone(vals: Array[MessageContainerBase]): Array[MessageContainerBase] = {
+    vals.map(v => {
+      v.Clone()
+    })
+  }
+
+  private def Clone(v: MessageContainerBase): MessageContainerBase = {
+    v.Clone()
+  }
+
+  private def Clone(ov: Option[MessageContainerBase]): Option[MessageContainerBase] = {
+    if (ov == None) return ov
+    Some(ov.get.Clone())
+  }
+
   override def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase] = {
-    localGetAllObjects(transId, containerName)
+    Clone(localGetAllObjects(transId, containerName))
   }
 
   override def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase = {
-    localGetObject(transId, containerName, partKey, primaryKey)
+    Clone(localGetObject(transId, containerName, partKey, primaryKey))
   }
 
   override def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] = {
-    localHistoryObjects(transId, containerName, partKey, appendCurrentChanges)
+    Clone(localHistoryObjects(transId, containerName, partKey, appendCurrentChanges))
   }
 
   override def getAdapterUniqueKeyValue(transId: Long, key: String): (String, Int, Int) = {
@@ -1565,7 +1580,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+  private def getLocalRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
     if (TxnContextCommonFunctions.IsEmptyKey(partKey))
       None
     val txnCtxt = getTransactionContext(transId, false)
@@ -1597,7 +1612,15 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     None
   }
 
+  override def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase] = {
+    Clone(getLocalRecent(transId, containerName, partKey, tmRange, f))
+  }
+
   override def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    Clone(getLocalRDD(transId, containerName, partKey, tmRange, f))
+  }
+  
+  private def getLocalRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
     val foundPartKeys = ArrayBuffer[List[String]]()
     val retResult = ArrayBuffer[MessageContainerBase]()
     val txnCtxt = getTransactionContext(transId, false)
