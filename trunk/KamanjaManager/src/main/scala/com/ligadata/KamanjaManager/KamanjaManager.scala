@@ -333,7 +333,7 @@ class KamanjaManager {
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
         dataChangeZkNodePath = zkNodeBasePath + "/datachange"
-        zkHeartBeatNodePath = zkNodeBasePath + "/monitor/engine/" + FatafatConfiguration.nodeId.toString
+        zkHeartBeatNodePath = zkNodeBasePath + "/monitor/engine/" + KamanjaConfiguration.nodeId.toString
       }
 
       KamanjaMdCfg.ValidateAllRequiredJars
@@ -352,8 +352,8 @@ class KamanjaManager {
 
       if (retval && zkHeartBeatNodePath.size > 0) {
         heartBeat = new HeartBeatUtil
-        heartBeat.Init(FatafatConfiguration.nodeId.toString, FatafatConfiguration.zkConnectString, zkHeartBeatNodePath, FatafatConfiguration.zkSessionTimeoutMs, FatafatConfiguration.zkConnectionTimeoutMs, 5000) // for every 5 secs
-        heartBeat.SetMainData("Node" + FatafatConfiguration.nodeId.toString)
+        heartBeat.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, zkHeartBeatNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, 5000) // for every 5 secs
+        heartBeat.SetMainData("Node" + KamanjaConfiguration.nodeId.toString)
       }
 
       /*
@@ -477,7 +477,7 @@ class KamanjaManager {
     var cntr: Long = 0
     var prevParticipents = ""
 
-    val nodeNameToSetZk = "Node" + FatafatConfiguration.nodeId.toString
+    val nodeNameToSetZk = "Node" + KamanjaConfiguration.nodeId.toString
 
     print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
