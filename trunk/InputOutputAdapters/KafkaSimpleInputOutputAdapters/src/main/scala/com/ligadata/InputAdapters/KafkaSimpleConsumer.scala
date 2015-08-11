@@ -178,8 +178,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
 
             // Call the broker and get a response.
-            val readTmNs = System.nanoTime
-            val readTmMs = System.currentTimeMillis
             val fetchResp = consumer.fetch(fetchReq)
 
             // Check for errors
@@ -204,6 +202,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
               readOffset = msgBuffer.nextOffset
               breakable {
+                val readTmNs = System.nanoTime
+                val readTmMs = System.currentTimeMillis
                 messagesProcessed = messagesProcessed + 1
 
                 // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
