@@ -31,7 +31,7 @@ object StartMetadataAPI {
     }
     else {
       for (arg <- arglist) {
-        if (arg.endsWith(".json") || arg.endsWith(".xml")) {
+        if (arg.endsWith(".json") || arg.endsWith(".xml")  || arg.endsWith(".scala")  || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
@@ -55,12 +55,12 @@ object StartMetadataAPI {
     var response = ""
     try {
       action match {
-          //message management
+        //message management
         case Action.ADDMESSAGE => response = MessageService.addMessage(input)
         case Action.UPDATEMESSAGE => response = MessageService.updateMessage(input)
         case Action.REMOVEMESSAGE => response = MessageService.removeMessage
         case Action.GETALLMESSAGES => response = MessageService.getAllMessages
-       //output message management
+        //output message management
         case Action.ADDOUTPUTMESSAGE => response = MessageService.addOutputMessage(input)
         case Action.UPDATEOUTPUTMESSAGE => response =MessageService.updateOutputMessage(input)
         case Action.REMOVEOUTPUTMESSAGE => response =MessageService.removeOutputMessage
@@ -81,39 +81,42 @@ object StartMetadataAPI {
         case Action.GETCONTAINER => response = ContainerService.getContainer
         case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
         case Action.REMOVECONTAINER => response = ContainerService.removeContainer
-          //Type management
+        //Type management
         case Action.ADDTYPE => response = TypeService.addType(input)
         case Action.GETTYPE => response = TypeService.getType
         case Action.GETALLTYPES => response = TypeService.getAllTypes
         case Action.REMOVETYPE => response = TypeService.removeType
         case Action.LOADTYPESFROMAFILE=> response = TypeService.loadTypesFromAFile
         case Action.DUMPALLTYPESBYOBJTYPEASJSON => response = TypeService.dumpAllTypesByObjTypeAsJson
-          //function management
+        //function management
         case Action.ADDFUNCTION => response = FunctionService.addFunction(input)
         case Action.GETFUNCTION => response = FunctionService.getFunction
         case Action.REMOVEFUNCTION => response = FunctionService.removeFunction
         case Action.UPDATEFUNCTION => response = FunctionService.updateFunction(input)
         case Action.LOADFUNCTIONSFROMAFILE => response = FunctionService.loadFunctionsFromAFile
         case Action.DUMPALLFUNCTIONSASJSON => response = FunctionService.dumpAllFunctionsAsJson
-          //config
+        //config
         case Action.UPLOADENGINECONFIG => response = ConfigService.uploadEngineConfig(input)
         case Action.UPLOADCOMPILECONFIG => response = ConfigService.uploadCompileConfig(input)
         case Action.DUMPALLCFGOBJECTS => response = ConfigService.dumpAllCfgObjects
         case Action.REMOVEENGINECONFIG => response = ConfigService.removeEngineConfig
-          //service
+        //service
         case Action.ADDCONCEPT => response = ConceptService.addConcept(input)
         case Action.REMOVECONCEPT => response =ConceptService.removeConcept
         case Action.LOADCONCEPTSFROMAFILE => response =ConceptService.loadConceptsFromAFile
         case Action.DUMPALLCONCEPTSASJSON => response =ConceptService.dumpAllConceptsAsJson
-          //jar
+        //jar
         case Action.UPLOADJAR=>response = JarService.uploadJar(input)
-          //dumps
+        //dumps
         case Action.DUMPMETADATA=>response =DumpService.dumpMetadata
         case Action.DUMPALLNODES=>response =DumpService.dumpAllNodes
         case Action.DUMPALLCLUSTERS=>response =DumpService.dumpAllClusters
         case Action.DUMPALLCLUSTERCFGS=>response =DumpService.dumpAllClusterCfgs
         case Action.DUMPALLADAPTERS=>response =DumpService.dumpAllAdapters
-        case _ => response = "Unexpected action!"
+        case _ => {
+          "Unexpected action!"
+          sys.exit(1)
+        }
       }
     }
     catch {

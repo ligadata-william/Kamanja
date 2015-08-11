@@ -101,32 +101,32 @@ object ContainerService {
 
   def getContainer: String ={
     var response=""
-      val containerKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
+    val containerKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
 
-      if (containerKeys.length == 0) {
-        response="Sorry, No containers available in the Metadata"
-      }else{
-        println("\nPick the container from the following list: ")
-        var srNo = 0
-        for(containerKey <- containerKeys){
-          srNo+=1
-          println("["+srNo+"] "+containerKey)
-        }
-        print("\nEnter your choice: ")
-        val choice: Int = readInt()
-
-        if (choice < 1 || choice > containerKeys.length) {
-          response="Invalid choice " + choice + ",start with main menu..."
-        }else{
-          val containerKey = containerKeys(choice - 1)
-          val contKeyTokens = containerKey.split("\\.")
-          val contNameSpace = contKeyTokens(0)
-          val contName = contKeyTokens(1)
-          val contVersion = contKeyTokens(2)
-          response=MetadataAPIImpl.GetContainerDefFromCache(contNameSpace, contName, "JSON", contVersion, userid)
-        }
+    if (containerKeys.length == 0) {
+      response="Sorry, No containers available in the Metadata"
+    }else{
+      println("\nPick the container from the following list: ")
+      var srNo = 0
+      for(containerKey <- containerKeys){
+        srNo+=1
+        println("["+srNo+"] "+containerKey)
       }
-      response
+      print("\nEnter your choice: ")
+      val choice: Int = readInt()
+
+      if (choice < 1 || choice > containerKeys.length) {
+        response="Invalid choice " + choice + ",start with main menu..."
+      }else{
+        val containerKey = containerKeys(choice - 1)
+        val contKeyTokens = containerKey.split("\\.")
+        val contNameSpace = contKeyTokens(0)
+        val contName = contKeyTokens(1)
+        val contVersion = contKeyTokens(2)
+        response=MetadataAPIImpl.GetContainerDefFromCache(contNameSpace, contName, "JSON", contVersion, userid)
+      }
+    }
+    response
   }
 
   def getAllContainers: String ={
@@ -155,37 +155,37 @@ object ContainerService {
   def removeContainer: String ={
     var response = ""
     try{
-    val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
+      val contKeys = MetadataAPIImpl.GetAllContainersFromCache(true, None)
 
-    if (contKeys.length == 0) {
-      response=("Sorry, No containers available in the Metadata")
-    }else{
-      println("\nPick the container to be deleted from the following list: ")
-      var seq = 0
-      contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
-
-      print("\nEnter your choice: ")
-      val choice: Int = readInt()
-
-      if (choice < 1 || choice > contKeys.length) {
-        response=("Invalid choice " + choice + ",start with main menu...")
+      if (contKeys.length == 0) {
+        response=("Sorry, No containers available in the Metadata")
       }else{
-        val contKey = contKeys(choice - 1)
-        val contKeyTokens = contKey.split("\\.")
-        val contNameSpace = contKeyTokens(0)
-        val contName = contKeyTokens(1)
-        val contVersion = contKeyTokens(2)
-        response = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
+        println("\nPick the container to be deleted from the following list: ")
+        var seq = 0
+        contKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
+
+        print("\nEnter your choice: ")
+        val choice: Int = readInt()
+
+        if (choice < 1 || choice > contKeys.length) {
+          response=("Invalid choice " + choice + ",start with main menu...")
+        }else{
+          val contKey = contKeys(choice - 1)
+          val contKeyTokens = contKey.split("\\.")
+          val contNameSpace = contKeyTokens(0)
+          val contName = contKeyTokens(1)
+          val contVersion = contKeyTokens(2)
+          response = MetadataAPIImpl.RemoveContainer(contNameSpace, contName, contVersion.toLong, userid)
+        }
+      }
+    } catch {
+      case e: NumberFormatException => {
+        response=("\n Entry not in desired format. Please enter only one choice correctly")
+      }
+      case e: Exception => {
+        response=(e.toString)
       }
     }
-  } catch {
-    case e: NumberFormatException => {
-      response=("\n Entry not in desired format. Please enter only one choice correctly")
-    }
-    case e: Exception => {
-      response=(e.toString)
-    }
-  }
     response
   }
 

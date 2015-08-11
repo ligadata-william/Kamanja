@@ -39,9 +39,9 @@ object ModelService {
                 response = errorMsg
               }
               case option => {
-               var  modelDefs=getUserInputFromMainMenu(models)
+                var  modelDefs=getUserInputFromMainMenu(models)
                 for (modelDef <- modelDefs)
-                response += MetadataAPIImpl.AddModel(modelDef.toString, userid)
+                  response += MetadataAPIImpl.AddModel(modelDef.toString, userid)
               }
             }
           }
@@ -84,7 +84,7 @@ object ModelService {
               case option => {
                 var  modelDefs=getUserInputFromMainMenu(models)
                 for (modelDef <- modelDefs)
-                response = MetadataAPIImpl.UpdateModel(modelDef.toString, userid)
+                  response = MetadataAPIImpl.UpdateModel(modelDef.toString, userid)
               }
             }
           }
@@ -151,10 +151,10 @@ object ModelService {
       response="Sorry, No models available in the Metadata"
     }else{
       var srNo = 0
-     for(modelKey <- modelKeys){
-      srNo += 1
-       response+="[" + srNo + "]" + modelKey+"\n"
-     }
+      for(modelKey <- modelKeys){
+        srNo += 1
+        response+="[" + srNo + "]" + modelKey+"\n"
+      }
     }
     response
   }
