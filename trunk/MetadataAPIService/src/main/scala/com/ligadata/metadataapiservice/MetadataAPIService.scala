@@ -40,12 +40,14 @@ trait MetadataAPIService extends HttpService {
   val metadataAPIRoute = {
     optionalHeaderValueByName("userid") { userId => {
       optionalHeaderValueByName("password") { password => {
-        optionalHeaderValueByName("role") { role =>
+        optionalHeaderValueByName("role") {role =>
+          optionalHeaderValueByName("modelname")
+        { modelname =>
           var user: Option[String] = None
 
           // Make sure that the Audit knows the difference between No User specified and an None (request originates within the engine)
           if (userId == None) user = Some("")
-          logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role)
+          logger.debug("userid => " + user.get + ",password => xxxxx" + ",role => " + role+",modelname => "+modelname)
           get {
               path("api" / Rest) { str => {
                 val toknRoute = str.split("/")
@@ -92,11 +94,11 @@ trait MetadataAPIService extends HttpService {
                     }
                   }
                 } else if (toknRoute(0).equalsIgnoreCase("Activate") || toknRoute(0).equalsIgnoreCase("Deactivate")) {
-                  entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0), toknRoute(1).toLowerCase, toknRoute(2), requestContext, user, password, role)}
+                  entity(as[String]) { reqBody => requestContext => processPutRequest(toknRoute(0), toknRoute(1).toLowerCase, toknRoute(2), requestContext, user, password, role) }
                 } else {
                   entity(as[String]) { reqBody => {
-                    if (toknRoute.size == 1) { requestContext => processPutRequest(toknRoute(0), reqBody, requestContext, user, password, role)}
-                    else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString)}
+                    if (toknRoute.size == 1) { requestContext => processPutRequest(toknRoute(0), reqBody, requestContext, user, password, role) }
+                    else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown PUT route")).toString) }
                   }
                   }
                 }
@@ -112,49 +114,47 @@ trait MetadataAPIService extends HttpService {
                     if (toknRoute(0).equalsIgnoreCase(GET_HEALTH)) 
                       requestContext => processHBRequest(reqBody, requestContext, user, password, role) 
                     else
-                      entity(as[String]) { reqBody => { requestContext => processPostRequest(toknRoute(0), reqBody, requestContext, user, password, role)}}
+                      entity(as[String]) { reqBody => { requestContext => processPostRequest(toknRoute(0), reqBody, requestContext, user, password, role,modelname) } }
                   } else if (toknRoute.size == 2 && toknRoute(0) == "model") {
                     toknRoute(1).toString match {
                       case ModelType.PMML => {
-                        val objectType=toknRoute(0)+toknRoute(1)
-                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+                        val objectType = toknRoute(0) + toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
 
                       }
                       case ModelType.JAVA => {
-                        val objectType=toknRoute(0)+toknRoute(1)
-                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+                        val objectType = toknRoute(0) + toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
                       }
 
                       case ModelType.SCALA => {
-                        val objectType=toknRoute(0)+toknRoute(1)
-                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role)}}
+                        val objectType = toknRoute(0) + toknRoute(1)
+                        entity(as[String]) { reqBody => { requestContext => processPostRequest(objectType, reqBody, requestContext, user, password, role,modelname) } }
                       }
                     }
-
                   }
-                  else { 
-                    requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)}
-                  }
+                  else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString) }
                 }
-              }
+              }}
             } ~
             delete {
               entity(as[String]) { reqBody =>
-                path("api" / Rest) { str => {
-                  val toknRoute = str.split("/")
-                  logger.debug("DELETE reqeust : api/" + str)
-                  if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role)}
-                  else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown DELETE route")).toString)}
-                }
+                path("api" / Rest) { str => 
+                  {
+           
+                    val toknRoute = str.split("/")
+                    logger.debug("DELETE reqeust : api/" + str)
+                    if (toknRoute.size == 2) { requestContext => processDeleteRequest(toknRoute(0).toLowerCase, toknRoute(1).toLowerCase, requestContext, user, password, role) }
+                    else { requestContext => requestContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown DELETE route")).toString) }
+                  }
                 }
               }
             }
-        }
-      }
-      }
-    }
-    } // Close all the Header parens
-  }
+        } //modelname
+      }  // Role
+      }} //password 2x
+      }} //userid
+  } // Routes
 
   /**
    * Modify Existing objects in the Metadata
@@ -216,7 +216,7 @@ trait MetadataAPIService extends HttpService {
   /**
    * Create new Objects in the Metadata
    */
-  private def processPostRequest(objtype: String, body: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String]): Unit = {
+  private def processPostRequest(objtype: String, body: String, rContext: RequestContext, userid: Option[String], password: Option[String], role: Option[String],modelname: Option[String]): Unit = {
     val action = "Add" + objtype
     val notes = "Invoked " + action + " API "
     if (objtype.equalsIgnoreCase("Container")) {
@@ -250,19 +250,22 @@ trait MetadataAPIService extends HttpService {
     } else if (objtype.equalsIgnoreCase("modeljava")) {
       //TODO
       logger.debug("In post request process of model java")
-      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role)))
-      addSourceModelService ! AddSourceModelService.Process(body)
-      //rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromJavaSource", body.toString, "Upload of java model successful").toString)
+
+      val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role,modelname)))
+      addSourceModelService ! AddSourceModelService.ProcessJava(body)
+
     }
     else if (objtype.equalsIgnoreCase("modelscala")) {
       //TODO
       logger.debug("In post request process of model scala")
-      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+     // rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromScalaSource",body.toString, "Upload of java model successful").toString)
+     val addSourceModelService: ActorRef = actorRefFactory.actorOf(Props(new AddSourceModelService(rContext, userid, password, role,modelname)))
+      addSourceModelService ! AddSourceModelService.ProcessScala(body)
+     
     }
     else if (objtype.equalsIgnoreCase("modelpmml")) {
-      //TODO
-      logger.debug("In post request process of model pmml")
-      rContext.complete(new ApiResult(ErrorCodeConstants.Success, "AddModelFromPMMLSource", body.toString, "Upload of java model successful").toString)
+      val addModelService: ActorRef = actorRefFactory.actorOf(Props(new AddModelService(rContext, userid, password, role)))
+      addModelService ! AddModelService.Process(body)
     }
     else {
       rContext.complete((new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Unknown POST route")).toString)
