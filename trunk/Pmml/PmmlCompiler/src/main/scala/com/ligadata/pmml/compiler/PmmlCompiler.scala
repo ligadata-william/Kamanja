@@ -510,7 +510,7 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		val modelNamespace = MdMgr.sysNS
 		val nmspc : String = "System_" /** only System namespace possible at the moment */
 		
-		val fqClassName : String = modelPkg + "." + nmspc + className + "_" + versionNo
+		val fqClassName : String = modelPkg + "." + className 
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
 		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
@@ -789,8 +789,12 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 			logger.error(s"Command used: $scalacCmd")
 		}
 		
+		val firstLine : String = scalaGeneratedCode.takeWhile(ch => ch != '\n').toString
+		val topPkgNamePattern = "package[ \t]+([a-zA-Z0-9_]+).*".r
+		val topPkgNamePattern(topPkgName) = firstLine
+		
 		/** The compiled class files are found in com/$client/pmml of the current folder.. mv them to $jarBuildDir*/
-		val mvCmd : String = s"mv com $workDir/$moduleName/"
+		val mvCmd : String = s"mv $topPkgName $workDir/$moduleName/"
 		val mvCmdRc : Int = Process(mvCmd).!
 		if (mvCmdRc != 0) {
 			logger.error(s"unable to move classes to build directory, $jarBuildDir ... rc = $mvCmdRc")

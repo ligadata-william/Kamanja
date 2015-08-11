@@ -10,26 +10,23 @@ COPDv2.xml
 	</Header>
 
 	<DataDictionary numberOfFields="8">
+
 		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
 		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+
 	    <DataField name="parameters" displayName="parameters" dataType="container">
 	       <Value value="gCtx" property="valid"/>
 	       <Value value="msg" property="valid"/>
 	    </DataField>
+
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
 		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
 
-		<!-- Not used -->
-		<DataField name="Inp_Clm_Thru_Dt" displayName="Inp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
-		<DataField name="Outp_Clm_Thru_Dt" displayName="Outp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
-		<DataField name="Hl7_Clm_Thru_Dt" displayName="Hl7_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
-
-		<DataField name="NamespaceSearchPath" displayName="parameters" dataType="container">
+		<DataField name="NamespaceSearchPath" displayName="NamespaceSearchPath" dataType="container">
        		<Value value="Rel10Messages, com.medco.messages.rel10" property="valid"/>
        		<Value value="Rel10Containers, com.medco.containers.rel10" property="valid"/>
        		<Value value="pmmludfs, com.mycompany.pmml.udfs.CustomUdfs" property="valid"/>
     	</DataField>
-
 
 	</DataDictionary>
 
@@ -67,7 +64,7 @@ COPDv2.xml
 		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.SmokeCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -87,7 +84,7 @@ COPDv2.xml
 		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.EnvCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.EnvCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -107,7 +104,7 @@ COPDv2.xml
 		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.CoughCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.CoughCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -127,7 +124,7 @@ COPDv2.xml
 		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.DyspnoeaCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -227,6 +224,23 @@ COPDv2.xml
 				<Constant dataType="integer">40</Constant> 
 			</Apply>
 		</DerivedField>
+
+
+	    <!-- Note: if there is no assert present in the kv store,  you would still need a the partition and primary key.
+	        These values must be avaialble in the incoming message to successfully use this method.  See the 
+	        derived fields assertPrimaryKey and assertPartitionKey above for how to build the appropriate lists for these 
+	        potentially multi field keys -->
+	    <DerivedField dataType="Demo05_06_1131_Visit_Asserts" name="assertions" optype="categorical">
+	    	<Apply function="GetMsgContainerElseNew">
+	        	<FieldRef field="gCtx"/>
+	        	<Constant dataType="typename">assertions</Constant>
+	        	<Constant dataType="string">system.Demo05_06_1131_Visit_Asserts</Constant>
+	        	<FieldRef field="Cur_desynpuf_id_list"/> 
+	        	<FieldRef field="Cur_desynpuf_id_list"/> 
+	    	</Apply>
+	    </DerivedField>
+
+
 			
 		<!--
 			**********************************************************
