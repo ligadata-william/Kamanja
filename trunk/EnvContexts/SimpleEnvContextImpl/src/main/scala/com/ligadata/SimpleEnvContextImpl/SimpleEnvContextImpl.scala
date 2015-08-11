@@ -1010,7 +1010,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   override def getPropertyValue(clusterId: String, key: String): String = {
-     mgr.GetUserProperty(clusterId,key)
+     _mgr.GetUserProperty(clusterId,key)
   }
   
   // Adding new messages or Containers
@@ -1039,7 +1039,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val names: Array[String] = c.split('.')
       val namespace: String = names.head
       val name: String = names.last
-      var containerType = mgr.ActiveType(namespace, name)
+      var containerType = _mgr.ActiveType(namespace, name)
       if (containerType != null) {
 
         val objFullName: String = containerType.FullName.toLowerCase
@@ -1053,7 +1053,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           newMsgOrContainer.containerType = containerType
           newMsgOrContainer.objFullName = objFullName
-          newMsgOrContainer.isContainer = (mgr.ActiveContainer(namespace, name) != null)
+          newMsgOrContainer.isContainer = (_mgr.ActiveContainer(namespace, name) != null)
 
           /** create a map to cache the entries to be resurrected from the mapdb */
           _messagesOrContainers(objFullName) = newMsgOrContainer

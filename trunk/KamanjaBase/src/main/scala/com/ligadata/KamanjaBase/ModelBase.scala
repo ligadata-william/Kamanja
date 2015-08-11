@@ -212,7 +212,7 @@ class MappedModelResults extends ModelResultBase {
 }
 
 trait EnvContext {
-  var _mgr: MdMgr
+  var _mgr: MdMgr = _
   def setMdMgr(mgr: MdMgr) : Unit
   def getPropertyValue(clusterId: String, key:String): String
   
