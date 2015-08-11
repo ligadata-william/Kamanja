@@ -2614,7 +2614,7 @@ object TestMetadataAPI {
     filterParameters(1) = "20150323000000"
     MetadataAPIImpl.getAuditRec(filterParameters)
   }
-
+/*
   def main(args: Array[String]) {
     try {
       //logger.setLevel(Level.TRACE);  //check again
@@ -2646,5 +2646,5 @@ object TestMetadataAPI {
     } finally {
       MetadataAPIImpl.shutdown
     }
-  }
+  } */
 }
