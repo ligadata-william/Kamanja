@@ -496,6 +496,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       val transService = new com.ligadata.transactions.SimpleTransService
       transService.init(1)
       transId = transService.getNextTransId
+      com.ligadata.transactions.NodeLevelTransService.Shutdown
     }
 
     val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
