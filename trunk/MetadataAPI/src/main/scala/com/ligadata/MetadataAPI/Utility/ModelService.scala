@@ -6,12 +6,16 @@ import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 import scala.io.Source
 
+import org.apache.log4j._
+
 /**
  * Created by dhaval on 8/7/15.
  */
 
 object ModelService {
   private val userid: Option[String] = Some("metadataapi")
+  val loggerName = this.getClass.getName
+  lazy val logger = Logger.getLogger(loggerName)
 
   def addModelPmml(input: String): String = {
     var modelDef=""

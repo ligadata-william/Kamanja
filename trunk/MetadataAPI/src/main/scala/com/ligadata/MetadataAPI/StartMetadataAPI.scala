@@ -3,7 +3,7 @@ package scala.com.ligadata.MetadataAPI
 import java.util.logging.Logger
 
 import com.ligadata.MetadataAPI.{TestMetadataAPI, MetadataAPIImpl}
-import main.scala.com.ligadata.MetadataAPI.Utility.{Action, ModelService, MessageService}
+import main.scala.com.ligadata.MetadataAPI.Utility.{ContainerService, Action, ModelService, MessageService}
 
 
 /**
@@ -71,7 +71,11 @@ object StartMetadataAPI {
         case Action.UPDATEMODEL => response = ModelService.updateModel(input)
         case Action.GETALLMODELS => response = ModelService.getAllModels
         case Action.GETMODEL => response = ModelService.getModel
-
+        case Action.ADDCONTAINER => response = ContainerService.addContainer(input)
+        case Action.UPDATECONTAINER => response = ContainerService.updateContainer(input)
+        case Action.GETCONTAINER => response = ContainerService.getContainer
+        case Action.GETALLCONTAINERS => response = ContainerService.getAllContainers
+        case Action.REMOVECONTAINER => response = ContainerService.removeContainer
 
         case _ => response = "Unexpected action!"
       }
