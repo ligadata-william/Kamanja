@@ -23,7 +23,7 @@ lazy val BaseFunctions = project.in(file("BaseFunctions")) dependsOn(Metadata, E
 
 lazy val Serialize = project.in(file("Utils/Serialize")) dependsOn(Metadata, AuditAdapterBase, Exceptions)
 
-lazy val ZooKeeperClient   = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize, Exceptions)
+lazy val ZooKeeperClient = project.in(file("Utils/ZooKeeper/CuratorClient")) dependsOn(Serialize, Exceptions)
 
 lazy val ZooKeeperListener = project.in(file("Utils/ZooKeeper/CuratorListener")) dependsOn(ZooKeeperClient, Serialize, Exceptions)
 
@@ -33,7 +33,7 @@ lazy val KamanjaBase = project.in(file("KamanjaBase")) dependsOn(Metadata, Excep
 
 lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, KamanjaBase, Exceptions)
 
-lazy val KamanjaManager = project.in(file("KamanjaManager")) dependsOn(Metadata, KamanjaBase, ApiImpl, KamanjaData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions, InputOutputAdapterBase, KamanjaUtils)
+lazy val KamanjaManager = project.in(file("KamanjaManager")) dependsOn(Metadata, KamanjaBase, ApiImpl, KamanjaData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions, InputOutputAdapterBase, KamanjaUtils, TransactionService)
 
 lazy val InputOutputAdapterBase = project.in(file("InputOutputAdapters/InputOutputAdapterBase")) dependsOn(Exceptions)
 
@@ -79,7 +79,7 @@ lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient"))
 
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, KamanjaBase, Exceptions)
 
-lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, KamanjaBase, KamanjaData, MetadataBootstrap, MetadataAPI, StorageManager, Exceptions)
+lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, KamanjaBase, KamanjaData, MetadataBootstrap, MetadataAPI, StorageManager, Exceptions, TransactionService)
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient, Exceptions)
 
@@ -125,4 +125,5 @@ lazy val SecurityAdapterBase = project.in(file("SecurityAdapters/SecurityAdapter
 
 lazy val KamanjaUtils = project.in(file("KamanjaUtils")) dependsOn(Exceptions)
 
+lazy val TransactionService = project.in(file("TransactionService")) dependsOn(Exceptions, KamanjaBase, ZooKeeperClient)
 

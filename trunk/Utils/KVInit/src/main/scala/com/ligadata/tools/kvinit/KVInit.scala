@@ -240,7 +240,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     dataDataStoreInfo = dataStore
 
-/*
+    /*
     if (isOk) {
       dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
       if (dataStoreType.size == 0) {
@@ -268,7 +268,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
     
 */
-    
+
     if (isOk) {
       zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
       zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
@@ -487,8 +487,19 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     var processedRows: Int = 0
     var errsCnt: Int = 0
+    var transId: Long = 0
 
     val csvdataRecs: List[String] = csvdata.tail
+
+    if (csvdataRecs.size > 0 && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
+  /*
+      com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, 30000, 30000, zkNodeBasePath + "/distributed-transaction-lock", 1)
+      val transService = new com.ligadata.transactions.SimpleTransService
+      transService.init(1)
+      transId = transService.getNextTransId(envCtxt)
+*/
+    }
+
     val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
 
     csvdataRecs.foreach(tuples => {
@@ -510,6 +521,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
         if (messageOrContainer != null) {
           try {
+            messageOrContainer.TransactionId(transId)
             messageOrContainer.populate(inputData)
           } catch {
             case e: Exception => {
@@ -555,7 +567,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         val changedContainersData = Map[String, List[List[String]]]()
         changedContainersData(kvname) = savedKeys.toList
-        val datachangedata = ("txnid" -> "0") ~
+        val datachangedata = ("txnid" -> transId.toString) ~
           ("changeddatakeys" -> changedContainersData.map(kv =>
             ("C" -> kv._1) ~
               ("K" -> kv._2)))

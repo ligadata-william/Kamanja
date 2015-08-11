@@ -152,7 +152,7 @@ class KamanjaManager {
       KamanjaMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
-    NodeLevelTransService.Shutdown
+    com.ligadata.transactions.NodeLevelTransService.Shutdown
     return exitCode
   }
 

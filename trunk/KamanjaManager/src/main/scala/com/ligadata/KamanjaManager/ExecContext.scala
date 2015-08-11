@@ -10,80 +10,9 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
 
-import com.ligadata.ZooKeeper._
-import org.apache.curator.framework.CuratorFramework
-import org.apache.curator.framework.recipes.locks.InterProcessMutex
+import com.ligadata.transactions._
 
-object NodeLevelTransService {
-  private[this] val LOG = Logger.getLogger(getClass);
-  private[this] var startTxnRangeIdx: Long = 1
-  private[this] var endTxnRangeIdx: Long = 0
-  private[this] val _lock = new Object
-  private[this] var zkcForGetRange: CuratorFramework = null
-
-  def getNextTransRange(envCtxt: EnvContext, requestedPartitionRange: Int): (Long, Long) = _lock.synchronized {
-    LOG.info("Start Requesting another Range %d for Partition".format(requestedPartitionRange))
-    if (startTxnRangeIdx > endTxnRangeIdx) {
-      LOG.info("Start Requesting another Range %d for Node from Storage".format(requestedPartitionRange))
-      // Do Distributed zookeeper lock here
-      if (zkcForGetRange == null)
-        zkcForGetRange = CreateClient.createSimple(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
-      if (zkcForGetRange == null)
-        throw new Exception("Failed to connect to Zookeeper with connection string:" + KamanjaConfiguration.zkConnectString)
-      val lockPath = KamanjaConfiguration.zkNodeBasePath + "/distributed-engine-lock"
-
-      try {
-        val lock = new InterProcessMutex(zkcForGetRange, lockPath);
-        try {
-          lock.acquire();
-          val (startRng, endRng) = envCtxt.getNextTransactionRange(KamanjaConfiguration.txnIdsRangeForNode)
-          startTxnRangeIdx = startRng
-          endTxnRangeIdx = endRng
-        } catch {
-          case e: Exception => throw e
-        } finally {
-          lock.release();
-        }
-
-      } catch {
-        case e: Exception => throw e
-      } finally {
-      }
-
-      LOG.info("Done Requesting another Range %d for Node from Storage".format(requestedPartitionRange))
-    }
-    val retStartIdx = startTxnRangeIdx
-    val retMaxEndIdx = startTxnRangeIdx + requestedPartitionRange - 1
-    val retEndIdx = if (retMaxEndIdx > endTxnRangeIdx) endTxnRangeIdx else retMaxEndIdx
-    startTxnRangeIdx = retEndIdx + 1
-    LOG.info("Done Requesting another Range %d for Partition".format(requestedPartitionRange))
-    return (retStartIdx, retEndIdx)
-  }
-
-  def Shutdown = _lock.synchronized {
-    if (zkcForGetRange != null)
-      zkcForGetRange.close()
-    zkcForGetRange = null
-  }
-
-}
-
-class SimpleTransService {
-  private[this] val LOG = Logger.getLogger(getClass);
-  private[this] var startTxnRangeIdx: Long = 1
-  private[this] var endTxnRangeIdx: Long = 0
-
-  def getNextTransId(envCtxt: EnvContext): Long = {
-    if (startTxnRangeIdx > endTxnRangeIdx) {
-      val (startRng, endRng) = NodeLevelTransService.getNextTransRange(envCtxt, KamanjaConfiguration.txnIdsRangeForPartition)
-      startTxnRangeIdx = startRng
-      endTxnRangeIdx = endRng
-    }
-    val retval = startTxnRangeIdx
-    startTxnRangeIdx += 1
-    retval
-  }
-}
+import com.ligadata.transactions._
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
@@ -91,9 +20,12 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
+  
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath + "/distributed-transaction-lock", KamanjaConfiguration.txnIdsRangeForNode)
 
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
   val transService = new SimpleTransService
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
@@ -190,10 +122,15 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
 
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
 
+  
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath + "/distributed-transaction-lock", KamanjaConfiguration.txnIdsRangeForNode)
+
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
   val transService = new SimpleTransService
 
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
+  
   private def getAllModelResults(data: Any): Array[Map[String, Any]] = {
     val results = new ArrayBuffer[Map[String, Any]]()
     try {
