@@ -492,11 +492,17 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     val csvdataRecs: List[String] = csvdata.tail
 
     if (csvdataRecs.size > 0 && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
-      com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
-      val transService = new com.ligadata.transactions.SimpleTransService
-      transService.init(1)
-      transId = transService.getNextTransId
-      com.ligadata.transactions.NodeLevelTransService.Shutdown
+      try {
+        com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
+        val transService = new com.ligadata.transactions.SimpleTransService
+        transService.init(1)
+        transId = transService.getNextTransId
+
+      } catch {
+        case e: Exception => throw e
+      } finally {
+        com.ligadata.transactions.NodeLevelTransService.Shutdown
+      }
     }
 
     val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
