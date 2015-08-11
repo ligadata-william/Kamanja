@@ -10,7 +10,6 @@ import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem
-// import scala.util.parsing.json.JSON
 import scala.collection.mutable.ArrayBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
@@ -102,7 +101,6 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
         }
         msg.populate(inputdata)
-        // msg.TransactionId(transId)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
           envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
