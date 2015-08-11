@@ -310,8 +310,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
         val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
         val value = new Value
-        for (b <- v)
-          value += b
+        value ++= v
 
         handler(value)
       } catch {
@@ -341,8 +340,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
         val v = result.getValue(Bytes.toBytes("value"), Bytes.toBytes("base"))
 
         val value = new Value
-        for (b <- v)
-          value += b
+        value ++= v
 
         target.Construct(key, value)
       } catch {
@@ -433,8 +431,7 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
           if (row != null) {
             val v = row.getRow()
             val key = new Key
-            for (b <- v)
-              key += b
+            key ++= v
 
             handler(key)
           } else {

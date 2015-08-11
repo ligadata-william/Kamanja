@@ -21,7 +21,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
   
-  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath + "/distributed-transaction-lock", KamanjaConfiguration.txnIdsRangeForNode)
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
 
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
   val transService = new SimpleTransService
@@ -33,7 +33,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
-      val transId = transService.getNextTransId(kamanjaCallerCtxt.envCtxt)
+      val transId = transService.getNextTransId
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       try {
@@ -123,7 +123,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
 
   
-  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath + "/distributed-transaction-lock", KamanjaConfiguration.txnIdsRangeForNode)
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
@@ -168,7 +168,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
 
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
-      val transId = transService.getNextTransId(kamanjaCallerCtxt.envCtxt)
+      val transId = transService.getNextTransId
       try {
         val json = parse(new String(data))
         if (json == null || json.values == null) {
