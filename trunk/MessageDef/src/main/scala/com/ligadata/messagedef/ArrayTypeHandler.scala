@@ -91,7 +91,7 @@ class ArrayTypeHandler {
           assignJsondata.append(methodGen.assignJsonForCntrArrayBuffer(f.Name, arrayType.elemDef.physicalName))
           keysStr.append("\"" + f.Name + "\",")
           if (msg.Fixed.toLowerCase().equals("false")) {
-            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
+            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) ;%s".format(pad1, f.Name, f.Name, newline))
           }
           scalaclass = scalaclass.append("%svar %s: %s = %s();%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
@@ -265,7 +265,7 @@ class ArrayTypeHandler {
           }
           if (msg.Fixed.toLowerCase().equals("false")) {
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
+            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)); %s".format(pad1, f.Name, f.Name, newline))
 
             //    keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
           }
