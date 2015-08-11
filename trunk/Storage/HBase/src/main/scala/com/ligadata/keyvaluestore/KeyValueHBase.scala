@@ -212,6 +212,8 @@ class KeyValueHBase(val kvManagerLoader: KamanjaLoaderInfo, val datastoreConfig:
       val tableDesc = new HTableDescriptor(TableName.valueOf(tableName));
       val colDesc1 = new HColumnDescriptor("key".getBytes())
       val colDesc2 = new HColumnDescriptor("value".getBytes())
+      // colDesc2.setMobEnabled(true);
+      // colDesc2.setMobThreshold(102400L);
       tableDesc.addFamily(colDesc1)
       tableDesc.addFamily(colDesc2)
       admin.createTable(tableDesc);
