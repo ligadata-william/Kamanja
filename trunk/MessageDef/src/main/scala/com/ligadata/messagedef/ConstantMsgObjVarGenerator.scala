@@ -751,7 +751,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def this() = {
     this(0, null)
   }
-    
+  def Clone(): MessageContainerBase = {
+    """ + message.Name + """.build(this)
+  }
+  
   """
   }
 
