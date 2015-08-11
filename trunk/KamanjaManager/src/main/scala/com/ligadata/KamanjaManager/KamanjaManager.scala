@@ -83,6 +83,9 @@ object KamanjaConfiguration {
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
+  var txnIdsRangeForNode: Int = 500000 // Each time get txnIdsRange of transaction ids for each Node
+  var txnIdsRangeForPartition: Int = 25000 // Each time get txnIdsRange of transaction ids for each partition
+
   // Debugging info configs -- Begin
   var waitProcessingSteps = collection.immutable.Set[Int]()
   var waitProcessingTime = 0
@@ -149,6 +152,7 @@ class KamanjaManager {
       KamanjaMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
+    NodeLevelTransService.Shutdown
     return exitCode
   }
 

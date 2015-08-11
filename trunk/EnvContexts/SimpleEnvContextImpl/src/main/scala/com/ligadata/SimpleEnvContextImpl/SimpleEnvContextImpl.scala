@@ -1399,15 +1399,17 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _runningTxnsDataStore.getAllKeys(keyCollector)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     keys.foreach(key => {
-      try {
-        val buildAdapOne = (tupleBytes: Value) => {
-          buildAdapterUniqueValue(tupleBytes, objs)
-        }
-        _runningTxnsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
-        results += ((key.K(0), objs(0)))
-      } catch {
-        case e: Exception => {
-          logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
+      if (key.T.compareTo("UK") == 0) {
+        try {
+          val buildAdapOne = (tupleBytes: Value) => {
+            buildAdapterUniqueValue(tupleBytes, objs)
+          }
+          _runningTxnsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
+          results += ((key.K(0), objs(0)))
+        } catch {
+          case e: Exception => {
+            logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
+          }
         }
       }
     })
@@ -1680,4 +1682,84 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       localSetObject(transId, containerName, v.PartitionKeyData.toList, v)
     })
   }
+
+  private def buildTxnStartOffset(tupleBytes: Value, objs: Array[Long]) {
+    // Get first _serInfoBufBytes bytes
+    if (tupleBytes.size < _serInfoBufBytes) {
+      val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
+      logger.error(errMsg)
+      throw new Exception(errMsg)
+    }
+
+    val valInfo = getValueInfo(tupleBytes)
+
+    val uniqVal = new String(valInfo).toLong
+
+    objs(0) = uniqVal
+  }
+
+  // We are not locking anything here. Just pulling from db and returning as requested. 
+  override def getNextTransactionRange(requestedRange: Int): (Long, Long) = {
+    if (requestedRange <= 0) {
+      return (0, -1)
+    }
+
+    var startTxnIdx: Long = 0
+    var endTxnIdx: Long = -1
+    var objs: Array[Long] = new Array[Long](1)
+    try {
+      if (_runningTxnsDataStore == null) {
+        throw new Exception("Not found Status DataStore to save Status.")
+      }
+
+      val buildAdapOne = (tupleBytes: Value) => {
+        buildTxnStartOffset(tupleBytes, objs)
+      }
+
+      val keystr = KamanjaData.PrepareKey("Txns", List[String]("Transactions"), 0, 0)
+      val key = makeKey(keystr)
+
+      try {
+        objs(0) = 0
+        _runningTxnsDataStore.get(key, buildAdapOne)
+        startTxnIdx = objs(0)
+      } catch {
+        case e: Exception => logger.debug("Key %s not found. Reason:%s, Message:%s".format(keystr, e.getCause, e.getMessage))
+        case t: Throwable => logger.debug("Key %s not found. Reason:%s, Message:%s".format(keystr, t.getCause, t.getMessage))
+      }
+
+      if (startTxnIdx <= 0)
+        startTxnIdx = 1
+      endTxnIdx = startTxnIdx + requestedRange - 1
+
+      // Persists next start transactionId
+      val storeObjects = new Array[IStorage](1)
+      var cntr = 0
+      val nextTxnStart = endTxnIdx + 1
+
+      object obj extends IStorage {
+        val k = key
+
+        val v = makeValue(nextTxnStart.toString.getBytes("UTF8"), "CSV")
+
+        def Key = k
+
+        def Value = v
+
+        def Construct(Key: Key, Value: Value) = {}
+      }
+      storeObjects(cntr) = obj
+      cntr += 1
+
+      val txn = _runningTxnsDataStore.beginTx()
+      _runningTxnsDataStore.putBatch(storeObjects)
+      _runningTxnsDataStore.commitTx(txn)
+    } catch {
+      case e: Exception => {
+        logger.debug(s"getNextTransactionRange() -- Unable to get Next Transaction Range")
+      }
+    }
+    (startTxnIdx, endTxnIdx)
+  }
+
 }

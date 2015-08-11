@@ -10,28 +10,88 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
 
-class SimpleTransService {
-  var startTxnId = 1
-  var endTxnId = 0
-  
-  def getNextTransId: Long = {
-    if (startTxnId >= endTxnId) {
-      //BUGBUG:: Yet to implement this to get counters from database
+import com.ligadata.ZooKeeper._
+import org.apache.curator.framework.CuratorFramework
+import org.apache.curator.framework.recipes.locks.InterProcessMutex
+
+object NodeLevelTransService {
+  private[this] val LOG = Logger.getLogger(getClass);
+  private[this] var startTxnRangeIdx: Long = 1
+  private[this] var endTxnRangeIdx: Long = 0
+  private[this] val _lock = new Object
+  private[this] var zkcForGetRange: CuratorFramework = null
+
+  def getNextTransRange(envCtxt: EnvContext, requestedPartitionRange: Int): (Long, Long) = _lock.synchronized {
+    LOG.info("Start Requesting another Range %d for Partition".format(requestedPartitionRange))
+    if (startTxnRangeIdx > endTxnRangeIdx) {
+      LOG.info("Start Requesting another Range %d for Node from Storage".format(requestedPartitionRange))
+      // Do Distributed zookeeper lock here
+      if (zkcForGetRange == null)
+        zkcForGetRange = CreateClient.createSimple(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
+      if (zkcForGetRange == null)
+        throw new Exception("Failed to connect to Zookeeper with connection string:" + KamanjaConfiguration.zkConnectString)
+      val lockPath = KamanjaConfiguration.zkNodeBasePath + "/distributed-engine-lock"
+
+      try {
+        val lock = new InterProcessMutex(zkcForGetRange, lockPath);
+        try {
+          lock.acquire();
+          val (startRng, endRng) = envCtxt.getNextTransactionRange(KamanjaConfiguration.txnIdsRangeForNode)
+          startTxnRangeIdx = startRng
+          endTxnRangeIdx = endRng
+        } catch {
+          case e: Exception => throw e
+        } finally {
+          lock.release();
+        }
+
+      } catch {
+        case e: Exception => throw e
+      } finally {
+      }
+
+      LOG.info("Done Requesting another Range %d for Node from Storage".format(requestedPartitionRange))
     }
-    val retval = startTxnId
-    startTxnId += 1
+    val retStartIdx = startTxnRangeIdx
+    val retMaxEndIdx = startTxnRangeIdx + requestedPartitionRange - 1
+    val retEndIdx = if (retMaxEndIdx > endTxnRangeIdx) endTxnRangeIdx else retMaxEndIdx
+    startTxnRangeIdx = retEndIdx + 1
+    LOG.info("Done Requesting another Range %d for Partition".format(requestedPartitionRange))
+    return (retStartIdx, retEndIdx)
+  }
+
+  def Shutdown = _lock.synchronized {
+    if (zkcForGetRange != null)
+      zkcForGetRange.close()
+    zkcForGetRange = null
+  }
+
+}
+
+class SimpleTransService {
+  private[this] val LOG = Logger.getLogger(getClass);
+  private[this] var startTxnRangeIdx: Long = 1
+  private[this] var endTxnRangeIdx: Long = 0
+
+  def getNextTransId(envCtxt: EnvContext): Long = {
+    if (startTxnRangeIdx > endTxnRangeIdx) {
+      val (startRng, endRng) = NodeLevelTransService.getNextTransRange(envCtxt, KamanjaConfiguration.txnIdsRangeForPartition)
+      startTxnRangeIdx = startRng
+      endTxnRangeIdx = endRng
+    }
+    val retval = startTxnRangeIdx
+    startTxnRangeIdx += 1
     retval
   }
 }
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
-
   val LOG = Logger.getLogger(getClass);
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
-  
+
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
   val transService = new SimpleTransService
 
@@ -41,7 +101,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
-      val transId = transService.getNextTransId
+      val transId = transService.getNextTransId(kamanjaCallerCtxt.envCtxt)
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       try {
@@ -127,9 +187,9 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
-  
+
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
-  
+
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
   val transService = new SimpleTransService
@@ -171,7 +231,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
 
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
-      val transId = transService.getNextTransId
+      val transId = transService.getNextTransId(kamanjaCallerCtxt.envCtxt)
       try {
         val json = parse(new String(data))
         if (json == null || json.values == null) {

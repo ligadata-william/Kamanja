@@ -244,6 +244,9 @@ trait EnvContext {
   // Final Commit for the given transaction
   def commitData(transId: Long): Unit
 
+  // Get Next Transaction Range
+  def getNextTransactionRange(requestedRange: Int): (Long, Long)
+  
   // Save State Entries on local node & on Leader
   def PersistLocalNodeStateEntries: Unit
   def PersistRemainingStateEntriesOnLeader: Unit
