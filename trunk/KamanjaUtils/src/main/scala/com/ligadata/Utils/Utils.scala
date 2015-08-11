@@ -14,7 +14,6 @@ import scala.collection.mutable.ArrayBuffer
 
 object Utils {
   private val LOG = Logger.getLogger(getClass);
-  val MaxTransactionsPerPartition: Long = 100000000000000L // 100T per partition (3 years of numbers if we process 1M/sec per partition), we can have 92,233 partitions per node (per EnvContext). At this moment we are taking it as global counter
 
   def SimpDateFmtTimeFromMs(tmMs: Long): String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(tmMs))

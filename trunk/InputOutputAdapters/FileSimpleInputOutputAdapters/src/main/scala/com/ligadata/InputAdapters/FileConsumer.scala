@@ -55,7 +55,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
         return
     }
 
-    var transId: Long = 0 // Get and Set it
     val uniqueVal = new FilePartitionUniqueRecordValue
     uniqueVal.FileFullPath = sFileName
 
@@ -95,7 +94,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
                       execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
-                      transId += 1
                     } catch {
                       case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
                     }
@@ -149,7 +147,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
             execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
-            transId += 1
           } catch {
             case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
           }
@@ -216,7 +213,6 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
 
         val s = System.nanoTime
 
-        var transId: Long = 0 // Get and Set it and pass to processfile & update properly
         var tm: Long = 0
         val st: Stats = new Stats
         val compString = if (fc.CompressionString == null) null else fc.CompressionString.trim

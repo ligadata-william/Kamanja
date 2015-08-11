@@ -50,7 +50,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = IbmMqAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[String, (IbmMqPartitionUniqueRecordKey, IbmMqPartitionUniqueRecordValue, Long, (IbmMqPartitionUniqueRecordValue, Int, Int))]()
+  private[this] val kvs = scala.collection.mutable.Map[String, (IbmMqPartitionUniqueRecordKey, IbmMqPartitionUniqueRecordValue, (IbmMqPartitionUniqueRecordValue, Int, Int))]()
 
   var connection: Connection = null
   var session: Session = null
@@ -121,7 +121,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     if (partitionInfo == null || partitionInfo.size == 0)
       return
 
-    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[IbmMqPartitionUniqueRecordKey], quad._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._txnId, (quad._validateInfo._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
+    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[IbmMqPartitionUniqueRecordKey], quad._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], (quad._validateInfo._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
 
     try {
       val ff = JmsFactoryFactory.getInstance(JmsConstants.WMQ_PROVIDER)
@@ -187,8 +187,6 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
             uniqueKey.QueueName = qc.queue_name
             uniqueKey.TopicName = qc.topic_name
 
-            var transId: Long = 0
-
             try {
               breakable {
                 while (true /* cntr < 100 */ ) {
@@ -207,9 +205,8 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                       execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
                       val kv = kvs.head._2
                       if (kv != null) {
-                        transId = kv._3
-                        processingXformMsg = kv._4._2
-                        totalXformMsg = kv._4._3
+                        processingXformMsg = kv._3._2
+                        totalXformMsg = kv._3._3
                       }
                     }
 
@@ -236,7 +233,6 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                           processingXformMsg = 0
                           totalXformMsg = 0
                           execThread.execute(msgData, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          transId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

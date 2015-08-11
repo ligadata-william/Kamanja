@@ -116,7 +116,6 @@ class KamanjaMonitor {
           val info = new StartProcPartInfo
           info._key = partMeta._1
           info._val = partMeta._2
-          info._txnId = 0
           info._validateInfo = valAdapInfo
           info
         }).toArray
@@ -142,7 +141,6 @@ class KamanjaMonitor {
         val info = new StartProcPartInfo
         info._key = partMeta._1
         info._val = partMeta._2
-        info._txnId = 0
         info._validateInfo = valAdapInfo
         info
       }).toArray

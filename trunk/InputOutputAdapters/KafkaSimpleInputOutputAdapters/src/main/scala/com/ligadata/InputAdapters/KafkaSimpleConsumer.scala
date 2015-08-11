@@ -39,7 +39,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private var numberOfErrors: Int = _
   private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService = _
-  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, (KafkaPartitionUniqueRecordValue, Int, Int))]()
   private var clientName: String = _
 
   // Heartbeat monitor related variables.
@@ -88,7 +88,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     val partitionInfo = partitionIds.map(quad => {
       (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey],
         quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue],
-        quad._txnId,
         (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx))
     })
 
@@ -131,10 +130,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           // if the offset is -1, then the server wants to start from the begining, else, it means that the server
           // knows what its doing and we start from that offset.
           var readOffset: Long = -1
-          var transactionId = partition._3
-          val uniqueRecordValue = if (ignoreFirstMsg) partition._4._1.Offset else partition._4._1.Offset - 1
-          var processingXformMsg = partition._4._2
-          var totalXformMsg = partition._4._3
+          val uniqueRecordValue = if (ignoreFirstMsg) partition._3._1.Offset else partition._3._1.Offset - 1
+          var processingXformMsg = partition._3._2
+          var totalXformMsg = partition._3._3
 
           var sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
           var messagesProcessed: Long = 0
@@ -233,7 +231,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
                 val key = Category + "/" + qc.Name + "/evtCnt"
                 cntrAdapter.addCntr(key, 1) // for now adding each row
-                transactionId = transactionId + 1
               }
 
             })

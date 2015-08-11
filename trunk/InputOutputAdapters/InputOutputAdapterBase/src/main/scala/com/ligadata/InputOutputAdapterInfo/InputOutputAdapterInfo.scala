@@ -37,7 +37,6 @@ class ValidateAdapterFoundInfo {
 class StartProcPartInfo {
   var _key: PartitionUniqueRecordKey = null
   var _val: PartitionUniqueRecordValue = null
-  var _txnId: Long = 0
   var _validateInfo: ValidateAdapterFoundInfo = null // If nothing is found from ValidateInfo, attach same value as _val.
 }
 
