@@ -69,8 +69,8 @@ object MessageService {
         var srno = 0
         println("List of messages:")
         for (messageKey <- messageKeys) {
-          srno += 1
-          println("[" + srno + "] " + messageKey)
+          //srno += 1
+          //println("[" + srno + "] " + messageKey)
           response += messageKey
         }
       }
