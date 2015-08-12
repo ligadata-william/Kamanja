@@ -356,8 +356,8 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	var modelOutputs : Map[String, (String, String, String)] = Map[String, (String, String, String)]()
 	
 	/** collected by RegisterMessages & collectContainers, grist for import statement generation */
-	val importStmtInfo : Map[String, String] = Map[String, String]()
-	def ImportStmtInfo : Map[String, String] = importStmtInfo
+	val importStmtInfo : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+	def ImportStmtInfo : scala.collection.mutable.Set[String] = importStmtInfo
 	
 	/** 
 	 *  Register any messages that will appear in the constructor of the generated model class.  Register the
@@ -388,7 +388,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 						} else {
 							if (msgDefType.isInstanceOf[ContainerTypeDef]) {
 								if (MetadataHelper.isContainerWithFieldOrKeyNames(msgDefType)) {
-									importStmtInfo(msgFld.dataType) = msgDefType.PhysicalName /** collect import info */
+									importStmtInfo += msgDefType.PhysicalName /** collect import info */
 								}
 								containersInScope += Tuple4(msgFldName,true,msgDefType,msgFldName)
 							} else {
@@ -415,7 +415,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 							  
 								if (containerTypeDef.isInstanceOf[ContainerTypeDef]) {
 									if (MetadataHelper.isContainerWithFieldOrKeyNames(containerTypeDef)) {
-										importStmtInfo(msgFld.dataType) = containerTypeDef.PhysicalName /** collect import info */
+										importStmtInfo += containerTypeDef.PhysicalName /** collect import info */
 									}
 									containersInScope += Tuple4(msgFldName,true,containerTypeDef,msgFldName)
 								} else {
@@ -479,7 +479,12 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 			elem match {
 			  case con : ContainerTypeDef => { 
 				  			if (MetadataHelper.isContainerWithFieldOrKeyNames(elem)) {
-				  				importStmtInfo(name) = elem.PhysicalName /** collect import info */
+				  				importStmtInfo += elem.PhysicalName /** collect import info */
+				  			} else {
+				  				val memberContainersWithFieldOrKeyNames : Array[BaseTypeDef] = MetadataHelper.collectMemberContainerTypes(elem)
+				  				if (memberContainersWithFieldOrKeyNames != null && memberContainersWithFieldOrKeyNames.size > 0) {
+				  					memberContainersWithFieldOrKeyNames.foreach( typ => importStmtInfo += typ.PhysicalName )
+				  				}
 				  			}
 				  			containersInScope += Tuple4(name,false,elem.asInstanceOf[ContainerTypeDef], "n/a")
 				  			true
@@ -494,6 +499,7 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 		
 		registered
 	}
+	
 	
 	/** these get queued for further processing */
 	val topLevelContainers : List[String] = List[String]("Header", "DataDictionary", "TransformationDictionary", "RuleSetModel")

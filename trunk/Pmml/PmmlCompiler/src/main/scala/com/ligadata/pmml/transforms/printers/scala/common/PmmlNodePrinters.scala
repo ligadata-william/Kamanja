@@ -831,6 +831,25 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
 
+		/** Give the rest... */
+		commentBuffer.append(s"/** Scala Packages... */\n")
+		commentBuffer.append(s"import scala.collection.mutable._\n")
+		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
+		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
+		commentBuffer.append(s"import scala.math._\n")
+		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
+		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
+		commentBuffer.append(s"\n")
+		commentBuffer.append(s"/**Core udfs and model runtime... */\n\n")
+		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
+		//commentBuffer.append(s"import com.ligadata.KamanjaBase._\n") 
+		commentBuffer.append(s"\n")
+
+		/** Add the imports implied by the namespace search path */		
+		addNamespaceSearchPathRelatedImports(ctx, commentBuffer)
+
 		/** If there were user defined udfs defined in the model, add these packages as well. 
 		 *  The usage of UdfSearchPath is deprecated... use NamespaceSearchPath to specify your udf pkg names*/
 		val pkgNames : Array[String] = ctx.udfSearchPath
@@ -850,7 +869,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			Array[String]()
 		}
 		if (pkgNames.size > 0) {
-			commentBuffer.append(s"/** Custom Udf Libraries Specified in PMML */\n")
+			commentBuffer.append(s"\n")
+			commentBuffer.append(s"/** Custom Udf Libraries Specified with UdfSearchPath */\n")
 			pkgNames.foreach( fullPkgObjName => {
 				commentBuffer.append(s"import $fullPkgObjName._\n")
 			})
@@ -858,23 +878,10 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 				commentBuffer.append(s"import $pkg._\n")
 			})
 		} else {
-			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML... */\n")
+			commentBuffer.append(s"\n")
+			commentBuffer.append(s"/** No Custom Udf Libraries Specified with UdfSearchPath... */\n")
 		}
-		/** Give the rest... */
-		commentBuffer.append(s"/** Other Packages... */\n")
-		commentBuffer.append(s"import com.ligadata.KamanjaBase._\n")
-		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
-		commentBuffer.append(s"import scala.collection.mutable._\n")
-		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
-		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
-		commentBuffer.append(s"import scala.math._\n")
-		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
-		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
-		commentBuffer.append(s"\n")
 
-		/** Add the imports implied by the namespace search path */		
-		addNamespaceSearchPathRelatedImports(ctx, commentBuffer)
-		
 		commentBuffer.append(s"\n/**\n")
 		appName match {
 		  case Some(appName)      =>    commentBuffer.append(s"    Application Name         : $appName\n")
@@ -926,28 +933,28 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val buffer : StringBuilder = new StringBuilder
 
 		/** message and container related namespaces (that have the version from physical name */
-		val nmspcNamePairs : Array[(String, String)] = ctx.ImportStmtInfo.values.map(physNm => {
+		val nmspcNamePairs : Array[(String, String)] = ctx.ImportStmtInfo.map(physNm => {
 			val nmNodes : Array[String] = physNm.split('.').map(_.trim)
 			val nmPart : String = nmNodes.last
 			val nmspcPart : String = nmNodes.takeWhile(_ != nmPart).addString(buffer, ".").toString
 			buffer.clear
 			(nmspcPart,nmPart)	
 		}).toArray
-		val msgNmSpcs : Array[String] = nmspcNamePairs.map(pair => pair._1)
+		val msgNmSpcs : Array[String] = nmspcNamePairs.map(pair => pair._1).toSet.toArray
 		
 		/** other namespaces from search path... exclude already collected msg/container nmspcs and the defaults */
 		val ignoreThese : Array[String] = msgNmSpcs ++ ctx.ExcludeFromImportConsideration
 		val otherImportNameCandidates : Array[String] = ctx.namespaceSearchPath.map(pair => pair._2.trim)
-		val otherImportNames : Array[String] = otherImportNameCandidates diff ignoreThese
+		val otherImportNames : Array[String] = otherImportNameCandidates.toSet.toArray diff ignoreThese
 		
-		val importNamespaces : Array[String] = Array[String]() ++ msgNmSpcs ++ otherImportNames
+		val importNamespaces : Array[String] = (Array[String]() ++ msgNmSpcs ++ otherImportNames).toSet.toArray
 		if (importNamespaces.size > 0) {
-			commentBuffer.append(s"/** NamespaceSearchPath related imports specified in PMML */\n")
+			commentBuffer.append(s"/** NamespaceSearchPath and Message/Container required imports */\n")
 			importNamespaces.foreach ( nmspc => {
 				commentBuffer.append(s"import $nmspc._\n")
 			})
 		} else {
-			commentBuffer.append(s"/** No NamespaceSearchPath elements in PMML... */\n")
+			commentBuffer.append(s"/** No NamespaceSearchPath and Message/Container required imports... */\n")
 		}	
 	}
 
@@ -1077,7 +1084,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		/** Add the IsValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
 		objBuffer.append(s"    override def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
-		objBuffer.append(s"        println(${'"'}message type received = ${'"'} + msg.getClass.getName )\n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
