@@ -695,6 +695,23 @@ class MessageDefImpl {
             }
           }
 
+          var fldList: Set[String] = Set[String]()
+          if (ele != null && ele.size > 0) {
+            ele.foreach(Fld => { fldList += Fld.Name })
+
+            if (fldList != null && fldList.size > 0) {
+              if (partitionKeysList != null && partitionKeysList.size > 0) {
+                if (!(partitionKeysList.toSet subsetOf fldList))
+                  throw new Exception("Partition Keys should be included in fields/elements of message/container definition " + message.get("Name").get.toString())
+              }
+
+              if (primaryKeysList != null && primaryKeysList.size > 0) {
+                if (!(primaryKeysList.toSet subsetOf fldList))
+                  throw new Exception("Primary Keys should be included in fields/elements of message/container definition " + message.get("Name").get.toString())
+              }
+            }
+          }
+
           if (key.equals("Concepts")) {
             conceptsList = getConcepts(message, key)
           }

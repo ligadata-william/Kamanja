@@ -147,14 +147,14 @@ class ConstantMethodGenerator {
 	var list : List[Map[String, Any]] = null 
     var keySet: Set[Any] = Set();
 	try{
-	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]];
        if (mapOriginal == null)
-         throw new Exception("Invalid json data")
+         throw new Exception("Invalid json data");
        
-       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
-       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]();
+       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )   ;   
     
-	  	var msgsAndCntrs : scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+	  	var msgsAndCntrs : scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]();
     
 	  	// Traverse through whole map and make KEYS are lowercase and populate
 	  	map.foreach(kv => {
@@ -173,7 +173,7 @@ class ConstantMethodGenerator {
           } else
             fields.put(key, (0, ValueToString(kv._2)))
         }
-      })
+      });
     """ + assignJsonData +
       """
      // fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
@@ -328,12 +328,12 @@ class ConstantMethodGenerator {
 	    """
   }
    def assignJsonDataMessage(mName: String) = {
-    """   
+    """  { 
         val inputData = new JsonData(json.dataInput)
         inputData.root_json = json.root_json
         inputData.cur_json = Option(map.getOrElse("""" + mName + """", null))
 	    """ + mName + """.populate(inputData)
-	    """
+        """
   }
 
    def getArrayStr(mbrVar: String, classname: String): String = {
