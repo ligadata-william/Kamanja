@@ -36,7 +36,7 @@ object StartMetadataAPI {
         } else if (arg.endsWith(".properties")) {
           config = arg
         } else {
-          action = arg
+          action += arg
         }
       }
 
@@ -44,6 +44,7 @@ object StartMetadataAPI {
       if (config == "")
         config = defaultConfig
       MetadataAPIImpl.InitMdMgrFromBootStrap(config)
+      action.trim
       response = route(Action.withName(action), location)
     }
     println("Result: " + response)
