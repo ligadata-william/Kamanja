@@ -226,21 +226,6 @@ COPDv2.xml
 		</DerivedField>
 
 
-	    <!-- Note: if there is no assert present in the kv store,  you would still need a the partition and primary key.
-	        These values must be avaialble in the incoming message to successfully use this method.  See the 
-	        derived fields assertPrimaryKey and assertPartitionKey above for how to build the appropriate lists for these 
-	        potentially multi field keys -->
-	    <DerivedField dataType="Demo05_06_1131_Visit_Asserts" name="assertions" optype="categorical">
-	    	<Apply function="GetMsgContainerElseNew">
-	        	<FieldRef field="gCtx"/>
-	        	<Constant dataType="typename">assertions</Constant>
-	        	<Constant dataType="string">system.Demo05_06_1131_Visit_Asserts</Constant>
-	        	<FieldRef field="Cur_desynpuf_id_list"/> 
-	        	<FieldRef field="Cur_desynpuf_id_list"/> 
-	    	</Apply>
-	    </DerivedField>
-
-
 			
 		<!--
 			**********************************************************
