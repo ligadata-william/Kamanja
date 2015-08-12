@@ -32,7 +32,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
       val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
 
-      val outputAlways: Boolean = true; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
+      val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
 
       // Execute all modes here
       models.foreach(md => {
