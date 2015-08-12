@@ -1077,6 +1077,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		/** Add the IsValidMessage function  */
 		objBuffer.append(s"    $valEvntArrayInstance\n")   
 		objBuffer.append(s"    override def IsValidMessage(msg: MessageContainerBase): Boolean = { \n")
+		objBuffer.append(s"        println(${'"'}message type received = ${'"'} + msg.getClass.getName )\n")
 		objBuffer.append(s"        validMessages.filter( m => m == msg.getClass.getName).size > 0\n")
 		objBuffer.append(s"    }\n")  /** end of IsValidMessage fcn  */		
 		objBuffer.append(s"\n")
