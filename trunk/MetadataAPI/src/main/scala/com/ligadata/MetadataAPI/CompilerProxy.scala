@@ -29,6 +29,7 @@ import org.json4s.jackson.JsonMethods._
 
 import java.net.URL
 import java.net.URLClassLoader
+import com.ligadata.Exceptions.StackTrace
 
 /**
  *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the
@@ -103,7 +104,6 @@ class CompilerProxy{
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -124,7 +124,6 @@ class CompilerProxy{
     }  catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -324,7 +323,6 @@ class CompilerProxy{
     catch{
       case e:Exception =>{
         logger.debug("Failed to compile the message definition " + e.toString)
-        e.printStackTrace
         throw new MsgCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
@@ -568,7 +566,6 @@ class CompilerProxy{
         throw e
       }
       case e:Exception =>{
-        e.printStackTrace()
         logger.error("Failed to compile the model definition " + e.toString)
         throw new ModelCompilationFailedException(e.getMessage())
       }
@@ -751,7 +748,8 @@ class CompilerProxy{
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
           } catch {
             case e: java.lang.NoClassDefFoundError => {
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
               throw e
             }
             case e: Exception => {
@@ -773,7 +771,6 @@ class CompilerProxy{
           case e: Exception => {
             // Trying Regular Object instantiation
             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName)
-            e.printStackTrace()
             throw new MsgCompilationFailedException(clsName)
           }
         }
@@ -808,7 +805,8 @@ class CompilerProxy{
       return classes.toArray
     } catch {
       case e: Exception =>
-        e.printStackTrace();
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         return Array[String]()
     }
   }
@@ -893,7 +891,7 @@ class CompilerProxy{
         classLoader.loadedJars += fl.getPath()
       } catch {
         case e: Exception => {
-          logger.error("Failed to add "+jarName + " due to internal exception " + e.printStackTrace)
+          logger.error("Failed to add "+jarName + " due to internal exception ")
           return
         }
       }

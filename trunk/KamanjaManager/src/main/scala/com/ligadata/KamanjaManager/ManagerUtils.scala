@@ -9,6 +9,7 @@ import java.util.jar.JarInputStream
 import scala.util.control.Breaks._
 import scala.collection.mutable.TreeSet
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -34,7 +35,8 @@ object ManagerUtils {
       return classes.toArray
     } catch {
       case e: Exception =>
-        e.printStackTrace();
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
         return null
     }
   }

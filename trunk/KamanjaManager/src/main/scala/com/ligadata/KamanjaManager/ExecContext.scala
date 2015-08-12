@@ -8,6 +8,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Exceptions.StackTrace
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
@@ -34,7 +35,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          e.printStackTrace()
+          
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))

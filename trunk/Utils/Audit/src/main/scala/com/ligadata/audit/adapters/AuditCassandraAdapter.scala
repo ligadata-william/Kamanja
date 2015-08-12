@@ -90,7 +90,11 @@ class AuditCassandraAdapter extends AuditAdapter {
         try {
           session.execute(createKeySpaceStmt);
         } catch {
-          case e: Exception => { throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) }
+          case e: Exception => {
+              val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
+              throw new CreateKeySpaceFailedException("Unable to create keyspace " + keyspace + ":" + e.getMessage()) 
+            }
         }
       
         // make sure the session is associated with the new tablespace, can be expensive if we create recycle sessions  too often
@@ -104,6 +108,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new ConnectionFailedException("Unable to connect to cassandra at " + hostnames + ":" + e.getMessage())
       }
     } 
@@ -170,7 +176,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       }
     }catch {
       case e: Exception => 
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception(e.getMessage())
     }
   }
@@ -241,6 +248,8 @@ class AuditCassandraAdapter extends AuditAdapter {
       auditRecords
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Failed to fetch audit records: " + e.getMessage())
       }
     }
@@ -263,6 +272,8 @@ class AuditCassandraAdapter extends AuditAdapter {
        })
     } catch {
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new Exception("Failed to read Audit Configuration: " + e.getMessage())
       }     
     }

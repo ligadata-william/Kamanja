@@ -17,6 +17,7 @@ import java.io.{ File }
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.syntaxtree.cooked.common._
 import com.ligadata.pmml.support._
+import com.ligadata.Exceptions.StackTrace
 
 
 /** 

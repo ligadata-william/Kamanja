@@ -14,6 +14,8 @@ import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._
 import java.io.{ File }
 
+import com.ligadata.Exceptions.StackTrace
+
 // This is shared by multiple threads to read (because we are not locking). We create this only once at this moment while starting the manager
 object KamanjaMdCfg {
   private[this] val LOG = Logger.getLogger(getClass);
@@ -270,7 +272,7 @@ object KamanjaMdCfg {
       } catch {
         case e: Exception => {
           LOG.error("Failed to instantiate Environment Context object for Class:" + className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
-          e.printStackTrace
+          
         }
       }
     } else {
@@ -378,7 +380,8 @@ object KamanjaMdCfg {
           LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        case e: Exception => {
+          LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
       }
     } else {
       LOG.error("Failed to instantiate output adapter object:" + statusAdapterCfg.className)
@@ -413,9 +416,10 @@ object KamanjaMdCfg {
         if (adapter == null) return false
         outputAdapters += adapter
       } catch {
-        case e: Exception =>
+        case e: Exception =>{
           LOG.error("Failed to get output adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
+          }
       }
     })
     return true
@@ -465,7 +469,8 @@ object KamanjaMdCfg {
           LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
         }
       } catch {
-        case e: Exception => LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)
+        case e: Exception =>{ 
+          LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className + ". Reason:" + e.getCause + ". Message:" + e.getMessage)}
       }
     } else {
       LOG.error("Failed to instantiate input adapter object:" + statusAdapterCfg.className)
@@ -499,9 +504,10 @@ object KamanjaMdCfg {
         if (adapter == null) return false
         inputAdapters += adapter
       } catch {
-        case e: Exception =>
+        case e: Exception =>{
           LOG.error("Failed to get input adapter for %s. Reason:%s Message:%s".format(ac, e.getCause, e.getMessage))
           return false
+        }
       }
     })
     return true

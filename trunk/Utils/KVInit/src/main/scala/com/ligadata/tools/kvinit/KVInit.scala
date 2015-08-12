@@ -40,6 +40,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
+import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -392,7 +393,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       } catch {
         case e: Exception => {
           logger.error("Failed to get classname:%s as message".format(clsName))
-          e.printStackTrace
+          
         }
       }
     }
@@ -412,7 +413,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       } catch {
         case e: Exception => {
           logger.error("Failed to get classname:%s as container".format(clsName))
-          e.printStackTrace
+          
         }
       }
     }
@@ -536,7 +537,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -619,8 +621,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             messageOrContainer.populate(inputData)
           } catch {
             case e: Exception => {
-              logger.error("Failed to populate message/container.")
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Failed to populate message/container."+"\nStackTrace:"+stackTrace)
               errsCnt += 1
             }
           }
@@ -636,8 +638,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             processedRows += 1
           } catch {
             case e: Exception => {
-              logger.error("Failed to serialize/write data.")
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Failed to serialize/write data."+"\nStackTrace:"+stackTrace)
+              
               errsCnt += 1
             }
           }
@@ -668,7 +671,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
-        case e: Exception => logger.error("Failed to send update notification to engine.")
+        case e: Exception => {
+          logger.error("Failed to send update notification to engine.")}
       } finally {
         if (zkcForSetData != null)
           zkcForSetData.close
@@ -830,7 +834,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       is = new FileInputStream(inputfile)
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStacktrace:"+stackTrace)
         return false
     }
 

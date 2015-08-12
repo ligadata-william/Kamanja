@@ -17,6 +17,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import kafka.consumer.ConsoleConsumer
+import com.ligadata.Exceptions.StackTrace
+
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -87,6 +89,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), groupName)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("\nStackTrace:"+stackTrace)
       }
     }
 
@@ -212,7 +216,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
                           val key = Category + "/" + qc.Name + "/evtCnt"
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
-                          case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                          case e: Exception => {
+                            LOG.error("Failed with Message:" + e.getMessage)}
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -258,9 +263,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
     val dataAndStat = try {
       (Some(client.readData(path, stat)), stat)
     } catch {
-      case e: ZkNoNodeException =>
+      case e: ZkNoNodeException =>{
+       val stackTrace = StackTrace.ThrowableTraceString(e)
+       LOG.debug("\nStackTrace:"+stackTrace)
         (None, stat)
-      case e2: Exception => throw e2
+      }
+      case e2: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e2)
+        LOG.debug("\nStackTrace:"+stackTrace)
+        throw e2
+        }
     }
     dataAndStat
   }

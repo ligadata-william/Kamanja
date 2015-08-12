@@ -3,6 +3,9 @@ package com.ligadata.KamanjaBase
 import java.net.URL
 import java.net.URLClassLoader
 import java.io.{ ByteArrayInputStream, DataInputStream, DataOutputStream, ByteArrayOutputStream }
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
+
 
 trait MessageContainerBase {
   var transactionId: Long
@@ -49,6 +52,8 @@ trait MdBaseResolveInfo {
 }
 
 object SerializeDeserialize {
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
   def Serialize(inst: MessageContainerBase): Array[Byte] = {
     val bos: ByteArrayOutputStream = new ByteArrayOutputStream(1024 * 1024)
     val dos = new DataOutputStream(bos)
@@ -65,8 +70,8 @@ object SerializeDeserialize {
 
     } catch {
       case e: Exception => {
-        // LOG.error("Failed to get classname :" + clsName)
-        e.printStackTrace
+        //LOG.error("Failed to get classname :" + clsName)
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -100,7 +105,7 @@ object SerializeDeserialize {
     } catch {
       case e: Exception => {
         // LOG.error("Failed to get classname :" + clsName)
-        e.printStackTrace
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }

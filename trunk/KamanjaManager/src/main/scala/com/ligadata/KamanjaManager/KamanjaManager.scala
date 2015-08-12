@@ -19,6 +19,7 @@ import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.Utils
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -32,7 +33,8 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
         (new Thread(new ConnHandler(socket, mgr))).start()
       }
     } catch {
-      case e: Exception => { LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -62,7 +64,8 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
         }
       }
     } catch {
-      case e: Exception => { LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       socket.close;
     }
@@ -305,7 +308,7 @@ class KamanjaManager {
             KamanjaConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => {} 
+        case e: Exception => {}
       }
 
       KamanjaMetadata.InitBootstrap
@@ -508,6 +511,8 @@ class KamanjaManager {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
         case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("\nStackTrace:"+stackTrace)
         }
       }
     }

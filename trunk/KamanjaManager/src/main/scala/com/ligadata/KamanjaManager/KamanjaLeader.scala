@@ -22,6 +22,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.apache.curator.utils.ZKPaths
 import scala.actors.threadpool.{ Executors, ExecutorService }
+import com.ligadata.Exceptions.StackTrace
 
 case class AdapMaxPartitions(Adap: String, MaxParts: Int)
 case class PartAndTxn(Part: String, Txn: Long)
@@ -254,6 +255,8 @@ object KamanjaLeader {
               Thread.sleep(1000) // sleep 1000 ms and then check
             } catch {
               case e: Exception => {
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)
               }
             }
             if ((System.nanoTime - CollectKeyValsFromValidation.getLastUpdateTime) < 1000 * 1000000) // 1000ms
@@ -317,7 +320,10 @@ object KamanjaLeader {
         SetNewDataToZkc(engineDistributionZkNodePath, sendJson.getBytes("UTF8"))
       }
     } catch {
-      case e: Exception => {}
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
+      }
     }
   }
 
@@ -457,7 +463,7 @@ object KamanjaLeader {
       } catch {
         case e: Exception => {
           LOG.error("Failed to print final Unique Keys. JsonString:%s, Reason:%s, Message:%s".format(receivedJsonStr, e.getCause, e.getMessage))
-          e.printStackTrace()
+          
         }
       }
     })
@@ -535,6 +541,8 @@ object KamanjaLeader {
               } catch {
                 case e: Exception => {
                   // Not doing anything
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.debug("\nStackTrace:"+stackTrace)
                 }
               }
 
@@ -551,7 +559,8 @@ object KamanjaLeader {
               SetNewDataToZkc(adaptrStatusPathForNode, sendJson.getBytes("UTF8"))
             }
           } catch {
-            case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+            case e: Exception => {
+              LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
           }
         }
         case "distribute" => {
@@ -694,11 +703,9 @@ object KamanjaLeader {
                   } catch {
                     case e: Exception => {
                       logger.error("Failed to reload keys for container:" + contName)
-                      e.printStackTrace()
                     }
-                    case t: Throwable => {
+                    case t: Throwable => { 
                       logger.error("Failed to reload keys for container:" + contName)
-                      t.printStackTrace()
                     }
                   }
                 }
@@ -765,7 +772,8 @@ object KamanjaLeader {
           })
         }
       } catch {
-        case e: Exception => { LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        case e: Exception => { 
+          LOG.error("Failed to get Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
       }
     }
   }
@@ -780,7 +788,8 @@ object KamanjaLeader {
           uniqPartKeysValues ++= uKeysVals
         })
       } catch {
-        case e: Exception => { LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+        case e: Exception => {
+          LOG.error("Failed to get Validate Input Adapters partitions. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
       }
     }
 
@@ -821,6 +830,8 @@ object KamanjaLeader {
         } catch {
           case e: Exception => {
             // Not doing anything
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
           }
         }
 

@@ -17,6 +17,8 @@ import com.ibm.msg.client.jms.JmsFactoryFactory
 import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.common.CommonConstants
 import com.ibm.msg.client.jms.JmsConstants
+import com.ligadata.Utils.Utils
+import com.ligadata.Exceptions.StackTrace
 
 object IbmMqConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new IbmMqConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -147,6 +149,8 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
       connection.start()
     } catch {
       case jmsex: Exception =>
+        val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+        LOG.debug("\nstackTrace:"+stackTrace)
         printFailure(jmsex)
         return
     }

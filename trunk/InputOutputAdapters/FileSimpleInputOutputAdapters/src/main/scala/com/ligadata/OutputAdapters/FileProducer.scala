@@ -7,6 +7,7 @@ import java.util.zip.GZIPOutputStream
 import java.nio.file.{ Paths, Files }
 import com.ligadata.KamanjaBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.FileAdapterConfiguration
+import com.ligadata.Exceptions.StackTrace
 
 object FileProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new FileProducer(inputConfig, cntrAdapter)

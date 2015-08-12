@@ -23,6 +23,7 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import com.ligadata.Serialize.{ JDataStore }
+import com.ligadata.Exceptions.StackTrace
 
 case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -107,6 +108,7 @@ object ExtractData extends MdBaseResolveInfo {
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
+            logger.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
         }
@@ -233,7 +235,6 @@ object ExtractData extends MdBaseResolveInfo {
       } catch {
         case e: Exception => {
           LOG.error("Failed to get classname:%s as message".format(clsName))
-          e.printStackTrace
           sys.exit(1)
         }
       }
@@ -254,7 +255,6 @@ object ExtractData extends MdBaseResolveInfo {
       } catch {
         case e: Exception => {
           LOG.error("Failed to get classname:%s as container".format(clsName))
-          e.printStackTrace
           sys.exit(1)
         }
       }
@@ -327,7 +327,8 @@ object ExtractData extends MdBaseResolveInfo {
       KeyValueManager.Get(connectinfo)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -347,7 +348,8 @@ object ExtractData extends MdBaseResolveInfo {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("1. Data not found for key:" + partKeyStr)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("1. Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     return objs(0)
@@ -424,6 +426,8 @@ LOG.debug("Does Primarykey Found: " + (if (v == null) "false" else "true"))
         if (os != null)
           os.close
         os = null
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("%s:Exception. Message:%s, Reason:%s".format(GetCurDtTmStr, e.getMessage, e.getCause))
       }
     }

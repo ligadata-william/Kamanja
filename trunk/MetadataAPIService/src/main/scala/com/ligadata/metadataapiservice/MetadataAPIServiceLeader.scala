@@ -16,6 +16,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 import org.apache.log4j._
+import com.ligadata.Exceptions.StackTrace
 
 
 
@@ -42,7 +43,8 @@ object MetadataAPIServiceLeader {
       LOG.debug("NodeId:%s, IsLeader:%s, Leader:%s, AllParticipents:{%s}".format(cs.nodeId, isLeaderStr, cs.leader, cs.participants.mkString(",")))
     } catch {
       case e: Exception => {
-        LOG.debug("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage))
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("EventChangeCallback => Found exception. reason %s, message %s".format(e.getCause, e.getMessage)+"\nStackTrace:"+stackTrace)
       }
     }
   }

@@ -35,7 +35,7 @@ lazy val ApiImpl = project.in(file("ApiImpl")) dependsOn(Metadata, KamanjaBase, 
 
 lazy val KamanjaManager = project.in(file("KamanjaManager")) dependsOn(Metadata, KamanjaBase, ApiImpl, KamanjaData, MetadataBootstrap, MetadataAPI, Serialize, ZooKeeperListener, ZooKeeperLeaderLatch, Exceptions)
 
-lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(KamanjaBase)
+lazy val IbmMqSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/IbmMqSimpleInputOutputAdapters")) dependsOn(KamanjaBase, Exceptions)
 
 lazy val KafkaSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/KafkaSimpleInputOutputAdapters")) dependsOn(KamanjaBase, Exceptions)
 
@@ -43,7 +43,7 @@ lazy val FileSimpleInputOutputAdapters = project.in(file("InputOutputAdapters/Fi
 
 lazy val SimpleEnvContextImpl = project.in(file("EnvContexts/SimpleEnvContextImpl")) dependsOn(KamanjaBase, KamanjaData, Storage, Serialize, Exceptions)
 
-lazy val Storage = project.in(file("Storage")) dependsOn(Metadata, Exceptions)
+lazy val Storage = project.in(file("Storage")) dependsOn(Metadata, Exceptions, KamanjaBase)
 
 lazy val Metadata = project.in(file("Metadata")) dependsOn(Exceptions)
 
@@ -73,7 +73,7 @@ lazy val MetadataBootstrap = project.in(file("MetadataBootstrap/Bootstrap")) dep
 
 lazy val MetadataAPIService = project.in(file("MetadataAPIService")) dependsOn(KamanjaBase,MetadataAPI,ZooKeeperLeaderLatch, Exceptions)
 
-lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient")) dependsOn(Serialize, Exceptions)
+lazy val MetadataAPIServiceClient = project.in(file("MetadataAPIServiceClient")) dependsOn(Serialize, Exceptions, KamanjaBase)
 
 lazy val SimpleKafkaProducer = project.in(file("Utils/SimpleKafkaProducer")) dependsOn(Metadata, KamanjaBase, Exceptions)
 
@@ -81,7 +81,7 @@ lazy val KVInit = project.in(file("Utils/KVInit")) dependsOn (Metadata, KamanjaB
 
 lazy val ZooKeeperLeaderLatch = project.in(file("Utils/ZooKeeper/CuratorLeaderLatch")) dependsOn(ZooKeeperClient, Exceptions)
 
-lazy val JsonDataGen = project.in(file("Utils/JsonDataGen")) dependsOn(Exceptions)
+lazy val JsonDataGen = project.in(file("Utils/JsonDataGen")) dependsOn(Exceptions, KamanjaBase)
 
 lazy val NodeInfoExtract  = project.in(file("Utils/NodeInfoExtract")) dependsOn(MetadataAPI, Exceptions)
 
@@ -95,7 +95,7 @@ lazy val KamanjaData = project.in(file("KamanjaData")) dependsOn(KamanjaBase, Ex
 
 lazy val CustomUdfLib = project.in(file("SampleApplication/CustomUdfLib")) dependsOn(PmmlUdfs, Exceptions)
 
-lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector"))
+lazy val JdbcDataCollector = project.in(file("Utils/JdbcDataCollector")) dependsOn(Exceptions)
 
 lazy val ExtractData = project.in(file("Utils/ExtractData")) dependsOn(Metadata, KamanjaBase, KamanjaData, MetadataBootstrap, MetadataAPI, Storage, Exceptions)
 

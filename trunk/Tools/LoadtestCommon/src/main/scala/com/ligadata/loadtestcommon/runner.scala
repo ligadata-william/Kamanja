@@ -16,13 +16,15 @@ import akka.actor._
 import com.ligadata._
 import com.ligadata.keyvaluestore._
 import com.ligadata.loadtestcommon._
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 {
 	///////////////////////////////////////////////////////////////////////////
 
 	val store = KeyValueManager.Get(config.connectinfo)
-
+   private val LOG = Logger.getLogger(getClass)
 	// We create an byte array of nRequests * nMaxSize
 	// Create the resources
 	// i-th request start at i-th byte and in nMaxMessage long
@@ -109,7 +111,10 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-					case e: Exception  => println("Add: Caught exception " + e.getMessage()+ "\n" + e.getStackTraceString)
+					case e: Exception  => {
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+             LOG.debug("StackTrace:"+stackTrace)
+            println("Add: Caught exception " + e.getMessage())}
 				}
 				sender ! Result ()
 			}
@@ -125,7 +130,10 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-					case e: Exception => println("Put: Caught exception " + e.getMessage()+ "\n" + e.getStackTraceString)
+					case e: Exception => {
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+             LOG.debug("StackTrace:"+stackTrace)
+            println("Put: Caught exception " + e.getMessage())}
 				}
 				sender ! Result ()
 			}
@@ -141,7 +149,10 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-					case e: Exception => println("Del: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
+					case e: Exception => {
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+             LOG.debug("StackTrace:"+stackTrace)
+            println("Del: Caught exception " + e.getMessage())}
 				}
 				sender ! Result ()
 			}
@@ -157,7 +168,11 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-					case e: Exception => println("Get: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
+					case e: Exception => {
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+             LOG.debug("StackTrace:"+stackTrace)
+            println("Get: Caught exception " + e.getMessage())
+            }
 				}
 				sender ! Result ()
 			}
@@ -176,7 +191,10 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-					case e: Exception => println("S1_put: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
+					case e: Exception => {
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+             LOG.debug("StackTrace:"+stackTrace)
+            println("S1_put: Caught exception " + e.getMessage() )}
 				}
 
 				context.system.scheduler.scheduleOnce(Duration(config.nMsgDelayMSec, MILLISECONDS))
@@ -202,8 +220,11 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 					{
 						case e: Exception =>
 						{
-							if(nReadExceptions < 2)
-								println("Get_Put@read: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
+							if(nReadExceptions < 2){
+								 val stackTrace = StackTrace.ThrowableTraceString(e)
+                 LOG.debug("StackTrace:"+stackTrace)
+                println("Get_Put@read: Caught exception " + e.getMessage())
+              }
 							nReadExceptions+=1
 						}
 						throw e;
@@ -222,8 +243,11 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 					{
 						case e: Exception =>
 						{
-							if(nWriteExceptions < 2)
-								println("Get_Put@write: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
+							if(nWriteExceptions < 2){
+                 val stackTrace = StackTrace.ThrowableTraceString(e)
+                 LOG.debug("StackTrace:"+stackTrace)
+								println("Get_Put@write: Caught exception " + e.getMessage() )
+              }
 							nWriteExceptions+=1
 						}
 						throw e;
@@ -231,7 +255,10 @@ class Runner(config: Configuration, externalBookKeeper : ActorRef = null)
 				}
 				catch
 				{
-				  	case e: Exception => {}
+				  	case e: Exception => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+                 LOG.debug("StackTrace:"+stackTrace)
+            }
 				}
 				finally
 				{

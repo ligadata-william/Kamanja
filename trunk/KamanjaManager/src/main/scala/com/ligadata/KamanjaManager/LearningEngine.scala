@@ -16,6 +16,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.outputmsg.OutputMsgGenerator
+import com.ligadata.Exceptions.StackTrace
 
 class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
@@ -56,10 +57,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           }
         } catch {
           case e: Exception => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace())
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
           }
           case t: Throwable => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + t.printStackTrace())
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
           }
         } finally {
           ThreadLocalStorage.modelContextInfo.remove
@@ -125,7 +126,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } catch {
             case e: Exception => {
               LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-              e.printStackTrace
+              
             }
           }
           val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
@@ -157,7 +158,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
           if (ignoreOutput == false) {
@@ -176,7 +178,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 2")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
           envContext.saveStatus(transId, "OutAdap", false)
@@ -190,7 +193,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
         }
@@ -200,7 +204,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     } catch {
       case e: Exception => {
         LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        e.printStackTrace
+        
       }
     }
 

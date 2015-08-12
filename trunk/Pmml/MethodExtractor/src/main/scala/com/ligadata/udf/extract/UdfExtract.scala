@@ -23,6 +23,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import com.ligadata.Serialize._
 import java.net.URLClassLoader
+import com.ligadata.Exceptions.StackTrace
 
 
 /**
@@ -118,7 +119,10 @@ object MethodExtract extends App with LogTrait{
 		try {
 			if (versionNumberStr != null) versionNumber = versionNumberStr.toLong
 		} catch {
-		  case _:Throwable => versionNumber = 1000000
+		  case _:Throwable => {
+        val stackTrace = StackTrace.ThrowableTraceString(_)
+        logger.debug("StackTrace:"+stackTrace)
+        versionNumber = 1000000}
 		}
 		val depsIn = if (options.contains('deps)) options.apply('deps) else null
 		val typedefPath = if (options.contains('typeDefsPath)) options.apply('typeDefsPath) else null
@@ -166,7 +170,9 @@ object MethodExtract extends App with LogTrait{
 			val members = clsType.declarations
 			members.filter(_.toString.startsWith("method")).foreach(m => mbrs += m)
 		} catch {
-		  case t : Throwable => t.printStackTrace 
+		  case t : Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
+      logger.debug("StackTrace:"+stackTrace)  
+      }
 		  sys.exit
 		}
 		
@@ -399,7 +405,7 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 	          }
 	        } catch {
 	          case e: Exception => {
-	            logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
+              logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
 	            return false
 	          }
 	        }

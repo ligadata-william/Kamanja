@@ -9,6 +9,7 @@ import java.nio.file.{ Paths, Files }
 import com.ligadata.KamanjaBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
+import com.ligadata.Exceptions.StackTrace
 
 object FileConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
@@ -97,7 +98,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
                       execThread.execute(transId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
                       transId += 1
                     } catch {
-                      case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                      case e: Exception => {
+                        LOG.error("Failed with Message:" + e.getMessage)}
                     }
 
                     st.totalSent += sendmsg.size
@@ -151,7 +153,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
             execThread.execute(transId, sendmsg, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
             transId += 1
           } catch {
-            case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+            case e: Exception => {
+              LOG.error("Failed with Message:" + e.getMessage)}
           }
 
           st.totalSent += sendmsg.size
@@ -280,6 +283,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val output: Array[Outp
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
+          
           LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           throw e
         }

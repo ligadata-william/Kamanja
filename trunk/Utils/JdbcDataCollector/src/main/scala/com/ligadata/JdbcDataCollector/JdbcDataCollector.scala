@@ -9,8 +9,8 @@ import java.nio.file.{ Paths, Files }
 import scala.reflect.runtime.{ universe => ru }
 import java.net.{ URL, URLClassLoader }
 import scala.collection.mutable.TreeSet
-import java.sql.{ Driver, DriverPropertyInfo };
-
+import java.sql.{ Driver, DriverPropertyInfo }
+import com.ligadata.Exceptions.StackTrace
 // ClassLoader
 class JdbcClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
   override def addURL(url: URL) {
@@ -68,6 +68,7 @@ object RunJdbcCollector {
         } catch {
           case e: Exception => {
             val errMsg = "Jar " + jarNm + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage)
+            LOG.error("Error:"+errMsg)
             throw new Exception(errMsg)
           }
         }
