@@ -1,6 +1,6 @@
 package com.ligadata.Security
 
-import com.ligadata.fatafat.metadata.SecurityAdapter
+import com.ligadata.kamanja.metadata.SecurityAdapter
 import com.sun.security.auth.callback.TextCallbackHandler
 import javax.security.auth.login._
 import javax.security.auth.Subject;
@@ -16,7 +16,7 @@ class SampleKerberosActions(inPriv: String) extends java.security.PrivilegedActi
   val log = Logger.getLogger(loggerName)
   
   def run: String = {
-    // if write is requested, see if we are allowed to access FATAFAT_OBJECT_WRITE System property
+    // if write is requested, see if we are allowed to access KAMANJA_OBJECT_WRITE System property
     // A security exception will be thrown
     if (priv.equalsIgnoreCase("write")) {
       log.info("user authorized to WRITE")        
@@ -104,12 +104,12 @@ class SimpleKerberosAdapter extends SecurityAdapter {
   
   /**
    * init - Initialize some information needed for thie plugin.  
-   *        1. FATAFAT_OBJECT_READ is created in SYSTEM
-   *        2. FATAFAT_OBJECT_WRITE is created in SYSTEM
+   *        1. KAMANJA_OBJECT_READ is created in SYSTEM
+   *        2. KAMANJA_OBJECT_WRITE is created in SYSTEM
    */
   override def init:Unit = {
-    System.setProperty("FATAFAT_OBJECT_READ", "REQUIRED")
-    System.setProperty("FATAFAT_OBJECT_WRITE", "REQUIRED")
+    System.setProperty("KAMANJA_OBJECT_READ", "REQUIRED")
+    System.setProperty("KAMANJA_OBJECT_WRITE", "REQUIRED")
   }
   
   // this is a callback that will be used by Kerberos server to collect a username and password

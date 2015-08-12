@@ -8,7 +8,7 @@ import org.apache.log4j._
 
 import scala.collection.JavaConversions._
 
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.ExtensionRegistry;
@@ -189,12 +189,12 @@ class ProtoBufSerializer extends Serializer{
     logger.debug("Parse " + ba.length + " bytes to create a " + objectType + " object ")
     try{
       objectType match{
-	case "com.ligadata.fatafat.metadata.AttributeDef" => {
+	case "com.ligadata.kamanja.metadata.AttributeDef" => {
 	  val a = Attribute.parseFrom(ba);
 	  logger.debug("Attribute => " + a)
 	  a
 	}
-	case "com.ligadata.fatafat.metadata.ModelDef" => {
+	case "com.ligadata.kamanja.metadata.ModelDef" => {
 	  val m = Model.parseFrom(ba);
 	  logger.debug("Deserialized Model as protobuf object => " + m)
 	  val mDef = buildModel(m)

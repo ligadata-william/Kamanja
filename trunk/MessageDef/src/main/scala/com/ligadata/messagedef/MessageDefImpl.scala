@@ -12,14 +12,14 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
 import org.json4s.Formats
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata.EntityType
-import com.ligadata.fatafat.metadata.MessageDef
-import com.ligadata.fatafat.metadata.BaseAttributeDef
-import com.ligadata.fatafat.metadata.ContainerDef
-import com.ligadata.fatafat.metadata.ArrayTypeDef
-import com.ligadata.fatafat.metadata.ArrayBufTypeDef
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.EntityType
+import com.ligadata.kamanja.metadata.MessageDef
+import com.ligadata.kamanja.metadata.BaseAttributeDef
+import com.ligadata.kamanja.metadata.ContainerDef
+import com.ligadata.kamanja.metadata.ArrayTypeDef
+import com.ligadata.kamanja.metadata.ArrayBufTypeDef
+import com.ligadata.kamanja.metadata._
 import com.ligadata.Exceptions._
 import com.ligadata.Exceptions.StackTrace
 
@@ -711,12 +711,30 @@ class MessageDefImpl {
             }
           }
 
+          var fldList: Set[String] = Set[String]()
+          if (ele != null && ele.size > 0) {
+            ele.foreach(Fld => { fldList += Fld.Name })
+
+            if (fldList != null && fldList.size > 0) {
+              if (partitionKeysList != null && partitionKeysList.size > 0) {
+                if (!(partitionKeysList.toSet subsetOf fldList))
+                  throw new Exception("Partition Keys should be included in fields/elements of message/container definition " + message.get("Name").get.toString())
+              }
+
+              if (primaryKeysList != null && primaryKeysList.size > 0) {
+                if (!(primaryKeysList.toSet subsetOf fldList))
+                  throw new Exception("Primary Keys should be included in fields/elements of message/container definition " + message.get("Name").get.toString())
+              }
+            }
+          }
+
           if (key.equals("Concepts")) {
             conceptsList = getConcepts(message, key)
           }
         }
-        // if (ele == null)
-        //   throw new Exception("Either Fields or Elements or Concepts  do not exist in " + message.get("Name").get.toString())
+
+        if (message.get("Fixed").get.toString().toLowerCase == "true" && ele == null)
+          throw new Exception("Either Fields or Elements or Concepts  do not exist in the Fixed Message/Container " + message.get("Name").get.toString())
 
         if (ele != null)
           ele = ele :+ new Element("", "transactionId", "system.long", "", "Fields", null)

@@ -1,11 +1,11 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata.MdMgr
-import com.ligadata.fatafat.metadata.MessageDef
-import com.ligadata.fatafat.metadata.ContainerDef
-import com.ligadata.fatafat.metadata.StructTypeDef
-import com.ligadata.fatafat.metadata.AttributeDef
-import com.ligadata.fatafat.metadata.MappedMsgTypeDef
+import com.ligadata.kamanja.metadata.MdMgr
+import com.ligadata.kamanja.metadata.MessageDef
+import com.ligadata.kamanja.metadata.ContainerDef
+import com.ligadata.kamanja.metadata.StructTypeDef
+import com.ligadata.kamanja.metadata.AttributeDef
+import com.ligadata.kamanja.metadata.MappedMsgTypeDef
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 import com.ligadata.Exceptions.StackTrace
@@ -53,8 +53,11 @@ class ContainerTypeHandler {
       assignCsvdata.append("%s%s.populate(inputdata);\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, pad2))
       assignJsondata.append(methodGen.assignJsonDataMessage(f.Name))
       if (msg.Fixed.toLowerCase().equals("false")) {
-        assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
+        assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s%s};%s".format(pad1, f.Name, f.Name, newline, pad1, newline))
+      } else if (msg.Fixed.toLowerCase().equals("true")) {
+        assignJsondata.append("%s%s};%s".format(newline, pad1, newline))
       }
+
       assignXmldata.append("%s%s.populate(xmlData)%s".format(pad3, f.Name, newline))
 
       if ((ctrDef.dependencyJarNames != null) && (ctrDef.jarName != null)) {
@@ -189,6 +192,6 @@ class ContainerTypeHandler {
     }
     //  (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncOfFixed.toString)
 
-    (list, argsList, jarset, returnAB.toArray )
+    (list, argsList, jarset, returnAB.toArray)
   }
 }

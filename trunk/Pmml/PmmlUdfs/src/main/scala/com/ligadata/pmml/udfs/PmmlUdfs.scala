@@ -36,8 +36,8 @@ import org.joda.time.chrono.JulianChronology
 import org.apache.log4j.Logger
 
 import com.ligadata.pmml.runtime._
-import com.ligadata.FatafatBase._
 import com.ligadata.Exceptions.StackTrace
+import com.ligadata.KamanjaBase._
 
 /**
  * These are the udfs supplied with the system.

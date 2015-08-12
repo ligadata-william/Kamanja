@@ -4,9 +4,9 @@ import scala.collection.mutable.{ Map, HashMap, MultiMap, Set, SortedSet, ArrayB
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.Exceptions._
 import org.apache.log4j.Logger
 import scala.collection.mutable.ListBuffer

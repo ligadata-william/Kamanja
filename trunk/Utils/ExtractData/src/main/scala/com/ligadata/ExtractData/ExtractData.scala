@@ -13,19 +13,19 @@ import scala.collection.mutable.TreeSet
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.ligadata.Serialize._
-import com.ligadata.FatafatData.FatafatData
+import com.ligadata.KamanjaData.KamanjaData
 import com.ligadata.MetadataAPI.MetadataAPIImpl
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata._
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.FatafatBase._
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.KamanjaBase._
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.Utils.Utils
 import com.ligadata.Serialize.{ JDataStore }
 import com.ligadata.Exceptions.StackTrace
 
-case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
+case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
 // ClassLoader
 class ExtractDataClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
@@ -178,7 +178,7 @@ object ExtractData extends MdBaseResolveInfo {
     valInfoBytes
   }
 
-  private def buildObject(tupleBytes: Value, objs: Array[FatafatData]): Unit = {
+  private def buildObject(tupleBytes: Value, objs: Array[KamanjaData]): Unit = {
     // Get first _serInfoBufBytes bytes
     if (tupleBytes.size < _serInfoBufBytes) {
       val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
@@ -191,7 +191,7 @@ object ExtractData extends MdBaseResolveInfo {
     serInfo.toLowerCase match {
       case "manual" => {
         val valInfo = getValueInfo(tupleBytes)
-        val datarec = new FatafatData
+        val datarec = new KamanjaData
         datarec.DeserializeData(valInfo, this, clsLoader)
         objs(0) = datarec
       }
@@ -228,7 +228,7 @@ object ExtractData extends MdBaseResolveInfo {
         var curClz = Class.forName(clsName, true, clsLoader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseContainerObj")
+          isContainer = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
@@ -248,7 +248,7 @@ object ExtractData extends MdBaseResolveInfo {
         var curClz = Class.forName(clsName, true, clsLoader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.FatafatBase.BaseMsgObj")
+          isMsg = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
@@ -340,9 +340,9 @@ object ExtractData extends MdBaseResolveInfo {
     k
   }
 
-  private def loadObjFromDb(key: List[String]): FatafatData = {
-    val partKeyStr = FatafatData.PrepareKey(_currentTypName, key, 0, 0)
-    var objs: Array[FatafatData] = new Array[FatafatData](1)
+  private def loadObjFromDb(key: List[String]): KamanjaData = {
+    val partKeyStr = KamanjaData.PrepareKey(_currentTypName, key, 0, 0)
+    var objs: Array[KamanjaData] = new Array[KamanjaData](1)
     val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs) }
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
@@ -355,9 +355,9 @@ object ExtractData extends MdBaseResolveInfo {
     return objs(0)
   }
 
-  private def collectKey(key: Key, keys: ArrayBuffer[FatafatDataKey]): Unit = {
+  private def collectKey(key: Key, keys: ArrayBuffer[KamanjaDataKey]): Unit = {
     implicit val jsonFormats = org.json4s.DefaultFormats
-    val parsed_key = org.json4s.jackson.JsonMethods.parse(new String(key.toArray)).extract[FatafatDataKey]
+    val parsed_key = org.json4s.jackson.JsonMethods.parse(new String(key.toArray)).extract[KamanjaDataKey]
     keys += parsed_key
   }
 
@@ -366,7 +366,7 @@ object ExtractData extends MdBaseResolveInfo {
     if (partKey == null || partKey.size == 0) {
       LOG.debug("Getting all Partition Keys")
       // Getting all keys if no partition key specified
-      val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
+      val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
       val keyCollector = (key: Key) => { collectKey(key, all_keys) }
       _allDataDataStore.getAllKeys(keyCollector)
       // LOG.debug("Got all Keys: " + all_keys.map(k => (k.T + " -> " + k.K.mkString(","))).mkString(":"))

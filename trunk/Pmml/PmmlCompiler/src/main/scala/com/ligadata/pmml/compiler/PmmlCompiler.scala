@@ -16,9 +16,9 @@ import javax.xml.parsers.SAXParserFactory
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
 import org.apache.log4j.Logger
-import com.ligadata.fatafat.metadata.MdMgr._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadataload.MetadataLoad
+import com.ligadata.kamanja.metadata.MdMgr._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadataload.MetadataLoad
 import com.ligadata.pmml.transforms.printers.scala.common._
 import com.ligadata.pmml.support._
 import com.ligadata.pmml.xmlingestion._

@@ -4,7 +4,7 @@ import scala.collection.immutable.{Set, HashMap}
 import scala.io.Source
 import java.io._
 import com.ligadata.MetadataAPI.{ MetadataAPIImpl }
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 
 class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String, val clusterId : String, val installDir : String) {
 
@@ -64,7 +64,7 @@ object NodeInfoExtract extends App {
     def usage : String = {
 """
 NodeInfoExtract --MetadataAPIConfig  <MetadataAPI config file path>
-                --NodeConfigPath <Fatafat engine config file path>
+                --NodeConfigPath <Kamanja engine config file path>
                 --ipFileName <file name path for the cluster node ips>
                 --ipPathPairFileName <file name path for the cluster node ip/path name pairs>
 				--installDir <the directory where the cluster is installed>

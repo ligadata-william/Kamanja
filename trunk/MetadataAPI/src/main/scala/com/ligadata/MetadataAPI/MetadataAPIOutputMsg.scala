@@ -1,8 +1,8 @@
 package com.ligadata.MetadataAPI
 
-import com.ligadata.fatafat.metadata.ObjType._
-import com.ligadata.fatafat.metadata._
-import com.ligadata.fatafat.metadata.MdMgr._
+import com.ligadata.kamanja.metadata.ObjType._
+import com.ligadata.kamanja.metadata._
+import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.Exceptions._
 
 import org.json4s._

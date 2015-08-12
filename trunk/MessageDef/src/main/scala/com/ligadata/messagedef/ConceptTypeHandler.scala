@@ -1,6 +1,6 @@
 package com.ligadata.messagedef
 
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
 import com.ligadata.Exceptions.StackTrace

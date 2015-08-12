@@ -8,19 +8,19 @@ import scala.reflect.runtime.{ universe => ru }
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
 import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.FatafatBase._
-import com.ligadata.FatafatBase.{ EnvContext, MessageContainerBase }
-import com.ligadata.fatafat.metadata._
+import com.ligadata.KamanjaBase._
+import com.ligadata.KamanjaBase.{ EnvContext, MessageContainerBase }
+import com.ligadata.kamanja.metadata._
 import com.ligadata.Exceptions._
 import java.net.URLClassLoader
 import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import com.ligadata.FatafatData.{ FatafatData }
 import com.ligadata.Exceptions.StackTrace
+import com.ligadata.KamanjaData.{ KamanjaData }
 
-case class FatafatDataKey(T: String, K: List[String], D: List[Int], V: Int)
+case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 case class InMemoryKeyData(K: List[String])
 
 trait LogTrait {
@@ -47,7 +47,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
   class MsgContainerInfo {
     var current_msg_cont_data: scala.collection.mutable.ArrayBuffer[MessageContainerBase] = scala.collection.mutable.ArrayBuffer[MessageContainerBase]()
-    var data: scala.collection.mutable.Map[String, (Boolean, FatafatData)] = scala.collection.mutable.Map[String, (Boolean, FatafatData)]()
+    var data: scala.collection.mutable.Map[String, (Boolean, KamanjaData)] = scala.collection.mutable.Map[String, (Boolean, KamanjaData)]()
     var containerType: BaseTypeDef = null
     var loadedAll: Boolean = false
     var reload: Boolean = false
@@ -56,11 +56,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   }
 
   object TxnContextCommonFunctions {
-    def getRecentFromFatafatData(fatafatData: FatafatData, tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
+    def getRecentFromKamanjaData(kamanjaData: KamanjaData, tmRange: TimeRange, f: MessageContainerBase => Boolean): (MessageContainerBase, Boolean) = {
       // BUGBUG:: tmRange is not yet handled
-      if (fatafatData != null) {
+      if (kamanjaData != null) {
         /*
-            val data = fatafatData.GetAllData
+            val data = kamanjaData.GetAllData
             var validRetVal: MessageContainerBase = null
             var maxTxnId = 0
             if (f != null) {
@@ -73,11 +73,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 */
 
         if (f != null) {
-          val filterddata = fatafatData.GetAllData.filter(v => f(v))
+          val filterddata = kamanjaData.GetAllData.filter(v => f(v))
           if (filterddata.size > 0)
             return (filterddata(filterddata.size - 1), true)
         } else {
-          val data = fatafatData.GetAllData
+          val data = kamanjaData.GetAllData
           if (data.size > 0)
             return (data(data.size - 1), true)
         }
@@ -85,13 +85,13 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       (null, false)
     }
 
-    def getRddDataFromFatafatData(fatafatData: FatafatData, tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
+    def getRddDataFromKamanjaData(kamanjaData: KamanjaData, tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase] = {
       // BUGBUG:: tmRange is not yet handled
-      if (fatafatData != null) {
+      if (kamanjaData != null) {
         if (f != null) {
-          return fatafatData.GetAllData.filter(v => f(v))
+          return kamanjaData.GetAllData.filter(v => f(v))
         } else {
-          return fatafatData.GetAllData
+          return kamanjaData.GetAllData
         }
       }
       Array[MessageContainerBase]()
@@ -102,14 +102,14 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       //BUGBUG:: Taking last record. But that may not be correct. Need to take max txnid one. But the issue is, if we are getting same data from multiple partitions, the txnids may be completely different.
       if (container != null) {
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (fatafatData != null)
-            return getRecentFromFatafatData(fatafatData._2, tmRange, f)
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          if (kamanjaData != null)
+            return getRecentFromKamanjaData(kamanjaData._2, tmRange, f)
         } else {
           val dataAsArr = container.data.toArray
           var idx = dataAsArr.size - 1
           while (idx >= 0) {
-            val (v, foundPartKey) = getRecentFromFatafatData(dataAsArr(idx)._2._2, tmRange, f)
+            val (v, foundPartKey) = getRecentFromKamanjaData(dataAsArr(idx)._2._2, tmRange, f)
             if (foundPartKey)
               return (v, foundPartKey)
             idx = idx - 1
@@ -148,16 +148,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       var foundPartKeys = ArrayBuffer[List[String]]()
       if (container != null) {
         if (TxnContextCommonFunctions.IsEmptyKey(partKey) == false) {
-          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-          if (fatafatData != null && IsKeyExists(alreadyFoundPartKeys, fatafatData._2.GetKey.toList) == false) {
-            retResult ++= getRddDataFromFatafatData(fatafatData._2, tmRange, f)
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+          if (kamanjaData != null && IsKeyExists(alreadyFoundPartKeys, kamanjaData._2.GetKey.toList) == false) {
+            retResult ++= getRddDataFromKamanjaData(kamanjaData._2, tmRange, f)
             foundPartKeys += partKey
           }
         } else {
           container.data.foreach(kv => {
             val k = kv._2._2.GetKey.toList
             if (IsKeyExists(alreadyFoundPartKeys, k) == false) {
-              retResult ++= getRddDataFromFatafatData(kv._2._2, tmRange, f)
+              retResult ++= getRddDataFromKamanjaData(kv._2._2, tmRange, f)
               foundPartKeys += k.toList
             }
           })
@@ -182,10 +182,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       fnd
     }
 
-    def setFetchedObj(containerName: String, partKeyStr: String, fatafatData: FatafatData): Unit = {
+    def setFetchedObj(containerName: String, partKeyStr: String, kamanjaData: KamanjaData): Unit = {
       val container = getMsgContainer(containerName.toLowerCase, true)
       if (container != null) {
-        container.data(partKeyStr) = (false, fatafatData)
+        container.data(partKeyStr) = (false, kamanjaData)
       }
     }
 
@@ -203,10 +203,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getObject(containerName: String, partKey: List[String], primaryKey: List[String]): (MessageContainerBase, Boolean) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null && TxnContextCommonFunctions.IsEmptyKey(partKey) == false && TxnContextCommonFunctions.IsEmptyKey(primaryKey) == false) {
-        val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-        if (fatafatData != null) {
+        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+        if (kamanjaData != null) {
           // Search for primary key match
-          return (fatafatData._2.GetMessageContainerBase(primaryKey.toArray, false), true)
+          return (kamanjaData._2.GetMessageContainerBase(primaryKey.toArray, false), true)
         }
       }
       (null, false)
@@ -215,21 +215,21 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     def getObjects(containerName: String, partKey: List[String], appendCurrentChanges: Boolean): (Array[MessageContainerBase], Boolean) = {
       val container = getMsgContainer(containerName.toLowerCase, false)
       if (container != null) {
-        val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
-        if (fatafatData != null) {
+        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKey), null)
+        if (kamanjaData != null) {
           if (container.current_msg_cont_data.size > 0) {
             val allData = ArrayBuffer[MessageContainerBase]()
             if (appendCurrentChanges) {
-              allData ++= fatafatData._2.GetAllData
+              allData ++= kamanjaData._2.GetAllData
               allData --= container.current_msg_cont_data
               allData ++= container.current_msg_cont_data // Just to get the current messages to end
             } else {
-              allData ++= fatafatData._2.GetAllData
+              allData ++= kamanjaData._2.GetAllData
               allData --= container.current_msg_cont_data
             }
             return (allData.toArray, true)
           } else {
-            return (fatafatData._2.GetAllData, true)
+            return (kamanjaData._2.GetAllData, true)
           }
         }
       }
@@ -242,11 +242,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val notFndPartkeys = ArrayBuffer[List[String]]()
         for (i <- 0 until partKeys.size) {
           if (TxnContextCommonFunctions.IsEmptyKey(partKeys(i)) == false) {
-            val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
-            if (fatafatData != null) {
+            val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
+            if (kamanjaData != null) {
               if (TxnContextCommonFunctions.IsEmptyKey(primaryKeys(i)) == false) {
                 // Search for primary key match
-                val fnd = fatafatData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
+                val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
                 if (fnd != null)
                   return (true, Array[List[String]]())
               }
@@ -268,10 +268,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val unmatchedPrimaryKeys = ArrayBuffer[List[String]]()
       if (container != null) {
         for (i <- 0 until partKeys.size) {
-          val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
-          if (fatafatData != null) {
+          val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(partKeys(i)), null)
+          if (kamanjaData != null) {
             // Search for primary key match
-            val fnd = fatafatData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
+            val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
             if (fnd != null) {
               matchedPartKeys += partKeys(i)
               matchedPrimaryKeys += primaryKeys(i)
@@ -301,7 +301,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
             container.data(partKeyStr) = (true, fnd._2)
           }
         } else {
-          val ffData = new FatafatData
+          val ffData = new KamanjaData
           ffData.SetKey(partKey.toArray)
           ffData.SetTypeName(containerName)
           ffData.AddMessageContainerBase(value, true, true)
@@ -424,8 +424,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
    * @param dstore : the mapdb handle
    * @param map : the map to be updated with key/MessageContainerBase pairs.
    */
-  private def loadMap(keys: Array[FatafatDataKey], msgOrCont: MsgContainerInfo): Unit = {
-    var objs: Array[FatafatData] = new Array[FatafatData](1)
+  private def loadMap(keys: Array[KamanjaDataKey], msgOrCont: MsgContainerInfo): Unit = {
+    var objs: Array[KamanjaData] = new Array[KamanjaData](1)
     var notFoundKeys = 0
     val buildOne = (tupleBytes: Value) => {
       buildObject(tupleBytes, objs, msgOrCont.containerType)
@@ -434,7 +434,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       try {
         val StartDateRange = if (key.D.size == 2) key.D(0) else 0
         val EndDateRange = if (key.D.size == 2) key.D(1) else 0
-        _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
+        _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
         msgOrCont.synchronized {
           msgOrCont.data(InMemoryKeyDataInJson(key.K)) = (false, objs(0))
         }
@@ -484,7 +484,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     valInfoBytes
   }
 
-  private def buildObject(tupleBytes: Value, objs: Array[FatafatData], containerType: BaseTypeDef): Unit = {
+  private def buildObject(tupleBytes: Value, objs: Array[KamanjaData], containerType: BaseTypeDef): Unit = {
     // Get first _serInfoBufBytes bytes
     if (tupleBytes.size < _serInfoBufBytes) {
       val errMsg = s"Invalid input. This has only ${tupleBytes.size} bytes data. But we are expecting serializer buffer bytes as of size ${_serInfoBufBytes}"
@@ -504,12 +504,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
           }
         }
         if (_kryoSer != null) {
-          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[FatafatData]
+          objs(0) = _kryoSer.DeserializeObjectFromByteArray(valInfo).asInstanceOf[KamanjaData]
         }
       }
       case "manual" => {
         val valInfo = getValueInfo(tupleBytes)
-        val datarec = new FatafatData
+        val datarec = new KamanjaData
         datarec.DeserializeData(valInfo, _mdres, _classLoader)
         objs(0) = datarec
       }
@@ -657,9 +657,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def loadObjFromDb(transId: Long, msgOrCont: MsgContainerInfo, key: List[String]): FatafatData = {
-    val partKeyStr = FatafatData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
-    var objs: Array[FatafatData] = new Array[FatafatData](1)
+  private def loadObjFromDb(transId: Long, msgOrCont: MsgContainerInfo, key: List[String]): KamanjaData = {
+    val partKeyStr = KamanjaData.PrepareKey(msgOrCont.objFullName, key, 0, 0)
+    var objs: Array[KamanjaData] = new Array[KamanjaData](1)
     val buildOne = (tupleBytes: Value) => {
       buildObject(tupleBytes, objs, msgOrCont.containerType)
     }
@@ -695,12 +695,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val fatafatData = container.data.getOrElse(partKeyStr, null)
-      if (fatafatData != null) {
+      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      if (kamanjaData != null) {
         // Search for primary key match
-        val v = fatafatData._2.GetMessageContainerBase(primaryKey.toArray, false)
+        val v = kamanjaData._2.GetMessageContainerBase(primaryKey.toArray, false)
         if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
         return v;
       }
       // If not found in memory, try in DB
@@ -714,7 +714,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       // If not found in DB, Create Empty and set to current transaction context
       if (txnCtxt != null) {
-        val emptyFfData = new FatafatData
+        val emptyFfData = new KamanjaData
         emptyFfData.SetKey(partKey.toArray)
         emptyFfData.SetTypeName(containerName)
         txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
@@ -738,12 +738,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val fatafatData = container.data.getOrElse(partKeyStr, null)
-      if (fatafatData != null) {
+      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      if (kamanjaData != null) {
         // Search for primary key match
         if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
-        retVals ++= fatafatData._2.GetAllData
+          txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
+        retVals ++= kamanjaData._2.GetAllData
       } else {
         val loadedFfData = loadObjFromDb(transId, container, partKey)
         if (loadedFfData != null) {
@@ -754,7 +754,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         } else {
           // If not found in DB, Create Empty and set to current transaction context
           if (txnCtxt != null) {
-            val emptyFfData = new FatafatData
+            val emptyFfData = new KamanjaData
             emptyFfData.SetKey(partKey.toArray)
             emptyFfData.SetTypeName(containerName)
             txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
@@ -799,7 +799,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     val v = _adapterUniqKeyValData.getOrElse(key, null)
     if (v != null) return v
-    val partKeyStr = FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
+    val partKeyStr = KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)
     var objs: Array[(String, Int, Int)] = new Array[(String, Int, Int)](1)
     val buildAdapOne = (tupleBytes: Value) => {
       buildAdapterUniqueValue(tupleBytes, objs)
@@ -832,7 +832,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     if (v != null) return v
     var objs = new Array[scala.collection.mutable.Map[String, SavedMdlResult]](1)
     val buildMdlOne = (tupleBytes: Value) => { buildModelsResult(tupleBytes, objs) }
-    val partKeyStr = FatafatData.PrepareKey("ModelResults", key, 0, 0)
+    val partKeyStr = KamanjaData.PrepareKey("ModelResults", key, 0, 0)
     try {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
@@ -867,10 +867,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val reMainingForDb = ArrayBuffer[List[String]]()
     if (container != null) {
       for (i <- 0 until remainingPartKeys.size) {
-        val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (fatafatData != null) {
+        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
+        if (kamanjaData != null) {
           // Search for primary key match
-          val fnd = fatafatData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
+          val fnd = kamanjaData._2.GetMessageContainerBase(primaryKeys(i).toArray, false)
           if (fnd != null)
             return true
         } else {
@@ -879,10 +879,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
 
       for (i <- 0 until reMainingForDb.size) {
-        val fatafatData = loadObjFromDb(transId, container, reMainingForDb(i))
-        if (fatafatData != null) {
+        val kamanjaData = loadObjFromDb(transId, container, reMainingForDb(i))
+        if (kamanjaData != null) {
           // Search for primary key match
-          val fnd = fatafatData.GetMessageContainerBase(primaryKeys(i).toArray, false)
+          val fnd = kamanjaData.GetMessageContainerBase(primaryKeys(i).toArray, false)
           if (fnd != null)
             return true
         }
@@ -910,10 +910,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       var unmatchedPrimaryKeys = ArrayBuffer[List[String]]()
 
       for (i <- 0 until remainingPartKeys.size) {
-        val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
-        if (fatafatData != null) {
+        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(remainingPartKeys(i)), null)
+        if (kamanjaData != null) {
           // Search for primary key match
-          val fnd = fatafatData._2.GetMessageContainerBase(remainingPrimaryKeys(i).toArray, false)
+          val fnd = kamanjaData._2.GetMessageContainerBase(remainingPrimaryKeys(i).toArray, false)
           if (fnd != null) {
             // Matched
           } else {
@@ -931,10 +931,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
       // BUGBUG:: Need to check whether the 1st key loaded 2nd key also. Because same partition key can have multiple primary keys or partition key itself can be duplicated
       for (i <- 0 until unmatchedPartKeys.size) {
-        val fatafatData = container.data.getOrElse(InMemoryKeyDataInJson(unmatchedPartKeys(i)), null)
-        if (fatafatData != null) {
+        val kamanjaData = container.data.getOrElse(InMemoryKeyDataInJson(unmatchedPartKeys(i)), null)
+        if (kamanjaData != null) {
           // Search for primary key match
-          val fnd = fatafatData._2.GetMessageContainerBase(unmatchedPrimaryKeys(i).toArray, false)
+          val fnd = kamanjaData._2.GetMessageContainerBase(unmatchedPrimaryKeys(i).toArray, false)
           if (fnd != null) {
             // Matched
           } else {
@@ -959,10 +959,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val partKeyStr = InMemoryKeyDataInJson(partKey)
-      val fatafatData = container.data.getOrElse(partKeyStr, null)
-      if (fatafatData != null) {
+      val kamanjaData = container.data.getOrElse(partKeyStr, null)
+      if (kamanjaData != null) {
         if (txnCtxt != null)
-          txnCtxt.setFetchedObj(containerName, partKeyStr, fatafatData._2)
+          txnCtxt.setFetchedObj(containerName, partKeyStr, kamanjaData._2)
         return ;
       }
       // If not found in memory, try in DB
@@ -974,7 +974,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       }
       // If not found in DB, Create Empty and set to current transaction context
       if (txnCtxt != null) {
-        val emptyFfData = new FatafatData
+        val emptyFfData = new KamanjaData
         emptyFfData.SetKey(partKey.toArray)
         emptyFfData.SetTypeName(containerName)
         txnCtxt.setFetchedObj(containerName, partKeyStr, emptyFfData)
@@ -1008,9 +1008,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     }
   }
 
-  private def collectKey(key: Key, keys: ArrayBuffer[FatafatDataKey]): Unit = {
+  private def collectKey(key: Key, keys: ArrayBuffer[KamanjaDataKey]): Unit = {
     implicit val jsonFormats: Formats = DefaultFormats
-    val parsed_key = parse(new String(key.toArray)).extract[FatafatDataKey]
+    val parsed_key = parse(new String(key.toArray)).extract[KamanjaDataKey]
     keys += parsed_key
   }
 
@@ -1037,7 +1037,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     _messagesOrContainers.clear
   }
 
-  private def getTableKeys(all_keys: ArrayBuffer[FatafatDataKey], objName: String): Array[FatafatDataKey] = {
+  private def getTableKeys(all_keys: ArrayBuffer[KamanjaDataKey], objName: String): Array[KamanjaDataKey] = {
     val tmpObjName = objName.toLowerCase
     all_keys.filter(k => k.T.compareTo(objName) == 0).toArray
   }
@@ -1057,7 +1057,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _checkPointAdapInfoDataStore = GetDataStoreHandle(statusInfoStoreType, statusInfoSchemaName, "checkPointAdapInfo", statusInfoLocation, statusInfoadapterSpecificConfig)
     }
 
-    val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
+    val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
     var keysAlreadyLoaded = false
 
     containerNames.foreach(c1 => {
@@ -1236,7 +1236,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               val serVal = kv._2._2.SerializeData
               object obj extends IStorage {
                 val k = makeKey(kv._2._2.SerializeKey)
-                // FatafatData.PrepareKey(mc.objFullName, ka, 0, 0)
+                // KamanjaData.PrepareKey(mc.objFullName, ka, 0, 0)
                 val v = makeValue(serVal, "manual")
 
                 def Key = k
@@ -1265,7 +1265,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _adapterUniqKeyValData(v1._1) = v1._2
       try {
         object obj extends IStorage {
-          val k = makeKey(FatafatData.PrepareKey("AdapterUniqKvData", List(v1._1), 0, 0))
+          val k = makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(v1._1), 0, 0))
           val json =
             ("Val" -> v1._2._1) ~
               ("xidx" -> v1._2._2) ~
@@ -1294,7 +1294,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       try {
         val serVal = _kryoSer.SerializeObjectToByteArray(v1._2)
         object obj extends IStorage {
-          val k = makeKey(FatafatData.PrepareKey("ModelResults", List(v1._1), 0, 0))
+          val k = makeKey(KamanjaData.PrepareKey("ModelResults", List(v1._1), 0, 0))
           val v = makeValue(serVal, "kryo")
 
           def Key = k
@@ -1357,7 +1357,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
         adapterUniqKeyValData.foreach(kv => {
           object obj extends IStorage {
-            val k = makeKey(FatafatData.PrepareKey("UK", List(kv._1), 0, 0))
+            val k = makeKey(KamanjaData.PrepareKey("UK", List(kv._1), 0, 0))
             val json =
               ("Val" -> kv._2._1) ~
                 ("xidx" -> kv._2._2) ~
@@ -1414,7 +1414,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   // Get all Status information from intermediate table
   override def getAllIntermediateStatusInfo: Array[(String, (String, Int, Int))] = {
     val results = new ArrayBuffer[(String, (String, Int, Int))]()
-    val keys = ArrayBuffer[FatafatDataKey]()
+    val keys = ArrayBuffer[KamanjaDataKey]()
     val keyCollector = (key: Key) => {
       collectKey(key, keys)
     }
@@ -1425,11 +1425,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val buildAdapOne = (tupleBytes: Value) => {
           buildAdapterUniqueValue(tupleBytes, objs)
         }
-        _runningTxnsDataStore.get(makeKey(FatafatData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
+        _runningTxnsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info")
+          logger.debug(s"getAllIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1446,11 +1446,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val buildAdapOne = (tupleBytes: Value) => {
           buildAdapterUniqueValue(tupleBytes, objs)
         }
-        _runningTxnsDataStore.get(makeKey(FatafatData.PrepareKey("UK", List(key), 0, 0)), buildAdapOne)
+        _runningTxnsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", List(key), 0, 0)), buildAdapOne)
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info")
+          logger.debug(s"getIntermediateStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1467,11 +1467,11 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val buildAdapOne = (tupleBytes: Value) => {
           buildAdapterUniqueValue(tupleBytes, objs)
         }
-        _allDataDataStore.get(makeKey(FatafatData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)), buildAdapOne)
+        _allDataDataStore.get(makeKey(KamanjaData.PrepareKey("AdapterUniqKvData", List(key), 0, 0)), buildAdapOne)
         results += ((key, objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Status Info")
+          logger.debug(s"getAllFinalStatusInfo() -- Unable to load Status Info")
         }
       }
     })
@@ -1498,7 +1498,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     validateUniqVals.foreach(kv => {
       object obj extends IStorage {
-        val key = makeKey(FatafatData.PrepareKey("CP", List(kv._1), 0, 0))
+        val key = makeKey(KamanjaData.PrepareKey("CP", List(kv._1), 0, 0))
         val value = kv._2
         val v = makeValue(value.getBytes("UTF8"), "CSV")
 
@@ -1532,7 +1532,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
   override def GetValidateAdapterInformation: Array[(String, String)] = {
     val results = ArrayBuffer[(String, String)]()
 
-    val keys = ArrayBuffer[FatafatDataKey]()
+    val keys = ArrayBuffer[KamanjaDataKey]()
     val keyCollector = (key: Key) => {
       collectKey(key, keys)
     }
@@ -1543,12 +1543,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         val buildAdapOne = (tupleBytes: Value) => {
           buildValidateAdapInfo(tupleBytes, objs)
         }
-        _checkPointAdapInfoDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, 0, 0)), buildAdapOne)
+        _checkPointAdapInfoDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, 0, 0)), buildAdapOne)
         logger.debug(s"GetValidateAdapterInformation -- %s -> %s".format(key.K(0), objs(0).toString))
         results += ((key.K(0), objs(0)))
       } catch {
         case e: Exception => {
-          logger.error(s"Unable to load Validate (Check Point) Adapter Information")
+          logger.debug(s"GetValidateAdapterInformation() -- Unable to load Validate (Check Point) Adapter Information")
         }
       }
     })
@@ -1560,7 +1560,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val container = _messagesOrContainers.getOrElse(containerName.toLowerCase, null)
     if (container != null) {
       val dataKeys = keys.map(partKey => {
-        FatafatDataKey(container.objFullName, partKey, List[Int](), 0)
+        KamanjaDataKey(container.objFullName, partKey, List[Int](), 0)
       }).toArray
       loadMap(dataKeys, container)
       /*
@@ -1594,7 +1594,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
-        val (v1, foundPartKey1) = TxnContextCommonFunctions.getRecentFromFatafatData(loadedFfData, tmRange, f)
+        val (v1, foundPartKey1) = TxnContextCommonFunctions.getRecentFromKamanjaData(loadedFfData, tmRange, f)
         if (foundPartKey1)
           return Some(v1)
       }
@@ -1634,7 +1634,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       // If not found in memory, try in DB
       val loadedFfData = loadObjFromDb(transId, container, partKey)
       if (loadedFfData != null) {
-        val res2 = TxnContextCommonFunctions.getRddDataFromFatafatData(loadedFfData, tmRange, f)
+        val res2 = TxnContextCommonFunctions.getRddDataFromKamanjaData(loadedFfData, tmRange, f)
         retResult ++= res2
       }
       return retResult.toArray
@@ -1645,12 +1645,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         // Nothing to be loaded from database
       } else {
         // Need to get all keys for this message/container and take all the data 
-        val all_keys = ArrayBuffer[FatafatDataKey]() // All keys for all tables for now
+        val all_keys = ArrayBuffer[KamanjaDataKey]() // All keys for all tables for now
         val keyCollector = (key: Key) => { collectKey(key, all_keys) }
         _allDataDataStore.getAllKeys(keyCollector)
         val keys = getTableKeys(all_keys, containerName.toLowerCase)
         if (keys.size > 0) {
-          var objs: Array[FatafatData] = new Array[FatafatData](1)
+          var objs: Array[KamanjaData] = new Array[KamanjaData](1)
           val buildOne = (tupleBytes: Value) => { buildObject(tupleBytes, objs, container.containerType) }
           val alreadyFoundPartKeys = foundPartKeys.toArray // No need to add to this list anymore. This is the final place we used this to check
           keys.foreach(key => {
@@ -1659,7 +1659,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               val EndDateRange = if (key.D.size == 2) key.D(1) else 0
               objs(0) = null
               try {
-                _allDataDataStore.get(makeKey(FatafatData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
+                _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
 
               } catch {
                 case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1668,7 +1668,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                   logger.debug("\nStackTrace:"+stackTrace)}
               }
               if (objs(0) != null) {
-                retResult ++= TxnContextCommonFunctions.getRddDataFromFatafatData(objs(0), tmRange, f)
+                retResult ++= TxnContextCommonFunctions.getRddDataFromKamanjaData(objs(0), tmRange, f)
               }
             }
           })

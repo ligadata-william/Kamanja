@@ -3,7 +3,7 @@ package com.ligadata.metadataapiservice
 import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.io.IO
-import com.ligadata.fatafat.metadata._
+import com.ligadata.kamanja.metadata._
 import spray.routing.RequestContext
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
@@ -33,11 +33,9 @@ class UploadModelConfigService(requestContext: RequestContext, userid:Option[Str
   }
 
   def process(cfgJson:String) = {
-
     log.debug("Requesting UploadModelConfig {}", cfgJson)
-    val apiResult = MetadataAPIImpl.UploadModelsConfig(cfgJson, null, null)
+    val apiResult = MetadataAPIImpl.UploadModelsConfig(cfgJson, userid, null)
     requestContext.complete(apiResult)
   }
 
 }
-
