@@ -74,8 +74,27 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 *       		in the current printer.
 		 *         	b) "builds" code is a string that is printed out of line just before closure of the current class.
 		 *          	See MacroSelect.scala for the details and use cases. 
+		 *           
+		 *  With the introduction of namespaces and namespace alias references in the pmml, there is a need to make a substitution of the
+		 *  alias with the actual namespace.  The code below that resets the scalaFcnName variable is principally for simple functions.
+		 *  Similar treatment is found for the Iterable function cases in the IterableFcnPrinter.
 		 */
 
+		scalaFcnName = if (node.function.contains(".")) { /** NOTE: builtin case above cannot match this predicate... by definition */
+			/** substitute the alias present with the corresponding namespace (i.e., full pkg) name */
+			val alias : String = node.function.split('.').head.trim
+			val fnName : String = node.function.split('.').last.trim
+			val nmspc : String = if (ctx.NamespaceSearchMap.contains(alias)) {
+				ctx.NamespaceSearchMap(alias).trim
+			} else {
+				PmmlError.logError(ctx, s"Function ${node.function}'s namespace alias could not produce a namespace from the map... logic/coding error in ctx!")
+				alias
+			}
+			s"$nmspc.$fnName"
+		} else {
+			scalaFcnName
+		}
+		
 		ctx.elementStack.push(node) /** track the element as it is processed */
 		if (isPmmlBuiltin && ! variadic) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
@@ -123,7 +142,14 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 				}
 			}
 			if (funcDef == null) {
-				/** perhaps its a macro instead */
+				/** 
+				 *  Perhaps its a macro instead...
+				 *  
+				 *  NOTE: Currently there are no namespace qualified macros in use.  All are part of the System namespace.
+				 *  Should that change due to formally allowing users to express macros through the metadata api, this will
+				 *  need to be reviewed.  It would then be possible to see namespace alias qualified reference expressions for
+				 *  types and functions. 
+				 */
 				val macroSelector : MacroSelect = new MacroSelect(ctx, ctx.mgr, node, generator, functionSelector)
 				val (macroDef,macroArgTypes) : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = macroSelector.selectMacro
 				if (macroDef != null) {	  

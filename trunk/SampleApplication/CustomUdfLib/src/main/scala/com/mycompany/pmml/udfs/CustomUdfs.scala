@@ -83,6 +83,24 @@ object CustomUdfs extends LogTrait {
     def ID_GEN() : String = {
         UUID.randomUUID().toString;
     }
+    
+    /**
+     * FNV fast hashing algorithm in 64 bits.
+     * @see http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
+     */
+    def hashKey(key: String): Long = {
+      val keyBytes : Array[Byte] = key.getBytes
+      val PRIME: Long = 1099511628211L
+      var i = 0
+      val len = keyBytes.length
+      var rv: Long = 0xcbf29ce484222325L
+      while (i < len) {
+        rv = (rv * PRIME) ^ (keyBytes(i) & 0xff)
+        i += 1
+      }
+      rv & 0xffffffffL
+    }
+
 
     /**
        Convert the supplied iso8601 date integer according to these format codes:

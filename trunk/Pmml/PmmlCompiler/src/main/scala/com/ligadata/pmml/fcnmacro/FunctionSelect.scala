@@ -77,7 +77,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.debug(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	
-	  	if (scalaFcnName == "CollectionLength") {
+	  	if (scalaFcnName == "Put") {
 	  		val stop : Int = 0
 	  	}
 	  	
@@ -1348,7 +1348,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val baseArgTypes : Map[String, Array[(String, ClassSymbol, Type)]] = collectContainerSuperClasses(argTypes)  	
 	  	val newArgTypes : Array[(String,Boolean,BaseTypeDef)] = argTypes.map( argType => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argType
-	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer && baseArgTypes.size > 0) {
+	  		val isCompilerContext : Boolean = (elem != null && elem.Name.toLowerCase == "context" && elem.NameSpace.toLowerCase == "system")
+	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer && baseArgTypes.size > 0 && ! isCompilerContext) {
 	  			val argTypeInfo = if (baseArgTypes.contains(arg)) baseArgTypes(arg) else null
 	  			if (argTypeInfo != null) {
 					var newType : String = null

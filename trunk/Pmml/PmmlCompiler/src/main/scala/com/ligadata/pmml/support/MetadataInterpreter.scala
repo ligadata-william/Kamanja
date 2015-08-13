@@ -463,13 +463,13 @@ class MetadataInterpreter(val ctx : PmmlContext) extends com.ligadata.pmml.compi
 	  	if (typesig.split('(').head.contains(".")) {
 	  		val (namepart, args) : (String,String) = typesig.span(_ != '(')
 	  		val names : Array[String] = namepart.split('.')
-	  		val reasonable : Boolean = (namepart.size == 2)
+	  		val reasonable : Boolean = (names.size == 2)
 	  		if (reasonable) {
 	  			val alias : String =  names(0)
 	  			val nm : String = names(1)
 	  			val nmSpc : String = if (ctx.NamespaceSearchMap.contains(alias)) ctx.NamespaceSearchMap.apply(alias) else alias
 	  			
-	  			val key : String = nmSpc.concat(nm).concat(args)
+	  			val key : String = nmSpc.concat(".").concat(nm).concat(args)
 	  			fdef = mgr.FunctionByTypeSig(key)
 	  		} else {
 	  			fdef = mgr.FunctionByTypeSig(typesig)
