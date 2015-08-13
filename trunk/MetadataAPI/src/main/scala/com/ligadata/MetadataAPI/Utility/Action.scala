@@ -1,6 +1,7 @@
 package main.scala.com.ligadata.MetadataAPI.Utility
 
-import main.scala.com.ligadata.MetadataAPI.Utility.Action._
+import main.scala.com.ligadata.MetadataAPI.Utility.Action.Value
+
 
 
 /**
@@ -40,14 +41,14 @@ object Action extends Enumeration {
   val GETALLTYPES = Value("getalltypes")
   val REMOVETYPE = Value("removetype")
   val LOADTYPESFROMAFILE = Value("loadtypesfromafile")
-  val DUMPALLTYPESBYOBJTYPEASJSON = Value("dumpalltypesbyobjtypeasjson")
+  val DUMPALLTYPESBYOBJTYPEASJSON = Value("dumpalltypes")
   //function
   val ADDFUNCTION = Value("addfunction")
   val GETFUNCTION = Value("getfunction")
   val REMOVEFUNCTION = Value("removefunction")
   val UPDATEFUNCTION= Value("updatefunction")
   val LOADFUNCTIONSFROMAFILE= Value("loadfunctionsfromafile")
-  val DUMPALLFUNCTIONSASJSON= Value("dumpallfunctionsasjson")
+  val DUMPALLFUNCTIONSASJSON= Value("dumpallfunctions")
   //config
   val UPLOADENGINECONFIG= Value("uploadengineconfig")
   val UPLOADCOMPILECONFIG= Value("uploadcompileconfig")
@@ -58,7 +59,7 @@ object Action extends Enumeration {
   val REMOVECONCEPT= Value("removeconcept")
   val UPDATECONCEPT= Value("updateconcept")
   val LOADCONCEPTSFROMAFILE= Value("loadconceptsfromafile ")
-  val DUMPALLCONCEPTSASJSON= Value("dumpallconceptsasjson")
+  val DUMPALLCONCEPTSASJSON= Value("dumpallconcepts")
   val UPLOADJAR=Value("uploadjar")
   //dump
   val DUMPMETADATA=Value("dumpmetadata")

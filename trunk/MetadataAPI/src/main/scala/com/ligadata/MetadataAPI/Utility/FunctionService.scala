@@ -5,7 +5,7 @@ import java.io.File
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 
 import scala.io.Source
-
+import org.apache.log4j._
 /**
  * Created by dhaval on 8/12/15.
  */
@@ -36,7 +36,7 @@ object FunctionService {
               case option => {
                 val functionDefs = getUserInputFromMainMenu(types)
                 for (functionDef <- functionDefs) {
-                  response += MetadataAPIImpl.AddFunction(functionDef.toString, "JSON", userid)
+                  response += MetadataAPIImpl.AddFunctions(functionDef.toString, "JSON", userid)
                 }
               }
             }
@@ -51,7 +51,7 @@ object FunctionService {
       //input provided
       var function = new File(input.toString)
       val functionDef = Source.fromFile(function).mkString
-      response = MetadataAPIImpl.AddFunction(functionDef.toString, "JSON", userid)
+      response = MetadataAPIImpl.AddFunctions(functionDef.toString, "JSON", userid)
     }
     response
   }
@@ -178,7 +178,15 @@ object FunctionService {
     response
   }
   def dumpAllFunctionsAsJson: String ={
-  var response=""
+    var response=""
+    try{
+      response=MetadataAPIImpl.GetAllFunctionDefs("JSON", userid).toString()
+    }
+    catch {
+      case e: Exception => {
+        response=e.getStackTrace.toString
+      }
+    }
     response
   }
 
