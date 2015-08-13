@@ -3,6 +3,7 @@ package main.scala.com.ligadata.MetadataAPI.Utility
 import java.io.File
 
 import com.ligadata.MetadataAPI.MetadataAPIImpl
+import com.ligadata.kamanja.metadata.AttributeDef
 
 import scala.io.Source
 import org.apache.log4j._
@@ -37,7 +38,7 @@ object ConceptService {
               case option => {
                 val conceptDefs = getUserInputFromMainMenu(types)
                 for (conceptDef <- conceptDefs) {
-                  response += MetadataAPIImpl.AddConcept(conceptDef.toString, "JSON", userid)
+                  response += MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
                 }
               }
             }
@@ -52,13 +53,44 @@ object ConceptService {
       //input provided
       var message = new File(input.toString)
       val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.AddConcept(conceptDef.toString, "JSON", userid)
+      response = MetadataAPIImpl.AddConcepts(conceptDef.toString, "JSON", userid)
     }
     response
   }
   def removeConcept: String ={
-    var response="TO BE IMPLEMENTED"
+    var response = ""
+    try {
+      val conceptKeys = MetadataAPIImpl.GetAllConcepts("JSON", userid).toArray
 
+      if (conceptKeys.length == 0) {
+        val errorMsg = "Sorry, No concepts available, in the Metadata, to delete!"
+        response = errorMsg
+      }
+      else {
+        println("\nPick the concepts to be deleted from the following list: ")
+        var srno = 0
+        for (conceptKey <- conceptKeys) {
+          srno += 1
+          println("[" + srno + "] " + conceptKey)
+        }
+        println("Enter your choice: ")
+        val choice: Int = readInt()
+
+        if (choice < 1 || choice > conceptKeys.length) {
+          val errormsg = "Invalid choice " + choice + ". Start with the main menu."
+          response = errormsg
+        }
+
+        val conceptKey = conceptKeys(choice - 1)
+
+        response=MetadataAPIImpl.RemoveConcept(conceptKey.asInstanceOf[AttributeDef])
+
+      }
+    } catch {
+      case e: Exception => {
+        response = e.getStackTrace.toString
+      }
+    }
     response
   }
   def updateConcept(input: String): String ={
@@ -83,7 +115,7 @@ object ConceptService {
               case option => {
                 val conceptDefs = getUserInputFromMainMenu(types)
                 for (conceptDef <- conceptDefs) {
-                  response += MetadataAPIImpl.UpdateConcept(conceptDef.toString, "JSON", userid)
+                  response += MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
                 }
               }
             }
@@ -98,7 +130,7 @@ object ConceptService {
       //input provided
       var message = new File(input.toString)
       val conceptDef = Source.fromFile(message).mkString
-      response = MetadataAPIImpl.UpdateConcept(conceptDef.toString, "JSON", userid)
+      response = MetadataAPIImpl.UpdateConcepts(conceptDef.toString, "JSON", userid)
     }
     response
   }
@@ -108,6 +140,14 @@ object ConceptService {
   }
   def dumpAllConceptsAsJson: String ={
     var response=""
+    try{
+      response=MetadataAPIImpl.GetAllConcepts("JSON", userid).toString
+    }
+    catch {
+      case e: Exception => {
+        response=e.getStackTrace.toString
+      }
+    }
     response
   }
 
