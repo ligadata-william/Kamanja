@@ -55,7 +55,7 @@ object ModelService {
       //process message
       var model = new File(input.toString)
       modelDef= Source.fromFile(model).mkString
-      response = MetadataAPIImpl.AddModel(modelDef, userid)
+      response = MetadataAPIImpl.AddModel(modelDef.toString, userid)
     }
     response
   }
