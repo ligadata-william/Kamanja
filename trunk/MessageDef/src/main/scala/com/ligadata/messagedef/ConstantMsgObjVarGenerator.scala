@@ -739,7 +739,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   if (other != null && other != this) {
     // call copying fields from other to local variables
-    //fromFunc(other)
+    fromFunc(other)
   }
 
   def this(txnId: Long) = {

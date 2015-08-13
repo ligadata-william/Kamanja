@@ -12,7 +12,7 @@ class BaseTypesHandler {
   private val pad4 = "\t\t\t\t"
   private val newline = "\n"
   val transactionid: String = "transactionid"
-    var cnstObjVar = new ConstantMsgObjVarGenerator
+  var cnstObjVar = new ConstantMsgObjVarGenerator
 
   def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean, msg: Message): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], ArrayBuffer[String], ArrayBuffer[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -77,16 +77,20 @@ class BaseTypesHandler {
 
         if (f.Name.toLowerCase().equals(transactionid)) {
           scalaclass = scalaclass.append("")
+          withMethod = withMethod.append("")
+          fromFuncOfFixed = fromFuncOfFixed.append("")
         } else {
           scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
           assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
           assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
           assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
+
+          withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
+          withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
+          withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s%s = %s.Clone(other.%s);%s".format(pad2, f.Name, typ.get.implementationName, f.Name, newline))
+
         }
-        withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
-        withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
       } else if (fixed.toLowerCase().equals("false")) {
 
@@ -106,12 +110,17 @@ class BaseTypesHandler {
         }
 
         keysStr.append("(\"" + f.Name + "\", " + mappedTypesABuf.indexOf(typstring) + "),")
+        if (f.Name.toLowerCase().equals(transactionid)) {
+          withMethod = withMethod.append("")
 
-        withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
-        withMethod = withMethod.append("%s fields(\"%s\") = (%s, value) %s".format(pad1, f.Name, mappedTypesABuf.indexOf(typstring), newline))
-        withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+        } else {
+          withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
+          withMethod = withMethod.append("%s fields(\"%s\") = (%s, value) %s".format(pad1, f.Name, mappedTypesABuf.indexOf(typstring), newline))
+          withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+        }
 
       }
+
       serializedBuf = serializedBuf.append(serializeMsgContainer(typ, fixed, f, baseTypId))
       deserializedBuf = deserializedBuf.append(deSerializeMsgContainer(typ, fixed, f, baseTypId))
       val (prevObjDeserialized, convertOldObjtoNewObj, mappedPrevVerMatch, mappedPrevTypNotMatchkey, prevObjTypNotMatchDeserialized, prevVerMsgBaseTypesIdxArryBuf) = prevObjDeserializeMsgContainer(typ, fixed, f, childs, baseTypId, prevVerMsgBaseTypesIdxArry)

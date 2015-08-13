@@ -153,7 +153,10 @@ class ContainerTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null) { %s".format(pad2, f.Name, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.Clone.asInstanceOf[%s] %s".format(pad2, f.Name, f.Name, ctrDef.PhysicalName, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s } %s ".format(pad2, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
@@ -186,6 +189,6 @@ class ContainerTypeHandler {
     }
     //  (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, keysStr.toString, serializedBuf.toString, deserializedBuf.toString, prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncOfFixed.toString)
 
-    (list, argsList, jarset, returnAB.toArray )
+    (list, argsList, jarset, returnAB.toArray)
   }
 }

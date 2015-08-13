@@ -73,7 +73,9 @@ class ConceptTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, f.Name, newline))
         fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))

@@ -7,7 +7,7 @@ class RDDHandler {
  
   type T = """ + msgName + """     
   override def build = new T
-  override def build(from: T) = new T(from)
+  override def build(from: T) = new T(from.transactionId, from)
   override def toJavaRDDObject: JavaRDDObject[T] = JavaRDDObject.fromRDDObject[T](this)
  
     """

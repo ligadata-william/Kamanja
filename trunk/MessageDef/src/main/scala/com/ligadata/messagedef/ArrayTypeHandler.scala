@@ -64,6 +64,12 @@ class ArrayTypeHandler {
             assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
+            fromFuncOfFixed = fromFuncOfFixed.append("%s if(other.%s != null) { %s".format(pad2, f.Name, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s %s = new %s(other.%s.length); %s".format(pad2, f.Name, typ.get.typeString, f.Name, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.map(v => %s.Clone(v)); %s".format(pad2, f.Name, f.Name, arrayType.elemDef.implementationName, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+         
           } else if (msg.Fixed.toLowerCase().equals("false")) {
 
             //scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
@@ -90,9 +96,11 @@ class ArrayTypeHandler {
           assignCsvdata.append(newline + methodGen.getArrayStr(f.Name, arrayType.elemDef.physicalName) + newline + "\t\tinputdata.curPos = inputdata.curPos+1" + newline)
           assignJsondata.append(methodGen.assignJsonForCntrArrayBuffer(f.Name, arrayType.elemDef.physicalName))
           keysStr.append("\"" + f.Name + "\",")
+
           if (msg.Fixed.toLowerCase().equals("false")) {
             assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
           }
+
           scalaclass = scalaclass.append("%svar %s: %s = %s();%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
         } else if (arrayType.elemDef.tTypeType.toString().toLowerCase().equals("tmessage")) {
@@ -116,6 +124,21 @@ class ArrayTypeHandler {
         mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
         mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
 
+        var typeStr: String = ""
+        if (typ.get.typeString.toString().split("\\[").size == 2) {
+          typeStr = typ.get.typeString.toString().split("\\[")(1)
+        }
+
+        if (msg.Fixed.toLowerCase().equals("true")) {
+
+          fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null) { %s".format(pad2, f.Name, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s %s = new %s(other.%s.length) %s".format(pad2, f.Name, typ.get.typeString, f.Name, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.map(f => f.Clone.asInstanceOf[%s ); %s".format(pad2, f.Name, f.Name, typeStr, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+
+        }
+
         //assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
       }
@@ -125,7 +148,6 @@ class ArrayTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
@@ -226,6 +248,13 @@ class ArrayTypeHandler {
             //  list(inputdata.curPos).split(arrvaldelim, -1).map(v => { xyz :+= com.ligadata.BaseTypes.IntImpl.Input(v)});
             assignCsvdata.append("%slist(inputdata.curPos).split(arrvaldelim, -1).map(v => {%s :+= %s(v)});\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
+
+            fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s %s.clear;  %s".format(pad2, f.Name, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s other.%s.map(v =>{ %s :+= %s.Clone(v)}); %s".format(pad2, f.Name, f.Name, arrayBufType.elemDef.implementationName, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
+            fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+
           } else if (msg.Fixed.toLowerCase().equals("false")) {
             //scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
 
@@ -321,6 +350,16 @@ class ArrayTypeHandler {
         msgAndCntnrsStr.append("\"" + f.Name + "\",")
         mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
         mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
+
+        if (msg.Fixed.toLowerCase().equals("true")) {
+          fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s %s.clear;  %s".format(pad2, f.Name, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s other.%s.map(v =>{ %s :+= v.Clone.asInstanceOf[%s}); %s".format(pad2, f.Name, f.Name, typ.get.typeString.toString().split("\\[")(1), newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
+          fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+
+        }
+
       }
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
 
@@ -329,7 +368,6 @@ class ArrayTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
