@@ -1,5 +1,7 @@
 package main.scala.com.ligadata.MetadataAPI.Utility
 
+import main.scala.com.ligadata.MetadataAPI.Utility.Action._
+
 
 /**
  * Created by dhaval on 8/7/15.
@@ -26,12 +28,43 @@ object Action extends Enumeration {
   val UPDATEMODEL=Value("updatemodel")
   val GETALLMODELS=Value("getallmodels")
   val GETMODEL=Value("getmodel")
-//container management
+  //container management
   val ADDCONTAINER = Value("addcontainer")
   val UPDATECONTAINER = Value("updatecontainer")
   val GETCONTAINER = Value("getcontainer")
   val GETALLCONTAINERS= Value("getallcontainers")
   val REMOVECONTAINER= Value("removecontainer")
-
+  //type management
+  val ADDTYPE  = Value("addtype")
+  val GETTYPE = Value("gettype")
+  val GETALLTYPES = Value("getalltypes")
+  val REMOVETYPE = Value("removetype")
+  val LOADTYPESFROMAFILE = Value("loadtypesfromafile")
+  val DUMPALLTYPESBYOBJTYPEASJSON = Value("dumpalltypesbyobjtypeasjson")
+  //function
+  val ADDFUNCTION = Value("addfunction")
+  val GETFUNCTION = Value("getfunction")
+  val REMOVEFUNCTION = Value("removefunction")
+  val UPDATEFUNCTION= Value("updatefunction")
+  val LOADFUNCTIONSFROMAFILE= Value("loadfunctionsfromafile")
+  val DUMPALLFUNCTIONSASJSON= Value("dumpallfunctionsasjson")
+  //config
+  val UPLOADENGINECONFIG= Value("uploadengineconfig")
+  val UPLOADCOMPILECONFIG= Value("uploadcompileconfig")
+  val DUMPALLCFGOBJECTS= Value("dumpallcfgobjects")
+  val REMOVEENGINECONFIG= Value("removeengineconfig")
+  //Concept
+  val ADDCONCEPT= Value("addconcept")
+  val REMOVECONCEPT= Value("removeconcept")
+  val UPDATECONCEPT= Value("updateconcept")
+  val LOADCONCEPTSFROMAFILE= Value("loadconceptsfromafile ")
+  val DUMPALLCONCEPTSASJSON= Value("dumpallconceptsasjson")
+  val UPLOADJAR=Value("uploadjar")
+  //dump
+  val DUMPMETADATA=Value("dumpmetadata")
+  val DUMPALLNODES=Value("dumpallnodes")
+  val DUMPALLCLUSTERS=Value("dumpallclusters")
+  val DUMPALLCLUSTERCFGS=Value("dumpallclustercfgs")
+  val DUMPALLADAPTERS=Value("dumpalladapters")
 }
 
