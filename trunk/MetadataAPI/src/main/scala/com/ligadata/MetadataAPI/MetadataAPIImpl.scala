@@ -943,7 +943,6 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       val dispkey = (getObjectType(obj) + "." + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)).toLowerCase
-      println("Key is "+key)
       obj.tranId = GetNewTranId
       //val value = JsonSerializer.SerializeObjectToJson(obj)
       logger.debug("Serialize the object: name of the object => " + dispkey)
@@ -966,7 +965,6 @@ object MetadataAPIImpl extends MetadataAPI {
         }
         case o: FunctionDef => {
           val funcKey = (obj.getClass().getName().split("\\.").last + "." + o.typeString).toLowerCase
-          println("functKey is "+funcKey)
           logger.debug("Adding the function to the cache: name of the object =>  " + funcKey)
           SaveObject(funcKey, value, functionStore)
           mdMgr.AddFunc(o)

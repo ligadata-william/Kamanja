@@ -579,8 +579,7 @@ object TestMetadataAPI {
 
   def RemoveMessageFromStore {
     try {
-      // logger.setLevel(Level.TRACE); //check again
-println("WTF")
+      // logger.setLevel(Level.TRACE); //check agai
       val msgKeys = MetadataAPIImpl.GetAllKeys("MessageDef", None)
 
       if (msgKeys.length == 0) {
