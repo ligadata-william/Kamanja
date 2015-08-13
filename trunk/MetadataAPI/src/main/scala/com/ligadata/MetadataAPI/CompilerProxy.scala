@@ -27,6 +27,45 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
+import java.net.URL
+import java.net.URLClassLoader
+import com.ligadata.Exceptions.StackTrace
+
+/**
+ *  MetadataClassLoader - contains the classes that need to be dynamically resolved the the
+ *  reflective calls
+ */
+class CompilerProxyClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+  override def addURL(url: URL) {
+    super.addURL(url)
+  }
+}
+
+/**
+ * MetadataLoaderInfo
+ */
+class CompilerProxyLoader {
+  // class loader
+  val loader: CompilerProxyClassLoader = new CompilerProxyClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
+  // Loaded jars
+  val loadedJars: TreeSet[String] = new TreeSet[String]
+  // Get a mirror for reflection
+  val mirror: scala.reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
+}
+
+object JarPathsUtils{
+  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
+    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
+    jarPaths.foreach(jPath => {
+      val fl = new File(jPath + "/" + jarName)
+      if (fl.exists) {
+        return fl.getPath
+      }
+    })
+    return jarName // Returning base jarName if not found in jar paths
+  }
+}
+>>>>>>> dev
 
 // CompilerProxy has utility functions to:
 // Call MessageDefinitionCompiler, 
@@ -66,7 +105,6 @@ class CompilerProxy{
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -87,7 +125,6 @@ class CompilerProxy{
     }  catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -289,7 +326,6 @@ class CompilerProxy{
     catch{
       case e:Exception =>{
         logger.debug("Failed to compile the message definition " + e.toString)
-        e.printStackTrace
         throw new MsgCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
@@ -533,7 +569,6 @@ class CompilerProxy{
         throw e
       }
       case e:Exception =>{
-        e.printStackTrace()
         logger.error("Failed to compile the model definition " + e.toString)
         throw new ModelCompilationFailedException(e.getMessage())
       }
@@ -734,7 +769,8 @@ class CompilerProxy{
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
           } catch {
             case e: java.lang.NoClassDefFoundError => {
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
               throw e
             }
             case e: Exception => {
@@ -756,7 +792,6 @@ class CompilerProxy{
           case e: Exception => {
             // Trying Regular Object instantiation
             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName)
-            e.printStackTrace()
             throw new MsgCompilationFailedException(clsName)
           }
         }
@@ -764,6 +799,55 @@ class CompilerProxy{
     })
     logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelBaseObj was found in the jarred source "+jarFileName)
     throw new MsgCompilationFailedException(jarFileName)
+  }
+
+  /**
+   * getClasseNamesInJar - A utility method to grab all class files from the jarfile
+   */
+  private  def getClasseNamesInJar(jarName: String): Array[String] = {
+    try {
+      val jarFile = new JarInputStream(new FileInputStream(jarName))
+      val classes = new ArrayBuffer[String]
+      val taillen = ".class".length()
+      breakable {
+        while (true) {
+          val jarEntry = jarFile.getNextJarEntry();
+          if (jarEntry == null)
+            break;
+          if (jarEntry.getName().endsWith(".class") && !jarEntry.isDirectory()) {
+            val clsnm: String = jarEntry.getName().replaceAll("/", ".").trim // Replace / with .
+            classes += clsnm.substring(0, clsnm.length() - taillen)
+          }
+        }
+      }
+      return classes.toArray
+    } catch {
+      case e: Exception =>
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
+        return Array[String]()
+    }
+  }
+
+  /**
+   * isDerivedFrom - A utility method to see if a class is a cubclass of a given class
+   */
+  private def isDerivedFrom(clz: Class[_], clsName: String): Boolean = {
+    var isIt: Boolean = false
+
+    val interfecs = clz.getInterfaces()
+    logger.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
+
+    breakable {
+      for (intf <- interfecs) {
+        logger.debug("Interface:" + intf.getName())
+        if (intf.getName().equals(clsName)) {
+          isIt = true
+          break
+        }
+      }
+    }
+    isIt
   }
 
   /**
@@ -815,6 +899,30 @@ class CompilerProxy{
   }
 
   /**
+<<<<<<< HEAD
+=======
+   *
+   */
+  private def loadJarFile (jarName: String, classLoader: CompilerProxyLoader): Unit = {
+    val fl = new File(jarName)
+    if (fl.exists) {
+      try {
+        classLoader.loader.addURL(fl.toURI().toURL())
+        classLoader.loadedJars += fl.getPath()
+      } catch {
+        case e: Exception => {
+          logger.error("Failed to add "+jarName + " due to internal exception ")
+          return
+        }
+      }
+    } else {
+      logger.error("Unable to locate Jar '"+jarName+"'")
+      return
+    }
+  }
+
+  /**
+>>>>>>> dev
    * addDepsFromClassPath - this is probably a temporary metho here for now.  THIS WILL CHANGE IN A FUTURE since we
    * dont want to allow developers using the classpath to pass in dependencies.
    */

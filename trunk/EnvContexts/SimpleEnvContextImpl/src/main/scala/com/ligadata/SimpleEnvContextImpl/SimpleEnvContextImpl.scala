@@ -16,6 +16,7 @@ import com.ligadata.Serialize._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaData.{ KamanjaData }
 import com.ligadata.keyvaluestore.KeyValueManager
 
@@ -440,21 +441,22 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       } catch {
         case e: ClassNotFoundException => {
+          
           logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          e.printStackTrace()
           notFoundKeys += 1
         }
         case e: KeyNotFoundException => {
+          
           logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          e.printStackTrace()
           notFoundKeys += 1
         }
         case e: Exception => {
+          
           logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${e.getCause}, Message:${e.getMessage}")
-          e.printStackTrace()
           notFoundKeys += 1
         }
         case ooh: Throwable => {
+          
           logger.error(s"Not found key:${key.K.mkString(",")}. Reason:${ooh.getCause}, Message:${ooh.getMessage}")
           throw ooh
         }
@@ -524,8 +526,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
-        throw new Exception(e.getMessage())
+        logger.error("Failed to GetDataStoreHandle")
+        throw e
       }
     }
   }
@@ -635,7 +637,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -775,7 +778,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildAdapOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -803,7 +807,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       _allDataDataStore.get(makeKey(partKeyStr), buildMdlOne)
     } catch {
       case e: Exception => {
-        logger.debug("Data not found for key:" + partKeyStr)
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Data not found for key:" + partKeyStr+"\nStackTrace:"+stackTrace)
       }
     }
     if (objs(0) != null) {
@@ -1217,8 +1222,8 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
               cntr += 1
             } catch {
               case e: Exception => {
+                
                 logger.error("Failed to serialize/write data.")
-                e.printStackTrace
                 throw e
               }
             }
@@ -1251,8 +1256,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         cntr += 1
       } catch {
         case e: Exception => {
-          logger.error("Failed to write data.")
-          e.printStackTrace
+          logger.error("Failed to write data")
           throw e
         }
       }
@@ -1276,8 +1280,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         cntr += 1
       } catch {
         case e: Exception => {
-          logger.error("Failed to write data.")
-          e.printStackTrace
+          logger.error("Failed to write data")
           throw e
         }
       }
@@ -1294,8 +1297,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     } catch {
       case e: Exception => {
         _allDataDataStore.endTx(txn)
-        logger.error("Failed to write data.")
-        e.printStackTrace
+        logger.error("Failed to write data")
         throw e
       }
     }
@@ -1654,8 +1656,10 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
                 _allDataDataStore.get(makeKey(KamanjaData.PrepareKey(key.T, key.K, StartDateRange, EndDateRange)), buildOne)
 
               } catch {
-                case e: Exception => {}
-                case t: Throwable => {}
+                case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                  logger.debug("\nStackTrace:"+stackTrace)}
+                case t: Throwable => {val stackTrace = StackTrace.ThrowableTraceString(t)
+                  logger.debug("\nStackTrace:"+stackTrace)}
               }
               if (objs(0) != null) {
                 retResult ++= TxnContextCommonFunctions.getRddDataFromKamanjaData(objs(0), tmRange, f)
