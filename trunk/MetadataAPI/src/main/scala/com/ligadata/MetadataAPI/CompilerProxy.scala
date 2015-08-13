@@ -22,7 +22,7 @@ import com.ligadata.Serialize._
 import com.ligadata.Exceptions._
 import java.util.jar.JarInputStream
 import scala.util.control.Breaks._
-// import scala.reflect.runtime.{ universe => ru }
+import scala.reflect.runtime.{ universe => ru }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -65,7 +65,6 @@ object JarPathsUtils{
     return jarName // Returning base jarName if not found in jar paths
   }
 }
->>>>>>> dev
 
 // CompilerProxy has utility functions to:
 // Call MessageDefinitionCompiler, 
@@ -898,11 +897,6 @@ class CompilerProxy{
     None
   }
 
-  /**
-<<<<<<< HEAD
-=======
-   *
-   */
   private def loadJarFile (jarName: String, classLoader: CompilerProxyLoader): Unit = {
     val fl = new File(jarName)
     if (fl.exists) {
@@ -922,7 +916,6 @@ class CompilerProxy{
   }
 
   /**
->>>>>>> dev
    * addDepsFromClassPath - this is probably a temporary metho here for now.  THIS WILL CHANGE IN A FUTURE since we
    * dont want to allow developers using the classpath to pass in dependencies.
    */

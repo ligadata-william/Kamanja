@@ -4899,24 +4899,6 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def LoadOutputMsgIntoCache(key: String) {
-	    try {
-	      logger.debug("Fetch the object " + key + " from database ")
-	      val obj = GetObject(key.toLowerCase, outputmsgStore)
-	      logger.debug("Deserialize the object " + key)
-	      val outputMsg = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte])
-	      val outputMsgDef = outputMsg.asInstanceOf[OutputMsgDef]
-	      logger.debug("Add the output msg def object " + key + " to the cache ")
-	      AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
-	    } catch {
-	      case e: Exception => {
-          
-	        val stackTrace = StackTrace.ThrowableTraceString(e)
-          logger.debug("\nStackTrace:"+stackTrace)
-	      }
-	    }
-	  }
-
-  def LoadOutputMsgIntoCache(key: String) {
     try {
       logger.debug("Fetch the object " + key + " from database ")
       val obj = GetObject(key.toLowerCase, outputmsgStore)
@@ -4927,7 +4909,8 @@ object MetadataAPIImpl extends MetadataAPI {
       AddObjectToCache(outputMsgDef, MdMgr.GetMdMgr)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
       }
     }
   }
@@ -5535,10 +5518,8 @@ object MetadataAPIImpl extends MetadataAPI {
       apiResult.toString()
     } catch {
       case e: Exception => {
-    } catch{
-      case e:Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("\nStackTrace:"+stackTrace)
+        logger.debug("\nStackTrace:" + stackTrace)
         var apiResult = new ApiResult(ErrorCodeConstants.Failure, "AddCluster", null, "Error :" + e.toString() + ErrorCodeConstants.Add_Cluster_Failed + ":" + clusterId)
         apiResult.toString()
       }
