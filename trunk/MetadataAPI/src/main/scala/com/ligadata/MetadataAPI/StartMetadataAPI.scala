@@ -26,7 +26,7 @@ object StartMetadataAPI {
       MetadataAPIImpl.InitMdMgrFromBootStrap(config)
       TestMetadataAPI.StartTest
     }
-    else if (args(0) == " config") {
+    else if (args(0) == "config") {
       config = defaultConfig
     }
     else {
