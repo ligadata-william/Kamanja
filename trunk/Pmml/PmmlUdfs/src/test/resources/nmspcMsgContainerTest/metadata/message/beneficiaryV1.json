@@ -1,0 +1,48 @@
+{
+  "Message": {
+    "NameSpace": "com.medco.messages.rel20",
+    "Name": "Beneficiary",
+    "Version": "00.01.00",
+    "Description": "Beneficiary Data",
+    "Fixed": "true",
+    "Persist": "true",
+    "Elements": [
+      {
+        "Field": {
+          "Name": "Desynpuf_Id",
+          "Type": "com.medco.types.rel10.Long"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Birth_Dt",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Death_Dt",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Sex_Ident_Cd",
+          "Type": "System.Int"
+        }
+      },
+      {
+        "Field": {
+          "Name": "Bene_Race_Cd",
+          "Type": "System.Int"
+        }
+      }
+    ],
+    "PartitionKey": [
+      "Desynpuf_Id"
+    ],
+    "PrimaryKey": [
+      "Desynpuf_Id"
+    ]
+  }
+}

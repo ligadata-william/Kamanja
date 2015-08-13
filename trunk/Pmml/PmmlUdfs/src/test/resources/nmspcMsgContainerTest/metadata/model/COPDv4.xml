@@ -1,28 +1,34 @@
 
 <!--
-COPDv2.xml 
+COPDv4.xml 
 -->
 
 <PMML xmlns="http://www.dmg.org/PMML-4_1" version="4.1">
 
 	<Header copyright="Edifecs Corp. Copyright 2014" description="COPD Risk Assessment">
-		<Application name="COPDRiskAssessmentV2" version="00.01.00"/>
+		<Application name="COPDRiskAssessmentV4" version="00.01.00"/>
 	</Header>
 
 	<DataDictionary numberOfFields="8">
+
 		<DataField name="msg" displayName="msg" optype="categorical" dataType="Beneficiary"/>
 		<DataField name="gCtx" displayName="globalContext" optype="categorical" dataType="EnvContext"/>
+
 	    <DataField name="parameters" displayName="parameters" dataType="container">
 	       <Value value="gCtx" property="valid"/>
 	       <Value value="msg" property="valid"/>
 	    </DataField>
+
 		<DataField name="COPDSeverity" displayName="COPDSeverity" optype="categorical" dataType="string"/>
 		<DataField name="Msg_Desynpuf_Id" displayName="Msg_Desynpuf_Id" optype="categorical" dataType="string"/>
 
-		<!-- Not used -->
-		<DataField name="Inp_Clm_Thru_Dt" displayName="Inp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
-		<DataField name="Outp_Clm_Thru_Dt" displayName="Outp_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
-		<DataField name="Hl7_Clm_Thru_Dt" displayName="Hl7_Clm_Thru_Dt" optype="categorical" dataType="integer"/>
+		<DataField name="NamespaceSearchPath" displayName="NamespaceSearchPath" dataType="container">
+       		<Value value="Rel10Messages, com.medco.messages.rel10" property="valid"/>
+       		<Value value="Rel20Messages, com.medco.messages.rel20" property="valid"/>
+       		<Value value="Rel10Containers, com.medco.containers.rel10" property="valid"/>
+       		<!--<Value value="Rel10Types, com.medco.types.rel10" property="valid"/>-->
+       		<Value value="pmmludfs, com.mycompany.pmml.udfs.CustomUdfs" property="valid"/>
+    	</DataField>
 
 	</DataDictionary>
 
@@ -40,7 +46,7 @@ COPDv2.xml
 		<DerivedField name="SputumMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.SputumCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.SputumCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -60,7 +66,7 @@ COPDv2.xml
 		<DerivedField name="SmokingMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.SmokeCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.SmokeCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -76,11 +82,11 @@ COPDv2.xml
 
 		<!--
 			Obtain the EnvExposureCodes MessageContainerBase array 
-		-->
+		-->com.medco.messages.rel20.Beneficiary
 		<DerivedField name="EnvExposureMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.EnvCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.EnvCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -100,7 +106,7 @@ COPDv2.xml
 		<DerivedField name="CoughMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.CoughCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.CoughCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -120,7 +126,7 @@ COPDv2.xml
 		<DerivedField name="DyspnoeaMessageContainerBases" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetArray">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">system.DyspnoeaCodes</Constant>
+			    <Constant dataType="string">com.medco.containers.rel10.DyspnoeaCodes</Constant>
 			</Apply>
 		</DerivedField>
 
@@ -220,7 +226,74 @@ COPDv2.xml
 				<Constant dataType="integer">40</Constant> 
 			</Apply>
 		</DerivedField>
-			
+
+
+		<!--
+			**********************************************************
+			*  New Beneficiary format... allocate one of fetch current
+			**********************************************************
+		-->
+
+	    <!-- Example of choosing a Beneficiary message with explicit alias -->
+	    <DerivedField dataType="Rel20Messages.Beneficiary" name="Beneficiary20" optype="categorical">
+	    	<Apply function="GetMsgContainerElseNew">
+	        	<FieldRef field="gCtx"/>
+	        	<Constant dataType="typename">Beneficiary20</Constant>
+	        	<Constant dataType="string">com.medco.messages.rel20.Beneficiary</Constant>
+	        	<FieldRef field="New_desynpuf_id_list"/> 
+	        	<FieldRef field="New_desynpuf_id_list"/> 
+	    	</Apply>
+	    </DerivedField>
+
+	    <!-- Example of udf with explicit alias qualifier -->
+		<DerivedField name="New_desynpuf_id_list" dataType="ListOfString" optype="continuous">
+			<Apply function="ToStringList">
+				<Apply function="ToString">
+					<Apply function="pmmludfs.hashKey">
+						<FieldRef field="msg.desynpuf_id"/>
+					</Apply>
+				</Apply>
+			</Apply>
+		</DerivedField>
+		
+
+	    <DerivedField dataType="boolean" name="SaveNewBeneficiary" optype="categorical">
+	        <Apply function="CompoundStatementBoolean">
+	    	    <Apply function="setField">
+		            <FieldRef field="Beneficiary20.desynpuf_id"/>
+					<Apply function="pmmludfs.hashKey">
+						<FieldRef field="msg.desynpuf_id"/>
+					</Apply>
+	        	</Apply>
+	    	    <Apply function="setField">
+		            <FieldRef field="Beneficiary20.bene_birth_dt"/>
+		            <FieldRef field="msg.bene_birth_dt"/>
+	        	</Apply>
+	    	    <Apply function="setField">
+		            <FieldRef field="Beneficiary20.bene_death_dt"/>
+		            <FieldRef field="msg.bene_death_dt"/>
+	        	</Apply>
+	    	    <Apply function="setField">
+		            <FieldRef field="Beneficiary20.bene_sex_ident_cd"/>
+		            <FieldRef field="msg.bene_sex_ident_cd"/>
+	        	</Apply>
+	    	    <Apply function="setField">
+		            <FieldRef field="Beneficiary20.bene_race_cd"/>
+		            <FieldRef field="msg.bene_race_cd"/>
+	        	</Apply>
+	            <!-- Put(ctx: Context, containerId: String, key: List[String], value: BaseMsg) -->
+		        <Apply function="Put">
+		            <Constant dataType="context">ctx</Constant>
+		            <Constant dataType="string">com.medco.messages.rel20.Beneficiary</Constant>
+	            	<FieldRef field="New_desynpuf_id_list"/>
+	            	<FieldRef field="Beneficiary20"/>
+	          	</Apply>
+
+	          	<Constant dataType="boolean">true</Constant>
+	        </Apply>
+	    </DerivedField>
+
+
 		<!--
 			**********************************************************
 			*  Filters for smoking, coughing, sputum, etc from various
@@ -239,7 +312,7 @@ COPDv2.xml
 		<DerivedField name="desynpuf_id_base_hl7s" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">System.HL7</Constant>
+			    <Constant dataType="string">com.medco.messages.rel10.HL7</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
@@ -316,7 +389,7 @@ COPDv2.xml
 		<DerivedField name="desynpuf_id_base_inpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">System.InpatientClaim</Constant>
+			    <Constant dataType="string">com.medco.messages.rel10.InpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
@@ -352,7 +425,7 @@ COPDv2.xml
 		<DerivedField name="desynpuf_id_base_outpatient_claims" dataType="ArrayOfMessageContainerBase" optype="categorical">
 			<Apply function="GetHistory">
 				<Constant dataType="context">ctx</Constant>
-			    <Constant dataType="string">System.OutpatientClaim</Constant>
+			    <Constant dataType="string">com.medco.messages.rel10.OutpatientClaim</Constant>
 	 			<FieldRef field="Cur_desynpuf_id_list"/> 
 				<Constant dataType="boolean">true</Constant> 
 			</Apply>
@@ -673,10 +746,22 @@ COPDv2.xml
 			</Apply>
 		</DerivedField>
 
+		<!-- format the date keys for the input aggregations -->
+		<DerivedField name="inPatientClaimDateKeysFormatted" dataType="ArrayOfString" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerMap">
+		       		<FieldRef field="outPatientClaimsByDateKeys"/>
+		 			<Constant dataType="fIdent">ISO8601DateFmt</Constant> 
+		 			<Constant dataType="string">yyyy-MMM-dd</Constant>
+		 			<Constant dataType="ident">_each</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
 		<DerivedField name="inPatientClaimCostsByDate" dataType="ImmutableMapOfIntDouble" optype="categorical">
 			<Apply function="ToMap">
 				<Apply function="Zip">
-					<FieldRef field="inPatientClaimsByDateKeys"/>
+					<FieldRef field="inPatientClaimDateKeysFormatted"/>
 					<FieldRef field="inPatientClaimTotalCostEachDate"/>
 				</Apply>
 			</Apply>
@@ -750,10 +835,22 @@ COPDv2.xml
 			</Apply>
 		</DerivedField>
 
+		<!-- format the date keys for the output aggregations -->
+		<DerivedField name="outPatientClaimDateKeysFormatted" dataType="ArrayOfString" optype="categorical">
+			<Apply function="ToArray">
+				<Apply function="ContainerMap">
+		       		<FieldRef field="outPatientClaimsByDateKeys"/>
+		 			<Constant dataType="fIdent">ISO8601DateFmt</Constant> 
+		 			<Constant dataType="string">yyyy-MMM-dd</Constant>
+		 			<Constant dataType="ident">_each</Constant> 
+				</Apply>
+			</Apply>
+		</DerivedField>
+
 		<DerivedField name="outPatientClaimCostsByDate" dataType="ImmutableMapOfIntDouble" optype="categorical">
 			<Apply function="ToMap">
 				<Apply function="Zip">
-					<FieldRef field="outPatientClaimsByDateKeys"/>
+					<FieldRef field="outPatientClaimDateKeysFormatted"/>
 					<FieldRef field="outPatientClaimTotalCostEachDate"/>
 				</Apply>
 			</Apply>
@@ -785,6 +882,7 @@ COPDv2.xml
 						<Constant dataType="integer">0</Constant> 
 					</Apply>
 				</Apply>
+				<FieldRef field="SaveNewBeneficiary"/>
 			</Apply> 
 		</DerivedField>
 
