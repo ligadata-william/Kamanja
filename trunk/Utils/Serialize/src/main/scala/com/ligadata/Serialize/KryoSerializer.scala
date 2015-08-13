@@ -11,6 +11,7 @@ import com.ligadata.kamanja.metadata._
 import com.twitter.chill.ScalaKryoInstantiator
 import com.esotericsoftware.kryo.io.{Input, Output}
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class KryoSerializer extends Serializer{
 
@@ -42,6 +43,8 @@ class KryoSerializer extends Serializer{
       ba
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new KryoSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
@@ -61,6 +64,8 @@ class KryoSerializer extends Serializer{
       m
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new KryoSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }

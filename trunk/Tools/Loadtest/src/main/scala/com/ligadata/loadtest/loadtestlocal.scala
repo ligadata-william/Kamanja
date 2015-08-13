@@ -16,11 +16,14 @@ import com.ligadata._
 import com.ligadata.StorageBase.{ DataStore, Transaction, IStorage, Key, Value, StorageAdapterObj }
 import com.ligadata.loadtest._
 import com.ligadata.keyvaluestore.KeyValueManager
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalStub = null)
 {  
 	///////////////////////////////////////////////////////////////////////////
 	val store = KeyValueManager.Get(collection.immutable.Set[String](), config.connectinfo, config.tablename)
+  private val LOG = Logger.getLogger(getClass)
 
 	// We create an byte array of nRequests * nMaxSize
 	// Create the resources
@@ -91,7 +94,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception  => println("Caught exception")
+					case e: Exception  => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception"+"\nStackTrace:"+stackTrace)}
 				}
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -107,7 +113,11 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")
+            }
 				}
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -123,7 +133,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -139,7 +152,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}					
 				if(config.nScenario==0) sender ! Result ()
 			}
@@ -158,7 +174,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 
 				context.system.scheduler.scheduleOnce(config.nMsgDelay) 
@@ -185,7 +204,10 @@ class LoadTestLocal(config: LoadTestConfig, externalBookKeeper : LoadTestLocalSt
 				}
 				catch 
 				{
-					case e: Exception => println("Caught exception")
+					case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
+            println("Caught exception")}
 				}
 				
 				sender ! Result()

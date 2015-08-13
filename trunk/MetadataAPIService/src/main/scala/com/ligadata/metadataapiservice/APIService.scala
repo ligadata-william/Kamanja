@@ -15,6 +15,7 @@ import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class APIService extends LigadataSSLConfiguration with Runnable{
 
@@ -139,7 +140,8 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         logger.debug("Unexpected Interrupt")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
       }
     } finally {
       Shutdown(0)

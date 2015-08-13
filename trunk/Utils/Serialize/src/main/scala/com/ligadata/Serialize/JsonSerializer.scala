@@ -15,6 +15,7 @@ import com.ligadata.Exceptions._
 import com.ligadata.AuditAdapterInfo.AuditRecord
 
 import java.util.Date
+import com.ligadata.Exceptions.StackTrace
 
 case class TypeDef(MetadataType: String, NameSpace: String, Name: String, TypeTypeName: String, TypeNameSpace: String, TypeName: String, PhysicalName: String, var Version: String, JarName: String, DependencyJars: List[String], Implementation: String, Fixed: Option[Boolean], NumberOfDimensions: Option[Int], KeyTypeNameSpace: Option[String], KeyTypeName: Option[String], ValueTypeNameSpace: Option[String], ValueTypeName: Option[String], TupleDefinitions: Option[List[TypeDef]])
 case class TypeDefList(Types: List[TypeDef])
@@ -100,11 +101,13 @@ object JsonSerializer {
       funcDefList.toArray
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("\nStackTrace:" + stackTrace)
         throw new FunctionListParsingException(e.getMessage())
       }
     }
@@ -184,6 +187,7 @@ object JsonSerializer {
         }
       }
       typeDef
+
     } catch {
       case e: AlreadyExistsException => {
         val keyValues = List(typ.NameSpace, typ.Name, typ.Version)
@@ -214,6 +218,7 @@ object JsonSerializer {
       var typeDefList: ArrayBuffer[BaseTypeDef] = ArrayBuffer[BaseTypeDef]()
 
       typeList.Types.map(typ => {
+
         try {
           val typeDefObj: BaseTypeDef = processTypeDef(typ)
           typeDefList += typeDefObj
@@ -233,11 +238,13 @@ object JsonSerializer {
       typeDefList.toArray
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new TypeDefListParsingException(e.getMessage())
       }
     }
@@ -278,11 +285,13 @@ object JsonSerializer {
       attrDefList
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new ConceptListParsingException(e.getMessage())
       }
     }
@@ -304,12 +313,13 @@ object JsonSerializer {
       zkTransaction
     } catch {
       case e: MappingException => {
-        //val tempZKTran = json.extract[]
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw new ZkTransactionParsingException(e.getMessage())
       }
     }
@@ -342,13 +352,16 @@ object JsonSerializer {
     } catch {
       case e: AlreadyExistsException => {
         logger.error("Failed to add the DerivedConcept: : " + e.getMessage())
+
       }
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:" + stackTrace)
         throw new ConceptListParsingException(e.getMessage())
       }
     }
@@ -375,11 +388,13 @@ object JsonSerializer {
       contDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw new ContainerDefParsingException(e.getMessage())
       }
     }
@@ -398,7 +413,8 @@ object JsonSerializer {
       typeDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: AlreadyExistsException => {
@@ -406,7 +422,8 @@ object JsonSerializer {
         throw new AlreadyExistsException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Stacktrace:"+stackTrace)
         throw new TypeParsingException(e.getMessage())
       }
     }
@@ -431,11 +448,13 @@ object JsonSerializer {
       concept
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new ConceptParsingException(e.getMessage())
       }
     }
@@ -469,11 +488,13 @@ object JsonSerializer {
       function
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new FunctionParsingException(e.getMessage())
       }
     }
@@ -504,11 +525,13 @@ object JsonSerializer {
       msgDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new MessageDefParsingException(e.getMessage())
       }
     }
@@ -550,11 +573,13 @@ object JsonSerializer {
       modDef
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new ModelDefParsingException(e.getMessage())
       }
     }
@@ -573,11 +598,13 @@ object JsonSerializer {
       fullmap
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new EngineConfigParsingException(e.getMessage())
       }
     }
@@ -595,11 +622,13 @@ object JsonSerializer {
       cfg
     } catch {
       case e: MappingException => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sParsingException(e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new ApiArgListParsingException(e.getMessage())
       }
     }
@@ -621,7 +650,8 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -836,7 +866,8 @@ object JsonSerializer {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -1391,7 +1422,8 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sSerializationException(e.getMessage())
       }
     }
@@ -1403,7 +1435,8 @@ object JsonSerializer {
       pretty(render(json))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw Json4sSerializationException(e.getMessage())
       }
     }

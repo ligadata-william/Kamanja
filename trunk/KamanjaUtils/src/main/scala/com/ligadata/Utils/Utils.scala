@@ -7,13 +7,15 @@ import java.util.Properties
 import java.util.zip.GZIPInputStream
 import java.nio.file.{ Paths, Files }
 import java.util.jar.JarInputStream
+import com.ligadata.Exceptions.StackTrace
+
 import scala.util.control.Breaks._
 import scala.collection.mutable.TreeSet
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 
 object Utils {
-  private val LOG = Logger.getLogger(getClass);
+  private val logger = Logger.getLogger(getClass)
 
   def SimpDateFmtTimeFromMs(tmMs: Long): String = {
     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new java.util.Date(tmMs))
@@ -97,7 +99,9 @@ object Utils {
       }
     } catch {
       case e: Exception =>
-        failStr = "Invalid Configuration. Message: " + e.getMessage()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.error("StackTrace:"+stackTrace)
+        failStr = "Invalid Configuration. Message: " + e.getMessage() + "\nStackTrace:"+stackTrace
         configs = null
     }
     return (configs, failStr)
@@ -155,25 +159,25 @@ object Utils {
   def LoadJars(jars: Array[String], loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     // Loading all jars
     for (j <- jars) {
-      LOG.debug("Processing Jar " + j.trim)
+      logger.debug("Processing Jar " + j.trim)
       val fl = new File(j.trim)
       if (fl.exists) {
         try {
           if (loadedJars(fl.getPath())) {
-            LOG.debug("Jar " + j.trim + " already loaded to class path.")
+            logger.debug("Jar " + j.trim + " already loaded to class path.")
           } else {
             loader.addURL(fl.toURI().toURL())
-            LOG.debug("Jar " + j.trim + " added to class path.")
+            logger.debug("Jar " + j.trim + " added to class path.")
             loadedJars += fl.getPath()
           }
         } catch {
           case e: Exception => {
-            LOG.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
+            logger.error("Jar " + j.trim + " failed added to class path. Reason:%s Message:%s".format(e.getCause, e.getMessage))
             return false
           }
         }
       } else {
-        LOG.error("Jar " + j.trim + " not found")
+        logger.error("Jar " + j.trim + " not found")
         return false
       }
     }
@@ -188,11 +192,11 @@ object Utils {
     var isIt: Boolean = false
 
     val interfecs = clz.getInterfaces()
-    LOG.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
+    logger.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
 
     breakable {
       for (intf <- interfecs) {
-        LOG.debug("Interface:" + intf.getName())
+        logger.debug("Interface:" + intf.getName())
         if (intf.getName().equals(clsName)) {
           isIt = true
           break

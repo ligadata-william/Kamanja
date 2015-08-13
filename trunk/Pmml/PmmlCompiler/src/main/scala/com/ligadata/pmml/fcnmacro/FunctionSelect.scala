@@ -16,6 +16,7 @@ import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.syntaxtree.cooked.common._
 import com.ligadata.pmml.support._
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
+import com.ligadata.Exceptions.StackTrace
 
 
 /** 
@@ -1599,7 +1600,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *  scala> val composite = Array[Array[Int]](a,b,c)
 	 *  composite: Array[Array[Int]] = Array(Array(1, 2, 3, 4, 5), Array(2, 4, 6, 8, 10), Array(4, 6, 8, 10, 12))
 	 *  
-	 *  scala> composite.map(arr => arr.sum)  <<< this kind of thing is common for aggregation
+	 *  scala> composite.map(arr => arr.sum)  ` this kind of thing is common for aggregation
 	 *  res0: Array[Int] = Array(15, 30, 40)
 	 *  
 	 *  scala> composite.map(arr => arr(0) + arr(2))  <<< this kind of thing is common for aggregation

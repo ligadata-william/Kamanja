@@ -3,6 +3,8 @@ package com.ligadata.messagedef
 import com.ligadata.kamanja.metadata._
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class BaseTypesHandler {
 
@@ -13,6 +15,7 @@ class BaseTypesHandler {
   private val newline = "\n"
   val transactionid: String = "transactionid"
     var cnstObjVar = new ConstantMsgObjVarGenerator
+    private val LOG = Logger.getLogger(getClass)
 
   def handleBaseTypes(keysSet: Set[String], fixed: String, typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msgVersion: String, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean, mappedTypesABuf: ArrayBuffer[String], firstTimeBaseType: Boolean, msg: Message): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], ArrayBuffer[String], ArrayBuffer[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -79,14 +82,14 @@ class BaseTypesHandler {
           scalaclass = scalaclass.append("")
         } else {
           scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
-          assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
-          assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString)%s".format(pad2, f.Name, fname, f.Name, dval, newline))
-          assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
+          assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1;\n".format(pad2, f.Name, fname, pad2))
+          assignJsondata.append("%s %s = %s(map.getOrElse(\"%s\", %s).toString);%s".format(pad2, f.Name, fname, f.Name, dval, newline))
+          assignXmldata.append("%sval _%sval_  = (xml \\\\ \"%s\").text.toString %s%sif (_%sval_  != \"\")%s%s =  %s( _%sval_ ) else %s = %s;%s".format(pad3, f.Name, f.Name, newline, pad3, f.Name, pad2, f.Name, fname, f.Name, f.Name, dval, newline))
         }
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s;%s".format(pad2, f.Name, f.Name, newline))
 
       } else if (fixed.toLowerCase().equals("false")) {
 
@@ -143,7 +146,8 @@ class BaseTypesHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -182,7 +186,10 @@ class BaseTypesHandler {
         }
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     serializedBuf.toString
@@ -215,7 +222,10 @@ class BaseTypesHandler {
       }
 
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     deserializedBuf.toString
@@ -264,7 +274,7 @@ class BaseTypesHandler {
         if (fixed.toLowerCase().equals("true")) {
 
           prevObjDeserializedBuf = prevObjDeserializedBuf.append("%s%s = prevVerObj.%s;%s".format(pad1, f.Name, f.Name, newline))
-          convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s%s".format(pad2, f.Name, f.Name, newline))
+          convertOldObjtoNewObjBuf = convertOldObjtoNewObjBuf.append("%s%s = oldObj.%s;%s".format(pad2, f.Name, f.Name, newline))
         } else if (fixed.toLowerCase().equals("false")) {
           mappedPrevVerMatchkeys.append("\"" + f.Name + "\",")
           //if (baseTypIdx != -1)
@@ -293,7 +303,10 @@ class BaseTypesHandler {
       }
 
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+         LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry)
