@@ -14,8 +14,8 @@ object DumpService {
   def dumpMetadata: String ={
     var response=""
     try{
-    MdMgr.GetMdMgr.dump
-    response="Metadata dumped in DEBUG mode"
+      MdMgr.GetMdMgr.dump
+      response="Metadata dumped in DEBUG mode"
     }catch{
       case e: Exception => {
         response=e.getStackTrace.toString

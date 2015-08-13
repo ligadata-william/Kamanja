@@ -97,7 +97,7 @@ object TypeService {
     response
   }
   def getAllTypes: String ={
-     MetadataAPIImpl.GetAllTypes("JSON", userid)
+    MetadataAPIImpl.GetAllTypes("JSON", userid)
   }
 
   def removeType: String ={
