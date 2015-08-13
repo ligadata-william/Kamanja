@@ -9,6 +9,7 @@ import org.apache.log4j._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 
 import com.ligadata.Exceptions._
 import com.ligadata.AuditAdapterInfo.AuditRecord
@@ -39,7 +40,7 @@ case class ModelDefinition(Model: ModelInfo)
 case class ParameterMap(RootDir: String, GitRootDir: String, Database: String, DatabaseHost: String, JarTargetDir: String, ScalaHome: String, JavaHome: String, ManifestPath: String, ClassPath: String, NotifyEngine: String, ZooKeeperConnectString: String)
 case class MetadataApiConfig(ApiConfigParameters: ParameterMap)
 
-case class ZooKeeperNotification(ObjectType: String, Operation: String, NameSpace: String, Name: String, Version: String, PhysicalName: String, JarName: String, DependantJars: List[String])
+case class ZooKeeperNotification(ObjectType: String, Operation: String, NameSpace: String, Name: String, Version: String, PhysicalName: String, JarName: String, DependantJars: List[String], ConfigContnent: Option[String])
 case class ZooKeeperTransaction(Notifications: List[ZooKeeperNotification], transactionId: Option[String])
 
 case class JDataStore(StoreType: String, SchemaName: String, Location: String, AdapterSpecificConfig: Option[String])
@@ -303,6 +304,7 @@ object JsonSerializer {
       zkTransaction
     } catch {
       case e: MappingException => {
+        //val tempZKTran = json.extract[]
         e.printStackTrace()
         throw Json4sParsingException(e.getMessage())
       }
@@ -814,6 +816,18 @@ object JsonSerializer {
             ("PhysicalName" -> o.physicalName) ~
             ("JarName" -> "") ~
             ("DependantJars" -> o.CheckAndGetDependencyJarNames.toList))
+          pretty(render(json))
+        }
+        case o: ConfigDef => {
+          val json = (("ObjectType" -> "ConfigDef") ~
+            ("Operation" -> operation) ~
+            ("NameSpace" -> o.NameSpace) ~
+            ("Name" -> o.name) ~
+            ("Version" -> "0") ~
+            ("PhysicalName" -> "") ~
+            ("JarName" -> "") ~
+            ("DependantJars" -> List[String]()) ~
+            ("ConfigContnent" -> o.contents))   
           pretty(render(json))
         }
         case _ => {
@@ -1361,8 +1375,6 @@ object JsonSerializer {
     objList.foreach(obj => { max = scala.math.max(obj.TranId, max) })
 
     var json = "{\n" + "\"transactionId\":\"" + max + "\",\n" + "\"" + objType + "\" :" + zkSerializeObjectListToJson(objList, operations) + "\n}"
-
-    println(json)
     json
   }
 
@@ -1395,6 +1407,11 @@ object JsonSerializer {
         throw Json4sSerializationException(e.getMessage())
       }
     }
+  }
+  
+  def SerializeMapToJsonString (map: Map[String,Any]): String = {
+     implicit val formats = org.json4s.DefaultFormats
+     return Serialization.write(map)
   }
 
 }

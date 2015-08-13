@@ -604,40 +604,8 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.debug("Writing Key:" + key)
 
       SaveObject(key, value, store)
-      /*
-
-      object obj extends IStorage {
-        var k = new Key
-        var v = new Value
-        for (c <- key) {
-          k += c.toByte
-        }
-        for (c <- value) {
-          v += c
-        }
-        def Key = k
-        def Value = v
-        def Construct(Key: Key, Value: Value) = {}
-      }
-      storeObjects(i) = obj
-*/
-
       i = i + 1
     })
-
-    /*
-    try {
-      store.putBatch(storeObjects)
-      store.commitTx(t)
-    } catch {
-      case e: Exception => {
-        logger.error("Failed to insert/update object for : " + keyList.mkString(",") + ". Exception Message:" + e.getMessage + ". Reason:" + e.getCause)
-        store.endTx(t)
-        throw new UpdateStoreFailedException("Failed to insert/update object for : " + keyList.mkString(","))
-      }
-    }
-*/
-
   }
 
   def RemoveObjectList(keyList: Array[String], store: DataStore) {
@@ -831,6 +799,8 @@ object MetadataAPIImpl extends MetadataAPI {
         max = scala.math.max(max, obj.TranId)
       })
       if (currentTranLevel < max) currentTranLevel = max
+      
+     
 
       if (notifyEngine != "YES") {
         logger.warn("Not Notifying the engine about this operation because The property NOTIFY_ENGINE is not set to YES")
@@ -1494,6 +1464,22 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
+  // For now only handle the Model COnfig... Engine Configs will come later
+  def AddConfigObjToCache(tid: Long, key: String, mdlConfig: Map[String, List[String]], mdMgr: MdMgr) {
+    // Update the current transaction level with this object  ???? What if an exception occurs ????
+    if (currentTranLevel < tid) currentTranLevel = tid
+    try {
+       mdMgr.AddModelConfig(key, mdlConfig)        
+    } catch {//Map[String, List[String]]
+      case e: AlreadyExistsException => {
+        logger.error("Failed to Cache the config object(" + key +  "): " + e.getMessage())
+      }
+      case e: Exception => {
+        logger.error("Failed to Cache the config object(" + key +  "): " + e.getMessage())
+      }
+    }
+  }
+  
   def AddObjectToCache(o: Object, mdMgr: MdMgr) {
     // If the object's Delete flag is set, this is a noop.
     val obj = o.asInstanceOf[BaseElemDef]
@@ -4273,6 +4259,9 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   private def LoadAllModelConfigsIntoChache: Unit = {
+    val maxTranId = GetTranId
+    currentTranLevel = maxTranId
+    logger.debug("Max Transaction Id => " + maxTranId)
     var keys = scala.collection.mutable.Set[Key]()
     modelConfigStore.getAllKeys({ (key: Key) => keys.add(key) })
     val keyArray = keys.toArray
@@ -4300,11 +4289,9 @@ object MetadataAPIImpl extends MetadataAPI {
       // Load All the Model Configs here... 
       LoadAllModelConfigsIntoChache
       startup = true
+      val maxTranId = currentTranLevel
       var objectsChanged = new Array[BaseElemDef](0)
       var operations = new Array[String](0)
-      val maxTranId = GetTranId
-      currentTranLevel = maxTranId
-      logger.debug("Max Transaction Id => " + maxTranId)
       var keys = scala.collection.mutable.Set[Key]()
       metadataStore.getAllKeys({ (key: Key) => keys.add(key) })
       val keyArray = keys.toArray
@@ -4520,12 +4507,21 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  private def updateThisKey(zkMessage: ZooKeeperNotification) {
+  private def updateThisKey(zkMessage: ZooKeeperNotification, tranId: Long) {
 
     var key: String = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version.toLong).toLowerCase
     val dispkey = (zkMessage.ObjectType + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + MdMgr.Pad0s2Version(zkMessage.Version.toLong)).toLowerCase
 
     zkMessage.ObjectType match {
+      case "ConfigDef" => {
+         zkMessage.Operation match {
+          case "Add" => {
+            val inConfig = "{\""+ zkMessage.Name + "\":" + zkMessage.ConfigContnent.get + "}"
+            AddConfigObjToCache(tranId, zkMessage.NameSpace+"."+zkMessage.Name, parse(inConfig).values.asInstanceOf[Map[String,List[String]]], MdMgr.GetMdMgr)
+          }
+          case _ => { logger.error("Unknown Operation " + zkMessage.Operation + " in zookeeper notification, notification is not processed ..")}
+        }
+      }
       case "ModelDef" => {
         zkMessage.Operation match {
           case "Add" => {
@@ -4697,14 +4693,14 @@ object MetadataAPIImpl extends MetadataAPI {
 
     // If we already processed this transaction, currTranLevel will be at least at the level of this notify.
     if (zkTransaction.transactionId.getOrElse("0").toLong <= currentTranLevel) return
-
+    
     try {
       zkTransaction.Notifications.foreach(zkMessage => {
         key = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + zkMessage.Version).toLowerCase
         dispkey = (zkMessage.Operation + "." + zkMessage.NameSpace + "." + zkMessage.Name + "." + MdMgr.Pad0s2Version(zkMessage.Version.toLong)).toLowerCase
         if (!cacheOfOwnChanges.contains(key)) {
           // Proceed with update.
-          updateThisKey(zkMessage)
+          updateThisKey(zkMessage,zkTransaction.transactionId.getOrElse("0").toLong)
         } else {
           // Ignore the update, remove the element from set.
           cacheOfOwnChanges.remove(key)
@@ -5413,28 +5409,46 @@ object MetadataAPIImpl extends MetadataAPI {
    *
    */
   private var cfgmap: Map[String, Any] = null
-  def UploadModelsConfig(cfgStr: String, userid: Option[String], objectList: String): String = {
+  def UploadModelsConfig(cfgStr: String, userid: Option[String], objectList: String, isFromNotify: Boolean = false): String = {
     var keyList = new Array[String](0)
     var valueList = new Array[Array[Byte]](0)
+    val tranId = GetNewTranId
     cfgmap = parse(cfgStr).values.asInstanceOf[Map[String, Any]]
-
+    var i = 0
+   // var objectsAdded: scala.collection.mutable.MutableList[Map[String, List[String]]] = scala.collection.mutable.MutableList[Map[String, List[String]]]()
+    var baseElems: Array[BaseElemDef] = new Array[BaseElemDef](cfgmap.keys.size)
     cfgmap.keys.foreach(key => {
       var mdl = cfgmap(key).asInstanceOf[Map[String, List[String]]]
+      
+      // wrap the config objet in Element Def
+      var confElem: ConfigDef = new ConfigDef
+      confElem.tranId = tranId
+      confElem.nameSpace = userid.get
+      confElem.contents = JsonSerializer.SerializeMapToJsonString(mdl)
+      confElem.name = key
+      baseElems(i) = confElem
+      i = i + 1
+       
       // Prepare KEY/VALUE for persistent insertion
-      var modelKey = userid.getOrElse("") + "." + key
+      var modelKey = userid.getOrElse("_") + "." + key
       var value = serializer.SerializeObjectToByteArray(mdl)
       keyList = keyList :+ modelKey.toLowerCase
       valueList = valueList :+ value
-      // Save inmemory
-      MdMgr.GetMdMgr.AddModelConfig(modelKey, mdl)
+      // Save in memory
+      AddConfigObjToCache(tranId, modelKey, mdl, MdMgr.GetMdMgr)
     })
     // Save in Databae
     SaveObjectList(keyList, valueList, modelConfigStore)
-
+    if (!isFromNotify) {
+      val operations = for (op <- baseElems) yield "Add"
+      NotifyEngine(baseElems, operations)
+    }
+    
     // return reuslts
     var apiResult = new ApiResult(ErrorCodeConstants.Success, "UploadModelsConfig", null, "Upload of model config successful")
     apiResult.toString()
   }
+ 
 
   private def getStringFromJsonNode(v: Any): String = {
     if (v == null) return ""
@@ -6341,7 +6355,6 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def UpdateMetadata(receivedJsonStr: String): Unit = {
     logger.debug("Process ZooKeeper notification " + receivedJsonStr)
-
     if (receivedJsonStr == null || receivedJsonStr.size == 0 || !isInitilized) {
       // nothing to do
       logger.debug("Metadata synching is not available.")
