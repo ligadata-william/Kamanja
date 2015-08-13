@@ -23,6 +23,7 @@ object MonitorAPIImpl {
   val CHILD_UPDATED_ACTION = "CHILD_UPDATED"
   val ENGINE = "engine"
   val METADATA = "metadata"
+  var _exec = Executors.newFixedThreadPool(1)
   
   private var healthInfo: scala.collection.mutable.Map[String,Any] = scala.collection.mutable.Map[String,Any]()
   
@@ -95,7 +96,6 @@ object MonitorAPIImpl {
     * startMetadataHeartbeat - will be called internally by the MetadataAPI task to update the healthcheck every 5 seconds.
     */
    def startMetadataHeartbeat: Unit = {
-     var _exec = Executors.newFixedThreadPool(1)
      _exec.execute(new Runnable() {
        override def run() = {
          var startTime = System.currentTimeMillis
@@ -106,5 +106,10 @@ object MonitorAPIImpl {
        }
       })
    }
+   
+   /**
+    * shutdownMonitor - Shutdown the Monitor Heartbeat
+    */
+  def shutdownMonitor: Unit = {_exec.shutdown}
    
 }

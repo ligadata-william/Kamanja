@@ -35,6 +35,8 @@ class GetHeartbeatService(requestContext: RequestContext, userid:Option[String],
   
   def process(nodeIds:String): Unit = {
     // NodeIds is a JSON array of nodeIds.
+    if (nodeIds == null || (nodeIds != null && nodeIds.length == 0))
+      requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Invalid BODY in a POST request.  Expecting either an array of nodeIds or an empty array for all").toString)  
   
     if (!MetadataAPIImpl.checkAuth(userid,password,cert, MetadataAPIImpl.getPrivilegeName("get","heartbeat"))) {
       requestContext.complete(new ApiResult(ErrorCodeConstants.Failure, APIName, null, "Error:Checking Heartbeat is not allowed for this user").toString )

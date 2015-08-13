@@ -6347,6 +6347,7 @@ object MetadataAPIImpl extends MetadataAPI {
   
   private def shutdownHeartbeat: Unit = {
     try {
+      MonitorAPIImpl.shutdownMonitor
       if (heartBeat != null)
         heartBeat.Shutdown
       heartBeat = null
