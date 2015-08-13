@@ -5,7 +5,7 @@ import java.util.Properties
 import kafka.message._
 import kafka.producer.{ ProducerConfig, Producer, KeyedMessage }
 import org.apache.log4j.Logger
-import com.ligadata.KamanjaBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.KafkaQueueAdapterConfiguration
 import com.ligadata.Exceptions.StackTrace
 

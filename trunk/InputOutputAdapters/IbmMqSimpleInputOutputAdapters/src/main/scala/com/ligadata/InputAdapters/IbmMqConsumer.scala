@@ -5,7 +5,7 @@ import scala.actors.threadpool.{ Executors, ExecutorService }
 import java.util.Properties
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
-import com.ligadata.KamanjaBase.{ EnvContext, AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, MakeExecContext, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, ExecContextObj, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, InputAdapterCallerContext }
 import com.ligadata.AdaptersConfiguration.{ IbmMqAdapterConfiguration, IbmMqPartitionUniqueRecordKey, IbmMqPartitionUniqueRecordValue }
 import javax.jms.{ Connection, Destination, JMSException, Message, MessageConsumer, Session, TextMessage, BytesMessage }
 import scala.util.control.Breaks._
@@ -17,14 +17,13 @@ import com.ibm.msg.client.jms.JmsFactoryFactory
 import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.common.CommonConstants
 import com.ibm.msg.client.jms.JmsConstants
-import com.ligadata.Utils.Utils
 import com.ligadata.Exceptions.StackTrace
 
 object IbmMqConsumer extends InputAdapterObj {
-  def CreateInputAdapter(inputConfig: AdapterConfiguration, output: Array[OutputAdapter], envCtxt: EnvContext, mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter): InputAdapter = new IbmMqConsumer(inputConfig, output, envCtxt, mkExecCtxt, cntrAdapter)
+  def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new IbmMqConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
 }
 
-class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[OutputAdapter], val envCtxt: EnvContext, val mkExecCtxt: MakeExecContext, cntrAdapter: CountersAdapter) extends InputAdapter {
+class IbmMqConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputAdapterCallerContext, val execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter) extends InputAdapter {
   private def printFailure(ex: Exception) {
     if (ex != null) {
       if (ex.isInstanceOf[JMSException]) {
@@ -52,7 +51,7 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = IbmMqAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[String, (IbmMqPartitionUniqueRecordKey, IbmMqPartitionUniqueRecordValue, Long, (IbmMqPartitionUniqueRecordValue, Int, Int))]()
+  private[this] val kvs = scala.collection.mutable.Map[String, (IbmMqPartitionUniqueRecordKey, IbmMqPartitionUniqueRecordValue, (IbmMqPartitionUniqueRecordValue, Int, Int))]()
 
   var connection: Connection = null
   var session: Session = null
@@ -118,12 +117,12 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
   }
 
   // Each value in partitionInfo is (PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, PartitionUniqueRecordValue) key, processed value, Start transactionid, Ignore Output Till given Value (Which is written into Output Adapter) 
-  override def StartProcessing(maxParts: Int, partitionInfo: Array[(PartitionUniqueRecordKey, PartitionUniqueRecordValue, Long, (PartitionUniqueRecordValue, Int, Int))], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
+  override def StartProcessing(partitionInfo: Array[StartProcPartInfo], ignoreFirstMsg: Boolean): Unit = lock.synchronized {
     LOG.debug("===============> Called StartProcessing")
     if (partitionInfo == null || partitionInfo.size == 0)
       return
 
-    val partInfo = partitionInfo.map(quad => { (quad._1.asInstanceOf[IbmMqPartitionUniqueRecordKey], quad._2.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._3, (quad._4._1.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._4._2, quad._4._3)) })
+    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[IbmMqPartitionUniqueRecordKey], quad._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], (quad._validateInfo._val.asInstanceOf[IbmMqPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
 
     try {
       val ff = JmsFactoryFactory.getInstance(JmsConstants.WMQ_PROVIDER)
@@ -191,8 +190,6 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
             uniqueKey.QueueName = qc.queue_name
             uniqueKey.TopicName = qc.topic_name
 
-            var transId: Long = 0
-
             try {
               breakable {
                 while (true /* cntr < 100 */ ) {
@@ -208,39 +205,37 @@ class IbmMqConsumer(val inputConfig: AdapterConfiguration, val output: Array[Out
 
                     if (checkForPartition) {
                       checkForPartition = false
-                      execThread = mkExecCtxt.CreateExecContext(input, 0, output, envCtxt)
+                      execThread = execCtxtObj.CreateExecContext(input, uniqueKey, callerCtxt)
                       val kv = kvs.head._2
                       if (kv != null) {
-                        transId = kv._3
-                        processingXformMsg = kv._4._2
-                        totalXformMsg = kv._4._3
+                        processingXformMsg = kv._3._2
+                        totalXformMsg = kv._3._3
                       }
                     }
 
                     if (executeCurMsg) {
                       try {
 
-                        var msgStr: String = null
+                        var msgData: Array[Byte] = null
                         var msgId: String = null
 
                         if (receivedMessage.isInstanceOf[BytesMessage]) {
                           val bytmsg = receivedMessage.asInstanceOf[BytesMessage]
                           val tmpmsg = new Array[Byte](bytmsg.getBodyLength().toInt)
                           bytmsg.readBytes(tmpmsg)
-                          msgStr = new String(tmpmsg)
+                          msgData = tmpmsg
                           msgId = bytmsg.getJMSMessageID()
                         } else if (receivedMessage.isInstanceOf[TextMessage]) {
                           val strmsg = receivedMessage.asInstanceOf[TextMessage]
-                          msgStr = strmsg.getText
+                          msgData = strmsg.getText.getBytes
                           msgId = strmsg.getJMSMessageID()
                         }
 
-                        if (msgStr != null) {
+                        if (msgData != null) {
                           uniqueVal.MessageId = msgId
                           processingXformMsg = 0
                           totalXformMsg = 0
-                          execThread.execute(transId, msgStr, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          transId += 1
+                          execThread.execute(msgData, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, false, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

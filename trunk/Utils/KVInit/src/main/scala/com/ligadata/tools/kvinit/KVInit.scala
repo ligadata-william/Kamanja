@@ -15,16 +15,13 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import org.apache.log4j.Logger
 import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.mapdb._
 import com.ligadata.KamanjaBase._
 import com.ligadata.kamanja.metadataload.MetadataLoad
-import com.ligadata.Utils.Utils
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import java.util.Properties
 import com.ligadata.MetadataAPI.MetadataAPIImpl
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.kamanja.metadata._
-import java.net.URL
-import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
 import com.ligadata.Serialize._
 import org.json4s._
@@ -40,6 +37,7 @@ import scala.collection.mutable.ArrayBuffer
 import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
+import com.ligadata.StorageBase.{ Key, Value, IStorage, DataStoreOperations, DataStore, Transaction, StorageAdapterObj }
 import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
@@ -145,7 +143,7 @@ Sample uses:
       val kvmaker: KVInit = new KVInit(loadConfigs, kvname.toLowerCase, csvpath, keyfieldnames, delimiterString, keyseparator, ignoreerrors)
       if (kvmaker.isOk) {
         if (dump != null && dump.toLowerCase().startsWith("y")) {
-          val dstore: DataStore = kvmaker.GetDataStoreHandle(kvmaker.dataStoreType, kvmaker.dataSchemaName, "AllData", kvmaker.dataLocation, kvmaker.adapterSpecificConfig)
+          val dstore: DataStore = kvmaker.GetDataStoreHandle(KvInitConfiguration.jarPaths, kvmaker.dataDataStoreInfo, "AllData")
           kvmaker.dump(dstore)
           dstore.Shutdown()
         } else {
@@ -163,37 +161,10 @@ Sample uses:
   }
 }
 
-class KvInitClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  override def addURL(url: URL) {
-    super.addURL(url)
-  }
-}
-
-class KvInitLoaderInfo {
-  // class loader
-  val loader: KvInitClassLoader = new KvInitClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-
-  // Loaded jars
-  val loadedJars: TreeSet[String] = new TreeSet[String];
-
-  // Get a mirror for reflection
-  val mirror = ru.runtimeMirror(loader)
-}
-
 object KvInitConfiguration {
   var nodeId: Int = _
   var configFile: String = _
   var jarPaths: collection.immutable.Set[String] = _
-  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
 }
 
 class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: String, val keyfieldnames: Array[String], delimiterString: String, keyseparator: String, ignoreerrors: String) extends LogTrait {
@@ -211,30 +182,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = isOk && header.contains(keynm.toLowerCase())
   })
 
-  val kvInitLoader = new KvInitLoaderInfo
-
-  val metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
-  if (metadataStoreType.size == 0) {
-    logger.error("Not found valid MetadataStoreType.")
-    isOk = false
-  }
-
-  val metadataSchemaName = loadConfigs.getProperty("MetadataSchemaName".toLowerCase, "").replace("\"", "").trim
-  if (metadataSchemaName.size == 0) {
-    logger.error("Not found valid MetadataSchemaName.")
-    isOk = false
-  }
-
-  val metadataLocation = loadConfigs.getProperty("MetadataLocation".toLowerCase, "").replace("\"", "").trim
-  if (metadataLocation.size == 0) {
-    logger.error("Not found valid MetadataLocation.")
-    isOk = false
-  }
-
-  /*
-  val metadataPrincipal = loadConfigs.getProperty("MetadataPrincipal".toLowerCase, "").replace("\"", "").trim
-  val metadataKeytab = loadConfigs.getProperty("MetadataKeytab".toLowerCase, "").replace("\"", "").trim
-*/
+  val kvInitLoader = new KamanjaLoaderInfo
 
   KvInitConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
   if (KvInitConfiguration.nodeId <= 0) {
@@ -245,12 +193,6 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   var nodeInfo: NodeInfo = _
 
   if (isOk) {
-    /*
-    if (metadataStoreType.compareToIgnoreCase("cassandra") == 0 || metadataStoreType.compareToIgnoreCase("hbase") == 0)
-      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, metadataLocation, metadataSchemaName, "")
-    else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
-      MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
-*/
     MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
 
     nodeInfo = mdMgr.Nodes.getOrElse(KvInitConfiguration.nodeId.toString, null)
@@ -286,10 +228,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     isOk = false
   }
 
-  var dataStoreType: String = null
-  var dataSchemaName: String = null
-  var dataLocation: String = null
-  var adapterSpecificConfig: String = null
+  var dataDataStoreInfo: String = null
   var zkConnectString: String = null
   var zkNodeBasePath: String = null
   var zkSessionTimeoutMs: Int = 0
@@ -297,9 +236,12 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
   if (isOk) {
     implicit val jsonFormats: Formats = DefaultFormats
-    val dataStoreInfo = parse(dataStore).extract[JDataStore]
+    // val dataStoreInfo = parse(dataStore).extract[JDataStore]
     val zKInfo = parse(zooKeeperInfo).extract[JZKInfo]
 
+    dataDataStoreInfo = dataStore
+
+    /*
     if (isOk) {
       dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
       if (dataStoreType.size == 0) {
@@ -325,6 +267,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     }
 
     adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
+    
+*/
 
     if (isOk) {
       zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
@@ -386,7 +330,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isContainer == false) {
-          isContainer = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
+          isContainer = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseContainerObj")
           if (isContainer == false)
             curClz = curClz.getSuperclass()
         }
@@ -406,7 +350,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         var curClz = Class.forName(clsName, true, kvInitLoader.loader)
 
         while (curClz != null && isMsg == false) {
-          isMsg = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
+          isMsg = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.BaseMsgObj")
           if (isMsg == false)
             curClz = curClz.getSuperclass()
         }
@@ -452,7 +396,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 */
   }
 
-  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KvInitClassLoader): Boolean = {
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     if (KvInitConfiguration.jarPaths == null) return false
 
     var retVal: Boolean = true
@@ -470,7 +414,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       return retVal
     }
 
-    val jars = allJars.map(j => KvInitConfiguration.GetValidJarFile(KvInitConfiguration.jarPaths, j))
+    val jars = allJars.map(j => Utils.GetValidJarFile(KvInitConfiguration.jarPaths, j))
 
     // Loading all jars
     for (j <- jars) {
@@ -500,41 +444,10 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     true
   }
 
-  def GetDataStoreHandle(storeType: String, storeName: String, tableName: String, dataLocation: String, adapterSpecificConfig: String): DataStore = {
+  private def GetDataStoreHandle(jarPaths: collection.immutable.Set[String], dataStoreInfo: String, tableName: String): DataStore = {
     try {
-      var connectinfo = new PropertyMap
-      connectinfo += ("connectiontype" -> storeType)
-      connectinfo += ("table" -> tableName)
-      if (adapterSpecificConfig != null)
-        connectinfo += ("adapterspecificconfig" -> adapterSpecificConfig)
-      storeType match {
-        case "hashmap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "treemap" => {
-          connectinfo += ("path" -> dataLocation)
-          connectinfo += ("schema" -> tableName) // Using tableName instead of storeName here to save into different tables
-          connectinfo += ("inmemory" -> "false")
-          connectinfo += ("withtransaction" -> "false")
-        }
-        case "cassandra" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-          connectinfo += ("ConsistencyLevelRead" -> "ONE")
-        }
-        case "hbase" => {
-          connectinfo += ("hostlist" -> dataLocation)
-          connectinfo += ("schema" -> storeName)
-        }
-        case _ => {
-          throw new Exception("The database type " + storeType + " is not supported yet ")
-        }
-      }
-      logger.debug("Getting DB Connection: " + connectinfo.mkString(","))
-      KeyValueManager.Get(connectinfo)
+      logger.debug("Getting DB Connection for dataStoreInfo:%s, tableName:%s".format(dataStoreInfo, tableName))
+      return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -565,29 +478,10 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     })
   }
 
-  def isDerivedFrom(clz: Class[_], clsName: String): Boolean = {
-    var isIt: Boolean = false
-
-    val interfecs = clz.getInterfaces()
-    logger.debug("Interfaces => " + interfecs.length + ",isDerivedFrom: Class=>" + clsName)
-
-    breakable {
-      for (intf <- interfecs) {
-        logger.debug("Interface:" + intf.getName())
-        if (intf.getName().equals(clsName)) {
-          isIt = true
-          break
-        }
-      }
-    }
-
-    isIt
-  }
-
   def buildContainerOrMessage: DataStore = {
     if (!isOk) return null
 
-    val kvstore: DataStore = GetDataStoreHandle(dataStoreType, dataSchemaName, "AllData", dataLocation, adapterSpecificConfig)
+    val kvstore: DataStore = GetDataStoreHandle(KvInitConfiguration.jarPaths, dataDataStoreInfo, "AllData")
     // kvstore.TruncateStore
 
     locateKeyPos
@@ -595,8 +489,24 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     var processedRows: Int = 0
     var errsCnt: Int = 0
+    var transId: Long = 0
 
     val csvdataRecs: List[String] = csvdata.tail
+
+    if (csvdataRecs.size > 0 && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
+      try {
+        com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
+        val transService = new com.ligadata.transactions.SimpleTransService
+        transService.init(1)
+        transId = transService.getNextTransId
+
+      } catch {
+        case e: Exception => throw e
+      } finally {
+        com.ligadata.transactions.NodeLevelTransService.Shutdown
+      }
+    }
+
     val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
 
     csvdataRecs.foreach(tuples => {
@@ -618,6 +528,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
         if (messageOrContainer != null) {
           try {
+            messageOrContainer.TransactionId(transId)
             messageOrContainer.populate(inputData)
           } catch {
             case e: Exception => {
@@ -664,7 +575,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         val changedContainersData = Map[String, List[List[String]]]()
         changedContainersData(kvname) = savedKeys.toList
-        val datachangedata = ("txnid" -> "0") ~
+        val datachangedata = ("txnid" -> transId.toString) ~
           ("changeddatakeys" -> changedContainersData.map(kv =>
             ("C" -> kv._1) ~
               ("K" -> kv._2)))
@@ -740,16 +651,16 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     })
   }
 
-  private def makeKey(key: String): com.ligadata.keyvaluestore.Key = {
-    var k = new com.ligadata.keyvaluestore.Key
+  private def makeKey(key: String): Key = {
+    var k = new Key
     k ++= key.getBytes("UTF8")
     k
   }
 
   private[this] var _serInfoBufBytes = 32
 
-  private def makeValue(value: String, serializerInfo: String): com.ligadata.keyvaluestore.Value = {
-    var v = new com.ligadata.keyvaluestore.Value
+  private def makeValue(value: String, serializerInfo: String): Value = {
+    var v = new Value
     v ++= serializerInfo.getBytes("UTF8")
 
     // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
@@ -770,8 +681,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     v
   }
 
-  private def makeValue(value: Array[Byte], serializerInfo: String): com.ligadata.keyvaluestore.Value = {
-    var v = new com.ligadata.keyvaluestore.Value
+  private def makeValue(value: Array[Byte], serializerInfo: String): Value = {
+    var v = new Value
     v ++= serializerInfo.getBytes("UTF8")
 
     // Making sure we write first _serInfoBufBytes bytes as serializerInfo. Pad it if it is less than _serInfoBufBytes bytes
@@ -799,7 +710,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
       def Key = k
       def Value = v
-      def Construct(Key: com.ligadata.keyvaluestore.Key, Value: com.ligadata.keyvaluestore.Value) = {}
+      def Construct(Key: Key, Value: Value) = {}
     }
     store.put(i)
   }

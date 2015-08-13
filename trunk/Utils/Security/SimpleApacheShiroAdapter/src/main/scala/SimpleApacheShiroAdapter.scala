@@ -11,7 +11,7 @@ import org.apache.shiro.subject.Subject
 import org.apache.shiro.util.Factory
 import org.apache.log4j._
 
-import com.ligadata.kamanja.metadata.SecurityAdapter
+import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import java.util.Properties
 import com.ligadata.Exceptions.StackTrace
 

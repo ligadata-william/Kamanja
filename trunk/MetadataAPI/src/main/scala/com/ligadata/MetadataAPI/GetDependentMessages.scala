@@ -11,15 +11,6 @@ import com.ligadata.kamanja.metadata.MdMgr._
 
 import com.ligadata.kamanja.metadataload.MetadataLoad
 
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.querybuilder.Insert
-import com.datastax.driver.core.ResultSet
-
-import com.ligadata.keyvaluestore._
-import com.ligadata.keyvaluestore.mapdb._
-import com.ligadata.keyvaluestore.cassandra._
-
 import scala.util.parsing.json.JSON
 import scala.util.parsing.json.{ JSONObject, JSONArray }
 import scala.collection.mutable.Map

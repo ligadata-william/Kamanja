@@ -1,7 +1,8 @@
 
 package com.ligadata.KamanjaManager
 
-import com.ligadata.KamanjaBase.{ EnvContext, ExecContext, InputAdapter, OutputAdapter, MakeExecContext, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.KamanjaBase.{ EnvContext }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, InputAdapterCallerContext }
 
 import org.apache.log4j.Logger
 import org.json4s._
@@ -10,27 +11,42 @@ import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
 import com.ligadata.Exceptions.StackTrace
 
+import com.ligadata.transactions._
+
+import com.ligadata.transactions._
+
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
-class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
+class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
   val LOG = Logger.getLogger(getClass);
+  if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
+    throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
+  }
+  
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
+
+  val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
+  val transService = new SimpleTransService
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
 
   val xform = new TransformMessageData
-  val engine = new LearningEngine(input, curPartitionId, output)
-  def execute(transId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
+      val transId = transService.getNextTransId
+      LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
 
       try {
         val transformStartTime = System.nanoTime
-        val xformedmsgs = xform.execute(data, format, associatedMsg, delimiterString)
+        val xformedmsgs = xform.execute(data, format, associatedMsg, delimiterString, uk, uv)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Transform", uv, readTmNanoSecs, transformStartTime))
         var xformedMsgCntr = 0
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, xformedMsgCntr, totalXformedMsgs)
-          engine.execute(transId, xformed._1, xformed._2, xformed._3, envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
+          kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, xformedMsgCntr, totalXformedMsgs)
+          engine.execute(transId, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
         })
       } catch {
         case e: Exception => {
@@ -40,8 +56,8 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
         val commitStartTime = System.nanoTime
-        val containerData = envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
-        envCtxt.commitData(transId)
+        val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
+        kamanjaCallerCtxt.envCtxt.commitData(transId)
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
@@ -60,9 +76,9 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionId: Int, val outp
   }
 }
 
-object MakeExecContextImpl extends MakeExecContext {
-  def CreateExecContext(input: InputAdapter, curPartitionId: Int, output: Array[OutputAdapter], envCtxt: EnvContext): ExecContext = {
-    new ExecContextImpl(input, curPartitionId, output, envCtxt)
+object ExecContextObjImpl extends ExecContextObj {
+  def CreateExecContext(input: InputAdapter, curPartitionKey: PartitionUniqueRecordKey, callerCtxt: InputAdapterCallerContext): ExecContext = {
+    new ExecContextImpl(input, curPartitionKey, callerCtxt)
   }
 }
 
@@ -98,12 +114,24 @@ object CollectKeyValsFromValidation {
 }
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
-class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val output: Array[OutputAdapter], val envCtxt: EnvContext) extends ExecContext {
+class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
   val LOG = Logger.getLogger(getClass);
 
-  val xform = new TransformMessageData
-  val engine = new LearningEngine(input, curPartitionId, output)
+  if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
+    throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
+  }
 
+  val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
+
+  
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
+
+  val xform = new TransformMessageData
+  val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
+  val transService = new SimpleTransService
+
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
+  
   private def getAllModelResults(data: Any): Array[Map[String, Any]] = {
     val results = new ArrayBuffer[Map[String, Any]]()
     try {
@@ -139,10 +167,11 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
     results.toArray
   }
 
-  def execute(transId: Long, data: String, format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
+  def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
+      val transId = transService.getNextTransId
       try {
-        val json = parse(data)
+        val json = parse(new String(data))
         if (json == null || json.values == null) {
           LOG.error("Invalid JSON data : " + data)
           return
@@ -182,7 +211,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        envCtxt.commitData(transId)
+        kamanjaCallerCtxt.envCtxt.commitData(transId)
       }
     } catch {
       case e: Exception => {
@@ -192,9 +221,9 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionId: Int, val
   }
 }
 
-object MakeValidateExecCtxtImpl extends MakeExecContext {
-  def CreateExecContext(input: InputAdapter, curPartitionId: Int, output: Array[OutputAdapter], envCtxt: EnvContext): ExecContext = {
-    new ValidateExecCtxtImpl(input, curPartitionId, output, envCtxt)
+object ValidateExecContextObjImpl extends ExecContextObj {
+  def CreateExecContext(input: InputAdapter, curPartitionKey: PartitionUniqueRecordKey, callerCtxt: InputAdapterCallerContext): ExecContext = {
+    new ValidateExecCtxtImpl(input, curPartitionKey, callerCtxt)
   }
 }
 

@@ -1,19 +1,14 @@
 package com.ligadata.MetadataAPI
 
-import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.Exceptions._
 
 import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 import com.ligadata.Serialize._
-import com.ligadata.Utils._
-import util.control.Breaks._
+import com.ligadata.AuditAdapterInfo._
 import com.ligadata.Exceptions.StackTrace
-import org.apache.log4j._
 
 object MetadataAPIOutputMsg {
 

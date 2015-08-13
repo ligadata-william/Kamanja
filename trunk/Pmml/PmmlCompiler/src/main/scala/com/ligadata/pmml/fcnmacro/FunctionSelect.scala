@@ -9,14 +9,13 @@ import scala.reflect.runtime.universe._
 import org.apache.log4j.Logger
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
-import java.net.URL
-import java.net.URLClassLoader
 import scala.reflect.runtime.{ universe => ru }
 //import java.nio.file.{ Paths, Files }
 import java.io.{ File }
 import com.ligadata.pmml.compiler._
 import com.ligadata.pmml.syntaxtree.cooked.common._
 import com.ligadata.pmml.support._
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import com.ligadata.Exceptions.StackTrace
 
 
@@ -1172,7 +1171,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 		
 	}
 	
-  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: PMMLClassLoader): Boolean = {
+  private def LoadJarIfNeeded(elem: BaseElem, loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
     if (PMMLConfiguration.jarPaths == null) return false
     
     var retVal: Boolean = true
@@ -1190,7 +1189,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
       return retVal
     }
 
-    val jars = allJars.map(j => PMMLConfiguration.GetValidJarFile(PMMLConfiguration.jarPaths, j))
+    val jars = allJars.map(j => Utils.GetValidJarFile(PMMLConfiguration.jarPaths, j))
 
     // Loading all jars
     for (j <- jars) {
@@ -1234,7 +1233,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 */
 	
 	def collectCollectionElementSuperClasses(argTypes : Array[(String,Boolean,BaseTypeDef)]) : Map[String, Array[Array[List[(String, ClassSymbol, Type)]]]] = {
-		val pmmlLoader = new PMMLLoaderInfo
+		val pmmlLoader = new KamanjaLoaderInfo
 	  
 	  	/** First get the arguments that are potentially collections with ElementTypes */
 		/** only container types that have element types */
@@ -1383,7 +1382,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  		(arg, elem.typeString, elem)
 	  	})
 
-		val pmmlLoader = new PMMLLoaderInfo
+		val pmmlLoader = new KamanjaLoaderInfo
 	  	
 	  	val containersWithSuperClasses : Array[(String,Array[(String, ClassSymbol, Type)])] = containerNamefullPkgNamesAndElem.map( nmsAndElem => {
 	  		val (nm, fqClassname) : (String, String) = (nmsAndElem._1, nmsAndElem._2)
@@ -1601,7 +1600,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	 *  scala> val composite = Array[Array[Int]](a,b,c)
 	 *  composite: Array[Array[Int]] = Array(Array(1, 2, 3, 4, 5), Array(2, 4, 6, 8, 10), Array(4, 6, 8, 10, 12))
 	 *  
-	 *  scala> composite.map(arr => arr.sum)  <<< this kind of thing is common for aggregation
+	 *  scala> composite.map(arr => arr.sum)  ` this kind of thing is common for aggregation
 	 *  res0: Array[Int] = Array(15, 30, 40)
 	 *  
 	 *  scala> composite.map(arr => arr(0) + arr(2))  <<< this kind of thing is common for aggregation

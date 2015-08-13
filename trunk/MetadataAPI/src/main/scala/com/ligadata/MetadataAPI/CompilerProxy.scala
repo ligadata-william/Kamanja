@@ -26,7 +26,7 @@ import scala.reflect.runtime.{ universe => ru }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import java.net.URL
 import java.net.URLClassLoader
 import com.ligadata.Exceptions.StackTrace
@@ -147,11 +147,12 @@ class CompilerProxy{
         MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(","))
       val (classStr,modDef) = compiler.compile(pmmlStr,compiler_work_dir,recompile)
 
-      /** if errors were encountered... the model definition is not manufactured.
-        *  Avoid Scala compilation of the broken src.  Src file MAY be available
-        *  in classStr.  However, if there were simple syntactic issues or simple semantic
-        *  issues, it may not be generated.
-        */
+      /**
+       * if errors were encountered... the model definition is not manufactured.
+       *  Avoid Scala compilation of the broken src.  Src file MAY be available
+       *  in classStr.  However, if there were simple syntactic issues or simple semantic
+       *  issues, it may not be generated.
+       */
       if (modDef != null) {
         var pmmlScalaFile = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_TARGET_DIR") + "/" + modDef.name + ".pmml"
         var classPath = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("CLASSPATH").trim
@@ -162,7 +163,7 @@ class CompilerProxy{
         val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
 
         if (modDef.DependencyJarNames != null) {
-          val depJars = modDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+          val depJars = modDef.DependencyJarNames.map(j => Utils.GetValidJarFile(jarPaths, j)).mkString(":")
           if (classPath != null && classPath.size > 0) {
             classPath = classPath + ":" + depJars
           } else {
@@ -197,7 +198,8 @@ class CompilerProxy{
         modDef.objectDefinition = pmmlStr
         modDef.objectFormat = fXML
 
-      } /** end of (modDef != null) */
+      }
+      /** end of (modDef != null) */
       // Alles gut! return class and modelDef
       (classStr,modDef)
     } catch {
@@ -252,7 +254,7 @@ class CompilerProxy{
 
       if (msgDef.DependencyJarNames != null) {
         val jarPaths = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
-        val depJars = msgDef.DependencyJarNames.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+        val depJars = msgDef.DependencyJarNames.map(j => Utils.GetValidJarFile(jarPaths, j)).mkString(":")
         if (classPath != null && classPath.size > 0) {
           classPath = classPath + ":" + depJars
         } else {
@@ -709,30 +711,48 @@ class CompilerProxy{
   private def getModelMetadataFromJar(jarFileName: String, elements: Set[BaseElemDef]): (String, String, String, String) = {
 
     // Resolve ModelNames and Models versions - note, the jar file generated is still in the workDirectory.
-    val classLoader: CompilerProxyLoader = new CompilerProxyLoader
+    val loaderInfo = new KamanjaLoaderInfo()
     // val jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR").split(",").toSet
     var jarPaths0 = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("JAR_PATHS").split(",").toSet
     jarPaths0 = jarPaths0 + MetadataAPIImpl.GetMetadataAPIConfig.getProperty("COMPILER_WORK_DIR")
 
+    var allJars = collection.mutable.Set[String]()
+
+    allJars = allJars + jarFileName
+    elements.foreach(elem => {
+      if (elem.JarName != null) {
+        allJars = allJars + elem.JarName
+      }
+      if (elem.DependencyJarNames != null) {
+        allJars = allJars ++ elem.DependencyJarNames
+      }
+    })
+
+    /*
+
     // Add this temp jar...
-    val jarName0 = JarPathsUtils.GetValidJarFile(jarPaths0, jarFileName)
-    
+    val jarName0 = Utils.GetValidJarFile(jarPaths0, jarFileName)
     loadJarFile(jarName0, classLoader)
     elements.foreach(elem => {
-      val jarNameType =  JarPathsUtils.GetValidJarFile(jarPaths0, elem.JarName)
+      val jarNameType =  Utils.GetValidJarFile(jarPaths0, elem.JarName)
       loadJarFile(jarNameType, classLoader)
     })
 
-    var classNames = getClasseNamesInJar(jarName0)
+*/
+
+    Utils.LoadJars(allJars.map(j => Utils.GetValidJarFile(jarPaths0, j)).toArray, loaderInfo.loadedJars, loaderInfo.loader)
+
+    val jarName0 = Utils.GetValidJarFile(jarPaths0, jarFileName)
+    var classNames = Utils.getClasseNamesInJar(jarName0)
     var tempCurClass: Class[_] = null
-    classNames.foreach (clsName => {
-      var curClz = Class.forName(clsName, true, classLoader.loader)
+    classNames.foreach(clsName => {
+      var curClz = Class.forName(clsName, true, loaderInfo.loader)
       tempCurClass = curClz
 
       var isModel = false
       while (curClz != null && isModel == false) {
-        isModel = isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
-          if (isModel == false)
+        isModel = Utils.isDerivedFrom(curClz, "com.ligadata.KamanjaBase.ModelBaseObj")
+        if (isModel == false)
           curClz = curClz.getSuperclass()
       }
       if (isModel) {
@@ -741,8 +761,8 @@ class CompilerProxy{
           var objInst: Any = null
           try {
             // Trying Singleton Object
-            val module = classLoader.mirror.staticModule(clsName)
-            val obj = classLoader.mirror.reflectModule(module) 
+            val module = loaderInfo.mirror.staticModule(clsName)
+            val obj = loaderInfo.mirror.reflectModule(module)
 
             objInst = obj.instance
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
@@ -779,9 +799,6 @@ class CompilerProxy{
     logger.error("COMPILER_PROXY: No class/objects implementing com.ligadata.KamanjaBase.ModelBaseObj was found in the jarred source "+jarFileName)
     throw new MsgCompilationFailedException(jarFileName)
   }
-
-
-
 
   /**
    * getClasseNamesInJar - A utility method to grab all class files from the jarfile
@@ -880,9 +897,6 @@ class CompilerProxy{
     None
   }
 
-  /**
-   *
-   */
   private def loadJarFile (jarName: String, classLoader: CompilerProxyLoader): Unit = {
     val fl = new File(jarName)
     if (fl.exists) {
@@ -955,12 +969,12 @@ class CompilerProxy{
         }
       })
       combinedDeps = combinedDeps ++ msgContDepSet
-      msgJars = msgContDepSet.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+      msgJars = msgContDepSet.map(j => Utils.GetValidJarFile(jarPaths, j)).mkString(":")
     }
 
     // Handle the Dependency Jar stuff
     if (inDeps != null) {
-      var depJars = inDeps.map(j => JarPathsUtils.GetValidJarFile(jarPaths, j)).mkString(":")
+      var depJars = inDeps.map(j => Utils.GetValidJarFile(jarPaths, j)).mkString(":")
       if (depJars != null && depJars.length > 0) depJars = depJars + ":" + msgJars else depJars = msgJars
       if (classPath != null && classPath.size > 0) {
         classPath = classPath + ":" + depJars

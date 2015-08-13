@@ -4,8 +4,6 @@ import com.ligadata.loadtestcommon._
 import com.ligadata.loadtestmaster._
 import com.ligadata.keyvaluestore._
 
-import com.ligadata.keyvaluestore.PropertyMap
-
 import akka.actor._
 import akka.actor.ActorDSL._
 import scala.concurrent.duration._
@@ -16,10 +14,13 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.event.LoggingAdapter;
+import akka.event.LoggingAdapter
 import akka.routing.RoundRobinPool
 import scala.concurrent.duration.Duration
 import concurrent._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 import com.ligadata.Exceptions.StackTrace
 import org.apache.log4j.Logger
 
@@ -44,7 +45,7 @@ class Master(outputfile : String) extends Actor
 	var nNodes = 0
 	var nNodesStarted = 0
 	var nNodesCompleted = 0
-	var nScenarioMultiplier = 1;
+	var nScenarioMultiplier = 1
 	var startTime : Long = 0
 	var endTime : Long = 0
 
@@ -209,105 +210,90 @@ class Master(outputfile : String) extends Actor
 	}
 }
 
-object Master
-{
+object Master {
 	var resultfile = "result.cvs"
-  private val LOG = Logger.getLogger(getClass)
-	def Prepare(config : Configuration)
-	{
-		if(config.bTruncateStore)
-		{
+	private val LOG = Logger.getLogger(getClass)
+
+	def Prepare(config: Configuration) {
+		if (config.bTruncateStore) {
 			println("Truncate store start - 30 sec wait")
 
 			Thread.sleep(30000L)
 
-			var nTries=3
+			var nTries = 3
 
-			while(nTries>0)
-			{
-				val store = KeyValueManager.Get(config.connectinfo)
+			while (nTries > 0) {
+				val store = KeyValueManager.Get(collection.immutable.Set[String](), config.connectinfo, config.tablename)
 
-				try
-				{
+				try {
 					store.TruncateStore()
 					println("Truncate store done")
 					nTries = 0
 				}
-				catch
-				{
-					case e1: Exception=>
-					{
-				  		nTries-=1
+				catch {
+					case e1: Exception => {
+						nTries -= 1
 
-				  		if(nTries>0)
-				  		{
-                val stackTrace = StackTrace.ThrowableTraceString(e1)
-                LOG.debug("StackTrace:"+stackTrace)
-				  			println("Prepare: Caught exception " + e1.getMessage())
-				  			Thread.sleep(30000L)
+						if (nTries > 0) {
+							val stackTrace = StackTrace.ThrowableTraceString(e1)
+							LOG.debug("StackTrace:" + stackTrace)
+							println("Prepare: Caught exception " + e1.getMessage())
+							Thread.sleep(30000L)
 
-				  		}
-				  		else
-				  		{
-                val stackTrace = StackTrace.ThrowableTraceString(e1)
-                LOG.error("StackTrace:"+stackTrace)
-				  			println("Prepare: Caught exception " + e1.getMessage() + "\n" + "StackTrace:"+stackTrace)
-				  			throw e1
-				  		}
+						}
+						else {
+							val stackTrace = StackTrace.ThrowableTraceString(e1)
+							LOG.error("StackTrace:" + stackTrace)
+							println("Prepare: Caught exception " + e1.getMessage() + "\n" + "StackTrace:" + stackTrace)
+							throw e1
+						}
 					}
-				  	case e: com.datastax.driver.core.exceptions.DriverException =>
-				  	{
-				  		nTries-=1
+					case e: com.datastax.driver.core.exceptions.DriverException => {
+						nTries -= 1
 
-				  		if(nTries>0)
-				  		{
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.error("StackTrace:"+stackTrace)
-				  			println("Prepare: Caught exception " + e.getMessage()+"\nStackTrace:"+stackTrace)
-				  			Thread.sleep(30000L)
+						if (nTries > 0) {
+							val stackTrace = StackTrace.ThrowableTraceString(e)
+							LOG.error("StackTrace:" + stackTrace)
+							println("Prepare: Caught exception " + e.getMessage() + "\nStackTrace:" + stackTrace)
+							Thread.sleep(30000L)
 
-				  		}
-				  		else
-				  		{
-                val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.error("StackTrace:"+stackTrace)
-				  			println("Prepare: Caught exception " + e.getMessage() + "\n" + "StackTrace:"+stackTrace)
-				  			throw e
-				  		}
-				  	}
+						}
+						else {
+							val stackTrace = StackTrace.ThrowableTraceString(e)
+							LOG.error("StackTrace:" + stackTrace)
+							println("Prepare: Caught exception " + e.getMessage() + "\n" + "StackTrace:" + stackTrace)
+							throw e
+						}
+					}
 					//case e: Exception => println("Prepare: Caught exception " + e.getMessage() + "\n" + e.getStackTraceString)
 					//throw e
 				}
-				finally
-				{
+				finally {
 					store.Shutdown()
 				}
 			}
 		}
 	}
 
-	def Conclude()
-	{
+	def Conclude() {
 
 	}
 
-	def Run(config : RemoteConfiguration)
-	{
+	def Run(config: RemoteConfiguration) {
 		println("start configuaration " + config.Name)
 
 		config.Dump()
 
 		Prepare(config)
 		implicit val system = ActorSystem("MasterSystem")
-		val master  = system.actorOf(Props(new Master(resultfile)), name = "Master")
+		val master = system.actorOf(Props(new Master(resultfile)), name = "Master")
 		master ! ExecuteMaster(config)
 		system.awaitTermination()
 
 		Conclude()
 	}
 
-	def main(args: Array[String])
-	{
+	def main(args: Array[String]) {
 		println("start Master")
 
 		val cmdconf = new Conf(args)
@@ -320,28 +306,30 @@ object Master
 		config.nrOfMessages = cmdconf.msg()
 		config.nMinMessage = cmdconf.minsize()
 		config.nMaxMessage = cmdconf.maxsize()
-		config.connectinfo("hostlist") = cmdconf.dbhost()
-		config.connectinfo("ConsistencyLevelRead") = cmdconf.consistencyLevelRead()
-		config.connectinfo("ConsistencyLevelWrite") = cmdconf.consistencyLevelWrite()
-		config.connectinfo("ConsistencyLevelDelete") = cmdconf.consistencyLevelDelete()
+
+		val connJson =
+			("connectiontype" -> "cassandra") ~
+				("hostlist" -> cmdconf.dbhost()) ~
+				("schema" -> "default") ~
+				("ConsistencyLevelRead" -> cmdconf.consistencyLevelRead()) ~
+				("ConsistencyLevelWrite" -> cmdconf.consistencyLevelWrite()) ~
+				("ConsistencyLevelDelete" -> cmdconf.consistencyLevelDelete())
+
+		config.connectinfo = compact(render(connJson))
 		config.nScenario = cmdconf.scenario()
 		config.runners = cmdconf.hosts()
 
-		val confsfile : String = cmdconf.confs()
+		val confsfile: String = cmdconf.confs()
 
-		if(confsfile.length()==0)
-		{
+		if (confsfile.length() == 0) {
 			Run(config)
 		}
-		else
-		{
+		else {
 			val configs = RemoteConfiguration.Load(confsfile, config)
-			for(config <- configs)
-			{
+			for (config <- configs) {
 				Run(config)
 			}
 		}
 		println("end Master")
 	}
 }
-

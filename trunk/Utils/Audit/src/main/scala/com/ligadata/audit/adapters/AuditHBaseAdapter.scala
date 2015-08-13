@@ -1,7 +1,7 @@
 package com.ligadata.audit.adapters
 
-import com.ligadata.keyvaluestore._
-import com.ligadata.kamanja.metadata._
+import com.ligadata.StorageBase.{ Key, Value }
+import com.ligadata.AuditAdapterInfo._
 
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.HBaseConfiguration

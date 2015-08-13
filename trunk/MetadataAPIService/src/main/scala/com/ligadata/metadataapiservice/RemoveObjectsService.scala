@@ -13,6 +13,7 @@ import com.ligadata.kamanja.metadata._
 import scala.util.control._
 
 import org.apache.log4j._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object RemoveObjectsService {
   case class Process(apiArgListJson: String)
