@@ -85,7 +85,7 @@ object TypeService {
         val typeNameSpace = typeKeyTokens(0)
         val typeName = typeKeyTokens(1)
         val typeVersion = typeKeyTokens(2)
-        response = MetadataAPIImpl.GetType(typeNameSpace, typeName,"JSON",typeVersion, userid).toString
+        response = MetadataAPIImpl.GetType(typeNameSpace, typeName,typeVersion, "JSON",userid).toString
 
       }
 
@@ -106,12 +106,12 @@ object TypeService {
       val typeKeys =MetadataAPIImpl.GetAllKeys("TypeDef", None)
 
       if (typeKeys.length == 0) {
-        val errorMsg="Sorry, No models available, in the Metadata, to delete!"
+        val errorMsg="Sorry, No types available, in the Metadata, to delete!"
         //println(errorMsg)
         response=errorMsg
       }
       else{
-        println("\nPick the model to be deleted from the following list: ")
+        println("\nPick the type to be deleted from the following list: ")
         var srno = 0
         for(modelKey <- typeKeys){
           srno+=1
@@ -130,7 +130,7 @@ object TypeService {
         val typeNameSpace = typeKeyTokens(0)
         val typeName = typeKeyTokens(1)
         val typeVersion = typeKeyTokens(2)
-        response = MetadataAPIImpl.RemoveModel(typeNameSpace, typeName, typeVersion.toLong, userid).toString
+        response = MetadataAPIImpl.RemoveType(typeNameSpace, typeName, typeVersion.toLong, userid).toString
       }
 
     } catch {
@@ -143,12 +143,53 @@ object TypeService {
   }
   //NOT REQUIRED
   def loadTypesFromAFile: String ={
-    var response="NOT REQUIRED. Please use the ADD TYPE option."
+
+    val response="NOT REQUIRED. Please use the ADD TYPE option."
     response
   }
 
   def dumpAllTypesByObjTypeAsJson: String ={
     var response=""
+    try {
+      val typeMenu = Map(1 -> "ScalarTypeDef",
+        2 -> "ArrayTypeDef",
+        3 -> "ArrayBufTypeDef",
+        4 -> "SetTypeDef",
+        5 -> "TreeSetTypeDef",
+        6 -> "AnyTypeDef",
+        7 -> "SortedSetTypeDef",
+        8 -> "MapTypeDef",
+        9 -> "HashMapTypeDef",
+        10 -> "ImmutableMapTypeDef",
+        11 -> "ListTypeDef",
+        12 -> "QueueTypeDef",
+        13 -> "TupleTypeDef")
+      var selectedType = "com.ligadata.kamanja.metadata.ScalarTypeDef"
+      var done = false
+      while (done == false) {
+        println("\n\nPick a Type ")
+        var seq = 0
+        typeMenu.foreach(key => { seq += 1; println("[" + seq + "] " + typeMenu(seq)) })
+        seq += 1
+        println("[" + seq + "] Main Menu")
+        print("\nEnter your choice: ")
+        val choice: Int = readInt()
+        if (choice <= typeMenu.size) {
+          selectedType = "com.ligadata.kamanja.metadata." + typeMenu(choice)
+          done = true
+        } else if (choice == typeMenu.size + 1) {
+          done = true
+        } else {
+          logger.error("Invalid Choice : " + choice)
+        }
+      }
+
+      response = MetadataAPIImpl.GetAllTypesByObjType("JSON", selectedType)
+    } catch {
+      case e: Exception => {
+        response=e.getStackTrace.toString
+      }
+    }
     response
   }
 

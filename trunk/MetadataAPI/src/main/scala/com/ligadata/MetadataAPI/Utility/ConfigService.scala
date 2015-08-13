@@ -98,7 +98,16 @@ object ConfigService {
   }
   def dumpAllCfgObjects: String ={
     var response=""
+    try{
+      response= MetadataAPIImpl.GetAllCfgObjects("JSON", userid)
+    }
+    catch {
+      case e: Exception => {
+        response=e.getStackTrace.toString
+      }
+    }
     response
+
   }
   def removeEngineConfig: String ={
     var response="TO BE IMPLEMENTED"

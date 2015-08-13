@@ -108,11 +108,11 @@ object StartMetadataAPI {
           //jar
         case Action.UPLOADJAR=>response = JarService.uploadJar(input)
           //dumps
-        case Action.DUMPMETADATA=>response =
-        case Action.DUMPALLNODES=>response =
-        case Action.DUMPALLCLUSTERS=>response =
-        case Action.DUMPALLCLUSTERCFGS=>response =
-        case Action.DUMPALLADAPTERS=>response =
+        case Action.DUMPMETADATA=>response =DumpService.dumpMetadata
+        case Action.DUMPALLNODES=>response =DumpService.dumpAllNodes
+        case Action.DUMPALLCLUSTERS=>response =DumpService.dumpAllClusters
+        case Action.DUMPALLCLUSTERCFGS=>response =DumpService.dumpAllClusterCfgs
+        case Action.DUMPALLADAPTERS=>response =DumpService.dumpAllAdapters
         case _ => response = "Unexpected action!"
       }
     }
