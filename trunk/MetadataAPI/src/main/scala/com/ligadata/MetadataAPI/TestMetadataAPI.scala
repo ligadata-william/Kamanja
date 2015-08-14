@@ -2123,7 +2123,7 @@ object TestMetadataAPI {
   }
 
   def TestKryoSerialize(configFile: String) {
-    MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
     val msgDefs = MdMgr.GetMdMgr.Types(true, true)
     msgDefs match {
       case None => {
@@ -2637,7 +2637,7 @@ object TestMetadataAPI {
         }
         myConfigFile = cfgfile.asInstanceOf[String]
       }
-      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile, true)
       StartTest
     } catch {
       case e: Exception => {

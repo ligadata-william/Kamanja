@@ -250,7 +250,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     else if ((metadataStoreType.compareToIgnoreCase("treemap") == 0) || (metadataStoreType.compareToIgnoreCase("hashmap") == 0))
       MetadataAPIImpl.InitMdMgr(mdMgr, metadataStoreType, "", metadataSchemaName, metadataLocation)
 */
-    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile, false)
 
     nodeInfo = mdMgr.Nodes.getOrElse(KvInitConfiguration.nodeId.toString, null)
     if (nodeInfo == null) {
