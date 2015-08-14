@@ -14,6 +14,8 @@ import org.json4s.Formats
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.JsonProcessingException
 import scala.util.control._
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author eshanhaval
@@ -31,8 +33,18 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
   private var classStr200_1 : String = _
   private var classStr200_java_1 : String = _
   private val testMSG1FilePath : String = "/tmp/testing/messages/hl7Test.json"
+  var classpath = ClassLoader.getSystemClassLoader
   
   val inputJsonStr = "{\"Message\" : {\"NameSpace\" : \"System\",\"Name\" : \"msg1\",\"Version\" : \"00.01.00\",\"Description\" : \"Hello World \",\"Fixed\" : \"true\",\"Elements\" : [{\"Field\" : {\"Name\" : \"Id\",\"Type\" : \"System.Int\"}},{\"Field\" : {\"Name\" : \"Name\",\"Type\" : \"System.String\"}},{\"Field\" : {\"Name\" : \"Score\",\"Type\" : \"System.Int\"}}]}}"
+  
+  def getClassPath() :String = {
+    val res = classpath.asInstanceOf[URLClassLoader].getURLs
+    val strBuilder : StringBuilder = null
+    for(i<-res){
+      strBuilder.append(i.getFile+":")
+    }
+    return strBuilder.toString().substring(0, strBuilder.length-1)
+  }
   
   override def beforeAll(){
     /*
@@ -162,7 +174,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     val actual = msg.processMsgDef(inputJsonStr.toString, inputMsgDfType.toString(), inputMdMgr, inputRecompile)
     var settings = new scala.tools.nsc.Settings()
     val origBootclasspath = settings.bootclasspath.value
-    settings.bootclasspath.value = "/Users/eshanhaval/Desktop/installTelecomApp/lib/system/metadata_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basefunctions_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/messagedef_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/methodextractor_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlcompiler_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/kamanjabase_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/bootstrap_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-time-2.3.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-convert-1.6.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basetypes_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmludfs_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlruntime_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-native_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-core_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-ast_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-databind-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-annotations-2.3.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-jackson_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-core-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/log4j-1.2.17.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/guava-18.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/exceptions_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-reflect-2.10.4.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-library-2.10.4.jar"
+    settings.bootclasspath.value = getClassPath
     val out = new java.io.StringWriter()
     var interpreter = new scala.tools.nsc.Interpreter(settings,new PrintWriter(out))
     val returnScala = interpreter.interpret(actual._1._1.substring(actual._1._1.toString().indexOf("import")))
@@ -204,7 +216,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     */
     var settings = new scala.tools.nsc.Settings()
     val origBootclasspath = settings.bootclasspath.value
-    settings.bootclasspath.value = "/Users/eshanhaval/Desktop/installTelecomApp/lib/system/metadata_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basefunctions_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/messagedef_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/methodextractor_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlcompiler_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/kamanjabase_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/bootstrap_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-time-2.3.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-convert-1.6.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basetypes_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmludfs_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlruntime_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-native_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-core_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-ast_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-databind-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-annotations-2.3.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-jackson_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-core-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/log4j-1.2.17.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/guava-18.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/exceptions_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-reflect-2.10.4.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-library-2.10.4.jar"
+    settings.bootclasspath.value = getClassPath
     val out = new java.io.StringWriter()
     var interpreter = new scala.tools.nsc.Interpreter(settings,new PrintWriter(out))
     val returnScala = interpreter.interpret(actual.toString())
@@ -230,7 +242,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     
     var settings = new scala.tools.nsc.Settings()
     val origBootclasspath = settings.bootclasspath.value
-    settings.bootclasspath.value = "/Users/eshanhaval/Desktop/installTelecomApp/lib/system/metadata_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basefunctions_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/messagedef_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/methodextractor_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlcompiler_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/kamanjabase_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/bootstrap_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-time-2.3.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/joda-convert-1.6.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/basetypes_2.10-0.1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmludfs_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/pmmlruntime_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-native_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-core_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-ast_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-databind-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-annotations-2.3.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/json4s-jackson_2.10-3.2.9.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/jackson-core-2.3.1.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/log4j-1.2.17.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/guava-18.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/exceptions_2.10-1.0.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-reflect-2.10.4.jar:/Users/eshanhaval/Desktop/installTelecomApp/lib/system/scala-library-2.10.4.jar"
+    settings.bootclasspath.value = getClassPath
     val out = new java.io.StringWriter()
     var interpreter = new scala.tools.nsc.Interpreter(settings,new PrintWriter(out))
     val returnScala = interpreter.interpret(actual.toString())
