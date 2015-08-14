@@ -353,7 +353,7 @@ class KamanjaManager {
       if (retval && zkHeartBeatNodePath.size > 0) {
         heartBeat = new HeartBeatUtil
         heartBeat.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, zkHeartBeatNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, 5000) // for every 5 secs
-        heartBeat.SetMainData("Node" + KamanjaConfiguration.nodeId.toString)
+        heartBeat.SetMainData(KamanjaConfiguration.nodeId.toString)
       }
 
       /*
@@ -477,7 +477,7 @@ class KamanjaManager {
     var cntr: Long = 0
     var prevParticipents = ""
 
-    val nodeNameToSetZk = "Node" + KamanjaConfiguration.nodeId.toString
+    val nodeNameToSetZk = KamanjaConfiguration.nodeId.toString
 
     print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 

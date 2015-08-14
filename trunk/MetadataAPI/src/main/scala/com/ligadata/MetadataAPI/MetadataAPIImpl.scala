@@ -173,7 +173,7 @@ object MetadataAPIImpl extends MetadataAPI {
    */
   def clockNewActivity: Unit= {
     if (heartBeat != null)
-      heartBeat.SetMainData("Node" + metadataAPIConfig.getProperty("NODE_ID").toString)
+      heartBeat.SetMainData(metadataAPIConfig.getProperty("NODE_ID").toString)
   }
 
 
@@ -6248,7 +6248,8 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def InitMdMgr(configFile: String) {
+  def InitMdMgr(configFile: String, startHB: Boolean = true) {
+    
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -6261,11 +6262,12 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.CloseDbStore
     MetadataAPIImpl.InitSecImpl
-    InitHearbeat
+    if (startHB) InitHearbeat
     initZkListeners   
   }
 
-  def InitMdMgrFromBootStrap(configFile: String) {
+  def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean = true) {
+        
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
     mdLoader.initialize
@@ -6279,18 +6281,18 @@ object MetadataAPIImpl extends MetadataAPI {
     MetadataAPIImpl.OpenDbStore(GetMetadataAPIConfig.getProperty("DATABASE"), GetMetadataAPIConfig.getProperty("ADAPTER_SPECIFIC_CONFIG"))
     MetadataAPIImpl.LoadAllObjectsIntoCache
     MetadataAPIImpl.InitSecImpl
-    InitHearbeat
+    if (startHB)  InitHearbeat
     isInitilized = true
     logger.debug("Metadata synching is now available.")
     
   }
   
   private def InitHearbeat: Unit = {
-    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + "Node" + metadataAPIConfig.getProperty("NODE_ID").toString
+    zkHeartBeatNodePath = metadataAPIConfig.getProperty("ZNODE_PATH") + "/monitor/metadata/" + metadataAPIConfig.getProperty("NODE_ID").toString
     if (zkHeartBeatNodePath.size > 0) {  
       heartBeat = new HeartBeatUtil
       heartBeat.Init("Metadata", metadataAPIConfig.getProperty("ZOOKEEPER_CONNECT_STRING"), zkHeartBeatNodePath,3000, 3000, 5000) // for every 5 secs
-      heartBeat.SetMainData("Node" + metadataAPIConfig.getProperty("NODE_ID").toString)
+      heartBeat.SetMainData(metadataAPIConfig.getProperty("NODE_ID").toString)
       MonitorAPIImpl.startMetadataHeartbeat
     }
 
