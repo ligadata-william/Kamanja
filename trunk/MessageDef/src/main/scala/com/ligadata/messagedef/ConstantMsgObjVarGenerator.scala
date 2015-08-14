@@ -747,7 +747,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
      
         if (ofield._2._1 >= 0) {
           val key = ofield._1.toLowerCase
-          if(key != "transactionId"){
+          if(key != "transactionid"){
           ofield._2._1 match {
            """ + fromFuncBaseTypesStr +
            """
