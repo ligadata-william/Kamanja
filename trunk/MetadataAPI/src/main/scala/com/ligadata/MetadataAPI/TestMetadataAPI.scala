@@ -18,6 +18,7 @@ import scala.io._
 import java.util.Date
 import java.util.Properties
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 object TestMetadataAPI {
 
@@ -93,7 +94,8 @@ object TestMetadataAPI {
         logger.error("Type already exists in metadata...")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -137,7 +139,9 @@ object TestMetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
+        
       }
     }
   }
@@ -185,7 +189,9 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
+        
       }
     }
   }
@@ -246,7 +252,8 @@ object TestMetadataAPI {
         logger.error("Function already exists in metadata...")
       }
       case e: Exception => {
-        e.printStackTrace()
+      val stackTrace = StackTrace.ThrowableTraceString(e)
+      logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -290,7 +297,9 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -334,7 +343,9 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -437,7 +448,9 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -484,7 +497,9 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
+        
       }
     }
   }
@@ -523,7 +538,9 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -566,7 +583,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -609,7 +627,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -650,7 +669,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -691,10 +711,14 @@ object TestMetadataAPI {
 
     } catch {
       case e: NumberFormatException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         print("\n Entry not in desired format. Please enter only one choice correctly")
       }
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error(e.toString)
+        logger.debug("\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -735,7 +759,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -776,7 +801,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -816,7 +842,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -856,7 +883,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -896,7 +924,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -913,7 +942,8 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -931,7 +961,8 @@ object TestMetadataAPI {
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -949,7 +980,8 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -967,7 +999,8 @@ object TestMetadataAPI {
       msgKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -985,7 +1018,8 @@ object TestMetadataAPI {
       modKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1059,7 +1093,8 @@ object TestMetadataAPI {
         logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1130,10 +1165,12 @@ object TestMetadataAPI {
 
     } catch {
       case e: AlreadyExistsException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         logger.error("Container Already in the metadata...." + e.getMessage())
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1216,7 +1253,8 @@ object TestMetadataAPI {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1290,7 +1328,8 @@ object TestMetadataAPI {
         logger.error("Message Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1339,7 +1378,8 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.UpdateModel(pmmlStr, userid))
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1355,8 +1395,11 @@ object TestMetadataAPI {
           configs = new Properties()
           configs.load(input);
         } catch {
-          case e: Exception =>
+          case e: Exception =>{
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
             throw new Exception("Failed to load configuration. Message:" + e.getMessage)
+          }
         } finally {
           input.close();
         }
@@ -1364,8 +1407,11 @@ object TestMetadataAPI {
         throw new Exception("Configuration file not found : " + configFile)
       }
     } catch {
-      case e: Exception =>
+      case e: Exception =>{
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Invalid Configuration. Message: " + e.getMessage())
+      }
     }
     return configs
   }
@@ -1453,7 +1499,8 @@ object TestMetadataAPI {
         logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1536,7 +1583,8 @@ object TestMetadataAPI {
         logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1588,7 +1636,8 @@ object TestMetadataAPI {
         logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1636,10 +1685,12 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.UploadModelsConfig(cfgStr, userid, "testConf"))
     } catch {
       case e: AlreadyExistsException => {
+        
         logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }   
   }
@@ -1687,10 +1738,12 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.UploadConfig(cfgStr, userid, "testConf"))
     } catch {
       case e: AlreadyExistsException => {
+        
         logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1738,10 +1791,12 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.RemoveConfig(cfgStr, userid, "n/a"))
     } catch {
       case e: AlreadyExistsException => {
+       
         logger.error("Object Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1788,10 +1843,12 @@ object TestMetadataAPI {
       println("Results as json string => \n" + MetadataAPIImpl.UploadJar(jarFilePath), userid)
     } catch {
       case e: AlreadyExistsException => {
+        
         logger.error("Model Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1841,10 +1898,12 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: AlreadyExistsException => {
+       
         logger.error("Function Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1856,7 +1915,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1906,11 +1966,13 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: AlreadyExistsException => {
+       
         logger.error("Concept Already in the metadata....")
       }
       case e: Exception => {
         //check again
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1922,7 +1984,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -1972,10 +2035,12 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: AlreadyExistsException => {
+       
         logger.error("Type Already in the metadata....")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2020,7 +2085,8 @@ object TestMetadataAPI {
       println("Result as Json String => " + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2032,7 +2098,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2044,7 +2111,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2056,7 +2124,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2068,7 +2137,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2080,7 +2150,8 @@ object TestMetadataAPI {
       println("Result as Json String => \n" + apiResult)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2184,7 +2255,8 @@ object TestMetadataAPI {
       zkc.setData().forPath("/ligadata/models", "Activate ModelDef-2".getBytes);
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     } finally {
       zkc.close();
@@ -2232,7 +2304,8 @@ object TestMetadataAPI {
       MetadataAPIImpl.UpdateObject(key, ba, store)
     } catch {
       case e: Exception => {
-        logger.debug("Failed to save the object : " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("Failed to save the object : " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -2254,7 +2327,8 @@ object TestMetadataAPI {
       assert(v == "value3")
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2331,10 +2405,11 @@ object TestMetadataAPI {
 
 	    } catch {
 	      case e: AlreadyExistsException => {
-	        logger.error("Object Already in the metadata....")
+          logger.error("Object Already in the metadata....")
 	      }
 	      case e: Exception => {
-	        e.printStackTrace()
+	        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	      }
 	    }
 	  }
@@ -2381,7 +2456,8 @@ object TestMetadataAPI {
 	      println("Results as json string => \n" + MetadataAPIOutputMsg.UpdateOutputMsg(outputmsgStr, userid))
 	    } catch {
 	      case e: Exception => {
-	        e.printStackTrace()
+	        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	      }
 	    }
 	  }
@@ -2421,7 +2497,8 @@ object TestMetadataAPI {
 
 	    } catch {
 	      case e: Exception => {
-	        e.printStackTrace()
+	        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	      }
 	    }
 	  }
@@ -2439,7 +2516,8 @@ object TestMetadataAPI {
 	      outputMsgsKeys.foreach(key => { seq += 1; println("[" + seq + "] " + key) })
 	    } catch {
 	      case e: Exception => {
-	        e.printStackTrace()
+	        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	      }
 	    }
 	  }
@@ -2565,7 +2643,8 @@ object TestMetadataAPI {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -2642,7 +2721,8 @@ object TestMetadataAPI {
       StartTest
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     } finally {
       MetadataAPIImpl.shutdown

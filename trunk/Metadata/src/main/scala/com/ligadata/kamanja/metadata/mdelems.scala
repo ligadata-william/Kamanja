@@ -662,6 +662,10 @@ class ModelDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
 
+class ConfigDef extends BaseElemDef {
+  var contents: String = _
+}
+
 class JarDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }

@@ -9,6 +9,7 @@ import java.nio.file.{ Paths, Files }
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, InputAdapter, InputAdapterObj, OutputAdapter, ExecContext, ExecContextObj, CountersAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, InputAdapterCallerContext }
 import com.ligadata.AdaptersConfiguration.{ FileAdapterConfiguration, FilePartitionUniqueRecordKey, FilePartitionUniqueRecordValue }
 import scala.util.control.Breaks._
+import com.ligadata.Exceptions.StackTrace
 
 object FileConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new FileConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
@@ -95,7 +96,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
                       execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
                     } catch {
-                      case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                      case e: Exception => {
+                        LOG.error("Failed with Message:" + e.getMessage)}
                     }
 
                     st.totalSent += sendmsg.size
@@ -148,7 +150,8 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
             execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
           } catch {
-            case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+            case e: Exception => {
+              LOG.error("Failed with Message:" + e.getMessage)}
           }
 
           st.totalSent += sendmsg.size
@@ -276,6 +279,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
         vl.Deserialize(v)
       } catch {
         case e: Exception => {
+          
           LOG.error("Failed to deserialize Value:%s. Reason:%s Message:%s".format(v, e.getCause, e.getMessage))
           throw e
         }

@@ -190,4 +190,7 @@ object ErrorCodeConstants {
    
    //Object
    val Get_All_Object_Keys_Successful = "Successfully fetched all object keys";
+   
+   //Monitor
+   val GetHeartbeat_Success = "Heartbeats fetched successfully"
 }

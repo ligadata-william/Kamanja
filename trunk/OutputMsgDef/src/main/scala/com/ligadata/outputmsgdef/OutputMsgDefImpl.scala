@@ -10,6 +10,7 @@ import com.ligadata.kamanja.metadata.MdMgr._
 import com.ligadata.Exceptions._
 import org.apache.log4j.Logger
 import scala.collection.mutable.ListBuffer
+import com.ligadata.Exceptions.StackTrace
 
 class OutputMessage(var NameSpace: String, var Name: String, var Version: String, var Description: String, var Queue: String, var PartitionKey: List[String], var Defaults: List[scala.collection.mutable.Map[String, String]], var DataDeclaration: List[scala.collection.mutable.Map[String, String]], var OutputFormat: String)
 
@@ -152,8 +153,8 @@ object OutputMsgDefImpl {
 
       }
       case e: Exception => {
-        e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
         throw e
       }
     }
@@ -214,8 +215,8 @@ object OutputMsgDefImpl {
         throw e
       }
       case e: Exception => {
-        // e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
     (fullname, fieldsInfo.toArray, typeof, fullpartionkey.toLowerCase())
@@ -240,8 +241,8 @@ object OutputMsgDefImpl {
         throw e
       }
       case e: Exception => {
-        // e.printStackTrace()
-        log.trace("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.trace("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
     fldtype.toLowerCase()
@@ -289,7 +290,7 @@ object OutputMsgDefImpl {
         throw e
       }
       case e: Exception => {
-        //  e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
         log.trace("Error " + e.getMessage())
       }
     }
@@ -395,7 +396,8 @@ object OutputMsgDefImpl {
       }
     } catch {
       case e: Exception => {
-        log.debug("Error " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("Error " + e.getMessage()+"\nStackTrace:"+stackTrace)
         throw e
       }
     }

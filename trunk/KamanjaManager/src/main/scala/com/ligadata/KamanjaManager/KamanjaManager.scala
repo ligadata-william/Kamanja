@@ -18,6 +18,8 @@ import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
 import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import org.apache.log4j.Logger
+import com.ligadata.HeartBeat.HeartBeatUtil
+import com.ligadata.Exceptions.StackTrace
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -31,7 +33,8 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
         (new Thread(new ConnHandler(socket, mgr))).start()
       }
     } catch {
-      case e: Exception => { LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -61,7 +64,8 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
         }
       }
     } catch {
-      case e: Exception => { LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       socket.close;
     }
@@ -132,6 +136,7 @@ class KamanjaManager {
   private val outputAdapters = new ArrayBuffer[OutputAdapter]
   private val statusAdapters = new ArrayBuffer[OutputAdapter]
   private val validateInputAdapters = new ArrayBuffer[InputAdapter]
+  private var heartBeat: HeartBeatUtil = null
 
   private type OptionMap = Map[Symbol, Any]
 
@@ -145,6 +150,9 @@ class KamanjaManager {
   private def Shutdown(exitCode: Int): Int = {
     if (KamanjaMetadata.envCtxt != null)
       KamanjaMetadata.envCtxt.PersistRemainingStateEntriesOnLeader
+    if (heartBeat != null)
+      heartBeat.Shutdown
+    heartBeat = null
     KamanjaLeader.Shutdown
     KamanjaMetadata.Shutdown
     ShutdownAdapters
@@ -263,7 +271,7 @@ class KamanjaManager {
             KamanjaConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => LOG.debug("Failed to load Wait Processing Info.")
+        case e: Exception => {}
       }
 
       LOG.debug("Initializing metadata bootstrap")
@@ -277,6 +285,7 @@ class KamanjaManager {
       var metadataUpdatesZkNodePath = ""
       var adaptersStatusPath = ""
       var dataChangeZkNodePath = ""
+      var zkHeartBeatNodePath = ""
 
       if (KamanjaConfiguration.zkNodeBasePath.size > 0) {
         val zkNodeBasePath = KamanjaConfiguration.zkNodeBasePath.stripSuffix("/").trim
@@ -286,6 +295,7 @@ class KamanjaManager {
         metadataUpdatesZkNodePath = zkNodeBasePath + "/metadataupdate"
         adaptersStatusPath = zkNodeBasePath + "/adaptersstatus"
         dataChangeZkNodePath = zkNodeBasePath + "/datachange"
+        zkHeartBeatNodePath = zkNodeBasePath + "/monitor/engine/" + KamanjaConfiguration.nodeId.toString
       }
 
       LOG.debug("Validating required jars")
@@ -305,6 +315,12 @@ class KamanjaManager {
         KamanjaMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
         LOG.debug("Initializing Loader")
         KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
+      }
+
+      if (retval && zkHeartBeatNodePath.size > 0) {
+        heartBeat = new HeartBeatUtil
+        heartBeat.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, zkHeartBeatNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, 5000) // for every 5 secs
+        heartBeat.SetMainData(KamanjaConfiguration.nodeId.toString)
       }
 
       /*
@@ -425,15 +441,25 @@ class KamanjaManager {
     var timeOutEndTime: Long = 0
     var participentsChangedCntr: Long = 0
     var lookingForDups = false
+    var cntr: Long = 0
+    var prevParticipents = ""
+
+    val nodeNameToSetZk = KamanjaConfiguration.nodeId.toString
 
     print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
-    while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now
+    while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
+      cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
+        val dispWarn = (lookingForDups && timeOutEndTime > 0)
         lookingForDups = false
         timeOutEndTime = 0
         participentsChangedCntr = KamanjaConfiguration.participentsChangedCntr
         val cs = KamanjaLeader.GetClusterStatus
         if (cs.leader != null && cs.participants != null && cs.participants.size > 0) {
+          if (dispWarn) {
+            LOG.warn("Got new participents. Trying to see whether the node still has duplicates participents. Previous Participents:{%s} Current Participents:{%s}".format(prevParticipents, cs.participants.mkString(",")))
+          }
+          prevParticipents = ""
           val isNotLeader = (cs.isLeader == false || cs.leader != cs.nodeId)
           if (isNotLeader) {
             val sameNodeIds = cs.participants.filter(p => p == cs.nodeId)
@@ -444,6 +470,7 @@ class KamanjaManager {
                 mxTm = 5000
               timeOutEndTime = System.currentTimeMillis + mxTm + 2000 // waiting another 2secs
               LOG.error("Found more than one of NodeId:%s in Participents:{%s}. Waiting for %d milli seconds to check whether it is real duplicate or not.".format(cs.nodeId, cs.participants.mkString(","), mxTm))
+              prevParticipents = cs.participants.mkString(",")
             }
           }
         }
@@ -471,7 +498,12 @@ class KamanjaManager {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
         case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("\nStackTrace:"+stackTrace)
         }
+      }
+      if (heartBeat != null && (cntr % 2 == 1)) {
+        heartBeat.SetMainData(nodeNameToSetZk)
       }
     }
 

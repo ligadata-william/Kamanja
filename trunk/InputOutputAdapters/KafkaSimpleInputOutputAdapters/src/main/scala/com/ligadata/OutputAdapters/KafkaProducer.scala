@@ -7,6 +7,7 @@ import kafka.producer.{ ProducerConfig, Producer, KeyedMessage }
 import org.apache.log4j.Logger
 import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.KafkaQueueAdapterConfiguration
+import com.ligadata.Exceptions.StackTrace
 
 object KafkaProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new KafkaProducer(inputConfig, cntrAdapter)

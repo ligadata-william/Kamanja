@@ -5,6 +5,7 @@ import com.ligadata.KamanjaBase.{ BaseMsg, MessageContainerBase }
 import com.ligadata.kamanja.metadata.MdMgr
 import com.ligadata.kamanja.metadata._
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 import scala.collection.mutable.{ ArrayBuffer }
 
@@ -35,7 +36,8 @@ class OutputMsgGenerator {
       } else throw new Exception("Output Msg Def in the sent list of OutputMsgDef do not match with either Model Results or Top level Msg")
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -73,7 +75,8 @@ class OutputMsgGenerator {
       })
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -155,7 +158,8 @@ class OutputMsgGenerator {
       (outputMsgDefExists, finalOutputMsgs.toArray, mymap)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -278,7 +282,8 @@ class OutputMsgGenerator {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        log.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }

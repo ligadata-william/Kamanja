@@ -9,6 +9,7 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Exceptions.StackTrace
 
 import com.ligadata.transactions._
 
@@ -50,7 +51,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          e.printStackTrace()
+          
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))

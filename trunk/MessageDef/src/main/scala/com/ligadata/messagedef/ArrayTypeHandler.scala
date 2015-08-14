@@ -3,6 +3,8 @@ package com.ligadata.messagedef
 import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class ArrayTypeHandler {
 
@@ -15,6 +17,7 @@ class ArrayTypeHandler {
   lazy val log = Logger.getLogger(logger)
   var cnstObjVar = new ConstantMsgObjVarGenerator
   var methodGen = new ConstantMethodGenerator
+  private val LOG = Logger.getLogger(getClass)
 
   def handleArrayType(keysSet: Set[String], typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], f: Element, msg: Message, childs: Map[String, Any], prevVerMsgBaseTypesIdxArry: ArrayBuffer[String], recompile: Boolean): (List[(String, String)], List[(String, String, String, String, Boolean, String)], Set[String], Array[String]) = {
     var scalaclass = new StringBuilder(8 * 1024)
@@ -93,7 +96,7 @@ class ArrayTypeHandler {
           keysStr.append("\"" + f.Name + "\",")
 
           if (msg.Fixed.toLowerCase().equals("false")) {
-            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
+            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) ;%s".format(pad1, f.Name, f.Name, newline))
           }
 
           scalaclass = scalaclass.append("%svar %s: %s = %s();%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
@@ -170,7 +173,8 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -270,7 +274,7 @@ class ArrayTypeHandler {
           }
           if (msg.Fixed.toLowerCase().equals("false")) {
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)) %s".format(pad1, f.Name, f.Name, newline))
+            assignJsondata.append("%s fields.put(\"%s\", (-1, %s)); %s".format(pad1, f.Name, f.Name, newline))
 
             //    keysStr.append("(\"" + f.Name + "\"," + typ.get.typeString + "),")
           }
@@ -374,7 +378,8 @@ class ArrayTypeHandler {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -422,7 +427,10 @@ class ArrayTypeHandler {
         serializedBuf.append("%sdos.write(bytes)}})}}%s".format(pad3, newline))
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     return serializedBuf.toString()
@@ -481,7 +489,10 @@ class ArrayTypeHandler {
         deserializedBuf.append("%s%s fields(\"%s\") = (-1, %s)}%s".format(newline, pad2, f.Name, f.Name, newline))
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception =>{ 
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
     return deserializedBuf.toString
   }
@@ -604,7 +615,10 @@ class ArrayTypeHandler {
         }
       }
     } catch {
-      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+      case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
+        throw new Exception("Exception occured " + e.getCause())}
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString)
