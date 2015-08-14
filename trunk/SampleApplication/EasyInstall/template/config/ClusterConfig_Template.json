@@ -57,7 +57,7 @@
           "zookeeperlistener_2.10-1.0.jar",
           "outputmsgdef_2.10-1.0.jar",
           "zookeeperleaderlatch_2.10-1.0.jar",
-          "scala-actors.jar",
+          "scala-actors-2.10.4.jar",
           "kamanjamanager_2.10-1.0.jar",
           "minlog-1.2.jar",
           "reflectasm-1.07-shaded.jar",
