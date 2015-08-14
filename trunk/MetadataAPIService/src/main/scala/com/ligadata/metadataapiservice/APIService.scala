@@ -103,7 +103,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       APIInit.SetConfigFile(configFile.toString)
 
       // Read properties file and Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
       // APIInit deals with shutdown activity and it needs to know
       // that database connections were successfully made
       APIInit.SetDbOpen

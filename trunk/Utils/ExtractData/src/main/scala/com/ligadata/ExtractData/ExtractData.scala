@@ -408,7 +408,7 @@ object ExtractData extends MdBaseResolveInfo {
 
       val typName = loadConfigs.getProperty("TypeName".toLowerCase, "").replace("\"", "").trim.toLowerCase
 
-      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(cfgfile,false)
 
       val nodeInfo = mdMgr.Nodes.getOrElse(nodeId.toString, null)
       if (nodeInfo == null) {

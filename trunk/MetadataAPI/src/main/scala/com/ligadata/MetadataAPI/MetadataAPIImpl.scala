@@ -6585,7 +6585,7 @@ object MetadataAPIImpl extends MetadataAPI {
     }
   }
 
-  def InitMdMgr(configFile: String, startHB: Boolean = true) {
+  def InitMdMgr(configFile: String, startHB: Boolean) {
     
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
@@ -6605,7 +6605,7 @@ object MetadataAPIImpl extends MetadataAPI {
     initZkListeners   
   }
 
-  def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean = true) {
+  def InitMdMgrFromBootStrap(configFile: String, startHB: Boolean) {
         
     MdMgr.GetMdMgr.truncate
     val mdLoader = new MetadataLoad(MdMgr.mdMgr, "", "", "", "")
