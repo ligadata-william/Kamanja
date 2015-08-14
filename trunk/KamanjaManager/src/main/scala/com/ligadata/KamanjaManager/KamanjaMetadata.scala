@@ -613,7 +613,7 @@ object KamanjaMetadata extends MdBaseResolveInfo {
   }
 
   def InitBootstrap: Unit = {
-    MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KamanjaConfiguration.configFile, false)
   }
 
   def InitMdMgr(tmpLoadedJars: TreeSet[String], tmpLoader: KamanjaClassLoader, tmpMirror: reflect.runtime.universe.Mirror, zkConnectString: String, znodePath: String, zkSessionTimeoutMs: Int, zkConnectionTimeoutMs: Int): Unit = {
