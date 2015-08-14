@@ -45,7 +45,7 @@ class ArrayTypeHandler {
     var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
+    var fromFuncBuf = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
@@ -64,12 +64,6 @@ class ArrayTypeHandler {
             assignCsvdata.append("%s%s = list(inputdata.curPos).split(arrvaldelim, -1).map(v => %s(v));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
 
-            fromFuncOfFixed = fromFuncOfFixed.append("%s if(other.%s != null) { %s".format(pad2, f.Name, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s %s = new %s(other.%s.length); %s".format(pad2, f.Name, typ.get.typeString, f.Name, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.map(v => %s.Clone(v)); %s".format(pad2, f.Name, f.Name, arrayType.elemDef.implementationName, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
-         
           } else if (msg.Fixed.toLowerCase().equals("false")) {
 
             //scalaclass = scalaclass.append("%svar %s: %s = _ ;%s".format(pad1, f.Name, typ.get.typeString, newline))
@@ -88,6 +82,7 @@ class ArrayTypeHandler {
           convertOldObjtoNewObjBuf.append(converToNewObj)
           mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
           mappedPrevTypNotrMatchkeys.append(mappedPrevVerTypNotMatchKys)
+          fromFuncBuf.append(getPrimitivesFromFunc(f.Name, arrayType.elemDef.implementationName, msg.Fixed, false, typ.get.typeString))
         }
         assignJsondata.append(methodGen.assignJsonForArray(f.Name, fname, msg, typ.get.typeString))
 
@@ -123,21 +118,7 @@ class ArrayTypeHandler {
         msgAndCntnrsStr.append("\"" + f.Name + "\",")
         mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
         mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
-
-        var typeStr: String = ""
-        if (typ.get.typeString.toString().split("\\[").size == 2) {
-          typeStr = typ.get.typeString.toString().split("\\[")(1)
-        }
-
-        if (msg.Fixed.toLowerCase().equals("true")) {
-
-          fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null) { %s".format(pad2, f.Name, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s %s = new %s(other.%s.length) %s".format(pad2, f.Name, typ.get.typeString, f.Name, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.map(f => f.Clone.asInstanceOf[%s ); %s".format(pad2, f.Name, f.Name, typeStr, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
-
-        }
+        fromFuncBuf.append(getFromFuncContainers(f.Name, msg.Fixed: String, false, typ.get.typeString))
 
         //assignCsvdata.append(newline + "//Array of " + arrayType.elemDef.physicalName + "not handled at this momemt" + newline)
 
@@ -185,7 +166,7 @@ class ArrayTypeHandler {
       returnAB += mappedPrevTypNotrMatchkeys.toString
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
-      returnAB += fromFuncOfFixed.toString
+      returnAB += fromFuncBuf.toString
 
     } catch {
       case e: Exception => {
@@ -230,7 +211,7 @@ class ArrayTypeHandler {
     var mappedMsgFieldsArryBuffer = new StringBuilder(8 * 1024)
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
+    var fromFuncBuf = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
@@ -248,12 +229,6 @@ class ArrayTypeHandler {
             //  list(inputdata.curPos).split(arrvaldelim, -1).map(v => { xyz :+= com.ligadata.BaseTypes.IntImpl.Input(v)});
             assignCsvdata.append("%slist(inputdata.curPos).split(arrvaldelim, -1).map(v => {%s :+= %s(v)});\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
             scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
-
-            fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s %s.clear;  %s".format(pad2, f.Name, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s other.%s.map(v =>{ %s :+= %s.Clone(v)}); %s".format(pad2, f.Name, f.Name, arrayBufType.elemDef.implementationName, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
-            fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
           } else if (msg.Fixed.toLowerCase().equals("false")) {
             //scalaclass = scalaclass.append("%svar %s: %s = new %s;%s".format(pad1, f.Name, typ.get.typeString, typ.get.typeString, newline))
@@ -273,6 +248,7 @@ class ArrayTypeHandler {
           convertOldObjtoNewObjBuf.append(converToNewObj)
           mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
           mappedPrevTypNotrMatchkeys.append(mappedPrevVerTypNotMatchKys)
+          fromFuncBuf.append(getPrimitivesFromFunc(f.Name, arrayBufType.elemDef.implementationName, msg.Fixed, true, typ.get.typeString))
 
         }
         assignJsondata.append(methodGen.assignJsonForPrimArrayBuffer(f.Name, fname, msg, typ.get.typeString))
@@ -350,15 +326,7 @@ class ArrayTypeHandler {
         msgAndCntnrsStr.append("\"" + f.Name + "\",")
         mappedPrevVerMatchkeys.append(mappedPrevVerMatch)
         mappedPrevTypNotrMatchkeys.append(mappedPrevTypNotMatchKys)
-
-        if (msg.Fixed.toLowerCase().equals("true")) {
-          fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s %s.clear;  %s".format(pad2, f.Name, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s other.%s.map(v =>{ %s :+= v.Clone.asInstanceOf[%s}); %s".format(pad2, f.Name, f.Name, typ.get.typeString.toString().split("\\[")(1), newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s } %s".format(pad2, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
-
-        }
+        fromFuncBuf.append(getFromFuncContainers(f.Name, msg.Fixed: String, true, typ.get.typeString))
 
       }
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
@@ -402,7 +370,7 @@ class ArrayTypeHandler {
       returnAB += mappedMsgFieldsArryBuffer.toString
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
-      returnAB += fromFuncOfFixed.toString
+      returnAB += fromFuncBuf.toString
 
     } catch {
       case e: Exception => {
@@ -751,6 +719,120 @@ class ArrayTypeHandler {
     }
 
     (serializedBuf.toString, prevObjDeserializedBuf.toString, deserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevVerTypNotMatchkeys.toString)
+  }
+
+  /**
+   * FromFunc for Primitive Arrays for Fixed and Mapped Messages
+   *
+   */
+
+  private def getPrimitivesFromFunc(fldName: String, implementationName: String, fixed: String, isArayBuf: Boolean, typeString: String): String = {
+    var fromFuncBuf = new StringBuilder(8 * 1024)
+    try {
+      if (fldName == null || fldName.trim() == "")
+        throw new Exception("Field name do not exists ")
+
+      if (implementationName != null && implementationName.trim() != "") {
+        if (fixed.toLowerCase().equals("true")) {
+          fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null ) { %s".format(pad2, fldName, newline))
+          if (isArayBuf) {
+            fromFuncBuf = fromFuncBuf.append("%s %s.clear;  %s".format(pad2, fldName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s other.%s.map(v =>{ %s :+= %s.Clone(v)}); %s".format(pad2, fldName, fldName, implementationName, newline))
+          } else {
+            fromFuncBuf = fromFuncBuf.append("%s %s = new %s(other.%s.length); %s".format(pad2, fldName, typeString, fldName, newline)) //typ.get.typeString
+            fromFuncBuf = fromFuncBuf.append("%s %s = other.%s.map(v => %s.Clone(v)); %s".format(pad2, fldName, fldName, implementationName, newline)) //arrayType.elemDef.implementationName
+
+          }
+          fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+          fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, fldName, newline))
+
+        } else if (fixed.toLowerCase().equals("false")) {
+          if (isArayBuf) {
+            fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) { %s".format(pad2, fldName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s val o = (other.fields(\"%s\")._2.asInstanceOf[%s])  %s".format(pad2, fldName, typeString, newline))
+            fromFuncBuf = fromFuncBuf.append("%s var %s = new %s(o.size); %s".format(pad2, fldName, typeString, newline))
+            fromFuncBuf = fromFuncBuf.append("%s for (i <- 0 until o.length) { %s".format(pad2, newline))
+            fromFuncBuf = fromFuncBuf.append("%s %s :+= %s.Clone(o(i)) %s".format(pad2, fldName, implementationName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+            fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, %s); %s".format(pad2, fldName, fldName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+
+          } else {
+
+            fromFuncBuf = fromFuncBuf.append("%s  if (other.fields.contains(\"%s\")) { %s".format(pad2, fldName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s  val o = (other.fields(\"%s\")._2.asInstanceOf[%s]) %s".format(pad2, fldName, typeString, newline))
+            fromFuncBuf = fromFuncBuf.append("%s var %s = new %s(o.size) %s".format(pad2, fldName, typeString, newline))
+            fromFuncBuf = fromFuncBuf.append("%s for (i <- 0 until o.length) { %s".format(pad2, newline))
+            fromFuncBuf = fromFuncBuf.append("%s %s(i) = %s.Clone(o(i)) %s".format(pad2, fldName, implementationName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+            fromFuncBuf = fromFuncBuf.append("%s  fields(\"%s\") = (-1, %s); %s".format(pad2, fldName, fldName, newline))
+            fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+          }
+        }
+      }
+
+    } catch {
+      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+    }
+
+    fromFuncBuf.toString
+
+  }
+
+  private def getFromFuncContainers(fldName: String, fixed: String, isArayBuf: Boolean, typeString: String): String = {
+    var fromFuncBuf = new StringBuilder(8 * 1024)
+    try {
+      if (fldName == null || fldName.trim() == "")
+        throw new Exception("Field name do not exists ")
+
+      var typeStr: String = ""
+      if (typeString.toString().split("\\[").size == 2) {
+        typeStr = typeString.toString().split("\\[")(1)
+      }
+
+      if (fixed.toLowerCase().equals("true")) {
+        if (isArayBuf) {
+          fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null ) { %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s %s.clear;  %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s other.%s.map(v =>{ %s :+= v.Clone.asInstanceOf[%s}); %s".format(pad2, fldName, fldName, typeStr, newline))
+          fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+          fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, fldName, newline))
+
+        } else {
+          fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null) { %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s %s = new %s(other.%s.length) %s".format(pad2, fldName, typeString, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s %s = other.%s.map(f => f.Clone.asInstanceOf[%s ); %s".format(pad2, fldName, fldName, typeStr, newline))
+          fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+          fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, fldName, newline))
+
+        }
+      } else if (fixed.toLowerCase().equals("false")) {
+        if (isArayBuf) {
+          fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) { %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  %s.clear; %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s val o = (other.fields(\"%s\")._2.asInstanceOf[%s]) ; %s".format(pad2, fldName, typeString, newline))
+          fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, %s) %s".format(pad2, fldName, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  } %s".format(pad2, newline))
+        } else {
+
+          fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) {  %s".format(pad2, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  val o = (other.fields(\"%s\")._2.asInstanceOf[%s]) ; %s".format(pad2, fldName, typeString, newline))
+          fromFuncBuf = fromFuncBuf.append("%s %s = new %s(o.size) ;%s".format(pad2, fldName, typeString, newline))
+          fromFuncBuf = fromFuncBuf.append("%s for(i <- 0 until o.length){ %s".format(pad2, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  %s(i) = o(i).Clone.asInstanceOf[%s  ;%s".format(pad2, fldName, typeStr, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  } %s".format(pad2, newline))
+          fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, %s) ;%s".format(pad2, fldName, fldName, newline))
+          fromFuncBuf = fromFuncBuf.append("%s  } %s".format(pad2, newline))
+
+        }
+      }
+
+    } catch {
+      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+    }
+
+    fromFuncBuf.toString
+
   }
 
 }

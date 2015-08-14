@@ -40,7 +40,7 @@ class ContainerTypeHandler {
     var mappedPrevTypNotrMatchkeys = new StringBuilder(8 * 1024)
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
+    var fromFuncBuf = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     try {
@@ -153,15 +153,18 @@ class ContainerTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null) { %s".format(pad2, f.Name, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s %s = other.%s.Clone.asInstanceOf[%s] %s".format(pad2, f.Name, f.Name, ctrDef.PhysicalName, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s } %s ".format(pad2, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null) { %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s %s = other.%s.Clone.asInstanceOf[%s] %s".format(pad2, f.Name, f.Name, ctrDef.PhysicalName, newline))
+        fromFuncBuf = fromFuncBuf.append("%s } %s ".format(pad2, newline))
+        fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, ctrDef.PhysicalName, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value) %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+        fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) { %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, other.fields(\"%s\")._2.asInstanceOf[%s].Clone.asInstanceOf[%s]); %s".format(pad2, f.Name, f.Name, ctrDef.PhysicalName, ctrDef.PhysicalName, newline))
+        fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
 
       }
 
@@ -179,7 +182,7 @@ class ContainerTypeHandler {
       returnAB += mappedPrevTypNotrMatchkeys.toString
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
-      returnAB += fromFuncOfFixed.toString
+      returnAB += fromFuncBuf.toString
 
     } catch {
       case e: Exception => {

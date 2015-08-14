@@ -294,7 +294,27 @@ class MessageDefImpl {
     var argsList_msg = List[(String, String, String, String, Boolean, String)]()
 
     try {
-      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partkeyPos, primarykeyPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, "", "", withMethods, fromFunc) = messageFldsExtractor.classStr(message, mdMgr, recompile)
+      //val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partkeyPos, primarykeyPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, "", "", withMethods, fromFunc) = messageFldsExtractor.classStr(message, mdMgr, recompile)
+
+      val (scalaReturnStrArray, count, list, argsList, partkeyPos, primarykeyPos) = messageFldsExtractor.classStr(message, mdMgr, recompile)
+      val classstr = scalaReturnStrArray(0)
+      val csvassignstr = scalaReturnStrArray(1)
+      val jsonstr = scalaReturnStrArray(2)
+      val xmlStr = scalaReturnStrArray(3)
+      val addMsg = scalaReturnStrArray(4)
+      val getMsg = scalaReturnStrArray(5)
+      val serializedBuf = scalaReturnStrArray(6)
+      val deserializedBuf = scalaReturnStrArray(7)
+      val prevDeserializedBuf = scalaReturnStrArray(8)
+      val prevVerMsgObjstr = scalaReturnStrArray(9)
+      val convertOldObjtoNewObjStr = scalaReturnStrArray(10)
+      val collections = scalaReturnStrArray(11)
+      val mappedSerBaseTypesBuf = scalaReturnStrArray(12)
+      val mappedDeserBaseTypesBuf = scalaReturnStrArray(13)
+      val withMethods = scalaReturnStrArray(14)
+      val fromFunc = scalaReturnStrArray(15)
+      val fromFuncBaseMapped = scalaReturnStrArray(16)
+
       val fromFuncOfFixed = cnstObjVar.fromFuncOfFixedMsgs(message, fromFunc)
       val getSerializedFuncStr = methodGen.getSerializedFunction(serializedBuf)
       val getWithMethod = withMethods
@@ -340,7 +360,29 @@ class MessageDefImpl {
     var argsList_msg = List[(String, String, String, String, Boolean, String)]()
     var nonVerScalaCls = new StringBuilder(8 * 1024)
     try {
-      val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partitionPos, primaryPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, mappedSerBaseTypesBuf, mappedDeserBaseTypesBuf, withMethods, "") = messageFldsExtractor.classStr(message, mdMgr, recompile)
+      //   val (classstr, csvassignstr, jsonstr, xmlStr, count, list, argsList, addMsg, getMsg, partitionPos, primaryPos, serializedBuf, deserializedBuf, prevDeserializedBuf, prevVerMsgObjstr, convertOldObjtoNewObjStr, collections, mappedSerBaseTypesBuf, mappedDeserBaseTypesBuf, withMethods, "") = messageFldsExtractor.classStr(message, mdMgr, recompile)
+
+      val (scalaReturnStrArray, count, list, argsList, partitionPos, primaryPos) = messageFldsExtractor.classStr(message, mdMgr, recompile)
+      val classstr = scalaReturnStrArray(0)
+      val csvassignstr = scalaReturnStrArray(1)
+      val jsonstr = scalaReturnStrArray(2)
+      val xmlStr = scalaReturnStrArray(3)
+      val addMsg = scalaReturnStrArray(4)
+      val getMsg = scalaReturnStrArray(5)
+      val serializedBuf = scalaReturnStrArray(6)
+      val deserializedBuf = scalaReturnStrArray(7)
+      val prevDeserializedBuf = scalaReturnStrArray(8)
+      val prevVerMsgObjstr = scalaReturnStrArray(9)
+      val convertOldObjtoNewObjStr = scalaReturnStrArray(10)
+      val collections = scalaReturnStrArray(11)
+      val mappedSerBaseTypesBuf = scalaReturnStrArray(12)
+      val mappedDeserBaseTypesBuf = scalaReturnStrArray(13)
+      val withMethods = scalaReturnStrArray(14)
+      val fromFunc = scalaReturnStrArray(15)
+      val fromFuncBaseTypesMapped = scalaReturnStrArray(16)
+
+      val fromFuncOfMapped = cnstObjVar.fromFuncOfMappedMsgs(message, fromFunc, fromFuncBaseTypesMapped)
+
       list_msg = list
       argsList_msg = argsList
       addMsgStr = cnstObjVar.addMessage(addMsg, message)
@@ -361,12 +403,12 @@ class MessageDefImpl {
       val (versionPkgImport, nonVerPkgImport, verPkg, nonVerPkg) = cnstObjVar.importStmts(message)
 
       scalaclass = scalaclass.append(versionPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
+      scalaclass = scalaclass.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message) 
 
       verJavaFactory = verJavaFactory.append(verPkg + rddHandler.javaMessageFactory(message) + " \n")
 
       nonVerScalaCls = nonVerScalaCls.append(nonVerPkgImport.toString() + newline + newline + objstr + newline + cobj.toString + newline + clsstr.toString + newline)
-      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + cnstObjVar.fromFuncOfMappedMsg(message) + " \n}")
+      nonVerScalaCls = nonVerScalaCls.append(cnstObjVar.transactionIdFuncs(message) + classstr + cnstObjVar.getTransactionIdMapped + cnstObjVar.getCollectionsMapped(collections) + csetters + addMsgStr + getMsgStr + cnstObjVar.saveObject(message) + methodGen.populate + methodGen.populateMappedCSV(csvassignstr, count) + methodGen.populateJson + methodGen.assignMappedJsonData(jsonstr) + methodGen.assignMappedXmlData(xmlStr) + methodGen.MappedMsgSerialize + methodGen.MappedMsgSerializeBaseTypes(mappedSerBaseTypesBuf) + methodGen.MappedMsgSerializeArrays(serializedBuf) + "" + getDeserializedFuncStr + convertOldObjtoNewObj + withMethods + fromFuncOfMapped + " \n}") //cnstObjVar.fromFuncOfMappedMsg(message)
 
       nonverJavaFactory = nonverJavaFactory.append(nonVerPkg + rddHandler.javaMessageFactory(message) + " \n")
 

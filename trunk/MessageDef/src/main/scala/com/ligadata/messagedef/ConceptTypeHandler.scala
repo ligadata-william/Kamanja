@@ -26,7 +26,7 @@ class ConceptTypeHandler {
     var fname: String = ""
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
+    var fromFuncBuf = new StringBuilder(8 * 1024)
 
     try {
 
@@ -73,14 +73,18 @@ class ConceptTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, f.Name, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s else %s = null; %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value )%s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
+
+        fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) { %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, other.fields(\"%s\")._2.asInstanceOf[%s].Clone.asInstanceOf[%s]); %s".format(pad2, f.Name, f.Name, attribute.typeString, attribute.typeString, newline))
+        fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
 
       }
 
@@ -90,7 +94,7 @@ class ConceptTypeHandler {
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncOfFixed.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncBuf.toString)
   }
 
 }

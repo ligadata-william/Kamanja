@@ -42,7 +42,7 @@ class BaseTypesHandler {
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
 
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
+    var fromFuncBaseTypesBuf = new StringBuilder(8 * 1024)
     var returnAB = new ArrayBuffer[String]
 
     var mapBaseTypesSetRet: Set[Int] = Set()
@@ -78,7 +78,7 @@ class BaseTypesHandler {
         if (f.Name.toLowerCase().equals(transactionid)) {
           scalaclass = scalaclass.append("")
           withMethod = withMethod.append("")
-          fromFuncOfFixed = fromFuncOfFixed.append("")
+
         } else {
           scalaclass = scalaclass.append("%svar %s:%s = _ ;%s".format(pad1, f.Name, typ.get.physicalName, newline))
           assignCsvdata.append("%s%s = %s(list(inputdata.curPos));\n%sinputdata.curPos = inputdata.curPos+1\n".format(pad2, f.Name, fname, pad2))
@@ -88,8 +88,6 @@ class BaseTypesHandler {
           withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, typ.get.typeString, msg.Name, newline))
           withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
           withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-          fromFuncOfFixed = fromFuncOfFixed.append("%s%s = %s.Clone(other.%s);%s".format(pad2, f.Name, typ.get.implementationName, f.Name, newline))
-
         }
 
       } else if (fixed.toLowerCase().equals("false")) {
@@ -131,6 +129,7 @@ class BaseTypesHandler {
       prevObjTypNotMatchDeserializedBuf = prevObjTypNotMatchDeserializedBuf.append(prevObjTypNotMatchDeserialized)
       prevVerMsgBaseTypesIdxArry1 = prevVerMsgBaseTypesIdxArryBuf
       fixedMsgGetKeyStrBuf.append("%s if(key.equals(\"%s\")) return %s; %s".format(pad1, f.Name, f.Name, newline))
+      fromFuncBaseTypesBuf.append(fromFunc(typ, fixed, f, baseTypId))
 
       returnAB += scalaclass.toString
       returnAB += assignCsvdata.toString
@@ -148,7 +147,7 @@ class BaseTypesHandler {
       returnAB += prevObjTypNotMatchDeserializedBuf.toString
       returnAB += fixedMsgGetKeyStrBuf.toString
       returnAB += withMethod.toString
-      returnAB += fromFuncOfFixed.toString
+      returnAB += fromFuncBaseTypesBuf.toString
 
     } catch {
       case e: Exception => {
@@ -306,6 +305,41 @@ class BaseTypesHandler {
     }
 
     (prevObjDeserializedBuf.toString, convertOldObjtoNewObjBuf.toString, mappedPrevVerMatchkeys.toString, mappedPrevTypNotrMatchkeys.toString, prevObjTypNotMatchDeserializedBuf.toString, prevVerMsgBaseTypesIdxArry)
+  }
+
+  /**
+   * From Func for mapped and Fixed Messages   *
+   *
+   */
+
+  private def fromFunc(typ: Option[com.ligadata.kamanja.metadata.BaseTypeDef], fixed: String, f: Element, mappedMsgBaseTypeIdx: Int): String = {
+    var fromFuncBuf = new StringBuilder(8 * 1024)
+    try {
+      if (typ.getOrElse("None").equals("None"))
+        throw new Exception("Type not found in metadata for Name: " + f.Name + " , NameSpace: " + f.NameSpace + " , Type : " + f.Ttype)
+      if (f.Name == null || f.Name.trim() == "")
+        throw new Exception("Field name do not exists ")
+
+      if (f.Name.toLowerCase().equals(transactionid)) {
+        fromFuncBuf = fromFuncBuf.append("")
+      } else {
+
+        val implClone = typ.get.implementationName + ".Clone"
+        if (implClone != null && implClone.trim() != "") {
+          if (fixed.toLowerCase().equals("true")) {
+            fromFuncBuf = fromFuncBuf.append("%s%s = %s(other.%s);%s".format(pad2, f.Name, implClone, f.Name, newline))
+          } else if (fixed.toLowerCase().equals("false")) {
+            if (mappedMsgBaseTypeIdx != -1)
+              fromFuncBuf = fromFuncBuf.append("%s case %s => fields(key) = (%s, %s(ofield._2._2.asInstanceOf[%s]));  %s".format(pad1, mappedMsgBaseTypeIdx, mappedMsgBaseTypeIdx, implClone, typ.get.physicalName, newline))
+
+          }
+        }
+      }
+    } catch {
+      case e: Exception => throw new Exception("Exception occured " + e.getCause())
+    }
+
+    fromFuncBuf.toString
   }
 
 }
