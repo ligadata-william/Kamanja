@@ -1540,14 +1540,32 @@ object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 			val (field, typeInfo) : (String, (String,Boolean,BaseTypeDef)) = tuple
 			val (typeStr, isContainerWFields, baseType) : (String,Boolean,BaseTypeDef) = typeInfo
 			
+			/** FIXME: Even if the msg compiler built the container with 'caseSensitive' using case in-sensitive
+			 *  will work for us as long as there are not containers with names that share the same characters.
+			 *  Only cases like mbrField and mbrfield would cause issues.
+			 */
+			val caseSensitive : Boolean = false
+			
+			val fieldAttrInMetadata : BaseAttributeDef = if (fieldsContainerType.isInstanceOf[StructTypeDef]) {
+				fieldsContainerType.asInstanceOf[StructTypeDef].attributeFor(field, caseSensitive)
+			} else {
+				if (fieldsContainerType.isInstanceOf[MappedMsgTypeDef]) {
+					fieldsContainerType.asInstanceOf[MappedMsgTypeDef].attributeFor(field, caseSensitive)
+				} else {
+					null
+				}
+			}
+			
+			val fieldName : String = if (fieldAttrInMetadata != null) fieldAttrInMetadata.Name else field
+			
 			val isMappedContainer : Boolean = if (baseType != null) baseType.isInstanceOf[MappedMsgTypeDef] else false
 			if (isMappedContainer) {
-				varRefBuffer.append(s".get(${'"'}$field${'"'}).asInstanceOf[$typeStr]")			  
+				varRefBuffer.append(s".get(${'"'}$fieldName${'"'}).asInstanceOf[$typeStr]")			  
 			} else {
 				if (! fieldsContainerType.IsFixed) {
 					varRefBuffer.append(s".get(${'"'}$field${'"'}).asInstanceOf[$typeStr]")
 				} else {
-					varRefBuffer.append(s".$field")
+					varRefBuffer.append(s".$fieldName")
 				}
 			}
 		})

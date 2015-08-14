@@ -488,6 +488,16 @@ class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
 
   override def NumMems = attrMap.size
   override def IsFixed: Boolean = false
+
+  /** 
+   *  @deprecated("Use attributeFor(name: String, caseSensitive : Boolean): BaseAttributeDef instead", "2015-Aug-13")
+   *  Answer the BaseAttributeDef with the supplied name.  Lower case representation of attribute names
+   *  assumed in the MappedMsgTypeDef instance.
+   *  compare according to supplied boolean 
+   *  @param name : name of attribute sought 
+   *  @param caseSensitive : when true names must exactly match
+   *  @return BaseAttributeDef found (or null if not found)
+   */
   def attributeFor(name: String): BaseAttributeDef = {
     val key = name.toLowerCase()
     val hasName: Boolean = attrMap.contains(key)
@@ -498,6 +508,42 @@ class MappedMsgTypeDef extends ContainerTypeDef with EntityType {
     }
     baseAttrDef
   }
+  
+  /** 
+   *  Answer the BaseAttributeDef with the supplied name.  Perform case or case insensitive 
+   *  compare according to supplied boolean. 
+   *  @param name : name of attribute sought 
+   *  @param caseSensitive : when true names must exactly match
+   *  @return BaseAttributeDef found (or null if not found)
+   *  
+   *  FIXME:  Ideally there is no case sensitive argument here.  Instead the MappedMsgTypeDef instance's 
+   *  "caseSensitive" state is examined for the proper compare.
+   */
+  def attributeFor(name: String, caseSensitive : Boolean): BaseAttributeDef = {
+    val key : String = if (caseSensitive) name else name.toLowerCase()
+    val mbrsMap: Map[String, BaseAttributeDef] = attrMap.filter(mbrkey => {
+    	val (m, _) : (String, BaseAttributeDef) = mbrkey
+    	if (! caseSensitive) {
+    		m.toLowerCase == key
+    	} else {
+    		m == key
+    	}
+    })
+    val mbrs : Array[BaseAttributeDef] = mbrsMap.values.toArray
+    val mbr : BaseAttributeDef = if (mbrs.size > 1) {
+    	if (! caseSensitive) {
+    		throw new Exception("More than one mixed case element found during case insensitive search... 'mbr' and 'Mbr' cannot exist in same container/msg" )
+    	}
+    	mbrs(0)
+    } else {
+    	if (mbrs.size == 1) {
+    		mbrs(0)
+    	} else {
+    		null
+    	}
+    }
+    mbr
+  }
 }
 
 class StructTypeDef extends ContainerTypeDef with EntityType {
@@ -507,12 +553,56 @@ class StructTypeDef extends ContainerTypeDef with EntityType {
 
   override def NumMems = memberDefs.size
   override def IsFixed: Boolean = true
+
+  /** 
+   *  @deprecated("Use attributeFor(name: String, caseSensitive : Boolean): BaseAttributeDef instead", "2015-Aug-13")
+   *  Answer the BaseAttributeDef with the supplied name.  Lower case representation of attribute names
+   *  assumed in the StructTypeDef instance.
+   *  compare according to supplied boolean 
+   *  @param name : name of attribute sought 
+   *  @param caseSensitive : when true names must exactly match
+   *  @return BaseAttributeDef found (or null if not found)
+   */
   def attributeFor(name: String): BaseAttributeDef = {
     val key = name.toLowerCase()
     val optMbr: Option[BaseAttributeDef] = memberDefs.find(m => m.name == key)
     val mbr: BaseAttributeDef = optMbr match {
       case Some(optMbr) => optMbr
       case _ => null
+    }
+    mbr
+  }
+  /** 
+   *  Answer the BaseAttributeDef with the supplied name.  Perform case or case insensitive 
+   *  compare according to supplied boolean.
+   *  @param name : name of attribute sought 
+   *  @param caseSensitive : when true names must exactly match
+   *  @return BaseAttributeDef found (or null if not found)
+   *  
+   *  FIXME:  Ideally there is no case sensitive argument here.  Instead the MappedMsgTypeDef instance's 
+   *  "caseSensitive" state is examined for the proper compare.
+   */
+  def attributeFor(name: String, caseSensitive : Boolean): BaseAttributeDef = {
+    val key = if (caseSensitive) name else name.toLowerCase()
+    val mbrs: Array[BaseAttributeDef] = memberDefs.filter(m => {
+    	if (! caseSensitive) {
+    		m.name.toLowerCase == key
+    	} else {
+    		m.name == key
+    	}
+    })
+
+    val mbr : BaseAttributeDef = if (mbrs.size > 1) {
+    	if (! caseSensitive) {
+    		throw new Exception("More than one mixed case element found during case insensitive search... 'mbr' and 'Mbr' cannot exist in same container/msg" )
+    	}
+    	mbrs(0)
+    } else {
+    	if (mbrs.size == 1) {
+    		mbrs(0)
+    	} else {
+    		null
+    	}
     }
     mbr
   }
