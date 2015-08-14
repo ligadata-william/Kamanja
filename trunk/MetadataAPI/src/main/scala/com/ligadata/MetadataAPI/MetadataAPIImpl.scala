@@ -5890,6 +5890,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def RefreshApiConfigForGivenNode(nodeId: String): Boolean = {
+
     val nd = mdMgr.Nodes.getOrElse(nodeId, null)
     if (nd == null) {
       logger.error("Node %s not found in metadata".format(nodeId))
@@ -5919,7 +5920,11 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("JAR_PATHS", jarPaths.mkString(","))
       logger.debug("JarPaths Based on node(%s) => %s".format(nodeId,jarPaths))
       val jarDir = compact(render(jarPaths(0))).replace("\"", "").trim
-      metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
+      
+      // If JAR_TARGET_DIR is unset.. set it ot the first value of the the JAR_PATH.. whatever it is... ????? I think we should error on start up.. this seems like wrong
+      // user behaviour not to set a variable vital to MODEL compilation.
+      if (metadataAPIConfig.getProperty("JAR_TARGET_DIR") == null || (metadataAPIConfig.getProperty("JAR_TARGET_DIR") != null && metadataAPIConfig.getProperty("JAR_TARGET_DIR").length == 0))    
+        metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
       logger.debug("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
     }
 
@@ -5981,6 +5986,7 @@ object MetadataAPIImpl extends MetadataAPI {
         val value = prop.getProperty(key);
         setPropertyFromConfigFile(key,value)
       }
+      
       pList.map(v => logger.warn(v+" remains unset"))
       propertiesAlreadyLoaded = true;
 
@@ -6215,7 +6221,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("CONFIG_FILES_DIR", CONFIG_FILES_DIR)
       metadataAPIConfig.setProperty("OUTPUTMESSAGE_FILES_DIR", OUTPUTMESSAGE_FILES_DIR)
 
-      propertiesAlreadyLoaded = true;
+      propertiesAlreadyLoaded =  true;
 
     } catch {
       case e: MappingException => {
