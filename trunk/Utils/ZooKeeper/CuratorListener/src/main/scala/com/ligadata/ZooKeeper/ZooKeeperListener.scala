@@ -19,6 +19,7 @@ import java.io._
 import scala.io._
 import java.util.concurrent._
 import scala.collection.JavaConverters._
+import com.ligadata.Exceptions.StackTrace
 
 class ZooKeeperListener {
   val loggerName = this.getClass.getName
@@ -38,7 +39,8 @@ class ZooKeeperListener {
       }
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
       }
     }
   }
@@ -64,7 +66,9 @@ class ZooKeeperListener {
       // logger.setLevel(Level.TRACE);
     } catch {
       case e: Exception => {
-        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
+        throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage()+"\nStackTrace:"+stackTrace)
       }
     }
   }
@@ -97,6 +101,8 @@ class ZooKeeperListener {
       pathChildCache.start();
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + znodePath + "):" + e.getMessage())
       }
     }
@@ -146,6 +152,8 @@ object ZooKeeperListenerTest {
       cache.start();
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to setup a PatchChildrenCacheListener with the node(" + zNodePath + "):" + e.getMessage())
       }
     }

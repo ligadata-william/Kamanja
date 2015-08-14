@@ -8,6 +8,8 @@ import com.ligadata.KamanjaBase._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -39,7 +41,9 @@ class KamanjaData {
   private var StartDateRange: Int = 0 // Start Date Range
   private var EndDateRange: Int = 0 // End Date Range
   private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
-
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
+  
   def Version = ver // Current Version
 
   // Getting Key information
@@ -134,7 +138,7 @@ class KamanjaData {
         })
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -150,7 +154,8 @@ class KamanjaData {
         data ++= collection.data
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          StackTrace.ThrowableTraceString(e)
+          logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -197,7 +202,7 @@ class KamanjaData {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -251,7 +256,7 @@ class KamanjaData {
       dis.close
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        logger.debug("StackTrace:"+StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }

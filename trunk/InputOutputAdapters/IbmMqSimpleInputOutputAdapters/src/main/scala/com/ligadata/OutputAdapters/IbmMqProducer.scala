@@ -3,7 +3,7 @@ package com.ligadata.OutputAdapters
 
 import java.util.Properties
 import org.apache.log4j.Logger
-import com.ligadata.KamanjaBase.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, OutputAdapter, OutputAdapterObj, CountersAdapter }
 import com.ligadata.AdaptersConfiguration.IbmMqAdapterConfiguration
 import javax.jms.{ Connection, Destination, JMSException, Message, MessageProducer, Session, TextMessage, BytesMessage }
 import com.ibm.msg.client.jms.JmsConnectionFactory
@@ -11,6 +11,7 @@ import com.ibm.msg.client.jms.JmsFactoryFactory
 import com.ibm.msg.client.wmq.WMQConstants
 import com.ibm.msg.client.wmq.common.CommonConstants
 import com.ibm.msg.client.jms.JmsConstants
+import com.ligadata.Exceptions.StackTrace
 
 object IbmMqProducer extends OutputAdapterObj {
   def CreateOutputAdapter(inputConfig: AdapterConfiguration, cntrAdapter: CountersAdapter): OutputAdapter = new IbmMqProducer(inputConfig, cntrAdapter)
@@ -73,7 +74,10 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     producer = session.createProducer(destination)
     connection.start()
   } catch {
-    case jmsex: Exception => printFailure(jmsex)
+    case jmsex: Exception => {
+      printFailure(jmsex)
+      val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+      LOG.debug("StackTrace:"+stackTrace)}
   }
 
   override def send(message: String, partKey: String): Unit = {
@@ -94,6 +98,8 @@ class IbmMqProducer(val inputConfig: AdapterConfiguration, cntrAdapter: Counters
     } catch {
       case jmsex: Exception => {
         printFailure(jmsex)
+        val stackTrace = StackTrace.ThrowableTraceString(jmsex)
+      LOG.debug("StackTrace:"+stackTrace)
       }
     }
   }

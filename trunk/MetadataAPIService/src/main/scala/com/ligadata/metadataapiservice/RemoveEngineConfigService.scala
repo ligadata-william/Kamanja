@@ -11,6 +11,7 @@ import com.ligadata.kamanja.metadata._
 import scala.util.{ Success, Failure }
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.MetadataAPI._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object RemoveEngineConfigService {
   case class Process(cfgJson:String)

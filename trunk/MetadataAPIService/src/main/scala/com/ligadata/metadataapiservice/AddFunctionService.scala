@@ -11,6 +11,7 @@ import com.ligadata.kamanja.metadata._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object AddFunctionService {
   case class Process(functionJson:String, formatType:String)

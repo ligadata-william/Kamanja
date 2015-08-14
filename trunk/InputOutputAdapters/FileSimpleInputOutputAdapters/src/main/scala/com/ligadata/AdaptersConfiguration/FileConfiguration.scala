@@ -1,7 +1,7 @@
 
 package com.ligadata.AdaptersConfiguration
 
-import com.ligadata.KamanjaBase.{ AdapterConfiguration, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.InputOutputAdapterInfo.{ AdapterConfiguration, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods._

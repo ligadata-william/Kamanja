@@ -36,6 +36,7 @@ import org.joda.time.chrono.JulianChronology
 import org.apache.log4j.Logger
 
 import com.ligadata.pmml.runtime._
+import com.ligadata.Exceptions.StackTrace
 import com.ligadata.KamanjaBase._
 
 /**
@@ -6324,7 +6325,9 @@ object Udfs extends LogTrait {
 		    lcd.getMillis()
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          
 		    	logger.error(s"Unable to parse '20 + $yydddStr' with pattern - 'yyyyDDD'")
+          
 		    	0
 		    }
 	    }
@@ -6510,7 +6513,9 @@ object Udfs extends LogTrait {
     		millis
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }
@@ -6538,7 +6543,9 @@ object Udfs extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
+            val stackTrace = StackTrace.ThrowableTraceString(iae)
 			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${fmtStrArray.toString}'")
+            logger.error("\nStackTrace:"+stackTrace)
 			    	0
 			    }
 		    }
@@ -6647,7 +6654,9 @@ object Udfs extends LogTrait {
 	        millis
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }
@@ -6691,7 +6700,9 @@ object Udfs extends LogTrait {
 	        seconds
 	    } catch {
 		    case iae:IllegalArgumentException => {
+          val stackTrace = StackTrace.ThrowableTraceString(iae)
 		    	logger.error(s"Unable to parse '$timestampStr' with pattern - '$fmtStr'")
+          logger.error("\nStackTrace:"+stackTrace)
 		    	0
 		    }
 	    }

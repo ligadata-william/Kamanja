@@ -10,7 +10,7 @@ import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.Serialize._
 import com.ligadata.kamanja.metadata._
-
+import com.ligadata.AuditAdapterInfo.AuditConstants
 import scala.util.control._
 
 import org.apache.log4j._
