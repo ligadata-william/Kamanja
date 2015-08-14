@@ -2,7 +2,6 @@ package com.ligadata.loadtestrunner
 
 import com.ligadata.loadtestcommon._
 import com.ligadata.loadtestrunner._
-import com.ligadata.keyvaluestore.PropertyMap
 import com.typesafe.config._
 import akka.actor.Actor
 import akka.actor.ActorRef

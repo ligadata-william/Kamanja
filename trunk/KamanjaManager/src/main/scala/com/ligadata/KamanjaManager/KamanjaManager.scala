@@ -2,6 +2,7 @@
 package com.ligadata.KamanjaManager
 
 import com.ligadata.KamanjaBase._
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 
 import scala.reflect.runtime.{ universe => ru }
 import scala.util.control.Breaks._
@@ -10,16 +11,15 @@ import collection.mutable.{ MultiMap, Set }
 import java.io.{ PrintWriter, File, PrintStream, BufferedReader, InputStreamReader }
 import scala.util.Random
 import scala.Array.canBuildFrom
-import java.net.URL
-import java.net.URLClassLoader
 import java.util.Properties
 import java.sql.Connection
 import scala.collection.mutable.TreeSet
 import java.net.{ Socket, ServerSocket }
 import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
-import com.ligadata.Utils.Utils
+import com.ligadata.Utils.{ Utils, KamanjaClassLoader, KamanjaLoaderInfo }
 import org.apache.log4j.Logger
 import com.ligadata.HeartBeat.HeartBeatUtil
+import com.ligadata.Exceptions.StackTrace
 
 class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
   private val LOG = Logger.getLogger(getClass);
@@ -33,7 +33,8 @@ class KamanjaServer(var mgr: KamanjaManager, port: Int) extends Runnable {
         (new Thread(new ConnHandler(socket, mgr))).start()
       }
     } catch {
-      case e: Exception => { LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Socket Error. Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       if (serverSocket.isClosed() == false)
         serverSocket.close
@@ -63,7 +64,8 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
         }
       }
     } catch {
-      case e: Exception => { LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
+      case e: Exception => {
+        LOG.error("Reason:%s Message:%s".format(e.getCause, e.getMessage)) }
     } finally {
       socket.close;
     }
@@ -73,17 +75,9 @@ class ConnHandler(var socket: Socket, var mgr: KamanjaManager) extends Runnable 
 object KamanjaConfiguration {
   var configFile: String = _
   var allConfigs: Properties = _
-  var metadataStoreType: String = _
-  var metadataSchemaName: String = _
-  var metadataLocation: String = _
-  var dataStoreType: String = _
-  var dataSchemaName: String = _
-  var dataLocation: String = _
-  var adapterSpecificConfig: String = _
-  var statusInfoStoreType: String = _
-  var statusInfoSchemaName: String = _
-  var statusInfoLocation: String = _
-  var statusInfoAdapterSpecificConfig: String = _
+//  var metadataDataStoreInfo: String = _
+  var dataDataStoreInfo: String = _
+  var statusDataStoreInfo: String = _
   var jarPaths: collection.immutable.Set[String] = _
   var nodeId: Int = _
   var clusterId: String = _
@@ -93,6 +87,9 @@ object KamanjaConfiguration {
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
+  var txnIdsRangeForNode: Int = 500000 // Each time get txnIdsRange of transaction ids for each Node
+  var txnIdsRangeForPartition: Int = 25000 // Each time get txnIdsRange of transaction ids for each partition
+
   // Debugging info configs -- Begin
   var waitProcessingSteps = collection.immutable.Set[Int]()
   var waitProcessingTime = 0
@@ -101,31 +98,12 @@ object KamanjaConfiguration {
   var shutdown = false
   var participentsChangedCntr: Long = 0
 
-  def GetValidJarFile(jarPaths: collection.immutable.Set[String], jarName: String): String = {
-    if (jarPaths == null) return jarName // Returning base jarName if no jarpaths found
-    jarPaths.foreach(jPath => {
-      val fl = new File(jPath + "/" + jarName)
-      if (fl.exists) {
-        return fl.getPath
-      }
-    })
-    return jarName // Returning base jarName if not found in jar paths
-  }
-
   def Reset: Unit = {
     configFile = null
     allConfigs = null
-    metadataStoreType = null
-    metadataSchemaName = null
-    metadataLocation = null
-    dataStoreType = null
-    dataSchemaName = null
-    dataLocation = null
-    adapterSpecificConfig = null
-    statusInfoStoreType = null
-    statusInfoSchemaName = null
-    statusInfoLocation = null
-    statusInfoAdapterSpecificConfig = null
+//    metadataDataStoreInfo = null
+    dataDataStoreInfo = null
+    statusDataStoreInfo = null
     jarPaths = null
     nodeId = 0
     clusterId = null
@@ -143,25 +121,6 @@ object KamanjaConfiguration {
     shutdown = false
     participentsChangedCntr = 0
   }
-}
-
-class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
-  override def addURL(url: URL) {
-    super.addURL(url)
-  }
-}
-
-class KamanjaLoaderInfo {
-  // class loader
-  val loader: KamanjaClassLoader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), getClass().getClassLoader())
-
-  // Loaded jars
-  val loadedJars: TreeSet[String] = new TreeSet[String];
-
-  // Get a mirror for reflection
-  val mirror: reflect.runtime.universe.Mirror = ru.runtimeMirror(loader)
-
-  // ru.runtimeMirror(modelsloader)
 }
 
 class KamanjaManager {
@@ -201,6 +160,7 @@ class KamanjaManager {
       KamanjaMetadata.envCtxt.Shutdown
     if (serviceObj != null)
       serviceObj.shutdown
+    com.ligadata.transactions.NodeLevelTransService.Shutdown
     return exitCode
   }
 
@@ -223,14 +183,13 @@ class KamanjaManager {
     if (dynamicjars != null && dynamicjars.length() > 0) {
       val jars = dynamicjars.split(",").map(_.trim).filter(_.length() > 0)
       if (jars.length > 0) {
-        val qualJars = jars.map(j => KamanjaConfiguration.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
-        val nonExistsJars = KamanjaMdCfg.CheckForNonExistanceJars(qualJars.toSet)
+        val qualJars = jars.map(j => Utils.GetValidJarFile(KamanjaConfiguration.jarPaths, j))
+        val nonExistsJars = Utils.CheckForNonExistanceJars(qualJars.toSet)
         if (nonExistsJars.size > 0) {
           LOG.error("Not found jars in given Dynamic Jars List : {" + nonExistsJars.mkString(", ") + "}")
           return false
         }
-        return ManagerUtils.LoadJars(qualJars.toArray, metadataLoader.loadedJars, metadataLoader.loader)
-
+        return Utils.LoadJars(qualJars.toArray, metadataLoader.loadedJars, metadataLoader.loader)
       }
     }
 
@@ -277,6 +236,8 @@ class KamanjaManager {
     val loadConfigs = KamanjaConfiguration.allConfigs
 
     try {
+      /*
+      KamanjaConfiguration.metadataDataStoreInfo = loadConfigs.getProperty("MetadataDataStore".toLowerCase, "")
       KamanjaConfiguration.metadataStoreType = loadConfigs.getProperty("MetadataStoreType".toLowerCase, "").replace("\"", "").trim
       if (KamanjaConfiguration.metadataStoreType.size == 0) {
         LOG.error("Not found valid MetadataStoreType.")
@@ -294,6 +255,7 @@ class KamanjaManager {
         LOG.error("Not found valid MetadataLocation.")
         return false
       }
+*/
 
       KamanjaConfiguration.nodeId = loadConfigs.getProperty("nodeId".toLowerCase, "0").replace("\"", "").trim.toInt
       if (KamanjaConfiguration.nodeId <= 0) {
@@ -301,7 +263,6 @@ class KamanjaManager {
         return false
       }
 
-      // This is just for debugging info. If anything fails here, we should not care.
       try {
         KamanjaConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "0").replace("\"", "").trim.toInt
         if (KamanjaConfiguration.waitProcessingTime > 0) {
@@ -310,9 +271,10 @@ class KamanjaManager {
             KamanjaConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
         }
       } catch {
-        case e: Exception => {} 
+        case e: Exception => {}
       }
 
+      LOG.debug("Initializing metadata bootstrap")
       KamanjaMetadata.InitBootstrap
 
       if (KamanjaMdCfg.InitConfigInfo == false)
@@ -336,17 +298,22 @@ class KamanjaManager {
         zkHeartBeatNodePath = zkNodeBasePath + "/monitor/engine/" + KamanjaConfiguration.nodeId.toString
       }
 
+      LOG.debug("Validating required jars")
       KamanjaMdCfg.ValidateAllRequiredJars
 
+      LOG.debug("Load Environment Context")
       KamanjaMetadata.envCtxt = KamanjaMdCfg.LoadEnvCtxt(metadataLoader)
       if (KamanjaMetadata.envCtxt == null)
         return false
 
+      LOG.debug("Loading Adapters")
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
       retval = KamanjaMdCfg.LoadAdapters(metadataLoader, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
 
       if (retval) {
+        LOG.debug("Initialize Metadata Manager")
         KamanjaMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
+        LOG.debug("Initializing Loader")
         KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
@@ -531,6 +498,8 @@ class KamanjaManager {
         Thread.sleep(500) // Waiting for 500 milli secs
       } catch {
         case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("\nStackTrace:"+stackTrace)
         }
       }
       if (heartBeat != null && (cntr % 2 == 1)) {

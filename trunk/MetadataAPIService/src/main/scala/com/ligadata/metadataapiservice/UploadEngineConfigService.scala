@@ -11,6 +11,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object UploadEngineConfigService {
   case class Process(cfgJson:String)

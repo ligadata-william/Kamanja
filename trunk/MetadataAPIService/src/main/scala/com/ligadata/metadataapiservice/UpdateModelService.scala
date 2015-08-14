@@ -9,6 +9,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 import com.ligadata.MetadataAPI._
 import com.ligadata.kamanja.metadata._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object UpdateModelService {
   case class Process(pmmlStr:String)
