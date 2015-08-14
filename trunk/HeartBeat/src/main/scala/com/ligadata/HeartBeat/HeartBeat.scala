@@ -66,11 +66,11 @@ class HeartBeatUtil {
       override def run() = {
         var startTime = System.currentTimeMillis
 
-        while (_exec.isShutdown == false) {
+        while (_exec != null && _exec.isShutdown == false) {
           Thread.sleep(250) // Waiting for 250 milli secs
           val curTime = System.currentTimeMillis
           val diffTm = curTime - startTime
-          if (_exec.isShutdown == false && diffTm >= _refreshTimeInMs) {
+          if (_exec != null && _exec.isShutdown == false && diffTm >= _refreshTimeInMs) {
             startTime = curTime
             // Sent the stuff in ZK
             SetNewDataInZk
