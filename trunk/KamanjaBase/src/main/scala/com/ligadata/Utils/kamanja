@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 jar_full_path=$(which jar)
-
+INPUT=$@
 if [ "$?" != "0" ]; then
 	echo "Not found java home directory."
 	exit 1
@@ -17,7 +17,6 @@ pwdnm=$(pwd -P)
 
 JAVA_HOME=$(dirname $(dirname $jar_full_path))
 SCALA_HOME=$(dirname $(dirname $scala_full_path))
-
 
 
 IFS=' ' read -a array <<< $@
@@ -40,8 +39,9 @@ if [ "${array[0] }" = "edit" ]; then
   echo "MetadataAPIConfig.properties update complete!"
   exit 0
 fi
-
-if [ -f ~/MetadataAPIConfig.properties ] ; then
+echo $INPUT | grep -i properties >> /dev/null
+if [ -f ~/MetadataAPIConfig.properties ] && [ $? = 1 ];
+then
 read -p  "MetadataAPIConfig.properties already present at $HOME. Do you want to overwrite it with a default? [Y/N]" line </dev/tty
 case "$line" in
   y|Y) rm ~/MetadataAPIConfig.properties
@@ -76,12 +76,18 @@ case "$line" in
   echo DO_AUDIT=NO >> ~/MetadataAPIConfig.properties
   echo DO_AUTH=NO >> ~/MetadataAPIConfig.properties
     ;;
-  *) echo "Using the previously loaded MetadataAPIConfig.properties!"
+  *) echo "Using the previously loaded/input MetadataAPIConfig.properties!"
     ;;
 esac
 fi
 
-
+if [ "$INPUT" = "web service" ]; then
+echo "Starting web service . . . ."
+java -jar $(brew --prefix)/Cellar/kamanja/0.0.1/bin/bin/MetadataAPIService-1.0
+else
 java -jar $(brew --prefix)/Cellar/kamanja/0.0.1/bin/bin/MetadataAPI-1.0 $@
+fi
+
+
 
 
