@@ -313,9 +313,9 @@ class MessageDefImpl {
       val mappedDeserBaseTypesBuf = scalaReturnStrArray(13)
       val withMethods = scalaReturnStrArray(14)
       val fromFunc = scalaReturnStrArray(15)
-      val fromFuncBaseMapped = scalaReturnStrArray(16)
+      val fromFuncBaseTypes = scalaReturnStrArray(16)
 
-      val fromFuncOfFixed = cnstObjVar.fromFuncOfFixedMsgs(message, fromFunc)
+      val fromFuncOfFixed = cnstObjVar.fromFuncOfFixedMsgs(message, fromFunc, fromFuncBaseTypes)
       val getSerializedFuncStr = methodGen.getSerializedFunction(serializedBuf)
       val getWithMethod = withMethods
       // println("withMethods" + withMethods)

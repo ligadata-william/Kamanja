@@ -724,11 +724,12 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String): String = {
+  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String, fromFuncBaeTypes:String): String = {
     var fromFnc: String = ""
     if (fromFunc != null) fromFnc = fromFunc
     """ 
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     """+ fromFuncBaeTypes+ """
 	""" + fromFnc + """
      	return this
     }
