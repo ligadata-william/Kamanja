@@ -20,10 +20,8 @@ import scala.util.parsing.json.{JSONObject, JSONArray}
 import org.json4s._
 import org.json4s.JsonDSL._
 import com.ligadata.Serialize._
-
 import com.ligadata.Utils.{Utils, KamanjaClassLoader, KamanjaLoaderInfo}
-import java.net.URLClassLoader
-import com.ligadata.Exceptions.StackTrace
+
 
 /**
 	MethodExtract accepts an fully qualifed scala object name 
@@ -375,45 +373,4 @@ Usage: scala com.ligadata.udf.extract.MethodExtract --object <fully qualifed sca
 		bufferedWriter.write(text)
 		bufferedWriter.close
 	}
-
-	/**
-	 * 	Load any jars that were supplied on the command line in the --cp argument
-	 *  
-	 *  @param jars the --cp values supplied on command line
-	 *  @loadedJars a TreeSet for avoiding multiple loads of same jar 
-	 *  @param loader the class loader to use
-	 *  
-	 *  @return true if loading was successful, else false
-	 */
-
-	private def LoadJarIfNeeded(jars : Array[String], loadedJars: TreeSet[String], loader: KamanjaClassLoader): Boolean = {
-
-	    // Loading all jars
-	    for (j <- jars) {
-	      //logger.debug("Processing Jar " + j.trim)
-	      val fl = new File(j.trim)
-	      if (fl.exists) {
-	        try {
-	          if (loadedJars(fl.getPath())) {
-	            //logger.debug("Jar " + j.trim + " already loaded to class path.")
-	          } else {
-	            loader.addURL(fl.toURI().toURL())
-	            //logger.debug("Jar " + j.trim + " added to class path.")
-	            loadedJars += fl.getPath()
-	          }
-	        } catch {
-	          case e: Exception => {
-              logger.error("Jar " + j.trim + " failed added to class path. Message: " + e.getMessage)
-	            return false
-	          }
-	        }
-	      } else {
-	        logger.error("Jar " + j.trim + " not found")
-	        return false
-	      }
-	    }
-	
-	    true
-	}
-
 }
