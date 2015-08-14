@@ -31,8 +31,8 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
    LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
-
-      val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
+      val tmpMdls = KamanjaMetadata.getAllModels
+      val models = if (tmpMdls != null) tmpMdls.map(mdl => mdl._2).toArray else Array[MdlInfo]()
 
       val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
 

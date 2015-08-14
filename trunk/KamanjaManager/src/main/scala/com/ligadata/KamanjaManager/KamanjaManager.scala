@@ -97,6 +97,7 @@ object KamanjaConfiguration {
 
   var shutdown = false
   var participentsChangedCntr: Long = 0
+  var metadataLoader = new KamanjaLoaderInfo
 
   def Reset: Unit = {
     configFile = null
@@ -125,9 +126,6 @@ object KamanjaConfiguration {
 
 class KamanjaManager {
   private val LOG = Logger.getLogger(getClass);
-
-  // metadata loader
-  private val metadataLoader = new KamanjaLoaderInfo
 
   // KamanjaServer Object
   private var serviceObj: KamanjaServer = null
@@ -189,7 +187,7 @@ class KamanjaManager {
           LOG.error("Not found jars in given Dynamic Jars List : {" + nonExistsJars.mkString(", ") + "}")
           return false
         }
-        return Utils.LoadJars(qualJars.toArray, metadataLoader.loadedJars, metadataLoader.loader)
+        return Utils.LoadJars(qualJars.toArray, KamanjaConfiguration.metadataLoader.loadedJars, KamanjaConfiguration.metadataLoader.loader)
       }
     }
 
@@ -302,18 +300,18 @@ class KamanjaManager {
       KamanjaMdCfg.ValidateAllRequiredJars
 
       LOG.debug("Load Environment Context")
-      KamanjaMetadata.envCtxt = KamanjaMdCfg.LoadEnvCtxt(metadataLoader)
+      KamanjaMetadata.envCtxt = KamanjaMdCfg.LoadEnvCtxt
       if (KamanjaMetadata.envCtxt == null)
         return false
 
       LOG.debug("Loading Adapters")
       // Loading Adapters (Do this after loading metadata manager & models & Dimensions (if we are loading them into memory))
-      retval = KamanjaMdCfg.LoadAdapters(metadataLoader, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
+      retval = KamanjaMdCfg.LoadAdapters(inputAdapters, outputAdapters, statusAdapters, validateInputAdapters)
 
       if (retval) {
         LOG.debug("Initialize Metadata Manager")
-        KamanjaMetadata.InitMdMgr(metadataLoader.loadedJars, metadataLoader.loader, metadataLoader.mirror, KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
-        LOG.debug("Initializing Loader")
+        KamanjaMetadata.InitMdMgr(KamanjaConfiguration.zkConnectString, metadataUpdatesZkNodePath, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs)
+        LOG.debug("Initializing Leader")
         KamanjaLeader.Init(KamanjaConfiguration.nodeId.toString, KamanjaConfiguration.zkConnectString, engineLeaderZkNodePath, engineDistributionZkNodePath, adaptersStatusPath, inputAdapters, outputAdapters, statusAdapters, validateInputAdapters, KamanjaMetadata.envCtxt, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, dataChangeZkNodePath)
       }
 
