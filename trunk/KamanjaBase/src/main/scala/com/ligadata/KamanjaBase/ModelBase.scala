@@ -212,6 +212,10 @@ class MappedModelResults extends ModelResultBase {
 }
 
 trait EnvContext {
+  var _mgr: MdMgr = _
+  def setMdMgr(mgr: MdMgr) : Unit
+  def getPropertyValue(clusterId: String, key:String): String
+  
   def getRecent(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Option[MessageContainerBase]
   def getRDD(transId: Long, containerName: String, partKey: List[String], tmRange: TimeRange, f: MessageContainerBase => Boolean): Array[MessageContainerBase]
   def saveOne(transId: Long, containerName: String, partKey: List[String], value: MessageContainerBase): Unit
@@ -220,7 +224,7 @@ trait EnvContext {
   def Shutdown: Unit
   def SetClassLoader(cl: java.lang.ClassLoader): Unit
   def SetMetadataResolveInfo(mdres: MdBaseResolveInfo): Unit
-  def AddNewMessageOrContainers(mgr: MdMgr, dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit
+  def AddNewMessageOrContainers(dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit
   def getAllObjects(transId: Long, containerName: String): Array[MessageContainerBase]
   def getObject(transId: Long, containerName: String, partKey: List[String], primaryKey: List[String]): MessageContainerBase
   def getHistoryObjects(transId: Long, containerName: String, partKey: List[String], appendCurrentChanges: Boolean): Array[MessageContainerBase] // if appendCurrentChanges is true return output includes the in memory changes (new or mods) at the end otherwise it ignore them.
@@ -294,8 +298,10 @@ class MdlInfo(val mdl: ModelBaseObj, val jarPath: String, val dependencyJarNames
 }
 
 class ModelContext(val txnContext: TransactionContext, val msg: MessageContainerBase) {
+  def getPropertyValue(clusterId: String, key:String): String = (txnContext.getPropertyValue(clusterId, key))
 }
 
 class TransactionContext(val transId: Long, val gCtx: EnvContext, val tenantId: String) {
+  def getPropertyValue(clusterId: String, key:String): String = {gCtx.getPropertyValue(clusterId, key)}
 }
 

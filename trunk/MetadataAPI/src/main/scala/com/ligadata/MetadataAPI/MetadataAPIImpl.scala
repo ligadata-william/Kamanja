@@ -113,6 +113,10 @@ object MetadataAPIImpl extends MetadataAPI {
     "ZNODE_PATH", "ZOOKEEPER_CONNECT_STRING", "COMPILER_WORK_DIR", "SERVICE_PORT", "MODEL_FILES_DIR", "TYPE_FILES_DIR", "FUNCTION_FILES_DIR",
     "CONCEPT_FILES_DIR", "MESSAGE_FILES_DIR", "CONTAINER_FILES_DIR", "CONFIG_FILES_DIR", "MODEL_EXEC_LOG", "NODE_ID", "SSL_CERTIFICATE", "SSL_PASSWD", "DO_AUTH", "SECURITY_IMPL_CLASS",
     "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS", "AUDIT_IMPL_JAR", "DO_AUDIT", "AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG", "METADATA_DATASTORE")
+    
+  // This is used to exclude all non-engine related configs from Uplodad Config method 
+  private val excludeList: Set[String] = Set[String]("ClusterId","StatusInfo","Nodes","Config","Adapters","DataStore","ZooKeeperInfo","EnvironmentContext") 
+  
   var isCassandra = false
   private[this] val lock = new Object
   var startup = false
@@ -543,8 +547,10 @@ object MetadataAPIImpl extends MetadataAPI {
   private var configStore: DataStore = _
   private var outputmsgStore: DataStore = _
   private var modelConfigStore: DataStore = _
-
-  def oStore = otherStore
+  private var userPopertiesStore: DataStore = _
+  
+  
+   def oStore = otherStore
 
   def KeyAsStr(k: Key): String = {
     val k1 = k.toArray[Byte]
@@ -1785,7 +1791,7 @@ object MetadataAPIImpl extends MetadataAPI {
       jarStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "jar_store")
       transStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "transaction_id")
       modelConfigStore = GetDataStoreHandle(jarPaths, dataStoreInfo, "model_config_objects")
-
+    
       modelStore = metadataStore
       messageStore = metadataStore
       containerStore = metadataStore
@@ -1848,6 +1854,11 @@ object MetadataAPIImpl extends MetadataAPI {
         modelConfigStore.Shutdown()
         modelConfigStore = null
         logger.debug("modelConfigStore closed")
+      }
+      if (userPopertiesStore != null) {
+        userPopertiesStore.Shutdown()
+        userPopertiesStore = null
+        logger.debug("userPopertiesStore closed")              
       }
     } catch {
       case e: Exception => {
@@ -4488,6 +4499,10 @@ object MetadataAPIImpl extends MetadataAPI {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterCfgInfo]
             MdMgr.GetMdMgr.AddClusterCfg(ci)
           }
+          case "userproperties" => {
+            val up = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[UserPropertiesInfo]
+            MdMgr.GetMdMgr.AddUserProperty(up)
+          }
           case _ => {
             throw InternalErrorException("LoadAllConfigObjectsIntoCache: Unknown objectType " + objType)
           }
@@ -4521,6 +4536,23 @@ object MetadataAPIImpl extends MetadataAPI {
     })
     MdMgr.GetMdMgr.DumpModelConfigs
   }
+  
+  //LoadAllUserPopertiesIntoChache - load all the date in the underlying userPopertiesStore into MdMgr Hashmap
+  //private def LoadAllUserPopertiesIntoChache: Unit = {
+  //    var keys = scala.collection.mutable.Set[com.ligadata.keyvaluestore.Key]()
+  //    userPopertiesStore.getAllKeys({ (key: Key) => keys.add(key) })  
+  //    val keyArray = keys.toArray
+  //    if (keyArray.length == 0) {
+  //      logger.debug("No model config objects available in the Database")
+  //      return
+  //    }
+  //    keyArray.foreach (key => {
+  //      val obj = GetObject(key, userPopertiesStore)
+   //     val conf = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[Map[String,List[String]]]
+   //     MdMgr.GetMdMgr.AddModelConfig(KeyAsStr(key),conf)
+   //   })
+    //  MdMgr.GetMdMgr.DumpModelConfigs
+ // }
 
   def LoadAllObjectsIntoCache {
     try {
@@ -4533,6 +4565,7 @@ object MetadataAPIImpl extends MetadataAPI {
 
       // Load All the Model Configs here... 
       LoadAllModelConfigsIntoChache
+      //LoadAllUserPopertiesIntoChache
       startup = true
       val maxTranId = currentTranLevel
       var objectsChanged = new Array[BaseElemDef](0)
@@ -5940,7 +5973,23 @@ object MetadataAPIImpl extends MetadataAPI {
             } else {
               logger.debug("Found no adapater objects in the config file")
             }
-
+         
+            // Now see if there are any other User Defined Properties in this cluster, if there are any, create a container
+            // like we did for adapters and noteds, etc....
+            var userDefinedProps: Map[String, Any]  = cluster.filter(x => {!excludeList.contains(x._1)} )
+            if (userDefinedProps.size > 0) {
+              val upProps: UserPropertiesInfo = MdMgr.GetMdMgr.MakeUPProps(ClusterId)
+              userDefinedProps.keys.foreach(key => {
+                println("Adding key "+key+"-->" + userDefinedProps(key).toString)
+                upProps.Props(key) = userDefinedProps(key).toString
+              })   
+              MdMgr.GetMdMgr.AddUserProperty(upProps)
+              val upKey = "userProperties." + upProps.clusterId 
+              val upValue = serializer.SerializeObjectToByteArray(upProps)
+              keyList = keyList :+ upKey.toLowerCase
+              valueList = valueList :+ upValue              
+              
+            }
           })
 
         } else {
@@ -5959,6 +6008,11 @@ object MetadataAPIImpl extends MetadataAPI {
         apiResult.toString()
       }
     }
+  }
+  
+  def getUP (ci: String, key: String): String = {
+     println(" YO WILLIE... GO PATRIOTS...  key = "+key+ " for clusterid  "+ci)
+     MdMgr.GetMdMgr.GetUserProperty(ci,key)
   }
 
   def getNodeList1: Array[NodeInfo] = {MdMgr.GetMdMgr.Nodes.values.toArray}
@@ -6232,7 +6286,7 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.error("ZooKeeperInfo not found for Node %s  & ClusterId : %s".format(nodeId, nd.ClusterId))
       return false
     }
-
+    println("->"+zooKeeperInfo)
     val jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
     if (jarPaths.size == 0) {
       logger.error("Not found valid JarPaths.")
