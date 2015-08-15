@@ -109,7 +109,7 @@ object MetadataAPIImpl extends MetadataAPI {
     "SECURITY_IMPL_JAR", "AUDIT_IMPL_CLASS", "AUDIT_IMPL_JAR", "DO_AUDIT", "AUDIT_PARMS", "ADAPTER_SPECIFIC_CONFIG", "METADATA_DATASTORE")
     
   // This is used to exclude all non-engine related configs from Uplodad Config method 
-  private val excludeList: Set[String] = Set[String]("ClusterId","Nodes","Config","Adapters") 
+  private val excludeList: Set[String] = Set[String]("ClusterId","StatusInfo","Nodes","Config","Adapters","DataStore","ZooKeeperInfo","EnvironmentContext") 
   
   var isCassandra = false
   private[this] val lock = new Object
@@ -4247,7 +4247,7 @@ object MetadataAPIImpl extends MetadataAPI {
             val ci = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[ClusterCfgInfo]
             MdMgr.GetMdMgr.AddClusterCfg(ci)
           }
-          case "userProperties" => {
+          case "userproperties" => {
             val up = serializer.DeserializeObjectFromByteArray(obj.Value.toArray[Byte]).asInstanceOf[UserPropertiesInfo]
             MdMgr.GetMdMgr.AddUserProperty(up)
           }
@@ -5636,7 +5636,8 @@ object MetadataAPIImpl extends MetadataAPI {
             var userDefinedProps: Map[String, Any]  = cluster.filter(x => {!excludeList.contains(x._1)} )
             if (userDefinedProps.size > 0) {
               val upProps: UserPropertiesInfo = MdMgr.GetMdMgr.MakeUPProps(ClusterId)
-              userDefinedProps.keys.foreach(key => {   
+              userDefinedProps.keys.foreach(key => {
+                println("Adding key "+key+"-->" + userDefinedProps(key).toString)
                 upProps.Props(key) = userDefinedProps(key).toString
               })   
               MdMgr.GetMdMgr.AddUserProperty(upProps)
@@ -5666,6 +5667,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   def getUP (ci: String, key: String): String = {
+     println(" YO WILLIE... GO PATRIOTS...  key = "+key+ " for clusterid  "+ci)
      MdMgr.GetMdMgr.GetUserProperty(ci,key)
   }
 
@@ -5929,7 +5931,7 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.error("ZooKeeperInfo not found for Node %s  & ClusterId : %s".format(nodeId, nd.ClusterId))
       return false
     }
-
+    println("->"+zooKeeperInfo)
     val jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
     if (jarPaths.size == 0) {
       logger.error("Not found valid JarPaths.")
