@@ -40,7 +40,8 @@ if [ "${array[0] }" = "edit" ]; then
   exit 0
 fi
 echo $INPUT | grep -i properties >> /dev/null
-if [ -f ~/MetadataAPIConfig.properties ] && [ $? = 1 ];
+RES=$?
+if [ -f ~/MetadataAPIConfig.properties ] && [ $RES = 1 ];
 then
 read -p  "MetadataAPIConfig.properties already present at $HOME. Do you want to overwrite it with a default? [Y/N]" line </dev/tty
 case "$line" in
@@ -62,7 +63,7 @@ case "$line" in
   echo CONCEPT_FILES_DIR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/input/application-1-HelloWorld/metadata/concept/ >> ~/MetadataAPIConfig.properties
   echo MESSAGE_FILES_DIR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/input/application-1-HelloWorld/metadata/message/ >> ~/MetadataAPIConfig.properties
   echo CONTAINER_FILES_DIR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/input/application-1-HelloWorld/metadata/container/ >> ~/MetadataAPIConfig.properties
-  echo CONFIG_FILES_DIR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/config >> ~/MetadataAPIConfig.properties
+  echo CONFIG_FILES_DIR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/input/application-1-HelloWorld/metadata/config/ >> ~/MetadataAPIConfig.properties
   echo MODEL_EXEC_LOG=true >> ~/MetadataAPIConfig.properties
   echo JarPaths=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/lib/system,$(brew --prefix)/Cellar/kamanja/0.0.1/bin/lib/application >> ~/MetadataAPIConfig.properties
   echo SECURITY_IMPL_JAR=$(brew --prefix)/Cellar/kamanja/0.0.1/bin/lib/system/simpleapacheshiroadapter_2.10-1.0.jar  >> ~/MetadataAPIConfig.properties
@@ -83,9 +84,9 @@ fi
 
 if [ "$INPUT" = "web service" ]; then
 echo "Starting web service . . . ."
-java -jar $(brew --prefix)/Cellar/kamanja/0.0.1/bin/bin/MetadataAPIService-1.0
+java -jar MetadataAPIService-1.0
 else
-java -jar $(brew --prefix)/Cellar/kamanja/0.0.1/bin/bin/MetadataAPI-1.0 $@
+java -jar MetadataAPI-1.0 $@
 fi
 
 
