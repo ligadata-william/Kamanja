@@ -38,6 +38,7 @@ import com.ligadata.ZooKeeper._
 import org.apache.curator.framework._
 import com.ligadata.Serialize.{ JDataStore, JZKInfo, JEnvCtxtJsonStr }
 import com.ligadata.StorageBase.{ Key, Value, IStorage, DataStoreOperations, DataStore, Transaction, StorageAdapterObj }
+import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
   val loggerName = this.getClass.getName()
@@ -192,7 +193,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
   var nodeInfo: NodeInfo = _
 
   if (isOk) {
-    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(KvInitConfiguration.configFile, false)
+
 
     nodeInfo = mdMgr.Nodes.getOrElse(KvInitConfiguration.nodeId.toString, null)
     if (nodeInfo == null) {
@@ -240,7 +242,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     dataDataStoreInfo = dataStore
 
-/*
+    /*
     if (isOk) {
       dataStoreType = dataStoreInfo.StoreType.replace("\"", "").trim
       if (dataStoreType.size == 0) {
@@ -268,7 +270,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
     adapterSpecificConfig = if (dataStoreInfo.AdapterSpecificConfig == None || dataStoreInfo.AdapterSpecificConfig == null) "" else dataStoreInfo.AdapterSpecificConfig.get.replace("\"", "").trim
     
 */
-    
+
     if (isOk) {
       zkConnectString = zKInfo.ZooKeeperConnectString.replace("\"", "").trim
       zkNodeBasePath = zKInfo.ZooKeeperNodeBasePath.replace("\"", "").trim
@@ -336,7 +338,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       } catch {
         case e: Exception => {
           logger.error("Failed to get classname:%s as message".format(clsName))
-          e.printStackTrace
+          
         }
       }
     }
@@ -356,7 +358,7 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       } catch {
         case e: Exception => {
           logger.error("Failed to get classname:%s as container".format(clsName))
-          e.printStackTrace
+          
         }
       }
     }
@@ -449,7 +451,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       return KeyValueManager.Get(jarPaths, dataStoreInfo, tableName)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStackTrace:"+stackTrace)
         throw new Exception(e.getMessage())
       }
     }
@@ -487,8 +490,24 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
     var processedRows: Int = 0
     var errsCnt: Int = 0
+    var transId: Long = 0
 
     val csvdataRecs: List[String] = csvdata.tail
+
+    if (csvdataRecs.size > 0 && zkConnectString != null && zkNodeBasePath != null && zkConnectString.size > 0 && zkNodeBasePath.size > 0) {
+      try {
+        com.ligadata.transactions.NodeLevelTransService.init(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs, zkNodeBasePath, 1, dataDataStoreInfo, KvInitConfiguration.jarPaths)
+        val transService = new com.ligadata.transactions.SimpleTransService
+        transService.init(1)
+        transId = transService.getNextTransId
+
+      } catch {
+        case e: Exception => throw e
+      } finally {
+        com.ligadata.transactions.NodeLevelTransService.Shutdown
+      }
+    }
+
     val savedKeys = new ArrayBuffer[List[String]](csvdataRecs.size)
 
     csvdataRecs.foreach(tuples => {
@@ -510,11 +529,12 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
 
         if (messageOrContainer != null) {
           try {
+            messageOrContainer.TransactionId(transId)
             messageOrContainer.populate(inputData)
           } catch {
             case e: Exception => {
-              logger.error("Failed to populate message/container.")
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Failed to populate message/container."+"\nStackTrace:"+stackTrace)
               errsCnt += 1
             }
           }
@@ -530,8 +550,9 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
             processedRows += 1
           } catch {
             case e: Exception => {
-              logger.error("Failed to serialize/write data.")
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Failed to serialize/write data."+"\nStackTrace:"+stackTrace)
+              
               errsCnt += 1
             }
           }
@@ -555,14 +576,15 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
         zkcForSetData = CreateClient.createSimple(zkConnectString, zkSessionTimeoutMs, zkConnectionTimeoutMs)
         val changedContainersData = Map[String, List[List[String]]]()
         changedContainersData(kvname) = savedKeys.toList
-        val datachangedata = ("txnid" -> "0") ~
+        val datachangedata = ("txnid" -> transId.toString) ~
           ("changeddatakeys" -> changedContainersData.map(kv =>
             ("C" -> kv._1) ~
               ("K" -> kv._2)))
         val sendJson = compact(render(datachangedata))
         zkcForSetData.setData().forPath(dataChangeZkNodePath, sendJson.getBytes("UTF8"))
       } catch {
-        case e: Exception => logger.error("Failed to send update notification to engine.")
+        case e: Exception => {
+          logger.error("Failed to send update notification to engine.")}
       } finally {
         if (zkcForSetData != null)
           zkcForSetData.close
@@ -724,7 +746,8 @@ class KVInit(val loadConfigs: Properties, val kvname: String, val csvpath: Strin
       is = new FileInputStream(inputfile)
     } catch {
       case e: Exception =>
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("\nStacktrace:"+stackTrace)
         return false
     }
 

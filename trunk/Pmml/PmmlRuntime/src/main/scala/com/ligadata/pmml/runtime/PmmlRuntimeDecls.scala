@@ -7,6 +7,7 @@ import org.joda.time.format._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.KamanjaBase._
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 trait LogTrait {
     val loggerName = this.getClass.getName()
@@ -978,7 +979,9 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
-			    	logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
+            
+            logger.error(s"Unable to parse '$timestampStr' with any of the patterns - '${timeStampPatterns.toString}'")
+            
 			    	0
 			    }
 		    }
@@ -1027,7 +1030,9 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 			    case iae:IllegalArgumentException => {
+            
 			    	logger.error(s"Unable to parse '$dateStr' with any of the patterns - '${datePatterns.toString}'")
+            
 			    	0
 			    }
 		    }
@@ -1072,7 +1077,9 @@ object DateTimeHelpers extends LogTrait {
 		        msecs
 		    } catch {
 		      case iae:IllegalArgumentException => {
+            
 		    	  logger.error(s"Unable to parse '$timeStr' with any of the patterns - '${timePatterns.toString}'")
+            
 		    	  0
 		      }
 		    }

@@ -1,7 +1,10 @@
 package com.ligadata.messagedef
 
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 class ConstantMethodGenerator {
   //populate method in msg-TransactionMsg class
+  private val LOG = Logger.getLogger(getClass)
    def populate = {
     """
   def populate(inputdata:InputData) = {
@@ -38,7 +41,8 @@ class ConstantMethodGenerator {
       """
  	}catch{
 		case e:Exception =>{
-			e.printStackTrace()
+			val stackTrace = StackTrace.ThrowableTraceString(e)
+      LOG.debug("Stacktrace:"+stackTrace)
   			throw e
 		}
 	}
@@ -58,7 +62,8 @@ class ConstantMethodGenerator {
       """
 	 	}catch{
 			case e:Exception =>{
-				e.printStackTrace()
+				val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Stacktrace:"+stackTrace)  
 	  			throw e
 			}
 		}
@@ -74,7 +79,8 @@ class ConstantMethodGenerator {
      	 assignJsonData(json)
 	}catch{
 	    case e:Exception =>{
-   	    	e.printStackTrace()
+   	    	val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("Stacktrace:"+stackTrace)
    	  		throw e	    	
 	  	}
 	  }
@@ -118,7 +124,8 @@ class ConstantMethodGenerator {
       """
 	  }catch{
   			case e:Exception =>{
-   				e.printStackTrace()
+   				val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("Stacktrace:"+stackTrace)
    			throw e	    	
 	  	}
 	}
@@ -147,14 +154,14 @@ class ConstantMethodGenerator {
 	var list : List[Map[String, Any]] = null 
     var keySet: Set[Any] = Set();
 	try{
-	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]]
+	   val mapOriginal = json.cur_json.get.asInstanceOf[Map[String, Any]];
        if (mapOriginal == null)
-         throw new Exception("Invalid json data")
+         throw new Exception("Invalid json data");
        
-       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]()
-       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )      
+       val map : scala.collection.mutable.Map[String, Any] =  scala.collection.mutable.Map[String, Any]();
+       mapOriginal.foreach(kv => {map(kv._1.toLowerCase()) = kv._2 } )   ;   
     
-	  	var msgsAndCntrs : scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]()
+	  	var msgsAndCntrs : scala.collection.mutable.Map[String, Any] = scala.collection.mutable.Map[String, Any]();
     
 	  	// Traverse through whole map and make KEYS are lowercase and populate
 	  	map.foreach(kv => {
@@ -173,14 +180,15 @@ class ConstantMethodGenerator {
           } else
             fields.put(key, (0, ValueToString(kv._2)))
         }
-      })
+      });
     """ + assignJsonData +
       """
      // fields.foreach(field => println("Key : "+ field._1 + "Idx " + field._2._1 +"Value" + field._2._2 ))
    
 	  } catch {
       	case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Stacktrace:"+stackTrace)
         throw e
       }
     }
@@ -209,7 +217,8 @@ class ConstantMethodGenerator {
     	assignXml(xml)
 	} catch{
 		case e:Exception =>{
-   			e.printStackTrace()
+   			val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Stacktrace:"+stackTrace)
    	  		throw e	    	
     	}
 	}
@@ -227,7 +236,8 @@ class ConstantMethodGenerator {
       """
 	}catch{
 	  case e:Exception =>{
-	    e.printStackTrace()
+	    val stackTrace = StackTrace.ThrowableTraceString(e)
+      LOG.debug("Stacktrace:"+stackTrace)
 		throw e	    	
 	  }
    	}
@@ -243,7 +253,8 @@ class ConstantMethodGenerator {
      
 	}catch{
 	  case e:Exception =>{
-	    e.printStackTrace()
+	    val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Stacktrace:"+stackTrace)
 		throw e	    	
 	  }
    	}
@@ -328,12 +339,12 @@ class ConstantMethodGenerator {
 	    """
   }
    def assignJsonDataMessage(mName: String) = {
-    """   
+    """  { 
         val inputData = new JsonData(json.dataInput)
         inputData.root_json = json.root_json
         inputData.cur_json = Option(map.getOrElse("""" + mName + """", null))
 	    """ + mName + """.populate(inputData)
-	    """
+        """
   }
 
    def getArrayStr(mbrVar: String, classname: String): String = {
@@ -345,7 +356,8 @@ class ConstantMethodGenerator {
           			ctrVar.populate(inputdata)
             } catch {
             	case e: Exception => {
-            	e.printStackTrace()
+             val stackTrace = StackTrace.ThrowableTraceString(e)
+            	LOG.debug("Stacktrace:"+stackTrace)
             	throw e
             	}
             }
@@ -451,7 +463,8 @@ class ConstantMethodGenerator {
     	   """ + serStr + """
     	} catch {
     		case e: Exception => {
-    	    e.printStackTrace()
+    	    val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("StackTrace:"+stackTrace)
     	  }
         }
      } 
@@ -512,7 +525,8 @@ class ConstantMethodGenerator {
       	""" + deSer + """ 
       	} catch {
       		case e: Exception => {
-          		e.printStackTrace()
+          		val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.debug("StackTrace:"+stackTrace)
       		}
       	}
     } 
@@ -594,7 +608,8 @@ class ConstantMethodGenerator {
      SerializeNonBaseTypes(dos)
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
       }
     }
   }

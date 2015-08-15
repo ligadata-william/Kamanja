@@ -9,31 +9,24 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.mutable.ArrayBuffer
+import com.ligadata.Exceptions.StackTrace
 
-class SimpleTransService {
-  var startTxnId = 1
-  var endTxnId = 0
-  
-  def getNextTransId: Long = {
-    if (startTxnId >= endTxnId) {
-      //BUGBUG:: Yet to implement this to get counters from database
-    }
-    val retval = startTxnId
-    startTxnId += 1
-    retval
-  }
-}
+import com.ligadata.transactions._
+
+import com.ligadata.transactions._
 
 // There are no locks at this moment. Make sure we don't call this with multiple threads for same object
 class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val callerCtxt: InputAdapterCallerContext) extends ExecContext {
-
   val LOG = Logger.getLogger(getClass);
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
   
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
+
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
   val transService = new SimpleTransService
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
 
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
@@ -58,7 +51,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          e.printStackTrace()
+          
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
@@ -127,13 +120,18 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
-  
+
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
+
   
+  NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
+
   val xform = new TransformMessageData
   val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
   val transService = new SimpleTransService
 
+  transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
+  
   private def getAllModelResults(data: Any): Array[Map[String, Any]] = {
     val results = new ArrayBuffer[Map[String, Any]]()
     try {

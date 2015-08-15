@@ -17,6 +17,8 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import kafka.consumer.ConsoleConsumer
+import com.ligadata.Exceptions.StackTrace
+
 
 object KafkaConsumer extends InputAdapterObj {
   def CreateInputAdapter(inputConfig: AdapterConfiguration, callerCtxt: InputAdapterCallerContext, execCtxtObj: ExecContextObj, cntrAdapter: CountersAdapter): InputAdapter = new KafkaConsumer(inputConfig, callerCtxt, execCtxtObj, cntrAdapter)
@@ -35,7 +37,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, (KafkaPartitionUniqueRecordValue, Int, Int))]()
 
   val groupName = "T" + hashCode.toString
 
@@ -87,6 +89,8 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
       ConsoleConsumer.tryCleanupZookeeper(qc.hosts.mkString(","), groupName)
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("\nStackTrace:"+stackTrace)
       }
     }
     
@@ -94,7 +98,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._txnId, (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
+    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue], (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
 
     qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
@@ -149,7 +153,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
             uniqueKey.Name = qc.Name
             uniqueKey.TopicName = qc.topic
 
-            var transId: Long = 0
             var ignoreOff: Long = -1
 
             try {
@@ -192,10 +195,9 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                             }
 
                           }
-                          transId = kv._3
-                          ignoreOff = if (ignoreFirstMsg) kv._4._1.Offset else kv._4._1.Offset - 1 
-                          processingXformMsg = kv._4._2
-                          totalXformMsg = kv._4._3
+                          ignoreOff = if (ignoreFirstMsg) kv._3._1.Offset else kv._3._1.Offset - 1 
+                          processingXformMsg = kv._3._2
+                          totalXformMsg = kv._3._3
                         }
                       }
                       if (executeCurMsg) {
@@ -207,13 +209,13 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                             totalXformMsg = 0
                           }
                           execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
-                          transId += 1
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"
                           cntrAdapter.addCntr(key, 1) // for now adding each row
                         } catch {
-                          case e: Exception => LOG.error("Failed with Message:" + e.getMessage)
+                          case e: Exception => {
+                            LOG.error("Failed with Message:" + e.getMessage)}
                         }
                       } else {
                         LOG.debug("Ignoring Message:%s".format(new String(message.message)))
@@ -259,9 +261,16 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
     val dataAndStat = try {
       (Some(client.readData(path, stat)), stat)
     } catch {
-      case e: ZkNoNodeException =>
+      case e: ZkNoNodeException =>{
+       val stackTrace = StackTrace.ThrowableTraceString(e)
+       LOG.debug("\nStackTrace:"+stackTrace)
         (None, stat)
-      case e2: Exception => throw e2
+      }
+      case e2: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e2)
+        LOG.debug("\nStackTrace:"+stackTrace)
+        throw e2
+        }
     }
     dataAndStat
   }

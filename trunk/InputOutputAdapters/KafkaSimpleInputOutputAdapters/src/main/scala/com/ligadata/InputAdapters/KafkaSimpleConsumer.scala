@@ -11,6 +11,7 @@ import kafka.consumer.{ SimpleConsumer }
 import java.net.{ InetAddress }
 import org.apache.log4j.Logger
 import scala.collection.mutable.Map
+import com.ligadata.Exceptions.StackTrace
 
 object KafkaSimpleConsumer extends InputAdapterObj {
   val METADATA_REQUEST_CORR_ID = 2
@@ -39,7 +40,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private var numberOfErrors: Int = _
   private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService = _
-  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, Long, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, (KafkaPartitionUniqueRecordValue, Int, Int))]()
   private var clientName: String = _
 
   // Heartbeat monitor related variables.
@@ -88,7 +89,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     val partitionInfo = partitionIds.map(quad => {
       (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey],
         quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue],
-        quad._txnId,
         (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx))
     })
 
@@ -131,10 +131,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           // if the offset is -1, then the server wants to start from the begining, else, it means that the server
           // knows what its doing and we start from that offset.
           var readOffset: Long = -1
-          var transactionId = partition._3
-          val uniqueRecordValue = if (ignoreFirstMsg) partition._4._1.Offset else partition._4._1.Offset - 1
-          var processingXformMsg = partition._4._2
-          var totalXformMsg = partition._4._3
+          val uniqueRecordValue = if (ignoreFirstMsg) partition._3._1.Offset else partition._3._1.Offset - 1
+          var processingXformMsg = partition._3._2
+          var totalXformMsg = partition._3._3
 
           var sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
           var messagesProcessed: Long = 0
@@ -178,8 +177,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
             val fetchReq = new FetchRequestBuilder().clientId(clientName).addFetch(qc.topic, partitionId, readOffset, KafkaSimpleConsumer.FETCHSIZE).build();
 
             // Call the broker and get a response.
-            val readTmNs = System.nanoTime
-            val readTmMs = System.currentTimeMillis
             val fetchResp = consumer.fetch(fetchReq)
 
             // Check for errors
@@ -204,6 +201,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               val message: Array[Byte] = new Array[Byte](bufferPayload.limit)
               readOffset = msgBuffer.nextOffset
               breakable {
+                val readTmNs = System.nanoTime
+                val readTmMs = System.currentTimeMillis
                 messagesProcessed = messagesProcessed + 1
 
                 // Engine in interested in message at OFFSET + 1, Because I cannot guarantee that offset for a partition
@@ -233,7 +232,6 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
                 val key = Category + "/" + qc.Name + "/evtCnt"
                 cntrAdapter.addCntr(key, 1) // for now adding each row
-                transactionId = transactionId + 1
               }
 
             })
@@ -246,7 +244,10 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               messagesProcessed = 0
             } catch {
               case e: java.lang.InterruptedException =>
-                LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread")
+                {
+                  val stackTrace = StackTrace.ThrowableTraceString(e)
+                  LOG.debug("KAFKA ADAPTER: Forcing down the Consumer Reader thread"+"\nStackTrace:"+stackTrace)
+                }
             }
           }
           if (consumer != null) { consumer.close }
@@ -288,7 +289,8 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           })
         })
       } catch {
-        case e: java.lang.InterruptedException => LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")
+        case e: java.lang.InterruptedException =>{
+          LOG.error("KAFKA-ADAPTER: Communication interrupted with broker " + broker + " while getting a list of partitions")}
       } finally {
         if (partConsumer != null) { partConsumer.close }
       }
@@ -382,7 +384,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               })
             })
           } catch {
-            case e: Exception => { LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + e.printStackTrace()) }
+            case e: Exception => { 
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.debug("KAFKA-ADAPTER: Communicatin problem with broker " + broker + " trace " + stackTrace) }
           } finally {
             if (llConsumer != null) llConsumer.close()
           }
@@ -390,7 +394,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       }
 
     } catch {
-      case e: Exception => { LOG.debug("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition) }
+      case e: Exception => { 
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("KAFKA ADAPTER - Fatal Error for FindLeader for partition " + inPartition+"\nStackTrace:"+stackTrace) }
     }
     return leaderMetadata;
   }
@@ -448,7 +454,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
         offset = offsets(0)
       }
     } catch {
-      case e: java.lang.Exception => { LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}") }
+      case e: java.lang.Exception => {
+        
+        LOG.error("KAFKA ADAPTER: Exception during offset inquiry request for partiotion {" + partitionId + "}") }
     } finally {
       if (llConsumer != null) { llConsumer.close }
     }
@@ -472,7 +480,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           return leaderMetaData
         }
       } catch {
-        case e: InterruptedException => { LOG.debug("Adapter terminated during findNewLeader") }
+        case e: InterruptedException => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("Adapter terminated during findNewLeader"+"\nStackTrace:"+stackTrace) }
       }
     }
     return null
@@ -494,7 +504,9 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
       hbRunning = false
       hbExecutor.shutdownNow()
     } catch {
-      case e: java.lang.InterruptedException => LOG.debug("Heartbeat terminated")
+      case e: java.lang.InterruptedException => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("Heartbeat terminated"+"\nStackTrace:"+stackTrace)}
     }
   }
 
@@ -547,12 +559,14 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
               Thread.sleep(KafkaSimpleConsumer.MONITOR_FREQUENCY)
             } catch {
               case e: java.lang.InterruptedException =>
-                LOG.debug("Shutting down the Monitor heartbeat")
+                val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("Shutting down the Monitor heartbeat"+"\nStackTrace:"+stackTrace)
                 hbRunning = false
             }
           }
         } catch {
-          case e: java.lang.Exception => LOG.error("Heartbeat forced down due to exception + " + e.printStackTrace())
+          case e: java.lang.Exception => {
+            LOG.error("Heartbeat forced down due to exception + ")}
         } finally {
           hbConsumers.foreach({ case (key, consumer) => { consumer.close } })
           hbRunning = false

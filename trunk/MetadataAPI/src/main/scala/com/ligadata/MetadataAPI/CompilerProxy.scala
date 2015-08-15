@@ -22,7 +22,6 @@ import com.ligadata.Serialize._
 import com.ligadata.Exceptions._
 import java.util.jar.JarInputStream
 import scala.util.control.Breaks._
-// import scala.reflect.runtime.{ universe => ru }
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
@@ -66,7 +65,6 @@ class CompilerProxy{
     } catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during AddModel. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -87,7 +85,6 @@ class CompilerProxy{
     }  catch {
       case e: Exception => {
         logger.error("COMPILER_PROXY: unable to determine model metadata information during recompile. ERROR "+e.getMessage)
-        logger.error(e.getStackTraceString)
         throw e
       }
     }
@@ -289,7 +286,6 @@ class CompilerProxy{
     catch{
       case e:Exception =>{
         logger.debug("Failed to compile the message definition " + e.toString)
-        e.printStackTrace
         throw new MsgCompilationFailedException(e.getMessage())
       }
       case e:AlreadyExistsException =>{
@@ -533,7 +529,6 @@ class CompilerProxy{
         throw e
       }
       case e:Exception =>{
-        e.printStackTrace()
         logger.error("Failed to compile the model definition " + e.toString)
         throw new ModelCompilationFailedException(e.getMessage())
       }
@@ -734,7 +729,8 @@ class CompilerProxy{
             logger.debug("COMPILER_PROXY: "+clsName+" is a Scala Class... ")
           } catch {
             case e: java.lang.NoClassDefFoundError => {
-              e.printStackTrace
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
               throw e
             }
             case e: Exception => {
@@ -756,7 +752,6 @@ class CompilerProxy{
           case e: Exception => {
             // Trying Regular Object instantiation
             logger.error("COMPILER_PROXY: Exception encountered trying to determin metadata from "+clsName)
-            e.printStackTrace()
             throw new MsgCompilationFailedException(clsName)
           }
         }

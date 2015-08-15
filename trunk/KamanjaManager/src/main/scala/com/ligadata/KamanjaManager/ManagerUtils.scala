@@ -1,7 +1,16 @@
 
 package com.ligadata.KamanjaManager
 
+import java.io.{File, FileInputStream}
+import java.util
+import java.util.jar.JarInputStream
+
+import com.ligadata.Utils.KamanjaClassLoader
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
+
+import scala.collection.mutable.ArrayBuffer
+import scala.util.control.Breaks._
 
 object ManagerUtils {
   private[this] val LOG = Logger.getLogger(getClass);
