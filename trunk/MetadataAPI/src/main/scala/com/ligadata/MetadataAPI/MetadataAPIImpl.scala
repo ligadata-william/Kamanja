@@ -5980,7 +5980,6 @@ object MetadataAPIImpl extends MetadataAPI {
             if (userDefinedProps.size > 0) {
               val upProps: UserPropertiesInfo = MdMgr.GetMdMgr.MakeUPProps(ClusterId)
               userDefinedProps.keys.foreach(key => {
-                println("Adding key "+key+"-->" + userDefinedProps(key).toString)
                 upProps.Props(key) = userDefinedProps(key).toString
               })   
               MdMgr.GetMdMgr.AddUserProperty(upProps)
@@ -6011,7 +6010,6 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   def getUP (ci: String, key: String): String = {
-     println(" YO WILLIE... GO PATRIOTS...  key = "+key+ " for clusterid  "+ci)
      MdMgr.GetMdMgr.GetUserProperty(ci,key)
   }
 
@@ -6286,7 +6284,6 @@ object MetadataAPIImpl extends MetadataAPI {
       logger.error("ZooKeeperInfo not found for Node %s  & ClusterId : %s".format(nodeId, nd.ClusterId))
       return false
     }
-    println("->"+zooKeeperInfo)
     val jarPaths = if (nd.JarPaths == null) Set[String]() else nd.JarPaths.map(str => str.replace("\"", "").trim).filter(str => str.size > 0).toSet
     if (jarPaths.size == 0) {
       logger.error("Not found valid JarPaths.")
