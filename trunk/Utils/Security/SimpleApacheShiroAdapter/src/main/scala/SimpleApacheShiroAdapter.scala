@@ -11,8 +11,9 @@ import org.apache.shiro.subject.Subject
 import org.apache.shiro.util.Factory
 import org.apache.log4j._
 
-import com.ligadata.kamanja.metadata.SecurityAdapter
+import com.ligadata.SecurityAdapterInfo.SecurityAdapter
 import java.util.Properties
+import com.ligadata.Exceptions.StackTrace
 
 class SimpleApacheShiroAdapter extends SecurityAdapter{
 
@@ -81,22 +82,24 @@ class SimpleApacheShiroAdapter extends SecurityAdapter{
           return false
         } 
         case ice:IncorrectCredentialsException => {
+          
           log.error("SimpleApacheShiroAdapter: Password for account " + token.getPrincipal() + " was incorrect!");
           return false
         } 
         case lae:LockedAccountException => {
+          
           log.error("SimpleApacheShiroAdapter: The account for username " + token.getPrincipal() + " is locked.  " +
                     "Please contact your administrator to unlock it.");
           return false
         }
         // ... catch more exceptions here, maybe custom ones specific to your application?
         case ae: AuthenticationException => {
-          ae.printStackTrace()
+          
           log.error("SimpleApacheShiroAdapter: Unexpected authorization exception " + ae.getMessage())
           return false
         }
         case e: Exception => {
-          e.printStackTrace()
+          
           log.error("SimpleApacheShiroAdapter: Unexpected  exception " + e.getMessage())
           return false
         }

@@ -665,6 +665,10 @@ class ModelDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
 
+class ConfigDef extends BaseElemDef {
+  var contents: String = _
+}
+
 class JarDef extends BaseElemDef {
   def typeString: String = PhysicalName
 }
@@ -721,6 +725,7 @@ class ClusterCfgInfo {
    * This object captures the information related to a clusterConfiguration
    */
   var clusterId: String = _
+  var usrConfigs: scala.collection.mutable.HashMap[String, String] = _
   var cfgMap: scala.collection.mutable.HashMap[String, String] = _
   var modifiedTime: Date = _
   var createdTime: Date = _
@@ -729,6 +734,7 @@ class ClusterCfgInfo {
   def CfgMap: scala.collection.mutable.HashMap[String, String] = cfgMap
   def ModifiedTime: Date = modifiedTime
   def CreatedTime: Date = createdTime
+  def getUsrConfigs: scala.collection.mutable.HashMap[String, String] = usrConfigs
 }
 
 class AdapterInfo {
@@ -758,18 +764,12 @@ class AdapterInfo {
   def AssociatedMessage: String = associatedMsg
 }
 
-class AuditRecord {
-  var actionTime: String = _
-  var action: String = _
-  var notes: String = _
-  var objectAccessed: String = _
-  var success: String = _
-  var transactionId: String = _
-  var userOrRole: String = _
-  var userPrivilege: String = _
-
-  override def toString: String =
-    "(" + actionTime + "," + action + "," + "," + objectAccessed + "," + success + "," + transactionId + "," + userOrRole + "," + userPrivilege + ")"
+class UserPropertiesInfo {
+   var clusterId: String = _
+   var props: scala.collection.mutable.HashMap[String, String] = _
+   
+   def ClusterId: String = clusterId
+   def Props: scala.collection.mutable.HashMap[String, String] = props  
 }
 
 class OutputMsgDef extends BaseElemDef {

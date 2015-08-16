@@ -33,11 +33,9 @@ class UploadModelConfigService(requestContext: RequestContext, userid:Option[Str
   }
 
   def process(cfgJson:String) = {
-
     log.debug("Requesting UploadModelConfig {}", cfgJson)
-    val apiResult = MetadataAPIImpl.UploadModelsConfig(cfgJson, null, null)
+    val apiResult = MetadataAPIImpl.UploadModelsConfig(cfgJson, userid, null)
     requestContext.complete(apiResult)
   }
 
 }
-

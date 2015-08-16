@@ -2,7 +2,6 @@ package com.ligadata.loadtest
 
 import java.util.concurrent._
 import scala.concurrent.duration.Duration
-import com.ligadata.keyvaluestore.PropertyMap
 
 class LoadTestConfig
 {
@@ -19,11 +18,8 @@ class LoadTestConfig
 	val bDoStorage = true;
 	val nScenario = 1;
 	val nMsgDelay = Duration(1, TimeUnit.MILLISECONDS)
-	
-	val connectinfo = new PropertyMap
-	connectinfo+= ("connectiontype" -> "cassandra")
-	connectinfo+= ("hostlist" -> "localhost") 
-	connectinfo+= ("schema" -> "default")
-	connectinfo+= ("table" -> "default")
+	val connectinfo = "{\"connectiontype\": \"cassandra\", \"hostlist\": \"localhost\", \"schema\": \"default\"}"
+	val tablename = "default"
 }
+
 

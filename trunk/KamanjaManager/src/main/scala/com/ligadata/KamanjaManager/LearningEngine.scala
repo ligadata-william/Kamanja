@@ -10,14 +10,15 @@ import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
 import scala.xml.Elem
-// import scala.util.parsing.json.JSON
 import scala.collection.mutable.ArrayBuffer
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.outputmsg.OutputMsgGenerator
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, InputAdapterObj, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.Exceptions.StackTrace
 
-class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, val output: Array[OutputAdapter]) {
+class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val output: Array[OutputAdapter]) {
   val LOG = Logger.getLogger(getClass);
   var cntr: Long = 0
   var totalLatencyFromReadToProcess: Long = 0
@@ -27,6 +28,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
+   LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
 
@@ -38,6 +40,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
       models.foreach(md => {
         try {
           if (md.mdl.IsValidMessage(finalTopMsgOrContainer)) {
+            LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, model:%s".format(uk, uv, md.mdl.ModelName))
             // Checking whether this message has any fields/concepts to execute in this model
             val mdlCtxt = new ModelContext(new TransactionContext(transId, envContext, md.tenantId), finalTopMsgOrContainer)
             ThreadLocalStorage.modelContextInfo.set(mdlCtxt)
@@ -56,10 +59,10 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           }
         } catch {
           case e: Exception => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage + "\n Trace:\n" + e.printStackTrace())
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + e.getCause + ". Message: " + e.getMessage)
           }
           case t: Throwable => {
-            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage + "\n Trace:\n" + t.printStackTrace())
+            LOG.error("Model Failed => " + md.mdl.ModelName() + ". Reason: " + t.getCause + ". Message: " + t.getMessage)
           }
         } finally {
           ThreadLocalStorage.modelContextInfo.remove
@@ -77,6 +80,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
 
   def execute(transId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
     // LOG.debug("LE => " + msgData)
+    LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
     try {
       if (msgInfo != null && inputdata != null) {
         val partKeyData = if (msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CanPersist) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata) else null
@@ -98,7 +102,6 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           msg = msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CreateNewMessage
         }
         msg.populate(inputdata)
-        msg.TransactionId(transId)
         var allMdlsResults: scala.collection.mutable.Map[String, SavedMdlResult] = null
         if (isValidPartitionKey) {
           envContext.setObject(transId, msgType, partKeyDataList, msg) // Whether it is newmsg or oldmsg, we are still doing createdNewMsg
@@ -125,7 +128,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
           } catch {
             case e: Exception => {
               LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-              e.printStackTrace
+              
             }
           }
           val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
@@ -157,7 +160,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 1")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
           if (ignoreOutput == false) {
@@ -176,7 +180,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 2")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
           envContext.saveStatus(transId, "OutAdap", false)
@@ -190,7 +195,8 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
               Thread.sleep(KamanjaConfiguration.waitProcessingTime)
               LOG.debug("====================================> Done Waiting in Step 3")
             } catch {
-              case e: Exception => {}
+              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
+                LOG.debug("StackTrace:"+stackTrace)}
             }
           }
         }
@@ -200,7 +206,7 @@ class LearningEngine(val input: InputAdapter, val processingPartitionId: Int, va
     } catch {
       case e: Exception => {
         LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        e.printStackTrace
+        
       }
     }
 

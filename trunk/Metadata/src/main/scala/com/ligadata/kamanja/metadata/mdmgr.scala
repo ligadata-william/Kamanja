@@ -16,6 +16,8 @@ import org.apache.log4j._
 import ObjTypeType._
 import ObjType._
 
+import com.ligadata.Exceptions.StackTrace
+
 /**
  * class MdMgr
  *
@@ -64,6 +66,7 @@ class MdMgr {
   private var nodes = new HashMap[String, NodeInfo]
   private var adapters = new HashMap[String, AdapterInfo]
   private var modelConfigs = new HashMap[String,scala.collection.immutable.Map[String,List[String]]]
+  private var configurations = new HashMap[String,UserPropertiesInfo]
 
   def SetLoggerLevel(level: Level) {
     logger.setLevel(level);
@@ -84,6 +87,7 @@ class MdMgr {
     nodes.clear
     adapters.clear
     outputMsgDefs.clear
+    modelConfigs.clear
   }
 
   def truncate(objectType: String) {
@@ -128,7 +132,10 @@ class MdMgr {
       }
       case "OutputMsgDef" => {
     	  outputMsgDefs.clear
-        }
+      }
+      case "ModelConfigs" => {
+        modelConfigs.clear
+      } 
       case _ => {
         logger.error("Unknown object type " + objectType + " in truncate function")
       }
@@ -172,7 +179,10 @@ class MdMgr {
             })
           }
         } catch {
-          case e: Exception => {}
+          case e: Exception => {
+            val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:"+stackTrace)
+          }
         }
         elm
       }
@@ -199,7 +209,10 @@ class MdMgr {
             })
           }
         } catch {
-          case e: Exception => {}
+          case e: Exception => {
+               val stackTrace = StackTrace.ThrowableTraceString(e)
+            logger.debug("\nStackTrace:"+stackTrace)
+          }
         }
         elm
       }
@@ -2695,6 +2708,28 @@ class MdMgr {
     modelConfigs.getOrElse(key.toLowerCase, scala.collection.immutable.Map[String,List[String]]())
   }
   
+  /**
+   * AddUserProperty - add UserPropertiesMap to a local cache
+   * @parms - clusterId: String
+   * @parms - upi: UserPropertiesInfo
+   */
+  def AddUserProperty(upi: UserPropertiesInfo): Unit = {
+    configurations(upi.ClusterId) = upi
+  } 
+  
+  /**
+   * GetUserProperty - return a String value of a User Property
+   * @parm - clusterId: String
+   * @parm - key: String
+   */
+  def GetUserProperty(clusterId: String, key: String): String = {
+    if (configurations.contains(clusterId)) {
+      val upi: scala.collection.mutable.HashMap[String, String] = configurations(clusterId).Props
+      return upi.get(key).getOrElse("")
+    }
+    return ""
+  }
+
   def MakeCluster(clusterId: String, description: String, privilges: String): ClusterInfo = {
     val ci = new ClusterInfo
     ci.clusterId = clusterId
@@ -2722,6 +2757,13 @@ class MdMgr {
     ci.modifiedTime = modifiedTime
     ci.createdTime = createdTime
     ci
+  }
+  
+  def MakeUPProps(clusterId: String): UserPropertiesInfo = {
+    var upi = new UserPropertiesInfo
+    upi.clusterId = clusterId
+    upi.props = new scala.collection.mutable.HashMap[String, String]
+    upi
   }
 
   def AddClusterCfg(ci: ClusterCfgInfo): Unit = {

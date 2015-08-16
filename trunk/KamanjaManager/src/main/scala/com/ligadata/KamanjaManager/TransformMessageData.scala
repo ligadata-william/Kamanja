@@ -8,10 +8,12 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import scala.xml.XML
 import scala.xml.Elem
+import org.apache.log4j.Logger
 
 // To filter data coming from Input (Queue/file). This takes N input fields and M output fields. Output fields are subset of Input fields.
 // We also have KEY. So that we can start sending the user into separate threads from here.
 class TransformMessageData {
+  private val LOG = Logger.getLogger(getClass);
   def parseCsvInputData(inputData: String, associatedMsg: String, delimiterString: String): (String, MsgContainerObjAndTransformInfo, InputData) = {
     val dataDelim = if (delimiterString != null && delimiterString.size > 0) delimiterString else ","
     val str_arr = inputData.split(dataDelim, -1)
@@ -137,8 +139,9 @@ class TransformMessageData {
     else throw new Exception("Invalid input data type")
   }
 
-  def execute(data: String, format: String, associatedMsg: String, delimiterString: String): Array[(String, MsgContainerObjAndTransformInfo, InputData)] = {
-    val output = parseInputData(data, format, associatedMsg, delimiterString)
+  def execute(data: Array[Byte], format: String, associatedMsg: String, delimiterString: String, uk: String, uv: String): Array[(String, MsgContainerObjAndTransformInfo, InputData)] = {
+    val output = parseInputData(new String(data), format, associatedMsg, delimiterString)
+    LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
     Array((output._1, output._2, output._3))
   }
 }

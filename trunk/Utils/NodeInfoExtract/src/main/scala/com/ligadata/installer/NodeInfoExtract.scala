@@ -9,7 +9,7 @@ import com.ligadata.kamanja.metadata._
 class NodeInfoExtract(val metadataAPIConfig : String, val nodeConfigPath : String, val clusterId : String, val installDir : String) {
 
 	//MetadataAPIImpl.InitMdMgrFromBootStrap(metadataAPIConfig)
-	MetadataAPIImpl.InitMdMgr(metadataAPIConfig)
+	MetadataAPIImpl.InitMdMgr(metadataAPIConfig, false)
 	
 	/** FIXME: At some point, the engine and MetadataAPI prop name will converge and these keys will likely be wrong!!!!!!!!!!!!!!!!!!! */
 	val metadataStoreType : String = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("DATABASE")
