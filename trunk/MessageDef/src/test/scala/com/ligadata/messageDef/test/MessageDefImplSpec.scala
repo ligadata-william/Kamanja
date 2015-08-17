@@ -84,56 +84,56 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
       file.delete()
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeInt type" in {
     val input: String = "int"
     val expected : String = "writeInt"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeUTF type" in {
     val input: String = "string"
     val expected : String = "writeUTF"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeLong type" in {
     val input: String = "long"
     val expected : String = "writeLong"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeDouble type" in {
     val input: String = "double"
     val expected : String = "writeDouble"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeBoolean type" in {
     val input: String = "boolean"
     val expected : String = "writeBoolean"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeChar type" in {
     val input: String = "char"
     val expected : String = "writeChar"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed writeFloat type" in {
     val input: String = "float"
     val expected : String = "writeFloat"
     val actual : String = new MessageDefImpl getSerializedType input
     assert(expected === actual)
   }
   
-  it should "return the appropriate deserialzed type" in {
+  it should "return the appropriate deserialzed dummyfloat type" in {
     val input: String = "dummyfloat"
     val expected : String = ""
     val actual : String = new MessageDefImpl getSerializedType input
@@ -162,7 +162,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     assert(checkFile == true && builder.toString() == inputScalaClass)
   }
   
-  it should "generated message definition should be interpreted" in {
+  it should "generated message definition should be successfully interpreted" in {
     //def processMsgDef(jsonstr: String, msgDfType: String, mdMgr: MdMgr, recompile: Boolean = false): ((String, String), ContainerDef, (String, String)) = {
     //val inputJsonStr = "{\"Message\" : {\"NameSpace\" : \"System\",\"Name\" : \"msg1\",\"Version\" : \"00.01.00\",\"Description\" : \"Hello World \",\"Fixed\" : \"true\",\"Elements\" : [{\"Field\" : {\"Name\" : \"Id\",\"Type\" : \"System.Int\"}},{\"Field\" : {\"Name\" : \"Name\",\"Type\" : \"System.String\"}},{\"Field\" : {\"Name\" : \"Score\",\"Type\" : \"System.Int\"}}]}}"
     val inputMsgDfType = "JSON"
@@ -275,7 +275,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     //bug bug : How to check the result
   }
   
-  it should "return a List[Element] object" in {
+  it should "return a object of type List[Element]" in {
     val inputMessage = parse(inputJsonStr).values.asInstanceOf[Map[String, Any]]
     val inputKey = "Elements"
     val invokePvtMthd = PrivateMethod[List[Element]]('getElementsObj)
@@ -283,7 +283,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     //bug bug : How to check the result
   }
   
-  it should "return a List[Element] object" in {
+  it should "return a List[Element]" in {
     val inputKey = "Concepts"
     val msgMap = parse(inputJsonStr).values.asInstanceOf[Map[String, Any]]
     val inputMessage= msgMap.get(inputKey).get.asInstanceOf[List[String]]
