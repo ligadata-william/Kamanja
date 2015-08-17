@@ -62,7 +62,7 @@ class MessageDefImpl {
 
   //creates the class string
 
-  private def getSerializedType(valType: String): String = {
+   def getSerializedType(valType: String): String = {
     valType match {
       case "int" => "writeInt"
       case "string" => "writeUTF"

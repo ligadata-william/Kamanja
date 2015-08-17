@@ -259,6 +259,7 @@ class MessageDefImplSpec extends FlatSpec with PrivateMethodTester with BeforeAn
     var settings = new scala.tools.nsc.Settings()
     val origBootclasspath = settings.bootclasspath.value
     settings.bootclasspath.value = getClassPath
+    
     val out = new java.io.StringWriter()
     var interpreter = new scala.tools.nsc.Interpreter(settings,new PrintWriter(out))
     val returnScala = interpreter.interpret(actual.toString())
