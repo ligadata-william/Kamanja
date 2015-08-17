@@ -2,7 +2,7 @@ package com.ligadata.kamanja.financial;
 
 import scala.Option;
 
-import com.ligadata.FatafatBase.*;
+import com.ligadata.KamanjaBase.*;
 import com.ligadata.messagescontainers.System.*;
 
 public class LowBalanceAlertModel extends ModelBase {
