@@ -1,7 +1,7 @@
 package com.ligadata.kamanja.financial;
 
 import com.google.common.base.Optional;
-import com.ligadata.FatafatBase.*;
+import com.ligadata.KamanjaBase.*;
 import com.ligadata.messagescontainers.System.*;
 
 public class HelloWorldModel extends ModelBase {
