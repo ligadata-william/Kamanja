@@ -85,6 +85,23 @@ mkdir -p $installPath/input/HelloWorld/metadata/type
 mkdir -p $installPath/input/HelloWorld/template
 # HelloWorld
 
+
+#new one
+mkdir -p $installPath/input/SampleApplications
+mkdir -p $installPath/input/SampleApplications/bin
+mkdir -p $installPath/input/SampleApplications/data
+mkdir -p $installPath/input/SampleApplications/metadata
+mkdir -p $installPath/input/SampleApplications/metadata/config
+mkdir -p $installPath/input/SampleApplications/metadata/container
+mkdir -p $installPath/input/SampleApplications/metadata/function
+mkdir -p $installPath/input/SampleApplications/metadata/message
+mkdir -p $installPath/input/SampleApplications/metadata/model
+mkdir -p $installPath/input/SampleApplications/metadata/script
+mkdir -p $installPath/input/SampleApplications/metadata/type
+mkdir -p $installPath/input/SampleApplications/template
+#new one
+
+
 # Telecom
 mkdir -p $installPath/input/Telecom
 mkdir -p $installPath/input/Telecom/bin
@@ -444,7 +461,10 @@ cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/Telecom/data
 # Telecom
 
-
+#new one
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/SampleApplications/data
+#new one
 # *******************************
 # Copy documentation files
 # *******************************
@@ -498,6 +518,23 @@ cp -rf * $installPath/input/Medical/template
 cd $srcPath/SampleApplication/HelloWorld/template
 cp -rf * $installPath/input/HelloWorld/template
 # HelloWorld
+
+#new one
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#new one
 
 #Finance
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
