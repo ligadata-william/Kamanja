@@ -393,7 +393,10 @@ cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/Telecom/data
 # Telecom
 
-
+#new one
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/SampleApplications/data
+#new one
 # *******************************
 # Copy documentation files
 # *******************************
@@ -487,6 +490,23 @@ cp -rf * $installPath/input/SampleApplications/template
 cd $srcPath/SampleApplication/Telecom/metadata/config
 cp -rf * $installPath/input/SampleApplications/metadata/config
 #Telecom
+
+#new one
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#new one
 
 #Finance
 
