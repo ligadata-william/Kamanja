@@ -152,6 +152,15 @@ class PmmlModelGenerator(ctx : PmmlContext) extends CodePrinterDispatch with com
 			
 			codeBuffer.append(modelClassBuffer.toString)
 			codeBuffer.append(classDeclsBuffer.toString)
+			
+			/** 
+			 *  End of Application Class generation.  NOTE: All Derive_<fieldname>, SimpleRule_<rulename>, et al are enclosed in 
+			 *  the model class as nested classes when the '}' is placed here.  This allows the namespace to be shared 
+			 *  among many models by nesting potentially conflicting names inside the model class.  
+			 */
+			codeBuffer.append(s"}\n")
+
+			
 			codeBuffer.toString
 		}
     }
