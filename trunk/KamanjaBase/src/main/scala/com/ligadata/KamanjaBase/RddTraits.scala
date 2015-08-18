@@ -791,7 +791,8 @@ abstract class RDDObject[T: ClassTag] {
   final def saveOne(inst: T): Unit = {
     val mdlCtxt = getCurrentModelContext
     if (mdlCtxt != null && mdlCtxt.txnContext != null) {
-      mdlCtxt.txnContext.gCtx.saveOne(mdlCtxt.txnContext.transId, getFullName, mdlCtxt.msg.PartitionKeyData.toList, inst.asInstanceOf[MessageContainerBase])
+      val obj = inst.asInstanceOf[MessageContainerBase]
+      mdlCtxt.txnContext.gCtx.saveOne(mdlCtxt.txnContext.transId, getFullName, obj.PartitionKeyData.toList, obj)
     }
   }
 

@@ -28,7 +28,8 @@ trait MessageContainerBase {
   def Name: String // Message or Container Name
   def Deserialize(dis: DataInputStream, mdResolver: MdBaseResolveInfo, loader: java.lang.ClassLoader, savedDataVersion: String): Unit
   def Serialize(dos: DataOutputStream): Unit
-  def Save(): Unit  
+  def Save(): Unit
+  def Clone(): MessageContainerBase
   final def TransactionId(transId: Long): Unit = { transactionId = transId }
   final def TransactionId(): Long = transactionId
 }

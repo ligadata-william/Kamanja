@@ -478,7 +478,7 @@ trait BaseContainer {
       var keys = Map(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
         """
       var fields: scala.collection.mutable.Map[String, (Int, Any)] = new scala.collection.mutable.HashMap[String, (Int, Any)];
-	"""
+ 	"""
     } else {
       """ 
 	    var keys = Map[String, Int]()
@@ -487,6 +487,14 @@ trait BaseContainer {
 	  """
     }
   }
+
+  def getTransactionIdMapped = {
+    """
+         fields("transactionId") =( (typsStr.indexOf("com.ligadata.BaseTypes.LongImpl")), transactionId)
+    """
+
+  }
+
   //Messages and containers in Set for mapped messages to poplulate the data
 
   def getMsgAndCntnrs(msgsAndCntnrs: String): String = {
@@ -722,11 +730,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String): String = {
+  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String, fromFuncBaeTypes:String): String = {
     var fromFnc: String = ""
     if (fromFunc != null) fromFnc = fromFunc
     """ 
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     """+ fromFuncBaeTypes+ """
+	""" + fromFnc + """
+     	return this
+    }
+    """
+
+  }
+
+  def fromFuncOfMappedMsgs(msg: Message, fromFunc: String, fromFuncBaseTypesStr: String): String = {
+    var fromFnc: String = ""
+    if (fromFunc != null) fromFnc = fromFunc
+    """ 
+     private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     
+     other.fields.foreach(ofield => {
+     
+        if (ofield._2._1 >= 0) {
+          val key = ofield._1.toLowerCase
+          if(key != "transactionid"){
+          ofield._2._1 match {
+           """ + fromFuncBaseTypesStr +
+           """
+            case _ => {} // could be -1
+          }
+        }
+       }
+      })
+     
 	""" + fromFnc + """
      	return this
     }
@@ -745,7 +781,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   if (other != null && other != this) {
     // call copying fields from other to local variables
-    //fromFunc(other)
+    fromFunc(other)
   }
 
   def this(txnId: Long) = {
@@ -757,7 +793,10 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def this() = {
     this(0, null)
   }
-    
+  def Clone(): MessageContainerBase = {
+    """ + message.Name + """.build(this)
+  }
+  
   """
   }
   
