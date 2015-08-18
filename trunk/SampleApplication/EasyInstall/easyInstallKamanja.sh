@@ -383,7 +383,10 @@ cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/Telecom/data
 # Telecom
 
-
+#new one
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/SampleApplications/data
+#new one
 # *******************************
 # Copy documentation files
 # *******************************
@@ -400,7 +403,6 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 # cd $srcPath/SampleApplication/Medical/Configs
 # cp * $installPath/input/Medical/metadata/config
 
-<<<<<<< HEAD
 #new one
 #HelloWorld
 
@@ -436,6 +438,26 @@ cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/Medical/Functions
 cp * $installPath/input/SampleApplications/metadata/function
+#new one
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#new one
+
+#Finance
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/SampleApplications/metadata/message
