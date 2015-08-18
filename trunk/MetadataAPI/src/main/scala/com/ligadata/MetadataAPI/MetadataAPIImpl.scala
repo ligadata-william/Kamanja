@@ -943,7 +943,6 @@ object MetadataAPIImpl extends MetadataAPI {
     try {
       val key = (getObjectType(obj) + "." + obj.FullNameWithVer).toLowerCase
       val dispkey = (getObjectType(obj) + "." + obj.FullName + "." + MdMgr.Pad0s2Version(obj.Version)).toLowerCase
-      println("Key is "+key)
       obj.tranId = GetNewTranId
       //val value = JsonSerializer.SerializeObjectToJson(obj)
       logger.debug("Serialize the object: name of the object => " + dispkey)
@@ -966,7 +965,6 @@ object MetadataAPIImpl extends MetadataAPI {
         }
         case o: FunctionDef => {
           val funcKey = (obj.getClass().getName().split("\\.").last + "." + o.typeString).toLowerCase
-          println("functKey is "+funcKey)
           logger.debug("Adding the function to the cache: name of the object =>  " + funcKey)
           SaveObject(funcKey, value, functionStore)
           mdMgr.AddFunc(o)
@@ -5892,6 +5890,7 @@ object MetadataAPIImpl extends MetadataAPI {
   }
 
   def RefreshApiConfigForGivenNode(nodeId: String): Boolean = {
+
     val nd = mdMgr.Nodes.getOrElse(nodeId, null)
     if (nd == null) {
       logger.error("Node %s not found in metadata".format(nodeId))
@@ -5921,7 +5920,11 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("JAR_PATHS", jarPaths.mkString(","))
       logger.debug("JarPaths Based on node(%s) => %s".format(nodeId,jarPaths))
       val jarDir = compact(render(jarPaths(0))).replace("\"", "").trim
-      metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
+      
+      // If JAR_TARGET_DIR is unset.. set it ot the first value of the the JAR_PATH.. whatever it is... ????? I think we should error on start up.. this seems like wrong
+      // user behaviour not to set a variable vital to MODEL compilation.
+      if (metadataAPIConfig.getProperty("JAR_TARGET_DIR") == null || (metadataAPIConfig.getProperty("JAR_TARGET_DIR") != null && metadataAPIConfig.getProperty("JAR_TARGET_DIR").length == 0))    
+        metadataAPIConfig.setProperty("JAR_TARGET_DIR", jarDir)
       logger.debug("Jar_target_dir Based on node(%s) => %s".format(nodeId,jarDir))
     }
 
@@ -5983,6 +5986,7 @@ object MetadataAPIImpl extends MetadataAPI {
         val value = prop.getProperty(key);
         setPropertyFromConfigFile(key,value)
       }
+      
       pList.map(v => logger.warn(v+" remains unset"))
       propertiesAlreadyLoaded = true;
 
@@ -6217,7 +6221,7 @@ object MetadataAPIImpl extends MetadataAPI {
       metadataAPIConfig.setProperty("CONFIG_FILES_DIR", CONFIG_FILES_DIR)
       metadataAPIConfig.setProperty("OUTPUTMESSAGE_FILES_DIR", OUTPUTMESSAGE_FILES_DIR)
 
-      propertiesAlreadyLoaded = true;
+      propertiesAlreadyLoaded =  true;
 
     } catch {
       case e: MappingException => {
