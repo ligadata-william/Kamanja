@@ -6,7 +6,7 @@ scalaVersion := "2.10.4"
 
 libraryDependencies += "org.joda" % "joda-convert" % "1.6"
 
-libraryDependencies += "joda-time" % "joda-time" % "2.3"
+libraryDependencies += "joda-time" % "joda-time" % "2.8.2"
 
 libraryDependencies += "log4j" % "log4j" % "1.2.17"
 
