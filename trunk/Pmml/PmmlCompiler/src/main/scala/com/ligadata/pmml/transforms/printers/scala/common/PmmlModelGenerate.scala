@@ -109,6 +109,9 @@ class PmmlModelGenerator(ctx : PmmlContext) extends CodePrinterDispatch with com
 		  case _ => PmmlError.logError(ctx, s"there was no RuleSetModel avaialble... whoops!\n")
 		}
 		
+		/** Collect the namespaces for all known models */
+		ctx.CollectNamespaceSet
+		
 		/** Register the parameters */
 		ctx.RegisterMessages
 		/** 

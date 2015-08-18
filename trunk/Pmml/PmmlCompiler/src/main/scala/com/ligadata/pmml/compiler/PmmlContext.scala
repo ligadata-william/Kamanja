@@ -142,6 +142,21 @@ class PmmlContext(val mgr : MdMgr, val injectLogging : Boolean)  extends LogTrai
 	val fcnTypeInfoStack : Stack[FcnTypeInfo] = Stack[FcnTypeInfo]()
 	
 	/** 
+	 *  Known namespaces at compile time 
+	 */
+	var knownNamespacesAtCompileTime : scala.collection.mutable.Set[String] = scala.collection.mutable.Set[String]()
+	def KnownNamespacesAtCompileTime : scala.collection.immutable.Set[String] = knownNamespacesAtCompileTime.toSet
+	
+	/** If the knownNamespacesAtCompileTime is empty, fetch them from the MetadataMgr */
+	def CollectNamespaceSet : Unit = {
+		if (knownNamespacesAtCompileTime.size == 0) {
+			val allModels : scala.collection.immutable.Set[String] = mgr.ActiveModels.map(modelDef => modelDef.NameSpace)
+			knownNamespacesAtCompileTime = scala.collection.mutable.Set[String]()
+			allModels.foreach(nmspc => knownNamespacesAtCompileTime += nmspc)
+		}
+	}
+	
+	/** 
 	 *  By default, these two namespaces are always present:  System, Pmml
 	 */
 	val namespaceSearchPathDefault : Array[(String,String)] = Array[(String,String)]((MdMgr.sysNS,MdMgr.sysNS), ("Pmml","Pmml"))

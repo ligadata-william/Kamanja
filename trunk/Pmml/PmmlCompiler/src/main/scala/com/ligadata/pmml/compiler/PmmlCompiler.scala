@@ -506,16 +506,19 @@ class PmmlCompiler(val mgr : MdMgr, val clientName : String, val logger : Logger
 		  case Some(optVersion) => optVersion.toString
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
-		/** FIXME: The model namespace perhaps should be specified in the model xml ? */
-		val modelNamespace = MdMgr.sysNS
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
 		
-		val fqClassName : String = modelPkg + "." + className 
+		val modelNamespace = modelPkg
+		
+		val fqClassName : String = modelNamespace + "." + className 
 		/** FIXME: This is hard coded now, but should be determined based upon the model type specified in the xml */
 		val modelType : String = "RuleSet" 
 		val inputVars : List[(String,String,String,String,Boolean,String)] = ctx.modelInputs.values.toList
 		logger.debug(s"\n\ndump of the inputVars for the model metadata construction:")
 		inputVars.foreach(aVar => {
+			/** FIXME: These names are not quite right ... they should match this output  
+			 *  ("outpatientInfoThisLastYear", "com.medco.messages.rel10.V1000000.OutpatientClaim", "com.medco.messages.rel10", "outpatientclaim", false, null)
+			 *  (input name, input type, type namespace, type name, isglobal, collection type)
+			 */
 			val (modelNmSpc, varnm, typeNmspc, typeNm, isGlobal, collectionType) : (String,String,String,String,Boolean,String) = aVar
 			logger.debug(s"(${'"'}$modelNmSpc${'"'}, ${'"'}$varnm${'"'}, ${'"'}$typeNmspc${'"'}, ${'"'}$typeNm${'"'}, $isGlobal, $collectionType)")
 		})
