@@ -52,10 +52,14 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 
 
 # HelloWorld
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/HelloWorld/template/script/StartMetadataAPI_Template.sh > $install_dir/input/HelloWorld/bin/ApplicationMetadata.sh
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/HelloWorld/template/script/PushSampleDataToKafka_Template.sh > $install_dir/input/HelloWorld/bin/PushSampleDataToKafka.sh
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_HelloWorld.sh > $install_dir/SampleApplications/HelloWorld/bin/HelloWorld_Metadata.sh
+#sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/PushSampleDataToKafka_Template_HelloWorld.sh > $install_dir/SampleApplications/HelloWorld/bin/Push_HelloWorld_DataToKafka.sh
 # HelloWorld
 
+#new one
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/StartMetadataAPI_Template_HelloWorld.sh > $install_dir/input/SampleApplications/bin/ApplicationMetadata_HelloWorld.sh
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/script/PushSampleDataToKafka_Template_HelloWorld.sh > $install_dir/input/SampleApplications/bin/PushSampleDataToKafka_HelloWorld.sh
+#new one
 
 #Telecom
 sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/Telecom/template/script/InitKvStores_Template.sh > $install_dir/input/Telecom/bin/InitKvStores.sh
@@ -84,8 +88,7 @@ sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_h
 #Finance
 
 # HelloWorld
-sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/HelloWorld/template/config/MetadataAPIConfig_Template.properties > $install_dir/input/HelloWorld/metadata/config/MetadataAPIConfig.properties
-
+sed "s/{InstallDirectory}/$install_dir_repl/g;s/{ScalaInstallDirectory}/$scala_home_repl/g;s/{JavaInstallDirectory}/$java_home_repl/g" $install_dir/input/SampleApplications/template/config/MetadataAPIConfig_Template_HelloWorld.properties > $install_dir/input/SampleApplications/metadata/config/MetadataAPIConfig_HelloWorld.properties
 # HelloWorld
 
 # Expecting 1st Parameter as Kafka Install directory
