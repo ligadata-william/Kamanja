@@ -32,7 +32,7 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
               fullObjectPath is the object that contains the methods for which to generate the json metadata
               versionNumber is the version number to use for the udfs in the object's generated json
               typeDefsPath is the file path that will receive any type definitions that may be needed to catalog the functions
-                 being collected
+                being collected
               fcnDefsPath is the file path that will receive the function definitions
               exclude  specifies a list of functions that are not to have any json formed.  This is useful for eliminating the generation of type 
                 information that is not exposed to the user in the pmml type system.  Joda types are an example.
@@ -44,8 +44,7 @@ extractUdfLibMetadata.scala --sbtProject <projectName>
         
         c. This script executes the fat jar version of the MethodExtractor (`pwd`/trunk/Pmml/MethodExtractor/target/scala-2.10/MethodExtractor-1.0)
 
-        d. Only one full object path may be specified in this version.
-      
+        d. Only one full object path may be specified in this version. 
 """
     }
 

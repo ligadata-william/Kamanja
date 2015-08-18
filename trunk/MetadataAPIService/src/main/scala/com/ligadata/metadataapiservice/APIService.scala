@@ -10,7 +10,7 @@ import org.json4s.jackson.JsonMethods._
 import com.ligadata.kamanja.metadata.ObjType._
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadataload.MetadataLoad
-import com.ligadata.MetadataAPI._
+import com.ligadata.MetadataAPI.MetadataAPIImpl
 import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._

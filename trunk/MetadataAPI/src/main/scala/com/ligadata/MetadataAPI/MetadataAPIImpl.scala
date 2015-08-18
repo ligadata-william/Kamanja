@@ -3307,13 +3307,13 @@ object MetadataAPIImpl extends MetadataAPI {
   }
   
   def AddModelFromSource(sourceCode: String, sourceLang: String, modelName: String, userid: Option[String]): String = {
-
-
     try {
       var compProxy = new CompilerProxy
       compProxy.setSessionUserId(userid)
       val modDef : ModelDef =  compProxy.compileModelFromSource(sourceCode, modelName, sourceLang)
+      logger.info("Begin uploading dependent Jars, please wait.")
       UploadJarsToDB(modDef)
+      logger.info("Finished uploading dependent Jars.")
       val apiResult = AddModel(modDef)  
 
       // Add all the objects and NOTIFY the world

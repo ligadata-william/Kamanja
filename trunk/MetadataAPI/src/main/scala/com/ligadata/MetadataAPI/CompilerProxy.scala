@@ -425,7 +425,6 @@ class CompilerProxy{
     
     if (moduleNamespace == null || moduleNamespace.length == 0) throw new ModelCompilationFailedException("Missing Namespace")
     
-
     if (isLocalOnly) {
       currentWorkFolder = currentWorkFolder + "_local"
     }
@@ -715,7 +714,7 @@ class CompilerProxy{
       loadJarFile(jarNameType, classLoader)
     })
 
-    var classNames = getClassesNamesInJar(jarName0)
+    var classNames = getClassNamesInJar(jarName0)
 
     var tempCurClass: Class[_] = null
     classNames.foreach (clsName => {
@@ -777,9 +776,9 @@ class CompilerProxy{
 
 
   /**
-   * getClassesNamesInJar - A utility method to grab all class files from the jarfile
+   * getClassNamesInJar - A utility method to grab all class files from the jarfile
    */
-  private  def getClassesNamesInJar(jarName: String): Array[String] = {
+  private  def getClassNamesInJar(jarName: String): Array[String] = {
     try {
       val jarFile = new JarInputStream(new FileInputStream(jarName))
       val classes = new ArrayBuffer[String]

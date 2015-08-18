@@ -1022,7 +1022,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		ctx.pmmlTerms("ClassName") = Some(classname)
 		logger.debug(s"Class Name to be created: $classname")
 
-
 		/** 
 		 *  2. 
 		 *  Scrub the version... be permissive with the version string... squeezing out undesirable characters 
