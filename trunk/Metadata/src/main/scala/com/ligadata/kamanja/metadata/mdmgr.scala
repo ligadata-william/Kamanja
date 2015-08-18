@@ -684,6 +684,17 @@ class MdMgr {
 
   /** Get All Versions of Models */
   def Models(onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ModelDef]] = { GetImmutableSet(Some(modelDefs.flatMap(x => x._2)), onlyActive, latestVersion) }
+  
+  /** Answer ALL Active AND Current ModelDefs  */
+  def ActiveModels: scala.collection.immutable.Set[ModelDef] = {
+    val optModels: Option[scala.collection.immutable.Set[ModelDef]] = Models(true, true)
+    val activeModels : scala.collection.immutable.Set[ModelDef] = optModels match {
+      case Some(optModels) => optModels
+      case _ => null
+    }
+    activeModels
+  }
+
 
   /** Get All Versions of Models for Key */
   def Models(key: String, onlyActive: Boolean, latestVersion: Boolean): Option[scala.collection.immutable.Set[ModelDef]] = { GetImmutableSet(modelDefs.get(key.trim.toLowerCase), onlyActive, latestVersion) }
