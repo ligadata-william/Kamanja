@@ -21,7 +21,7 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   if (callerCtxt.isInstanceOf[KamanjaInputAdapterCallerContext] == false) {
     throw new Exception("Handling only KamanjaInputAdapterCallerContext in ValidateExecCtxtImpl")
   }
-  
+
   NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
 
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
@@ -29,13 +29,16 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
   transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
 
   val xform = new TransformMessageData
-  val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
+  val engine = new LearningEngine(input, curPartitionKey)
+  var cntr: Long = 0
   def execute(data: Array[Byte], format: String, uniqueKey: PartitionUniqueRecordKey, uniqueVal: PartitionUniqueRecordValue, readTmNanoSecs: Long, readTmMilliSecs: Long, ignoreOutput: Boolean, processingXformMsg: Int, totalXformMsg: Int, associatedMsg: String, delimiterString: String): Unit = {
     try {
       val uk = uniqueKey.Serialize
       val uv = uniqueVal.Serialize
       val transId = transService.getNextTransId
       LOG.debug("Processing uniqueKey:%s, uniqueVal:%s, Datasize:%d".format(uk, uv, data.size))
+
+      var outputResults = ArrayBuffer[(String, String)]() // Adapter/Queue name & output message 
 
       try {
         val transformStartTime = System.nanoTime
@@ -45,28 +48,48 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         val totalXformedMsgs = xformedmsgs.size
         xformedmsgs.foreach(xformed => {
           xformedMsgCntr += 1
-          kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, xformedMsgCntr, totalXformedMsgs)
-          engine.execute(transId, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
+          var output = engine.execute(transId, xformed._1, xformed._2, xformed._3, kamanjaCallerCtxt.envCtxt, readTmNanoSecs, readTmMilliSecs, uk, uv, xformedMsgCntr, totalXformedMsgs, (ignoreOutput && xformedMsgCntr <= processingXformMsg))
+          if (output != null) {
+            outputResults ++= output
+          }
         })
       } catch {
         case e: Exception => {
           LOG.error("Failed to execute message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-          
+
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
         val commitStartTime = System.nanoTime
         val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
-        kamanjaCallerCtxt.envCtxt.commitData(transId)
+        // 
+        // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
+        kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList)
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
+        // kamanjaCallerCtxt.envCtxt.saveStatus(transId, "SetData", false)
+
+        val sendOutStartTime = System.nanoTime
+        if (outputResults != null && kamanjaCallerCtxt.outputAdapters != null) {
+          // Not yet checking for Adapter Name matches
+          outputResults.foreach(adapteroutput => {
+            kamanjaCallerCtxt.outputAdapters.foreach(o => {
+              o.send(adapteroutput._2, cntr.toString)
+              cntr += 1
+            })
+          })
+        }
+        kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
+        LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
+
         if (containerData != null && containerData.size > 0) {
           val datachangedata = ("txnid" -> transId.toString) ~
             ("changeddatakeys" -> containerData.map(kv =>
               ("C" -> kv._1) ~
                 ("K" -> kv._2)))
           val sendJson = compact(render(datachangedata))
+          // Do we need to log this?
           KamanjaLeader.SetNewDataToZkc(KamanjaConfiguration.zkNodeBasePath + "/datachange", sendJson.getBytes("UTF8"))
         }
-        LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
       }
     } catch {
       case e: Exception => {
@@ -123,15 +146,14 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
 
   val kamanjaCallerCtxt = callerCtxt.asInstanceOf[KamanjaInputAdapterCallerContext]
 
-  
   NodeLevelTransService.init(KamanjaConfiguration.zkConnectString, KamanjaConfiguration.zkSessionTimeoutMs, KamanjaConfiguration.zkConnectionTimeoutMs, KamanjaConfiguration.zkNodeBasePath, KamanjaConfiguration.txnIdsRangeForNode, KamanjaConfiguration.dataDataStoreInfo, KamanjaConfiguration.jarPaths)
 
   val xform = new TransformMessageData
-  val engine = new LearningEngine(input, curPartitionKey, kamanjaCallerCtxt.outputAdapters)
+  val engine = new LearningEngine(input, curPartitionKey)
   val transService = new SimpleTransService
 
   transService.init(KamanjaConfiguration.txnIdsRangeForPartition)
-  
+
   private def getAllModelResults(data: Any): Array[Map[String, Any]] = {
     val results = new ArrayBuffer[Map[String, Any]]()
     try {
@@ -211,7 +233,7 @@ class ValidateExecCtxtImpl(val input: InputAdapter, val curPartitionKey: Partiti
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
-        kamanjaCallerCtxt.envCtxt.commitData(transId)
+        kamanjaCallerCtxt.envCtxt.commitData(transId, null, null, null)
       }
     } catch {
       case e: Exception => {

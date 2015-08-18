@@ -90,11 +90,6 @@ object KamanjaConfiguration {
   var txnIdsRangeForNode: Int = 500000 // Each time get txnIdsRange of transaction ids for each Node
   var txnIdsRangeForPartition: Int = 25000 // Each time get txnIdsRange of transaction ids for each partition
 
-  // Debugging info configs -- Begin
-  var waitProcessingSteps = collection.immutable.Set[Int]()
-  var waitProcessingTime = 0
-  // Debugging info configs -- End
-
   var shutdown = false
   var participentsChangedCntr: Long = 0
 
@@ -112,11 +107,6 @@ object KamanjaConfiguration {
     zkNodeBasePath = null
     zkSessionTimeoutMs = 0
     zkConnectionTimeoutMs = 0
-
-    // Debugging info configs -- Begin
-    waitProcessingSteps = null
-    waitProcessingTime = 0
-    // Debugging info configs -- End
 
     shutdown = false
     participentsChangedCntr = 0
@@ -261,17 +251,6 @@ class KamanjaManager {
       if (KamanjaConfiguration.nodeId <= 0) {
         LOG.error("Not found valid nodeId. It should be greater than 0")
         return false
-      }
-
-      try {
-        KamanjaConfiguration.waitProcessingTime = loadConfigs.getProperty("waitProcessingTime".toLowerCase, "0").replace("\"", "").trim.toInt
-        if (KamanjaConfiguration.waitProcessingTime > 0) {
-          val setps = loadConfigs.getProperty("waitProcessingSteps".toLowerCase, "").replace("\"", "").split(",").map(_.trim).filter(_.length() > 0)
-          if (setps.size > 0)
-            KamanjaConfiguration.waitProcessingSteps = setps.map(_.toInt).toSet
-        }
-      } catch {
-        case e: Exception => {}
       }
 
       LOG.debug("Initializing metadata bootstrap")
@@ -446,7 +425,7 @@ class KamanjaManager {
 
     val nodeNameToSetZk = KamanjaConfiguration.nodeId.toString
 
-    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
+    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C\n")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {
