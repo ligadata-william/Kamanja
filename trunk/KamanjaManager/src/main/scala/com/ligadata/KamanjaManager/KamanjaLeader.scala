@@ -2,7 +2,7 @@
 package com.ligadata.KamanjaManager
 
 import com.ligadata.KamanjaBase._
-import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo, ValidateAdapterFoundInfo }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue, StartProcPartInfo }
 import com.ligadata.kamanja.metadata.{ BaseElem, MappedMsgTypeDef, BaseAttributeDef, StructTypeDef, EntityType, AttributeDef, ArrayBufTypeDef, MessageDef, ContainerDef, ModelDef }
 import com.ligadata.kamanja.metadata._
 import com.ligadata.kamanja.metadata.MdMgr._
@@ -293,24 +293,19 @@ object KamanjaLeader {
         val key = begVals(i)._1.Serialize.toLowerCase
         val foundVal = map.getOrElse(key, null)
 
-        val valAdapInfo = new ValidateAdapterFoundInfo
-        valAdapInfo._transformProcessingMsgIdx = 0
-        valAdapInfo._transformTotalMsgIdx = 0
-
         val info = new StartProcPartInfo
 
         if (foundVal != null) {
           val desVal = via.DeserializeValue(foundVal)
-          valAdapInfo._val = desVal
+          info._validateInfoVal = desVal
           info._key = begVals(i)._1
           info._val = desVal
         } else {
-          valAdapInfo._val = begVals(i)._2
+          info._validateInfoVal = begVals(i)._2
           info._key = begVals(i)._1
           info._val = begVals(i)._2
         }
 
-        info._validateInfo = valAdapInfo
         finalVals += info
       }
       LOG.debug("Trying to read data from ValidatedAdapter: " + via.UniqueName)
@@ -504,19 +499,15 @@ object KamanjaLeader {
 
           for (i <- 0 until keys.size) {
             val key = keys(i)
-            val valAdapInfo = new ValidateAdapterFoundInfo
-            valAdapInfo._val = vals(i)
-            valAdapInfo._transformProcessingMsgIdx = 0
-            valAdapInfo._transformTotalMsgIdx = 0
 
             val info = new StartProcPartInfo
             info._key = key
             info._val = vals(i)
-            info._validateInfo = valAdapInfo
+            info._validateInfoVal = vals(i)
             quads += info
           }
 
-          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._key.Serialize, q._val.Serialize, (q._validateInfo._val.Serialize, q._validateInfo._transformProcessingMsgIdx, q._validateInfo._transformTotalMsgIdx)) }).mkString(","))
+          LOG.info(ia.UniqueName + " ==> Processing Keys & values: " + quads.map(q => { (q._key.Serialize, q._val.Serialize, q._validateInfoVal.Serialize) }).mkString(","))
           ia.StartProcessing(quads.toArray, true)
         }
       } catch {

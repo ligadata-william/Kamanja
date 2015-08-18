@@ -94,7 +94,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
                     try {
                       // Creating new string to convert from Byte Array to string
                       uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-                      execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
+                      execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, fc.delimiterString)
                     } catch {
                       case e: Exception => {
                         LOG.error("Failed with Message:" + e.getMessage)}
@@ -148,7 +148,7 @@ class FileConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: InputA
           try {
             // Creating new string to convert from Byte Array to string
             uniqueVal.Offset = 0 //BUGBUG:: yet to fill this information
-            execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, 0, 0, fc.associatedMsg, fc.delimiterString)
+            execThread.execute(sendmsg.getBytes, format, uniqueKey, uniqueVal, readTmNs, readTmMs, false, fc.associatedMsg, fc.delimiterString)
           } catch {
             case e: Exception => {
               LOG.error("Failed with Message:" + e.getMessage)}
