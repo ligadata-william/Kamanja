@@ -407,7 +407,7 @@ class CompilerProxy{
    *
    */
   private def jarCode ( moduleNamespace: String
-                        , modelName: String
+                        , moduleName: String
                         , moduleVersion: String
                         , sourceCode : String
                         , classpath : String
@@ -434,7 +434,7 @@ class CompilerProxy{
     val killDir = s"rm -Rf $compiler_work_dir/"+currentWorkFolder
     val killDirRc = Process(killDir).! /** remove any work space that may be present from prior failed run  */
     if (killDirRc != 0) {
-      logger.error(s"Unable to rm $compiler_work_dir/$modelName ... rc = $killDirRc")
+      logger.error(s"Unable to rm $compiler_work_dir/$moduleName ... rc = $killDirRc")
       return (killDirRc, "")
     }
 
@@ -454,12 +454,12 @@ class CompilerProxy{
     }
 
     /** compile the generated code if its a local copy, make sure we save off the  postfixed _local in the working directory*/
-    var sourceName: String = getClassName(sourceCode, sourceLanguage, modelName )
+    var sourceName: String = getClassName(sourceCode, sourceLanguage, moduleName )
     var cHome: String = scalahome
     if (sourceLanguage.equalsIgnoreCase("java"))
       cHome = javahome
     else {
-      if (isLocalOnly) sourceName = modelName+"_local"
+      if (isLocalOnly) sourceName = moduleName+"_local"
     }
 
     // Compile 
@@ -474,11 +474,7 @@ class CompilerProxy{
     // if helperJavaSource is not null, means we are generating Factory java files.
     if (helperJavaSource != null) {
       val tempClassPath = classpath+":"+s"$compiler_work_dir/$currentWorkFolder"
-<<<<<<< HEAD
-      val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, modelName+"Factory", tempClassPath, helperJavaSource, clientName, modelName, "java")
-=======
       val rc = compile(s"$compiler_work_dir/$currentWorkFolder", javahome, moduleName+"Factory", tempClassPath, helperJavaSource, clientName, moduleName, packageRoot,"java")
->>>>>>> Enable any package name to be chosen for messages and models
       // Bail if compilation filed.
       if (rc != 0) {
         return (rc, "")
@@ -490,9 +486,9 @@ class CompilerProxy{
     if (!isLocalOnly) {
       var d = new java.util.Date()
       var epochTime = d.getTime
-      moduleNameJar = moduleNamespace + "_" + modelName + "_" + moduleVersion + "_" + epochTime + ".jar"
+      moduleNameJar = moduleNamespace + "_" + moduleName + "_" + moduleVersion + "_" + epochTime + ".jar"
     } else {
-      moduleNameJar = moduleNamespace + "_" + modelName + ".jar"
+      moduleNameJar = moduleNamespace + "_" + moduleName + ".jar"
     }
 
     val jarPath = compiler_work_dir + "/" + moduleNameJar
