@@ -1424,6 +1424,7 @@ object TestMetadataAPI {
 
   def AddModelSourceJava {
     try {
+      
       var dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("MODEL_FILES_DIR")
       if (dirName == null) {
         dirName = MetadataAPIImpl.GetMetadataAPIConfig.getProperty("GIT_ROOT") + "/Kamanja/trunk/MetadataAPI/src/test/SampleTestFiles/Models"
@@ -2195,7 +2196,7 @@ object TestMetadataAPI {
   }
 
   def TestKryoSerialize(configFile: String) {
-    MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+    MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
     val msgDefs = MdMgr.GetMdMgr.Types(true, true)
     msgDefs match {
       case None => {
@@ -2697,13 +2698,6 @@ object TestMetadataAPI {
 
   def main(args: Array[String]) {
     try {
-      //logger.setLevel(Level.TRACE);  //check again
-      //  MetadataAPIImpl.SetLoggerLevel(Level.TRACE)
-      //  MdMgr.GetMdMgr.SetLoggerLevel(Level.TRACE)
-      //  serializer.SetLoggerLevel(Level.TRACE)
-      //  JsonSerializer.SetLoggerLevel(Level.TRACE)
-      //  GetDependentMessages.SetLoggerLevel(Level.TRACE)
-
       var myConfigFile: String = null
       if (args.length == 0) {
         logger.error("Config File must be supplied, pass a config file as a command line argument:  --config /your-install-path/MetadataAPIConfig.properties")
@@ -2717,12 +2711,13 @@ object TestMetadataAPI {
         }
         myConfigFile = cfgfile.asInstanceOf[String]
       }
-      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(myConfigFile, true)
+
       StartTest
     } catch {
-      case e: Exception => {
+      case e: Throwable => {
         val stackTrace = StackTrace.ThrowableTraceString(e)
-        logger.debug("StackTrace:"+stackTrace)
+        logger.error("StackTrace:"+stackTrace)
       }
     } finally {
       MetadataAPIImpl.shutdown

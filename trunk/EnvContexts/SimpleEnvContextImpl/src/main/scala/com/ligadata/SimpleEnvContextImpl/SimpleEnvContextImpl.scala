@@ -35,6 +35,8 @@ case class AdapterUniqueValueDes(Val: String, xidx: Int, xtot: Int) // Using mos
  */
 object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
+  override def setMdMgr(inMgr: MdMgr) : Unit ={_mgr = inMgr}
+    
   override def NewMessageOrContainer(fqclassname: String): MessageContainerBase = {
     val msgOrContainer: MessageContainerBase = Class.forName(fqclassname).newInstance().asInstanceOf[MessageContainerBase]
     msgOrContainer
@@ -1013,8 +1015,12 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     all_keys.filter(k => k.T.compareTo(objName) == 0).toArray
   }
 
+  override def getPropertyValue(clusterId: String, key: String): String = {
+     _mgr.GetUserProperty(clusterId,key)
+  }
+  
   // Adding new messages or Containers
-  override def AddNewMessageOrContainers(mgr: MdMgr, dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit = {
+  override def AddNewMessageOrContainers(dataDataStoreInfo: String, containerNames: Array[String], loadAllData: Boolean, statusDataStoreInfo: String, jarPaths: collection.immutable.Set[String]): Unit = {
     logger.info("Messages/Containers => " + (if (containerNames != null) containerNames.mkString(",") else ""))
     logger.debug("Messages/Containers => loadAllData:%s, jarPaths:%s".format(loadAllData.toString, jarPaths.mkString(",")))
     if (_allDataDataStore == null) {
@@ -1039,7 +1045,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val names: Array[String] = c.split('.')
       val namespace: String = names.head
       val name: String = names.last
-      var containerType = mgr.ActiveType(namespace, name)
+      var containerType = _mgr.ActiveType(namespace, name)
       if (containerType != null) {
 
         val objFullName: String = containerType.FullName.toLowerCase
@@ -1053,7 +1059,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
           newMsgOrContainer.containerType = containerType
           newMsgOrContainer.objFullName = objFullName
-          newMsgOrContainer.isContainer = (mgr.ActiveContainer(namespace, name) != null)
+          newMsgOrContainer.isContainer = (_mgr.ActiveContainer(namespace, name) != null)
 
           /** create a map to cache the entries to be resurrected from the mapdb */
           _messagesOrContainers(objFullName) = newMsgOrContainer
