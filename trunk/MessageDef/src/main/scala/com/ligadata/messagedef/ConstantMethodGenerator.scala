@@ -103,7 +103,7 @@ class ConstantMethodGenerator {
   def caseSensitveMapStr(msg: Message): String = {
     var caseSensMapStr: String = ""
 
-    if (msg.isCase) {
+    if (msg.isCaseSensitive) {
       caseSensMapStr = """
         val map = json.cur_json.get.asInstanceOf[Map[String, Any]]
     		if (map == null) {

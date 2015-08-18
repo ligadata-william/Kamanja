@@ -423,7 +423,7 @@ class MessageFldsExtractor {
         scalaclass.append(methodGen.getAddMappedMsgsInConstructor(mappedMsgFieldsVar.toString) + methodGen.getAddMappedArraysInConstructor(mappedMsgFieldsArry.toString, mappedMsgFieldsArryBuffer.toString) + cnstObjVar.getMappedMsgPrevVerMatchKeys(mappedPrevVerMatchkeys.toString) + methodGen.mappedToStringForKeys)
         scalaclass.append(cnstObjVar.getMappedMsgPrevVerTypeNotMatchKeys(mappedPrevTypNotMatchkeys.toString) + methodGen.mappedPrevObjTypNotMatchDeserializedBuf(prevObjTypNotMatchDeserializedBuf.toString))
 
-        if (message.isCase) {
+        if (message.isCaseSensitive) {
           partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => "toStringForKey(\"" + p + "\")").mkString(", ") + ")") else ""
           prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => "toStringForKey(\"" + p + "\")").mkString(", ") + ")") else ""
         } else {
@@ -433,7 +433,7 @@ class MessageFldsExtractor {
 
       } else if (message.Fixed.toLowerCase().equals("true")) {
 
-        if (message.isCase) {
+        if (message.isCaseSensitive) {
           partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(" + message.PartitionKey.map(p => p + ".toString").mkString(", ") + ")") else ""
           prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(" + message.PrimaryKeys.map(p => p + ".toString").mkString(", ") + ")") else ""
         } else {

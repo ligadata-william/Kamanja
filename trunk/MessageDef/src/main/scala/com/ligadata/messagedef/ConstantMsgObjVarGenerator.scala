@@ -21,7 +21,7 @@ class ConstantMsgObjVarGenerator {
     partitionString = partitionString + ")"
 
     var partitionKeys: String = ""
-    if (message.isCase)
+    if (message.isCaseSensitive)
       partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p).mkString("\", \"") + "\")") else ""
     else
       partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
@@ -34,7 +34,7 @@ class ConstantMsgObjVarGenerator {
 
   def primarykeyStrObj(message: Message, primaryPos: Array[Int]): String = {
     var prmryKeys: String = ""
-    if (message.isCase)
+    if (message.isCaseSensitive)
       prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p).mkString("\", \"") + "\")") else ""
     else
       prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
@@ -60,7 +60,7 @@ class ConstantMsgObjVarGenerator {
     var getPrimaryKeyData = new StringBuilder(8 * 1024)
     var caseSensMapStr: String = ""
 
-    if (msg.isCase) {
+    if (msg.isCaseSensitive) {
       caseSensMapStr = """
         val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
     		if (map == null) {
@@ -119,7 +119,7 @@ class ConstantMsgObjVarGenerator {
 
     var caseSensMapStr: String = ""
 
-    if (msg.isCase) {
+    if (msg.isCaseSensitive) {
       caseSensMapStr = """
         val map = jsonData.cur_json.get.asInstanceOf[Map[String, Any]]
     		if (map == null) {
@@ -687,7 +687,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     var partitionString = partitionStr.substring(0, partitionStr.length - 1)
     partitionString = partitionString + ")"
 
-    if (!message.isCase)
+    if (!message.isCaseSensitive)
       partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     else
       partitionKeys = if (message.PartitionKey != null && message.PartitionKey.size > 0) ("Array(\"" + message.PartitionKey.map(p => p).mkString("\", \"") + "\")") else ""
@@ -701,7 +701,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
 
   def primarykeyStrMapped(message: Message, primaryPos: Array[Int]): String = {
     var prmryKeys: String = ""
-    if (!message.isCase)
+    if (!message.isCaseSensitive)
 
       prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     else
