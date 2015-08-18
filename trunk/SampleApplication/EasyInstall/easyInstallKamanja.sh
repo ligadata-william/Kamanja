@@ -364,10 +364,6 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 #echo "generating keystore..."
 #keytool -genkey -keyalg RSA -alias selfsigned -keystore $installPath/config/keystore.jks -storepass password -validity 360 -keysize 2048
 
-#copy kamanja to bin directory
-cp $srcPath/Utils/Script/kamanja $bin
-
-
 # *******************************
 # COPD messages data prep
 # *******************************
@@ -383,10 +379,9 @@ cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/Telecom/data
 # Telecom
 
-#new one
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
-#new one
+
 # *******************************
 # Copy documentation files
 # *******************************
@@ -403,9 +398,7 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 # cd $srcPath/SampleApplication/Medical/Configs
 # cp * $installPath/input/Medical/metadata/config
 
-#new one
 #HelloWorld
-
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
 
@@ -421,12 +414,12 @@ cp * $installPath/input/SampleApplications/metadata/model
 cd $srcPath/SampleApplication/HelloWorld/template
 cp -rf * $installPath/input/SampleApplications/template
 
+
 cd $srcPath/SampleApplication/HelloWorld/config
 cp -rf * $installPath/input/SampleApplications/metadata/config
 #HelloWorld
 
 #Medical
-
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
 
@@ -434,36 +427,16 @@ cd $srcPath/SampleApplication/Medical/SampleData
 cp *.csv $installPath/input/SampleApplications/data
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
-cp * $installPath/input/SampleApplications/metadata/container
+cp * $installPath/input/Medical/metadata/container
 
 cd $srcPath/SampleApplication/Medical/Functions
 cp * $installPath/input/SampleApplications/metadata/function
-#new one
-cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/SampleApplications/metadata/container
-
-cd $srcPath/SampleApplication/HelloWorld/message
-cp * $installPath/input/SampleApplications/metadata/message
-
-cd $srcPath/SampleApplication/HelloWorld/model
-cp * $installPath/input/SampleApplications/metadata/model
-
-cd $srcPath/SampleApplication/HelloWorld/template
-cp -rf * $installPath/input/SampleApplications/template
-
-cd $srcPath/SampleApplication/HelloWorld/config
-cp -rf * $installPath/input/SampleApplications/metadata/config
-#new one
-
-#Finance
-cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
-cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/SampleApplications/metadata/message
 
-cd $srcPath/SampleApplication/Medical/Models
-cp *.* $installPath/input/SampleApplications/metadata/model
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
 
 cd $srcPath/SampleApplication/Medical/Types
 cp * $installPath/input/SampleApplications/metadata/type
