@@ -27,7 +27,7 @@ class MessageFldsExtractor {
   lazy val log = Logger.getLogger(logger)
 
   //generates the variables string and assign string
-  def classStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (String, String, String, String, Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], String, String, Array[Int], Array[Int], String, String, String, String, String, String, String, String, String, String) = {
+  def classStr(message: Message, mdMgr: MdMgr, recompile: Boolean): (Array[String], Int, List[(String, String)], List[(String, String, String, String, Boolean, String)], Array[Int], Array[Int]) = {
     var scalaclass = new StringBuilder(8 * 1024)
     var assignCsvdata = new StringBuilder(8 * 1024)
     var assignJsondata = new StringBuilder(8 * 1024)
@@ -59,7 +59,8 @@ class MessageFldsExtractor {
     var prevObjTypNotMatchDeserializedBuf = new StringBuilder(8 * 1024)
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethods = new StringBuilder(8 * 1024)
-    var fromFuncforFixed = new StringBuilder(8 * 1024)
+    var fromFuncBuf = new StringBuilder(8 * 1024)
+    var fromFuncBaseTypesBuf = new StringBuilder(8 * 1024)
 
     var list = List[(String, String)]()
     var argsList = List[(String, String, String, String, Boolean, String)]()
@@ -182,7 +183,7 @@ class MessageFldsExtractor {
               mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(arr_4(14))
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arr_4(15))
               withMethods = withMethods.append(arr_4(16))
-              fromFuncforFixed = fromFuncforFixed.append(arr_4(17))
+              fromFuncBuf = fromFuncBuf.append(arr_4(17))
 
               //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
             } else if (typ.get.tType.toString().equals("tArrayBuf")) {
@@ -210,7 +211,7 @@ class MessageFldsExtractor {
               mappedMsgFieldsArryBuffer = mappedMsgFieldsArryBuffer.append(arrayBuf_4(16))
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arrayBuf_4(17))
               withMethods = withMethods.append(arrayBuf_4(18))
-              fromFuncforFixed = fromFuncforFixed.append(arrayBuf_4(19))
+              fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
 
             } else if (typ.get.tType.toString().equals("tHashMap")) {
 
@@ -253,7 +254,7 @@ class MessageFldsExtractor {
 
               fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(baseTyp_6(14))
               withMethods = withMethods.append(baseTyp_6(15))
-              fromFuncforFixed = fromFuncforFixed.append(baseTyp_6(16))
+              fromFuncBaseTypesBuf = fromFuncBaseTypesBuf.append(baseTyp_6(16))
 
               if (paritionkeys != null && paritionkeys.size > 0) {
                 if (paritionkeys.contains(f.Name)) {
@@ -305,7 +306,7 @@ class MessageFldsExtractor {
                 mappedMsgFieldsArryBuffer = mappedMsgFieldsArryBuffer.append(arrayBuf_4(16))
                 fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arrayBuf_4(17))
                 withMethods = withMethods.append(arrayBuf_4(18))
-                fromFuncforFixed = fromFuncforFixed.append(arrayBuf_4(19))
+                fromFuncBuf = fromFuncBuf.append(arrayBuf_4(19))
 
               } else if (typ.get.tType.toString().equals("tArray")) {
 
@@ -331,7 +332,7 @@ class MessageFldsExtractor {
                 mappedPrevTypNotMatchkeys = mappedPrevTypNotMatchkeys.append(arr_4(14))
                 fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(arr_4(15))
                 withMethods = withMethods.append(arr_4(16))
-                fromFuncforFixed = fromFuncforFixed.append(arr_4(17))
+                fromFuncBuf = fromFuncBuf.append(arr_4(17))
 
                 //       =  assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString,  list, argsList, addMsg.toString)  = 
               } else {
@@ -340,7 +341,7 @@ class MessageFldsExtractor {
 
                   val (cntnr_1, cntnr_2, cntnr_3, cntnr_4) = cntTypHandler.handleContainer(message, mdMgr, ftypeVersion, f, recompile, childs)
                   list = cntnr_1
-                  argsList = argsList ::: cntnr_2                  
+                  argsList = argsList ::: cntnr_2
                   jarset = jarset ++ cntnr_3
                   scalaclass = scalaclass.append(cntnr_4(0))
                   assignCsvdata = assignCsvdata.append(cntnr_4(1))
@@ -357,7 +358,7 @@ class MessageFldsExtractor {
                   fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(cntnr_4(12))
 
                   withMethods = withMethods.append(cntnr_4(13))
-                  fromFuncforFixed = fromFuncforFixed.append(cntnr_4(14))
+                  fromFuncBuf = fromFuncBuf.append(cntnr_4(14))
                   //   mappedPrevVerMatchkeys
 
                 }
@@ -402,7 +403,7 @@ class MessageFldsExtractor {
             jarset = jarset ++ ccpt_8
             fixedMsgGetKeyStrBuf = fixedMsgGetKeyStrBuf.append(ccpt_9)
             withMethods = withMethods.append(ccpt_10)
-            fromFuncforFixed = fromFuncforFixed.append(ccpt_11)
+            fromFuncBuf = fromFuncBuf.append(ccpt_11)
           }
 
         }
@@ -461,7 +462,27 @@ class MessageFldsExtractor {
       }
     }
 
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, count, list, argsList, addMessage, getmessage, partitionPos, primaryPos, serializedBuf.toString, deserializedBuf.toString, prevDeserializedBuf.toString, prevVerMsgObjstr, convertOldObjtoNewObjBuf.toString, collections.toString, mappedSerBaseTypesBuf.toString, mappedDeserBaseTypesBuf.toString, withMethods.toString, fromFuncforFixed.toString)
+    var returnClassStr = new ArrayBuffer[String]
+
+    returnClassStr += scalaclass.toString
+    returnClassStr += assignCsvdata.toString
+    returnClassStr += assignJsondata.toString
+    returnClassStr += assignXmldata.toString
+    returnClassStr += addMessage
+    returnClassStr += getmessage
+    returnClassStr += serializedBuf.toString
+    returnClassStr += deserializedBuf.toString
+    returnClassStr += prevDeserializedBuf.toString
+    returnClassStr += prevVerMsgObjstr
+    returnClassStr += convertOldObjtoNewObjBuf.toString
+    returnClassStr += collections.toString
+    returnClassStr += mappedSerBaseTypesBuf.toString
+    returnClassStr += mappedDeserBaseTypesBuf.toString
+    returnClassStr += withMethods.toString
+    returnClassStr += fromFuncBuf.toString
+    returnClassStr += fromFuncBaseTypesBuf.toString
+
+    (returnClassStr.toArray, count, list, argsList, partitionPos, primaryPos)
 
   }
 
