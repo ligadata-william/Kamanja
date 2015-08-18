@@ -374,29 +374,9 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 echo "Prepare test messages and copy them into place..."
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo.csv.gz $installPath/input/SampleApplications/data
+>>>>>>> change easy install and setpath for sample apps path
 
-cd $srcPath/SampleApplication/Medical/SampleData
-cp *.csv $installPath/input/Medical/data
 
-# HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/data
-cp * $installPath/input/HelloWorld/data
-# HelloWorld
-
-#Finance
-cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
-cp * $installPath/input/Finance/data
-#Finance
-
-# Telecom
-cd $srcPath/SampleApplication/Telecom/data
-cp * $installPath/input/Telecom/data
-# Telecom
-
-#new one
-cd $srcPath/SampleApplication/HelloWorld/data
-cp * $installPath/input/SampleApplications/data
-#new one
 # *******************************
 # Copy documentation files
 # *******************************
@@ -412,11 +392,6 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs
 # cp * $installPath/input/Medical/metadata/config
-
-# Not copying anything from here
-# cd $srcPath/SampleApplication/Medical/Configs
-# cp * $installPath/input/Medical/metadata/config
-
 
 #new one
 #HelloWorld
@@ -441,7 +416,6 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #HelloWorld
 
 #Medical
-
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
 
@@ -471,7 +445,6 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Medical
 
 #Telecom
-
 cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/SampleApplications/data
 
@@ -491,25 +464,7 @@ cd $srcPath/SampleApplication/Telecom/metadata/config
 cp -rf * $installPath/input/SampleApplications/metadata/config
 #Telecom
 
-#new one
-cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/SampleApplications/metadata/container
-
-cd $srcPath/SampleApplication/HelloWorld/message
-cp * $installPath/input/SampleApplications/metadata/message
-
-cd $srcPath/SampleApplication/HelloWorld/model
-cp * $installPath/input/SampleApplications/metadata/model
-
-cd $srcPath/SampleApplication/HelloWorld/template
-cp -rf * $installPath/input/SampleApplications/template
-
-cd $srcPath/SampleApplication/HelloWorld/config
-cp -rf * $installPath/input/SampleApplications/metadata/config
-#new one
-
 #Finance
-
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
 cp * $installPath/input/SampleApplications/data
 
@@ -532,15 +487,8 @@ cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/me
 cp -rf * $installPath/input/SampleApplications/metadata/config
 #Finance
 
-#new one
-
-
-
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
-
-
-
 
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
