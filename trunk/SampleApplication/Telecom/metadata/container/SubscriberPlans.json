@@ -24,6 +24,9 @@
 		"Type": "System.Long"
 	  }
 	],
+	"PrimaryKey": [
+	  "planName"
+	],
 	"PartitionKey": [
 	  "planName"
 	]

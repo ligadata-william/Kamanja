@@ -16,6 +16,9 @@
 		"Type": "System.Long"
 	  }
 	],
+	"PrimaryKey": [
+	  "msisdn"
+	],
 	"PartitionKey": [
 	  "msisdn"
 	]
