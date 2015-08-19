@@ -416,6 +416,7 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #HelloWorld
 
 #Medical
+
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
 
@@ -445,6 +446,7 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Medical
 
 #Telecom
+
 cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/SampleApplications/data
 
@@ -465,6 +467,7 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Telecom
 
 #Finance
+
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
 cp * $installPath/input/SampleApplications/data
 
