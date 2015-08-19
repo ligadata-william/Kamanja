@@ -402,6 +402,7 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 
 #new one
 #HelloWorld
+
 cd $srcPath/SampleApplication/HelloWorld/data
 cp * $installPath/input/SampleApplications/data
 
@@ -422,19 +423,15 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #HelloWorld
 
 #Medical
+
 cd $srcPath/Utils/KVInit/src/main/resources
 cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
 
 cd $srcPath/SampleApplication/Medical/SampleData
 cp *.csv $installPath/input/SampleApplications/data
 
-
-
-cd $srcPath/SampleApplication/Medical/SampleData
-cp *.csv $installPath/input/SampleApplications/data
-
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
-cp * $installPath/input/Medical/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/Medical/Functions
 cp * $installPath/input/SampleApplications/metadata/function
@@ -443,7 +440,7 @@ cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
 cp * $installPath/input/SampleApplications/metadata/message
 
 cd $srcPath/SampleApplication/Medical/Models
-cp *.* $installPath/input/Medical/metadata/model
+cp *.* $installPath/input/SampleApplications/metadata/model
 
 cd $srcPath/SampleApplication/Medical/Types
 cp * $installPath/input/SampleApplications/metadata/type
@@ -456,6 +453,7 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Medical
 
 #Telecom
+
 cd $srcPath/SampleApplication/Telecom/data
 cp * $installPath/input/SampleApplications/data
 
@@ -476,6 +474,7 @@ cp -rf * $installPath/input/SampleApplications/metadata/config
 #Telecom
 
 #Finance
+
 cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
 cp * $installPath/input/SampleApplications/data
 
