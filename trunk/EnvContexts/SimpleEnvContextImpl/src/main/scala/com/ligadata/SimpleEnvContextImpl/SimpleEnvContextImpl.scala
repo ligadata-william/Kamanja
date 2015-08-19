@@ -1341,35 +1341,38 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
       val adapKeyValStoreObjs = new ArrayBuffer[IStorage]()
 
       adapterUniqKeyValData.foreach(v1 => {
-        _adapterUniqKeyValData(v1._1) = v1._2
-        try {
-          object obj extends IStorage {
-            val k = makeKey(KamanjaData.PrepareKey("UK", List(v1._1), 0, 0))
-            val json = ("T" -> v1._2._1) ~
-              ("V" -> v1._2._2) ~
-              ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
-              ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
-            val compjson = compact(render(json))
-            val v = makeValue(compjson.getBytes("UTF8"), "CSV")
+        if (v1._2._3 != null && v1._2._3.size > 0) { // If we have output then only commit this, otherwise ignore 
+          try {
+            object obj extends IStorage {
+              val k = makeKey(KamanjaData.PrepareKey("UK", List(v1._1), 0, 0))
+              val json = ("T" -> v1._2._1) ~
+                ("V" -> v1._2._2) ~
+                ("Qs" -> v1._2._3.map(qsres => { qsres._1 })) ~
+                ("Res" -> v1._2._3.map(qsres => { qsres._2 }))
+              val compjson = compact(render(json))
+              val v = makeValue(compjson.getBytes("UTF8"), "CSV")
 
-            def Key = k
+              def Key = k
 
-            def Value = v
+              def Value = v
 
-            def Construct(Key: Key, Value: Value) = {}
-          }
-          adapKeyValStoreObjs += obj
-        } catch {
-          case e: Exception => {
-            logger.error("Failed to write data")
-            throw e
+              def Construct(Key: Key, Value: Value) = {}
+            }
+            adapKeyValStoreObjs += obj
+          } catch {
+            case e: Exception => {
+              logger.error("Failed to write data")
+              throw e
+            }
           }
         }
       })
 
-      val txn1 = _committingPartitionsDataStore.beginTx()
-      _committingPartitionsDataStore.putBatch(adapKeyValStoreObjs.toArray)
-      _committingPartitionsDataStore.commitTx(txn1)
+      if (adapKeyValStoreObjs.size > 0) {
+        val txn1 = _committingPartitionsDataStore.beginTx()
+        _committingPartitionsDataStore.putBatch(adapKeyValStoreObjs.toArray)
+        _committingPartitionsDataStore.commitTx(txn1)
+      }
     }
 
     val txn = _allDataDataStore.beginTx()
@@ -1466,15 +1469,16 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
     val results = new ArrayBuffer[(String, (Long, String, List[(String, String)]))]()
     var objs = new Array[(Long, String, List[(String, String)])](1)
     keys.foreach(key => {
-      if (key.T.compareTo("UK") == 0) {
+      if (key.T.compareToIgnoreCase("UK") == 0) {
         try {
           val buildAdapOne = (tupleBytes: Value) => {
             buildAdapterUniqueValue(tupleBytes, objs)
           }
           objs(0) = null
           _committingPartitionsDataStore.get(makeKey(KamanjaData.PrepareKey("UK", key.K, 0, 0)), buildAdapOne)
-          if (objs(0) != null)
+          if (objs(0) != null) {
             results += ((key.K(0), (objs(0))))
+          }
         } catch {
           case e: Exception => {
             val stackTrace = StackTrace.ThrowableTraceString(e)
@@ -1483,6 +1487,7 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
         }
       }
     })
+
     logger.debug("Loaded %d committing informations".format(results.size))
     results.toArray
   }
