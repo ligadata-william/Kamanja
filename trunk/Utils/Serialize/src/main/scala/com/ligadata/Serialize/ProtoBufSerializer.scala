@@ -17,6 +17,7 @@ import com.ligadata.Serialize.MetadataObjects._
 import com.ligadata.Serialize.MetadataObjects.MetadataType._
 import java.io._
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class ProtoBufSerializer extends Serializer{
 
@@ -150,7 +151,8 @@ class ProtoBufSerializer extends Serializer{
       m
     }catch{
       case e:Exception => {
-	e.printStackTrace()
+	val stackTrace = StackTrace.ThrowableTraceString(e)
+  logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Deserialize the object: " + e.getMessage())
       }
     }
@@ -175,6 +177,8 @@ class ProtoBufSerializer extends Serializer{
       }
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to Serialize the object(" + obj.getClass().getName() + "): " + e.getMessage())
       }
     }
@@ -202,6 +206,8 @@ class ProtoBufSerializer extends Serializer{
       }
     }catch{
       case e:Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
 	throw new ProtoBufSerializationException("Failed to DeSerialize the object:" + e.getMessage())
       }
     }

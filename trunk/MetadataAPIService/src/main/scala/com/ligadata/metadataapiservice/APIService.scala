@@ -15,6 +15,7 @@ import org.apache.log4j._
 import com.ligadata.Utils._
 import scala.util.control.Breaks._
 import com.ligadata.Exceptions._
+import com.ligadata.Exceptions.StackTrace
 
 class APIService extends LigadataSSLConfiguration with Runnable{
 
@@ -102,7 +103,7 @@ class APIService extends LigadataSSLConfiguration with Runnable{
       APIInit.SetConfigFile(configFile.toString)
 
       // Read properties file and Open db connection
-      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile)
+      MetadataAPIImpl.InitMdMgrFromBootStrap(configFile, true)
       // APIInit deals with shutdown activity and it needs to know
       // that database connections were successfully made
       APIInit.SetDbOpen
@@ -139,7 +140,8 @@ class APIService extends LigadataSSLConfiguration with Runnable{
         logger.debug("Unexpected Interrupt")
       }
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace =   StackTrace.ThrowableTraceString(e)
+              logger.debug("Stacktrace:"+stackTrace)
       }
     } finally {
       Shutdown(0)

@@ -611,5 +611,10 @@ trait MetadataAPI {
    * the Type object either as a JSON or XML string depending on the parameter formatType
    */
   def GetType(objectName:String, formatType: String) : String
-
+  
+    /**
+   *  getHealthCheck - will return all the health-check information for the nodeId specified. 
+   *  @parm - nodeId: String - if no parameter specified, return health-check for all nodes 
+   */
+  def getHealthCheck(nodeId: String): String 
 }

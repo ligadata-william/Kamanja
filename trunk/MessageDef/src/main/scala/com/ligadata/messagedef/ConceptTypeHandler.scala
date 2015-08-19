@@ -3,6 +3,8 @@ package com.ligadata.messagedef
 import com.ligadata.kamanja.metadata._
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 
 class ConceptTypeHandler {
 
@@ -26,8 +28,8 @@ class ConceptTypeHandler {
     var fname: String = ""
     var fixedMsgGetKeyStrBuf = new StringBuilder(8 * 1024)
     var withMethod = new StringBuilder(8 * 1024)
-    var fromFuncOfFixed = new StringBuilder(8 * 1024)
-
+    var fromFuncBuf = new StringBuilder(8 * 1024)
+    val LOG = Logger.getLogger(getClass)
     try {
 
       var attribute: BaseAttributeDef = mdMgr.Attribute(f.Ttype, ftypeVersion, true).getOrElse(null)
@@ -73,22 +75,29 @@ class ConceptTypeHandler {
         withMethod = withMethod.append("%s %s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s this.%s = value %s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
-        fromFuncOfFixed = fromFuncOfFixed.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s if (other.%s != null ) { %s".format(pad2, f.Name, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s%s = other.%s%s".format(pad2, f.Name, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s else %s = null; %s".format(pad2, f.Name, newline))
 
       } else if (msg.Fixed.toLowerCase().equals("false")) {
         withMethod = withMethod.append("%s%s def with%s(value: %s) : %s = {%s".format(newline, pad1, f.Name, attribute.typeString, msg.Name, newline))
         withMethod = withMethod.append("%s fields(\"%s\") = (-1, value )%s".format(pad1, f.Name, newline))
         withMethod = withMethod.append("%s return this %s %s } %s".format(pad1, newline, pad1, newline))
 
+        fromFuncBuf = fromFuncBuf.append("%s if (other.fields.contains(\"%s\")) { %s".format(pad2, f.Name, newline))
+        fromFuncBuf = fromFuncBuf.append("%s fields(\"%s\") = (-1, other.fields(\"%s\")._2.asInstanceOf[%s].Clone.asInstanceOf[%s]); %s".format(pad2, f.Name, f.Name, attribute.typeString, attribute.typeString, newline))
+        fromFuncBuf = fromFuncBuf.append("%s } %s".format(pad2, newline))
+
       }
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
-    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncOfFixed.toString)
+    (scalaclass.toString, assignCsvdata.toString, assignJsondata.toString, assignXmldata.toString, list, argsList, addMsg.toString, jarset, fixedMsgGetKeyStrBuf.toString, withMethod.toString, fromFuncBuf.toString)
   }
 
 }
