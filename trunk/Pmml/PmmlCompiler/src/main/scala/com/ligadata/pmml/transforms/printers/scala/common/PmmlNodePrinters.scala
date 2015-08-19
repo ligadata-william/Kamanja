@@ -74,8 +74,27 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 *       		in the current printer.
 		 *         	b) "builds" code is a string that is printed out of line just before closure of the current class.
 		 *          	See MacroSelect.scala for the details and use cases. 
+		 *           
+		 *  With the introduction of namespaces and namespace alias references in the pmml, there is a need to make a substitution of the
+		 *  alias with the actual namespace.  The code below that resets the scalaFcnName variable is principally for simple functions.
+		 *  Similar treatment is found for the Iterable function cases in the IterableFcnPrinter.
 		 */
 
+		scalaFcnName = if (node.function.contains(".")) { /** NOTE: builtin case above cannot match this predicate... by definition */
+			/** substitute the alias present with the corresponding namespace (i.e., full pkg) name */
+			val alias : String = node.function.split('.').head.trim
+			val fnName : String = node.function.split('.').last.trim
+			val nmspc : String = if (ctx.NamespaceSearchMap.contains(alias)) {
+				ctx.NamespaceSearchMap(alias).trim
+			} else {
+				PmmlError.logError(ctx, s"Function ${node.function}'s namespace alias could not produce a namespace from the map... logic/coding error in ctx!")
+				alias
+			}
+			s"$nmspc.$fnName"
+		} else {
+			scalaFcnName
+		}
+		
 		ctx.elementStack.push(node) /** track the element as it is processed */
 		if (isPmmlBuiltin && ! variadic) {	/** pmml functions in the spec */
 			/** Take the translated name (scalaFcnName) and print it */
@@ -123,7 +142,14 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 				}
 			}
 			if (funcDef == null) {
-				/** perhaps its a macro instead */
+				/** 
+				 *  Perhaps its a macro instead...
+				 *  
+				 *  NOTE: Currently there are no namespace qualified macros in use.  All are part of the System namespace.
+				 *  Should that change due to formally allowing users to express macros through the metadata api, this will
+				 *  need to be reviewed.  It would then be possible to see namespace alias qualified reference expressions for
+				 *  types and functions. 
+				 */
 				val macroSelector : MacroSelect = new MacroSelect(ctx, ctx.mgr, node, generator, functionSelector)
 				val (macroDef,macroArgTypes) : (MacroDef, Array[(String,Boolean,BaseTypeDef)]) = macroSelector.selectMacro
 				if (macroDef != null) {	  
@@ -653,7 +679,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 
 		clsBuffer.append(s"    override def execute(ctx : Context) : $returnDataValueType = {\n")
 		
-		if (node.name == "IfElsePred1") {
+		if (node.name == "inPatientClaimDateKeysFormatted") {
 			val stop : Boolean = true
 		}
 		
@@ -702,13 +728,15 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
  		if (ifActionElemsLen == 2) {
 			clsBuffer.append(s"\n        var result : $scalaDataType = if ($fldName) { $truthStr } else { $liesStr }\n")
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}result.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n val resStr = ModelsResults.ValueString(result) ")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}resStr${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType(result))\n")
 	  		clsBuffer.append(s"        new $returnDataValueType(result)\n")
 		} else {
 			if (ctx.injectLogging) {
-				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}$fldName.toString${'}'}${'"'})\n")
+				clsBuffer.append(s"\n val fldNameStr = ModelsResults.ValueString(${fldName}) ")
+				clsBuffer.append(s"\n        logger.debug(s${'"'}Derive${'_'}${node.name} result = ${'$'}${'{'}fldNameStr${'}'}${'"'})\n")
 			}
 			clsBuffer.append(s"\n        ctx.xDict.apply(${'"'}$fldNameVal${'"'}).Value(new $returnDataValueType($fldName))\n")
 			clsBuffer.append(s"        new $returnDataValueType($fldName)\n")
@@ -785,7 +813,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val commentBuffer : StringBuilder = new StringBuilder()
 
 		/** Get the classname for this object */
-		val classname = if (ctx.pmmlTerms.contains("ClassName")) {
+		val classname : String = if (ctx.pmmlTerms.contains("ClassName")) {
 				val someNm = ctx.pmmlTerms.apply("ClassName") 
 				someNm match {
 				  case Some(someNm) => someNm
@@ -801,6 +829,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 *  the PMML file path that was used to build the source
 		 */
 		val appName : Option[String] = ctx.pmmlTerms.apply("ApplicationName")
+		val optModelNamespace : Option[String] = ctx.pmmlTerms.apply("ModelNamespace")
 		val fcnName : Option[String] = ctx.pmmlTerms.apply("FunctionName")
 		val pmmlPath : Option[String] = ctx.pmmlTerms.apply("PMML")
 		val modelVersion : Option[String] = ctx.pmmlTerms.apply("Version")
@@ -808,26 +837,49 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val descriptionTxt : Option[String] = ctx.pmmlTerms.apply("Description")
 		val modelName : Option[String] = ctx.pmmlTerms.apply("ModelName")
 		
-		val nmspc : String = "System" /** only System namespace possible at the moment */
+		val nmspc : String = optModelNamespace match {
+		  case Some(optModelNamespace) => optModelNamespace
+		  case _ => "**NO NAME WAS SPECIFIED**"
+		}
 		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
 		val versionNo : String = optVersion match {
 		  case Some(optVersion) => optVersion.toString
-		  case _ => "0000"
+		  case _ => "0000001"
 		}
 		  
-		val clientName : String = ctx.ClientName
-		val curTmInMilli = System.currentTimeMillis
-		val modelPkg = s"com.$clientName.${nmspc}_${classname}_${versionNo}_${curTmInMilli}.pmml"
+		val modelPkg : String = s"${nmspc}.V${versionNo}"
 		ctx.pmmlTerms("ModelPackageName") = Some(modelPkg)
+		
 		commentBuffer.append(s"package $modelPkg\n\n")
 
 		/** Add core udf lib always to import so names don't have to be qualified with full package spec. */
 		commentBuffer.append(s"/**Core Udfs... */\n\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
 		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
-		/** If there were user defined udfs defined in the model, add these packages as well. */
+
+		/** Give the rest... */
+		commentBuffer.append(s"/** Scala Packages... */\n")
+		commentBuffer.append(s"import scala.collection.mutable._\n")
+		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
+		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
+		commentBuffer.append(s"import scala.math._\n")
+		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
+		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
+		commentBuffer.append(s"\n")
+		commentBuffer.append(s"/**Core udfs and model runtime... */\n\n")
+		commentBuffer.append(s"import com.ligadata.pmml.udfs._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.udfs.Udfs._\n")
+		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
+		//commentBuffer.append(s"import com.ligadata.KamanjaBase._\n") 
+		commentBuffer.append(s"\n")
+
+		/** Add the imports implied by the namespace search path */		
+		addNamespaceSearchPathRelatedImports(ctx, commentBuffer)
+
+		/** If there were user defined udfs defined in the model, add these packages as well. 
+		 *  The usage of UdfSearchPath is deprecated... use NamespaceSearchPath to specify your udf pkg names*/
 		val pkgNames : Array[String] = ctx.udfSearchPath
-		val pkgsOnly : Array[String] = if (pkgNames.size > 0) {
+		val pkgsOnly : Array[String] = if (pkgNames != null && pkgNames.size > 0) {
 			if (pkgNames.contains(".")) {
 				val pkgs : Array[String] = pkgNames.map(pkg => {
 					val pkgNmNodes : Array[String] = pkg.split('.').dropRight(1)
@@ -843,7 +895,8 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			Array[String]()
 		}
 		if (pkgNames.size > 0) {
-			commentBuffer.append(s"/** Custom Udf Libraries Specified in PMML */\n")
+			commentBuffer.append(s"\n")
+			commentBuffer.append(s"/** Custom Udf Libraries Specified with UdfSearchPath */\n")
 			pkgNames.foreach( fullPkgObjName => {
 				commentBuffer.append(s"import $fullPkgObjName._\n")
 			})
@@ -851,21 +904,11 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 				commentBuffer.append(s"import $pkg._\n")
 			})
 		} else {
-			commentBuffer.append(s"/** No Custom Udf Libraries Specified in PMML */\n")
+			commentBuffer.append(s"\n")
+			commentBuffer.append(s"/** No Custom Udf Libraries Specified with UdfSearchPath... */\n")
 		}
-		/** Give the rest... */
-		commentBuffer.append(s"/** Other Packages... */\n")
-		commentBuffer.append(s"import com.ligadata.KamanjaBase._\n")
-		commentBuffer.append(s"import com.ligadata.pmml.runtime._\n")
-		commentBuffer.append(s"import scala.collection.mutable._\n")
-		commentBuffer.append(s"import scala.collection.immutable.{ Map }\n")
-		commentBuffer.append(s"import scala.collection.immutable.{ Set }\n")
-		commentBuffer.append(s"import scala.math._\n")
-		commentBuffer.append(s"import scala.collection.immutable.StringLike\n")
-		commentBuffer.append(s"import scala.util.control.Breaks._\n")	
-		commentBuffer.append(s"\n")
-		
-		commentBuffer.append(s"/**\n")
+
+		commentBuffer.append(s"\n/**\n")
 		appName match {
 		  case Some(appName)      =>    commentBuffer.append(s"    Application Name         : $appName\n")
 		  case _ => commentBuffer.append(s"    Application Name            : N/A\n")
@@ -901,9 +944,52 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
  	}
 
 	/** 
+	 *  Add the imports implied by the namespace search path.  There are two cases:
+	 *  
+	 *  $   - The physical class names of the messages and container in use are found by looking
+	 *   		up the type of the message or container and grabbing its physical name.
+	 *  $   - The namespace search paths that are not germane to messages and containers but are used
+	 *      	for types or udfs are extracted from the NamespaceSearchPath itself.
+	 * 
+	 *  @param ctx the pmml compiler global context object for this compilation
+	 *  @param commentBuffer the StringBuild that is to collect the generated import statements
+	 *  @return Unit
+	 */
+	def addNamespaceSearchPathRelatedImports(ctx : PmmlContext, commentBuffer : StringBuilder) : Unit = {
+		val buffer : StringBuilder = new StringBuilder
+
+		/** message and container related namespaces (that have the version from physical name */
+		val nmspcNamePairs : Array[(String, String)] = ctx.ImportStmtInfo.map(physNm => {
+			val nmNodes : Array[String] = physNm.split('.').map(_.trim)
+			val nmPart : String = nmNodes.last
+			val nmspcPart : String = nmNodes.takeWhile(_ != nmPart).addString(buffer, ".").toString
+			buffer.clear
+			(nmspcPart,nmPart)	
+		}).toArray
+		val msgNmSpcs : Array[String] = nmspcNamePairs.map(pair => pair._1).toSet.toArray
+		
+		/** other namespaces from search path... exclude already collected msg/container nmspcs and the defaults */
+		val ignoreThese : Array[String] = msgNmSpcs ++ ctx.ExcludeFromImportConsideration
+		val otherImportNameCandidates : Array[String] = ctx.namespaceSearchPath.map(pair => pair._2.trim)
+		val otherImportNames : Array[String] = otherImportNameCandidates.toSet.toArray diff ignoreThese
+		
+		val importNamespaces : Array[String] = (Array[String]() ++ msgNmSpcs ++ otherImportNames).toSet.toArray
+		if (importNamespaces.size > 0) {
+			commentBuffer.append(s"/** NamespaceSearchPath and Message/Container required imports */\n")
+			importNamespaces.foreach ( nmspc => {
+				commentBuffer.append(s"import $nmspc._\n")
+			})
+		} else {
+			commentBuffer.append(s"/** No NamespaceSearchPath and Message/Container required imports... */\n")
+		}	
+	}
+
+	
+	/** 
 	 *  Generate a name for the class based upon the id info found in the Header 
 	 *  Squeeze all but typical alphameric characters from app name and version string
 	 *  Several side effects.  Collect the ClassName and VersionNumber for ctx.pmmlTerms.
+	 *  @param ctx the pmml compiler's global state singleton
 	 */
 	def generateClassName(ctx : PmmlContext) : String = {
 		val appName : Option[String] = ctx.pmmlTerms.apply("ApplicationName")
@@ -912,43 +998,45 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val numBuffer : StringBuilder = new StringBuilder()
 		val alphaNumPattern = "[0-9A-Za-z_]+".r
 		val numPattern = "[0-9]+".r
-		var classNameString : String = appName match {
+		val classNameString : String = appName match {
 			case Some(appName) => appName
 			case _ => "NO_CLASSNAME_SUPPLIED_FOR_THIS_MODEL"
 		}
-		val alphaNumPieces1 = alphaNumPattern.findAllIn(classNameString)
 
+		/** 
+		 *  1. Clean up the class name
+		 *  Even though the application name has been split from its possible namespace prefix
+		 *  during the Header transformation, it still may be a name that has spaces and other
+		 *  undesirable (illegal from scala identifier perspective) characters in it.
+		 *  We squeeze them out here.
+		 */  
+		val alphaNumPieces1 = alphaNumPattern.findAllIn(classNameString)
+		//val classname : String = if (alphaNumPieces1.size > 0) {
+			for (piece <- alphaNumPieces1) nmBuffer.append(piece)
+		val classname : String = nmBuffer.toString
+		//} else {
+		//	PmmlError.logError(ctx, s"Application name was comprised totally of illegal characters...")
+		//	"***NO_CLASSNAME_SUPPLIED_FOR_THIS_MODEL***"
+		//}
+		/** ReCache the class name and cleaned version in the ctx dictionary of useful terms */
+		ctx.pmmlTerms("ClassName") = Some(classname)
+		logger.debug(s"Class Name to be created: $classname")
+
+		/** 
+		 *  2. 
+		 *  Scrub the version... be permissive with the version string... squeezing out undesirable characters 
+		 */
 		val versionStr : String = modelVersion match {
 		  case Some(optVersion) => optVersion.toString
 		  case _ => "there is no class name for this model... incredible as it seems"
 		}
 		val numVersionPieces = numPattern.findAllIn(versionStr)
 		
-		
-		for (piece <- alphaNumPieces1) nmBuffer.append(piece)
-
 		for (piece <- numVersionPieces) numBuffer.append(piece)
 		if (numBuffer.length == 0) {
 			numBuffer.append("1000001")
 		}
-		/** 
-		 *  No longer is the version number appended to the model name... the model name is 
-		 *  only the value PMML Application element found in the PMML header prefixed with
-		 *  the "System" namespace.  We have no special provision at this time for using an
-		 *  alternate namespace for the model.  We may need to change this by allowing the
-		 *  namespace to be specified in the PMML model's header.
-		 *  
-		 *  nmBuffer.append(numBuffer.toString)
-		 */
 		
-		val classname1 : String = nmBuffer.toString
-		val classNameFixer = "[-. ]+".r
-		val classname : String = classNameFixer.replaceAllIn(classname1,"_")
-		
-		logger.debug(s"Class Name to be created: $classname")
-		
-		/** Cache the class name in the ctx dictionary of useful terms */
-		ctx.pmmlTerms("ClassName") = Some(classname)
 		val vnum : Long = numBuffer.toString.toLong
 		ctx.pmmlTerms("VersionNumber") = Some(vnum.toString)
 		
@@ -976,11 +1064,12 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		}
 		val verNoStr : String = "_" + versionNo.toString
 		
+		/** use the namespace garnered from the application name in the header for the */
 		val nmspc : String = "System" /** only System namespace possible at the moment */
 		if (ctx.injectLogging) {
-			objBuffer.append(s"object ${nmspc}_$classname$verNoStr extends ModelBaseObj with LogTrait {\n") 
+			objBuffer.append(s"object $classname extends ModelBaseObj with LogTrait {\n") 
 		} else {
-			objBuffer.append(s"object ${nmspc}_$classname$verNoStr extends ModelBaseObj {\n") 
+			objBuffer.append(s"object $classname extends ModelBaseObj {\n") 
 		}
 		
 		/** generate static variables */
@@ -1046,7 +1135,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			
 			objBuffer.append(s"    override def CreateNewModel(mdlCtxt: ModelContext): ModelBase =\n")
 			objBuffer.append(s"    {\n") 
-			objBuffer.append(s"           new ${nmspc}_$classname$verNoStr(mdlCtxt, this)\n")
+			objBuffer.append(s"           new $classname(mdlCtxt, this)\n")
 			objBuffer.append(s"    }\n") 	
 			objBuffer.append(s"\n")
 	
@@ -1060,7 +1149,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		val clsBuffer : StringBuilder = new StringBuilder()
 			
 		/** Get the classname for this object */
-		val classname = if (ctx.pmmlTerms.contains("ClassName")) {
+		val classname : String = if (ctx.pmmlTerms.contains("ClassName")) {
 				val someNm = ctx.pmmlTerms.apply("ClassName") 
 				someNm match {
 				  case Some(someNm) => someNm
@@ -1093,16 +1182,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		})
 		val ctorGtxAndMessagesStr : String = ctorMsgsBuffer.toString
 
-		val optVersion = ctx.pmmlTerms.apply("VersionNumber")
-		val versionNo : String = optVersion match {
-		  case Some(optVersion) => optVersion.toString
-		  case _ => {
-			  PmmlError.logError(ctx, s"there is no class name for this model... incredible as it seems")		
-			  "there is no class name for this model... incredible as it seems"
-		  }
-		}
-		val verNoStr : String = "_" + versionNo.toString
-
 		/**
 		 * FIXME: The following line constrains models to living in the System namespace.  This needs to be changed as
 		 * the full thrust of arbitrary namespaces via the NamespaceSearchPath are implemented.  The check here will 
@@ -1112,8 +1191,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		 * 
 		 * If no alias is given, the default is System_
 		 */
-		val nmspc : String = "System_" /** only System namespace possible at the moment */
-		clsBuffer.append(s"class $nmspc$classname$verNoStr(modelContext: ModelContext, factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
+		clsBuffer.append(s"class $classname(modelContext: ModelContext, factory: ModelBaseObj, $ctorGtxAndMessagesStr, val modelName:String, val modelVersion:String, val tenantId: String, val transId: Long)\n")
 		if (ctx.injectLogging) {
 			clsBuffer.append(s"   extends ModelBase(modelContext,factory) with LogTrait {\n") 
 		} else {
@@ -1167,7 +1245,7 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 			/** 
 			 *  Add the initialize function to the the class body 
 			 */
-			clsBuffer.append(s"    def initialize : $nmspc$classname$verNoStr = {\n")
+			clsBuffer.append(s"    def initialize : $classname = {\n")
 			clsBuffer.append(s"\n")
 			
 			/** Other Model Support FIXME: Note that the simpleRules/ruleset,rulesetmodel references are only appropriate for RuleSetModels */
@@ -1516,10 +1594,6 @@ object NodePrinterHelpers extends com.ligadata.pmml.compiler.LogTrait {
 		clsBuffer.append(modelClassComment(ctx, generator))
 		clsBuffer.append(objBody(ctx, generator))
 		clsBuffer.append(modelClassBody(ctx, generator))
-		/** 
-		 *  End of Application Class generation
-		 */
-		clsBuffer.append(s"}\n")
  		
 		clsBuffer
  	}

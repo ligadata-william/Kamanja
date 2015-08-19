@@ -1,0 +1,19 @@
+{
+"Types" :[ 
+{
+  "MetadataType" : "ArrayTypeDef",
+  "NameSpace" : "system",
+  "Name" : "arrayofinteger",
+  "TypeTypeName" : "tScalar",
+  "TypeNameSpace" : "system",
+  "TypeName" : "Int",
+  "PhysicalName" : null,
+  "Version" : "000000000001000001",
+  "JarName" : null,
+  "DependencyJars" : [ "basetypes_2.10-0.1.0.jar", "metadata_2.10-1.0.jar" ],
+  "Implementation" : null,
+  "NumberOfDimensions" : 1,
+  "TransactionId" : 0
+} ]
+
+}

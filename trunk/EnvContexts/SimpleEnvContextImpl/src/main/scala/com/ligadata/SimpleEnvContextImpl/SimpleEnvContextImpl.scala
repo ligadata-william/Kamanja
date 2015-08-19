@@ -1042,10 +1042,9 @@ object SimpleEnvContextImpl extends EnvContext with LogTrait {
 
     containerNames.foreach(c1 => {
       val c = c1.toLowerCase
-      val names: Array[String] = c.split('.')
-      val namespace: String = names.head
-      val name: String = names.last
+      val (namespace, name) = Utils.parseNameTokenNoVersion(c)
       var containerType = _mgr.ActiveType(namespace, name)
+
       if (containerType != null) {
 
         val objFullName: String = containerType.FullName.toLowerCase

@@ -77,7 +77,7 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val scalaFcnName : String = PmmlTypes.translateBuiltinNameIfNeeded(node.function)
 	  	logger.debug(s"selectSimpleFcn ... search mdmgr for $scalaFcnName...")
 	  	
-	  	if (scalaFcnName == "CollectionLength") {
+	  	if (scalaFcnName == "Put") {
 	  		val stop : Int = 0
 	  	}
 	  	
@@ -395,7 +395,14 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	fcnKeys
 	}
 	
-	/** Collect the child arguments for simple function. */
+	/** Collect the child arguments for simple function. 
+	 *	@param expandCompoundFieldTypes when true, compound field references are returned for each node of the field reference
+	 * 	@return an Array[Array[(typestring, isContainer, typedef)] for each std fcn arg in the reference or leaf if flag parm is false
+	 *  				,Array[(typestring, isContainer, typedef)] for each mbr arg for arguments where iterable function expressions are present
+	 *      			,the address of the ContainerTypeDef if applicable for this argument
+	 *         			,for iterable functions the Array of the BaseTypes for the "mbr" arguments
+	 *            		,the return type if known for those arguments that are functions
+	 */
 	def collectArgKeys(expandCompoundFieldTypes : Boolean = false) : 
 		Array[(Array[(String,Boolean,BaseTypeDef)],Array[(String,Boolean,BaseTypeDef)],ContainerTypeDef,Array[BaseTypeDef], String)]= {
 
@@ -414,7 +421,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
   				val fcnDef : FunctionDef = if (fcnInfo != null) fcnInfo.fcnDef else null
   				val reasonable : Boolean = (isFcn && fcnDef != null && typeStringForRetTypeString == fcnDef.returnTypeString)
   				
-  				val returnType : BaseTypeDef = if (fcnDef != null) fcnDef.retType else ctx.mgr.ActiveType("Boolean") // either 'and' or 'or'
+  				val (returnTypeStr, returnType) : (String,BaseTypeDef) = if (fcnDef != null) {
+  					(fcnDef.retType.typeString, fcnDef.retType) 
+  				} else {
+  					ctx.MetadataHelper.getType("Boolean") // either 'and' or 'or'
+  				}
   				/** FIXME: if 'if' take the type of the true or false action */
   				
   				/** For functions, build an appropriate arg key based on the function return type */
@@ -1337,7 +1348,8 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 	  	val baseArgTypes : Map[String, Array[(String, ClassSymbol, Type)]] = collectContainerSuperClasses(argTypes)  	
 	  	val newArgTypes : Array[(String,Boolean,BaseTypeDef)] = argTypes.map( argType => {
 	  		val (arg, isContainer, elem) : (String, Boolean, BaseTypeDef) = argType
-	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer && baseArgTypes.size > 0) {
+	  		val isCompilerContext : Boolean = (elem != null && elem.Name.toLowerCase == "context" && elem.NameSpace.toLowerCase == "system")
+	  		val useThisTuple : (String,Boolean,BaseTypeDef) = if (isContainer && baseArgTypes.size > 0 && ! isCompilerContext) {
 	  			val argTypeInfo = if (baseArgTypes.contains(arg)) baseArgTypes(arg) else null
 	  			if (argTypeInfo != null) {
 					var newType : String = null
@@ -1945,7 +1957,11 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 			          
 			          val collCollType : BaseTypeDef = if (containerType.ElementTypes.size > 0) containerType.ElementTypes.last else null
 			          val collCollContainer : ContainerTypeDef  = if (collCollType.isInstanceOf[ContainerTypeDef]) collCollType.asInstanceOf[ContainerTypeDef] else null
-			          val collCollElemType : BaseTypeDef = if (collCollContainer.ElementTypes.size > 0) collCollContainer.ElementTypes.last else null
+			          val collCollElemType : BaseTypeDef = if (collCollContainer != null && collCollContainer.ElementTypes.size > 0) {
+			        	  collCollContainer.ElementTypes.last 
+			          } else {
+			        	  null
+			          }
 					  val collAttrContainer  : ContainerTypeDef = if (collCollElemType != null && ctx.MetadataHelper.isContainerWithFieldOrKeyNames(collCollElemType)) {
 						  collCollElemType match {
 						    case s : StructTypeDef => collCollElemType.asInstanceOf[StructTypeDef]
@@ -1971,26 +1987,24 @@ class FunctionSelect(val ctx : PmmlContext, val mgr : MdMgr, val node : xApply) 
 				    		  (null,"Any",false)
 				    	  }
 				    	  Array[(String,Boolean,BaseTypeDef)]((attrStr,isContainerWithFields,attrType))
-				      } else {	
-				        
+				      } else {	        
 				    	  /** 
-				    	   *  The assumption HAD been that 'ident' arguments to the Iterable function referred to field names of a
-				    	   *  structure or mapped message container.  NOW there is an exception.  It is also possible to refer to the entire
-				    	   *  element of the Iterable with the '_each' member variable used in the applied function on the member of the Iterable.
-				    	   *  
-				    	   *  Check that here and if it is '_each' (current value of ctx.applyElementName) let it pass, filling out the triple of course.
+				    	   *  See if the constant value refers to the entire element of the Iterable ... i.e., the '_each' 
+				    	   *  member variable is present.
 				    	   */
 				    	  val collTypeInfo : Array[(String,Boolean,BaseTypeDef)] = if (constNode.Value.toString == ctx.applyElementName) {
-				    		  val isContainerWithFields = false
-				    		  val collCollElemTypeStr : String = collCollElemType.typeString
-				    		  val collCollContainerTypeStr : String = collCollContainer.typeString
-				    		  Array[(String,Boolean,BaseTypeDef)]((collCollContainerTypeStr,isContainerWithFields,collCollContainer))
-				    		  //Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollElemType))
-				    	  } else {
-					    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
-					    	  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
-					    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
-				    	  }
+				    		  val (collCollElemTypeStr,isContainerWithFields, typedef) : (String, Boolean, BaseTypeDef) = if (collCollType == null) {
+				    				  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference a valid type")
+				    				  ("Unknown field", false, null)
+				    			  } else {
+				    				  (collCollType.typeString, false, collCollType)
+				    			  }
+	  				    		  Array[(String,Boolean,BaseTypeDef)]((collCollElemTypeStr,isContainerWithFields,collCollContainer))
+				    		  } else {
+						    	  /** Ok.. the container's collection element was an array alright, but it still didn't have fields... issue error ... things will crash soon. */
+						    	  PmmlError.logError(ctx, s"Ident const ${constNode.Value.toString} does not reference any field in iterable collection, ${containerType.typeString}")
+						    	  Array[(String,Boolean,BaseTypeDef)](("Unknown field",false,null))
+				    		  }
 				        
 				      	  collTypeInfo
 				      }
