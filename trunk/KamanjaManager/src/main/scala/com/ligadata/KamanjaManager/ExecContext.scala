@@ -60,12 +60,40 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         }
       } finally {
         // LOG.debug("UniqueKeyValue:%s => %s".format(uk, uv))
+        val dispMsg = if (KamanjaConfiguration.waitProcessingTime > 0) new String(data) else ""
+        if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(1)) {
+          try {
+            LOG.debug("Started Waiting in Step 1 (before committing data) for Message:" + dispMsg)
+            Thread.sleep(KamanjaConfiguration.waitProcessingTime)
+            LOG.debug("Done Waiting in Step 1 (before committing data) for Message:" + dispMsg)
+          } catch {
+            case e: Exception => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.debug("StackTrace:" + stackTrace)
+            }
+          }
+        }
+
         val commitStartTime = System.nanoTime
         val containerData = kamanjaCallerCtxt.envCtxt.getChangedData(transId, false, true) // scala.collection.immutable.Map[String, List[List[String]]]
         // 
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
         kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
+
+        if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
+          try {
+            LOG.debug("Started Waiting in Step 2 (before writing to output adapter) for Message:" + dispMsg)
+            Thread.sleep(KamanjaConfiguration.waitProcessingTime)
+            LOG.debug("Done Waiting in Step 2 (before writing to output adapter) for Message:" + dispMsg)
+          } catch {
+            case e: Exception => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.debug("StackTrace:" + stackTrace)
+            }
+          }
+        }
+        
         val sendOutStartTime = System.nanoTime
         if (outputResults != null && kamanjaCallerCtxt.outputAdapters != null) {
           // Not yet checking for Adapter Name matches
@@ -76,6 +104,20 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
             })
           })
         }
+
+        if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
+          try {
+            LOG.debug("Started Waiting in Step 2 (before removing sent data) for Message:" + dispMsg)
+            Thread.sleep(KamanjaConfiguration.waitProcessingTime)
+            LOG.debug("Done Waiting in Step 2 (before removing sent data) for Message:" + dispMsg)
+          } catch {
+            case e: Exception => {
+              val stackTrace = StackTrace.ThrowableTraceString(e)
+              LOG.debug("StackTrace:" + stackTrace)
+            }
+          }
+        }
+                
         kamanjaCallerCtxt.envCtxt.removeCommittedKey(transId, uk)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNanoSecs, sendOutStartTime))
 
