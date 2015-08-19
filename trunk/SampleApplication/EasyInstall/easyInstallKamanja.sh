@@ -57,33 +57,22 @@ mkdir -p $installPath/template
 mkdir -p $installPath/template/config
 mkdir -p $installPath/template/script
 mkdir -p $installPath/input
-mkdir -p $installPath/input/application-2-Healthcare
-mkdir -p $installPath/input/application-2-Healthcare/bin
-mkdir -p $installPath/input/application-2-Healthcare/data
-mkdir -p $installPath/input/application-2-Healthcare/metadata
-mkdir -p $installPath/input/application-2-Healthcare/metadata/config
-mkdir -p $installPath/input/application-2-Healthcare/metadata/container
-mkdir -p $installPath/input/application-2-Healthcare/metadata/function
-mkdir -p $installPath/input/application-2-Healthcare/metadata/message
-mkdir -p $installPath/input/application-2-Healthcare/metadata/model
-mkdir -p $installPath/input/application-2-Healthcare/metadata/script
-mkdir -p $installPath/input/application-2-Healthcare/metadata/type
-mkdir -p $installPath/input/application-2-Healthcare/template
 
-# application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld
-mkdir -p $installPath/input/application-1-HelloWorld/bin
-mkdir -p $installPath/input/application-1-HelloWorld/data
-mkdir -p $installPath/input/application-1-HelloWorld/metadata
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/config
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/container
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/function
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/message
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/model
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/script
-mkdir -p $installPath/input/application-1-HelloWorld/metadata/type
-mkdir -p $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+
+#new one
+mkdir -p $installPath/input/SampleApplications
+mkdir -p $installPath/input/SampleApplications/bin
+mkdir -p $installPath/input/SampleApplications/data
+mkdir -p $installPath/input/SampleApplications/metadata
+mkdir -p $installPath/input/SampleApplications/metadata/config
+mkdir -p $installPath/input/SampleApplications/metadata/container
+mkdir -p $installPath/input/SampleApplications/metadata/function
+mkdir -p $installPath/input/SampleApplications/metadata/message
+mkdir -p $installPath/input/SampleApplications/metadata/model
+mkdir -p $installPath/input/SampleApplications/metadata/script
+mkdir -p $installPath/input/SampleApplications/metadata/type
+mkdir -p $installPath/input/SampleApplications/template
+#new one
 
 bin=$installPath/bin
 systemlib=$installPath/lib/system
@@ -399,16 +388,7 @@ cp $srcPath/Utils/KVInit/src/main/resources/*cfg $systemlib
 # Prepare test messages and copy them into place
 
 echo "Prepare test messages and copy them into place..."
-cd $srcPath/Utils/KVInit/src/main/resources
-cp copd_demo.csv.gz $installPath/input/application-2-Healthcare/data
 
-cd $srcPath/SampleApplication/Medical/SampleData
-cp *.csv $installPath/input/application-2-Healthcare/data
-
-# application-1-HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/data
-cp * $installPath/input/application-1-HelloWorld/data
-# application-1-HelloWorld
 
 # *******************************
 # Copy documentation files
@@ -424,60 +404,121 @@ cp $srcPath/KamanjaManager/src/main/resources/log4j.properties $installPath/conf
 
 # Not copying anything from here
 # cd $srcPath/SampleApplication/Medical/Configs
-# cp * $installPath/input/application-2-Healthcare/metadata/config
+# cp * $installPath/input/Medical/metadata/config
+
+
+#new one
+#HelloWorld
+
+cd $srcPath/SampleApplication/HelloWorld/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/HelloWorld/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/HelloWorld/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/HelloWorld/model
+cp * $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/HelloWorld/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/HelloWorld/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#HelloWorld
+
+#Medical
+
+cd $srcPath/Utils/KVInit/src/main/resources
+cp copd_demo_Medical.csv.gz $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/Medical/SampleData
+cp *.csv $installPath/input/SampleApplications/data
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Containers
-cp * $installPath/input/application-2-Healthcare/metadata/container
-
-# application-1-HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/container
-cp * $installPath/input/application-1-HelloWorld/metadata/container
-# application-1-HelloWorld
+cp * $installPath/input/SampleApplications/metadata/container
 
 cd $srcPath/SampleApplication/Medical/Functions
-cp * $installPath/input/application-2-Healthcare/metadata/function
+cp * $installPath/input/SampleApplications/metadata/function
 
 cd $srcPath/SampleApplication/Medical/MessagesAndContainers/Fixed/Messages
-cp * $installPath/input/application-2-Healthcare/metadata/message
-
-# application-1-HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/message
-cp * $installPath/input/application-1-HelloWorld/metadata/message
-# application-1-HelloWorld
+cp * $installPath/input/SampleApplications/metadata/message
 
 cd $srcPath/SampleApplication/Medical/Models
-cp *.* $installPath/input/application-2-Healthcare/metadata/model
-
-# application-1-HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/model
-cp * $installPath/input/application-1-HelloWorld/metadata/model
-# application-1-HelloWorld
+cp *.* $installPath/input/SampleApplications/metadata/model
 
 cd $srcPath/SampleApplication/Medical/Types
-cp * $installPath/input/application-2-Healthcare/metadata/type
+cp * $installPath/input/SampleApplications/metadata/type
 
 cd $srcPath/SampleApplication/Medical/template
-cp -rf * $installPath/input/application-2-Healthcare/template
+cp -rf * $installPath/input/SampleApplications/template
 
-# application-1-HelloWorld
-cd $srcPath/SampleApplication/HelloWorld/template
-cp -rf * $installPath/input/application-1-HelloWorld/template
-# application-1-HelloWorld
+cd $srcPath/SampleApplication/Medical/Configs
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Medical
+
+#Telecom
+
+cd $srcPath/SampleApplication/Telecom/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/Telecom/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/Telecom/metadata/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/Telecom/metadata/model
+cp *.* $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/Telecom/metadata/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/Telecom/metadata/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Telecom
+
+#Finance
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/data
+cp * $installPath/input/SampleApplications/data
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/container
+cp * $installPath/input/SampleApplications/metadata/container
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/message
+cp * $installPath/input/SampleApplications/metadata/message
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/model
+cp *.* $installPath/input/SampleApplications/metadata/model
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/type
+cp * $installPath/input/SampleApplications/metadata/type
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/template
+cp -rf * $installPath/input/SampleApplications/template
+
+cd $srcPath/SampleApplication/InterfacesSamples/src/main/resources/sample-app/metadata/config
+cp -rf * $installPath/input/SampleApplications/metadata/config
+#Finance
+
+#new one
+
+
 
 cd $srcPath/SampleApplication/EasyInstall/template
 cp -rf * $installPath/template
 
-cd $srcPath/SampleApplication/HelloWorld/config
-cp -rf * $installPath/input/application-1-HelloWorld/metadata/config
 
-cd $srcPath/SampleApplication/Medical/Configs
-cp -rf * $installPath/input/application-2-Healthcare/metadata/config
+
 
 cd $srcPath/SampleApplication/EasyInstall
 cp SetPaths.sh $installPath/bin/
 
 bash $installPath/bin/SetPaths.sh $KafkaRootDir
 
-chmod 0700 $installPath/input/application-2-Healthcare/bin/*sh
+chmod 0700 $installPath/input/SampleApplications/bin/*sh
 
 echo "Kamanja install complete..."

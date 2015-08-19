@@ -1,0 +1,34 @@
+{
+  "Container": {
+	"NameSpace": "System",
+	"Name": "SubscriberPlans",
+	"Version": "00.01.00",
+	"Description": "Subscriber Plans",
+	"Fixed": "true",
+	"Persist": "true",
+	"Fields": [
+	  {
+		"Name": "planName",
+		"Type": "System.String"
+	  },
+	  {
+		"Name": "planType",
+		"Type": "System.Int"
+	  },
+	  {
+		"Name": "planLimit",
+		"Type": "System.Long"
+	  },
+	  {
+		"Name": "individualLimit",
+		"Type": "System.Long"
+	  }
+	],
+	"PrimaryKey": [
+	  "planName"
+	],
+	"PartitionKey": [
+	  "planName"
+	]
+  }
+}
