@@ -3,12 +3,13 @@ package com.ligadata.messagedef
 import com.ligadata.kamanja.metadata.MdMgr
 import scala.collection.mutable.ArrayBuffer
 import org.apache.log4j.Logger
+import com.ligadata.Exceptions.StackTrace
 
 class ConstantMsgObjVarGenerator {
 
   var rddHandler = new RDDHandler
   val logger = this.getClass.getName
-  lazy val log = Logger.getLogger(logger)
+  lazy val LOG = Logger.getLogger(logger)
 
   def partitionkeyStrObj(message: Message, partitionPos: Array[Int]): String = {
     val pad1 = "\t"
@@ -32,7 +33,7 @@ class ConstantMsgObjVarGenerator {
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.debug("primaryPos " + primaryPos.length)
+    LOG.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -153,7 +154,8 @@ class ConstantMsgObjVarGenerator {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace()
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        LOG.debug("StackTrace:"+stackTrace)
         throw e
       }
     }
@@ -390,7 +392,8 @@ import com.ligadata.KamanjaBase.{InputData, DelimitedData, JsonData, XmlData}
 import com.ligadata.BaseTypes._
 import com.ligadata.KamanjaBase.SerializeDeserialize
 import java.io.{ DataInputStream, DataOutputStream , ByteArrayOutputStream}
-
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j.Logger
 """
     val versionPkgImport = verPkg + otherImprts + imprt
     val nonVerPkgImport = nonVerPkg + otherImprts + imprt
@@ -475,7 +478,7 @@ trait BaseContainer {
       var keys = Map(""" + keysStr.toString.substring(0, keysStr.toString.length - 1) + ") \n " +
         """
       var fields: scala.collection.mutable.Map[String, (Int, Any)] = new scala.collection.mutable.HashMap[String, (Int, Any)];
-	"""
+ 	"""
     } else {
       """ 
 	    var keys = Map[String, Int]()
@@ -484,6 +487,14 @@ trait BaseContainer {
 	  """
     }
   }
+
+  def getTransactionIdMapped = {
+    """
+         fields("transactionId") =( (typsStr.indexOf("com.ligadata.BaseTypes.LongImpl")), transactionId)
+    """
+
+  }
+
   //Messages and containers in Set for mapped messages to poplulate the data
 
   def getMsgAndCntnrs(msgsAndCntnrs: String): String = {
@@ -537,6 +548,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
     		  return getWithReflection(key)
     	} catch {
     		  case e: Exception => {
+          val stackTrace = StackTrace.ThrowableTraceString(e)
+          LOG.debug("StackTrace:"+stackTrace)
     		  // Call By Name
              return getByName(key)
     		  }
@@ -553,7 +566,8 @@ class XmlData(var dataInput: String) extends InputData(){ }
 		      return null;
 		    } catch {
 		      case e: Exception => {
-		        e.printStackTrace()
+		        val stackTrace = StackTrace.ThrowableTraceString(e)
+            LOG.debug("StackTrace:"+stackTrace)
 		        throw e
 		      }
 		    }
@@ -653,7 +667,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     val prmryKeys = if (message.PrimaryKeys != null && message.PrimaryKeys.size > 0) ("Array(\"" + message.PrimaryKeys.map(p => p.toLowerCase).mkString("\", \"") + "\")") else ""
     val pad1 = "\t"
     var primaryStr = new StringBuilder
-    log.debug("primaryPos " + primaryPos.length)
+    LOG.debug("primaryPos " + primaryPos.length)
     primaryStr.append("Array(")
     for (p <- primaryPos) {
       primaryStr.append(p + ",")
@@ -716,11 +730,39 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   }
 
-  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String): String = {
+  def fromFuncOfFixedMsgs(msg: Message, fromFunc: String, fromFuncBaeTypes:String): String = {
     var fromFnc: String = ""
     if (fromFunc != null) fromFnc = fromFunc
     """ 
      private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     """+ fromFuncBaeTypes+ """
+	""" + fromFnc + """
+     	return this
+    }
+    """
+
+  }
+
+  def fromFuncOfMappedMsgs(msg: Message, fromFunc: String, fromFuncBaseTypesStr: String): String = {
+    var fromFnc: String = ""
+    if (fromFunc != null) fromFnc = fromFunc
+    """ 
+     private def fromFunc(other: """ + msg.Name + """): """ + msg.Name + """ = {
+     
+     other.fields.foreach(ofield => {
+     
+        if (ofield._2._1 >= 0) {
+          val key = ofield._1.toLowerCase
+          if(key != "transactionid"){
+          ofield._2._1 match {
+           """ + fromFuncBaseTypesStr +
+           """
+            case _ => {} // could be -1
+          }
+        }
+       }
+      })
+     
 	""" + fromFnc + """
      	return this
     }
@@ -739,7 +781,7 @@ class XmlData(var dataInput: String) extends InputData(){ }
     """
   if (other != null && other != this) {
     // call copying fields from other to local variables
-    //fromFunc(other)
+    fromFunc(other)
   }
 
   def this(txnId: Long) = {
@@ -751,8 +793,18 @@ class XmlData(var dataInput: String) extends InputData(){ }
   def this() = {
     this(0, null)
   }
-    
+  def Clone(): MessageContainerBase = {
+    """ + message.Name + """.build(this)
+  }
+  
   """
+  }
+  
+   def logStackTrace = {
+    """
+    private val LOG = Logger.getLogger(getClass)
+    """
+    
   }
 
 }

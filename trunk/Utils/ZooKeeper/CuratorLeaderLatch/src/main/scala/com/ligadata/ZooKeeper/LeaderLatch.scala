@@ -12,6 +12,8 @@ import java.util.concurrent.Callable
 import org.apache.log4j._
 import scala.collection.JavaConverters._
 import org.apache.curator.framework.api.CuratorEventType._;
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 case class ClusterStatus(nodeId: String, isLeader: Boolean, leader: String, participants: Iterable[String])
 
@@ -22,6 +24,9 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
   private var clstStatus: ClusterStatus = _
   private var isShuttingDown: Boolean = false
   private[this] val lock = new Object()
+  
+   val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 
   def SetIsShuttingDown(isIt: Boolean) = lock.synchronized {
     isShuttingDown = isIt
@@ -67,6 +72,8 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
       watchLeaderChildren()
     } catch {
       case e: Exception => {
+        val stackTrace = StackTrace.ThrowableTraceString(e)
+        logger.debug("StackTrace:"+stackTrace)
         throw new Exception("Failed to start a zookeeper session with(" + zkcConnectString + "): " + e.getMessage())
       }
     }
@@ -86,6 +93,7 @@ class ZkLeaderLatch(val zkcConnectString: String, val leaderPath: String, val no
         EventChangeCallback(clstStatus)
     } catch {
       case e: Exception => {
+        
         LOG.error("Leader callback has some error. Reason:%s, Message:%s".format(e.getCause, e.getMessage))
       }
     }

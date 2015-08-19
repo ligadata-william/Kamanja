@@ -11,6 +11,7 @@ import spray.client.pipelining._
 import scala.util.{ Success, Failure }
 
 import com.ligadata.MetadataAPI._
+import com.ligadata.AuditAdapterInfo.AuditConstants
 
 object UpdateTypeService {
   case class Process(typeJson:String,formatType:String)

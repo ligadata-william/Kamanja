@@ -8,6 +8,8 @@ import com.ligadata.KamanjaBase._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.ligadata.Exceptions.StackTrace
+import org.apache.log4j._
 
 case class KamanjaDataKey(T: String, K: List[String], D: List[Int], V: Int)
 
@@ -39,6 +41,8 @@ class KamanjaData {
   private var StartDateRange: Int = 0 // Start Date Range
   private var EndDateRange: Int = 0 // End Date Range
   private var data = ArrayBuffer[MessageContainerBase]() // Messages/Containers for this key & with in this date range. 
+  val loggerName = this.getClass.getName
+  val logger = Logger.getLogger(loggerName)
 
   def Version = ver // Current Version
 
@@ -81,13 +85,23 @@ class KamanjaData {
   // Adding New Message or Container
   def AddMessageContainerBase(baseCntMsg: MessageContainerBase, checkForSameObj: Boolean, moveToEnd: Boolean): Unit = {
     if (checkForSameObj) {
-      if (moveToEnd) {
-        data -= baseCntMsg // Remove here and add it later
-      } else {
-        data.foreach(d => {
-          if (d == baseCntMsg)
-            return
-        })
+      val primaryKey = baseCntMsg.PrimaryKeyData
+      if (primaryKey.size > 0) {
+
+        breakable {
+          for (i <- 0 until data.size) {
+            val pkd = data(i).PrimaryKeyData
+            if (pkd.sameElements(primaryKey)) {
+              if (moveToEnd) {
+                data.remove(i) // Remove here and add it later
+                break
+              } else {
+                data(i) = baseCntMsg // Do In-place Replace and return 
+                return
+              }
+            }
+          }
+        }
       }
       data += baseCntMsg
     } else {
@@ -120,12 +134,14 @@ class KamanjaData {
           var replaced = false
           breakable {
             val primaryKey = typ.PrimaryKeyData
-            for (i <- 0 until data.size) {
-              val pkd = data(i).PrimaryKeyData
-              if (pkd.sameElements(primaryKey)) {
-                data(i) = typ
-                replaced = true
-                break
+            if (primaryKey.size > 0) {
+              for (i <- 0 until data.size) {
+                val pkd = data(i).PrimaryKeyData
+                if (pkd.sameElements(primaryKey)) {
+                  data(i) = typ
+                  replaced = true
+                  break
+                }
               }
             }
           }
@@ -134,7 +150,7 @@ class KamanjaData {
         })
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -150,7 +166,8 @@ class KamanjaData {
         data ++= collection.data
       } catch {
         case e: Exception => {
-          e.printStackTrace
+          StackTrace.ThrowableTraceString(e)
+          logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
           throw e
         }
       }
@@ -197,7 +214,7 @@ class KamanjaData {
 
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
         dos.close
         bos.close
         throw e
@@ -251,7 +268,7 @@ class KamanjaData {
       dis.close
     } catch {
       case e: Exception => {
-        e.printStackTrace
+        logger.debug("StackTrace:" + StackTrace.ThrowableTraceString(e))
         dis.close
         throw e
       }
