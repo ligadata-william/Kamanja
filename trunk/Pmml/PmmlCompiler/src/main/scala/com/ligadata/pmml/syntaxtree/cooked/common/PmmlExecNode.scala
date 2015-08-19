@@ -1547,10 +1547,10 @@ object PmmlExecNode extends com.ligadata.pmml.compiler.LogTrait {
 			val caseSensitive : Boolean = false
 			
 			val fieldAttrInMetadata : BaseAttributeDef = if (fieldsContainerType.isInstanceOf[StructTypeDef]) {
-				fieldsContainerType.asInstanceOf[StructTypeDef].attributeFor(field, caseSensitive)
+				fieldsContainerType.asInstanceOf[StructTypeDef].attributeFor(field)
 			} else {
 				if (fieldsContainerType.isInstanceOf[MappedMsgTypeDef]) {
-					fieldsContainerType.asInstanceOf[MappedMsgTypeDef].attributeFor(field, caseSensitive)
+					fieldsContainerType.asInstanceOf[MappedMsgTypeDef].attributeFor(field)
 				} else {
 					null
 				}
