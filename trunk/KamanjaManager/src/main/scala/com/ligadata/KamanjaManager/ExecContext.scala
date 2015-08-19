@@ -66,8 +66,6 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
         // kamanjaCallerCtxt.envCtxt.setAdapterUniqueKeyValue(transId, uk, uv, outputResults.toList)
         kamanjaCallerCtxt.envCtxt.commitData(transId, uk, uv, outputResults.toList)
         LOG.info(ManagerUtils.getComponentElapsedTimeStr("Commit", uv, readTmNanoSecs, commitStartTime))
-        // kamanjaCallerCtxt.envCtxt.saveStatus(transId, "SetData", false)
-
         val sendOutStartTime = System.nanoTime
         if (outputResults != null && kamanjaCallerCtxt.outputAdapters != null) {
           // Not yet checking for Adapter Name matches

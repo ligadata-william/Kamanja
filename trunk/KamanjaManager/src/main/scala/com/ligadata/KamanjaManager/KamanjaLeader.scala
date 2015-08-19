@@ -103,13 +103,14 @@ object KamanjaLeader {
   }
 
   private def SendUnSentInfoToOutputAdapters: Unit = lock.synchronized {
+    // LOG.info("SendUnSentInfoToOutputAdapters -- envCtxt:" + envCtxt + ", outputAdapters:" + outputAdapters)
     if (envCtxt != null && outputAdapters != null) {
       // Information found in Committing list
       val committingInfo = envCtxt.getAllIntermediateCommittingInfo // Array[(String, (Long, String, List[(String, String)]))]
 
-      if (committingInfo != null && committingInfo.size > 0) {
-        LOG.info("======> committingInfo:" + committingInfo.map(info => (info._1, (info._2._1, info._2._2, info._2._3.mkString(";")))).mkString(","))
+      LOG.info("Information found in Committing Info. table:" + committingInfo.map(info => (info._1, (info._2._1, info._2._2, info._2._3.mkString(";")))).mkString(","))
 
+      if (committingInfo != null && committingInfo.size > 0) {
         // For current key, we need to hold the values of Committing, What ever we have in main table, Validate Adapter Info
         val currentValues = scala.collection.mutable.Map[String, ((Long, String, List[(String, String)]), (Long, String), (String, Int, Int, Long))]()
 
@@ -123,7 +124,7 @@ object KamanjaLeader {
         val allAdapterUniqKvDataInfo = envCtxt.getAllAdapterUniqKvDataInfo(keys)
 
         if (allAdapterUniqKvDataInfo != null) {
-          LOG.info("======> allAdapterUniqKvDataInfo:" + allAdapterUniqKvDataInfo.mkString(","))
+          LOG.debug("Information found in data table:" + allAdapterUniqKvDataInfo.mkString(","))
           allAdapterUniqKvDataInfo.foreach(ai => {
             val key = ai._1.toLowerCase
             val fndVal = currentValues.getOrElse(key, null)
@@ -135,9 +136,8 @@ object KamanjaLeader {
 
         // Get recent information from output validators
         val validateFndKeysAndVals = getValidateAdaptersInfo
-
         if (validateFndKeysAndVals != null) {
-          LOG.info("======> validateFndKeysAndVals:" + validateFndKeysAndVals.mkString(","))
+          LOG.debug("Information found in Validate Adapters:" + validateFndKeysAndVals.mkString(","))
           validateFndKeysAndVals.foreach(validatekv => {
             val key = validatekv._1.toLowerCase
             val fndVal = currentValues.getOrElse(key, null)
@@ -149,11 +149,11 @@ object KamanjaLeader {
 
         // Now find which one we need to resend
         // BUGBUG:: Not yet handling M/N Sub Messages for a Message
+        var tmpCntr = 0
         currentValues.foreach(possibleKeyToSend => {
           // We should not have possibleKeyToSend._2._1._1 < possibleKeyToSend._2._2._1 and if it is possibleKeyToSend._2._1._1 > possibleKeyToSend._2._2._1, the data is not yet committed to main table.
           if (possibleKeyToSend._2._1 != null && possibleKeyToSend._2._2 != null && possibleKeyToSend._2._1._1 == possibleKeyToSend._2._2._1) { // This is just committing record and is written in main table.
             if (possibleKeyToSend._2._3 == null || possibleKeyToSend._2._1._1 != possibleKeyToSend._2._3._4) { // Not yet written in. possibleKeyToSend._2._1._1 < possibleKeyToSend._2._3._4 should not happen and possibleKeyToSend._2._1._1 == possibleKeyToSend._2._3._4 is already written.
-              var tmpCntr = 0
               val outputResults = possibleKeyToSend._2._1._3
               if (outputResults != null && outputAdapters != null) {
                 // Not yet checking for Adapter Name matches
@@ -163,6 +163,7 @@ object KamanjaLeader {
                     tmpCntr += 1
                   })
                 })
+                LOG.debug("All %d results sent to each output queues of %d".format(outputResults.size, outputAdapters.size))
               }
             }
           }
@@ -368,7 +369,6 @@ object KamanjaLeader {
           })
 
           val (allPartitionUniqueRecordKeys, allPartsToValidate) = getAllPartitionsToValidate
-
           val validateFndKeysAndVals = getValidateAdaptersInfo
 
           allPartsToValidate.foreach(kv => {
