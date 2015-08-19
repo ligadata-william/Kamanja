@@ -107,9 +107,9 @@ class ExecContextImpl(val input: InputAdapter, val curPartitionKey: PartitionUni
 
         if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
           try {
-            LOG.debug("Started Waiting in Step 2 (before removing sent data) for Message:" + dispMsg)
+            LOG.debug("Started Waiting in Step 3 (before removing sent data) for Message:" + dispMsg)
             Thread.sleep(KamanjaConfiguration.waitProcessingTime)
-            LOG.debug("Done Waiting in Step 2 (before removing sent data) for Message:" + dispMsg)
+            LOG.debug("Done Waiting in Step 3 (before removing sent data) for Message:" + dispMsg)
           } catch {
             case e: Exception => {
               val stackTrace = StackTrace.ThrowableTraceString(e)
