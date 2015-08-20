@@ -31,7 +31,7 @@ object StartMetadataAPI {
     }
     else {
       for (arg <- arglist) {
-        if (arg.endsWith(".json") || arg.endsWith(".xml")) {
+        if (arg.endsWith(".json") || arg.endsWith(".xml")  || arg.endsWith(".scala")  || arg.endsWith(".java")) {
           location = arg
         } else if (arg.endsWith(".properties")) {
           config = arg
@@ -113,7 +113,10 @@ object StartMetadataAPI {
         case Action.DUMPALLCLUSTERS=>response =DumpService.dumpAllClusters
         case Action.DUMPALLCLUSTERCFGS=>response =DumpService.dumpAllClusterCfgs
         case Action.DUMPALLADAPTERS=>response =DumpService.dumpAllAdapters
-        case _ => response = "Unexpected action!"
+        case _ => {
+          "Unexpected action!"
+          sys.exit(1)
+        }
       }
     }
     catch {

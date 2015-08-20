@@ -1,5 +1,5 @@
 #!/bin/bash
-KAMANJA_BASEPATH=$(brew --prefix)/Cellar/kamanja/1.1.0
+KAMANJA_BASEPATH=`cat /tmp/kamanja.location`
 
 # Start the engine with hashdb backed metadata configuration.  The zookeeper and your queue software should be running
 ipport="8998"

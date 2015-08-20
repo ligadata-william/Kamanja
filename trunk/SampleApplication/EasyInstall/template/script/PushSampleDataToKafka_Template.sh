@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-KAMANJA_BASEPATH=$(brew --prefix)/Cellar/kamanja/1.1.0
+KAMANJA_BASEPATH=`cat /tmp/kamanja.location`
 if [ "$#" -eq 1 ]; then
 INPUTFILE=$@
 else
