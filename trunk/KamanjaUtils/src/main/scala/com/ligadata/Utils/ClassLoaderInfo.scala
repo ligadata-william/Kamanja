@@ -121,12 +121,12 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: 
   }
 }
 
-class KamanjaLoaderInfo(val parent: KamanjaLoaderInfo = null, useParentloadedJars: Boolean = false) {
+class KamanjaLoaderInfo(val parent: KamanjaLoaderInfo = null, val useParentloadedJars: Boolean = false, val parentLast: Boolean = false) {
   // Parent Loader
   val parentLoader: ClassLoader = if (parent != null) parent.loader else getClass().getClassLoader();
 
   // Class Loader
-  val loader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), parentLoader)
+  val loader = new KamanjaClassLoader(ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs(), parentLoader, parentLast)
 
   // Loaded jars
   val loadedJars: TreeSet[String] = if (useParentloadedJars && parent != null) parent.loadedJars else new TreeSet[String]

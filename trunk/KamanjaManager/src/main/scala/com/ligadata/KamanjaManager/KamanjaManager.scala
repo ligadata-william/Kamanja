@@ -97,7 +97,9 @@ object KamanjaConfiguration {
 
   var shutdown = false
   var participentsChangedCntr: Long = 0
-  var metadataLoader = new KamanjaLoaderInfo
+  var baseLoader = new KamanjaLoaderInfo
+  var adaptersAndEnvCtxtLoader = new KamanjaLoaderInfo(baseLoader, true, true)
+  var metadataLoader = new KamanjaLoaderInfo(baseLoader, true, true)
 
   def Reset: Unit = {
     configFile = null
@@ -187,7 +189,7 @@ class KamanjaManager {
           LOG.error("Not found jars in given Dynamic Jars List : {" + nonExistsJars.mkString(", ") + "}")
           return false
         }
-        return Utils.LoadJars(qualJars.toArray, KamanjaConfiguration.metadataLoader.loadedJars, KamanjaConfiguration.metadataLoader.loader)
+        return Utils.LoadJars(qualJars.toArray, KamanjaConfiguration.baseLoader.loadedJars, KamanjaConfiguration.baseLoader.loader)
       }
     }
 
