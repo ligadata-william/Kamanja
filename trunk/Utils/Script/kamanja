@@ -1,4 +1,4 @@
-  #!/usr/bin/env bash
+#!/bin/sh
 KAMANJA_BASEPATH=/Cellar/kamanja/1.1.0
 jar_full_path=$(which jar)
 INPUT=$@
