@@ -37,7 +37,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
   //BUGBUG:: Not Checking whether inputConfig is really QueueAdapterConfiguration or not. 
   private[this] val qc = KafkaQueueAdapterConfiguration.GetAdapterConfig(inputConfig)
   private[this] val lock = new Object()
-  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private[this] val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]()
 
   val groupName = "T" + hashCode.toString
 
@@ -98,7 +98,7 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
 
     consumerConnector = Consumer.create(consumerConfig)
 
-    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue], (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx)) })
+    val partInfo = partitionInfo.map(quad => { (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey], quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfoVal.asInstanceOf[KafkaPartitionUniqueRecordValue]) })
 
     qc.instancePartitions = partInfo.map(trip => { trip._1.PartitionId }).toSet
 
@@ -145,8 +145,6 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
             var execThread: ExecContext = null
             var cntr: Long = 0
             var currentOffset: Long = -1
-            var processingXformMsg = 0
-            var totalXformMsg = 0
             val uniqueKey = new KafkaPartitionUniqueRecordKey
             val uniqueVal = new KafkaPartitionUniqueRecordValue
 
@@ -195,20 +193,14 @@ class KafkaConsumer(val inputConfig: AdapterConfiguration, val callerCtxt: Input
                             }
 
                           }
-                          ignoreOff = if (ignoreFirstMsg) kv._3._1.Offset else kv._3._1.Offset - 1 
-                          processingXformMsg = kv._3._2
-                          totalXformMsg = kv._3._3
+                          ignoreOff = if (ignoreFirstMsg) kv._3.Offset else kv._3.Offset - 1 
                         }
                       }
                       if (executeCurMsg) {
                         try {
                           // Creating new string to convert from Byte Array to string
                           uniqueVal.Offset = currentOffset
-                          if (message.offset >= ignoreOff) {
-                            processingXformMsg = 0
-                            totalXformMsg = 0
-                          }
-                          execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
+                          execThread.execute(message.message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, message.offset <= ignoreOff, qc.associatedMsg, qc.delimiterString)
                           // consumerConnector.commitOffsets // BUGBUG:: Bad way of calling to save all offsets
                           cntr += 1
                           val key = Category + "/" + qc.Name + "/evtCnt"

@@ -40,7 +40,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
   private var numberOfErrors: Int = _
   private var replicaBrokers: Set[String] = Set()
   private var readExecutor: ExecutorService = _
-  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, (KafkaPartitionUniqueRecordValue, Int, Int))]()
+  private val kvs = scala.collection.mutable.Map[Int, (KafkaPartitionUniqueRecordKey, KafkaPartitionUniqueRecordValue, KafkaPartitionUniqueRecordValue)]()
   private var clientName: String = _
 
   // Heartbeat monitor related variables.
@@ -89,7 +89,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
     val partitionInfo = partitionIds.map(quad => {
       (quad._key.asInstanceOf[KafkaPartitionUniqueRecordKey],
         quad._val.asInstanceOf[KafkaPartitionUniqueRecordValue],
-        (quad._validateInfo._val.asInstanceOf[KafkaPartitionUniqueRecordValue], quad._validateInfo._transformProcessingMsgIdx, quad._validateInfo._transformTotalMsgIdx))
+        quad._validateInfoVal.asInstanceOf[KafkaPartitionUniqueRecordValue])
     })
 
     qc.instancePartitions = partitionInfo.map(partQuad => { partQuad._1.PartitionId }).toSet
@@ -131,9 +131,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
           // if the offset is -1, then the server wants to start from the begining, else, it means that the server
           // knows what its doing and we start from that offset.
           var readOffset: Long = -1
-          val uniqueRecordValue = if (ignoreFirstMsg) partition._3._1.Offset else partition._3._1.Offset - 1
-          var processingXformMsg = partition._3._2
-          var totalXformMsg = partition._3._3
+          val uniqueRecordValue = if (ignoreFirstMsg) partition._3.Offset else partition._3.Offset - 1
 
           var sleepDuration = KafkaSimpleConsumer.SLEEP_DURATION
           var messagesProcessed: Long = 0
@@ -224,11 +222,7 @@ class KafkaSimpleConsumer(val inputConfig: AdapterConfiguration, val callerCtxt:
 
                 uniqueVal.Offset = msgBuffer.offset
                 val dontSendOutputToOutputAdap = uniqueVal.Offset <= uniqueRecordValue
-                if (dontSendOutputToOutputAdap == false) {
-                  processingXformMsg = 0
-                  totalXformMsg = 0
-                }
-                execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, processingXformMsg, totalXformMsg, qc.associatedMsg, qc.delimiterString)
+                execThread.execute(message, qc.formatOrInputAdapterName, uniqueKey, uniqueVal, readTmNs, readTmMs, dontSendOutputToOutputAdap, qc.associatedMsg, qc.delimiterString)
 
                 val key = Category + "/" + qc.Name + "/evtCnt"
                 cntrAdapter.addCntr(key, 1) // for now adding each row

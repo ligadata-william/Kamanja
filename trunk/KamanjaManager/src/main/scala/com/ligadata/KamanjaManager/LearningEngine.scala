@@ -5,7 +5,6 @@ import com.ligadata.KamanjaBase._
 import com.ligadata.Utils.Utils
 import java.util.Map
 import com.ligadata.outputmsg.OutputMsgGenerator
-import scala.util.Random
 import org.apache.log4j.Logger
 import java.io.{ PrintWriter, File }
 import scala.xml.XML
@@ -15,26 +14,21 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import com.ligadata.outputmsg.OutputMsgGenerator
-import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, InputAdapterObj, OutputAdapter, ExecContextObj, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
+import com.ligadata.InputOutputAdapterInfo.{ ExecContext, InputAdapter, PartitionUniqueRecordKey, PartitionUniqueRecordValue }
 import com.ligadata.Exceptions.StackTrace
 
-class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey, val output: Array[OutputAdapter]) {
+class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniqueRecordKey) {
   val LOG = Logger.getLogger(getClass);
-  var cntr: Long = 0
-  var totalLatencyFromReadToProcess: Long = 0
-  // var totalLatencyFromReadToOutput: Long = 0
-
-  val rand = new Random(hashCode)
 
   private def RunAllModels(transId: Long, finalTopMsgOrContainer: MessageContainerBase, envContext: EnvContext, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int): Array[SavedMdlResult] = {
     var results: ArrayBuffer[SavedMdlResult] = new ArrayBuffer[SavedMdlResult]()
-   LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
+    LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
 
     if (finalTopMsgOrContainer != null) {
 
       val models: Array[MdlInfo] = KamanjaMetadata.getAllModels.map(mdl => mdl._2).toArray
 
-      val outputAlways: Boolean = false; // (rand.nextInt(9) == 5) // For now outputting ~(1 out of 9) randomly when we get random == 5
+      val outputAlways: Boolean = false;
 
       // Execute all modes here
       models.foreach(md => {
@@ -78,9 +72,11 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
     (topMsgInfo.parents(0)._1, true, topMsgInfo)
   }
 
-  def execute(transId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Unit = {
+  def execute(transId: Long, msgType: String, msgInfo: MsgContainerObjAndTransformInfo, inputdata: InputData, envContext: EnvContext, readTmNs: Long, rdTmMs: Long, uk: String, uv: String, xformedMsgCntr: Int, totalXformedMsgs: Int, ignoreOutput: Boolean): Array[(String, String)] = {
     // LOG.debug("LE => " + msgData)
     LOG.debug("Processing uniqueKey:%s, uniqueVal:%s".format(uk, uv))
+    val returnOutput = ArrayBuffer[(String, String)]() // Adapter/Queue name & output message 
+
     try {
       if (msgInfo != null && inputdata != null) {
         val partKeyData = if (msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].CanPersist) msgInfo.contmsgobj.asInstanceOf[BaseMsgObj].PartitionKeyData(inputdata) else null
@@ -128,7 +124,7 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
           } catch {
             case e: Exception => {
               LOG.error("Failed to get Model results. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-              
+
             }
           }
           val resMap = scala.collection.mutable.Map[String, Array[(String, Any)]]()
@@ -149,67 +145,22 @@ class LearningEngine(val input: InputAdapter, val curPartitionKey: PartitionUniq
             val json = ("ModelsResult" -> results.toList.map(res => res.toJson))
             resStr = compact(render(json))
           }
+          returnOutput += (("", resStr))
 
-          envContext.saveStatus(transId, "Start", true)
           if (isValidPartitionKey) {
             envContext.saveModelsResult(transId, partKeyDataList, allMdlsResults)
-          }
-          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(1)) {
-            try {
-              LOG.debug("====================================> Started Waiting in Step 1")
-              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 1")
-            } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.debug("StackTrace:"+stackTrace)}
-            }
-          }
-          if (ignoreOutput == false) {
-            if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
-              LOG.debug("====================================> Sending to Output Adapter")
-            }
-            val sendOutStartTime = System.nanoTime
-            output.foreach(o => {
-              o.send(resStr, cntr.toString)
-            })
-            LOG.info(ManagerUtils.getComponentElapsedTimeStr("SendResults", uv, readTmNs, sendOutStartTime))
-          }
-          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(2)) {
-            try {
-              LOG.debug("====================================> Started Waiting in Step 2")
-              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 2")
-            } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.debug("StackTrace:"+stackTrace)}
-            }
-          }
-          envContext.saveStatus(transId, "OutAdap", false)
-          var latencyFromReadToProcess = (System.nanoTime - readTmNs) / 1000 // Nanos to micros
-          if (latencyFromReadToProcess < 0) latencyFromReadToProcess = 40 // taking minimum 40 micro secs
-          totalLatencyFromReadToProcess += latencyFromReadToProcess
-          envContext.saveStatus(transId, "SetData", false)
-          if (KamanjaConfiguration.waitProcessingTime > 0 && KamanjaConfiguration.waitProcessingSteps(3)) {
-            try {
-              LOG.debug("====================================> Started Waiting in Step 3")
-              Thread.sleep(KamanjaConfiguration.waitProcessingTime)
-              LOG.debug("====================================> Done Waiting in Step 3")
-            } catch {
-              case e: Exception => {val stackTrace = StackTrace.ThrowableTraceString(e)
-                LOG.debug("StackTrace:"+stackTrace)}
-            }
           }
         }
       } else {
         LOG.error("Recieved null message object for input:" + inputdata.dataInput)
       }
+      return returnOutput.toArray
     } catch {
       case e: Exception => {
         LOG.error("Failed to create and run message. Reason:%s Message:%s".format(e.getCause, e.getMessage))
-        
+
       }
     }
-
-    cntr += 1
+    return Array[(String, String)]()
   }
 }

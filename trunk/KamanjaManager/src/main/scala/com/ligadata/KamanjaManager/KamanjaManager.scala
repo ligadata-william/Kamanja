@@ -87,8 +87,8 @@ object KamanjaConfiguration {
   var zkSessionTimeoutMs: Int = _
   var zkConnectionTimeoutMs: Int = _
 
-  var txnIdsRangeForNode: Int = 500000 // Each time get txnIdsRange of transaction ids for each Node
-  var txnIdsRangeForPartition: Int = 25000 // Each time get txnIdsRange of transaction ids for each partition
+  var txnIdsRangeForNode: Int = 100000 // Each time get txnIdsRange of transaction ids for each Node
+  var txnIdsRangeForPartition: Int = 10000 // Each time get txnIdsRange of transaction ids for each partition
 
   // Debugging info configs -- Begin
   var waitProcessingSteps = collection.immutable.Set[Int]()
@@ -114,7 +114,7 @@ object KamanjaConfiguration {
     zkConnectionTimeoutMs = 0
 
     // Debugging info configs -- Begin
-    waitProcessingSteps = null
+    waitProcessingSteps = collection.immutable.Set[Int]()
     waitProcessingTime = 0
     // Debugging info configs -- End
 
@@ -446,7 +446,7 @@ class KamanjaManager {
 
     val nodeNameToSetZk = KamanjaConfiguration.nodeId.toString
 
-    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C")
+    print("KamanjaManager is running now. Waiting for user to terminate with CTRL + C\n")
     while (KamanjaConfiguration.shutdown == false) { // Infinite wait for now 
       cntr = cntr + 1
       if (participentsChangedCntr != KamanjaConfiguration.participentsChangedCntr) {

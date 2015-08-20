@@ -393,6 +393,7 @@ cp $srcPath/Storage/Voldemort/target/scala-2.10/*.jar $systemlib
 cp $srcPath/InputOutputAdapters/InputOutputAdapterBase/target/scala-2.10/*.jar $systemlib
 cp $srcPath/KamanjaUtils/target/scala-2.10/kamanjautils_2.10-1.0.jar $systemlib
 cp $srcPath/SecurityAdapters/SecurityAdapterBase/target/scala-2.10/*.jar $systemlib
+cp $ivyPath/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar $systemlib
 
 # an extra copy to make sure ?  
 cp $srcPath/InputOutputAdapters/IbmMqSimpleInputOutputAdapters/lib/*.jar $systemlib
