@@ -10,12 +10,13 @@ import java.io.{ ByteArrayOutputStream, InputStream }
 import org.apache.log4j.Logger
 import scala.collection.mutable.ArrayBuffer
 
-class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClassLoader(urls, parent) {
+class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader, val parentLast: Boolean = false) extends URLClassLoader(urls, parent) {
   private val LOG = Logger.getLogger(getClass)
   private var loadedRawClasses = Map[String, Array[Byte]]()
   private var loadedClasses = Map[String, Class[_]]()
   private var loadedJars = ArrayBuffer[URL]()
 
+  // Read All Data of given length from InputStream
   private def ReadAllData(is: InputStream, length: Int): Array[Byte] = {
     val retVal = new Array[Byte](length)
     var off = 0
@@ -27,10 +28,10 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
       len -= bytesRead
       off += bytesRead
     }
-
     retVal
   }
 
+  // Read Full Class Data from the given Input Stream
   private def ReadClassData(ze: JarEntry, is: InputStream): Array[Byte] = {
     val size = ze.getSize.toInt
     if (size != -1) {
@@ -48,7 +49,7 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   }
 
   private def LoadClassesFromURL(jarName: String): Unit = this.synchronized {
-    LOG.info("Trying to load classes from Jar:" + jarName)
+    LOG.debug("Trying to load classes from Jar:" + jarName)
     val taillen = ".class".length()
     var jar: JarFile = null
     try {
@@ -60,7 +61,6 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
         if (entry != null && entry.getName().endsWith(".class") && !entry.isDirectory()) {
           val tmpclsnm = entry.getName().replaceAll("/", ".").trim // Replace / with .
           val className = tmpclsnm.substring(0, tmpclsnm.length() - taillen)
-          LOG.info("JvmClass:" + entry.getName() + ", Class:" + className)
           if (loadedRawClasses.contains(className) == false) {
             val is = jar.getInputStream(entry)
             val data = ReadClassData(entry, is)
@@ -68,13 +68,13 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
               loadedRawClasses(className) = data
             }
           } else {
-            LOG.info(className + " already Loaded raw data")
+            LOG.debug(className + " raw data already loaded")
           }
         }
       }
     } catch {
       case e: Exception => {
-        // e.printStackTrace();
+        LOG.error("Failed to Load classes from JAR:" + jarName + ". Reason:" + e.getCause + ". Message:" + e.getMessage())
       }
     } finally {
       if (jar != null)
@@ -83,9 +83,14 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   }
 
   override def addURL(url: URL) {
-    LoadClassesFromURL(url.getPath)
-    loadedJars += url
-    // super.addURL(url) // If we are going to maintain our own classes in this, no need to call this addURL. Which is duplicate
+    if (parentLast) {
+      // First resolve in the class in local loader, that's why we load raw data  
+      LoadClassesFromURL(url.getPath)
+      loadedJars += url
+    } else {
+      // Passing it to super classes, so that we can use default Parent First
+      super.addURL(url)
+    }
   }
 
   override def findClass(name: String): Class[_] = {
@@ -93,19 +98,18 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
   }
 
   protected override def loadClass(className: String, resolve: Boolean): Class[_] = this.synchronized {
-    LOG.info("Trying to load Class:" + className)
     try {
       // Find in Loaded Classes
       val cls = loadedClasses.getOrElse(className, null)
-      if (cls != null) {
+      if (cls != null)
         return cls
-      }
       // If not find in Loaded Classes, find in Raw data Loaded Classes
       val rawClsData = loadedRawClasses.getOrElse(className, null)
       if (rawClsData != null && rawClsData.length > 0) {
         val cls = defineClass(className, rawClsData, 0, rawClsData.length, null)
         if (resolve) resolveClass(cls)
         loadedClasses(className) = cls
+        loadedRawClasses.remove(className) // Removing RawClass data once we resolve class
         return cls
       }
       return super.loadClass(className, resolve)
@@ -115,7 +119,6 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
       }
     }
   }
-  // val loader = new ParentLastClassLoader(Thread.currentThread().getContextClassLoader, paths)
 }
 
 class KamanjaLoaderInfo(val parent: KamanjaLoaderInfo = null, useParentloadedJars: Boolean = false) {
