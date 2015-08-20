@@ -63,8 +63,20 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
             val is = jar.getInputStream(entry)
             val data = ReadClassData(entry, is)
             if (data != null && data.length > 0) {
-              val cls = defineClass(className, data, 0, data.length, null)
-              loadedClasses(className) = cls
+              try {
+                val cls = defineClass(className, data, 0, data.length, null)
+                loadedClasses(className) = cls
+              } catch {
+                case e: LinkageError => {
+                  LOG.error("LinkageError => Reason:" + e.getCause + ". Message:" + e.getMessage())
+                }
+                case e: Exception => {
+                  LOG.error("Exception => Reason:" + e.getCause + ". Message:" + e.getMessage())
+                }
+                case e: Throwable => {
+                  LOG.error("Throwable => Reason:" + e.getCause + ". Message:" + e.getMessage())
+                }
+              }
             }
           } else {
             LOG.info(className + " already Loaded")
