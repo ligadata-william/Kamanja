@@ -52,16 +52,16 @@ class KamanjaClassLoader(urls: Array[URL], parent: ClassLoader) extends URLClass
 
       while (entries.hasMoreElements()) {
         val entry = entries.nextElement();
-        val name = entry.getName();
-        val clsnm: String = entry.getName().replaceAll("/", ".").trim // Replace / with .
-        val className = clsnm.substring(0, clsnm.length() - taillen)
-
-        val is = jar.getInputStream(entry)
-
-        val data = ReadClassData(entry, is)
-        if (data != null && data.length > 0) {
-          val cls = defineClass(className, data, 0, data.length, null)
-          loadedClasses(className) = cls
+        if (entry != null && entry.getName().endsWith(".class") && !entry.isDirectory()) {
+          val name = entry.getName();
+          val tmpclsnm: String = entry.getName().replaceAll("/", ".").trim // Replace / with .
+          val className = tmpclsnm.substring(0, tmpclsnm.length() - taillen)
+          val is = jar.getInputStream(entry)
+          val data = ReadClassData(entry, is)
+          if (data != null && data.length > 0) {
+            val cls = defineClass(className, data, 0, data.length, null)
+            loadedClasses(className) = cls
+          }
         }
       }
     } catch {
